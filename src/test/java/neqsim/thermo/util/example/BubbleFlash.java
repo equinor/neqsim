@@ -20,7 +20,7 @@ public class BubbleFlash {
   private static final Logger logger = LogManager.getLogger(BubbleFlash.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.

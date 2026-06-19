@@ -17,8 +17,8 @@ public class TooManyIterationsException extends neqsim.util.exception.ThermoExce
   /**
    * Constructs a <code>TooManyIterationsException</code> with a standard error message.
    *
-   * @param className Class that exception is raised from
-   * @param methodName Method that exception is raised from
+   * @param className     Class that exception is raised from
+   * @param methodName    Method that exception is raised from
    * @param maxIterations the maximum number of iterations
    */
   public TooManyIterationsException(String className, String methodName, long maxIterations) {
@@ -29,8 +29,8 @@ public class TooManyIterationsException extends neqsim.util.exception.ThermoExce
   /**
    * Constructs a <code>TooManyIterationsException</code> with a standard error message.
    *
-   * @param obj object that exception is raised from
-   * @param methodName method that exception is raised from
+   * @param obj           object that exception is raised from
+   * @param methodName    method that exception is raised from
    * @param maxIterations the maximum number of iterations
    */
   public TooManyIterationsException(Object obj, String methodName, long maxIterations) {
@@ -48,10 +48,9 @@ public class TooManyIterationsException extends neqsim.util.exception.ThermoExce
    */
   public String getRemediation() {
     return "Solver did not converge within " + maxIterations + " iterations. Try:\n"
-        + "1. Check initial conditions are physically reasonable\n"
-        + "2. Simplify the fluid composition (fewer components)\n"
-        + "3. Use a different equation of state\n"
-        + "4. Increase max iterations if close to convergence\n"
-        + "5. For distillation: use DAMPED solver instead of SEQUENTIAL";
+	+ "1. Check initial conditions are physically reasonable\n"
+	+ "2. Simplify the fluid composition (fewer components)\n" + "3. Use a different equation of state\n"
+	+ "4. Increase max iterations if close to convergence\n"
+	+ "5. For distillation: use DAMPED solver instead of SEQUENTIAL";
   }
 }

@@ -80,8 +80,7 @@ public class StandardBasedCsvDataSource implements MechanicalDesignDataSource {
   }
 
   @Override
-  public Optional<DesignLimitData> getDesignLimits(String equipmentTypeName,
-      String companyIdentifier) {
+  public Optional<DesignLimitData> getDesignLimits(String equipmentTypeName, String companyIdentifier) {
     ensureLoaded();
 
     if (!isStandardFormat) {
@@ -112,13 +111,13 @@ public class StandardBasedCsvDataSource implements MechanicalDesignDataSource {
 
     for (StandardDataRow row : cachedData) {
       if (!normalize(row.standardCode).equals(normalizedStandard)) {
-        continue;
+	continue;
       }
       if (normalizedVersion != null && !normalize(row.version).equals(normalizedVersion)) {
-        continue;
+	continue;
       }
       if (!normalize(row.equipmentType).equals(normalizedEquipment)) {
-        continue;
+	continue;
       }
 
       // Apply specification values
@@ -138,13 +137,12 @@ public class StandardBasedCsvDataSource implements MechanicalDesignDataSource {
     for (StandardDataRow row : cachedData) {
       String code = row.standardCode;
       if (code == null || code.isEmpty()) {
-        code = row.company; // Fallback for legacy format
+	code = row.company; // Fallback for legacy format
       }
       if (code != null && !standards.contains(code)) {
-        if (normalizedEquipment == null
-            || normalize(row.equipmentType).equals(normalizedEquipment)) {
-          standards.add(code);
-        }
+	if (normalizedEquipment == null || normalize(row.equipmentType).equals(normalizedEquipment)) {
+	  standards.add(code);
+	}
       }
     }
 
@@ -160,9 +158,9 @@ public class StandardBasedCsvDataSource implements MechanicalDesignDataSource {
 
     for (StandardDataRow row : cachedData) {
       if (normalize(row.standardCode).equals(normalizedStandard)) {
-        if (row.version != null && !row.version.isEmpty() && !versions.contains(row.version)) {
-          versions.add(row.version);
-        }
+	if (row.version != null && !row.version.isEmpty() && !versions.contains(row.version)) {
+	  versions.add(row.version);
+	}
       }
     }
 
@@ -173,18 +171,16 @@ public class StandardBasedCsvDataSource implements MechanicalDesignDataSource {
    * Get all specification values for a given standard, version, and equipment type.
    *
    * <p>
-   * Returns a map from specification name to a two-element double array where index 0 is MINVALUE
-   * and index 1 is MAXVALUE. This allows access to arbitrary specification names beyond the fixed
-   * fields in {@link DesignLimitData}.
+   * Returns a map from specification name to a two-element double array where index 0 is MINVALUE and index 1 is
+   * MAXVALUE. This allows access to arbitrary specification names beyond the fixed fields in {@link DesignLimitData}.
    * </p>
    *
-   * @param standardCode the standard code (e.g., "NORSOK-D-010")
-   * @param version the standard version (e.g., "Rev 5"), or null for any version
+   * @param standardCode      the standard code (e.g., "NORSOK-D-010")
+   * @param version           the standard version (e.g., "Rev 5"), or null for any version
    * @param equipmentTypeName the equipment type (e.g., "SubseaWell")
    * @return map of specification name to [minValue, maxValue] arrays
    */
-  public Map<String, double[]> getSpecificationValues(String standardCode, String version,
-      String equipmentTypeName) {
+  public Map<String, double[]> getSpecificationValues(String standardCode, String version, String equipmentTypeName) {
     ensureLoaded();
 
     Map<String, double[]> specs = new LinkedHashMap<String, double[]>();
@@ -194,24 +190,23 @@ public class StandardBasedCsvDataSource implements MechanicalDesignDataSource {
 
     for (StandardDataRow row : cachedData) {
       if (!normalize(row.standardCode).equals(normalizedStandard)) {
-        continue;
+	continue;
       }
       if (normalizedVersion != null && !normalize(row.version).equals(normalizedVersion)) {
-        continue;
+	continue;
       }
       if (!normalize(row.equipmentType).equals(normalizedEquipment)) {
-        continue;
+	continue;
       }
       if (row.specification != null && !row.specification.isEmpty()) {
-        specs.put(row.specification, new double[] {row.minValue, row.maxValue});
+	specs.put(row.specification, new double[] { row.minValue, row.maxValue });
       }
     }
 
     return specs;
   }
 
-  private Optional<DesignLimitData> findByCompany(String equipmentTypeName,
-      String companyIdentifier) {
+  private Optional<DesignLimitData> findByCompany(String equipmentTypeName, String companyIdentifier) {
     String normalizedEquipment = normalize(equipmentTypeName);
     String normalizedCompany = normalize(companyIdentifier);
 
@@ -220,36 +215,36 @@ public class StandardBasedCsvDataSource implements MechanicalDesignDataSource {
 
     for (StandardDataRow row : cachedData) {
       if (!normalize(row.equipmentType).equals(normalizedEquipment)) {
-        continue;
+	continue;
       }
       if (!normalize(row.company).equals(normalizedCompany)) {
-        continue;
+	continue;
       }
 
       // Apply direct values for legacy format
       if (!Double.isNaN(row.maxPressure)) {
-        builder.maxPressure(row.maxPressure);
-        found = true;
+	builder.maxPressure(row.maxPressure);
+	found = true;
       }
       if (!Double.isNaN(row.minPressure)) {
-        builder.minPressure(row.minPressure);
-        found = true;
+	builder.minPressure(row.minPressure);
+	found = true;
       }
       if (!Double.isNaN(row.maxTemperature)) {
-        builder.maxTemperature(row.maxTemperature);
-        found = true;
+	builder.maxTemperature(row.maxTemperature);
+	found = true;
       }
       if (!Double.isNaN(row.minTemperature)) {
-        builder.minTemperature(row.minTemperature);
-        found = true;
+	builder.minTemperature(row.minTemperature);
+	found = true;
       }
       if (!Double.isNaN(row.corrosionAllowance)) {
-        builder.corrosionAllowance(row.corrosionAllowance);
-        found = true;
+	builder.corrosionAllowance(row.corrosionAllowance);
+	found = true;
       }
       if (!Double.isNaN(row.jointEfficiency)) {
-        builder.jointEfficiency(row.jointEfficiency);
-        found = true;
+	builder.jointEfficiency(row.jointEfficiency);
+	found = true;
       }
     }
 
@@ -313,33 +308,33 @@ public class StandardBasedCsvDataSource implements MechanicalDesignDataSource {
     try {
       BufferedReader reader = openReader();
       if (reader == null) {
-        return;
+	return;
       }
 
       try {
-        String header = reader.readLine();
-        if (header == null) {
-          return;
-        }
+	String header = reader.readLine();
+	if (header == null) {
+	  return;
+	}
 
-        String[] columns = header.split(",");
-        ColumnIndex index = ColumnIndex.from(columns);
-        isStandardFormat = index.hasStandardColumns();
+	String[] columns = header.split(",");
+	ColumnIndex index = ColumnIndex.from(columns);
+	isStandardFormat = index.hasStandardColumns();
 
-        String line;
-        while ((line = reader.readLine()) != null) {
-          String[] tokens = parseCsvLine(line);
-          if (tokens.length < 2) {
-            continue;
-          }
+	String line;
+	while ((line = reader.readLine()) != null) {
+	  String[] tokens = parseCsvLine(line);
+	  if (tokens.length < 2) {
+	    continue;
+	  }
 
-          StandardDataRow row = parseRow(tokens, index);
-          if (row != null) {
-            cachedData.add(row);
-          }
-        }
+	  StandardDataRow row = parseRow(tokens, index);
+	  if (row != null) {
+	    cachedData.add(row);
+	  }
+	}
       } finally {
-        reader.close();
+	reader.close();
       }
     } catch (IOException ex) {
       logger.error("Failed to read design standard CSV", ex);
@@ -350,14 +345,14 @@ public class StandardBasedCsvDataSource implements MechanicalDesignDataSource {
     if (isResource) {
       InputStream is = getClass().getClassLoader().getResourceAsStream(resourcePath);
       if (is == null) {
-        logger.warn("Resource not found: {}", resourcePath);
-        return null;
+	logger.warn("Resource not found: {}", resourcePath);
+	return null;
       }
       return new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
     } else {
       if (csvPath == null || !Files.isReadable(csvPath)) {
-        logger.warn("CSV file not readable: {}", csvPath);
-        return null;
+	logger.warn("CSV file not readable: {}", csvPath);
+	return null;
       }
       return Files.newBufferedReader(csvPath, StandardCharsets.UTF_8);
     }
@@ -372,12 +367,12 @@ public class StandardBasedCsvDataSource implements MechanicalDesignDataSource {
     for (int i = 0; i < line.length(); i++) {
       char c = line.charAt(i);
       if (c == '"') {
-        inQuotes = !inQuotes;
+	inQuotes = !inQuotes;
       } else if (c == ',' && !inQuotes) {
-        tokens.add(current.toString().trim());
-        current = new StringBuilder();
+	tokens.add(current.toString().trim());
+	current = new StringBuilder();
       } else {
-        current.append(c);
+	current.append(c);
       }
     }
     tokens.add(current.toString().trim());
@@ -481,35 +476,35 @@ public class StandardBasedCsvDataSource implements MechanicalDesignDataSource {
       ColumnIndex index = new ColumnIndex();
 
       for (int i = 0; i < columns.length; i++) {
-        String col = columns[i].trim().toUpperCase(Locale.ROOT).replace("\"", "");
+	String col = columns[i].trim().toUpperCase(Locale.ROOT).replace("\"", "");
 
-        if (col.equals("STANDARD_CODE") || col.equals("STANDARDCODE")) {
-          index.standardCodeIndex = i;
-        } else if (col.equals("STANDARD_VERSION") || col.equals("VERSION")) {
-          index.versionIndex = i;
-        } else if (col.equals("EQUIPMENTTYPE") || col.equals("EQUIPMENT_TYPE")) {
-          index.equipmentTypeIndex = i;
-        } else if (col.equals("COMPANY")) {
-          index.companyIndex = i;
-        } else if (col.equals("SPECIFICATION")) {
-          index.specificationIndex = i;
-        } else if (col.equals("MINVALUE") || col.equals("MIN_VALUE")) {
-          index.minValueIndex = i;
-        } else if (col.equals("MAXVALUE") || col.equals("MAX_VALUE")) {
-          index.maxValueIndex = i;
-        } else if (col.equals("MAXPRESSURE")) {
-          index.maxPressureIndex = i;
-        } else if (col.equals("MINPRESSURE")) {
-          index.minPressureIndex = i;
-        } else if (col.equals("MAXTEMPERATURE")) {
-          index.maxTemperatureIndex = i;
-        } else if (col.equals("MINTEMPERATURE")) {
-          index.minTemperatureIndex = i;
-        } else if (col.equals("CORROSIONALLOWANCE")) {
-          index.corrosionAllowanceIndex = i;
-        } else if (col.equals("JOINTEFFICIENCY")) {
-          index.jointEfficiencyIndex = i;
-        }
+	if (col.equals("STANDARD_CODE") || col.equals("STANDARDCODE")) {
+	  index.standardCodeIndex = i;
+	} else if (col.equals("STANDARD_VERSION") || col.equals("VERSION")) {
+	  index.versionIndex = i;
+	} else if (col.equals("EQUIPMENTTYPE") || col.equals("EQUIPMENT_TYPE")) {
+	  index.equipmentTypeIndex = i;
+	} else if (col.equals("COMPANY")) {
+	  index.companyIndex = i;
+	} else if (col.equals("SPECIFICATION")) {
+	  index.specificationIndex = i;
+	} else if (col.equals("MINVALUE") || col.equals("MIN_VALUE")) {
+	  index.minValueIndex = i;
+	} else if (col.equals("MAXVALUE") || col.equals("MAX_VALUE")) {
+	  index.maxValueIndex = i;
+	} else if (col.equals("MAXPRESSURE")) {
+	  index.maxPressureIndex = i;
+	} else if (col.equals("MINPRESSURE")) {
+	  index.minPressureIndex = i;
+	} else if (col.equals("MAXTEMPERATURE")) {
+	  index.maxTemperatureIndex = i;
+	} else if (col.equals("MINTEMPERATURE")) {
+	  index.minTemperatureIndex = i;
+	} else if (col.equals("CORROSIONALLOWANCE")) {
+	  index.corrosionAllowanceIndex = i;
+	} else if (col.equals("JOINTEFFICIENCY")) {
+	  index.jointEfficiencyIndex = i;
+	}
       }
 
       return index;

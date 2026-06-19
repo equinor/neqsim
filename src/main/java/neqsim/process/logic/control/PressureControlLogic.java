@@ -14,21 +14,19 @@ import neqsim.process.processmodel.ProcessSystem;
  * Process logic for automatic pressure control via valve throttling.
  *
  * <p>
- * This logic automatically adjusts a control valve opening when activated, typically in response to
- * high pressure alarms. The valve adjustment helps reduce system pressure before safety systems
- * (HIPPS, ESD) need to activate.
+ * This logic automatically adjusts a control valve opening when activated, typically in response to high pressure
+ * alarms. The valve adjustment helps reduce system pressure before safety systems (HIPPS, ESD) need to activate.
  *
  * <p>
  * Typical usage pattern:
  *
  * <pre>
  * ControlValve inletValve = (ControlValve) system.getUnit("Inlet Valve");
- * PressureControlLogic throttleLogic =
- *     new PressureControlLogic("Pressure HIHI Auto-Throttle", inletValve, 50.0, system);
+ * PressureControlLogic throttleLogic = new PressureControlLogic("Pressure HIHI Auto-Throttle", inletValve, 50.0,
+ *     system);
  *
  * // Activate automatically on HIHI alarm
- * alarmManager
- *     .registerActionHandler(AlarmActionHandler.activateLogicOnHIHI("PT-101", throttleLogic));
+ * alarmManager.registerActionHandler(AlarmActionHandler.activateLogicOnHIHI("PT-101", throttleLogic));
  * </pre>
  *
  * @author ESOL
@@ -48,13 +46,12 @@ public class PressureControlLogic implements ProcessLogic {
   /**
    * Creates pressure control logic with system run.
    *
-   * @param name the logic name
-   * @param controlValve the valve to throttle
+   * @param name          the logic name
+   * @param controlValve  the valve to throttle
    * @param targetOpening the target valve opening percentage (0-100)
-   * @param system the process system to run after valve change
+   * @param system        the process system to run after valve change
    */
-  public PressureControlLogic(String name, ControlValve controlValve, double targetOpening,
-      ProcessSystem system) {
+  public PressureControlLogic(String name, ControlValve controlValve, double targetOpening, ProcessSystem system) {
     this.name = name;
     this.controlValve = controlValve;
     this.targetOpening = targetOpening;
@@ -68,8 +65,8 @@ public class PressureControlLogic implements ProcessLogic {
   /**
    * Creates pressure control logic without automatic system run.
    *
-   * @param name the logic name
-   * @param controlValve the valve to throttle
+   * @param name          the logic name
+   * @param controlValve  the valve to throttle
    * @param targetOpening the target valve opening percentage (0-100)
    */
   public PressureControlLogic(String name, ControlValve controlValve, double targetOpening) {
@@ -100,14 +97,14 @@ public class PressureControlLogic implements ProcessLogic {
 
       // Execute all actions immediately
       for (LogicAction action : actions) {
-        action.execute();
+	action.execute();
       }
 
       state = LogicState.COMPLETED;
 
       // Optionally run system after valve change to update pressures
       if (runSystemAfterChange && system != null) {
-        system.run();
+	system.run();
       }
     }
   }
@@ -147,8 +144,7 @@ public class PressureControlLogic implements ProcessLogic {
 
   @Override
   public String getStatusDescription() {
-    return String.format("%s [%s]: Throttle %s to %.1f%%", name, state, controlValve.getName(),
-        targetOpening);
+    return String.format("%s [%s]: Throttle %s to %.1f%%", name, state, controlValve.getName(), targetOpening);
   }
 
   /**

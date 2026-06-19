@@ -11,9 +11,8 @@ import neqsim.thermo.system.SystemInterface;
  * Validation report for fluid characterization operations.
  *
  * <p>
- * This class captures key properties before and after characterization to verify that the operation
- * preserves mass, maintains reasonable property values, and achieves the desired component
- * structure.
+ * This class captures key properties before and after characterization to verify that the operation preserves mass,
+ * maintains reasonable property values, and achieves the desired component structure.
  *
  * @author ESOL
  */
@@ -67,13 +66,13 @@ public class CharacterizationValidationReport {
   /**
    * Generate a validation report comparing source and characterized fluids.
    *
-   * @param source the original source fluid
+   * @param source    the original source fluid
    * @param reference the reference fluid used for characterization
-   * @param result the characterized result fluid
+   * @param result    the characterized result fluid
    * @return validation report
    */
-  public static CharacterizationValidationReport generate(SystemInterface source,
-      SystemInterface reference, SystemInterface result) {
+  public static CharacterizationValidationReport generate(SystemInterface source, SystemInterface reference,
+      SystemInterface result) {
     Builder builder = new Builder();
 
     builder.sourceFluidName = "Source";
@@ -87,31 +86,23 @@ public class CharacterizationValidationReport {
     // Calculate source properties
     builder.sourceTotalMoles = source.getTotalNumberOfMoles();
     builder.sourceTotalMass = calculateTotalMass(source);
-    builder.sourceAverageMW =
-        builder.sourceTotalMoles > 0 ? builder.sourceTotalMass / builder.sourceTotalMoles : 0;
+    builder.sourceAverageMW = builder.sourceTotalMoles > 0 ? builder.sourceTotalMass / builder.sourceTotalMoles : 0;
 
     // Calculate result properties
     builder.resultTotalMoles = result.getTotalNumberOfMoles();
     builder.resultTotalMass = calculateTotalMass(result);
-    builder.resultAverageMW =
-        builder.resultTotalMoles > 0 ? builder.resultTotalMass / builder.resultTotalMoles : 0;
+    builder.resultAverageMW = builder.resultTotalMoles > 0 ? builder.resultTotalMass / builder.resultTotalMoles : 0;
 
     // Calculate differences
-    builder.massDifferencePercent =
-        builder.sourceTotalMass > 0
-            ? 100.0 * Math.abs(builder.resultTotalMass - builder.sourceTotalMass)
-                / builder.sourceTotalMass
-            : 0;
-    builder.molesDifferencePercent =
-        builder.sourceTotalMoles > 0
-            ? 100.0 * Math.abs(builder.resultTotalMoles - builder.sourceTotalMoles)
-                / builder.sourceTotalMoles
-            : 0;
-    builder.mwDifferencePercent =
-        builder.sourceAverageMW > 0
-            ? 100.0 * Math.abs(builder.resultAverageMW - builder.sourceAverageMW)
-                / builder.sourceAverageMW
-            : 0;
+    builder.massDifferencePercent = builder.sourceTotalMass > 0
+	? 100.0 * Math.abs(builder.resultTotalMass - builder.sourceTotalMass) / builder.sourceTotalMass
+	: 0;
+    builder.molesDifferencePercent = builder.sourceTotalMoles > 0
+	? 100.0 * Math.abs(builder.resultTotalMoles - builder.sourceTotalMoles) / builder.sourceTotalMoles
+	: 0;
+    builder.mwDifferencePercent = builder.sourceAverageMW > 0
+	? 100.0 * Math.abs(builder.resultAverageMW - builder.sourceAverageMW) / builder.sourceAverageMW
+	: 0;
 
     // Collect pseudo-component details
     builder.sourcePseudoComponentMoles = getPseudoComponentMoles(source);
@@ -120,16 +111,16 @@ public class CharacterizationValidationReport {
     // Generate warnings
     builder.warnings = new ArrayList<>();
     if (builder.massDifferencePercent > 0.1) {
-      builder.warnings.add(String.format("Mass difference %.4f%% exceeds 0.1%% threshold",
-          builder.massDifferencePercent));
+      builder.warnings
+	  .add(String.format("Mass difference %.4f%% exceeds 0.1%% threshold", builder.massDifferencePercent));
     }
     if (builder.molesDifferencePercent > 0.1) {
-      builder.warnings.add(String.format("Moles difference %.4f%% exceeds 0.1%% threshold",
-          builder.molesDifferencePercent));
+      builder.warnings
+	  .add(String.format("Moles difference %.4f%% exceeds 0.1%% threshold", builder.molesDifferencePercent));
     }
     if (builder.resultPseudoComponentCount != builder.referencePseudoComponentCount) {
       builder.warnings.add(String.format("Result PC count (%d) differs from reference (%d)",
-          builder.resultPseudoComponentCount, builder.referencePseudoComponentCount));
+	  builder.resultPseudoComponentCount, builder.referencePseudoComponentCount));
     }
 
     builder.isValid = builder.warnings.isEmpty();
@@ -142,7 +133,7 @@ public class CharacterizationValidationReport {
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
       ComponentInterface comp = fluid.getComponent(i);
       if (comp.isIsTBPfraction() || comp.isIsPlusFraction()) {
-        count++;
+	count++;
       }
     }
     return count;
@@ -162,7 +153,7 @@ public class CharacterizationValidationReport {
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
       ComponentInterface comp = fluid.getComponent(i);
       if (comp.isIsTBPfraction() || comp.isIsPlusFraction()) {
-        result.put(comp.getComponentName(), comp.getNumberOfmoles());
+	result.put(comp.getComponentName(), comp.getNumberOfmoles());
       }
     }
     return result;
@@ -252,7 +243,7 @@ public class CharacterizationValidationReport {
     if (!warnings.isEmpty()) {
       sb.append("Warnings:\n");
       for (String warning : warnings) {
-        sb.append("  ⚠ ").append(warning).append("\n");
+	sb.append("  ⚠ ").append(warning).append("\n");
       }
     } else {
       sb.append("Status: ✓ Valid (no warnings)\n");

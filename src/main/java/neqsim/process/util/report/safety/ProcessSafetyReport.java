@@ -13,8 +13,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 /**
- * Immutable value object containing all information gathered by the
- * {@link ProcessSafetyReportBuilder}.
+ * Immutable value object containing all information gathered by the {@link ProcessSafetyReportBuilder}.
  */
 public final class ProcessSafetyReport {
   /** Condition monitoring findings. */
@@ -39,11 +38,11 @@ public final class ProcessSafetyReport {
     this.scenarioLabel = scenarioLabel;
     this.thresholds = thresholds == null ? new ProcessSafetyThresholds() : thresholds;
     this.conditionFindings = conditionFindings == null ? Collections.emptyList()
-        : Collections.unmodifiableList(new ArrayList<>(conditionFindings));
+	: Collections.unmodifiableList(new ArrayList<>(conditionFindings));
     this.safetyMargins = safetyMargins == null ? Collections.emptyList()
-        : Collections.unmodifiableList(new ArrayList<>(safetyMargins));
+	: Collections.unmodifiableList(new ArrayList<>(safetyMargins));
     this.reliefDeviceAssessments = reliefDeviceAssessments == null ? Collections.emptyList()
-        : Collections.unmodifiableList(new ArrayList<>(reliefDeviceAssessments));
+	: Collections.unmodifiableList(new ArrayList<>(reliefDeviceAssessments));
     this.systemKpis = systemKpis;
     this.equipmentSnapshotJson = equipmentSnapshotJson;
   }
@@ -77,8 +76,7 @@ public final class ProcessSafetyReport {
   }
 
   /**
-   * Serialize the report to JSON. The structure is intentionally friendly for dashboards and audit
-   * archiving.
+   * Serialize the report to JSON. The structure is intentionally friendly for dashboards and audit archiving.
    *
    * @return JSON representation of the report
    */
@@ -95,18 +93,18 @@ public final class ProcessSafetyReport {
     root.add("reliefDevices", gson.toJsonTree(reliefDeviceAssessments));
     if (equipmentSnapshotJson != null && !equipmentSnapshotJson.trim().isEmpty()) {
       try {
-        JsonElement parsed = JsonParser.parseString(equipmentSnapshotJson);
-        root.add("equipment", parsed);
+	JsonElement parsed = JsonParser.parseString(equipmentSnapshotJson);
+	root.add("equipment", parsed);
       } catch (Exception parseException) {
-        root.addProperty("equipment", equipmentSnapshotJson);
+	root.addProperty("equipment", equipmentSnapshotJson);
       }
     }
     return gson.toJson(root);
   }
 
   /**
-   * Produce a CSV representation of the key findings. The CSV is organized with a single header
-   * allowing it to be imported into spreadsheets.
+   * Produce a CSV representation of the key findings. The CSV is organized with a single header allowing it to be
+   * imported into spreadsheets.
    *
    * @return CSV formatted summary
    */
@@ -114,40 +112,35 @@ public final class ProcessSafetyReport {
     StringBuilder sb = new StringBuilder();
     sb.append("Category,Name,Metric,Value,Severity,Details\n");
     for (ConditionFinding finding : conditionFindings) {
-      appendCsvRow(sb, "ConditionMonitor", finding.getUnitName(), "Message", "",
-          finding.getSeverity(), finding.getMessage());
+      appendCsvRow(sb, "ConditionMonitor", finding.getUnitName(), "Message", "", finding.getSeverity(),
+	  finding.getMessage());
     }
     for (SafetyMarginAssessment margin : safetyMargins) {
-      appendCsvRow(sb, "SafetyMargin", margin.getUnitName(), "Margin",
-          formatDouble(margin.getMarginFraction()), margin.getSeverity(),
-          String.format(Locale.ROOT, "design=%.3f bara, operating=%.3f bara",
-              margin.getDesignPressureBar(), margin.getOperatingPressureBar()));
+      appendCsvRow(sb, "SafetyMargin", margin.getUnitName(), "Margin", formatDouble(margin.getMarginFraction()),
+	  margin.getSeverity(), String.format(Locale.ROOT, "design=%.3f bara, operating=%.3f bara",
+	      margin.getDesignPressureBar(), margin.getOperatingPressureBar()));
     }
     for (ReliefDeviceAssessment relief : reliefDeviceAssessments) {
       appendCsvRow(sb, "ReliefDevice", relief.getUnitName(), "Utilisation",
-          formatDouble(relief.getUtilisationFraction()), relief.getSeverity(),
-          String.format(Locale.ROOT,
-              "set=%.3f bara, relieving=%.3f bara, upstream=%.3f bara, massFlow=%.3f kg/hr",
-              relief.getSetPressureBar(), relief.getRelievingPressureBar(),
-              relief.getUpstreamPressureBar(), relief.getMassFlowRateKgPerHr()));
+	  formatDouble(relief.getUtilisationFraction()), relief.getSeverity(),
+	  String.format(Locale.ROOT, "set=%.3f bara, relieving=%.3f bara, upstream=%.3f bara, massFlow=%.3f kg/hr",
+	      relief.getSetPressureBar(), relief.getRelievingPressureBar(), relief.getUpstreamPressureBar(),
+	      relief.getMassFlowRateKgPerHr()));
     }
     if (systemKpis != null) {
-      appendCsvRow(sb, "SystemKpi", scenarioLabel != null ? scenarioLabel : "process",
-          "EntropyChange", formatDouble(systemKpis.getEntropyChangeKjPerK()),
-          systemKpis.getEntropySeverity(), "kJ/K");
-      appendCsvRow(sb, "SystemKpi", scenarioLabel != null ? scenarioLabel : "process",
-          "ExergyChange", formatDouble(systemKpis.getExergyChangeKj()),
-          systemKpis.getExergySeverity(), "kJ");
+      appendCsvRow(sb, "SystemKpi", scenarioLabel != null ? scenarioLabel : "process", "EntropyChange",
+	  formatDouble(systemKpis.getEntropyChangeKjPerK()), systemKpis.getEntropySeverity(), "kJ/K");
+      appendCsvRow(sb, "SystemKpi", scenarioLabel != null ? scenarioLabel : "process", "ExergyChange",
+	  formatDouble(systemKpis.getExergyChangeKj()), systemKpis.getExergySeverity(), "kJ");
     }
     return sb.toString();
   }
 
-  private static void appendCsvRow(StringBuilder sb, String category, String name, String metric,
-      String value, SeverityLevel severity, String details) {
-    sb.append(escapeCsv(category)).append(',').append(escapeCsv(name)).append(',')
-        .append(escapeCsv(metric)).append(',').append(escapeCsv(value)).append(',')
-        .append(severity == null ? "" : severity.name()).append(',')
-        .append(escapeCsv(details)).append('\n');
+  private static void appendCsvRow(StringBuilder sb, String category, String name, String metric, String value,
+      SeverityLevel severity, String details) {
+    sb.append(escapeCsv(category)).append(',').append(escapeCsv(name)).append(',').append(escapeCsv(metric)).append(',')
+	.append(escapeCsv(value)).append(',').append(severity == null ? "" : severity.name()).append(',')
+	.append(escapeCsv(details)).append('\n');
   }
 
   private static String escapeCsv(String value) {
@@ -223,8 +216,8 @@ public final class ProcessSafetyReport {
     private final SeverityLevel severity;
     private final String notes;
 
-    public SafetyMarginAssessment(String unitName, double designPressureBar,
-        double operatingPressureBar, double marginFraction, SeverityLevel severity, String notes) {
+    public SafetyMarginAssessment(String unitName, double designPressureBar, double operatingPressureBar,
+	double marginFraction, SeverityLevel severity, String notes) {
       this.unitName = unitName;
       this.designPressureBar = designPressureBar;
       this.operatingPressureBar = operatingPressureBar;
@@ -269,8 +262,7 @@ public final class ProcessSafetyReport {
     private final SeverityLevel severity;
 
     public ReliefDeviceAssessment(String unitName, double setPressureBar, double relievingPressureBar,
-        double upstreamPressureBar, double massFlowRateKgPerHr, double utilisationFraction,
-        SeverityLevel severity) {
+	double upstreamPressureBar, double massFlowRateKgPerHr, double utilisationFraction, SeverityLevel severity) {
       this.unitName = unitName;
       this.setPressureBar = setPressureBar;
       this.relievingPressureBar = relievingPressureBar;
@@ -316,8 +308,8 @@ public final class ProcessSafetyReport {
     private final SeverityLevel entropySeverity;
     private final SeverityLevel exergySeverity;
 
-    public SystemKpiSnapshot(double entropyChangeKjPerK, double exergyChangeKj,
-        SeverityLevel entropySeverity, SeverityLevel exergySeverity) {
+    public SystemKpiSnapshot(double entropyChangeKjPerK, double exergyChangeKj, SeverityLevel entropySeverity,
+	SeverityLevel exergySeverity) {
       this.entropyChangeKjPerK = entropyChangeKjPerK;
       this.exergyChangeKj = exergyChangeKj;
       this.entropySeverity = entropySeverity;

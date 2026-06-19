@@ -46,7 +46,7 @@ class TransientPipeTest {
     pipe.setDiameter(0.3);
     pipe.setNumberOfSections(10);
 
-    double[] elevations = {0, 0, -5, -10, -10, -5, 0, 0, 5, 10};
+    double[] elevations = { 0, 0, -5, -10, -10, -5, 0, 0, 5, 10 };
     pipe.setElevationProfile(elevations);
 
     pipe.initializePipe();
@@ -68,7 +68,7 @@ class TransientPipeTest {
     pipe.setDiameter(0.3);
     pipe.setNumberOfSections(5);
 
-    double[] inclinations = {0, Math.toRadians(10), Math.toRadians(-5), 0, Math.toRadians(15)};
+    double[] inclinations = { 0, Math.toRadians(10), Math.toRadians(-5), 0, Math.toRadians(15) };
     pipe.setInclinationProfile(inclinations);
 
     pipe.initializePipe();
@@ -138,8 +138,7 @@ class TransientPipeTest {
     assertEquals(25, pressureProfile.length);
 
     // Pressure should decrease along pipe
-    assertTrue(pressureProfile[0] > pressureProfile[24],
-        "Pressure should decrease from inlet to outlet");
+    assertTrue(pressureProfile[0] > pressureProfile[24], "Pressure should decrease from inlet to outlet");
 
     // Holdup profile
     double[] holdupProfile = pipe.getLiquidHoldupProfile();
@@ -175,13 +174,13 @@ class TransientPipeTest {
     double[] elevations = new double[20];
     for (int i = 0; i < 20; i++) {
       if (i < 5) {
-        elevations[i] = 0;
+	elevations[i] = 0;
       } else if (i < 10) {
-        elevations[i] = -10 * (i - 4) / 5.0; // Downhill
+	elevations[i] = -10 * (i - 4) / 5.0; // Downhill
       } else if (i < 15) {
-        elevations[i] = -10 + 10 * (i - 9) / 5.0; // Uphill
+	elevations[i] = -10 + 10 * (i - 9) / 5.0; // Uphill
       } else {
-        elevations[i] = 0;
+	elevations[i] = 0;
       }
     }
     pipe.setElevationProfile(elevations);
@@ -191,16 +190,15 @@ class TransientPipeTest {
     // Check accumulation tracker found low point
     LiquidAccumulationTracker accumTracker = pipe.getAccumulationTracker();
     assertNotNull(accumTracker);
-    assertFalse(accumTracker.getAccumulationZones().isEmpty(),
-        "Should identify accumulation zone at low point");
+    assertFalse(accumTracker.getAccumulationZones().isEmpty(), "Should identify accumulation zone at low point");
 
     // Check sections for low point marking
     PipeSection[] sections = pipe.getSections();
     boolean foundLowPoint = false;
     for (PipeSection section : sections) {
       if (section.isLowPoint()) {
-        foundLowPoint = true;
-        break;
+	foundLowPoint = true;
+	break;
       }
     }
     assertTrue(foundLowPoint, "Should mark low point in sections");
@@ -315,8 +313,7 @@ class TransientPipeTest {
 
     StreamInterface outlet = pipe.getOutletStream();
     assertNotNull(outlet, "Outlet stream should be created");
-    assertTrue(outlet.getFluid().getPressure() < inlet.getPressure(),
-        "Outlet pressure should be less than inlet");
+    assertTrue(outlet.getFluid().getPressure() < inlet.getPressure(), "Outlet pressure should be less than inlet");
   }
 
   @Disabled("Integration test - requires thermodynamic calculations")
@@ -383,8 +380,7 @@ class TransientPipeTest {
   }
 
   /**
-   * Test TransientPipe with all possible phase combinations to verify volume-weighted averaging for
-   * three-phase flow.
+   * Test TransientPipe with all possible phase combinations to verify volume-weighted averaging for three-phase flow.
    */
   @Test
   @Disabled("Integration test - requires thermodynamic calculations")
@@ -448,12 +444,10 @@ class TransientPipeTest {
     threePhasesPipe.setNumberOfSections(10);
 
     // Main test: Verify three-phase system can run with volume-weighted averaging
-    assertDoesNotThrow(() -> threePhasesPipe.run(),
-        "Three-phase pipe should run without exception");
+    assertDoesNotThrow(() -> threePhasesPipe.run(), "Three-phase pipe should run without exception");
 
     // Verify that if all three phases exist after flash, averaging logic works
-    if (threePhase.hasPhaseType("gas") && threePhase.hasPhaseType("oil")
-        && threePhase.hasPhaseType("aqueous")) {
+    if (threePhase.hasPhaseType("gas") && threePhase.hasPhaseType("oil") && threePhase.hasPhaseType("aqueous")) {
       double V_oil = threePhase.getPhase("oil").getVolume();
       double V_water = threePhase.getPhase("aqueous").getVolume();
 
@@ -517,7 +511,7 @@ class TransientPipeTest {
     // Verify simulation advanced further (use tolerance for floating-point comparison)
     double expectedMinTime = simTime1 + 2.0 - 1e-9; // Allow small floating-point error
     assertTrue(pipe.getSimulationTime() >= expectedMinTime,
-        "Simulation time should have advanced by at least 2.0 seconds");
+	"Simulation time should have advanced by at least 2.0 seconds");
     assertTrue(pipe.getTotalTimeSteps() > steps1, "Should have taken more time steps");
   }
 
@@ -552,12 +546,11 @@ class TransientPipeTest {
     double simTime2 = pipe.getSimulationTime();
 
     // Verify simulation continued advancing
-    assertTrue(simTime2 > simTime1,
-        "Simulation time should advance after changing inlet conditions");
+    assertTrue(simTime2 > simTime1, "Simulation time should advance after changing inlet conditions");
 
     // Verify that runTransient can be called multiple times without errors
     assertDoesNotThrow(() -> pipe.runTransient(0.5, java.util.UUID.randomUUID()),
-        "Should be able to run additional transient steps");
+	"Should be able to run additional transient steps");
   }
 
   @Test
@@ -613,8 +606,7 @@ class TransientPipeTest {
     pipe.setMaxSimulationTime(100);
 
     // Build process system
-    neqsim.process.processmodel.ProcessSystem process =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem process = new neqsim.process.processmodel.ProcessSystem();
     process.add(inlet);
     process.add(pipe);
 
@@ -642,8 +634,7 @@ class TransientPipeTest {
   }
 
   /**
-   * Example: Transient simulation with constant upstream pressure, transient pipe, and outlet valve
-   * control.
+   * Example: Transient simulation with constant upstream pressure, transient pipe, and outlet valve control.
    *
    * <p>
    * This example demonstrates a realistic scenario where:
@@ -678,8 +669,8 @@ class TransientPipeTest {
     sourceStream.run();
 
     // ========== Inlet Valve (from source to pipe) ==========
-    neqsim.process.equipment.valve.ThrottlingValve inletValve =
-        new neqsim.process.equipment.valve.ThrottlingValve("InletValve", sourceStream);
+    neqsim.process.equipment.valve.ThrottlingValve inletValve = new neqsim.process.equipment.valve.ThrottlingValve(
+	"InletValve", sourceStream);
     inletValve.setOutletPressure(45.0); // Pressure drop across inlet valve to 45 bar
     inletValve.run();
 
@@ -702,8 +693,7 @@ class TransientPipeTest {
     pipe.setOutletPressure(outletPressureOpen);
 
     // ========== Build Process System ==========
-    neqsim.process.processmodel.ProcessSystem process =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem process = new neqsim.process.processmodel.ProcessSystem();
     process.add(sourceStream);
     process.add(inletValve);
     process.add(pipe);
@@ -750,9 +740,8 @@ class TransientPipeTest {
       dpHistory.add(dp);
 
       if (t % 5 == 0) {
-        logger.info("t=" + t + "s: Inlet P=" + String.format("%.2f", inletP) + " bara, "
-            + "Outlet P=" + String.format("%.2f", outletP) + " bara, " + "ΔP="
-            + String.format("%.2f", dp) + " bar");
+	logger.info("t=" + t + "s: Inlet P=" + String.format("%.2f", inletP) + " bara, " + "Outlet P="
+	    + String.format("%.2f", outletP) + " bara, " + "ΔP=" + String.format("%.2f", dp) + " bar");
       }
     }
 
@@ -760,13 +749,11 @@ class TransientPipeTest {
     double dpAfterClosing = dpHistory.get(dpHistory.size() - 1);
 
     logger.info("\nAfter valve closing:");
-    System.out
-        .println("  Outlet pressure: " + String.format("%.2f", pressureAfterClosing) + " bara");
+    System.out.println("  Outlet pressure: " + String.format("%.2f", pressureAfterClosing) + " bara");
     logger.info("  Pressure drop: " + String.format("%.2f", dpAfterClosing) + " bar");
 
     // Verify: outlet pressure is at the new higher setpoint (38 bar)
-    assertTrue(pressureAfterClosing > 35.0,
-        "Outlet pressure should approach new setpoint (38 bar)");
+    assertTrue(pressureAfterClosing > 35.0, "Outlet pressure should approach new setpoint (38 bar)");
 
     // Note: When outlet valve closes, it restricts flow. With constant inlet flow,
     // the outlet pressure boundary forces a new equilibrium state.
@@ -791,9 +778,8 @@ class TransientPipeTest {
       dpHistory.add(dp);
 
       if (t % 5 == 0) {
-        logger.info("t=" + t + "s: Inlet P=" + String.format("%.2f", inletP) + " bara, "
-            + "Outlet P=" + String.format("%.2f", outletP) + " bara, " + "ΔP="
-            + String.format("%.2f", dp) + " bar");
+	logger.info("t=" + t + "s: Inlet P=" + String.format("%.2f", inletP) + " bara, " + "Outlet P="
+	    + String.format("%.2f", outletP) + " bara, " + "ΔP=" + String.format("%.2f", dp) + " bar");
       }
     }
 
@@ -805,20 +791,16 @@ class TransientPipeTest {
     logger.info("  Pressure drop: " + String.format("%.2f", finalDP) + " bar");
 
     // Verify: outlet pressure returned to lower value when valve reopens
-    assertTrue(finalOutletP < pressureAfterClosing,
-        "Outlet pressure should decrease when valve reopens");
+    assertTrue(finalOutletP < pressureAfterClosing, "Outlet pressure should decrease when valve reopens");
 
     // ========== Summary ==========
     logger.info("\n=== Summary ===");
-    logger
-        .info("Initial state (valve open):     Outlet P = " + String.format("%.1f", initialOutletP)
-            + " bar, ΔP = " + String.format("%.1f", initialDP) + " bar");
-    logger.info(
-        "After valve closed (30%):       Outlet P = " + String.format("%.1f", pressureAfterClosing)
-            + " bar, ΔP = " + String.format("%.1f", dpAfterClosing) + " bar");
-    System.out
-        .println("After valve reopened (100%):    Outlet P = " + String.format("%.1f", finalOutletP)
-            + " bar, ΔP = " + String.format("%.1f", finalDP) + " bar");
+    logger.info("Initial state (valve open):     Outlet P = " + String.format("%.1f", initialOutletP) + " bar, ΔP = "
+	+ String.format("%.1f", initialDP) + " bar");
+    logger.info("After valve closed (30%):       Outlet P = " + String.format("%.1f", pressureAfterClosing)
+	+ " bar, ΔP = " + String.format("%.1f", dpAfterClosing) + " bar");
+    System.out.println("After valve reopened (100%):    Outlet P = " + String.format("%.1f", finalOutletP)
+	+ " bar, ΔP = " + String.format("%.1f", finalDP) + " bar");
 
     // Final verification
     assertTrue(process.getTime() > 0, "Process time should have advanced");
@@ -856,16 +838,15 @@ class TransientPipeTest {
     pipe.run();
 
     // Outlet valve with Cv specification
-    neqsim.process.equipment.valve.ThrottlingValve outletValve =
-        new neqsim.process.equipment.valve.ThrottlingValve("OutletValve", pipe.getOutletStream());
+    neqsim.process.equipment.valve.ThrottlingValve outletValve = new neqsim.process.equipment.valve.ThrottlingValve(
+	"OutletValve", pipe.getOutletStream());
     outletValve.setCv(50.0, "US"); // Cv = 50 US units
     outletValve.setOutletPressure(40.0); // 40 bar downstream
     outletValve.setPercentValveOpening(100.0);
     outletValve.run();
 
     // Build process
-    neqsim.process.processmodel.ProcessSystem process =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem process = new neqsim.process.processmodel.ProcessSystem();
     process.add(source);
     process.add(pipe);
     process.add(outletValve);
@@ -873,26 +854,24 @@ class TransientPipeTest {
     process.run();
 
     logger.info("=== Cv-Based Valve Example ===");
-    logger.info(
-        "Initial outlet flow: " + outletValve.getOutletStream().getFlowRate("kg/sec") + " kg/s");
+    logger.info("Initial outlet flow: " + outletValve.getOutletStream().getFlowRate("kg/sec") + " kg/s");
 
     // Transient: Change valve opening
-    double[] valveOpenings = {100.0, 75.0, 50.0, 25.0, 50.0, 75.0, 100.0};
+    double[] valveOpenings = { 100.0, 75.0, 50.0, 25.0, 50.0, 75.0, 100.0 };
 
     for (double opening : valveOpenings) {
       outletValve.setPercentValveOpening(opening);
 
       // Run 5 seconds at each opening
       for (int t = 0; t < 5; t++) {
-        process.runTransient(1.0, java.util.UUID.randomUUID());
+	process.runTransient(1.0, java.util.UUID.randomUUID());
       }
 
       double flow = outletValve.getOutletStream().getFlowRate("kg/sec");
-      double dp =
-          pipe.getOutletStream().getPressure() - outletValve.getOutletStream().getPressure();
+      double dp = pipe.getOutletStream().getPressure() - outletValve.getOutletStream().getPressure();
 
-      logger.info("Valve opening: " + opening + "% -> Flow: " + String.format("%.3f", flow)
-          + " kg/s, ΔP: " + String.format("%.2f", dp) + " bar");
+      logger.info("Valve opening: " + opening + "% -> Flow: " + String.format("%.3f", flow) + " kg/s, ΔP: "
+	  + String.format("%.2f", dp) + " bar");
     }
 
     // Verify simulation ran correctly
@@ -903,8 +882,8 @@ class TransientPipeTest {
   /**
    * Compare TransientPipe pressure drop with PipeBeggsAndBrills for pure gas flow.
    *
-   * For single-phase gas flow, both models should give similar steady-state pressure drops since
-   * the physics simplifies to standard Darcy-Weisbach friction.
+   * For single-phase gas flow, both models should give similar steady-state pressure drops since the physics simplifies
+   * to standard Darcy-Weisbach friction.
    */
   @Test
   @Disabled
@@ -931,8 +910,8 @@ class TransientPipeTest {
     bbStream.setPressure(inletPressure, "bara");
     bbStream.run();
 
-    neqsim.process.equipment.pipeline.PipeBeggsAndBrills bbPipe =
-        new neqsim.process.equipment.pipeline.PipeBeggsAndBrills("BB pipe", bbStream);
+    neqsim.process.equipment.pipeline.PipeBeggsAndBrills bbPipe = new neqsim.process.equipment.pipeline.PipeBeggsAndBrills(
+	"BB pipe", bbStream);
     bbPipe.setLength(pipeLength);
     bbPipe.setDiameter(pipeDiameter);
     bbPipe.setPipeWallRoughness(roughness);
@@ -944,8 +923,7 @@ class TransientPipeTest {
     double bbPressureDrop = inletPressure - bbOutletPressure;
 
     logger.info("=== Pure Gas Flow: TransientPipe vs PipeBeggsAndBrills ===");
-    logger.info("Conditions: " + flowRate + " kg/s, " + pipeDiameter * 1000 + " mm ID, "
-        + pipeLength + " m length");
+    logger.info("Conditions: " + flowRate + " kg/s, " + pipeDiameter * 1000 + " mm ID, " + pipeLength + " m length");
     logger.info("Inlet: " + inletPressure + " bara, " + inletTemp + " K");
 
     logger.info("PipeBeggsAndBrills:");
@@ -1003,8 +981,8 @@ class TransientPipeTest {
       double term = Math.pow(relRough / 3.7, 1.11) + 6.9 / Re;
       f_manual = Math.pow(-1.8 * Math.log10(term), -2);
     }
-    double dP_manual = f_manual * (pipeLength / pipeDiameter) * 0.5 * gasDensity * actualVelocity
-        * actualVelocity / 1e5;
+    double dP_manual = f_manual * (pipeLength / pipeDiameter) * 0.5 * gasDensity * actualVelocity * actualVelocity
+	/ 1e5;
 
     logger.info("\nManual Darcy-Weisbach calculation:");
     logger.info("  Friction factor: " + String.format("%.6f", f_manual));
@@ -1012,8 +990,7 @@ class TransientPipeTest {
 
     // ========== Comparison ==========
     logger.info("\n=== Comparison ===");
-    logger.info(
-        "BB ΔP: " + String.format("%.4f", bbPressureDrop) + " bar (Beggs and Brill reference)");
+    logger.info("BB ΔP: " + String.format("%.4f", bbPressureDrop) + " bar (Beggs and Brill reference)");
     logger.info("TP ΔP: " + String.format("%.4f", tpPressureDrop) + " bar (TransientPipe)");
     logger.info("Manual ΔP: " + String.format("%.4f", dP_manual) + " bar (Darcy-Weisbach)");
 
@@ -1026,15 +1003,14 @@ class TransientPipeTest {
     assertTrue(tpPressureDrop > 0, "TransientPipe pressure drop should be positive");
     assertTrue(bbPressureDrop > 0, "Beggs and Brill pressure drop should be positive");
     assertTrue(ratioTPtoBB > 0.85 && ratioTPtoBB < 1.15,
-        "TransientPipe should match Beggs and Brill within 15% for pure gas flow. Ratio: "
-            + ratioTPtoBB);
+	"TransientPipe should match Beggs and Brill within 15% for pure gas flow. Ratio: " + ratioTPtoBB);
   }
 
   /**
    * Compare TransientPipe pressure drop with PipeBeggsAndBrills for pure oil (liquid) flow.
    *
-   * For single-phase liquid flow, both models should give similar steady-state pressure drops since
-   * the physics simplifies to standard Darcy-Weisbach friction.
+   * For single-phase liquid flow, both models should give similar steady-state pressure drops since the physics
+   * simplifies to standard Darcy-Weisbach friction.
    */
   @Test
   @Disabled
@@ -1061,8 +1037,8 @@ class TransientPipeTest {
     bbStream.setPressure(inletPressure, "bara");
     bbStream.run();
 
-    neqsim.process.equipment.pipeline.PipeBeggsAndBrills bbPipe =
-        new neqsim.process.equipment.pipeline.PipeBeggsAndBrills("BB pipe", bbStream);
+    neqsim.process.equipment.pipeline.PipeBeggsAndBrills bbPipe = new neqsim.process.equipment.pipeline.PipeBeggsAndBrills(
+	"BB pipe", bbStream);
     bbPipe.setLength(pipeLength);
     bbPipe.setDiameter(pipeDiameter);
     bbPipe.setPipeWallRoughness(roughness);
@@ -1074,8 +1050,7 @@ class TransientPipeTest {
     double bbPressureDrop = inletPressure - bbOutletPressure;
 
     logger.info("=== Pure Oil Flow: TransientPipe vs PipeBeggsAndBrills ===");
-    logger.info("Conditions: " + flowRate + " kg/s, " + pipeDiameter * 1000 + " mm ID, "
-        + pipeLength + " m length");
+    logger.info("Conditions: " + flowRate + " kg/s, " + pipeDiameter * 1000 + " mm ID, " + pipeLength + " m length");
     logger.info("Inlet: " + inletPressure + " bara, " + inletTemp + " K");
 
     logger.info("PipeBeggsAndBrills:");
@@ -1137,8 +1112,8 @@ class TransientPipeTest {
       double term = Math.pow(relRough / 3.7, 1.11) + 6.9 / Re;
       f_manual = Math.pow(-1.8 * Math.log10(term), -2);
     }
-    double dP_manual = f_manual * (pipeLength / pipeDiameter) * 0.5 * oilDensity * actualVelocity
-        * actualVelocity / 1e5;
+    double dP_manual = f_manual * (pipeLength / pipeDiameter) * 0.5 * oilDensity * actualVelocity * actualVelocity
+	/ 1e5;
 
     logger.info("\nManual Darcy-Weisbach calculation:");
     logger.info("  Friction factor: " + String.format("%.6f", f_manual));
@@ -1146,8 +1121,7 @@ class TransientPipeTest {
 
     // ========== Comparison ==========
     logger.info("\n=== Comparison ===");
-    logger.info(
-        "BB ΔP: " + String.format("%.4f", bbPressureDrop) + " bar (Beggs and Brill reference)");
+    logger.info("BB ΔP: " + String.format("%.4f", bbPressureDrop) + " bar (Beggs and Brill reference)");
     logger.info("TP ΔP: " + String.format("%.4f", tpPressureDrop) + " bar (TransientPipe)");
     logger.info("Manual ΔP: " + String.format("%.4f", dP_manual) + " bar (Darcy-Weisbach)");
 
@@ -1160,8 +1134,7 @@ class TransientPipeTest {
     assertTrue(tpPressureDrop > 0, "TransientPipe pressure drop should be positive");
     assertTrue(bbPressureDrop > 0, "Beggs and Brill pressure drop should be positive");
     assertTrue(ratioTPtoBB > 0.85 && ratioTPtoBB < 1.15,
-        "TransientPipe should match Beggs and Brill within 15% for pure oil flow. Ratio: "
-            + ratioTPtoBB);
+	"TransientPipe should match Beggs and Brill within 15% for pure oil flow. Ratio: " + ratioTPtoBB);
   }
 
   /**
@@ -1185,9 +1158,9 @@ class TransientPipeTest {
    * </ul>
    *
    * <p>
-   * This example includes a TransientPipe to show the pipe outlet flow behavior with slug dynamics.
-   * Inlet flow is modulated to simulate terrain-induced slugging, and the pipe outlet mass flow is
-   * tracked to observe slug propagation.
+   * This example includes a TransientPipe to show the pipe outlet flow behavior with slug dynamics. Inlet flow is
+   * modulated to simulate terrain-induced slugging, and the pipe outlet mass flow is tracked to observe slug
+   * propagation.
    *
    * <p>
    * This is a common challenge in offshore production systems and is critical for:
@@ -1228,8 +1201,7 @@ class TransientPipeTest {
     logger.info("  Flow rate: " + baseFlowRate + " kg/s");
     logger.info("  Inlet pressure: 60.0 bara");
     logger.info("  Temperature: 288.15 K (15°C)");
-    System.out
-        .println("  Gas mole fraction: " + String.format("%.2f", pipeInlet.getFluid().getBeta()));
+    System.out.println("  Gas mole fraction: " + String.format("%.2f", pipeInlet.getFluid().getBeta()));
 
     // ========== TransientPipe with terrain profile (riser section) ==========
     TransientPipe riserPipe = new TransientPipe("Riser", pipeInlet);
@@ -1239,7 +1211,7 @@ class TransientPipeTest {
     riserPipe.setOutletPressure(55.0); // bara - Lower outlet pressure
 
     // Terrain profile: mostly vertical riser
-    double[] elevations = {-100, -80, -60, -40, -20, 0, 20, 40, 60, 80, 100}; // -100m to +100m
+    double[] elevations = { -100, -80, -60, -40, -20, 0, 20, 40, 60, 80, 100 }; // -100m to +100m
     riserPipe.setElevationProfile(elevations);
 
     logger.info("\nRiser pipe configuration:");
@@ -1249,9 +1221,8 @@ class TransientPipeTest {
     logger.info("  Outlet pressure: 55.0 bara");
 
     // ========== Topside separator ==========
-    neqsim.process.equipment.separator.Separator separator =
-        new neqsim.process.equipment.separator.Separator("TopsideSeparator",
-            riserPipe.getOutletStream());
+    neqsim.process.equipment.separator.Separator separator = new neqsim.process.equipment.separator.Separator(
+	"TopsideSeparator", riserPipe.getOutletStream());
     separator.setCalculateSteadyState(false);
     separator.setInternalDiameter(2.5); // 2.5 m diameter
     separator.setSeparatorLength(8.0); // 8 m length (L/D = 3.2)
@@ -1273,8 +1244,7 @@ class TransientPipeTest {
     logger.info("  Peak flow multiplier: " + (1.0 + slugAmplitude) + "x");
 
     // ========== Build process system ==========
-    neqsim.process.processmodel.ProcessSystem process =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem process = new neqsim.process.processmodel.ProcessSystem();
     process.add(pipeInlet);
     process.add(riserPipe);
     process.add(separator);
@@ -1286,8 +1256,7 @@ class TransientPipeTest {
     double initialPressure = separator.getPressure();
     double initialPipeOutFlow = riserPipe.getOutletMassFlow();
     logger.info("\n=== Initial Steady State ===");
-    System.out
-        .println("  Pipe outlet mass flow: " + String.format("%.2f", initialPipeOutFlow) + " kg/s");
+    System.out.println("  Pipe outlet mass flow: " + String.format("%.2f", initialPipeOutFlow) + " kg/s");
     logger.info("  Separator liquid level: " + String.format("%.3f", initialLevel));
     logger.info("  Separator pressure: " + String.format("%.1f", initialPressure) + " bara");
 
@@ -1315,30 +1284,30 @@ class TransientPipeTest {
       String event = "";
 
       if (cyclePosition < slugDuration) {
-        // During slug arrival - rapid rise then gradual decay
-        double slugProgress = cyclePosition / slugDuration;
-        double slugFactor;
-        if (slugProgress < 0.2) {
-          // Fast rise (first 20% of slug duration)
-          slugFactor = slugProgress / 0.2;
-        } else {
-          // Exponential decay (remaining 80%)
-          slugFactor = Math.exp(-3.0 * (slugProgress - 0.2) / 0.8);
-        }
-        currentFlowRate = baseFlowRate * (1.0 + slugAmplitude * slugFactor);
+	// During slug arrival - rapid rise then gradual decay
+	double slugProgress = cyclePosition / slugDuration;
+	double slugFactor;
+	if (slugProgress < 0.2) {
+	  // Fast rise (first 20% of slug duration)
+	  slugFactor = slugProgress / 0.2;
+	} else {
+	  // Exponential decay (remaining 80%)
+	  slugFactor = Math.exp(-3.0 * (slugProgress - 0.2) / 0.8);
+	}
+	currentFlowRate = baseFlowRate * (1.0 + slugAmplitude * slugFactor);
 
-        if (!inSlug) {
-          slugCount++;
-          event = "<-- SLUG #" + slugCount + " ARRIVING";
-          inSlug = true;
-        }
+	if (!inSlug) {
+	  slugCount++;
+	  event = "<-- SLUG #" + slugCount + " ARRIVING";
+	  inSlug = true;
+	}
       } else {
-        // Between slugs - steady base flow
-        currentFlowRate = baseFlowRate;
-        if (inSlug) {
-          event = "<-- slug passed";
-          inSlug = false;
-        }
+	// Between slugs - steady base flow
+	currentFlowRate = baseFlowRate;
+	if (inSlug) {
+	  event = "<-- slug passed";
+	  inSlug = false;
+	}
       }
 
       // Update inlet flow rate
@@ -1363,8 +1332,8 @@ class TransientPipeTest {
 
       // Print status every 30 seconds or on slug events
       if (t % 30 == 0 || !event.isEmpty()) {
-        logger.info(String.format("%5d    %10.1f    %12.2f   %.3f   %7.1f  %s", t, currentFlowRate,
-            pipeOutFlow, level, pressure, event));
+	logger.info(String.format("%5d    %10.1f    %12.2f   %.3f   %7.1f  %s", t, currentFlowRate, pipeOutFlow, level,
+	    pressure, event));
       }
     }
 
@@ -1407,8 +1376,7 @@ class TransientPipeTest {
     logger.info("  Avg: " + String.format("%.2f", avgPipeOut) + " kg/s");
     logger.info("  Range: " + String.format("%.2f", maxPipeOut - minPipeOut) + " kg/s");
     if (minPipeOut > 0) {
-      System.out
-          .println("  Peak/Min ratio: " + String.format("%.2f", maxPipeOut / minPipeOut) + "x");
+      System.out.println("  Peak/Min ratio: " + String.format("%.2f", maxPipeOut / minPipeOut) + "x");
     }
 
     // ========== Assertions ==========

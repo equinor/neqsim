@@ -18,8 +18,7 @@ class WellAllocatorTest extends neqsim.NeqSimTest {
   /** Logger object for class. */
 
   /**
-   * Test method for
-   * {@link neqsim.process.measurementdevice.WellAllocator#getMeasuredValue(java.lang.String)}.
+   * Test method for {@link neqsim.process.measurementdevice.WellAllocator#getMeasuredValue(java.lang.String)}.
    */
   @Test
   void testGetMeasuredValueString() {
@@ -62,8 +61,7 @@ class WellAllocatorTest extends neqsim.NeqSimTest {
     wellAlloc.setExportGasStream(stream_gasExp);
     wellAlloc.setExportOilStream(stream_oilExp);
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(stream_2);
     operations.add(sep1);
@@ -75,12 +73,9 @@ class WellAllocatorTest extends neqsim.NeqSimTest {
     WellAllocatorResponse responsAl = new WellAllocatorResponse(wellAlloc);
 
     logger.info("name " + responsAl.name);
-    logger.info("gas flow "
-        + responsAl.data.get("gas export rate").value);
-    logger.info("oil flow "
-        + responsAl.data.get("oil export rate").value);
-    logger.info("total flow "
-        + responsAl.data.get("total export rate").value);
+    logger.info("gas flow " + responsAl.data.get("gas export rate").value);
+    logger.info("oil flow " + responsAl.data.get("oil export rate").value);
+    logger.info("total flow " + responsAl.data.get("total export rate").value);
     // stream_1.displayResult();
     // stream_1.displayResult();
   }

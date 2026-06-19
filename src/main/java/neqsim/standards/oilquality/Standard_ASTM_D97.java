@@ -9,9 +9,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * ASTM D97 - Standard Test Method for Pour Point of Petroleum Products.
  *
  * <p>
- * Determines the pour point of a petroleum product, which is the lowest temperature at which the
- * oil will still flow. The pour point is 3 C above the temperature at which the oil ceases to flow
- * when cooled.
+ * Determines the pour point of a petroleum product, which is the lowest temperature at which the oil will still flow.
+ * The pour point is 3 C above the temperature at which the oil ceases to flow when cooled.
  * </p>
  *
  * <p>
@@ -54,14 +53,13 @@ public class Standard_ASTM_D97 extends neqsim.standards.Standard {
   private double measurementPressure = 1.01325;
 
   /**
-   * Pour point offset above gel point in degrees (standard is +3 C above the point where oil ceases
-   * to flow).
+   * Pour point offset above gel point in degrees (standard is +3 C above the point where oil ceases to flow).
    */
   private double pourPointOffset = 3.0;
 
   /**
-   * Maximum viscosity threshold in mPa.s (cP) for considering oil as non-flowing. Typical practical
-   * limit is around 10000-50000 cP.
+   * Maximum viscosity threshold in mPa.s (cP) for considering oil as non-flowing. Typical practical limit is around
+   * 10000-50000 cP.
    */
   private double nonFlowViscosityThreshold = 20000.0;
 
@@ -85,42 +83,42 @@ public class Standard_ASTM_D97 extends neqsim.standards.Standard {
 
     for (double tempC = startTempC; tempC >= endTempC; tempC -= stepC) {
       try {
-        SystemInterface fluid = thermoSystem.clone();
-        fluid.setTemperature(273.15 + tempC);
-        fluid.setPressure(measurementPressure);
-        fluid.setMultiPhaseCheck(true);
+	SystemInterface fluid = thermoSystem.clone();
+	fluid.setTemperature(273.15 + tempC);
+	fluid.setPressure(measurementPressure);
+	fluid.setMultiPhaseCheck(true);
 
-        ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-        ops.TPflash();
-        fluid.initPhysicalProperties("viscosity");
+	ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+	ops.TPflash();
+	fluid.initPhysicalProperties("viscosity");
 
-        // Check for very high viscosity indicating non-flow
-        int oilPhase = findOilPhase(fluid);
-        if (oilPhase >= 0) {
-          double viscosity = fluid.getPhase(oilPhase).getViscosity("kg/msec") * 1000.0; // mPa.s
-          if (viscosity > nonFlowViscosityThreshold) {
-            gelTempC = tempC;
-            break;
-          }
-        }
+	// Check for very high viscosity indicating non-flow
+	int oilPhase = findOilPhase(fluid);
+	if (oilPhase >= 0) {
+	  double viscosity = fluid.getPhase(oilPhase).getViscosity("kg/msec") * 1000.0; // mPa.s
+	  if (viscosity > nonFlowViscosityThreshold) {
+	    gelTempC = tempC;
+	    break;
+	  }
+	}
 
-        // Also check if a solid/wax phase dominates
-        if (fluid.hasPhaseType("wax") || fluid.hasPhaseType("solid")) {
-          // Check wax fraction; if very high, oil won't flow
-          double solidFraction = 0.0;
-          for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-            String phaseType = fluid.getPhase(i).getType().toString();
-            if ("wax".equals(phaseType) || "solid".equals(phaseType)) {
-              solidFraction += fluid.getPhase(i).getBeta();
-            }
-          }
-          if (solidFraction > 0.02) { // >2% wax typically stops flow
-            gelTempC = tempC;
-            break;
-          }
-        }
+	// Also check if a solid/wax phase dominates
+	if (fluid.hasPhaseType("wax") || fluid.hasPhaseType("solid")) {
+	  // Check wax fraction; if very high, oil won't flow
+	  double solidFraction = 0.0;
+	  for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
+	    String phaseType = fluid.getPhase(i).getType().toString();
+	    if ("wax".equals(phaseType) || "solid".equals(phaseType)) {
+	      solidFraction += fluid.getPhase(i).getBeta();
+	    }
+	  }
+	  if (solidFraction > 0.02) { // >2% wax typically stops flow
+	    gelTempC = tempC;
+	    break;
+	  }
+	}
       } catch (Exception ex) {
-        logger.debug("Flash failed at {} C: {}", tempC, ex.getMessage());
+	logger.debug("Flash failed at {} C: {}", tempC, ex.getMessage());
       }
     }
 
@@ -140,7 +138,7 @@ public class Standard_ASTM_D97 extends neqsim.standards.Standard {
     for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
       String phaseType = fluid.getPhase(i).getType().toString();
       if ("oil".equals(phaseType) || "liquid".equals(phaseType)) {
-        return i;
+	return i;
       }
     }
     if (fluid.getNumberOfPhases() > 0) {

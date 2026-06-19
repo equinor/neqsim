@@ -27,15 +27,15 @@ public final class ExperimentalDataSet implements Serializable {
   /**
    * Creates an experimental data set.
    *
-   * @param name data set name
-   * @param responseName measured response name
-   * @param responseUnit measured response unit
+   * @param name                   data set name
+   * @param responseName           measured response name
+   * @param responseUnit           measured response unit
    * @param dependentVariableNames names of independent variables passed to the fitting function
    * @param dependentVariableUnits units of independent variables passed to the fitting function
    * @throws IllegalArgumentException if dependent variable metadata is empty or inconsistent
    */
-  public ExperimentalDataSet(String name, String responseName, String responseUnit,
-      String[] dependentVariableNames, String[] dependentVariableUnits) {
+  public ExperimentalDataSet(String name, String responseName, String responseUnit, String[] dependentVariableNames,
+      String[] dependentVariableUnits) {
     validateDependentVariableMetadata(dependentVariableNames, dependentVariableUnits);
     this.name = defaultString(name, "experimental data set");
     this.responseName = defaultString(responseName, "response");
@@ -47,8 +47,8 @@ public final class ExperimentalDataSet implements Serializable {
   /**
    * Creates an experimental data set without explicit unit metadata.
    *
-   * @param name data set name
-   * @param responseName measured response name
+   * @param name                   data set name
+   * @param responseName           measured response name
    * @param dependentVariableNames names of independent variables passed to the fitting function
    * @throws IllegalArgumentException if dependent variable metadata is empty
    */
@@ -77,32 +77,31 @@ public final class ExperimentalDataSet implements Serializable {
   /**
    * Adds an experimental data point.
    *
-   * @param measuredValue measured response value
+   * @param measuredValue     measured response value
    * @param standardDeviation positive standard deviation for the measured response
-   * @param dependentValues independent variable values used by the fitting function
+   * @param dependentValues   independent variable values used by the fitting function
    * @return this data set for fluent construction
    * @throws IllegalArgumentException if values are invalid or dimensions do not match metadata
    */
-  public ExperimentalDataSet addPoint(double measuredValue, double standardDeviation,
-      double[] dependentValues) {
+  public ExperimentalDataSet addPoint(double measuredValue, double standardDeviation, double[] dependentValues) {
     return addPoint(new ExperimentalDataPoint(measuredValue, standardDeviation, dependentValues));
   }
 
   /**
    * Adds an experimental data point with reference metadata.
    *
-   * @param measuredValue measured response value
+   * @param measuredValue     measured response value
    * @param standardDeviation positive standard deviation for the measured response
-   * @param dependentValues independent variable values used by the fitting function
-   * @param reference source reference for the data point
-   * @param description short description of the data point
+   * @param dependentValues   independent variable values used by the fitting function
+   * @param reference         source reference for the data point
+   * @param description       short description of the data point
    * @return this data set for fluent construction
    * @throws IllegalArgumentException if values are invalid or dimensions do not match metadata
    */
-  public ExperimentalDataSet addPoint(double measuredValue, double standardDeviation,
-      double[] dependentValues, String reference, String description) {
-    return addPoint(new ExperimentalDataPoint(measuredValue, standardDeviation, dependentValues,
-        reference, description));
+  public ExperimentalDataSet addPoint(double measuredValue, double standardDeviation, double[] dependentValues,
+      String reference, String description) {
+    return addPoint(
+	new ExperimentalDataPoint(measuredValue, standardDeviation, dependentValues, reference, description));
   }
 
   /**
@@ -124,10 +123,9 @@ public final class ExperimentalDataSet implements Serializable {
    * Splits the data set into training and validation subsets while preserving point order.
    *
    * @param trainingFraction fraction of rows assigned to the training subset, exclusive range
-   *        {@code 0.0 < trainingFraction < 1.0}
+   *                         {@code 0.0 < trainingFraction < 1.0}
    * @return two data sets: index 0 is training and index 1 is validation
-   * @throws IllegalArgumentException if the fraction is outside the valid range or fewer than two
-   *         points are available
+   * @throws IllegalArgumentException if the fraction is outside the valid range or fewer than two points are available
    */
   public ExperimentalDataSet[] split(double trainingFraction) {
     if (trainingFraction <= 0.0 || trainingFraction >= 1.0) {
@@ -142,12 +140,12 @@ public final class ExperimentalDataSet implements Serializable {
     ExperimentalDataSet validation = createEmptyCopy(name + " validation");
     for (int i = 0; i < points.size(); i++) {
       if (i < trainingCount) {
-        training.addPoint(points.get(i));
+	training.addPoint(points.get(i));
       } else {
-        validation.addPoint(points.get(i));
+	validation.addPoint(points.get(i));
       }
     }
-    return new ExperimentalDataSet[] {training, validation};
+    return new ExperimentalDataSet[] { training, validation };
   }
 
   /**
@@ -236,32 +234,30 @@ public final class ExperimentalDataSet implements Serializable {
   /**
    * Reads an experimental data set from a CSV file.
    *
-   * @param file CSV file with a header row
-   * @param name data set name
-   * @param responseName response name and default measured-value column
-   * @param responseUnit response unit used in the resulting data set
+   * @param file                   CSV file with a header row
+   * @param name                   data set name
+   * @param responseName           response name and default measured-value column
+   * @param responseUnit           response unit used in the resulting data set
    * @param dependentVariableNames independent variable names and default column names
    * @param dependentVariableUnits independent variable units used in the resulting data set
    * @return experimental data set
    * @throws IOException if the file cannot be read
    */
-  public static ExperimentalDataSet fromCsv(File file, String name, String responseName,
-      String responseUnit, String[] dependentVariableNames, String[] dependentVariableUnits)
-      throws IOException {
-    return ExperimentalDataReader.fromCsv(file, name, responseName, responseUnit,
-        dependentVariableNames, dependentVariableUnits);
+  public static ExperimentalDataSet fromCsv(File file, String name, String responseName, String responseUnit,
+      String[] dependentVariableNames, String[] dependentVariableUnits) throws IOException {
+    return ExperimentalDataReader.fromCsv(file, name, responseName, responseUnit, dependentVariableNames,
+	dependentVariableUnits);
   }
 
   /**
    * Reads an experimental data set from a CSV file using explicit mapping options.
    *
-   * @param file CSV file with a header row
+   * @param file    CSV file with a header row
    * @param options CSV mapping options
    * @return experimental data set
    * @throws IOException if the file cannot be read
    */
-  public static ExperimentalDataSet fromCsv(File file, ExperimentalDataReader.CsvOptions options)
-      throws IOException {
+  public static ExperimentalDataSet fromCsv(File file, ExperimentalDataReader.CsvOptions options) throws IOException {
     return ExperimentalDataReader.fromCsv(file, options);
   }
 
@@ -316,8 +312,7 @@ public final class ExperimentalDataSet implements Serializable {
    * @return empty data set with copied metadata
    */
   private ExperimentalDataSet createEmptyCopy(String newName) {
-    return new ExperimentalDataSet(newName, responseName, responseUnit, dependentVariableNames,
-        dependentVariableUnits);
+    return new ExperimentalDataSet(newName, responseName, responseUnit, dependentVariableNames, dependentVariableUnits);
   }
 
   /**
@@ -332,8 +327,7 @@ public final class ExperimentalDataSet implements Serializable {
       throw new IllegalArgumentException("dependentVariableNames must contain at least one name");
     }
     if (units == null || units.length != names.length) {
-      throw new IllegalArgumentException(
-          "dependentVariableUnits must have the same length as dependentVariableNames");
+      throw new IllegalArgumentException("dependentVariableUnits must have the same length as dependentVariableNames");
     }
   }
 
@@ -358,7 +352,7 @@ public final class ExperimentalDataSet implements Serializable {
   /**
    * Returns a default string if the supplied value is null.
    *
-   * @param value user supplied value
+   * @param value        user supplied value
    * @param defaultValue fallback value
    * @return value or defaultValue if value is null
    */

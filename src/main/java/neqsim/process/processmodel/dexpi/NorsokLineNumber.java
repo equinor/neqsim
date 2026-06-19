@@ -1,12 +1,11 @@
 package neqsim.process.processmodel.dexpi;
 
 /**
- * Composes a complete pipe line-identification number following the NORSOK Z-003 / PIP PIC001
- * convention.
+ * Composes a complete pipe line-identification number following the NORSOK Z-003 / PIP PIC001 convention.
  *
  * <p>
- * The full line number concatenates the nominal size, fluid (service) code, a sequential line
- * number, the piping (material) class and an optional insulation code, separated by hyphens:
+ * The full line number concatenates the nominal size, fluid (service) code, a sequential line number, the piping
+ * (material) class and an optional insulation code, separated by hyphens:
  * </p>
  *
  * <pre>
@@ -15,8 +14,8 @@ package neqsim.process.processmodel.dexpi;
  * </pre>
  *
  * <p>
- * where {@code H25} denotes 25&nbsp;mm of heat-conservation insulation. Empty or missing fields are
- * omitted so a partially specified line still produces a sensible identifier.
+ * where {@code H25} denotes 25&nbsp;mm of heat-conservation insulation. Empty or missing fields are omitted so a
+ * partially specified line still produces a sensible identifier.
  * </p>
  *
  * @author NeqSim
@@ -36,7 +35,8 @@ final class NorsokLineNumber {
   private String insulation;
 
   /** Creates an empty line-number builder. */
-  NorsokLineNumber() {}
+  NorsokLineNumber() {
+  }
 
   /**
    * Sets the nominal pipe size. A bare number is suffixed with the inch mark.
@@ -90,8 +90,8 @@ final class NorsokLineNumber {
   /**
    * Sets the insulation code.
    *
-   * @param code insulation code such as {@code "H25"} (heat conservation) or {@code "PP"}
-   *        (personnel protection) (may be null)
+   * @param code insulation code such as {@code "H25"} (heat conservation) or {@code "PP"} (personnel protection) (may
+   *             be null)
    * @return this builder
    */
   NorsokLineNumber insulation(String code) {
@@ -117,7 +117,7 @@ final class NorsokLineNumber {
   /**
    * Appends a field with a leading hyphen when the builder already has content.
    *
-   * @param sb the target buffer
+   * @param sb    the target buffer
    * @param field the field value (skipped when null)
    */
   private static void appendField(StringBuilder sb, String field) {

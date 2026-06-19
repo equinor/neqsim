@@ -7,8 +7,8 @@ import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
  * Mechanistic flow regime detector based on Taitel-Dukler and Barnea models.
  *
  * <p>
- * Determines the flow pattern in two-phase pipe flow based on local conditions including fluid
- * properties, velocities, pipe geometry and inclination.
+ * Determines the flow pattern in two-phase pipe flow based on local conditions including fluid properties, velocities,
+ * pipe geometry and inclination.
  *
  * <p>
  * Supports two detection methods:
@@ -20,10 +20,10 @@ import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
  * <p>
  * References:
  * <ul>
- * <li>Taitel, Y. and Dukler, A.E. (1976) - A Model for Predicting Flow Regime Transitions in
- * Horizontal and Near Horizontal Gas-Liquid Flow</li>
- * <li>Barnea, D. (1987) - A Unified Model for Predicting Flow-Pattern Transitions for the Whole
- * Range of Pipe Inclinations</li>
+ * <li>Taitel, Y. and Dukler, A.E. (1976) - A Model for Predicting Flow Regime Transitions in Horizontal and Near
+ * Horizontal Gas-Liquid Flow</li>
+ * <li>Barnea, D. (1987) - A Unified Model for Predicting Flow-Pattern Transitions for the Whole Range of Pipe
+ * Inclinations</li>
  * </ul>
  *
  * @author Even Solbraa
@@ -82,16 +82,15 @@ public class FlowRegimeDetector implements Serializable {
    * Enable or disable minimum slip criterion for flow regime detection.
    *
    * <p>
-   * When enabled, the detector calculates the slip ratio for each feasible flow regime and selects
-   * the one with minimum slip (closest to 1). This approach assumes the physical system naturally
-   * tends toward the flow pattern with minimum phase velocity difference.
+   * When enabled, the detector calculates the slip ratio for each feasible flow regime and selects the one with minimum
+   * slip (closest to 1). This approach assumes the physical system naturally tends toward the flow pattern with minimum
+   * phase velocity difference.
    * </p>
    *
    * @param useMinimumSlip true to use minimum slip criterion, false for mechanistic approach
    */
   public void setUseMinimumSlipCriterion(boolean useMinimumSlip) {
-    this.detectionMethod =
-        useMinimumSlip ? DetectionMethod.MINIMUM_SLIP : DetectionMethod.MECHANISTIC;
+    this.detectionMethod = useMinimumSlip ? DetectionMethod.MINIMUM_SLIP : DetectionMethod.MECHANISTIC;
   }
 
   /**
@@ -110,9 +109,9 @@ public class FlowRegimeDetector implements Serializable {
    * Detect flow regime for a pipe section.
    *
    * <p>
-   * Uses superficial velocity ratios rather than holdup for single-phase detection. This correctly
-   * identifies gas-dominant flows with low liquid loading as two-phase rather than single-phase
-   * gas, ensuring proper slip and accumulation calculations.
+   * Uses superficial velocity ratios rather than holdup for single-phase detection. This correctly identifies
+   * gas-dominant flows with low liquid loading as two-phase rather than single-phase gas, ensuring proper slip and
+   * accumulation calculations.
    * </p>
    *
    * @param section The pipe section with current state
@@ -168,9 +167,9 @@ public class FlowRegimeDetector implements Serializable {
    * Detect flow regime using minimum slip criterion.
    *
    * <p>
-   * Calculates the slip ratio for each feasible flow regime and selects the one with the minimum
-   * slip (closest to 1). This approach is based on the principle that the physical system tends
-   * toward the flow pattern with minimum phase velocity difference.
+   * Calculates the slip ratio for each feasible flow regime and selects the one with the minimum slip (closest to 1).
+   * This approach is based on the principle that the physical system tends toward the flow pattern with minimum phase
+   * velocity difference.
    * </p>
    *
    * @param section Pipe section with current state
@@ -184,15 +183,15 @@ public class FlowRegimeDetector implements Serializable {
     // Candidate flow regimes based on pipe orientation
     FlowRegime[] candidates;
     if (isNearHorizontal) {
-      candidates = new FlowRegime[] {FlowRegime.STRATIFIED_SMOOTH, FlowRegime.STRATIFIED_WAVY,
-          FlowRegime.SLUG, FlowRegime.ANNULAR, FlowRegime.DISPERSED_BUBBLE};
+      candidates = new FlowRegime[] { FlowRegime.STRATIFIED_SMOOTH, FlowRegime.STRATIFIED_WAVY, FlowRegime.SLUG,
+	  FlowRegime.ANNULAR, FlowRegime.DISPERSED_BUBBLE };
     } else if (isUpward) {
-      candidates = new FlowRegime[] {FlowRegime.BUBBLE, FlowRegime.SLUG, FlowRegime.CHURN,
-          FlowRegime.ANNULAR, FlowRegime.DISPERSED_BUBBLE};
+      candidates = new FlowRegime[] { FlowRegime.BUBBLE, FlowRegime.SLUG, FlowRegime.CHURN, FlowRegime.ANNULAR,
+	  FlowRegime.DISPERSED_BUBBLE };
     } else {
       // Downward flow
-      candidates = new FlowRegime[] {FlowRegime.STRATIFIED_SMOOTH, FlowRegime.STRATIFIED_WAVY,
-          FlowRegime.SLUG, FlowRegime.ANNULAR};
+      candidates = new FlowRegime[] { FlowRegime.STRATIFIED_SMOOTH, FlowRegime.STRATIFIED_WAVY, FlowRegime.SLUG,
+	  FlowRegime.ANNULAR };
     }
 
     FlowRegime bestRegime = candidates[0];
@@ -209,8 +208,8 @@ public class FlowRegimeDetector implements Serializable {
       double slipDeviation = Math.abs(params.slipRatio - 1.0);
 
       if (slipDeviation < minSlipDeviation) {
-        minSlipDeviation = slipDeviation;
-        bestRegime = regime;
+	minSlipDeviation = slipDeviation;
+	bestRegime = regime;
       }
     }
 
@@ -224,18 +223,18 @@ public class FlowRegimeDetector implements Serializable {
    * Uses Taitel-Dukler (1976) flow regime map.
    * </p>
    *
-   * @param U_SL Superficial liquid velocity (m/s)
-   * @param U_SG Superficial gas velocity (m/s)
-   * @param D Diameter (m)
+   * @param U_SL  Superficial liquid velocity (m/s)
+   * @param U_SG  Superficial gas velocity (m/s)
+   * @param D     Diameter (m)
    * @param theta Inclination (radians)
    * @param rho_L Liquid density (kg/m³)
    * @param rho_G Gas density (kg/m³)
-   * @param mu_L Liquid viscosity (Pa·s)
+   * @param mu_L  Liquid viscosity (Pa·s)
    * @param sigma Surface tension (N/m)
    * @return Flow regime
    */
-  private FlowRegime detectHorizontalFlowRegime(double U_SL, double U_SG, double D, double theta,
-      double rho_L, double rho_G, double mu_L, double sigma) {
+  private FlowRegime detectHorizontalFlowRegime(double U_SL, double U_SG, double D, double theta, double rho_L,
+      double rho_G, double mu_L, double sigma) {
     double U_M = U_SL + U_SG;
 
     // Dimensionless parameters
@@ -283,18 +282,18 @@ public class FlowRegimeDetector implements Serializable {
    * Uses Barnea (1987) unified model.
    * </p>
    *
-   * @param U_SL Superficial liquid velocity (m/s)
-   * @param U_SG Superficial gas velocity (m/s)
-   * @param D Diameter (m)
+   * @param U_SL  Superficial liquid velocity (m/s)
+   * @param U_SG  Superficial gas velocity (m/s)
+   * @param D     Diameter (m)
    * @param theta Inclination (radians, positive = upward)
    * @param rho_L Liquid density (kg/m³)
    * @param rho_G Gas density (kg/m³)
-   * @param mu_L Liquid viscosity (Pa·s)
+   * @param mu_L  Liquid viscosity (Pa·s)
    * @param sigma Surface tension (N/m)
    * @return Flow regime
    */
-  private FlowRegime detectInclinedFlowRegime(double U_SL, double U_SG, double D, double theta,
-      double rho_L, double rho_G, double mu_L, double sigma) {
+  private FlowRegime detectInclinedFlowRegime(double U_SL, double U_SG, double D, double theta, double rho_L,
+      double rho_G, double mu_L, double sigma) {
     boolean isUpward = theta > 0;
 
     // Check for dispersed bubble
@@ -305,7 +304,7 @@ public class FlowRegimeDetector implements Serializable {
     // Check for annular/churn
     if (isAnnularFlow(U_SL, U_SG, D, rho_L, rho_G, sigma)) {
       if (isUpward && U_SL > 0.1) {
-        return FlowRegime.CHURN;
+	return FlowRegime.CHURN;
       }
       return FlowRegime.ANNULAR;
     }
@@ -319,7 +318,7 @@ public class FlowRegimeDetector implements Serializable {
 
       double alpha_G = U_SG / (U_SG + U_SL + U_bubble);
       if (alpha_G < alpha_G_crit) {
-        return FlowRegime.BUBBLE;
+	return FlowRegime.BUBBLE;
       }
 
       return FlowRegime.SLUG;
@@ -329,11 +328,11 @@ public class FlowRegimeDetector implements Serializable {
       double h_L = estimateStratifiedLiquidLevel(U_SL, U_SG, D, rho_L, rho_G, mu_L, theta);
 
       if (isKelvinHelmholtzUnstable(U_SG, h_L, D, rho_L, rho_G)) {
-        return FlowRegime.SLUG;
+	return FlowRegime.SLUG;
       }
 
       if (isWavyTransition(U_SG, h_L, D, rho_L, rho_G, mu_L)) {
-        return FlowRegime.STRATIFIED_WAVY;
+	return FlowRegime.STRATIFIED_WAVY;
       }
 
       return FlowRegime.STRATIFIED_SMOOTH;
@@ -343,17 +342,17 @@ public class FlowRegimeDetector implements Serializable {
   /**
    * Calculate Martinelli parameter X.
    *
-   * @param U_SL superficial liquid velocity [m/s]
-   * @param U_SG superficial gas velocity [m/s]
-   * @param D pipe diameter [m]
+   * @param U_SL  superficial liquid velocity [m/s]
+   * @param U_SG  superficial gas velocity [m/s]
+   * @param D     pipe diameter [m]
    * @param rho_L liquid density [kg/m³]
    * @param rho_G gas density [kg/m³]
-   * @param mu_L liquid viscosity [Pa·s]
+   * @param mu_L  liquid viscosity [Pa·s]
    * @param sigma surface tension [N/m]
    * @return Martinelli parameter X
    */
-  private double calcMartinelliParameter(double U_SL, double U_SG, double D, double rho_L,
-      double rho_G, double mu_L, double sigma) {
+  private double calcMartinelliParameter(double U_SL, double U_SG, double D, double rho_L, double rho_G, double mu_L,
+      double sigma) {
     if (U_SG < 1e-6) {
       return 1e6;
     }
@@ -377,8 +376,8 @@ public class FlowRegimeDetector implements Serializable {
   /**
    * Calculate modified Froude number.
    *
-   * @param U_SG superficial gas velocity [m/s]
-   * @param D pipe diameter [m]
+   * @param U_SG  superficial gas velocity [m/s]
+   * @param D     pipe diameter [m]
    * @param rho_L liquid density [kg/m3]
    * @param rho_G gas density [kg/m3]
    * @return modified Froude number [-]
@@ -394,15 +393,14 @@ public class FlowRegimeDetector implements Serializable {
   /**
    * Calculate Kelvin-Helmholtz stability parameter.
    *
-   * @param U_SG superficial gas velocity [m/s]
-   * @param D pipe diameter [m]
+   * @param U_SG  superficial gas velocity [m/s]
+   * @param D     pipe diameter [m]
    * @param rho_L liquid density [kg/m3]
    * @param rho_G gas density [kg/m3]
    * @param sigma interfacial tension [N/m]
    * @return Kelvin-Helmholtz parameter [-]
    */
-  private double calcKelvinHelmholtzParameter(double U_SG, double D, double rho_L, double rho_G,
-      double sigma) {
+  private double calcKelvinHelmholtzParameter(double U_SG, double D, double rho_L, double rho_G, double sigma) {
     double deltaRho = rho_L - rho_G;
     if (deltaRho < 1e-6) {
       return 0;
@@ -413,15 +411,14 @@ public class FlowRegimeDetector implements Serializable {
   /**
    * Calculate turbulence parameter T.
    *
-   * @param U_SL superficial liquid velocity [m/s]
-   * @param D pipe diameter [m]
+   * @param U_SL  superficial liquid velocity [m/s]
+   * @param D     pipe diameter [m]
    * @param rho_L liquid density [kg/m3]
    * @param rho_G gas density [kg/m3]
-   * @param mu_L liquid viscosity [Pa.s]
+   * @param mu_L  liquid viscosity [Pa.s]
    * @return turbulence parameter T [-]
    */
-  private double calcTurbulenceParameter(double U_SL, double D, double rho_L, double rho_G,
-      double mu_L) {
+  private double calcTurbulenceParameter(double U_SL, double D, double rho_L, double rho_G, double mu_L) {
     double deltaRho = rho_L - rho_G;
     if (deltaRho < 1e-6) {
       return 0;
@@ -433,8 +430,7 @@ public class FlowRegimeDetector implements Serializable {
   }
 
   /**
-   * Default interfacial tension for gas-oil systems [N/m]. Typical values: 0.015-0.030 N/m for
-   * hydrocarbon systems.
+   * Default interfacial tension for gas-oil systems [N/m]. Typical values: 0.015-0.030 N/m for hydrocarbon systems.
    */
   private static final double DEFAULT_GAS_OIL_IFT = 0.020;
 
@@ -444,24 +440,22 @@ public class FlowRegimeDetector implements Serializable {
   private static final double DEFAULT_GAS_WATER_IFT = 0.072;
 
   /**
-   * Default interfacial tension for oil-water systems [N/m]. Typical values: 0.020-0.050 N/m
-   * depending on oil type.
+   * Default interfacial tension for oil-water systems [N/m]. Typical values: 0.020-0.050 N/m depending on oil type.
    */
   private static final double DEFAULT_OIL_WATER_IFT = 0.030;
 
   /**
    * Check if flow is in dispersed bubble regime.
    *
-   * @param U_SL superficial liquid velocity [m/s]
-   * @param U_SG superficial gas velocity [m/s]
-   * @param D pipe diameter [m]
+   * @param U_SL  superficial liquid velocity [m/s]
+   * @param U_SG  superficial gas velocity [m/s]
+   * @param D     pipe diameter [m]
    * @param rho_L liquid density [kg/m³]
    * @param rho_G gas density [kg/m³]
    * @param sigma surface tension [N/m]
    * @return true if flow is in dispersed bubble regime
    */
-  private boolean isDispersedBubble(double U_SL, double U_SG, double D, double rho_L, double rho_G,
-      double sigma) {
+  private boolean isDispersedBubble(double U_SL, double U_SG, double D, double rho_L, double rho_G, double sigma) {
     double U_M = U_SL + U_SG;
 
     // Use default surface tension if not available (assume gas-oil for typical multiphase)
@@ -481,20 +475,19 @@ public class FlowRegimeDetector implements Serializable {
    * Check if flow is in annular regime.
    *
    * <p>
-   * Uses Taitel-Dukler (1976) criterion for annular flow transition. The critical gas velocity is
-   * based on the balance between aerodynamic lift and gravity forces on the liquid film.
+   * Uses Taitel-Dukler (1976) criterion for annular flow transition. The critical gas velocity is based on the balance
+   * between aerodynamic lift and gravity forces on the liquid film.
    * </p>
    *
-   * @param U_SL superficial liquid velocity [m/s]
-   * @param U_SG superficial gas velocity [m/s]
-   * @param D pipe diameter [m]
+   * @param U_SL  superficial liquid velocity [m/s]
+   * @param U_SG  superficial gas velocity [m/s]
+   * @param D     pipe diameter [m]
    * @param rho_L liquid density [kg/m³]
    * @param rho_G gas density [kg/m³]
    * @param sigma surface tension [N/m]
    * @return true if flow is in annular regime
    */
-  private boolean isAnnularFlow(double U_SL, double U_SG, double D, double rho_L, double rho_G,
-      double sigma) {
+  private boolean isAnnularFlow(double U_SL, double U_SG, double D, double rho_L, double rho_G, double sigma) {
     // Minimum gas velocity for annular flow (Taitel-Dukler)
     double deltaRho = rho_L - rho_G;
     if (deltaRho < 1e-6) {
@@ -517,17 +510,17 @@ public class FlowRegimeDetector implements Serializable {
   /**
    * Estimate liquid level in stratified flow.
    *
-   * @param U_SL superficial liquid velocity [m/s]
-   * @param U_SG superficial gas velocity [m/s]
-   * @param D pipe diameter [m]
+   * @param U_SL  superficial liquid velocity [m/s]
+   * @param U_SG  superficial gas velocity [m/s]
+   * @param D     pipe diameter [m]
    * @param rho_L liquid density [kg/m3]
    * @param rho_G gas density [kg/m3]
-   * @param mu_L liquid viscosity [Pa.s]
+   * @param mu_L  liquid viscosity [Pa.s]
    * @param theta pipe inclination angle [rad]
    * @return estimated liquid level [m]
    */
-  private double estimateStratifiedLiquidLevel(double U_SL, double U_SG, double D, double rho_L,
-      double rho_G, double mu_L, double theta) {
+  private double estimateStratifiedLiquidLevel(double U_SL, double U_SG, double D, double rho_L, double rho_G,
+      double mu_L, double theta) {
     // Simplified momentum balance for stratified flow
     // Iterative solution for liquid level h_L
 
@@ -545,7 +538,7 @@ public class FlowRegimeDetector implements Serializable {
       double S_i = D * Math.sin(beta / 2.0); // Interface width
 
       if (A_L < 1e-10 || A_G < 1e-10) {
-        break;
+	break;
       }
 
       double U_L = U_SL * PI * D * D / 4.0 / A_L;
@@ -572,15 +565,14 @@ public class FlowRegimeDetector implements Serializable {
       double gravity_term = deltaRho * GRAVITY * Math.sin(theta);
 
       // Residual
-      double resid =
-          (-tau_wL * S_L + tau_i * S_i) / A_L - (-tau_wG * S_G - tau_i * S_i) / A_G - gravity_term;
+      double resid = (-tau_wL * S_L + tau_i * S_i) / A_L - (-tau_wG * S_G - tau_i * S_i) / A_G - gravity_term;
 
       // Adjust h_L
       h_L = h_L - 0.1 * D * Math.signum(resid);
       h_L = Math.max(0.01 * D, Math.min(0.99 * D, h_L));
 
       if (Math.abs(h_L - h_prev) < 1e-6 * D) {
-        break;
+	break;
       }
     }
 
@@ -590,15 +582,14 @@ public class FlowRegimeDetector implements Serializable {
   /**
    * Check Kelvin-Helmholtz instability for slug transition.
    *
-   * @param U_SG superficial gas velocity
-   * @param h_L liquid height
-   * @param D pipe diameter
+   * @param U_SG  superficial gas velocity
+   * @param h_L   liquid height
+   * @param D     pipe diameter
    * @param rho_L liquid density
    * @param rho_G gas density
    * @return true if Kelvin-Helmholtz unstable condition exists
    */
-  private boolean isKelvinHelmholtzUnstable(double U_SG, double h_L, double D, double rho_L,
-      double rho_G) {
+  private boolean isKelvinHelmholtzUnstable(double U_SG, double h_L, double D, double rho_L, double rho_G) {
     if (h_L < 0.01 * D || h_L > 0.99 * D) {
       return false;
     }
@@ -624,16 +615,15 @@ public class FlowRegimeDetector implements Serializable {
   /**
    * Check transition from smooth to wavy stratified.
    *
-   * @param U_SG superficial gas velocity
-   * @param h_L liquid height
-   * @param D pipe diameter
+   * @param U_SG  superficial gas velocity
+   * @param h_L   liquid height
+   * @param D     pipe diameter
    * @param rho_L liquid density
    * @param rho_G gas density
-   * @param mu_L liquid viscosity
+   * @param mu_L  liquid viscosity
    * @return true if transition from smooth to wavy stratified occurs
    */
-  private boolean isWavyTransition(double U_SG, double h_L, double D, double rho_L, double rho_G,
-      double mu_L) {
+  private boolean isWavyTransition(double U_SG, double h_L, double D, double rho_L, double rho_G, double mu_L) {
     if (h_L < 0.01 * D || h_L > 0.99 * D) {
       return false;
     }
@@ -657,7 +647,7 @@ public class FlowRegimeDetector implements Serializable {
   /**
    * Calculate bubble rise velocity using Harmathy correlation.
    *
-   * @param D pipe diameter (m)
+   * @param D     pipe diameter (m)
    * @param rho_L liquid density (kg/m³)
    * @param rho_G gas density (kg/m³)
    * @param sigma surface tension (N/m)
@@ -674,34 +664,33 @@ public class FlowRegimeDetector implements Serializable {
   /**
    * Get flow regime transition map for visualization/debugging.
    *
-   * @param section Pipe section with fluid properties
-   * @param U_SL_max Maximum superficial liquid velocity (m/s)
-   * @param U_SG_max Maximum superficial gas velocity (m/s)
+   * @param section    Pipe section with fluid properties
+   * @param U_SL_max   Maximum superficial liquid velocity (m/s)
+   * @param U_SG_max   Maximum superficial gas velocity (m/s)
    * @param resolution Grid resolution
    * @return 2D array of flow regimes
    */
-  public FlowRegime[][] getFlowRegimeMap(PipeSection section, double U_SL_max, double U_SG_max,
-      int resolution) {
+  public FlowRegime[][] getFlowRegimeMap(PipeSection section, double U_SL_max, double U_SG_max, int resolution) {
     FlowRegime[][] map = new FlowRegime[resolution][resolution];
     PipeSection testSection = section.clone();
 
     for (int i = 0; i < resolution; i++) {
       for (int j = 0; j < resolution; j++) {
-        double U_SL = (i + 0.5) * U_SL_max / resolution;
-        double U_SG = (j + 0.5) * U_SG_max / resolution;
+	double U_SL = (i + 0.5) * U_SL_max / resolution;
+	double U_SG = (j + 0.5) * U_SG_max / resolution;
 
-        double U_M = U_SL + U_SG;
-        if (U_M > 1e-6) {
-          testSection.setLiquidHoldup(U_SL / U_M);
-          testSection.setGasHoldup(U_SG / U_M);
-          testSection.setLiquidVelocity(U_SL / Math.max(U_SL / U_M, 0.01));
-          testSection.setGasVelocity(U_SG / Math.max(U_SG / U_M, 0.01));
-          testSection.updateDerivedQuantities();
+	double U_M = U_SL + U_SG;
+	if (U_M > 1e-6) {
+	  testSection.setLiquidHoldup(U_SL / U_M);
+	  testSection.setGasHoldup(U_SG / U_M);
+	  testSection.setLiquidVelocity(U_SL / Math.max(U_SL / U_M, 0.01));
+	  testSection.setGasVelocity(U_SG / Math.max(U_SG / U_M, 0.01));
+	  testSection.updateDerivedQuantities();
 
-          map[i][j] = detectFlowRegime(testSection);
-        } else {
-          map[i][j] = FlowRegime.SINGLE_PHASE_LIQUID;
-        }
+	  map[i][j] = detectFlowRegime(testSection);
+	} else {
+	  map[i][j] = FlowRegime.SINGLE_PHASE_LIQUID;
+	}
       }
     }
 

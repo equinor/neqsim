@@ -13,19 +13,18 @@ import com.google.gson.GsonBuilder;
  * Material selection helper per NORSOK M-001 "Materials selection".
  *
  * <p>
- * Provides material grade recommendations for pipelines and process piping based on the corrosion
- * environment (CO2 corrosion rate, H2S partial pressure, chloride content, temperature). Integrates
- * with {@link NorsokM506CorrosionRate} for CO2 corrosion rate input.
+ * Provides material grade recommendations for pipelines and process piping based on the corrosion environment (CO2
+ * corrosion rate, H2S partial pressure, chloride content, temperature). Integrates with {@link NorsokM506CorrosionRate}
+ * for CO2 corrosion rate input.
  * </p>
  *
  * <p>
  * NORSOK M-001 classifies service environments and maps them to suitable material grades:
  * </p>
  * <ul>
- * <li>Sweet service (CO2 only): carbon steel with corrosion allowance, or 13Cr/duplex for high
- * rates</li>
- * <li>Sour service (H2S present per NACE MR0175/ISO 15156): material restrictions based on
- * hardness and SSC resistance</li>
+ * <li>Sweet service (CO2 only): carbon steel with corrosion allowance, or 13Cr/duplex for high rates</li>
+ * <li>Sour service (H2S present per NACE MR0175/ISO 15156): material restrictions based on hardness and SSC
+ * resistance</li>
  * <li>Chloride-containing: pitting and SCC risk for austenitic stainless steels</li>
  * </ul>
  *
@@ -120,7 +119,8 @@ public class NorsokM001MaterialSelection implements Serializable {
   /**
    * Creates a new NorsokM001MaterialSelection with default parameters.
    */
-  public NorsokM001MaterialSelection() {}
+  public NorsokM001MaterialSelection() {
+  }
 
   // --- Setters ---
 
@@ -220,8 +220,8 @@ public class NorsokM001MaterialSelection implements Serializable {
    * Evaluates the service environment and recommends material grade and corrosion allowance.
    *
    * <p>
-   * This method classifies the service conditions (sweet/sour, chloride risk), evaluates the
-   * corrosion severity, and selects the appropriate material grade per NORSOK M-001 guidelines.
+   * This method classifies the service conditions (sweet/sour, chloride risk), evaluates the corrosion severity, and
+   * selects the appropriate material grade per NORSOK M-001 guidelines.
    * </p>
    */
   public void evaluate() {
@@ -301,8 +301,8 @@ public class NorsokM001MaterialSelection implements Serializable {
    * Assesses chloride stress corrosion cracking (SCC) risk.
    *
    * <p>
-   * Per NORSOK M-001, SCC risk for austenitic and duplex stainless steels depends on chloride
-   * concentration and temperature:
+   * Per NORSOK M-001, SCC risk for austenitic and duplex stainless steels depends on chloride concentration and
+   * temperature:
    * </p>
    * <ul>
    * <li>Low risk: Cl less than 50 mg/L or temperature below 60 degrees C</li>
@@ -318,15 +318,15 @@ public class NorsokM001MaterialSelection implements Serializable {
       return "Low";
     } else if (chlorideConcentrationMgL < 1000) {
       if (maxDesignTemperatureC < 100) {
-        return "Medium";
+	return "Medium";
       } else {
-        return "High";
+	return "High";
       }
     } else if (chlorideConcentrationMgL < 50000) {
       if (maxDesignTemperatureC < 80) {
-        return "Medium";
+	return "Medium";
       } else {
-        return "High";
+	return "High";
       }
     } else {
       return "Very High";
@@ -363,7 +363,7 @@ public class NorsokM001MaterialSelection implements Serializable {
   /**
    * Selects material for sweet (CO2 only) service per NORSOK M-001.
    *
-   * @param highChloride true if Cl greater than 1000 mg/L
+   * @param highChloride     true if Cl greater than 1000 mg/L
    * @param veryHighChloride true if Cl greater than 50000 mg/L
    */
   private void selectSweetServiceMaterial(boolean highChloride, boolean veryHighChloride) {
@@ -378,92 +378,74 @@ public class NorsokM001MaterialSelection implements Serializable {
       // Medium corrosion: CS with increased CA or consider CRA
       recommendedMaterial = "Carbon steel with increased corrosion allowance";
       materialMaxTemperatureC = 450.0;
-      alternativeMaterials = Arrays.asList(
-          "Carbon steel (CS) with 3-6 mm CA", "13Cr martensitic SS (UNS S41000)");
+      alternativeMaterials = Arrays.asList("Carbon steel (CS) with 3-6 mm CA", "13Cr martensitic SS (UNS S41000)");
       notes.add("Medium CO2 corrosion (0.1-0.3 mm/yr): evaluate CS with CA vs. 13Cr lifecycle");
 
     } else if (co2CorrosionRateMmyr < 1.0) {
       // High corrosion: 13Cr or carbon steel with heavy CA + inhibitor
       if (highChloride) {
-        recommendedMaterial = "22Cr Duplex SS (UNS S31803)";
-        materialMaxTemperatureC = 200.0;
-        alternativeMaterials = Arrays.asList(
-            "22Cr Duplex SS (UNS S31803)",
-            "25Cr Super Duplex SS (UNS S32750)");
-        notes.add("High corrosion + chlorides: duplex SS recommended for combined resistance");
+	recommendedMaterial = "22Cr Duplex SS (UNS S31803)";
+	materialMaxTemperatureC = 200.0;
+	alternativeMaterials = Arrays.asList("22Cr Duplex SS (UNS S31803)", "25Cr Super Duplex SS (UNS S32750)");
+	notes.add("High corrosion + chlorides: duplex SS recommended for combined resistance");
       } else {
-        recommendedMaterial = "13Cr martensitic SS (UNS S41000)";
-        materialMaxTemperatureC = 150.0;
-        alternativeMaterials = Arrays.asList(
-            "13Cr martensitic SS (UNS S41000)",
-            "Super 13Cr (UNS S41426)",
-            "Carbon steel with CI and heavy CA (>6 mm)");
-        notes.add("High CO2 corrosion (0.3-1.0 mm/yr): CRA recommended over CS with heavy CA");
+	recommendedMaterial = "13Cr martensitic SS (UNS S41000)";
+	materialMaxTemperatureC = 150.0;
+	alternativeMaterials = Arrays.asList("13Cr martensitic SS (UNS S41000)", "Super 13Cr (UNS S41426)",
+	    "Carbon steel with CI and heavy CA (>6 mm)");
+	notes.add("High CO2 corrosion (0.3-1.0 mm/yr): CRA recommended over CS with heavy CA");
       }
 
     } else {
       // Very high corrosion: CRA mandatory
       if (veryHighChloride) {
-        recommendedMaterial = "25Cr Super Duplex SS (UNS S32750)";
-        materialMaxTemperatureC = 200.0;
-        alternativeMaterials = Arrays.asList(
-            "25Cr Super Duplex SS (UNS S32750)",
-            "Alloy 625 (UNS N06625)");
+	recommendedMaterial = "25Cr Super Duplex SS (UNS S32750)";
+	materialMaxTemperatureC = 200.0;
+	alternativeMaterials = Arrays.asList("25Cr Super Duplex SS (UNS S32750)", "Alloy 625 (UNS N06625)");
       } else if (highChloride) {
-        recommendedMaterial = "22Cr Duplex SS (UNS S31803)";
-        materialMaxTemperatureC = 200.0;
-        alternativeMaterials = Arrays.asList(
-            "22Cr Duplex SS (UNS S31803)",
-            "25Cr Super Duplex SS (UNS S32750)");
+	recommendedMaterial = "22Cr Duplex SS (UNS S31803)";
+	materialMaxTemperatureC = 200.0;
+	alternativeMaterials = Arrays.asList("22Cr Duplex SS (UNS S31803)", "25Cr Super Duplex SS (UNS S32750)");
       } else {
-        recommendedMaterial = "22Cr Duplex SS (UNS S31803)";
-        materialMaxTemperatureC = 200.0;
-        alternativeMaterials = Arrays.asList(
-            "Super 13Cr (UNS S41426)",
-            "22Cr Duplex SS (UNS S31803)");
+	recommendedMaterial = "22Cr Duplex SS (UNS S31803)";
+	materialMaxTemperatureC = 200.0;
+	alternativeMaterials = Arrays.asList("Super 13Cr (UNS S41426)", "22Cr Duplex SS (UNS S31803)");
       }
       notes.add("Very high CO2 corrosion (>1.0 mm/yr): CRA mandatory, CS not practical");
     }
 
     // Temperature check
     if (maxDesignTemperatureC > materialMaxTemperatureC) {
-      notes.add("WARNING: Design temperature (" + maxDesignTemperatureC
-          + " C) exceeds material limit (" + materialMaxTemperatureC + " C)");
+      notes.add("WARNING: Design temperature (" + maxDesignTemperatureC + " C) exceeds material limit ("
+	  + materialMaxTemperatureC + " C)");
     }
   }
 
   /**
    * Selects material for sour service per NORSOK M-001 and NACE MR0175/ISO 15156.
    *
-   * @param isSevereSour true if H2S pp greater than 0.1 bar
-   * @param highChloride true if Cl greater than 1000 mg/L
+   * @param isSevereSour     true if H2S pp greater than 0.1 bar
+   * @param highChloride     true if Cl greater than 1000 mg/L
    * @param veryHighChloride true if Cl greater than 50000 mg/L
    */
-  private void selectSourServiceMaterial(boolean isSevereSour, boolean highChloride,
-      boolean veryHighChloride) {
+  private void selectSourServiceMaterial(boolean isSevereSour, boolean highChloride, boolean veryHighChloride) {
     notes.add("Sour service: materials must comply with NACE MR0175/ISO 15156");
 
     if (isSevereSour) {
       // Severe sour: very restricted material options
       if (veryHighChloride) {
-        recommendedMaterial = "Alloy C-276 (UNS N10276)";
-        materialMaxTemperatureC = 300.0;
-        alternativeMaterials = Arrays.asList(
-            "Alloy C-276 (UNS N10276)",
-            "Alloy 625 (UNS N06625)");
-        notes.add("Severe sour + high chloride: nickel alloy required");
+	recommendedMaterial = "Alloy C-276 (UNS N10276)";
+	materialMaxTemperatureC = 300.0;
+	alternativeMaterials = Arrays.asList("Alloy C-276 (UNS N10276)", "Alloy 625 (UNS N06625)");
+	notes.add("Severe sour + high chloride: nickel alloy required");
       } else if (highChloride) {
-        recommendedMaterial = "25Cr Super Duplex SS (UNS S32750)";
-        materialMaxTemperatureC = 200.0;
-        alternativeMaterials = Arrays.asList(
-            "25Cr Super Duplex SS (UNS S32750)",
-            "Alloy 625 (UNS N06625)");
+	recommendedMaterial = "25Cr Super Duplex SS (UNS S32750)";
+	materialMaxTemperatureC = 200.0;
+	alternativeMaterials = Arrays.asList("25Cr Super Duplex SS (UNS S32750)", "Alloy 625 (UNS N06625)");
       } else {
-        recommendedMaterial = "22Cr Duplex SS (UNS S31803)";
-        materialMaxTemperatureC = 200.0;
-        alternativeMaterials = Arrays.asList(
-            "22Cr Duplex SS (UNS S31803)",
-            "25Cr Super Duplex SS (UNS S32750)");
+	recommendedMaterial = "22Cr Duplex SS (UNS S31803)";
+	materialMaxTemperatureC = 200.0;
+	alternativeMaterials = Arrays.asList("22Cr Duplex SS (UNS S31803)", "25Cr Super Duplex SS (UNS S32750)");
       }
       notes.add("Severe sour (H2S pp > 0.1 bar): CS HIC/SSC risk, CRA required");
       notes.add("All materials must be qualified per ISO 15156-3 for sour service");
@@ -471,37 +453,32 @@ public class NorsokM001MaterialSelection implements Serializable {
     } else {
       // Mild/moderate sour
       if (co2CorrosionRateMmyr < 0.3 && !highChloride) {
-        // Low CO2 rate: sour-rated CS may be acceptable
-        recommendedMaterial = "Carbon steel (sour service grade, HIC/SSC tested)";
-        materialMaxTemperatureC = 450.0;
-        alternativeMaterials = Arrays.asList(
-            "Carbon steel (HIC-tested per ISO 15156-2)",
-            "13Cr (sour service qualified, max H2S per ISO 15156-3)");
-        notes.add("Mild sour: CS acceptable if HIC/SSC tested per ISO 15156-2");
-        notes.add("CS hardness must not exceed 22 HRC (248 HB) per NACE MR0175");
+	// Low CO2 rate: sour-rated CS may be acceptable
+	recommendedMaterial = "Carbon steel (sour service grade, HIC/SSC tested)";
+	materialMaxTemperatureC = 450.0;
+	alternativeMaterials = Arrays.asList("Carbon steel (HIC-tested per ISO 15156-2)",
+	    "13Cr (sour service qualified, max H2S per ISO 15156-3)");
+	notes.add("Mild sour: CS acceptable if HIC/SSC tested per ISO 15156-2");
+	notes.add("CS hardness must not exceed 22 HRC (248 HB) per NACE MR0175");
       } else {
-        // Moderate sour + high rate
-        if (highChloride) {
-          recommendedMaterial = "22Cr Duplex SS (UNS S31803)";
-          materialMaxTemperatureC = 200.0;
-          alternativeMaterials = Arrays.asList(
-              "22Cr Duplex SS (UNS S31803)",
-              "25Cr Super Duplex SS (UNS S32750)");
-        } else {
-          recommendedMaterial = "Super 13Cr (UNS S41426, sour service qualified)";
-          materialMaxTemperatureC = 150.0;
-          alternativeMaterials = Arrays.asList(
-              "Super 13Cr (UNS S41426)",
-              "22Cr Duplex SS (UNS S31803)");
-        }
-        notes.add("Moderate sour + elevated CO2 corrosion: CRA recommended");
+	// Moderate sour + high rate
+	if (highChloride) {
+	  recommendedMaterial = "22Cr Duplex SS (UNS S31803)";
+	  materialMaxTemperatureC = 200.0;
+	  alternativeMaterials = Arrays.asList("22Cr Duplex SS (UNS S31803)", "25Cr Super Duplex SS (UNS S32750)");
+	} else {
+	  recommendedMaterial = "Super 13Cr (UNS S41426, sour service qualified)";
+	  materialMaxTemperatureC = 150.0;
+	  alternativeMaterials = Arrays.asList("Super 13Cr (UNS S41426)", "22Cr Duplex SS (UNS S31803)");
+	}
+	notes.add("Moderate sour + elevated CO2 corrosion: CRA recommended");
       }
     }
 
     // Temperature limit check
     if (maxDesignTemperatureC > materialMaxTemperatureC) {
-      notes.add("WARNING: Design temperature (" + maxDesignTemperatureC
-          + " C) exceeds material limit (" + materialMaxTemperatureC + " C)");
+      notes.add("WARNING: Design temperature (" + maxDesignTemperatureC + " C) exceeds material limit ("
+	  + materialMaxTemperatureC + " C)");
     }
   }
 
@@ -529,16 +506,16 @@ public class NorsokM001MaterialSelection implements Serializable {
       // Additional allowance for sour service (pitting factor)
       boolean isSour = h2sPartialPressureBar >= 0.003;
       if (isSour) {
-        baseCa += 1.0;
-        notes.add("Added 1.0 mm CA for sour service localized corrosion risk");
+	baseCa += 1.0;
+	notes.add("Added 1.0 mm CA for sour service localized corrosion risk");
       }
 
       if (baseCa > 6.0) {
-        notes.add("CA exceeds 6.0 mm: recommend re-evaluating with CRA material for lifecycle "
-            + "cost benefit. Calculated CA = " + String.format("%.1f", baseCa) + " mm");
-        recommendedCorrosionAllowanceMm = 6.0;
+	notes.add("CA exceeds 6.0 mm: recommend re-evaluating with CRA material for lifecycle "
+	    + "cost benefit. Calculated CA = " + String.format("%.1f", baseCa) + " mm");
+	recommendedCorrosionAllowanceMm = 6.0;
       } else {
-        recommendedCorrosionAllowanceMm = baseCa;
+	recommendedCorrosionAllowanceMm = baseCa;
       }
     } else {
       // CRA materials: no corrosion allowance needed
@@ -689,8 +666,7 @@ public class NorsokM001MaterialSelection implements Serializable {
    * @return JSON string with all material selection results
    */
   public String toJson() {
-    Gson gson =
-        new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
+    Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
     return gson.toJson(toMap());
   }
 

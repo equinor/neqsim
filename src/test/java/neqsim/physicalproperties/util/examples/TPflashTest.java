@@ -59,8 +59,7 @@ public class TPflashTest {
      * testSystem.addComponent("i-butane", 1.95); testSystem.addComponent("n-butane", 1.95);
      * testSystem.addComponent("n-pentane", 0.95); testSystem.addComponent("i-pentane", 0.95);
      *
-     * testSystem.addTBPfraction("C6",0.10,100.0/1000.0,0.8);
-     * testSystem.addTBPfraction("C7",0.060,110.0/1000.0,0.82);
+     * testSystem.addTBPfraction("C6",0.10,100.0/1000.0,0.8); testSystem.addTBPfraction("C7",0.060,110.0/1000.0,0.82);
      * testSystem.addTBPfraction("C8",0.00453,120.0/1000.0,0.83);
      * testSystem.addTBPfraction("C9",0.0031,130.0/1000.0,0.85);
      *
@@ -99,8 +98,7 @@ public class TPflashTest {
     // 1);
     // testSystem.setPhysicalPropertyModel(PhysicalPropertyType.BASIC);
     // testSystem.getPhase(0).initPhysicalProperties("viscosity");
-    double visc =
-        testSystem.getPhase(1).getPhysicalProperties().getViscosityModel().calcViscosity();
+    double visc = testSystem.getPhase(1).getPhysicalProperties().getViscosityModel().calcViscosity();
     testSystem.display();
   }
 }

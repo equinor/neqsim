@@ -17,17 +17,16 @@ import neqsim.process.chemistry.util.StandardsRegistry.StandardReference;
  * Two complementary calculations:
  * </p>
  * <ol>
- * <li><strong>Hammerschmidt</strong> — engineering screening estimate of the wt% inhibitor in the
- * water phase required to suppress the hydrate equilibrium temperature by a target {@code dT}.
- * Recommended only for first-pass sizing; for FEED use a NeqSim hydrate flash.</li>
- * <li><strong>Required injection rate</strong> — given the produced-water rate and a target
- * lean/rich split, returns the kg/h of neat inhibitor.</li>
+ * <li><strong>Hammerschmidt</strong> — engineering screening estimate of the wt% inhibitor in the water phase required
+ * to suppress the hydrate equilibrium temperature by a target {@code dT}. Recommended only for first-pass sizing; for
+ * FEED use a NeqSim hydrate flash.</li>
+ * <li><strong>Required injection rate</strong> — given the produced-water rate and a target lean/rich split, returns
+ * the kg/h of neat inhibitor.</li>
  * </ol>
  *
  * <p>
- * For rigorous suppression the recommended path is to use NeqSim's
- * {@code HydrateInhibitorConcentrationFlash}; this class provides the screening result and
- * standards traceability used by the compatibility and RCA layers.
+ * For rigorous suppression the recommended path is to use NeqSim's {@code HydrateInhibitorConcentrationFlash}; this
+ * class provides the screening result and standards traceability used by the compatibility and RCA layers.
  * </p>
  *
  * <p>
@@ -100,7 +99,8 @@ public class ThermodynamicHydrateInhibitorPerformance implements Serializable {
   /**
    * Default constructor.
    */
-  public ThermodynamicHydrateInhibitorPerformance() {}
+  public ThermodynamicHydrateInhibitorPerformance() {
+  }
 
   /**
    * Sets the inhibitor chemistry.
@@ -139,8 +139,8 @@ public class ThermodynamicHydrateInhibitorPerformance implements Serializable {
   }
 
   /**
-   * Sets the lean inhibitor concentration already present in the produced water (e.g. from
-   * carry-over of regenerated MEG).
+   * Sets the lean inhibitor concentration already present in the produced water (e.g. from carry-over of regenerated
+   * MEG).
    *
    * @param wtPct weight percent (0-100)
    */
@@ -159,8 +159,8 @@ public class ThermodynamicHydrateInhibitorPerformance implements Serializable {
     double w = 100.0 * targetSubcoolingC * mw / (k + targetSubcoolingC * mw);
     requiredInhibitorWtPctInWater = w;
     if (w > 60.0) {
-      warnings.add("Required inhibitor wt% > 60 — Hammerschmidt accuracy degraded; use rigorous"
-          + " NeqSim hydrate flash");
+      warnings
+	  .add("Required inhibitor wt% > 60 — Hammerschmidt accuracy degraded; use rigorous" + " NeqSim hydrate flash");
     }
     if (w <= leanInhibitorWtPctInWater) {
       warnings.add("Lean carry-over already meets target — no make-up required");
@@ -169,7 +169,7 @@ public class ThermodynamicHydrateInhibitorPerformance implements Serializable {
     // Mass balance: w*M_total = leanW*M_water + 100*M_pure
     // M_pure = (w - leanW) * M_water / (100 - w)
     double makeupPureKgHr = Math.max(0.0,
-        (w - leanInhibitorWtPctInWater) * waterFlowKgPerHour / Math.max(1.0e-3, 100.0 - w));
+	(w - leanInhibitorWtPctInWater) * waterFlowKgPerHour / Math.max(1.0e-3, 100.0 - w));
     requiredInjectionKgPerHour = makeupPureKgHr / Math.max(1.0e-3, inhibitorPurityWtPct / 100.0);
     evaluated = true;
   }
@@ -216,8 +216,8 @@ public class ThermodynamicHydrateInhibitorPerformance implements Serializable {
    * @return list of standard reference maps
    */
   public List<Map<String, Object>> getStandardsApplied() {
-    return StandardsRegistry.toMapList(StandardsRegistry.GPSA_DB, new StandardReference(
-        "Hammerschmidt 1934", "Industrial", "Original empirical hydrate suppression correlation"));
+    return StandardsRegistry.toMapList(StandardsRegistry.GPSA_DB, new StandardReference("Hammerschmidt 1934",
+	"Industrial", "Original empirical hydrate suppression correlation"));
   }
 
   /**

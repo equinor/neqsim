@@ -19,8 +19,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Comprehensive test for ESD (Emergency Shutdown) system demonstrating fire alarm handling with
- * voting logic.
+ * Comprehensive test for ESD (Emergency Shutdown) system demonstrating fire alarm handling with voting logic.
  *
  * <p>
  * This test simulates a realistic ESD scenario where:
@@ -104,8 +103,8 @@ class ESDFireAlarmSystemTest {
 
     // Configure alarm thresholds
     AlarmConfig fireAlarmConfig = AlarmConfig.builder().highLimit(0.5) // Fire detected at 0.5
-        .delay(1.0) // 1 second confirmation delay
-        .deadband(0.1).unit("binary").build();
+	.delay(1.0) // 1 second confirmation delay
+	.deadband(0.1).unit("binary").build();
 
     fireDetector1.setAlarmConfig(fireAlarmConfig);
     fireDetector2.setAlarmConfig(fireAlarmConfig);
@@ -122,7 +121,7 @@ class ESDFireAlarmSystemTest {
 
     // Splitter to direct flow to process or blowdown
     gasSplitter = new Splitter("Gas Splitter", separatorGasOut, 2);
-    gasSplitter.setSplitFactors(new double[] {1.0, 0.0}); // Initially all to process
+    gasSplitter.setSplitFactors(new double[] { 1.0, 0.0 }); // Initially all to process
     gasSplitter.run();
 
     Stream processStream = new Stream("To Process", gasSplitter.getSplitStream(0));
@@ -170,8 +169,7 @@ class ESDFireAlarmSystemTest {
     assertEquals(10000.0, processStream.getFlowRate("kg/hr"), 100.0, "Gas flows to process");
     assertEquals(0.0, blowdownStream.getFlowRate("kg/hr"), 1.0, "No flow to blowdown");
     logger.info("Process flow: " + String.format("%.1f kg/hr", processStream.getFlowRate("kg/hr")));
-    logger
-        .info("Blowdown flow: " + String.format("%.1f kg/hr", blowdownStream.getFlowRate("kg/hr")));
+    logger.info("Blowdown flow: " + String.format("%.1f kg/hr", blowdownStream.getFlowRate("kg/hr")));
     logger.info("FD-101 State: NO FIRE");
     logger.info("FD-102 State: NO FIRE");
     logger.info("ESD Status: NORMAL OPERATION");
@@ -186,15 +184,13 @@ class ESDFireAlarmSystemTest {
     assertFalse(fireDetector2.isFireDetected(), "FD-102 should still be normal");
 
     // Check voting logic - need 2 detectors for ESD
-    int fireAlarmsActive =
-        (fireDetector1.isFireDetected() ? 1 : 0) + (fireDetector2.isFireDetected() ? 1 : 0);
+    int fireAlarmsActive = (fireDetector1.isFireDetected() ? 1 : 0) + (fireDetector2.isFireDetected() ? 1 : 0);
     boolean esdShouldActivate = (fireAlarmsActive >= 2);
 
     logger.info("FD-101 State: FIRE DETECTED");
     logger.info("FD-102 State: NO FIRE");
     logger.info("Active fire alarms: " + fireAlarmsActive + " of 2");
-    System.out
-        .println("ESD Logic: " + (esdShouldActivate ? "ACTIVATE ESD" : "WAITING FOR CONFIRMATION"));
+    System.out.println("ESD Logic: " + (esdShouldActivate ? "ACTIVATE ESD" : "WAITING FOR CONFIRMATION"));
 
     assertFalse(esdShouldActivate, "ESD should NOT activate with only 1 fire alarm");
     assertFalse(bdValve.isActivated(), "BD valve should still be inactive");
@@ -209,8 +205,7 @@ class ESDFireAlarmSystemTest {
     assertTrue(fireDetector1.isFireDetected(), "FD-101 should still detect fire");
     assertTrue(fireDetector2.isFireDetected(), "FD-102 should now detect fire");
 
-    fireAlarmsActive =
-        (fireDetector1.isFireDetected() ? 1 : 0) + (fireDetector2.isFireDetected() ? 1 : 0);
+    fireAlarmsActive = (fireDetector1.isFireDetected() ? 1 : 0) + (fireDetector2.isFireDetected() ? 1 : 0);
     esdShouldActivate = (fireAlarmsActive >= 2);
 
     logger.info("FD-101 State: FIRE DETECTED");
@@ -222,7 +217,7 @@ class ESDFireAlarmSystemTest {
 
     // Activate ESD system
     bdValve.activate();
-    gasSplitter.setSplitFactors(new double[] {0.0, 1.0}); // Redirect to blowdown
+    gasSplitter.setSplitFactors(new double[] { 0.0, 1.0 }); // Redirect to blowdown
     separator.setCalculateSteadyState(false); // Switch to dynamic mode
 
     assertTrue(bdValve.isActivated(), "BD valve should be activated");
@@ -232,9 +227,9 @@ class ESDFireAlarmSystemTest {
     // PHASE 4: Dynamic blowdown simulation with flare heat and emissions tracking
     logger.info("═══ PHASE 4: BLOWDOWN SIMULATION WITH FLARE EMISSIONS ═══");
     logger.info(
-        "Time (s) | FD-101 | FD-102 | Alarms | BD Open (%) | BD Flow (kg/hr) | Flare Heat (MW) | CO2 Rate (kg/s) | Cumul Heat (GJ) | Cumul CO2 (kg)");
+	"Time (s) | FD-101 | FD-102 | Alarms | BD Open (%) | BD Flow (kg/hr) | Flare Heat (MW) | CO2 Rate (kg/s) | Cumul Heat (GJ) | Cumul CO2 (kg)");
     logger.info(
-        "---------|--------|--------|--------|-------------|-----------------|-----------------|-----------------|-----------------|----------------");
+	"---------|--------|--------|--------|-------------|-----------------|-----------------|-----------------|-----------------|----------------");
 
     double timeStep = 1.0;
     double totalTime = 20.0;
@@ -243,18 +238,18 @@ class ESDFireAlarmSystemTest {
     for (double time = 0.0; time <= totalTime; time += timeStep) {
       // Run equipment
       if (separator.getCalculateSteadyState()) {
-        separator.run();
+	separator.run();
       } else {
-        separator.runTransient(timeStep, java.util.UUID.randomUUID());
+	separator.runTransient(timeStep, java.util.UUID.randomUUID());
       }
       separatorGasOut.run();
       gasSplitter.run();
       blowdownStream.run();
 
       if (time >= esdActivationTime && bdValve.isActivated()) {
-        bdValve.runTransient(timeStep, java.util.UUID.randomUUID());
+	bdValve.runTransient(timeStep, java.util.UUID.randomUUID());
       } else {
-        bdValve.run();
+	bdValve.run();
       }
 
       bdValveOutlet.run();
@@ -267,39 +262,33 @@ class ESDFireAlarmSystemTest {
       flare.updateCumulative(timeStep);
 
       // Count active alarms
-      int activeAlarms =
-          (fireDetector1.isFireDetected() ? 1 : 0) + (fireDetector2.isFireDetected() ? 1 : 0);
+      int activeAlarms = (fireDetector1.isFireDetected() ? 1 : 0) + (fireDetector2.isFireDetected() ? 1 : 0);
 
       // Print status every 2 seconds or at key events
       if (time % 2.0 == 0.0 || time == 5.0 || time == 10.0) {
-        logger.printf(org.apache.logging.log4j.Level.INFO,
-            "%8.1f | %6s | %6s | %6d | %11.1f | %15.1f | %15.2f | %15.3f | %15.2f | %14.1f%n", time,
-            fireDetector1.isFireDetected() ? "FIRE" : "OK",
-            fireDetector2.isFireDetected() ? "FIRE" : "OK", activeAlarms,
-            bdValve.getPercentValveOpening(), toFlare.getFlowRate("kg/hr"), flare.getHeatDuty("MW"),
-            flare.getCO2Emission("kg/sec"), flare.getCumulativeHeatReleased("GJ"),
-            flare.getCumulativeCO2Emission("kg"));
+	logger.printf(org.apache.logging.log4j.Level.INFO,
+	    "%8.1f | %6s | %6s | %6d | %11.1f | %15.1f | %15.2f | %15.3f | %15.2f | %14.1f%n", time,
+	    fireDetector1.isFireDetected() ? "FIRE" : "OK", fireDetector2.isFireDetected() ? "FIRE" : "OK",
+	    activeAlarms, bdValve.getPercentValveOpening(), toFlare.getFlowRate("kg/hr"), flare.getHeatDuty("MW"),
+	    flare.getCO2Emission("kg/sec"), flare.getCumulativeHeatReleased("GJ"),
+	    flare.getCumulativeCO2Emission("kg"));
       }
     }
-
-
 
     // PHASE 5: Summary and verification
     logger.info("═══ BLOWDOWN SUMMARY ═══");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Final BD valve opening: %.1f%%%n",
-        bdValve.getPercentValveOpening());
+	bdValve.getPercentValveOpening());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Total gas blown down: %.1f kg%n",
-        flare.getCumulativeGasBurned("kg"));
+	flare.getCumulativeGasBurned("kg"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Total heat released: %.2f GJ%n",
-        flare.getCumulativeHeatReleased("GJ"));
+	flare.getCumulativeHeatReleased("GJ"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Total CO2 emissions: %.1f kg%n",
-        flare.getCumulativeCO2Emission("kg"));
-
+	flare.getCumulativeCO2Emission("kg"));
 
     logger.info("═══ FIRE ALARM STATUS ═══");
     logger.info(fireDetector1.toString());
     logger.info(fireDetector2.toString());
-
 
     // Verification assertions
     assertTrue(fireDetector1.isFireDetected(), "FD-101 should be in fire state");
@@ -313,10 +302,8 @@ class ESDFireAlarmSystemTest {
     logger.info("✓ Two fire alarms successfully triggered ESD");
     logger.info("✓ BD valve activated and opened");
     logger.info("✓ Gas routed to flare");
-    logger.info("✓ Flare heat output calculated: "
-        + String.format("%.2f GJ", flare.getCumulativeHeatReleased("GJ")));
-    logger.info("✓ CO2 emissions calculated: "
-        + String.format("%.1f kg", flare.getCumulativeCO2Emission("kg")));
+    logger.info("✓ Flare heat output calculated: " + String.format("%.2f GJ", flare.getCumulativeHeatReleased("GJ")));
+    logger.info("✓ CO2 emissions calculated: " + String.format("%.1f kg", flare.getCumulativeCO2Emission("kg")));
 
     logger.info("╔════════════════════════════════════════════════════════════════╗");
     logger.info("║            ESD FIRE ALARM TEST COMPLETED                       ║");
@@ -327,8 +314,8 @@ class ESDFireAlarmSystemTest {
    * Test ESD system with 2-out-of-3 voting logic for fire alarms.
    *
    * <p>
-   * Demonstrates redundancy with three fire detectors where any two alarms will trigger ESD. This
-   * is a more robust configuration used in critical safety applications.
+   * Demonstrates redundancy with three fire detectors where any two alarms will trigger ESD. This is a more robust
+   * configuration used in critical safety applications.
    * </p>
    */
   @Test
@@ -343,8 +330,7 @@ class ESDFireAlarmSystemTest {
     fireDetector3 = new FireDetector("FD-103", "Separator Area - East");
 
     // Configure alarm thresholds
-    AlarmConfig fireAlarmConfig =
-        AlarmConfig.builder().highLimit(0.5).delay(0.5).deadband(0.1).unit("binary").build();
+    AlarmConfig fireAlarmConfig = AlarmConfig.builder().highLimit(0.5).delay(0.5).deadband(0.1).unit("binary").build();
 
     fireDetector1.setAlarmConfig(fireAlarmConfig);
     fireDetector2.setAlarmConfig(fireAlarmConfig);
@@ -418,8 +404,7 @@ class ESDFireAlarmSystemTest {
     assertEquals(1, alarmCount);
     logger.info("  Active alarms: " + alarmCount);
     logger.info("  Note: BD valve stays activated (latched) until manual reset\n");
-    assertTrue(bdValve.isActivated(),
-        "BD valve remains activated even with alarms cleared (safety latch)");
+    assertTrue(bdValve.isActivated(), "BD valve remains activated even with alarms cleared (safety latch)");
 
     logger.info("✓ 2-out-of-3 voting logic verified");
     logger.info("✓ ESD activates with any 2 detectors");
@@ -440,7 +425,7 @@ class ESDFireAlarmSystemTest {
     int count = 0;
     for (FireDetector detector : detectors) {
       if (detector.isFireDetected()) {
-        count++;
+	count++;
       }
     }
     return count;
@@ -466,10 +451,8 @@ class ESDFireAlarmSystemTest {
     logger.info("╚════════════════════════════════════════════════════════════════╝\n");
 
     // Setup gas detectors for hydrocarbon (combustible gas) detection
-    GasDetector gasDetector1 =
-        new GasDetector("GD-101", GasDetector.GasType.COMBUSTIBLE, "Separator Area - East");
-    GasDetector gasDetector2 =
-        new GasDetector("GD-102", GasDetector.GasType.COMBUSTIBLE, "Separator Area - West");
+    GasDetector gasDetector1 = new GasDetector("GD-101", GasDetector.GasType.COMBUSTIBLE, "Separator Area - East");
+    GasDetector gasDetector2 = new GasDetector("GD-102", GasDetector.GasType.COMBUSTIBLE, "Separator Area - West");
 
     // Configure for methane detection
     gasDetector1.setGasSpecies("methane");
@@ -482,10 +465,10 @@ class ESDFireAlarmSystemTest {
 
     // Configure two-level alarms: 20% LEL (warning) and 60% LEL (high alarm)
     AlarmConfig gasAlarmConfig = AlarmConfig.builder().highLimit(20.0) // 20% LEL - warning level
-        .highHighLimit(60.0) // 60% LEL - high alarm, triggers ESD
-        .delay(2.0) // 2 second confirmation delay
-        .deadband(2.0) // 2% deadband
-        .unit("% LEL").build();
+	.highHighLimit(60.0) // 60% LEL - high alarm, triggers ESD
+	.delay(2.0) // 2 second confirmation delay
+	.deadband(2.0) // 2% deadband
+	.unit("% LEL").build();
 
     gasDetector1.setAlarmConfig(gasAlarmConfig);
     gasDetector2.setAlarmConfig(gasAlarmConfig);
@@ -501,7 +484,7 @@ class ESDFireAlarmSystemTest {
     separatorGasOut.run();
 
     gasSplitter = new Splitter("Gas Splitter", separatorGasOut, 2);
-    gasSplitter.setSplitFactors(new double[] {1.0, 0.0}); // Initially all to process
+    gasSplitter.setSplitFactors(new double[] { 1.0, 0.0 }); // Initially all to process
     gasSplitter.run();
 
     Stream processStream = new Stream("To Process", gasSplitter.getSplitStream(0));
@@ -530,20 +513,16 @@ class ESDFireAlarmSystemTest {
     flare.run();
 
     logger.info("═══ SYSTEM CONFIGURATION ═══");
-    System.out
-        .println("Gas Detector 1: " + gasDetector1.getName() + " @ " + gasDetector1.getLocation());
+    System.out.println("Gas Detector 1: " + gasDetector1.getName() + " @ " + gasDetector1.getLocation());
     logger.info("  Type: Combustible Gas (%LEL)");
     logger.info("  Gas Species: " + gasDetector1.getGasSpecies());
-    System.out
-        .println("  LEL: " + String.format("%.0f ppm", gasDetector1.getLowerExplosiveLimit()));
+    System.out.println("  LEL: " + String.format("%.0f ppm", gasDetector1.getLowerExplosiveLimit()));
     logger.info("  Warning: 20% LEL");
     logger.info("  High Alarm: 60% LEL (triggers ESD)");
 
-    System.out
-        .println("Gas Detector 2: " + gasDetector2.getName() + " @ " + gasDetector2.getLocation());
+    System.out.println("Gas Detector 2: " + gasDetector2.getName() + " @ " + gasDetector2.getLocation());
     logger.info("  Type: Combustible Gas (%LEL)");
     logger.info("  Gas Species: " + gasDetector2.getGasSpecies());
-
 
     // PHASE 1: Normal Operation
     logger.info("═══ PHASE 1: NORMAL OPERATION ═══");
@@ -551,12 +530,9 @@ class ESDFireAlarmSystemTest {
     assertFalse(gasDetector2.isGasDetected(20.0), "GD-102 should not detect gas");
     assertEquals(0.0, gasDetector1.getGasConcentration(), 0.01);
     assertEquals(0.0, gasDetector2.getGasConcentration(), 0.01);
-    logger.info("GD-101: " + String.format("%.1f %% LEL", gasDetector1.getGasConcentration())
-        + " - NORMAL");
-    logger.info("GD-102: " + String.format("%.1f %% LEL", gasDetector2.getGasConcentration())
-        + " - NORMAL");
+    logger.info("GD-101: " + String.format("%.1f %% LEL", gasDetector1.getGasConcentration()) + " - NORMAL");
+    logger.info("GD-102: " + String.format("%.1f %% LEL", gasDetector2.getGasConcentration()) + " - NORMAL");
     logger.info("Process flow: " + String.format("%.1f kg/hr", processStream.getFlowRate("kg/hr")));
-
 
     // PHASE 2: Gas leak detected - Warning level (25% LEL)
     logger.info("═══ PHASE 2: GAS LEAK DETECTED - WARNING LEVEL ═══");
@@ -567,13 +543,10 @@ class ESDFireAlarmSystemTest {
     assertFalse(gasDetector1.isHighAlarm(60.0), "GD-101 should not be in high alarm yet");
     assertFalse(gasDetector2.isGasDetected(20.0), "GD-102 should still be normal");
 
-    logger.info("GD-101: " + String.format("%.1f %% LEL", gasDetector1.getGasConcentration())
-        + " - WARNING");
-    logger.info("GD-102: " + String.format("%.1f %% LEL", gasDetector2.getGasConcentration())
-        + " - NORMAL");
+    logger.info("GD-101: " + String.format("%.1f %% LEL", gasDetector1.getGasConcentration()) + " - WARNING");
+    logger.info("GD-102: " + String.format("%.1f %% LEL", gasDetector2.getGasConcentration()) + " - NORMAL");
     logger.info("Action: Investigate gas source, prepare for evacuation");
     logger.info("ESD Status: NOT ACTIVATED (waiting for high alarm confirmation)");
-
 
     // PHASE 3: High gas concentration - ESD activation (65% LEL on both detectors)
     logger.info("═══ PHASE 3: HIGH GAS CONCENTRATION - ESD ACTIVATION ═══");
@@ -588,24 +561,20 @@ class ESDFireAlarmSystemTest {
     // Check if ESD should activate (both detectors > 60% LEL)
     boolean esdShouldActivate = gasDetector1.isHighAlarm(60.0) && gasDetector2.isHighAlarm(60.0);
 
-    logger.info("GD-101: " + String.format("%.1f %% LEL", gasDetector1.getGasConcentration())
-        + " - HIGH ALARM");
-    logger.info("GD-102: " + String.format("%.1f %% LEL", gasDetector2.getGasConcentration())
-        + " - HIGH ALARM");
-    logger.info(
-        "ESD Logic: " + (esdShouldActivate ? "ACTIVATE ESD (2-out-of-2 high alarms)" : "NO ESD"));
+    logger.info("GD-101: " + String.format("%.1f %% LEL", gasDetector1.getGasConcentration()) + " - HIGH ALARM");
+    logger.info("GD-102: " + String.format("%.1f %% LEL", gasDetector2.getGasConcentration()) + " - HIGH ALARM");
+    logger.info("ESD Logic: " + (esdShouldActivate ? "ACTIVATE ESD (2-out-of-2 high alarms)" : "NO ESD"));
 
     assertTrue(esdShouldActivate, "ESD should activate with both detectors in high alarm");
 
     // Activate ESD
     bdValve.activate();
-    gasSplitter.setSplitFactors(new double[] {0.0, 1.0}); // Redirect to blowdown
+    gasSplitter.setSplitFactors(new double[] { 0.0, 1.0 }); // Redirect to blowdown
     separator.setCalculateSteadyState(false); // Switch to dynamic mode
 
     assertTrue(bdValve.isActivated(), "BD valve should be activated");
     logger.info("BD Valve: ACTIVATED");
     logger.info("Flow: Redirected to blowdown and flare");
-
 
     // PHASE 4: Brief blowdown simulation
     logger.info("═══ PHASE 4: BLOWDOWN SIMULATION ═══");
@@ -617,18 +586,18 @@ class ESDFireAlarmSystemTest {
 
     for (double time = 0.0; time <= totalTime; time += timeStep) {
       if (separator.getCalculateSteadyState()) {
-        separator.run();
+	separator.run();
       } else {
-        separator.runTransient(timeStep, java.util.UUID.randomUUID());
+	separator.runTransient(timeStep, java.util.UUID.randomUUID());
       }
       separatorGasOut.run();
       gasSplitter.run();
       blowdownStream.run();
 
       if (bdValve.isActivated()) {
-        bdValve.runTransient(timeStep, java.util.UUID.randomUUID());
+	bdValve.runTransient(timeStep, java.util.UUID.randomUUID());
       } else {
-        bdValve.run();
+	bdValve.run();
       }
 
       bdValveOutlet.run();
@@ -637,13 +606,10 @@ class ESDFireAlarmSystemTest {
       flare.run();
       flare.updateCumulative(timeStep);
 
-      logger.printf(org.apache.logging.log4j.Level.INFO,
-          "%8.0f | %6.1f%% | %6.1f%% | %5.0f | %15.2f | %14.1f%n", time,
-          gasDetector1.getGasConcentration(), gasDetector2.getGasConcentration(),
-          bdValve.getPercentValveOpening(), flare.getHeatDuty("MW"),
-          flare.getCumulativeCO2Emission("kg"));
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%8.0f | %6.1f%% | %6.1f%% | %5.0f | %15.2f | %14.1f%n", time,
+	  gasDetector1.getGasConcentration(), gasDetector2.getGasConcentration(), bdValve.getPercentValveOpening(),
+	  flare.getHeatDuty("MW"), flare.getCumulativeCO2Emission("kg"));
     }
-
 
     logger.info("═══ SUMMARY ═══");
     logger.info("Gas Detection System: FUNCTIONAL ✓");
@@ -652,16 +618,12 @@ class ESDFireAlarmSystemTest {
     logger.info("  ESD Response: Blowdown valve activated");
 
     logger.info("Blowdown Results:");
-    logger.info(
-        "  Total gas burned: " + String.format("%.1f kg", flare.getCumulativeGasBurned("kg")));
-    logger.info("  Total heat released: "
-        + String.format("%.2f GJ", flare.getCumulativeHeatReleased("GJ")));
-    logger.info(
-        "  Total CO2 emissions: " + String.format("%.1f kg", flare.getCumulativeCO2Emission("kg")));
+    logger.info("  Total gas burned: " + String.format("%.1f kg", flare.getCumulativeGasBurned("kg")));
+    logger.info("  Total heat released: " + String.format("%.2f GJ", flare.getCumulativeHeatReleased("GJ")));
+    logger.info("  Total CO2 emissions: " + String.format("%.1f kg", flare.getCumulativeCO2Emission("kg")));
 
     logger.info(gasDetector1.toString());
     logger.info(gasDetector2.toString());
-
 
     // Verifications
     assertTrue(gasDetector1.isHighAlarm(60.0), "GD-101 should be in high alarm state");
@@ -699,8 +661,7 @@ class ESDFireAlarmSystemTest {
     FireDetector fd1 = new FireDetector("FD-101", "Separator North");
     FireDetector fd2 = new FireDetector("FD-102", "Separator South");
 
-    AlarmConfig fireAlarmConfig =
-        AlarmConfig.builder().highLimit(0.5).delay(1.0).unit("binary").build();
+    AlarmConfig fireAlarmConfig = AlarmConfig.builder().highLimit(0.5).delay(1.0).unit("binary").build();
     fd1.setAlarmConfig(fireAlarmConfig);
     fd2.setAlarmConfig(fireAlarmConfig);
 
@@ -711,8 +672,8 @@ class ESDFireAlarmSystemTest {
     gd1.setGasSpecies("methane");
     gd2.setGasSpecies("methane");
 
-    AlarmConfig gasAlarmConfig =
-        AlarmConfig.builder().highLimit(20.0).highHighLimit(60.0).delay(2.0).unit("% LEL").build();
+    AlarmConfig gasAlarmConfig = AlarmConfig.builder().highLimit(20.0).highHighLimit(60.0).delay(2.0).unit("% LEL")
+	.build();
     gd1.setAlarmConfig(gasAlarmConfig);
     gd2.setAlarmConfig(gasAlarmConfig);
 
@@ -724,7 +685,6 @@ class ESDFireAlarmSystemTest {
     logger.info("Fire Detectors: FD-101, FD-102 (2-out-of-2 voting)");
     logger.info("Gas Detectors: GD-101, GD-102 (2-out-of-2 voting for high alarm)");
     logger.info("ESD Logic: Activate if (2 fire alarms) OR (2 gas high alarms)");
-
 
     // Test scenarios
     logger.info("═══ SCENARIO TESTING ═══\n");
@@ -740,7 +700,6 @@ class ESDFireAlarmSystemTest {
     logger.info("  ESD: " + (esdActive ? "ACTIVE" : "NORMAL") + " ✓");
     assertFalse(esdActive, "ESD should not be active");
 
-
     // Scenario 2: One fire alarm only
     logger.info("Scenario 2: One fire detector activates");
     fd1.detectFire();
@@ -752,7 +711,6 @@ class ESDFireAlarmSystemTest {
     logger.info("  Gas high alarms: 0/2");
     logger.info("  ESD: " + (esdActive ? "ACTIVE" : "NORMAL") + " ✓");
     assertFalse(esdActive, "ESD should not activate with only 1 fire alarm");
-
 
     // Scenario 3: One gas warning (not high alarm)
     logger.info("Scenario 3: One gas detector shows warning (25% LEL)");
@@ -766,7 +724,6 @@ class ESDFireAlarmSystemTest {
     logger.info("  Gas high alarms: 0/2");
     logger.info("  ESD: " + (esdActive ? "ACTIVE" : "NORMAL") + " ✓");
     assertFalse(esdActive, "ESD should not activate on gas warning alone");
-
 
     // Scenario 4: Two fire alarms - ESD should activate
     logger.info("Scenario 4: Two fire detectors activate");
@@ -785,7 +742,6 @@ class ESDFireAlarmSystemTest {
     }
     assertTrue(valve.isActivated(), "Valve should be activated");
     logger.info("  >>> ESD ACTIVATED VIA FIRE DETECTION <<<");
-
 
     // Reset for next scenario
     valve.reset();
@@ -811,7 +767,6 @@ class ESDFireAlarmSystemTest {
     }
     assertTrue(valve.isActivated(), "Valve should be activated");
     logger.info("  >>> ESD ACTIVATED VIA GAS DETECTION <<<");
-
 
     logger.info("═══ SUMMARY ═══");
     logger.info("✓ Fire detection voting (2oo2) verified");

@@ -51,7 +51,7 @@ public class NeqSimProcessDesignDataBase extends NeqSimDataBase {
     // Fill tables from csv-files if not initialized and not currently being initialized.
     synchronized (NeqSimProcessDesignDataBase.class) {
       if ("H2fromCSV".equals(dataBaseType) && !h2IsInitialized && !h2IsInitalizing) {
-        initH2DatabaseFromCSVfiles();
+	initH2DatabaseFromCSVfiles();
       }
     }
     setDataBaseType(dataBaseType);
@@ -76,8 +76,7 @@ public class NeqSimProcessDesignDataBase extends NeqSimDataBase {
    */
   public static void initH2DatabaseFromCSVfiles() {
     h2IsInitalizing = true;
-    neqsim.util.database.NeqSimProcessDesignDataBase.connectionString =
-        "jdbc:h2:mem:neqsimprocessdesigndatabase;DB_CLOSE_DELAY=-1";
+    neqsim.util.database.NeqSimProcessDesignDataBase.connectionString = "jdbc:h2:mem:neqsimprocessdesigndatabase;DB_CLOSE_DELAY=-1";
     neqsim.util.database.NeqSimProcessDesignDataBase.dataBaseType = "H2";
 
     try {

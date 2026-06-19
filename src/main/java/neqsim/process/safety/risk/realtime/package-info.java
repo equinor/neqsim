@@ -2,26 +2,23 @@
  * Real-time Risk Monitoring Package for Digital Twin Integration.
  *
  * <p>
- * This package provides real-time risk monitoring capabilities for integration with digital twin
- * platforms, SCADA systems, and control room dashboards. Key features include:
+ * This package provides real-time risk monitoring capabilities for integration with digital twin platforms, SCADA
+ * systems, and control room dashboards. Key features include:
  * </p>
  *
  * <ul>
- * <li><strong>Continuous Monitoring:</strong> Scheduled risk assessments at configurable
- * intervals</li>
+ * <li><strong>Continuous Monitoring:</strong> Scheduled risk assessments at configurable intervals</li>
  * <li><strong>Alert Generation:</strong> Automatic alerts for threshold breaches and anomalies</li>
  * <li><strong>Trend Analysis:</strong> Track risk trends over time with anomaly detection</li>
- * <li><strong>Dashboard Integration:</strong> JSON output format for easy integration with web
- * dashboards</li>
+ * <li><strong>Dashboard Integration:</strong> JSON output format for easy integration with web dashboards</li>
  * <li><strong>Equipment Status:</strong> Track individual equipment risk levels and health</li>
  * </ul>
  *
  * <h2>Key Classes</h2>
  * <ul>
- * <li>{@link neqsim.process.safety.risk.realtime.RealTimeRiskMonitor} - Main monitoring class with
- * alert generation</li>
- * <li>{@link neqsim.process.safety.risk.realtime.RealTimeRiskAssessment} - Single assessment result
- * with metrics</li>
+ * <li>{@link neqsim.process.safety.risk.realtime.RealTimeRiskMonitor} - Main monitoring class with alert
+ * generation</li>
+ * <li>{@link neqsim.process.safety.risk.realtime.RealTimeRiskAssessment} - Single assessment result with metrics</li>
  * </ul>
  *
  * <h2>Integration Patterns</h2>

@@ -48,16 +48,16 @@ public class AttractiveTermPrGassem2001 extends AttractiveTermPr {
   @Override
   public void init() {
     m = (0.37464 + 1.54226 * getComponent().getAcentricFactor()
-        - 0.26992 * getComponent().getAcentricFactor() * getComponent().getAcentricFactor());
+	- 0.26992 * getComponent().getAcentricFactor() * getComponent().getAcentricFactor());
   }
 
   /** {@inheritDoc} */
   @Override
   public double alpha(double temperature) {
     // System.out.println("alpha gassem");
-    return Math.exp((A + B * temperature / getComponent().getTC()) * (1.0
-        - Math.pow(temperature / getComponent().getTC(), C + D * getComponent().getAcentricFactor()
-            + E * getComponent().getAcentricFactor() * getComponent().getAcentricFactor())));
+    return Math.exp((A + B * temperature / getComponent().getTC())
+	* (1.0 - Math.pow(temperature / getComponent().getTC(), C + D * getComponent().getAcentricFactor()
+	    + E * getComponent().getAcentricFactor() * getComponent().getAcentricFactor())));
   }
 
   /** {@inheritDoc} */
@@ -70,16 +70,14 @@ public class AttractiveTermPrGassem2001 extends AttractiveTermPr {
   @Override
   public double diffalphaT(double temperature) {
     return 1.0 / getComponent().getTC() * alpha(temperature)
-        * ((B * (1.0 - Math.pow(temperature / getComponent().getTC(),
-            C + D * getComponent().getAcentricFactor()
-                + E * getComponent().getAcentricFactor() * getComponent().getAcentricFactor())))
-            - (A + B * temperature / getComponent().getTC())
-                * (C + D * getComponent().getAcentricFactor()
-                    + E * getComponent().getAcentricFactor() * getComponent().getAcentricFactor())
-                * Math.pow(temperature / getComponent().getTC(),
-                    C + D * getComponent().getAcentricFactor() + E
-                        * getComponent().getAcentricFactor() * getComponent().getAcentricFactor()
-                        - 1.0));
+	* ((B * (1.0 - Math.pow(temperature / getComponent().getTC(),
+	    C + D * getComponent().getAcentricFactor()
+		+ E * getComponent().getAcentricFactor() * getComponent().getAcentricFactor())))
+	    - (A + B * temperature / getComponent().getTC())
+		* (C + D * getComponent().getAcentricFactor()
+		    + E * getComponent().getAcentricFactor() * getComponent().getAcentricFactor())
+		* Math.pow(temperature / getComponent().getTC(), C + D * getComponent().getAcentricFactor()
+		    + E * getComponent().getAcentricFactor() * getComponent().getAcentricFactor() - 1.0));
   }
 
   /** {@inheritDoc} */
@@ -88,10 +86,9 @@ public class AttractiveTermPrGassem2001 extends AttractiveTermPr {
     // not implemented dubble derivative
 
     return m * m / temperature / getComponent().getTC() / 2.0
-        + (1.0 + m * (1.0 - Math.sqrt(temperature / getComponent().getTC()))) * m
-            / Math.sqrt(
-                temperature * temperature * temperature / (Math.pow(getComponent().getTC(), 3.0)))
-            / (getComponent().getTC() * getComponent().getTC()) / 2.0;
+	+ (1.0 + m * (1.0 - Math.sqrt(temperature / getComponent().getTC()))) * m
+	    / Math.sqrt(temperature * temperature * temperature / (Math.pow(getComponent().getTC(), 3.0)))
+	    / (getComponent().getTC() * getComponent().getTC()) / 2.0;
   }
 
   /** {@inheritDoc} */

@@ -17,7 +17,8 @@ public class FluidBoundaryNodeNonReactive extends FluidBoundaryNode {
    * Constructor for FluidBoundaryNodeNonReactive.
    * </p>
    */
-  public FluidBoundaryNodeNonReactive() {}
+  public FluidBoundaryNodeNonReactive() {
+  }
 
   /**
    * <p>

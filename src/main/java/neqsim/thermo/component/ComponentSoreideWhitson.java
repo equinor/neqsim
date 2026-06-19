@@ -15,10 +15,10 @@ public class ComponentSoreideWhitson extends ComponentPR {
    * Constructor for ComponentSoreideWhitson.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
-   * @param moles a double
+   * @param name         a {@link java.lang.String} object
+   * @param moles        a double
    * @param molesInPhase a double
-   * @param compIndex a int
+   * @param compIndex    a int
    */
   public ComponentSoreideWhitson(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);

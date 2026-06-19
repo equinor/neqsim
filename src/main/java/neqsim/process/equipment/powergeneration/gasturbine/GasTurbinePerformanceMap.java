@@ -6,17 +6,17 @@ import java.io.Serializable;
  * Part-load and ambient-correction performance map for a gas turbine.
  *
  * <p>
- * The map combines three effects to map ISO rated performance from {@link GasTurbineSpec} to actual
- * site conditions and operating load:
+ * The map combines three effects to map ISO rated performance from {@link GasTurbineSpec} to actual site conditions and
+ * operating load:
  * </p>
  * <ul>
- * <li><b>Part-load heat rate</b> — polynomial in load fraction (load = actual power / rated power
- * at site conditions). Default coefficients reproduce the classical aeroderivative shape: ~+5 %
- * heat rate at 75 % load, ~+18 % at 50 %, ~+45 % at 30 %.</li>
- * <li><b>Ambient temperature correction</b> — linear loss of available power above 15 °C ISO (~0.7
- * %/°C for aeroderivatives, ~0.5 %/°C for industrial frames) and a small heat-rate penalty.</li>
- * <li><b>Site pressure / altitude correction</b> — power scales linearly with ambient pressure
- * ratio relative to 1.013 bara.</li>
+ * <li><b>Part-load heat rate</b> — polynomial in load fraction (load = actual power / rated power at site conditions).
+ * Default coefficients reproduce the classical aeroderivative shape: ~+5 % heat rate at 75 % load, ~+18 % at 50 %, ~+45
+ * % at 30 %.</li>
+ * <li><b>Ambient temperature correction</b> — linear loss of available power above 15 °C ISO (~0.7 %/°C for
+ * aeroderivatives, ~0.5 %/°C for industrial frames) and a small heat-rate penalty.</li>
+ * <li><b>Site pressure / altitude correction</b> — power scales linearly with ambient pressure ratio relative to 1.013
+ * bara.</li>
  * </ul>
  *
  * <p>
@@ -62,8 +62,7 @@ public class GasTurbinePerformanceMap implements Serializable {
   }
 
   /**
-   * Create a map for an industrial / heavy-frame turbine with flatter part-load curve and lower
-   * ambient sensitivity.
+   * Create a map for an industrial / heavy-frame turbine with flatter part-load curve and lower ambient sensitivity.
    *
    * @return new map instance configured for industrial turbines
    */
@@ -79,8 +78,7 @@ public class GasTurbinePerformanceMap implements Serializable {
   }
 
   /**
-   * Create a map matching the supplied catalog spec (selects industrial vs aeroderivative
-   * defaults).
+   * Create a map matching the supplied catalog spec (selects industrial vs aeroderivative defaults).
    *
    * @param spec gas turbine catalog entry
    * @return new map configured for the spec type
@@ -95,13 +93,12 @@ public class GasTurbinePerformanceMap implements Serializable {
   /**
    * Maximum continuous power available at the given ambient conditions.
    *
-   * @param ratedPowerW ISO rated power [W]
+   * @param ratedPowerW         ISO rated power [W]
    * @param ambientTemperatureK ambient temperature [K]
    * @param ambientPressureBara ambient pressure [bara]
    * @return site-corrected available power [W]
    */
-  public double getAvailablePower(double ratedPowerW, double ambientTemperatureK,
-      double ambientPressureBara) {
+  public double getAvailablePower(double ratedPowerW, double ambientTemperatureK, double ambientPressureBara) {
     double tFactor = 1.0 - powerLossPerKelvin * (ambientTemperatureK - T_ISO_K);
     if (tFactor < 0.5) {
       tFactor = 0.5;
@@ -117,13 +114,12 @@ public class GasTurbinePerformanceMap implements Serializable {
    * Effective heat rate at a given load fraction and ambient temperature.
    *
    * @param isoHeatRateKJPerKWh ISO heat rate [kJ/kWh]
-   * @param loadFraction fraction of site-corrected available power (0–1.1)
+   * @param loadFraction        fraction of site-corrected available power (0–1.1)
    * @param ambientTemperatureK ambient temperature [K]
    * @return effective heat rate [kJ/kWh]
    * @throws IllegalArgumentException if {@code loadFraction} is non-positive
    */
-  public double getHeatRate(double isoHeatRateKJPerKWh, double loadFraction,
-      double ambientTemperatureK) {
+  public double getHeatRate(double isoHeatRateKJPerKWh, double loadFraction, double ambientTemperatureK) {
     if (loadFraction <= 0.0) {
       throw new IllegalArgumentException("loadFraction must be positive, got " + loadFraction);
     }
@@ -133,7 +129,7 @@ public class GasTurbinePerformanceMap implements Serializable {
       // never better than ISO at full load
       partLoadMultiplier = 1.0 - 0.02 * (x - 1.0); // small bonus near rated
       if (partLoadMultiplier < 0.98) {
-        partLoadMultiplier = 0.98;
+	partLoadMultiplier = 0.98;
       }
     }
     double tCorr = 1.0 + heatRateRisePerKelvin * (ambientTemperatureK - T_ISO_K);
@@ -147,12 +143,11 @@ public class GasTurbinePerformanceMap implements Serializable {
    * Thermal efficiency at a given load fraction and ambient temperature.
    *
    * @param isoHeatRateKJPerKWh ISO heat rate [kJ/kWh]
-   * @param loadFraction load fraction
+   * @param loadFraction        load fraction
    * @param ambientTemperatureK ambient temperature [K]
    * @return thermal efficiency (0–1)
    */
-  public double getEfficiency(double isoHeatRateKJPerKWh, double loadFraction,
-      double ambientTemperatureK) {
+  public double getEfficiency(double isoHeatRateKJPerKWh, double loadFraction, double ambientTemperatureK) {
     double hr = getHeatRate(isoHeatRateKJPerKWh, loadFraction, ambientTemperatureK);
     if (hr <= 0.0) {
       return 0.0;
@@ -161,11 +156,11 @@ public class GasTurbinePerformanceMap implements Serializable {
   }
 
   /**
-   * Exhaust mass flow at the given load fraction (approximately linear with load fraction for
-   * aeroderivatives, slightly less than linear for industrial frames).
+   * Exhaust mass flow at the given load fraction (approximately linear with load fraction for aeroderivatives, slightly
+   * less than linear for industrial frames).
    *
    * @param ratedExhaustFlowKgPerS ISO exhaust flow [kg/s]
-   * @param loadFraction load fraction
+   * @param loadFraction           load fraction
    * @return exhaust flow [kg/s]
    */
   public double getExhaustFlow(double ratedExhaustFlowKgPerS, double loadFraction) {
@@ -177,11 +172,11 @@ public class GasTurbinePerformanceMap implements Serializable {
   }
 
   /**
-   * Exhaust temperature at the given load fraction. Exhaust T typically increases as load drops on
-   * a two-shaft engine because TET is held constant while air flow drops.
+   * Exhaust temperature at the given load fraction. Exhaust T typically increases as load drops on a two-shaft engine
+   * because TET is held constant while air flow drops.
    *
    * @param ratedExhaustTemperatureK ISO exhaust temperature [K]
-   * @param loadFraction load fraction
+   * @param loadFraction             load fraction
    * @return exhaust temperature [K]
    */
   public double getExhaustTemperature(double ratedExhaustTemperatureK, double loadFraction) {
@@ -230,7 +225,7 @@ public class GasTurbinePerformanceMap implements Serializable {
   /**
    * Override the ambient temperature corrections.
    *
-   * @param powerLossPerKelvin fraction of rated power lost per K above ISO
+   * @param powerLossPerKelvin    fraction of rated power lost per K above ISO
    * @param heatRateRisePerKelvin fractional heat-rate rise per K above ISO
    */
   public void setAmbientCorrection(double powerLossPerKelvin, double heatRateRisePerKelvin) {

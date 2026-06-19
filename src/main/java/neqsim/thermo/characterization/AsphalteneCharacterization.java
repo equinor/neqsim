@@ -6,8 +6,8 @@ import neqsim.thermo.system.SystemInterface;
  * Characterizes asphaltene content using SARA fractionation data.
  *
  * <p>
- * SARA analysis divides crude oil into four fractions: Saturates, Aromatics, Resins, and
- * Asphaltenes. This class uses SARA data to:
+ * SARA analysis divides crude oil into four fractions: Saturates, Aromatics, Resins, and Asphaltenes. This class uses
+ * SARA data to:
  * </p>
  * <ul>
  * <li>Calculate the Colloidal Instability Index (CII)</li>
@@ -16,8 +16,8 @@ import neqsim.thermo.system.SystemInterface;
  * </ul>
  *
  * <p>
- * The colloidal model treats asphaltenes as particles stabilized by resins. Precipitation occurs
- * when the resin-to-asphaltene ratio drops below a critical value.
+ * The colloidal model treats asphaltenes as particles stabilized by resins. Precipitation occurs when the
+ * resin-to-asphaltene ratio drops below a critical value.
  * </p>
  *
  * <p>
@@ -76,18 +76,18 @@ public class AsphalteneCharacterization {
   /**
    * Default constructor.
    */
-  public AsphalteneCharacterization() {}
+  public AsphalteneCharacterization() {
+  }
 
   /**
    * Constructor with SARA fractions.
    *
-   * @param saturates weight fraction of saturates (0-1)
-   * @param aromatics weight fraction of aromatics (0-1)
-   * @param resins weight fraction of resins (0-1)
+   * @param saturates   weight fraction of saturates (0-1)
+   * @param aromatics   weight fraction of aromatics (0-1)
+   * @param resins      weight fraction of resins (0-1)
    * @param asphaltenes weight fraction of asphaltenes (0-1)
    */
-  public AsphalteneCharacterization(double saturates, double aromatics, double resins,
-      double asphaltenes) {
+  public AsphalteneCharacterization(double saturates, double aromatics, double resins, double asphaltenes) {
     this.saturates = saturates;
     this.aromatics = aromatics;
     this.resins = resins;
@@ -110,13 +110,12 @@ public class AsphalteneCharacterization {
   /**
    * Sets SARA fractions from analysis data.
    *
-   * @param saturates weight fraction of saturates (0-1)
-   * @param aromatics weight fraction of aromatics (0-1)
-   * @param resins weight fraction of resins (0-1)
+   * @param saturates   weight fraction of saturates (0-1)
+   * @param aromatics   weight fraction of aromatics (0-1)
+   * @param resins      weight fraction of resins (0-1)
    * @param asphaltenes weight fraction of asphaltenes (0-1)
    */
-  public void setSARAFractions(double saturates, double aromatics, double resins,
-      double asphaltenes) {
+  public void setSARAFractions(double saturates, double aromatics, double resins, double asphaltenes) {
     this.saturates = saturates;
     this.aromatics = aromatics;
     this.resins = resins;
@@ -127,7 +126,7 @@ public class AsphalteneCharacterization {
   /**
    * Sets C7+ fraction properties for correlation calculations.
    *
-   * @param mwC7plus molecular weight of C7+ fraction (g/mol)
+   * @param mwC7plus      molecular weight of C7+ fraction (g/mol)
    * @param densityC7plus density of C7+ at standard conditions (kg/m3)
    */
   public void setC7plusProperties(double mwC7plus, double densityC7plus) {
@@ -165,8 +164,7 @@ public class AsphalteneCharacterization {
    * Calculates the Resin-to-Asphaltene ratio (R/A).
    *
    * <p>
-   * Higher R/A ratios indicate better asphaltene stability. Critical R/A for stability is typically
-   * around 1.0-3.0.
+   * Higher R/A ratios indicate better asphaltene stability. Critical R/A for stability is typically around 1.0-3.0.
    * </p>
    *
    * @return the resin-to-asphaltene ratio
@@ -215,11 +213,11 @@ public class AsphalteneCharacterization {
    * Adds asphaltene and resin pseudo-components to a thermodynamic system.
    *
    * <p>
-   * This method adds characterized asphaltene and resin components with appropriate CPA parameters
-   * for association modeling.
+   * This method adds characterized asphaltene and resin components with appropriate CPA parameters for association
+   * modeling.
    * </p>
    *
-   * @param system the thermodynamic system to modify
+   * @param system           the thermodynamic system to modify
    * @param totalC7plusMoles total moles of C7+ fraction to distribute
    */
   public void addAsphalteneComponents(SystemInterface system, double totalC7plusMoles) {
@@ -269,8 +267,7 @@ public class AsphalteneCharacterization {
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       system.getPhase(i).getComponent(resIndex).setMolarMass(mwResin / 1000.0);
       // Resins have weaker self-association but cross-associate with asphaltenes
-      system.getPhase(i).getComponent(resIndex)
-          .setAssociationEnergy(resinAsphalteneAssociationEnergy * 0.6);
+      system.getPhase(i).getComponent(resIndex).setAssociationEnergy(resinAsphalteneAssociationEnergy * 0.6);
       system.getPhase(i).getComponent(resIndex).setAssociationVolume(asphalteneAssociationVolume);
     }
   }

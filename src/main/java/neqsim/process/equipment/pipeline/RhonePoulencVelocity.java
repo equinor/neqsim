@@ -6,9 +6,9 @@ import java.io.Serializable;
  * Rhone-Poulenc maximum velocity calculation for gas pipes.
  *
  * <p>
- * The Rhone-Poulenc curves are empirical correlations widely used in the European oil and gas
- * industry for determining maximum allowable gas velocities in pipes to prevent erosion and
- * vibration. They relate maximum velocity to gas density through a power-law relationship.
+ * The Rhone-Poulenc curves are empirical correlations widely used in the European oil and gas industry for determining
+ * maximum allowable gas velocities in pipes to prevent erosion and vibration. They relate maximum velocity to gas
+ * density through a power-law relationship.
  * </p>
  *
  * <p>
@@ -54,14 +54,13 @@ import java.io.Serializable;
  * </table>
  *
  * <p>
- * Alternatively, the class provides tabulated data points from the standard Rhone-Poulenc curves
- * with log-log interpolation for higher accuracy.
+ * Alternatively, the class provides tabulated data points from the standard Rhone-Poulenc curves with log-log
+ * interpolation for higher accuracy.
  * </p>
  *
  * <p>
- * Comparison with API RP 14E: The API RP 14E formula uses $V_e = C / \sqrt{\rho}$ (exponent = 0.5),
- * while Rhone-Poulenc uses an exponent of approximately 0.44, giving a less aggressive velocity
- * reduction at higher densities.
+ * Comparison with API RP 14E: The API RP 14E formula uses $V_e = C / \sqrt{\rho}$ (exponent = 0.5), while Rhone-Poulenc
+ * uses an exponent of approximately 0.44, giving a less aggressive velocity reduction at higher densities.
  * </p>
  *
  * @author Even Solbraa
@@ -106,8 +105,8 @@ public class RhonePoulencVelocity implements Serializable {
     /**
      * Construct a ServiceType enum value.
      *
-     * @param cFactor the C-factor constant
-     * @param exponent the density exponent
+     * @param cFactor          the C-factor constant
+     * @param exponent         the density exponent
      * @param maxVelocityLimit upper velocity limit in m/s
      * @param minVelocityLimit lower velocity limit in m/s
      */
@@ -156,32 +155,28 @@ public class RhonePoulencVelocity implements Serializable {
   }
 
   /**
-   * Tabulated gas density values (kg/m3) from the standard Rhone-Poulenc curve for non-corrosive
-   * gas service. Used for log-log interpolation.
+   * Tabulated gas density values (kg/m3) from the standard Rhone-Poulenc curve for non-corrosive gas service. Used for
+   * log-log interpolation.
    */
-  private static final double[] TABLE_DENSITY_NON_CORROSIVE =
-      {1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0};
+  private static final double[] TABLE_DENSITY_NON_CORROSIVE = { 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0 };
 
   /**
-   * Tabulated maximum velocity values (m/s) corresponding to the density points for non-corrosive
-   * gas service. Used for log-log interpolation.
+   * Tabulated maximum velocity values (m/s) corresponding to the density points for non-corrosive gas service. Used for
+   * log-log interpolation.
    */
-  private static final double[] TABLE_VELOCITY_NON_CORROSIVE =
-      {60.0, 45.0, 30.0, 22.0, 16.0, 11.0, 8.0, 5.5, 3.5};
+  private static final double[] TABLE_VELOCITY_NON_CORROSIVE = { 60.0, 45.0, 30.0, 22.0, 16.0, 11.0, 8.0, 5.5, 3.5 };
 
   /**
-   * Tabulated gas density values (kg/m3) from the standard Rhone-Poulenc curve for corrosive gas
-   * service. Used for log-log interpolation.
+   * Tabulated gas density values (kg/m3) from the standard Rhone-Poulenc curve for corrosive gas service. Used for
+   * log-log interpolation.
    */
-  private static final double[] TABLE_DENSITY_CORROSIVE =
-      {1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0};
+  private static final double[] TABLE_DENSITY_CORROSIVE = { 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0 };
 
   /**
-   * Tabulated maximum velocity values (m/s) corresponding to the density points for corrosive gas
-   * service. Used for log-log interpolation.
+   * Tabulated maximum velocity values (m/s) corresponding to the density points for corrosive gas service. Used for
+   * log-log interpolation.
    */
-  private static final double[] TABLE_VELOCITY_CORROSIVE =
-      {30.0, 23.0, 15.0, 11.0, 8.0, 5.5, 4.0, 3.0, 2.0};
+  private static final double[] TABLE_VELOCITY_CORROSIVE = { 30.0, 23.0, 15.0, 11.0, 8.0, 5.5, 4.0, 3.0, 2.0 };
 
   /** The selected service type. */
   private ServiceType serviceType = ServiceType.NON_CORROSIVE_GAS;
@@ -244,12 +239,12 @@ public class RhonePoulencVelocity implements Serializable {
   }
 
   /**
-   * Calculate the maximum allowable gas velocity using log-log interpolation of tabulated
-   * Rhone-Poulenc curve data points.
+   * Calculate the maximum allowable gas velocity using log-log interpolation of tabulated Rhone-Poulenc curve data
+   * points.
    *
    * <p>
-   * This method provides higher accuracy than the power-law approximation by interpolating between
-   * standard data points from the published Rhone-Poulenc curves.
+   * This method provides higher accuracy than the power-law approximation by interpolating between standard data points
+   * from the published Rhone-Poulenc curves.
    * </p>
    *
    * @param gasDensity gas density in kg/m3 (must be positive)
@@ -279,13 +274,13 @@ public class RhonePoulencVelocity implements Serializable {
    * Perform log-log interpolation between tabulated data points.
    *
    * <p>
-   * If the input value is outside the table range, log-log extrapolation is used based on the
-   * nearest two data points, bounded by the service type velocity limits.
+   * If the input value is outside the table range, log-log extrapolation is used based on the nearest two data points,
+   * bounded by the service type velocity limits.
    * </p>
    *
    * @param xTable array of x values (must be sorted ascending)
    * @param yTable array of corresponding y values
-   * @param x the x value to interpolate at
+   * @param x      the x value to interpolate at
    * @return interpolated y value
    */
   private double logLogInterpolate(double[] xTable, double[] yTable, double x) {
@@ -319,13 +314,13 @@ public class RhonePoulencVelocity implements Serializable {
     // Within table range - interpolate
     for (int i = 0; i < n - 1; i++) {
       if (x >= xTable[i] && x <= xTable[i + 1]) {
-        double logX0 = Math.log(xTable[i]);
-        double logX1 = Math.log(xTable[i + 1]);
-        double logY0 = Math.log(yTable[i]);
-        double logY1 = Math.log(yTable[i + 1]);
-        double slope = (logY1 - logY0) / (logX1 - logX0);
-        double logY = logY0 + slope * (logX - logX0);
-        return Math.exp(logY);
+	double logX0 = Math.log(xTable[i]);
+	double logX1 = Math.log(xTable[i + 1]);
+	double logY0 = Math.log(yTable[i]);
+	double logY1 = Math.log(yTable[i + 1]);
+	double slope = (logY1 - logY0) / (logX1 - logX0);
+	double logY = logY0 + slope * (logX - logX0);
+	return Math.exp(logY);
       }
     }
 
@@ -334,8 +329,8 @@ public class RhonePoulencVelocity implements Serializable {
   }
 
   /**
-   * Static convenience method to calculate Rhone-Poulenc maximum velocity for non-corrosive gas
-   * service using the power-law formula.
+   * Static convenience method to calculate Rhone-Poulenc maximum velocity for non-corrosive gas service using the
+   * power-law formula.
    *
    * @param gasDensity gas density in kg/m3
    * @return maximum allowable velocity in m/s
@@ -345,8 +340,8 @@ public class RhonePoulencVelocity implements Serializable {
   }
 
   /**
-   * Static convenience method to calculate Rhone-Poulenc maximum velocity for corrosive gas service
-   * using the power-law formula.
+   * Static convenience method to calculate Rhone-Poulenc maximum velocity for corrosive gas service using the power-law
+   * formula.
    *
    * @param gasDensity gas density in kg/m3
    * @return maximum allowable velocity in m/s

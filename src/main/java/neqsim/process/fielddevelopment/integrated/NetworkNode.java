@@ -6,10 +6,10 @@ import java.io.Serializable;
  * A node in an integrated production network.
  *
  * <p>
- * Nodes are connection points between branches ({@link NetworkBranch}). A node carries a pressure
- * that is either fixed (a boundary condition such as a reservoir datum pressure or an export sink
- * pressure) or solved for by {@link NetworkNewtonSolver}. An optional external rate models a source
- * (injection, positive) or sink (offtake, negative) attached directly to the node.
+ * Nodes are connection points between branches ({@link NetworkBranch}). A node carries a pressure that is either fixed
+ * (a boundary condition such as a reservoir datum pressure or an export sink pressure) or solved for by
+ * {@link NetworkNewtonSolver}. An optional external rate models a source (injection, positive) or sink (offtake,
+ * negative) attached directly to the node.
  * </p>
  *
  * @author NeqSim
@@ -43,9 +43,9 @@ public class NetworkNode implements Serializable {
   /**
    * Creates a network node.
    *
-   * @param name unique node name
-   * @param type node classification
-   * @param pressureBara initial or fixed pressure in bara
+   * @param name          unique node name
+   * @param type          node classification
+   * @param pressureBara  initial or fixed pressure in bara
    * @param pressureFixed true if the pressure is a boundary condition (not solved for)
    */
   public NetworkNode(String name, NodeType type, double pressureBara, boolean pressureFixed) {
@@ -58,7 +58,7 @@ public class NetworkNode implements Serializable {
   /**
    * Creates a fixed-pressure reservoir boundary node.
    *
-   * @param name unique node name
+   * @param name                  unique node name
    * @param reservoirPressureBara reservoir datum pressure in bara
    * @return a reservoir node
    */
@@ -69,7 +69,7 @@ public class NetworkNode implements Serializable {
   /**
    * Creates a solved-for manifold node.
    *
-   * @param name unique node name
+   * @param name                unique node name
    * @param initialPressureBara initial pressure guess in bara
    * @return a manifold node
    */
@@ -80,7 +80,7 @@ public class NetworkNode implements Serializable {
   /**
    * Creates a fixed-pressure sink (export/separator) boundary node.
    *
-   * @param name unique node name
+   * @param name             unique node name
    * @param sinkPressureBara fixed sink pressure in bara
    * @return a sink node
    */

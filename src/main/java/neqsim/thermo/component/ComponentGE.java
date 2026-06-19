@@ -35,10 +35,10 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
    * Constructor for ComponentGE.
    * </p>
    *
-   * @param name Name of component.
-   * @param moles Total number of moles of component.
+   * @param name         Name of component.
+   * @param moles        Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex Index number of component in phase object component array.
+   * @param compIndex    Index number of component in phase object component array.
    */
   public ComponentGE(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
@@ -47,26 +47,23 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
   /** {@inheritDoc} */
   @Override
   public double fugcoef(PhaseInterface phase) {
-    logger.info("fug coef "
-        + gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure());
+    logger.info("fug coef " + gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure());
     if (referenceStateType.equals("solvent")) {
-      fugacityCoefficient =
-          gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure();
+      fugacityCoefficient = gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure();
       gammaRefCor = gamma;
     } else {
       double activinf = 1.0;
       if (phase.hasComponent("water")) {
-        int waternumb = phase.getComponent("water").getComponentNumber();
-        activinf =
-            gamma / ((PhaseGE) phase).getActivityCoefficientInfDilWater(componentNumber, waternumb);
+	int waternumb = phase.getComponent("water").getComponentNumber();
+	activinf = gamma / ((PhaseGE) phase).getActivityCoefficientInfDilWater(componentNumber, waternumb);
       } else {
-        activinf = gamma / ((PhaseGE) phase).getActivityCoefficientInfDil(componentNumber);
+	activinf = gamma / ((PhaseGE) phase).getActivityCoefficientInfDil(componentNumber);
       }
       double henryCoef = getHenryCoef(phase.getTemperature());
       // Handle infinite or very large Henry coefficients (database error or insoluble component)
       // Use a large but finite value to represent essentially insoluble components
       if (Double.isInfinite(henryCoef) || henryCoef > 1.0e12 || isIsIon()) {
-        henryCoef = 1.0e12; // Cap at 1e12 bar - effectively insoluble
+	henryCoef = 1.0e12; // Cap at 1e12 bar - effectively insoluble
       }
       fugacityCoefficient = activinf * henryCoef / phase.getPressure();
       // gamma* benyttes ikke
@@ -109,8 +106,7 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
     // int numberOfComponents = phase.getNumberOfComponents();
 
     if (referenceStateType.equals("solvent")) {
-      dfugdt = dlngammadt
-          + 1.0 / getAntoineVaporPressure(temperature) * getAntoineVaporPressuredT(temperature);
+      dfugdt = dlngammadt + 1.0 / getAntoineVaporPressure(temperature) * getAntoineVaporPressuredT(temperature);
       logger.info("check this dfug dt - antoine");
     } else {
       dfugdt = dlngammadt + getHenryCoefdT(temperature);

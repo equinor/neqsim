@@ -10,10 +10,9 @@ import java.util.Set;
  * Fast pre-simulation feasibility checks for process synthesis candidates.
  *
  * <p>
- * These rules catch structurally impossible or weak candidates before rigorous NeqSim simulation.
- * They are intentionally conservative: a rule should reject only candidates that violate basic
- * synthesis logic such as missing feed components, impossible target purity bounds, missing graph
- * inputs, or reaction routes with absent reactants.
+ * These rules catch structurally impossible or weak candidates before rigorous NeqSim simulation. They are
+ * intentionally conservative: a rule should reject only candidates that violate basic synthesis logic such as missing
+ * feed components, impossible target purity bounds, missing graph inputs, or reaction routes with absent reactants.
  * </p>
  *
  * @author NeqSim Development Team
@@ -24,7 +23,8 @@ public class ProcessSynthesisFeasibilityPruner {
   /**
    * Creates a feasibility pruner.
    */
-  public ProcessSynthesisFeasibilityPruner() {}
+  public ProcessSynthesisFeasibilityPruner() {
+  }
 
   /**
    * Validates a process research specification.
@@ -37,9 +37,9 @@ public class ProcessSynthesisFeasibilityPruner {
     double total = 0.0;
     for (Map.Entry<String, Double> entry : spec.getFeedComponents().entrySet()) {
       if (entry.getValue() == null || entry.getValue().doubleValue() < 0.0) {
-        messages.add("Feed component has negative amount: " + entry.getKey());
+	messages.add("Feed component has negative amount: " + entry.getKey());
       } else {
-        total += entry.getValue().doubleValue();
+	total += entry.getValue().doubleValue();
       }
     }
     if (total <= 0.0) {
@@ -53,16 +53,16 @@ public class ProcessSynthesisFeasibilityPruner {
     }
     for (ProcessResearchSpec.ProductTarget target : spec.getProductTargets()) {
       if (target.getMinPurity() < 0.0 || target.getMinPurity() > 1.0) {
-        messages.add("Product target purity must be between 0 and 1: " + target.getName());
+	messages.add("Product target purity must be between 0 and 1: " + target.getName());
       }
       if (target.getMinFlowRate() < 0.0) {
-        messages.add("Product target flow must be non-negative: " + target.getName());
+	messages.add("Product target flow must be non-negative: " + target.getName());
       }
       if (target.getComponentName() != null && !target.getComponentName().trim().isEmpty()
-          && !spec.getFeedComponents().containsKey(target.getComponentName())
-          && !reactionProducesComponent(target.getComponentName(), spec)) {
-        messages.add("Product target component is absent from feed and reaction products: "
-            + target.getComponentName());
+	  && !spec.getFeedComponents().containsKey(target.getComponentName())
+	  && !reactionProducesComponent(target.getComponentName(), spec)) {
+	messages
+	    .add("Product target component is absent from feed and reaction products: " + target.getComponentName());
       }
     }
     return messages;
@@ -72,7 +72,7 @@ public class ProcessSynthesisFeasibilityPruner {
    * Checks whether a reaction option passes basic synthesis rules.
    *
    * @param reaction reaction option to inspect
-   * @param spec process research specification
+   * @param spec     process research specification
    * @return feasibility result
    */
   public FeasibilityResult checkReaction(ReactionOption reaction, ProcessResearchSpec spec) {
@@ -81,24 +81,20 @@ public class ProcessSynthesisFeasibilityPruner {
       result.addIssue("Reactor type is not allowed: " + reaction.getReactorType());
     }
     for (Map.Entry<String, Double> entry : reaction.getStoichiometry().entrySet()) {
-      if (entry.getValue().doubleValue() < 0.0
-          && !spec.getFeedComponents().containsKey(entry.getKey())) {
-        result.addIssue("Reaction reactant is not present in feed: " + entry.getKey());
+      if (entry.getValue().doubleValue() < 0.0 && !spec.getFeedComponents().containsKey(entry.getKey())) {
+	result.addIssue("Reaction reactant is not present in feed: " + entry.getKey());
       }
     }
-    if (reaction.getExpectedProductComponent() != null
-        && !reaction.getExpectedProductComponent().trim().isEmpty()
-        && !spec.getFeedComponents().containsKey(reaction.getExpectedProductComponent())
-        && !reaction.getStoichiometry().containsKey(reaction.getExpectedProductComponent())) {
-      result.addIssue("Expected reaction product is not in feed or stoichiometry: "
-          + reaction.getExpectedProductComponent());
+    if (reaction.getExpectedProductComponent() != null && !reaction.getExpectedProductComponent().trim().isEmpty()
+	&& !spec.getFeedComponents().containsKey(reaction.getExpectedProductComponent())
+	&& !reaction.getStoichiometry().containsKey(reaction.getExpectedProductComponent())) {
+      result.addIssue(
+	  "Expected reaction product is not in feed or stoichiometry: " + reaction.getExpectedProductComponent());
     }
-    if (!Double.isNaN(reaction.getReactorTemperatureK())
-        && reaction.getReactorTemperatureK() <= 0.0) {
+    if (!Double.isNaN(reaction.getReactorTemperatureK()) && reaction.getReactorTemperatureK() <= 0.0) {
       result.addIssue("Reaction temperature must be above 0 K");
     }
-    if (!Double.isNaN(reaction.getReactorPressureBara())
-        && reaction.getReactorPressureBara() <= 0.0) {
+    if (!Double.isNaN(reaction.getReactorPressureBara()) && reaction.getReactorPressureBara() <= 0.0) {
       result.addIssue("Reaction pressure must be positive");
     }
     return result;
@@ -111,8 +107,7 @@ public class ProcessSynthesisFeasibilityPruner {
    * @param spec process research specification
    * @return feasibility result
    */
-  public FeasibilityResult checkOperationPath(List<OperationOption> path,
-      ProcessResearchSpec spec) {
+  public FeasibilityResult checkOperationPath(List<OperationOption> path, ProcessResearchSpec spec) {
     FeasibilityResult result = new FeasibilityResult();
     if (path == null || path.isEmpty()) {
       result.addIssue("Operation path is empty");
@@ -122,29 +117,27 @@ public class ProcessSynthesisFeasibilityPruner {
     availableMaterials.add(normalize(spec.getFeedMaterialName()));
     for (OperationOption option : path) {
       if (!spec.allowsUnitType(option.getEquipmentType())) {
-        result.addIssue("Operation uses a disallowed equipment type: " + option.getEquipmentType());
+	result.addIssue("Operation uses a disallowed equipment type: " + option.getEquipmentType());
       }
       if (option.getInputMaterials().isEmpty()) {
-        result.addIssue("Operation has no declared input material: " + option.getName());
+	result.addIssue("Operation has no declared input material: " + option.getName());
       }
       for (String input : option.getInputMaterials()) {
-        if (!availableMaterials.contains(normalize(input))) {
-          result.addIssue("Operation input material is not available before " + option.getName()
-              + ": " + input);
-        }
+	if (!availableMaterials.contains(normalize(input))) {
+	  result.addIssue("Operation input material is not available before " + option.getName() + ": " + input);
+	}
       }
       if (option.getOutputMaterials().isEmpty()) {
-        result.addIssue("Operation has no declared output material: " + option.getName());
+	result.addIssue("Operation has no declared output material: " + option.getName());
       }
       for (String output : option.getOutputMaterials()) {
-        availableMaterials.add(normalize(output));
+	availableMaterials.add(normalize(output));
       }
     }
     for (ProcessResearchSpec.ProductTarget target : spec.getProductTargets()) {
       if (target.getMaterialName() != null && !target.getMaterialName().trim().isEmpty()
-          && !availableMaterials.contains(normalize(target.getMaterialName()))) {
-        result.addIssue(
-            "Operation path does not produce target material: " + target.getMaterialName());
+	  && !availableMaterials.contains(normalize(target.getMaterialName()))) {
+	result.addIssue("Operation path does not produce target material: " + target.getMaterialName());
       }
     }
     return result;
@@ -154,14 +147,14 @@ public class ProcessSynthesisFeasibilityPruner {
    * Checks if any reaction option produces a component.
    *
    * @param componentName component name to find
-   * @param spec process research specification
+   * @param spec          process research specification
    * @return true if a reaction produces the component
    */
   private boolean reactionProducesComponent(String componentName, ProcessResearchSpec spec) {
     for (ReactionOption reaction : spec.getReactionOptions()) {
       Double coefficient = reaction.getStoichiometry().get(componentName);
       if (coefficient != null && coefficient.doubleValue() > 0.0) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -186,7 +179,8 @@ public class ProcessSynthesisFeasibilityPruner {
     /**
      * Creates an empty feasibility result.
      */
-    public FeasibilityResult() {}
+    public FeasibilityResult() {
+    }
 
     /**
      * Adds an issue.

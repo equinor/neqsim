@@ -21,7 +21,7 @@ class BlackOilSeparatorTest {
 
   @BeforeAll
   static void setUp() {
-    double[] grid = {50, 100, 150, 200, 250, 300};
+    double[] grid = { 50, 100, 150, 200, 250, 300 };
     List<BlackOilPVTTable.Record> recs = new ArrayList<BlackOilPVTTable.Record>();
     for (double p : grid) {
       // Rs increases with pressure up to bubble point
@@ -58,8 +58,7 @@ class BlackOilSeparatorTest {
     double gasGasStd = sep.getGasOut().getGasStdTotal();
     assertTrue(oilOilStd > 0, "Oil outlet should have oil");
     assertTrue(gasGasStd >= 0, "Gas outlet should have non-negative gas");
-    assertEquals(200.0, sep.getWaterOut().getWaterStd(), 1e-6,
-        "All water should go to water outlet");
+    assertEquals(200.0, sep.getWaterOut().getWaterStd(), 1e-6, "All water should go to water outlet");
   }
 
   @Test
@@ -93,8 +92,7 @@ class BlackOilSeparatorTest {
     process.run();
 
     // After ProcessSystem.run(), the separator should have been executed
-    assertNotNull(sep.getLastFlashResult(),
-        "Separator should have flash result after ProcessSystem.run()");
+    assertNotNull(sep.getLastFlashResult(), "Separator should have flash result after ProcessSystem.run()");
   }
 
   @Test

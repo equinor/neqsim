@@ -16,18 +16,18 @@ import neqsim.process.processmodel.ProcessSystem;
  * Physics-grounded reward functions for reinforcement learning process optimization.
  *
  * <p>
- * Provides pre-built, composable reward functions for common process engineering optimization
- * objectives. Each reward component is physically meaningful and grounded in engineering metrics
- * (energy efficiency, product quality, throughput, safety compliance). Rewards are designed to be
- * combined with configurable weights for multi-objective optimization.
+ * Provides pre-built, composable reward functions for common process engineering optimization objectives. Each reward
+ * component is physically meaningful and grounded in engineering metrics (energy efficiency, product quality,
+ * throughput, safety compliance). Rewards are designed to be combined with configurable weights for multi-objective
+ * optimization.
  * </p>
  *
  * <h2>Available Reward Components:</h2>
  * <ul>
- * <li>{@link #energyEfficiency(ProcessSystem)} — Minimizes total energy consumption (compressor
- * power + heater/cooler duty)</li>
- * <li>{@link #productQuality(ProcessSystem, String, String, double)} — Tracks a product stream
- * property toward a target setpoint</li>
+ * <li>{@link #energyEfficiency(ProcessSystem)} — Minimizes total energy consumption (compressor power + heater/cooler
+ * duty)</li>
+ * <li>{@link #productQuality(ProcessSystem, String, String, double)} — Tracks a product stream property toward a target
+ * setpoint</li>
  * <li>{@link #throughput(ProcessSystem, String)} — Maximizes production throughput</li>
  * <li>{@link #constraintSatisfaction(ProcessSystem)} — Penalizes operating envelope violations</li>
  * <li>{@link #specificEnergy(ProcessSystem, String)} — Minimizes energy per unit of product</li>
@@ -70,8 +70,8 @@ public class ProcessRewardFunction implements Serializable {
   }
 
   /**
-   * Add energy minimization component. Sums compressor power and heater/cooler absolute duty,
-   * normalized by a reference scale, and applies a negative reward.
+   * Add energy minimization component. Sums compressor power and heater/cooler absolute duty, normalized by a reference
+   * scale, and applies a negative reward.
    *
    * @param weight reward weight (typically 0.1 to 10.0)
    * @return this for chaining
@@ -80,28 +80,27 @@ public class ProcessRewardFunction implements Serializable {
     components.add(new RewardComponent("energy_minimization", weight) {
       @Override
       double computeRaw() {
-        return -energyEfficiency(process);
+	return -energyEfficiency(process);
       }
     });
     return this;
   }
 
   /**
-   * Add product quality tracking toward a target value. Uses quadratic penalty for deviation from
-   * the setpoint.
+   * Add product quality tracking toward a target value. Uses quadratic penalty for deviation from the setpoint.
    *
-   * @param streamName name of the product stream equipment
+   * @param streamName   name of the product stream equipment
    * @param propertyName property to track (e.g., "temperature", "methane_molfrac")
-   * @param target target value in physical units
-   * @param weight reward weight
+   * @param target       target value in physical units
+   * @param weight       reward weight
    * @return this for chaining
    */
-  public ProcessRewardFunction addProductQualityTarget(String streamName, String propertyName,
-      double target, double weight) {
+  public ProcessRewardFunction addProductQualityTarget(String streamName, String propertyName, double target,
+      double weight) {
     components.add(new RewardComponent("quality_" + streamName + "_" + propertyName, weight) {
       @Override
       double computeRaw() {
-        return -productQuality(process, streamName, propertyName, target);
+	return -productQuality(process, streamName, propertyName, target);
       }
     });
     return this;
@@ -111,22 +110,22 @@ public class ProcessRewardFunction implements Serializable {
    * Add throughput maximization for a product stream.
    *
    * @param streamName name of the product stream equipment
-   * @param weight reward weight
+   * @param weight     reward weight
    * @return this for chaining
    */
   public ProcessRewardFunction addThroughputMaximization(String streamName, double weight) {
     components.add(new RewardComponent("throughput_" + streamName, weight) {
       @Override
       double computeRaw() {
-        return throughput(process, streamName);
+	return throughput(process, streamName);
       }
     });
     return this;
   }
 
   /**
-   * Add constraint satisfaction penalty. Penalizes streams with non-physical values (negative T, P,
-   * compositions outside [0,1]).
+   * Add constraint satisfaction penalty. Penalizes streams with non-physical values (negative T, P, compositions
+   * outside [0,1]).
    *
    * @param weight penalty weight (typically 50-200)
    * @return this for chaining
@@ -135,7 +134,7 @@ public class ProcessRewardFunction implements Serializable {
     components.add(new RewardComponent("constraint_penalty", weight) {
       @Override
       double computeRaw() {
-        return -constraintSatisfaction(process);
+	return -constraintSatisfaction(process);
       }
     });
     return this;
@@ -145,15 +144,14 @@ public class ProcessRewardFunction implements Serializable {
    * Add specific energy minimization (energy per unit product).
    *
    * @param productStreamName name of the product stream
-   * @param weight reward weight
+   * @param weight            reward weight
    * @return this for chaining
    */
-  public ProcessRewardFunction addSpecificEnergyMinimization(String productStreamName,
-      double weight) {
+  public ProcessRewardFunction addSpecificEnergyMinimization(String productStreamName, double weight) {
     components.add(new RewardComponent("specific_energy_" + productStreamName, weight) {
       @Override
       double computeRaw() {
-        return -specificEnergy(process, productStreamName);
+	return -specificEnergy(process, productStreamName);
       }
     });
     return this;
@@ -197,10 +195,9 @@ public class ProcessRewardFunction implements Serializable {
     int i = 0;
     for (Map.Entry<String, Double> entry : lastBreakdown.entrySet()) {
       if (i > 0) {
-        sb.append(",\n");
+	sb.append(",\n");
       }
-      sb.append("  \"").append(entry.getKey()).append("\": ")
-          .append(String.format("%.6f", entry.getValue()));
+      sb.append("  \"").append(entry.getKey()).append("\": ").append(String.format("%.6f", entry.getValue()));
       i++;
     }
     sb.append("\n}");
@@ -213,8 +210,8 @@ public class ProcessRewardFunction implements Serializable {
    * Compute total energy consumption of the process normalized to MW.
    *
    * <p>
-   * Sums compressor power (positive = consumed), heater duty (positive = consumed), and cooler duty
-   * (absolute = energy removed that must be supplied by cooling utility). Returns the total in MW.
+   * Sums compressor power (positive = consumed), heater duty (positive = consumed), and cooler duty (absolute = energy
+   * removed that must be supplied by cooling utility). Returns the total in MW.
    * </p>
    *
    * @param proc the process system
@@ -229,23 +226,23 @@ public class ProcessRewardFunction implements Serializable {
 
     for (ProcessEquipmentInterface unit : units) {
       if (unit instanceof Compressor) {
-        Compressor comp = (Compressor) unit;
-        double power = comp.getPower();
-        if (!Double.isNaN(power) && !Double.isInfinite(power)) {
-          totalEnergyW += Math.abs(power);
-        }
+	Compressor comp = (Compressor) unit;
+	double power = comp.getPower();
+	if (!Double.isNaN(power) && !Double.isInfinite(power)) {
+	  totalEnergyW += Math.abs(power);
+	}
       } else if (unit instanceof Heater) {
-        Heater heater = (Heater) unit;
-        double duty = heater.getDuty();
-        if (!Double.isNaN(duty) && !Double.isInfinite(duty)) {
-          totalEnergyW += Math.abs(duty);
-        }
+	Heater heater = (Heater) unit;
+	double duty = heater.getDuty();
+	if (!Double.isNaN(duty) && !Double.isInfinite(duty)) {
+	  totalEnergyW += Math.abs(duty);
+	}
       } else if (unit instanceof Cooler) {
-        Cooler cooler = (Cooler) unit;
-        double duty = cooler.getDuty();
-        if (!Double.isNaN(duty) && !Double.isInfinite(duty)) {
-          totalEnergyW += Math.abs(duty);
-        }
+	Cooler cooler = (Cooler) unit;
+	double duty = cooler.getDuty();
+	if (!Double.isNaN(duty) && !Double.isInfinite(duty)) {
+	  totalEnergyW += Math.abs(duty);
+	}
       }
     }
 
@@ -255,14 +252,13 @@ public class ProcessRewardFunction implements Serializable {
   /**
    * Compute squared deviation of a product stream property from its target.
    *
-   * @param proc the process system
-   * @param streamName equipment name of the product stream
+   * @param proc         the process system
+   * @param streamName   equipment name of the product stream
    * @param propertyName "temperature" (K), "pressure" (bar), or component name for mole fraction
-   * @param target target value
+   * @param target       target value
    * @return squared normalized deviation (0 at target, increases with distance)
    */
-  public static double productQuality(ProcessSystem proc, String streamName, String propertyName,
-      double target) {
+  public static double productQuality(ProcessSystem proc, String streamName, String propertyName, double target) {
     ProcessEquipmentInterface unit = proc.getUnit(streamName);
     if (unit == null) {
       return 1.0; // Max penalty if stream not found
@@ -272,7 +268,7 @@ public class ProcessRewardFunction implements Serializable {
     if (outlets == null || outlets.isEmpty()) {
       // The unit itself might be a stream
       if (unit instanceof StreamInterface) {
-        return computePropertyDeviation((StreamInterface) unit, propertyName, target);
+	return computePropertyDeviation((StreamInterface) unit, propertyName, target);
       }
       return 1.0;
     }
@@ -283,7 +279,7 @@ public class ProcessRewardFunction implements Serializable {
   /**
    * Compute mass throughput of a product stream in kg/s.
    *
-   * @param proc the process system
+   * @param proc       the process system
    * @param streamName equipment name
    * @return mass flow rate in kg/s, or 0 if not found
    */
@@ -314,8 +310,8 @@ public class ProcessRewardFunction implements Serializable {
    * Compute total constraint violation penalty.
    *
    * <p>
-   * Checks all streams for non-physical values: T &lt; 0 K, P &lt; 0, compositions outside [0,1],
-   * NaN values. Returns the sum of squared violations.
+   * Checks all streams for non-physical values: T &lt; 0 K, P &lt; 0, compositions outside [0,1], NaN values. Returns
+   * the sum of squared violations.
    * </p>
    *
    * @param proc the process system
@@ -331,39 +327,38 @@ public class ProcessRewardFunction implements Serializable {
     for (ProcessEquipmentInterface unit : units) {
       List<StreamInterface> outlets = unit.getOutletStreams();
       if (outlets == null) {
-        continue;
+	continue;
       }
       for (StreamInterface stream : outlets) {
-        if (stream == null || stream.getThermoSystem() == null) {
-          continue;
-        }
+	if (stream == null || stream.getThermoSystem() == null) {
+	  continue;
+	}
 
-        double t = stream.getThermoSystem().getTemperature();
-        double p = stream.getThermoSystem().getPressure();
+	double t = stream.getThermoSystem().getTemperature();
+	double p = stream.getThermoSystem().getPressure();
 
-        if (Double.isNaN(t) || Double.isInfinite(t) || t <= 0.0) {
-          penalty += 1.0;
-        }
-        if (Double.isNaN(p) || Double.isInfinite(p) || p <= 0.0) {
-          penalty += 1.0;
-        }
+	if (Double.isNaN(t) || Double.isInfinite(t) || t <= 0.0) {
+	  penalty += 1.0;
+	}
+	if (Double.isNaN(p) || Double.isInfinite(p) || p <= 0.0) {
+	  penalty += 1.0;
+	}
 
-        // Check compositions
-        int numPhases = stream.getThermoSystem().getNumberOfPhases();
-        for (int phase = 0; phase < numPhases; phase++) {
-          double sum = 0.0;
-          for (int comp = 0; comp < stream.getThermoSystem().getPhase(phase)
-              .getNumberOfComponents(); comp++) {
-            double x = stream.getThermoSystem().getPhase(phase).getComponent(comp).getx();
-            if (Double.isNaN(x) || x < -0.001 || x > 1.001) {
-              penalty += 0.1;
-            }
-            sum += x;
-          }
-          if (Math.abs(sum - 1.0) > 0.01) {
-            penalty += 0.5;
-          }
-        }
+	// Check compositions
+	int numPhases = stream.getThermoSystem().getNumberOfPhases();
+	for (int phase = 0; phase < numPhases; phase++) {
+	  double sum = 0.0;
+	  for (int comp = 0; comp < stream.getThermoSystem().getPhase(phase).getNumberOfComponents(); comp++) {
+	    double x = stream.getThermoSystem().getPhase(phase).getComponent(comp).getx();
+	    if (Double.isNaN(x) || x < -0.001 || x > 1.001) {
+	      penalty += 0.1;
+	    }
+	    sum += x;
+	  }
+	  if (Math.abs(sum - 1.0) > 0.01) {
+	    penalty += 0.5;
+	  }
+	}
       }
     }
     return penalty;
@@ -372,7 +367,7 @@ public class ProcessRewardFunction implements Serializable {
   /**
    * Compute specific energy consumption (energy per unit of product).
    *
-   * @param proc the process system
+   * @param proc              the process system
    * @param productStreamName product stream name
    * @return specific energy in MJ/kg, or a large number if no throughput
    */
@@ -388,13 +383,12 @@ public class ProcessRewardFunction implements Serializable {
   /**
    * Compute deviation of a stream property from target.
    *
-   * @param stream the stream
+   * @param stream       the stream
    * @param propertyName "temperature", "pressure", or component name for mole fraction
-   * @param target target value
+   * @param target       target value
    * @return squared normalized deviation
    */
-  private static double computePropertyDeviation(StreamInterface stream, String propertyName,
-      double target) {
+  private static double computePropertyDeviation(StreamInterface stream, String propertyName, double target) {
     if (stream == null || stream.getThermoSystem() == null) {
       return 1.0;
     }
@@ -412,14 +406,13 @@ public class ProcessRewardFunction implements Serializable {
       // Treat as component name — look up mole fraction in first phase
       int numPhases = stream.getThermoSystem().getNumberOfPhases();
       if (numPhases > 0) {
-        try {
-          int compIdx =
-              stream.getThermoSystem().getPhase(0).getComponent(propertyName).getComponentNumber();
-          actual = stream.getThermoSystem().getPhase(0).getComponent(compIdx).getx();
-          scale = 1.0;
-        } catch (Exception e) {
-          return 1.0;
-        }
+	try {
+	  int compIdx = stream.getThermoSystem().getPhase(0).getComponent(propertyName).getComponentNumber();
+	  actual = stream.getThermoSystem().getPhase(0).getComponent(compIdx).getx();
+	  scale = 1.0;
+	} catch (Exception e) {
+	  return 1.0;
+	}
       }
     }
 
@@ -445,7 +438,7 @@ public class ProcessRewardFunction implements Serializable {
     /**
      * Constructor.
      *
-     * @param name component name
+     * @param name   component name
      * @param weight component weight
      */
     RewardComponent(String name, double weight) {

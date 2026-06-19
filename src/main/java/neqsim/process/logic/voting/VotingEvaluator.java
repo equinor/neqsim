@@ -7,9 +7,8 @@ import java.util.List;
  * Generic voting logic evaluator for redundant sensors or conditions.
  *
  * <p>
- * Voting logic is used throughout process control and safety systems to increase reliability by
- * requiring multiple independent signals to agree before taking action. This generic implementation
- * supports:
+ * Voting logic is used throughout process control and safety systems to increase reliability by requiring multiple
+ * independent signals to agree before taking action. This generic implementation supports:
  * <ul>
  * <li>Digital voting (boolean conditions: 1oo2, 2oo3, etc.)</li>
  * <li>Analog voting (continuous values: average, median, mid-value select)</li>
@@ -65,7 +64,7 @@ public class VotingEvaluator<T> {
   /**
    * Adds an input to the voting group.
    *
-   * @param value current value (Boolean or Double)
+   * @param value  current value (Boolean or Double)
    * @param faulty true if this input is faulty
    */
   public void addInput(T value, boolean faulty) {
@@ -95,10 +94,10 @@ public class VotingEvaluator<T> {
 
     for (VotingInput<T> input : inputs) {
       if (!input.faulty) {
-        validCount++;
-        if (input.value instanceof Boolean && (Boolean) input.value) {
-          trueCount++;
-        }
+	validCount++;
+	if (input.value instanceof Boolean && (Boolean) input.value) {
+	  trueCount++;
+	}
       }
     }
 
@@ -115,8 +114,8 @@ public class VotingEvaluator<T> {
    * Evaluates analog voting using median selection.
    *
    * <p>
-   * Returns the median value of non-faulty inputs. Median is preferred over average for safety
-   * systems as it's less sensitive to outliers.
+   * Returns the median value of non-faulty inputs. Median is preferred over average for safety systems as it's less
+   * sensitive to outliers.
    * </p>
    *
    * @return median value
@@ -127,7 +126,7 @@ public class VotingEvaluator<T> {
 
     for (VotingInput<T> input : inputs) {
       if (!input.faulty && input.value instanceof Double) {
-        validValues.add((Double) input.value);
+	validValues.add((Double) input.value);
       }
     }
 
@@ -157,8 +156,8 @@ public class VotingEvaluator<T> {
 
     for (VotingInput<T> input : inputs) {
       if (!input.faulty && input.value instanceof Double) {
-        sum += (Double) input.value;
-        count++;
+	sum += (Double) input.value;
+	count++;
       }
     }
 
@@ -173,8 +172,8 @@ public class VotingEvaluator<T> {
    * Evaluates analog voting using mid-value select.
    *
    * <p>
-   * For 3 inputs, returns the middle value (not highest, not lowest). This provides some outlier
-   * rejection like median but is more intuitive for 3-input systems.
+   * For 3 inputs, returns the middle value (not highest, not lowest). This provides some outlier rejection like median
+   * but is more intuitive for 3-input systems.
    * </p>
    *
    * @return mid-value
@@ -185,7 +184,7 @@ public class VotingEvaluator<T> {
 
     for (VotingInput<T> input : inputs) {
       if (!input.faulty && input.value instanceof Double) {
-        validValues.add((Double) input.value);
+	validValues.add((Double) input.value);
       }
     }
 
@@ -216,7 +215,7 @@ public class VotingEvaluator<T> {
     int count = 0;
     for (VotingInput<T> input : inputs) {
       if (!input.faulty) {
-        count++;
+	count++;
       }
     }
     return count;
@@ -231,7 +230,7 @@ public class VotingEvaluator<T> {
     int count = 0;
     for (VotingInput<T> input : inputs) {
       if (input.faulty) {
-        count++;
+	count++;
       }
     }
     return count;

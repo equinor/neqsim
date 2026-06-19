@@ -17,7 +17,6 @@ import org.apache.logging.log4j.Logger;
 class CPAImplicitProfilingTest extends neqsim.NeqSimTest {
   private static final Logger logger = LogManager.getLogger(CPAImplicitProfilingTest.class);
 
-
   /**
    * Profile Oil+Gas+Water+MEG case to count molarVolume calls and iterations.
    */
@@ -76,7 +75,8 @@ class CPAImplicitProfilingTest extends neqsim.NeqSimTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "Standard 100x init(1): %.1f ms%n", stdInitTime / 1e6);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Implicit 100x init(1): %.1f ms%n", implInitTime / 1e6);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Ratio: %.2f%n", (double) implInitTime / stdInitTime);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Implicit profile: %s%n", PhaseSrkCPAfullyImplicit.getProfileSummary());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Implicit profile: %s%n",
+	PhaseSrkCPAfullyImplicit.getProfileSummary());
 
     // --- Single init(3) comparison ---
     logger.info("\n=== Single init(3) comparison (computes fugacity coefficients) ===");
@@ -97,7 +97,8 @@ class CPAImplicitProfilingTest extends neqsim.NeqSimTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "Standard 100x init(3): %.1f ms%n", stdInit3Time / 1e6);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Implicit 100x init(3): %.1f ms%n", implInit3Time / 1e6);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Ratio: %.2f%n", (double) implInit3Time / stdInit3Time);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Implicit profile: %s%n", PhaseSrkCPAfullyImplicit.getProfileSummary());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Implicit profile: %s%n",
+	PhaseSrkCPAfullyImplicit.getProfileSummary());
   }
 
   /**
@@ -130,26 +131,25 @@ class CPAImplicitProfilingTest extends neqsim.NeqSimTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s %8s %8s %8s%n", "Case", "Calls", "AvgIter", "Fallback");
 
     // Pure water
-    profileCase("Pure water", 273.15 + 25, 1.0, new String[] {"water"}, new double[] {1.0}, false);
+    profileCase("Pure water", 273.15 + 25, 1.0, new String[] { "water" }, new double[] { 1.0 }, false);
 
     // Methane + water
-    profileCase("Methane + water", 273.15 + 5, 50.0, new String[] {"methane", "water"},
-        new double[] {0.95, 0.05}, true);
+    profileCase("Methane + water", 273.15 + 5, 50.0, new String[] { "methane", "water" }, new double[] { 0.95, 0.05 },
+	true);
 
     // NatGas + water + MEG
     profileCase("NatGas+water+MEG", 273.15 + 5, 50.0,
-        new String[] {"methane", "ethane", "propane", "n-butane", "water", "MEG"},
-        new double[] {0.80, 0.06, 0.03, 0.01, 0.08, 0.02}, true);
+	new String[] { "methane", "ethane", "propane", "n-butane", "water", "MEG" },
+	new double[] { 0.80, 0.06, 0.03, 0.01, 0.08, 0.02 }, true);
 
     // Oil+Gas+Water+MEG
-    profileCase("Oil+Gas+Water+MEG", 273.15 + 50, 80.0,
-        new String[] {"methane", "ethane", "propane", "n-butane", "n-pentane", "n-hexane",
-            "n-heptane", "n-octane", "water", "MEG"},
-        new double[] {0.40, 0.05, 0.04, 0.03, 0.03, 0.04, 0.08, 0.05, 0.25, 0.03}, true);
+    profileCase(
+	"Oil+Gas+Water+MEG", 273.15 + 50, 80.0, new String[] { "methane", "ethane", "propane", "n-butane", "n-pentane",
+	    "n-hexane", "n-heptane", "n-octane", "water", "MEG" },
+	new double[] { 0.40, 0.05, 0.04, 0.03, 0.03, 0.04, 0.08, 0.05, 0.25, 0.03 }, true);
   }
 
-  private void profileCase(String label, double T, double P, String[] comps, double[] moles,
-      boolean multiPhase) {
+  private void profileCase(String label, double T, double P, String[] comps, double[] moles, boolean multiPhase) {
     PhaseSrkCPAfullyImplicit.resetProfileCounters();
 
     SystemInterface sys = new SystemSrkCPAstatoilFullyImplicit(T, P);
@@ -164,7 +164,8 @@ class CPAImplicitProfilingTest extends neqsim.NeqSimTest {
     ThermodynamicOperations ops = new ThermodynamicOperations(sys);
     ops.TPflash();
 
-    logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s %s%n", label, PhaseSrkCPAfullyImplicit.getProfileSummary());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s %s%n", label,
+	PhaseSrkCPAfullyImplicit.getProfileSummary());
   }
 
   private void addOilGasWaterMEG(SystemInterface sys) {

@@ -7,13 +7,12 @@ import org.apache.logging.log4j.Logger;
  * Utility class for detecting flow patterns in two-phase pipe flow.
  *
  * <p>
- * Implements various flow pattern prediction models including Taitel-Dukler (1976), Baker chart,
- * and Barnea (1987).
+ * Implements various flow pattern prediction models including Taitel-Dukler (1976), Baker chart, and Barnea (1987).
  * </p>
  *
  * <p>
- * Reference: Taitel, Y., &amp; Dukler, A.E. (1976). "A model for predicting flow regime transitions
- * in horizontal and near horizontal gas-liquid flow." AIChE Journal, 22(1), 47-55.
+ * Reference: Taitel, Y., &amp; Dukler, A.E. (1976). "A model for predicting flow regime transitions in horizontal and
+ * near horizontal gas-liquid flow." AIChE Journal, 22(1), 47-55.
  * </p>
  *
  * @author ASMF
@@ -29,38 +28,38 @@ public class FlowPatternDetector {
   /**
    * Private constructor to prevent instantiation.
    */
-  private FlowPatternDetector() {}
+  private FlowPatternDetector() {
+  }
 
   /**
    * Detects the flow pattern using the specified model.
    *
-   * @param model the flow pattern prediction model to use
-   * @param usg superficial gas velocity (m/s)
-   * @param usl superficial liquid velocity (m/s)
-   * @param rhoG gas density (kg/m³)
-   * @param rhoL liquid density (kg/m³)
-   * @param muG gas viscosity (Pa·s)
-   * @param muL liquid viscosity (Pa·s)
-   * @param sigma surface tension (N/m)
-   * @param diameter pipe diameter (m)
+   * @param model       the flow pattern prediction model to use
+   * @param usg         superficial gas velocity (m/s)
+   * @param usl         superficial liquid velocity (m/s)
+   * @param rhoG        gas density (kg/m³)
+   * @param rhoL        liquid density (kg/m³)
+   * @param muG         gas viscosity (Pa·s)
+   * @param muL         liquid viscosity (Pa·s)
+   * @param sigma       surface tension (N/m)
+   * @param diameter    pipe diameter (m)
    * @param inclination pipe inclination from horizontal (radians, positive = upward)
    * @return the predicted flow pattern
    */
-  public static FlowPattern detectFlowPattern(FlowPatternModel model, double usg, double usl,
-      double rhoG, double rhoL, double muG, double muL, double sigma, double diameter,
-      double inclination) {
+  public static FlowPattern detectFlowPattern(FlowPatternModel model, double usg, double usl, double rhoG, double rhoL,
+      double muG, double muL, double sigma, double diameter, double inclination) {
     switch (model) {
-      case TAITEL_DUKLER:
-        return detectTaitelDukler(usg, usl, rhoG, rhoL, muG, muL, sigma, diameter, inclination);
-      case BAKER_CHART:
-        return detectBakerChart(usg, usl, rhoG, rhoL, muL, sigma);
-      case BARNEA:
-        return detectBarnea(usg, usl, rhoG, rhoL, muG, muL, sigma, diameter, inclination);
-      case BEGGS_BRILL:
-        return detectBeggsBrill(usg, usl, rhoG, rhoL, diameter, inclination);
-      case MANUAL:
-      default:
-        return FlowPattern.STRATIFIED; // Default
+    case TAITEL_DUKLER:
+      return detectTaitelDukler(usg, usl, rhoG, rhoL, muG, muL, sigma, diameter, inclination);
+    case BAKER_CHART:
+      return detectBakerChart(usg, usl, rhoG, rhoL, muL, sigma);
+    case BARNEA:
+      return detectBarnea(usg, usl, rhoG, rhoL, muG, muL, sigma, diameter, inclination);
+    case BEGGS_BRILL:
+      return detectBeggsBrill(usg, usl, rhoG, rhoL, diameter, inclination);
+    case MANUAL:
+    default:
+      return FlowPattern.STRATIFIED; // Default
     }
   }
 
@@ -68,8 +67,7 @@ public class FlowPatternDetector {
    * Detects flow pattern using the Taitel-Dukler (1976) mechanistic model.
    *
    * <p>
-   * This model is applicable to horizontal and near-horizontal pipes. It uses physical transition
-   * criteria:
+   * This model is applicable to horizontal and near-horizontal pipes. It uses physical transition criteria:
    * </p>
    * <ul>
    * <li>Stratified → Slug: Kelvin-Helmholtz instability</li>
@@ -78,19 +76,19 @@ public class FlowPatternDetector {
    * <li>Bubble → Slug: Maximum void fraction (~0.25)</li>
    * </ul>
    *
-   * @param usg superficial gas velocity
-   * @param usl superficial liquid velocity
-   * @param rhoG gas density
-   * @param rhoL liquid density
-   * @param muG gas viscosity
-   * @param muL liquid viscosity
-   * @param sigma surface tension
-   * @param diameter pipe diameter
+   * @param usg         superficial gas velocity
+   * @param usl         superficial liquid velocity
+   * @param rhoG        gas density
+   * @param rhoL        liquid density
+   * @param muG         gas viscosity
+   * @param muL         liquid viscosity
+   * @param sigma       surface tension
+   * @param diameter    pipe diameter
    * @param inclination pipe inclination
    * @return the detected flow pattern
    */
-  private static FlowPattern detectTaitelDukler(double usg, double usl, double rhoG, double rhoL,
-      double muG, double muL, double sigma, double diameter, double inclination) {
+  private static FlowPattern detectTaitelDukler(double usg, double usl, double rhoG, double rhoL, double muG,
+      double muL, double sigma, double diameter, double inclination) {
     // Calculate mixture velocity and input liquid fraction
     double um = usg + usl;
     double lambdaL = usl / um;
@@ -106,11 +104,9 @@ public class FlowPatternDetector {
     double X = Math.sqrt((rhoL / rhoG) * (muL / muG)) * (usl / usg);
 
     // Dimensionless groups for Taitel-Dukler
-    double F = Math.sqrt(rhoG / (rhoL - rhoG)) * usg
-        / Math.sqrt(G * diameter * Math.cos(inclination + 1e-10));
+    double F = Math.sqrt(rhoG / (rhoL - rhoG)) * usg / Math.sqrt(G * diameter * Math.cos(inclination + 1e-10));
     double K = F * Math.sqrt(resl);
-    double T = Math.pow(Math.abs(Math.sin(inclination)) / Math.cos(inclination + 1e-10), 0.5)
-        * Math.pow(resl, 0.5);
+    double T = Math.pow(Math.abs(Math.sin(inclination)) / Math.cos(inclination + 1e-10), 0.5) * Math.pow(resl, 0.5);
 
     // Flow pattern determination based on Taitel-Dukler criteria
 
@@ -131,7 +127,7 @@ public class FlowPatternDetector {
     // or very high void fraction with significant gas velocity
     if ((F > 1.0 && usg > 5.0) || (voidFraction > 0.95 && usg > 10.0)) {
       if (voidFraction > 0.9) {
-        return FlowPattern.DROPLET;
+	return FlowPattern.DROPLET;
       }
       return FlowPattern.ANNULAR;
     }
@@ -160,16 +156,16 @@ public class FlowPatternDetector {
    * Uses dimensionless groups based on superficial mass fluxes.
    * </p>
    *
-   * @param usg superficial gas velocity [m/s]
-   * @param usl superficial liquid velocity [m/s]
-   * @param rhoG gas density [kg/m³]
-   * @param rhoL liquid density [kg/m³]
-   * @param muL liquid dynamic viscosity [Pa·s]
+   * @param usg   superficial gas velocity [m/s]
+   * @param usl   superficial liquid velocity [m/s]
+   * @param rhoG  gas density [kg/m³]
+   * @param rhoL  liquid density [kg/m³]
+   * @param muL   liquid dynamic viscosity [Pa·s]
    * @param sigma surface tension [N/m]
    * @return detected flow pattern
    */
-  private static FlowPattern detectBakerChart(double usg, double usl, double rhoG, double rhoL,
-      double muL, double sigma) {
+  private static FlowPattern detectBakerChart(double usg, double usl, double rhoG, double rhoL, double muL,
+      double sigma) {
     // Reference properties (air-water at atmospheric conditions)
     double rhoG_ref = 1.23; // kg/m³
     double rhoL_ref = 1000.0; // kg/m³
@@ -178,8 +174,7 @@ public class FlowPatternDetector {
 
     // Baker parameters
     double lambda = Math.sqrt((rhoG / rhoG_ref) * (rhoL / rhoL_ref));
-    double psi =
-        (sigma_ref / sigma) * Math.pow(muL / muL_ref, 0.33333) * Math.pow(rhoL_ref / rhoL, 2);
+    double psi = (sigma_ref / sigma) * Math.pow(muL / muL_ref, 0.33333) * Math.pow(rhoL_ref / rhoL, 2);
 
     // Mass fluxes
     double Gg = rhoG * usg;
@@ -216,19 +211,19 @@ public class FlowPatternDetector {
    * Extension of Taitel-Dukler for all pipe inclinations.
    * </p>
    *
-   * @param usg superficial gas velocity [m/s]
-   * @param usl superficial liquid velocity [m/s]
-   * @param rhoG gas density [kg/m³]
-   * @param rhoL liquid density [kg/m³]
-   * @param muG gas viscosity [Pa·s]
-   * @param muL liquid viscosity [Pa·s]
-   * @param sigma surface tension [N/m]
-   * @param diameter pipe diameter [m]
+   * @param usg         superficial gas velocity [m/s]
+   * @param usl         superficial liquid velocity [m/s]
+   * @param rhoG        gas density [kg/m³]
+   * @param rhoL        liquid density [kg/m³]
+   * @param muG         gas viscosity [Pa·s]
+   * @param muL         liquid viscosity [Pa·s]
+   * @param sigma       surface tension [N/m]
+   * @param diameter    pipe diameter [m]
    * @param inclination pipe inclination angle [rad]
    * @return the detected flow pattern
    */
-  private static FlowPattern detectBarnea(double usg, double usl, double rhoG, double rhoL,
-      double muG, double muL, double sigma, double diameter, double inclination) {
+  private static FlowPattern detectBarnea(double usg, double usl, double rhoG, double rhoL, double muG, double muL,
+      double sigma, double diameter, double inclination) {
     // For near-horizontal pipes, use Taitel-Dukler
     if (Math.abs(inclination) < Math.PI / 18) { // Less than 10 degrees
       return detectTaitelDukler(usg, usl, rhoG, rhoL, muG, muL, sigma, diameter, inclination);
@@ -244,29 +239,29 @@ public class FlowPatternDetector {
     if (inclination > 0) {
       // Upward flow
       if (voidFraction < 0.25) {
-        return FlowPattern.BUBBLE;
+	return FlowPattern.BUBBLE;
       }
       if (voidFraction > 0.75) {
-        if (usg > 15.0) {
-          return FlowPattern.DROPLET;
-        }
-        return FlowPattern.ANNULAR;
+	if (usg > 15.0) {
+	  return FlowPattern.DROPLET;
+	}
+	return FlowPattern.ANNULAR;
       }
       // Check for churn flow in vertical
       if (Math.abs(inclination) > Math.PI / 4) { // More than 45 degrees
-        double frg = usg / Math.sqrt(G * diameter);
-        if (frg > 0.5 && frg < 3.0 && voidFraction > 0.4 && voidFraction < 0.7) {
-          return FlowPattern.CHURN;
-        }
+	double frg = usg / Math.sqrt(G * diameter);
+	if (frg > 0.5 && frg < 3.0 && voidFraction > 0.4 && voidFraction < 0.7) {
+	  return FlowPattern.CHURN;
+	}
       }
       return FlowPattern.SLUG;
     } else {
       // Downward flow - simplified
       if (voidFraction > 0.8) {
-        return FlowPattern.ANNULAR;
+	return FlowPattern.ANNULAR;
       }
       if (voidFraction < 0.2) {
-        return FlowPattern.BUBBLE;
+	return FlowPattern.BUBBLE;
       }
       return FlowPattern.SLUG;
     }
@@ -279,16 +274,16 @@ public class FlowPatternDetector {
    * Empirical correlation for all pipe inclinations.
    * </p>
    *
-   * @param usg superficial gas velocity [m/s]
-   * @param usl superficial liquid velocity [m/s]
-   * @param rhoG gas density [kg/m³]
-   * @param rhoL liquid density [kg/m³]
-   * @param diameter pipe diameter [m]
+   * @param usg         superficial gas velocity [m/s]
+   * @param usl         superficial liquid velocity [m/s]
+   * @param rhoG        gas density [kg/m³]
+   * @param rhoL        liquid density [kg/m³]
+   * @param diameter    pipe diameter [m]
    * @param inclination pipe inclination angle [rad]
    * @return the detected flow pattern
    */
-  private static FlowPattern detectBeggsBrill(double usg, double usl, double rhoG, double rhoL,
-      double diameter, double inclination) {
+  private static FlowPattern detectBeggsBrill(double usg, double usl, double rhoG, double rhoL, double diameter,
+      double inclination) {
     double um = usg + usl;
     double lambdaL = usl / um;
     double nFr = um * um / (G * diameter);
@@ -303,8 +298,7 @@ public class FlowPatternDetector {
     if ((lambdaL < 0.01 && nFr < L1) || (lambdaL >= 0.01 && nFr < L2)) {
       return FlowPattern.STRATIFIED; // Segregated
     }
-    if ((lambdaL >= 0.01 && lambdaL < 0.4 && nFr >= L3 && nFr <= L1)
-        || (lambdaL >= 0.4 && nFr >= L3 && nFr <= L4)) {
+    if ((lambdaL >= 0.01 && lambdaL < 0.4 && nFr >= L3 && nFr <= L1) || (lambdaL >= 0.4 && nFr >= L3 && nFr <= L4)) {
       return FlowPattern.SLUG; // Intermittent
     }
     if ((lambdaL < 0.4 && nFr >= L1) || (lambdaL >= 0.4 && nFr > L4)) {
@@ -318,42 +312,41 @@ public class FlowPatternDetector {
   /**
    * Calculates the liquid holdup using the Beggs-Brill correlation.
    *
-   * @param pattern the flow pattern
-   * @param lambdaL no-slip liquid holdup (input liquid fraction)
-   * @param nFr Froude number
+   * @param pattern     the flow pattern
+   * @param lambdaL     no-slip liquid holdup (input liquid fraction)
+   * @param nFr         Froude number
    * @param inclination pipe inclination (radians)
    * @return the actual liquid holdup
    */
-  public static double calculateLiquidHoldup(FlowPattern pattern, double lambdaL, double nFr,
-      double inclination) {
+  public static double calculateLiquidHoldup(FlowPattern pattern, double lambdaL, double nFr, double inclination) {
     // Horizontal liquid holdup coefficients
     double a, b, c;
     switch (pattern) {
-      case STRATIFIED:
-      case STRATIFIED_WAVY:
-        a = 0.980;
-        b = 0.4846;
-        c = 0.0868;
-        break;
-      case SLUG:
-      case CHURN:
-        a = 0.845;
-        b = 0.5351;
-        c = 0.0173;
-        break;
-      case ANNULAR:
-      case DROPLET:
-      case DISPERSED_BUBBLE:
-        a = 1.065;
-        b = 0.5824;
-        c = 0.0609;
-        break;
-      case BUBBLE:
-      default:
-        a = 0.98;
-        b = 0.4846;
-        c = 0.0868;
-        break;
+    case STRATIFIED:
+    case STRATIFIED_WAVY:
+      a = 0.980;
+      b = 0.4846;
+      c = 0.0868;
+      break;
+    case SLUG:
+    case CHURN:
+      a = 0.845;
+      b = 0.5351;
+      c = 0.0173;
+      break;
+    case ANNULAR:
+    case DROPLET:
+    case DISPERSED_BUBBLE:
+      a = 1.065;
+      b = 0.5824;
+      c = 0.0609;
+      break;
+    case BUBBLE:
+    default:
+      a = 0.98;
+      b = 0.4846;
+      c = 0.0868;
+      break;
     }
 
     // Horizontal holdup
@@ -364,8 +357,7 @@ public class FlowPatternDetector {
     // Inclination correction (simplified)
     double theta = inclination;
     if (Math.abs(theta) > 0.001) {
-      double psi = 1.0 + 0.3 * Math.sin(1.8 * theta)
-          - 0.1 * Math.sin(1.8 * theta) * (1.0 - Math.pow(lambdaL, 2));
+      double psi = 1.0 + 0.3 * Math.sin(1.8 * theta) - 0.1 * Math.sin(1.8 * theta) * (1.0 - Math.pow(lambdaL, 2));
       return hL0 * psi;
     }
 

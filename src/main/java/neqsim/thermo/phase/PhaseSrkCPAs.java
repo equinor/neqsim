@@ -22,7 +22,8 @@ public class PhaseSrkCPAs extends PhaseSrkCPA {
    * Constructor for PhaseSrkCPAs.
    * </p>
    */
-  public PhaseSrkCPAs() {}
+  public PhaseSrkCPAs() {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -43,7 +44,7 @@ public class PhaseSrkCPAs extends PhaseSrkCPA {
     componentArray[compNumber] = new ComponentSrkCPAs(name, moles, molesInPhase, compNumber, this);
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i] instanceof ComponentSrkCPA) {
-        ((ComponentSrkCPA) componentArray[i]).resizeXsitedni(numberOfComponents);
+	((ComponentSrkCPA) componentArray[i]).resizeXsitedni(numberOfComponents);
       }
     }
   }
@@ -73,7 +74,7 @@ public class PhaseSrkCPAs extends PhaseSrkCPA {
     double u = 1.0 - x;
 
     double val = -x / (getTotalVolume() * getTotalVolume() * u) + xV / (getTotalVolume() * u)
-        - x / (getTotalVolume() * u * u) * (-1.0) * xV;
+	- x / (getTotalVolume() * u * u) * (-1.0) * xV;
     return -val;
 
     // double gvv
@@ -90,10 +91,8 @@ public class PhaseSrkCPAs extends PhaseSrkCPA {
     double totVol5 = totVol4 * totVol;
 
     double temp1 = 1.0 - 0.475 * getB() / getTotalVolume();
-    double gvv =
-        -0.21434375 / (temp1 * temp1 * temp1) * getB() * getB() * getB() / (totVol5 * totVol)
-            - 0.135375E1 / (temp1 * temp1) * getB() * getB() / (totVol5)
-            - 0.285E1 / (temp1) * getB() / (totVol4);
+    double gvv = -0.21434375 / (temp1 * temp1 * temp1) * getB() * getB() * getB() / (totVol5 * totVol)
+	- 0.135375E1 / (temp1 * temp1) * getB() * getB() / (totVol5) - 0.285E1 / (temp1) * getB() / (totVol4);
     return gvv;
   }
 }

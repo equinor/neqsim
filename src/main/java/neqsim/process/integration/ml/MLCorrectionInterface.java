@@ -4,8 +4,8 @@ package neqsim.process.integration.ml;
  * Interface for integrating machine learning corrections with physics-based models.
  *
  * <p>
- * This interface enables hybrid AI approaches where ML models augment first-principles physics
- * predictions. It is designed for integration with AI-based production optimization platforms.
+ * This interface enables hybrid AI approaches where ML models augment first-principles physics predictions. It is
+ * designed for integration with AI-based production optimization platforms.
  * </p>
  *
  * <p>
@@ -26,7 +26,7 @@ public interface MLCorrectionInterface {
    * Applies ML correction to a physics-based prediction.
    *
    * @param physicsPrediction the prediction from the physics model
-   * @param features input features for the ML model
+   * @param features          input features for the ML model
    * @return corrected prediction
    */
   double correct(double physicsPrediction, double[] features);
@@ -35,7 +35,7 @@ public interface MLCorrectionInterface {
    * Applies ML correction to multiple predictions (batch mode).
    *
    * @param physicsPredictions array of physics predictions
-   * @param featureMatrix matrix of features (one row per prediction)
+   * @param featureMatrix      matrix of features (one row per prediction)
    * @return array of corrected predictions
    */
   default double[] correctBatch(double[] physicsPredictions, double[][] featureMatrix) {
@@ -71,8 +71,7 @@ public interface MLCorrectionInterface {
    * Updates the ML model with new weights/parameters.
    *
    * <p>
-   * This method is called when an external AI platform pushes updated model parameters after
-   * retraining.
+   * This method is called when an external AI platform pushes updated model parameters after retraining.
    * </p>
    *
    * @param modelPayload serialized model parameters
@@ -100,7 +99,7 @@ public interface MLCorrectionInterface {
    * Gets the uncertainty (standard deviation) for a prediction.
    *
    * @param physicsPrediction the physics prediction
-   * @param features input features
+   * @param features          input features
    * @return predicted standard deviation
    */
   default double getUncertainty(double physicsPrediction, double[] features) {

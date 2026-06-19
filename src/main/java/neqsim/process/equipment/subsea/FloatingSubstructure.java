@@ -9,14 +9,12 @@ import neqsim.process.equipment.ProcessEquipmentBaseClass;
  * Floating substructure model for offshore wind turbines and oil/gas platforms.
  *
  * <p>
- * Calculates hydrostatic stability, displacement, draft, and key design parameters for floating
- * structures. Supports common floating concepts:
+ * Calculates hydrostatic stability, displacement, draft, and key design parameters for floating structures. Supports
+ * common floating concepts:
  * </p>
  * <ul>
- * <li><b>Semi-submersible</b>: Multiple columns connected by braces, good motion characteristics
- * </li>
- * <li><b>Spar</b>: Deep-draft cylindrical structure, deep water,
- * ballast-stabilized</li>
+ * <li><b>Semi-submersible</b>: Multiple columns connected by braces, good motion characteristics</li>
+ * <li><b>Spar</b>: Deep-draft cylindrical structure, deep water, ballast-stabilized</li>
  * <li><b>Barge</b>: Shallow-draft flat-bottomed, simple construction</li>
  * <li><b>TLP (Tension Leg Platform)</b>: Buoyancy-excess anchored by tendons</li>
  * </ul>
@@ -44,19 +42,19 @@ import neqsim.process.equipment.ProcessEquipmentBaseClass;
  * <pre>{@code
  * FloatingSubstructure fs = new FloatingSubstructure("Spar Foundation");
  * fs.setConceptType(FloatingSubstructure.ConceptType.SPAR);
- * fs.setTurbineMass(1200.0);   // tonnes
- * fs.setTowerMass(800.0);      // tonnes
- * fs.setWaterDepth(265.0);     // m
+ * fs.setTurbineMass(1200.0); // tonnes
+ * fs.setTowerMass(800.0); // tonnes
+ * fs.setWaterDepth(265.0); // m
  * fs.setSignificantWaveHeight(14.0); // m (100-year)
- * fs.setSeawaterDensity(1025.0);     // kg/m3
+ * fs.setSeawaterDensity(1025.0); // kg/m3
  *
  * // Spar geometry
- * fs.setColumnDiameter(15.0);   // m
- * fs.setColumnHeight(80.0);     // m
+ * fs.setColumnDiameter(15.0); // m
+ * fs.setColumnHeight(80.0); // m
  *
  * fs.run();
- * double gm = fs.getMetacentricHeight();  // m
- * double draft = fs.getDraft();            // m
+ * double gm = fs.getMetacentricHeight(); // m
+ * double draft = fs.getDraft(); // m
  * }</pre>
  *
  * @author esol
@@ -252,20 +250,20 @@ public class FloatingSubstructure extends ProcessEquipmentBaseClass {
   @Override
   public void run(UUID id) {
     switch (conceptType) {
-      case SEMI_SUBMERSIBLE:
-        calculateSemiSubmersible();
-        break;
-      case SPAR:
-        calculateSpar();
-        break;
-      case BARGE:
-        calculateBarge();
-        break;
-      case TLP:
-        calculateTLP();
-        break;
-      default:
-        calculateSemiSubmersible();
+    case SEMI_SUBMERSIBLE:
+      calculateSemiSubmersible();
+      break;
+    case SPAR:
+      calculateSpar();
+      break;
+    case BARGE:
+      calculateBarge();
+      break;
+    case TLP:
+      calculateTLP();
+      break;
+    default:
+      calculateSemiSubmersible();
     }
     calculateNaturalPeriods();
     calculateStaticTilt();
@@ -298,8 +296,7 @@ public class FloatingSubstructure extends ProcessEquipmentBaseClass {
 
     // Pontoon steel
     double pontoonShellPerimeter = 2.0 * (pontoonWidth + pontoonHeight);
-    double pontoonSteelVolume =
-        pontoonShellPerimeter * pontoonLength * 0.025 * 1.15 * numberOfColumns;
+    double pontoonSteelVolume = pontoonShellPerimeter * pontoonLength * 0.025 * 1.15 * numberOfColumns;
     double pontoonSteelMass = pontoonSteelVolume * steelDensity / 1000.0;
 
     // Bracing
@@ -314,11 +311,11 @@ public class FloatingSubstructure extends ProcessEquipmentBaseClass {
     if (ballastMass <= 0) {
       // Auto-calculate ballast to achieve target draft
       double targetDraft = columnHeight * 0.65; // 65% of column height submerged
-      double requiredDisplacement = seawaterDensity * (numberOfColumns * colArea * targetDraft
-          + pontoonVolume) / 1000.0; // tonnes
+      double requiredDisplacement = seawaterDensity * (numberOfColumns * colArea * targetDraft + pontoonVolume)
+	  / 1000.0; // tonnes
       ballastMass = requiredDisplacement - lightshipMass;
       if (ballastMass < 0) {
-        ballastMass = 0;
+	ballastMass = 0;
       }
     }
 
@@ -330,8 +327,7 @@ public class FloatingSubstructure extends ProcessEquipmentBaseClass {
     double pontoonDisplacement = seawaterDensity * pontoonVolume / 1000.0;
     double columnDisplacementNeeded = displacement - pontoonDisplacement;
     if (columnDisplacementNeeded > 0) {
-      draft = columnDisplacementNeeded * 1000.0
-          / (seawaterDensity * numberOfColumns * colArea);
+      draft = columnDisplacementNeeded * 1000.0 / (seawaterDensity * numberOfColumns * colArea);
       draft = Math.min(draft, columnHeight);
     } else {
       draft = pontoonHeight;
@@ -348,8 +344,7 @@ public class FloatingSubstructure extends ProcessEquipmentBaseClass {
     // I = N * (pi*R^4/4 + A*d^2) where d = distance from center
     double iLocal = Math.PI * Math.pow(colRadius, 4) / 4.0;
     double dFromCenter = columnSpacing / 2.0;
-    waterplaneSecondMoment =
-        numberOfColumns * (iLocal + colArea * dFromCenter * dFromCenter);
+    waterplaneSecondMoment = numberOfColumns * (iLocal + colArea * dFromCenter * dFromCenter);
 
     // Center of buoyancy (KB) — approximate as centroid of submerged volume
     double pontoonCB = pontoonHeight / 2.0;
@@ -358,8 +353,7 @@ public class FloatingSubstructure extends ProcessEquipmentBaseClass {
     double volColumnsSubmerged = numberOfColumns * colArea * (draft - pontoonHeight);
     double totalSubmergedVol = volPontoons + volColumnsSubmerged;
     if (totalSubmergedVol > 0) {
-      centerOfBuoyancy =
-          (volPontoons * pontoonCB + volColumnsSubmerged * columnSubmergedCB) / totalSubmergedVol;
+      centerOfBuoyancy = (volPontoons * pontoonCB + volColumnsSubmerged * columnSubmergedCB) / totalSubmergedVol;
     }
 
     // Center of gravity (KG)
@@ -368,8 +362,8 @@ public class FloatingSubstructure extends ProcessEquipmentBaseClass {
     double turbineCog = draft + freeboard + hubHeight; // at hub
     double towerCog = draft + freeboard + (hubHeight / 2.0); // mid-tower
 
-    centerOfGravity = (steelWeight * steelCog + ballastMass * ballastCog
-        + turbineMass * turbineCog + towerMass * towerCog) / totalMass;
+    centerOfGravity = (steelWeight * steelCog + ballastMass * ballastCog + turbineMass * turbineCog
+	+ towerMass * towerCog) / totalMass;
 
     // Metacentric radius (BM = I / V)
     metacentricRadius = waterplaneSecondMoment / displacedVolume;
@@ -403,7 +397,7 @@ public class FloatingSubstructure extends ProcessEquipmentBaseClass {
       double requiredDisplacement = seawaterDensity * colArea * targetDraft / 1000.0;
       ballastMass = requiredDisplacement - lightshipMass;
       if (ballastMass < 0) {
-        ballastMass = 0;
+	ballastMass = 0;
       }
     }
 
@@ -431,8 +425,8 @@ public class FloatingSubstructure extends ProcessEquipmentBaseClass {
     turbineCog = draft + freeboard + hubHeight;
     double towerCog = draft + freeboard + hubHeight / 2.0;
 
-    centerOfGravity = (steelWeight * steelCog + ballastMass * ballastCog
-        + turbineMass * turbineCog + towerMass * towerCog) / totalMass;
+    centerOfGravity = (steelWeight * steelCog + ballastMass * ballastCog + turbineMass * turbineCog
+	+ towerMass * towerCog) / totalMass;
 
     // BM = I/V (very small for spar — stability from low KG)
     metacentricRadius = waterplaneSecondMoment / displacedVolume;
@@ -450,18 +444,16 @@ public class FloatingSubstructure extends ProcessEquipmentBaseClass {
     double bottomArea = bargeLength * bargeWidth;
     double sideArea = 2.0 * (bargeLength + bargeWidth) * bargeDepth;
     double shellThickness = 0.020; // 20mm
-    steelWeight =
-        (bottomArea + sideArea + bottomArea) * shellThickness * 1.30 * steelDensity / 1000.0;
+    steelWeight = (bottomArea + sideArea + bottomArea) * shellThickness * 1.30 * steelDensity / 1000.0;
 
     double lightshipMass = steelWeight + turbineMass + towerMass;
 
     if (ballastMass <= 0) {
       double targetDraft = bargeDepth * 0.50;
-      double requiredDisplacement =
-          seawaterDensity * bargeLength * bargeWidth * targetDraft / 1000.0;
+      double requiredDisplacement = seawaterDensity * bargeLength * bargeWidth * targetDraft / 1000.0;
       ballastMass = requiredDisplacement - lightshipMass;
       if (ballastMass < 0) {
-        ballastMass = 0;
+	ballastMass = 0;
       }
     }
 
@@ -484,8 +476,8 @@ public class FloatingSubstructure extends ProcessEquipmentBaseClass {
     double turbineCog = draft + freeboard + hubHeight;
     double towerCog = draft + freeboard + hubHeight / 2.0;
 
-    centerOfGravity = (steelWeight * steelCog + ballastMass * ballastCog
-        + turbineMass * turbineCog + towerMass * towerCog) / totalMass;
+    centerOfGravity = (steelWeight * steelCog + ballastMass * ballastCog + turbineMass * turbineCog
+	+ towerMass * towerCog) / totalMass;
 
     metacentricRadius = waterplaneSecondMoment / displacedVolume;
     metacentricHeight = centerOfBuoyancy + metacentricRadius - centerOfGravity;
@@ -523,10 +515,8 @@ public class FloatingSubstructure extends ProcessEquipmentBaseClass {
 
     // Pitch natural period: T = 2*pi * sqrt(I_mass / (rho*g*V*GM))
     // Moment of inertia of mass about waterline (approx)
-    double momentOfInertia =
-        totalMass * 1000.0 * Math.pow(centerOfGravity, 2) * 1.5; // kg*m2 approx
-    double stiffnessPitch =
-        seawaterDensity * 9.81 * displacedVolume * Math.abs(metacentricHeight); // N*m/rad
+    double momentOfInertia = totalMass * 1000.0 * Math.pow(centerOfGravity, 2) * 1.5; // kg*m2 approx
+    double stiffnessPitch = seawaterDensity * 9.81 * displacedVolume * Math.abs(metacentricHeight); // N*m/rad
 
     if (stiffnessPitch > 0 && metacentricHeight > 0) {
       pitchNaturalPeriod = 2.0 * Math.PI * Math.sqrt(momentOfInertia / stiffnessPitch);
@@ -556,20 +546,20 @@ public class FloatingSubstructure extends ProcessEquipmentBaseClass {
     // Base cost: steel cost + fabrication + outfitting
     double steelCostPerTonne; // KNOK/tonne
     switch (conceptType) {
-      case SEMI_SUBMERSIBLE:
-        steelCostPerTonne = 50.0; // KNOK/tonne (fab + material)
-        break;
-      case SPAR:
-        steelCostPerTonne = 40.0; // Simpler geometry
-        break;
-      case BARGE:
-        steelCostPerTonne = 35.0; // Simplest
-        break;
-      case TLP:
-        steelCostPerTonne = 60.0; // Complex tendons
-        break;
-      default:
-        steelCostPerTonne = 50.0;
+    case SEMI_SUBMERSIBLE:
+      steelCostPerTonne = 50.0; // KNOK/tonne (fab + material)
+      break;
+    case SPAR:
+      steelCostPerTonne = 40.0; // Simpler geometry
+      break;
+    case BARGE:
+      steelCostPerTonne = 35.0; // Simplest
+      break;
+    case TLP:
+      steelCostPerTonne = 60.0; // Complex tendons
+      break;
+    default:
+      steelCostPerTonne = 50.0;
     }
 
     estimatedCost = steelWeight * steelCostPerTonne / 1000.0; // MNOK

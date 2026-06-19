@@ -35,10 +35,9 @@ import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
- * Provides a stable, string-addressable automation API for interacting with a running NeqSim
- * {@link ProcessSystem} or {@link ProcessModel}. Variables in the simulation are reachable through
- * stable dot-notation paths such as {@code "separator-1.gasOutStream.temperature"}, removing the
- * need to navigate Java objects directly.
+ * Provides a stable, string-addressable automation API for interacting with a running NeqSim {@link ProcessSystem} or
+ * {@link ProcessModel}. Variables in the simulation are reachable through stable dot-notation paths such as
+ * {@code "separator-1.gasOutStream.temperature"}, removing the need to navigate Java objects directly.
  *
  * <p>
  * When backed by a {@link ProcessModel} (multi-area plant), addresses use area-qualified syntax:
@@ -58,8 +57,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * </ul>
  *
  * <p>
- * <strong>Address format:</strong> {@code unitName.property} or
- * {@code unitName.streamPort.property}
+ * <strong>Address format:</strong> {@code unitName.property} or {@code unitName.streamPort.property}
  * </p>
  *
  * <p>
@@ -98,9 +96,8 @@ public class ProcessAutomation {
   public static final String AREA_SEPARATOR = "::";
 
   /**
-   * Stable schema version for JSON responses produced by this facade. Increment the minor for
-   * additive changes, the major for breaking changes. Agents and MCP clients should branch on this
-   * value when parsing responses.
+   * Stable schema version for JSON responses produced by this facade. Increment the minor for additive changes, the
+   * major for breaking changes. Agents and MCP clients should branch on this value when parsing responses.
    */
   public static final String SCHEMA_VERSION = "1.0";
 
@@ -108,16 +105,14 @@ public class ProcessAutomation {
   private final ProcessModel processModel;
   private final AutomationDiagnostics diagnostics;
   /**
-   * Registry of typed write validators consulted by
-   * {@link #setVariableValueValidated(String, double, String)} and
-   * {@link #setValuesTransactional(Map, String)}. Defaults to
-   * {@link WriteValidatorRegistry#createDefault()}.
+   * Registry of typed write validators consulted by {@link #setVariableValueValidated(String, double, String)} and
+   * {@link #setValuesTransactional(Map, String)}. Defaults to {@link WriteValidatorRegistry#createDefault()}.
    */
   private WriteValidatorRegistry validatorRegistry = WriteValidatorRegistry.createDefault();
   /**
-   * Dirty flag: true when one or more inputs have been changed via {@link #setVariableValue} since
-   * the last successful run. Used by {@link #isDirty()}, {@link #runIfDirty()}, and the
-   * {@code stale} warning emitted by {@link #getVariableValueSafe}.
+   * Dirty flag: true when one or more inputs have been changed via {@link #setVariableValue} since the last successful
+   * run. Used by {@link #isDirty()}, {@link #runIfDirty()}, and the {@code stale} warning emitted by
+   * {@link #getVariableValueSafe}.
    */
   private boolean dirty = false;
 
@@ -163,8 +158,8 @@ public class ProcessAutomation {
   }
 
   /**
-   * Returns the diagnostics instance for this automation facade. The diagnostics provide fuzzy name
-   * matching, auto-correction, physical value validation, and operation history tracking.
+   * Returns the diagnostics instance for this automation facade. The diagnostics provide fuzzy name matching,
+   * auto-correction, physical value validation, and operation history tracking.
    *
    * @return the automation diagnostics
    */
@@ -173,11 +168,11 @@ public class ProcessAutomation {
   }
 
   /**
-   * Reads a variable value with self-healing: if the exact address fails, attempts auto-correction
-   * via fuzzy matching against known unit names and variable addresses. Returns a JSON string with
-   * the value on success, or a diagnostic result with suggestions on failure.
+   * Reads a variable value with self-healing: if the exact address fails, attempts auto-correction via fuzzy matching
+   * against known unit names and variable addresses. Returns a JSON string with the value on success, or a diagnostic
+   * result with suggestions on failure.
    *
-   * @param address the dot-notation address, e.g. "separator-1.gasOutStream.temperature"
+   * @param address       the dot-notation address, e.g. "separator-1.gasOutStream.temperature"
    * @param unitOfMeasure the desired unit
    * @return JSON result string with either value or diagnostic information
    */
@@ -189,14 +184,13 @@ public class ProcessAutomation {
     } catch (IllegalArgumentException e) {
       AutomationDiagnostics.DiagnosticResult diag = diagnoseAndAttemptRecovery(address, e);
       if (diag.hasAutoCorrection()) {
-        try {
-          double value = getVariableValue(diag.getAutoCorrection(), unitOfMeasure);
-          diagnostics.recordFailure("get", address, diag.getCategory(), diag.getAutoCorrection());
-          return buildAutoCorrectedJson(address, diag.getAutoCorrection(), value, unitOfMeasure,
-              diag);
-        } catch (Exception retryEx) {
-          // Auto-correction also failed
-        }
+	try {
+	  double value = getVariableValue(diag.getAutoCorrection(), unitOfMeasure);
+	  diagnostics.recordFailure("get", address, diag.getCategory(), diag.getAutoCorrection());
+	  return buildAutoCorrectedJson(address, diag.getAutoCorrection(), value, unitOfMeasure, diag);
+	} catch (Exception retryEx) {
+	  // Auto-correction also failed
+	}
       }
       diagnostics.recordFailure("get", address, diag.getCategory(), null);
       return diag.toJson();
@@ -204,25 +198,23 @@ public class ProcessAutomation {
   }
 
   /**
-   * Sets a variable value with self-healing: if the exact address fails, attempts auto-correction
-   * via fuzzy matching. Also validates the value against physical bounds before setting.
+   * Sets a variable value with self-healing: if the exact address fails, attempts auto-correction via fuzzy matching.
+   * Also validates the value against physical bounds before setting.
    *
-   * @param address the dot-notation address
-   * @param value the value to set
+   * @param address       the dot-notation address
+   * @param value         the value to set
    * @param unitOfMeasure the unit of the value
    * @return JSON result string with either success or diagnostic information
    */
   public String setVariableValueSafe(String address, double value, String unitOfMeasure) {
     // Pre-validate physical bounds
     String propertyName = extractPropertyName(address);
-    AutomationDiagnostics.DiagnosticResult boundsCheck =
-        diagnostics.validatePhysicalBounds(propertyName, value, unitOfMeasure);
-    if (boundsCheck != null
-        && boundsCheck.getCategory() == AutomationDiagnostics.ErrorCategory.VALUE_OUT_OF_BOUNDS
-        && boundsCheck.getContext().containsKey("severity")
-        && !"WARNING".equals(boundsCheck.getContext().get("severity"))) {
-      diagnostics.recordFailure("set", address,
-          AutomationDiagnostics.ErrorCategory.VALUE_OUT_OF_BOUNDS, null);
+    AutomationDiagnostics.DiagnosticResult boundsCheck = diagnostics.validatePhysicalBounds(propertyName, value,
+	unitOfMeasure);
+    if (boundsCheck != null && boundsCheck.getCategory() == AutomationDiagnostics.ErrorCategory.VALUE_OUT_OF_BOUNDS
+	&& boundsCheck.getContext().containsKey("severity")
+	&& !"WARNING".equals(boundsCheck.getContext().get("severity"))) {
+      diagnostics.recordFailure("set", address, AutomationDiagnostics.ErrorCategory.VALUE_OUT_OF_BOUNDS, null);
       return boundsCheck.toJson();
     }
 
@@ -234,14 +226,13 @@ public class ProcessAutomation {
     } catch (IllegalArgumentException e) {
       AutomationDiagnostics.DiagnosticResult diag = diagnoseAndAttemptRecovery(address, e);
       if (diag.hasAutoCorrection()) {
-        try {
-          setVariableValue(diag.getAutoCorrection(), value, unitOfMeasure);
-          diagnostics.recordFailure("set", address, diag.getCategory(), diag.getAutoCorrection());
-          return buildAutoCorrectedSetJson(address, diag.getAutoCorrection(), value, unitOfMeasure,
-              diag);
-        } catch (Exception retryEx) {
-          // Auto-correction also failed
-        }
+	try {
+	  setVariableValue(diag.getAutoCorrection(), value, unitOfMeasure);
+	  diagnostics.recordFailure("set", address, diag.getCategory(), diag.getAutoCorrection());
+	  return buildAutoCorrectedSetJson(address, diag.getAutoCorrection(), value, unitOfMeasure, diag);
+	} catch (Exception retryEx) {
+	  // Auto-correction also failed
+	}
       }
       diagnostics.recordFailure("set", address, diag.getCategory(), null);
       return diag.toJson();
@@ -256,15 +247,14 @@ public class ProcessAutomation {
    */
   public List<String> getAreaList() {
     if (processModel == null) {
-      throw new IllegalStateException(
-          "getAreaList() is only available when backed by a ProcessModel");
+      throw new IllegalStateException("getAreaList() is only available when backed by a ProcessModel");
     }
     return Collections.unmodifiableList(processModel.getProcessSystemNames());
   }
 
   /**
-   * Returns the names of all unit operations. When backed by a {@link ProcessModel}, returns
-   * area-qualified names in the format {@code "AreaName::UnitName"}.
+   * Returns the names of all unit operations. When backed by a {@link ProcessModel}, returns area-qualified names in
+   * the format {@code "AreaName::UnitName"}.
    *
    * @return unmodifiable list of unit operation names
    */
@@ -272,10 +262,10 @@ public class ProcessAutomation {
     if (processModel != null) {
       List<String> names = new ArrayList<String>();
       for (String areaName : processModel.getProcessSystemNames()) {
-        ProcessSystem area = processModel.get(areaName);
-        for (ProcessEquipmentInterface unit : area.getUnitOperations()) {
-          names.add(areaName + AREA_SEPARATOR + unit.getName());
-        }
+	ProcessSystem area = processModel.get(areaName);
+	for (ProcessEquipmentInterface unit : area.getUnitOperations()) {
+	  names.add(areaName + AREA_SEPARATOR + unit.getName());
+	}
       }
       return Collections.unmodifiableList(names);
     }
@@ -289,18 +279,17 @@ public class ProcessAutomation {
   }
 
   /**
-   * Returns the names of unit operations in a specific process area. Only available when backed by
-   * a {@link ProcessModel}.
+   * Returns the names of unit operations in a specific process area. Only available when backed by a
+   * {@link ProcessModel}.
    *
    * @param areaName the name of the process area
    * @return unmodifiable list of unit operation names (without area prefix)
-   * @throws IllegalStateException if backed by a single ProcessSystem
+   * @throws IllegalStateException    if backed by a single ProcessSystem
    * @throws IllegalArgumentException if the area is not found
    */
   public List<String> getUnitList(String areaName) {
     if (processModel == null) {
-      throw new IllegalStateException(
-          "getUnitList(areaName) is only available when backed by a ProcessModel");
+      throw new IllegalStateException("getUnitList(areaName) is only available when backed by a ProcessModel");
     }
     ProcessSystem area = processModel.get(areaName);
     if (area == null) {
@@ -329,12 +318,11 @@ public class ProcessAutomation {
    * Returns variables for the named unit, filtered by type.
    *
    * <p>
-   * When backed by a {@link ProcessModel}, the {@code unitName} may be area-qualified:
-   * {@code "AreaName::UnitName"}.
+   * When backed by a {@link ProcessModel}, the {@code unitName} may be area-qualified: {@code "AreaName::UnitName"}.
    * </p>
    *
    * @param unitName the name of the unit operation, optionally area-qualified
-   * @param type the variable type filter, or null for all variables
+   * @param type     the variable type filter, or null for all variables
    * @return list of variable descriptors matching the filter
    * @throws IllegalArgumentException if the unit is not found
    */
@@ -349,7 +337,7 @@ public class ProcessAutomation {
     List<SimulationVariable> filtered = new ArrayList<SimulationVariable>();
     for (SimulationVariable v : all) {
       if (v.getType() == type) {
-        filtered.add(v);
+	filtered.add(v);
       }
     }
     return Collections.unmodifiableList(filtered);
@@ -358,8 +346,8 @@ public class ProcessAutomation {
   // ------------------------- Adjustable parameters -------------------------
 
   /**
-   * Sentinel threshold above which an adjuster bound is treated as unbounded. Adjusters default to
-   * +/-1e10, so any magnitude at or beyond 1e9 is reported as {@code null} (no bound).
+   * Sentinel threshold above which an adjuster bound is treated as unbounded. Adjusters default to +/-1e10, so any
+   * magnitude at or beyond 1e9 is reported as {@code null} (no bound).
    */
   private static final double UNBOUNDED_THRESHOLD = 1.0e9;
 
@@ -372,11 +360,10 @@ public class ProcessAutomation {
    * <ul>
    * <li><strong>Writable INPUT variables</strong> &mdash; every {@link SimulationVariable} of type
    * {@link VariableType#INPUT} that is writable, with its existing bounds and default unit.</li>
-   * <li><strong>Adjuster unit operations</strong> &mdash; each
-   * {@link neqsim.process.equipment.util.Adjuster} is reported with the unit operation and property
-   * it actually drives ({@link AdjustableParameter#getTargetUnitName()} and
-   * {@link AdjustableParameter#getTargetProperty()}). This removes the ambiguity that arises when
-   * an adjuster's name does not match the variable it controls.</li>
+   * <li><strong>Adjuster unit operations</strong> &mdash; each {@link neqsim.process.equipment.util.Adjuster} is
+   * reported with the unit operation and property it actually drives ({@link AdjustableParameter#getTargetUnitName()}
+   * and {@link AdjustableParameter#getTargetProperty()}). This removes the ambiguity that arises when an adjuster's
+   * name does not match the variable it controls.</li>
    * </ul>
    *
    * @return an unmodifiable list of adjustable parameter descriptors
@@ -386,41 +373,40 @@ public class ProcessAutomation {
     for (String unitName : getUnitList()) {
       ProcessEquipmentInterface unit;
       try {
-        unit = resolveUnit(unitName).unit;
+	unit = resolveUnit(unitName).unit;
       } catch (RuntimeException e) {
-        continue;
+	continue;
       }
       if (unit instanceof Adjuster) {
-        Adjuster adj = (Adjuster) unit;
-        ProcessEquipmentInterface adjusted = adj.getAdjustedEquipment();
-        String targetUnitName = adjusted == null ? null : adjusted.getName();
-        String adjustedVar = emptyToNull(adj.getAdjustedVariable());
-        String unitStr = adj.getAdjustedVariableUnit();
-        Double lo = sanitizeBound(adj.getMinAdjustedValue());
-        Double hi = sanitizeBound(adj.getMaxAdjustedValue());
-        String address;
-        if (targetUnitName != null && adjustedVar != null) {
-          address = targetUnitName + "." + adjustedVar;
-        } else {
-          address = unitName;
-        }
-        params.add(new AdjustableParameter(unitName, address, unitStr, lo, hi, targetUnitName,
-            adjustedVar, AdjustableParameter.Source.ADJUSTER));
+	Adjuster adj = (Adjuster) unit;
+	ProcessEquipmentInterface adjusted = adj.getAdjustedEquipment();
+	String targetUnitName = adjusted == null ? null : adjusted.getName();
+	String adjustedVar = emptyToNull(adj.getAdjustedVariable());
+	String unitStr = adj.getAdjustedVariableUnit();
+	Double lo = sanitizeBound(adj.getMinAdjustedValue());
+	Double hi = sanitizeBound(adj.getMaxAdjustedValue());
+	String address;
+	if (targetUnitName != null && adjustedVar != null) {
+	  address = targetUnitName + "." + adjustedVar;
+	} else {
+	  address = unitName;
+	}
+	params.add(new AdjustableParameter(unitName, address, unitStr, lo, hi, targetUnitName, adjustedVar,
+	    AdjustableParameter.Source.ADJUSTER));
       } else {
-        List<SimulationVariable> inputs;
-        try {
-          inputs = getVariableList(unitName, VariableType.INPUT);
-        } catch (RuntimeException e) {
-          continue;
-        }
-        for (SimulationVariable v : inputs) {
-          if (!v.isWritable()) {
-            continue;
-          }
-          params.add(new AdjustableParameter(v.getName(), v.getAddress(), v.getDefaultUnit(),
-              v.getMinimumValue(), v.getMaximumValue(), unitName, v.getName(),
-              AdjustableParameter.Source.INPUT_VARIABLE));
-        }
+	List<SimulationVariable> inputs;
+	try {
+	  inputs = getVariableList(unitName, VariableType.INPUT);
+	} catch (RuntimeException e) {
+	  continue;
+	}
+	for (SimulationVariable v : inputs) {
+	  if (!v.isWritable()) {
+	    continue;
+	  }
+	  params.add(new AdjustableParameter(v.getName(), v.getAddress(), v.getDefaultUnit(), v.getMinimumValue(),
+	      v.getMaximumValue(), unitName, v.getName(), AdjustableParameter.Source.INPUT_VARIABLE));
+	}
       }
     }
     return Collections.unmodifiableList(params);
@@ -429,8 +415,8 @@ public class ProcessAutomation {
   /**
    * Returns the registry of adjustable parameters as a JSON string.
    *
-   * @return JSON string {@code {schemaVersion, count, parameters:[{name, address, unit, lowerBound,
-   *         upperBound, targetUnitName, targetProperty, source}]}}
+   * @return JSON string {@code {schemaVersion, count, parameters:[{name, address, unit, lowerBound, upperBound,
+   *         targetUnitName, targetProperty, source}]}}
    */
   public String getAdjustableParametersJson() {
     List<AdjustableParameter> params = getAdjustableParameters();
@@ -446,10 +432,9 @@ public class ProcessAutomation {
   }
 
   /**
-   * Creates a new {@link AgenticProcessOptimizer} bound to this automation facade. This is the
-   * recommended entry point for closed-loop, ML- and agent-driven optimization over the underlying
-   * process: the optimizer drives {@link #evaluate(Map, String, java.util.List)} for every trial,
-   * speaks schema-versioned JSON, and never throws.
+   * Creates a new {@link AgenticProcessOptimizer} bound to this automation facade. This is the recommended entry point
+   * for closed-loop, ML- and agent-driven optimization over the underlying process: the optimizer drives
+   * {@link #evaluate(Map, String, java.util.List)} for every trial, speaks schema-versioned JSON, and never throws.
    *
    * @return a fresh optimizer wrapping this facade
    */
@@ -458,8 +443,8 @@ public class ProcessAutomation {
   }
 
   /**
-   * Converts an adjuster bound to a nullable {@link Double}, mapping sentinel "unbounded" values
-   * (magnitude at or beyond {@link #UNBOUNDED_THRESHOLD}) and non-finite values to {@code null}.
+   * Converts an adjuster bound to a nullable {@link Double}, mapping sentinel "unbounded" values (magnitude at or
+   * beyond {@link #UNBOUNDED_THRESHOLD}) and non-finite values to {@code null}.
    *
    * @param value the raw bound value
    * @return the bound, or {@code null} if effectively unbounded
@@ -485,8 +470,8 @@ public class ProcessAutomation {
   }
 
   /**
-   * Returns the simple class name (equipment type) of a unit operation. Useful for discovering what
-   * kind of equipment a unit is, e.g. "Compressor", "Separator", "PipeBeggsAndBrills".
+   * Returns the simple class name (equipment type) of a unit operation. Useful for discovering what kind of equipment a
+   * unit is, e.g. "Compressor", "Separator", "PipeBeggsAndBrills".
    *
    * @param unitName the name of the unit operation, optionally area-qualified
    * @return the simple class name of the equipment
@@ -501,14 +486,13 @@ public class ProcessAutomation {
    * Reads the current value of a simulation variable.
    *
    * <p>
-   * When backed by a {@link ProcessModel}, the address must be area-qualified:
-   * {@code "AreaName::unitName.property"} or {@code "AreaName::unitName.streamPort.property"}.
+   * When backed by a {@link ProcessModel}, the address must be area-qualified: {@code "AreaName::unitName.property"} or
+   * {@code "AreaName::unitName.streamPort.property"}.
    * </p>
    *
-   * @param address the dot-notation address, e.g. "separator-1.gasOutStream.temperature" or
-   *        "Separation::separator-1.gasOutStream.temperature"
-   * @param unitOfMeasure the desired unit, e.g. "C", "bara", "kg/hr". Pass null or empty for
-   *        default units
+   * @param address       the dot-notation address, e.g. "separator-1.gasOutStream.temperature" or
+   *                      "Separation::separator-1.gasOutStream.temperature"
+   * @param unitOfMeasure the desired unit, e.g. "C", "bara", "kg/hr". Pass null or empty for default units
    * @return the variable value in the requested unit
    * @throws IllegalArgumentException if the address cannot be resolved
    */
@@ -536,30 +520,28 @@ public class ProcessAutomation {
     } else if (parts.length == 3) {
       StreamInterface stream = resolveStreamPort(unit, parts[1]);
       if (stream == null) {
-        throw new IllegalArgumentException(
-            "Stream port not found: " + parts[1] + " on unit " + unitName);
+	throw new IllegalArgumentException("Stream port not found: " + parts[1] + " on unit " + unitName);
       }
       return getStreamProperty(stream, parts[2], unitOfMeasure);
     } else {
-      throw new IllegalArgumentException("Invalid address format: " + address
-          + ". Expected 'unitName.property' or 'unitName.port.property'");
+      throw new IllegalArgumentException(
+	  "Invalid address format: " + address + ". Expected 'unitName.property' or 'unitName.port.property'");
     }
   }
 
   /**
-   * Sets the value of a simulation input variable. Only variables with {@link VariableType#INPUT
-   * INPUT} type can be set.
+   * Sets the value of a simulation input variable. Only variables with {@link VariableType#INPUT INPUT} type can be
+   * set.
    *
    * <p>
    * When backed by a {@link ProcessModel}, the address must be area-qualified:
    * {@code "AreaName::Compressor.outletPressure"}.
    * </p>
    *
-   * @param address the dot-notation address, e.g. "Compressor.outletPressure" or
-   *        "Compression::Compressor.outletPressure"
-   * @param value the value to set
-   * @param unitOfMeasure the unit of the provided value, e.g. "bara", "C". Pass null or empty for
-   *        default units
+   * @param address       the dot-notation address, e.g. "Compressor.outletPressure" or
+   *                      "Compression::Compressor.outletPressure"
+   * @param value         the value to set
+   * @param unitOfMeasure the unit of the provided value, e.g. "bara", "C". Pass null or empty for default units
    * @throws IllegalArgumentException if the address cannot be resolved or the variable is read-only
    */
   public void setVariableValue(String address, double value, String unitOfMeasure) {
@@ -586,13 +568,12 @@ public class ProcessAutomation {
     } else if (parts.length == 3) {
       StreamInterface stream = resolveStreamPort(unit, parts[1]);
       if (stream == null) {
-        throw new IllegalArgumentException(
-            "Stream port not found: " + parts[1] + " on unit " + unitName);
+	throw new IllegalArgumentException("Stream port not found: " + parts[1] + " on unit " + unitName);
       }
       setStreamProperty(stream, parts[2], value, unitOfMeasure);
     } else {
-      throw new IllegalArgumentException("Invalid address format: " + address
-          + ". Expected 'unitName.property' or 'unitName.port.property'");
+      throw new IllegalArgumentException(
+	  "Invalid address format: " + address + ". Expected 'unitName.property' or 'unitName.port.property'");
     }
     this.dirty = true;
   }
@@ -645,67 +626,67 @@ public class ProcessAutomation {
     if (unitName != null && (unitName.startsWith("=") || unitName.startsWith("-"))) {
       ProcessEquipmentInterface found = findByReferenceDesignation(areaName, unitName);
       if (found != null) {
-        return found;
+	return found;
       }
     }
 
     if (processModel != null) {
       if (areaName != null) {
-        ProcessSystem area = processModel.get(areaName);
-        if (area == null) {
-          // Try fuzzy area matching
-          List<String> areaNames = processModel.getProcessSystemNames();
-          String corrected = diagnostics.autoCorrectName(areaName, areaNames);
-          if (corrected != null) {
-            area = processModel.get(corrected);
-          }
-          if (area == null) {
-            List<String> suggestions = diagnostics.findClosestNames(areaName, areaNames, 3);
-            throw new IllegalArgumentException("Area not found: " + areaName
-                + (suggestions.isEmpty() ? "" : ". Did you mean: " + suggestions + "?"));
-          }
-        }
-        ProcessEquipmentInterface unit = area.getUnit(unitName);
-        if (unit == null) {
-          // Try fuzzy unit matching within the area
-          List<String> unitNames = getPlainUnitNames(area);
-          String corrected = diagnostics.autoCorrectName(unitName, unitNames);
-          if (corrected != null) {
-            unit = area.getUnit(corrected);
-          }
-          if (unit == null) {
-            List<String> suggestions = diagnostics.findClosestNames(unitName, unitNames, 3);
-            throw new IllegalArgumentException("Unit not found: " + unitName + " in area "
-                + areaName + (suggestions.isEmpty() ? "" : ". Did you mean: " + suggestions + "?"));
-          }
-        }
-        return unit;
+	ProcessSystem area = processModel.get(areaName);
+	if (area == null) {
+	  // Try fuzzy area matching
+	  List<String> areaNames = processModel.getProcessSystemNames();
+	  String corrected = diagnostics.autoCorrectName(areaName, areaNames);
+	  if (corrected != null) {
+	    area = processModel.get(corrected);
+	  }
+	  if (area == null) {
+	    List<String> suggestions = diagnostics.findClosestNames(areaName, areaNames, 3);
+	    throw new IllegalArgumentException(
+		"Area not found: " + areaName + (suggestions.isEmpty() ? "" : ". Did you mean: " + suggestions + "?"));
+	  }
+	}
+	ProcessEquipmentInterface unit = area.getUnit(unitName);
+	if (unit == null) {
+	  // Try fuzzy unit matching within the area
+	  List<String> unitNames = getPlainUnitNames(area);
+	  String corrected = diagnostics.autoCorrectName(unitName, unitNames);
+	  if (corrected != null) {
+	    unit = area.getUnit(corrected);
+	  }
+	  if (unit == null) {
+	    List<String> suggestions = diagnostics.findClosestNames(unitName, unitNames, 3);
+	    throw new IllegalArgumentException("Unit not found: " + unitName + " in area " + areaName
+		+ (suggestions.isEmpty() ? "" : ". Did you mean: " + suggestions + "?"));
+	  }
+	}
+	return unit;
       }
       // Search all areas
       for (String name : processModel.getProcessSystemNames()) {
-        ProcessSystem area = processModel.get(name);
-        ProcessEquipmentInterface unit = area.getUnit(unitName);
-        if (unit != null) {
-          return unit;
-        }
+	ProcessSystem area = processModel.get(name);
+	ProcessEquipmentInterface unit = area.getUnit(unitName);
+	if (unit != null) {
+	  return unit;
+	}
       }
       // Fuzzy search across all areas
       List<String> allNames = new ArrayList<String>();
       for (String name : processModel.getProcessSystemNames()) {
-        allNames.addAll(getPlainUnitNames(processModel.get(name)));
+	allNames.addAll(getPlainUnitNames(processModel.get(name)));
       }
       String corrected = diagnostics.autoCorrectName(unitName, allNames);
       if (corrected != null) {
-        for (String name : processModel.getProcessSystemNames()) {
-          ProcessEquipmentInterface u = processModel.get(name).getUnit(corrected);
-          if (u != null) {
-            return u;
-          }
-        }
+	for (String name : processModel.getProcessSystemNames()) {
+	  ProcessEquipmentInterface u = processModel.get(name).getUnit(corrected);
+	  if (u != null) {
+	    return u;
+	  }
+	}
       }
       List<String> suggestions = diagnostics.findClosestNames(unitName, allNames, 3);
       throw new IllegalArgumentException("Unit not found in any area: " + unitName
-          + (suggestions.isEmpty() ? "" : ". Did you mean: " + suggestions + "?"));
+	  + (suggestions.isEmpty() ? "" : ". Did you mean: " + suggestions + "?"));
     }
 
     // Single ProcessSystem mode
@@ -715,12 +696,12 @@ public class ProcessAutomation {
       List<String> unitNames = getPlainUnitNames(processSystem);
       String corrected = diagnostics.autoCorrectName(unitName, unitNames);
       if (corrected != null) {
-        unit = processSystem.getUnit(corrected);
+	unit = processSystem.getUnit(corrected);
       }
       if (unit == null) {
-        List<String> suggestions = diagnostics.findClosestNames(unitName, unitNames, 3);
-        throw new IllegalArgumentException("Unit not found: " + unitName
-            + (suggestions.isEmpty() ? "" : ". Did you mean: " + suggestions + "?"));
+	List<String> suggestions = diagnostics.findClosestNames(unitName, unitNames, 3);
+	throw new IllegalArgumentException(
+	    "Unit not found: " + unitName + (suggestions.isEmpty() ? "" : ". Did you mean: " + suggestions + "?"));
       }
     }
     return unit;
@@ -745,28 +726,27 @@ public class ProcessAutomation {
    * Finds a unit by its IEC 81346 reference designation string.
    *
    * <p>
-   * Searches all equipment in the relevant process system(s) for a matching reference designation.
-   * This enables addressing equipment by their IEC 81346 codes, e.g. "=A1-B1" or "-K2".
+   * Searches all equipment in the relevant process system(s) for a matching reference designation. This enables
+   * addressing equipment by their IEC 81346 codes, e.g. "=A1-B1" or "-K2".
    * </p>
    *
-   * @param areaName the area name to search within (null to search all)
+   * @param areaName     the area name to search within (null to search all)
    * @param refDesString the reference designation string to match
    * @return the matching equipment, or null if not found
    */
-  private ProcessEquipmentInterface findByReferenceDesignation(String areaName,
-      String refDesString) {
+  private ProcessEquipmentInterface findByReferenceDesignation(String areaName, String refDesString) {
     if (processModel != null) {
       if (areaName != null) {
-        ProcessSystem area = processModel.get(areaName);
-        if (area != null) {
-          return searchByRefDes(area, refDesString);
-        }
+	ProcessSystem area = processModel.get(areaName);
+	if (area != null) {
+	  return searchByRefDes(area, refDesString);
+	}
       }
       for (String name : processModel.getProcessSystemNames()) {
-        ProcessEquipmentInterface found = searchByRefDes(processModel.get(name), refDesString);
-        if (found != null) {
-          return found;
-        }
+	ProcessEquipmentInterface found = searchByRefDes(processModel.get(name), refDesString);
+	if (found != null) {
+	  return found;
+	}
       }
       return null;
     }
@@ -776,7 +756,7 @@ public class ProcessAutomation {
   /**
    * Searches a process system for equipment matching a reference designation string.
    *
-   * @param ps the process system to search
+   * @param ps           the process system to search
    * @param refDesString the reference designation to match
    * @return the matching equipment, or null if not found
    */
@@ -784,7 +764,7 @@ public class ProcessAutomation {
     for (ProcessEquipmentInterface unit : ps.getUnitOperations()) {
       String unitRefDes = unit.getReferenceDesignationString();
       if (unitRefDes != null && !unitRefDes.isEmpty() && unitRefDes.equals(refDesString)) {
-        return unit;
+	return unit;
       }
     }
     return null;
@@ -794,19 +774,18 @@ public class ProcessAutomation {
    * Builds the list of variables exposed by a unit operation.
    *
    * @param unitName the unit name (used as address prefix)
-   * @param unit the unit operation
+   * @param unit     the unit operation
    * @return list of variables
    */
-  private List<SimulationVariable> buildVariableList(String unitName,
-      ProcessEquipmentInterface unit) {
+  private List<SimulationVariable> buildVariableList(String unitName, ProcessEquipmentInterface unit) {
     List<SimulationVariable> vars = new ArrayList<SimulationVariable>();
     boolean handledOutlets = false;
 
     // Universal equipment-level outputs
-    vars.add(new SimulationVariable(unitName + ".temperature", "temperature", VariableType.OUTPUT,
-        "K", "Equipment temperature"));
-    vars.add(new SimulationVariable(unitName + ".pressure", "pressure", VariableType.OUTPUT, "bara",
-        "Equipment pressure"));
+    vars.add(new SimulationVariable(unitName + ".temperature", "temperature", VariableType.OUTPUT, "K",
+	"Equipment temperature"));
+    vars.add(
+	new SimulationVariable(unitName + ".pressure", "pressure", VariableType.OUTPUT, "bara", "Equipment pressure"));
 
     // Stream-specific variables
     if (unit instanceof StreamInterface) {
@@ -816,48 +795,42 @@ public class ProcessAutomation {
 
     // Separator family (ThreePhaseSeparator before Separator since it extends Separator)
     if (unit instanceof ThreePhaseSeparator) {
-      addStreamOutputVariables(vars, unitName + ".gasOutStream",
-          ((ThreePhaseSeparator) unit).getGasOutStream());
-      addStreamOutputVariables(vars, unitName + ".oilOutStream",
-          ((ThreePhaseSeparator) unit).getOilOutStream());
-      addStreamOutputVariables(vars, unitName + ".waterOutStream",
-          ((ThreePhaseSeparator) unit).getWaterOutStream());
+      addStreamOutputVariables(vars, unitName + ".gasOutStream", ((ThreePhaseSeparator) unit).getGasOutStream());
+      addStreamOutputVariables(vars, unitName + ".oilOutStream", ((ThreePhaseSeparator) unit).getOilOutStream());
+      addStreamOutputVariables(vars, unitName + ".waterOutStream", ((ThreePhaseSeparator) unit).getWaterOutStream());
       handledOutlets = true;
     } else if (unit instanceof Separator) {
-      addStreamOutputVariables(vars, unitName + ".gasOutStream",
-          ((Separator) unit).getGasOutStream());
-      addStreamOutputVariables(vars, unitName + ".liquidOutStream",
-          ((Separator) unit).getLiquidOutStream());
+      addStreamOutputVariables(vars, unitName + ".gasOutStream", ((Separator) unit).getGasOutStream());
+      addStreamOutputVariables(vars, unitName + ".liquidOutStream", ((Separator) unit).getLiquidOutStream());
       handledOutlets = true;
     }
 
     // Tank (gas/liquid outlets like separator)
     if (unit instanceof Tank) {
-      vars.add(new SimulationVariable(unitName + ".liquidLevel", "liquidLevel", VariableType.OUTPUT,
-          "", "Tank liquid level"));
-      vars.add(new SimulationVariable(unitName + ".volume", "volume", VariableType.INPUT, "m3",
-          "Tank volume"));
+      vars.add(new SimulationVariable(unitName + ".liquidLevel", "liquidLevel", VariableType.OUTPUT, "",
+	  "Tank liquid level"));
+      vars.add(new SimulationVariable(unitName + ".volume", "volume", VariableType.INPUT, "m3", "Tank volume"));
       try {
-        addStreamOutputVariables(vars, unitName + ".gasOutStream",
-            (StreamInterface) unit.getClass().getMethod("getGasOutStream").invoke(unit));
-        addStreamOutputVariables(vars, unitName + ".liquidOutStream",
-            (StreamInterface) unit.getClass().getMethod("getLiquidOutStream").invoke(unit));
-        handledOutlets = true;
+	addStreamOutputVariables(vars, unitName + ".gasOutStream",
+	    (StreamInterface) unit.getClass().getMethod("getGasOutStream").invoke(unit));
+	addStreamOutputVariables(vars, unitName + ".liquidOutStream",
+	    (StreamInterface) unit.getClass().getMethod("getLiquidOutStream").invoke(unit));
+	handledOutlets = true;
       } catch (Exception e) {
-        // Tank may not have gas/liquid split
+	// Tank may not have gas/liquid split
       }
     }
 
     // Expander (extends Compressor, check before Compressor)
     if (unit instanceof Expander) {
-      vars.add(new SimulationVariable(unitName + ".outletPressure", "outletPressure",
-          VariableType.INPUT, "bara", "Expander outlet pressure"));
-      vars.add(new SimulationVariable(unitName + ".isentropicEfficiency", "isentropicEfficiency",
-          VariableType.INPUT, "", "Isentropic efficiency (fraction)"));
-      vars.add(new SimulationVariable(unitName + ".polytropicEfficiency", "polytropicEfficiency",
-          VariableType.INPUT, "", "Polytropic efficiency (fraction)"));
-      vars.add(new SimulationVariable(unitName + ".power", "power", VariableType.OUTPUT, "kW",
-          "Expander power output"));
+      vars.add(new SimulationVariable(unitName + ".outletPressure", "outletPressure", VariableType.INPUT, "bara",
+	  "Expander outlet pressure"));
+      vars.add(new SimulationVariable(unitName + ".isentropicEfficiency", "isentropicEfficiency", VariableType.INPUT,
+	  "", "Isentropic efficiency (fraction)"));
+      vars.add(new SimulationVariable(unitName + ".polytropicEfficiency", "polytropicEfficiency", VariableType.INPUT,
+	  "", "Polytropic efficiency (fraction)"));
+      vars.add(
+	  new SimulationVariable(unitName + ".power", "power", VariableType.OUTPUT, "kW", "Expander power output"));
       addOutletStreamVariables(vars, unitName, unit);
       handledOutlets = true;
     }
@@ -865,43 +838,41 @@ public class ProcessAutomation {
     // CompressorTrain (check before Compressor since it doesn't extend Compressor)
     if (unit instanceof CompressorTrain) {
       vars.add(new SimulationVariable(unitName + ".power", "power", VariableType.OUTPUT, "kW",
-          "Compressor train total power"));
-      vars.add(new SimulationVariable(unitName + ".polytropicEfficiency", "polytropicEfficiency",
-          VariableType.OUTPUT, "", "Overall polytropic efficiency"));
+	  "Compressor train total power"));
+      vars.add(new SimulationVariable(unitName + ".polytropicEfficiency", "polytropicEfficiency", VariableType.OUTPUT,
+	  "", "Overall polytropic efficiency"));
       addOutletStreamVariables(vars, unitName, unit);
       handledOutlets = true;
     }
 
     // Compressor (not Expander)
     if (unit instanceof Compressor && !(unit instanceof Expander)) {
-      vars.add(new SimulationVariable(unitName + ".outletPressure", "outletPressure",
-          VariableType.INPUT, "bara", "Compressor outlet pressure"));
-      vars.add(new SimulationVariable(unitName + ".polytropicEfficiency", "polytropicEfficiency",
-          VariableType.INPUT, "", "Polytropic efficiency (fraction)"));
-      vars.add(new SimulationVariable(unitName + ".isentropicEfficiency", "isentropicEfficiency",
-          VariableType.OUTPUT, "", "Isentropic efficiency (fraction)"));
+      vars.add(new SimulationVariable(unitName + ".outletPressure", "outletPressure", VariableType.INPUT, "bara",
+	  "Compressor outlet pressure"));
+      vars.add(new SimulationVariable(unitName + ".polytropicEfficiency", "polytropicEfficiency", VariableType.INPUT,
+	  "", "Polytropic efficiency (fraction)"));
+      vars.add(new SimulationVariable(unitName + ".isentropicEfficiency", "isentropicEfficiency", VariableType.OUTPUT,
+	  "", "Isentropic efficiency (fraction)"));
       vars.add(new SimulationVariable(unitName + ".power", "power", VariableType.OUTPUT, "kW",
-          "Compressor power consumption"));
-      vars.add(new SimulationVariable(unitName + ".speed", "speed", VariableType.INPUT, "rpm",
-          "Compressor speed"));
-      vars.add(new SimulationVariable(unitName + ".polytropicHead", "polytropicHead",
-          VariableType.OUTPUT, "kJ/kg", "Polytropic head"));
-      vars.add(new SimulationVariable(unitName + ".compressionRatio", "compressionRatio",
-          VariableType.OUTPUT, "", "Compression ratio"));
+	  "Compressor power consumption"));
+      vars.add(new SimulationVariable(unitName + ".speed", "speed", VariableType.INPUT, "rpm", "Compressor speed"));
+      vars.add(new SimulationVariable(unitName + ".polytropicHead", "polytropicHead", VariableType.OUTPUT, "kJ/kg",
+	  "Polytropic head"));
+      vars.add(new SimulationVariable(unitName + ".compressionRatio", "compressionRatio", VariableType.OUTPUT, "",
+	  "Compression ratio"));
       addOutletStreamVariables(vars, unitName, unit);
       handledOutlets = true;
     }
 
     // Pump
     if (unit instanceof Pump) {
-      vars.add(new SimulationVariable(unitName + ".outletPressure", "outletPressure",
-          VariableType.INPUT, "bara", "Pump outlet pressure"));
-      vars.add(new SimulationVariable(unitName + ".power", "power", VariableType.OUTPUT, "kW",
-          "Pump power consumption"));
-      vars.add(new SimulationVariable(unitName + ".isentropicEfficiency", "isentropicEfficiency",
-          VariableType.INPUT, "", "Isentropic efficiency (fraction)"));
-      vars.add(new SimulationVariable(unitName + ".speed", "speed", VariableType.INPUT, "rpm",
-          "Pump speed"));
+      vars.add(new SimulationVariable(unitName + ".outletPressure", "outletPressure", VariableType.INPUT, "bara",
+	  "Pump outlet pressure"));
+      vars.add(
+	  new SimulationVariable(unitName + ".power", "power", VariableType.OUTPUT, "kW", "Pump power consumption"));
+      vars.add(new SimulationVariable(unitName + ".isentropicEfficiency", "isentropicEfficiency", VariableType.INPUT,
+	  "", "Isentropic efficiency (fraction)"));
+      vars.add(new SimulationVariable(unitName + ".speed", "speed", VariableType.INPUT, "rpm", "Pump speed"));
       addOutletStreamVariables(vars, unitName, unit);
       handledOutlets = true;
     }
@@ -909,79 +880,74 @@ public class ProcessAutomation {
     // Heat exchanger (HeatExchanger extends Heater, so check BEFORE Heater)
     if (unit instanceof HeatExchanger && !(unit instanceof Cooler)) {
       vars.add(new SimulationVariable(unitName + ".UAvalue", "UAvalue", VariableType.INPUT, "W/K",
-          "Overall heat transfer coefficient times area"));
-      vars.add(new SimulationVariable(unitName + ".duty", "duty", VariableType.OUTPUT, "W",
-          "Heat exchanger duty"));
-      vars.add(new SimulationVariable(unitName + ".thermalEffectiveness", "thermalEffectiveness",
-          VariableType.OUTPUT, "", "Thermal effectiveness"));
+	  "Overall heat transfer coefficient times area"));
+      vars.add(new SimulationVariable(unitName + ".duty", "duty", VariableType.OUTPUT, "W", "Heat exchanger duty"));
+      vars.add(new SimulationVariable(unitName + ".thermalEffectiveness", "thermalEffectiveness", VariableType.OUTPUT,
+	  "", "Thermal effectiveness"));
       handledOutlets = true;
     }
 
     // Cooler
     if (unit instanceof Cooler) {
-      vars.add(new SimulationVariable(unitName + ".outletTemperature", "outletTemperature",
-          VariableType.INPUT, "C", "Cooler outlet temperature"));
-      vars.add(new SimulationVariable(unitName + ".duty", "duty", VariableType.OUTPUT, "W",
-          "Cooler duty"));
+      vars.add(new SimulationVariable(unitName + ".outletTemperature", "outletTemperature", VariableType.INPUT, "C",
+	  "Cooler outlet temperature"));
+      vars.add(new SimulationVariable(unitName + ".duty", "duty", VariableType.OUTPUT, "W", "Cooler duty"));
       addOutletStreamVariables(vars, unitName, unit);
       handledOutlets = true;
     }
 
     // Heater (not Cooler and not HeatExchanger)
     if (unit instanceof Heater && !(unit instanceof Cooler) && !(unit instanceof HeatExchanger)) {
-      vars.add(new SimulationVariable(unitName + ".outletTemperature", "outletTemperature",
-          VariableType.INPUT, "C", "Heater outlet temperature"));
-      vars.add(new SimulationVariable(unitName + ".duty", "duty", VariableType.OUTPUT, "W",
-          "Heater duty"));
+      vars.add(new SimulationVariable(unitName + ".outletTemperature", "outletTemperature", VariableType.INPUT, "C",
+	  "Heater outlet temperature"));
+      vars.add(new SimulationVariable(unitName + ".duty", "duty", VariableType.OUTPUT, "W", "Heater duty"));
       addOutletStreamVariables(vars, unitName, unit);
       handledOutlets = true;
     }
 
     // Valve
     if (unit instanceof ThrottlingValve) {
-      vars.add(new SimulationVariable(unitName + ".outletPressure", "outletPressure",
-          VariableType.INPUT, "bara", "Valve outlet pressure"));
-      vars.add(new SimulationVariable(unitName + ".Cv", "Cv", VariableType.INPUT, "",
-          "Valve flow coefficient"));
-      vars.add(new SimulationVariable(unitName + ".percentValveOpening", "percentValveOpening",
-          VariableType.INPUT, "%", "Valve opening percentage"));
+      vars.add(new SimulationVariable(unitName + ".outletPressure", "outletPressure", VariableType.INPUT, "bara",
+	  "Valve outlet pressure"));
+      vars.add(new SimulationVariable(unitName + ".Cv", "Cv", VariableType.INPUT, "", "Valve flow coefficient"));
+      vars.add(new SimulationVariable(unitName + ".percentValveOpening", "percentValveOpening", VariableType.INPUT, "%",
+	  "Valve opening percentage"));
       addOutletStreamVariables(vars, unitName, unit);
       handledOutlets = true;
     }
 
     // Pipeline (AdiabaticPipe, PipeBeggsAndBrills, etc.)
     if (unit instanceof Pipeline) {
-      vars.add(new SimulationVariable(unitName + ".length", "length", VariableType.INPUT, "m",
-          "Pipe length"));
-      vars.add(new SimulationVariable(unitName + ".diameter", "diameter", VariableType.INPUT, "m",
-          "Pipe inner diameter"));
-      vars.add(new SimulationVariable(unitName + ".pipeWallRoughness", "pipeWallRoughness",
-          VariableType.INPUT, "m", "Pipe wall roughness"));
-      vars.add(new SimulationVariable(unitName + ".wallThickness", "wallThickness",
-          VariableType.INPUT, "m", "Pipe wall thickness"));
+      vars.add(new SimulationVariable(unitName + ".length", "length", VariableType.INPUT, "m", "Pipe length"));
+      vars.add(
+	  new SimulationVariable(unitName + ".diameter", "diameter", VariableType.INPUT, "m", "Pipe inner diameter"));
+      vars.add(new SimulationVariable(unitName + ".pipeWallRoughness", "pipeWallRoughness", VariableType.INPUT, "m",
+	  "Pipe wall roughness"));
+      vars.add(new SimulationVariable(unitName + ".wallThickness", "wallThickness", VariableType.INPUT, "m",
+	  "Pipe wall thickness"));
       vars.add(new SimulationVariable(unitName + ".elevation", "elevation", VariableType.INPUT, "m",
-          "Pipe elevation change from inlet to outlet"));
-      vars.add(new SimulationVariable(unitName + ".pressureDrop", "pressureDrop",
-          VariableType.OUTPUT, "bara", "Pressure drop across pipe"));
+	  "Pipe elevation change from inlet to outlet"));
+      vars.add(new SimulationVariable(unitName + ".pressureDrop", "pressureDrop", VariableType.OUTPUT, "bara",
+	  "Pressure drop across pipe"));
       if (unit instanceof WaterHammerPipe) {
-        vars.add(new SimulationVariable(unitName + ".valveOpening", "valveOpening",
-            VariableType.INPUT, "", "Water-hammer valve opening fraction"));
-        vars.add(new SimulationVariable(unitName + ".valveOpeningPercent", "valveOpeningPercent",
-            VariableType.INPUT, "%", "Water-hammer valve opening percentage"));
-        vars.add(new SimulationVariable(unitName + ".waveSpeed", "waveSpeed", VariableType.INPUT,
-            "m/s", "Acoustic wave speed override or calculated value"));
-        vars.add(new SimulationVariable(unitName + ".numberOfNodes", "numberOfNodes",
-            VariableType.INPUT, "", "Water-hammer computational node count"));
-        vars.add(new SimulationVariable(unitName + ".courantNumber", "courantNumber",
-            VariableType.INPUT, "", "Courant number for stable transient time steps"));
-        vars.add(new SimulationVariable(unitName + ".maxStableTimeStep", "maxStableTimeStep",
-            VariableType.OUTPUT, "s", "Maximum stable time step from the Courant limit"));
-        vars.add(new SimulationVariable(unitName + ".waveRoundTripTime", "waveRoundTripTime",
-            VariableType.OUTPUT, "s", "Pipe acoustic wave round-trip time"));
-        vars.add(new SimulationVariable(unitName + ".maxPressure", "maxPressure",
-            VariableType.OUTPUT, "bara", "Maximum pressure envelope during transient"));
-        vars.add(new SimulationVariable(unitName + ".minPressure", "minPressure",
-            VariableType.OUTPUT, "bara", "Minimum pressure envelope during transient"));
+	vars.add(new SimulationVariable(unitName + ".valveOpening", "valveOpening", VariableType.INPUT, "",
+	    "Water-hammer valve opening fraction"));
+	vars.add(new SimulationVariable(unitName + ".valveOpeningPercent", "valveOpeningPercent", VariableType.INPUT,
+	    "%", "Water-hammer valve opening percentage"));
+	vars.add(new SimulationVariable(unitName + ".waveSpeed", "waveSpeed", VariableType.INPUT, "m/s",
+	    "Acoustic wave speed override or calculated value"));
+	vars.add(new SimulationVariable(unitName + ".numberOfNodes", "numberOfNodes", VariableType.INPUT, "",
+	    "Water-hammer computational node count"));
+	vars.add(new SimulationVariable(unitName + ".courantNumber", "courantNumber", VariableType.INPUT, "",
+	    "Courant number for stable transient time steps"));
+	vars.add(new SimulationVariable(unitName + ".maxStableTimeStep", "maxStableTimeStep", VariableType.OUTPUT, "s",
+	    "Maximum stable time step from the Courant limit"));
+	vars.add(new SimulationVariable(unitName + ".waveRoundTripTime", "waveRoundTripTime", VariableType.OUTPUT, "s",
+	    "Pipe acoustic wave round-trip time"));
+	vars.add(new SimulationVariable(unitName + ".maxPressure", "maxPressure", VariableType.OUTPUT, "bara",
+	    "Maximum pressure envelope during transient"));
+	vars.add(new SimulationVariable(unitName + ".minPressure", "minPressure", VariableType.OUTPUT, "bara",
+	    "Minimum pressure envelope during transient"));
       }
       addOutletStreamVariables(vars, unitName, unit);
       handledOutlets = true;
@@ -989,36 +955,36 @@ public class ProcessAutomation {
 
     // Ejector
     if (unit instanceof Ejector) {
-      vars.add(new SimulationVariable(unitName + ".dischargePressure", "dischargePressure",
-          VariableType.INPUT, "bara", "Ejector discharge pressure"));
-      vars.add(new SimulationVariable(unitName + ".entrainmentRatio", "entrainmentRatio",
-          VariableType.OUTPUT, "", "Ejector entrainment ratio"));
-      vars.add(new SimulationVariable(unitName + ".efficiencyIsentropic", "efficiencyIsentropic",
-          VariableType.INPUT, "", "Isentropic efficiency"));
+      vars.add(new SimulationVariable(unitName + ".dischargePressure", "dischargePressure", VariableType.INPUT, "bara",
+	  "Ejector discharge pressure"));
+      vars.add(new SimulationVariable(unitName + ".entrainmentRatio", "entrainmentRatio", VariableType.OUTPUT, "",
+	  "Ejector entrainment ratio"));
+      vars.add(new SimulationVariable(unitName + ".efficiencyIsentropic", "efficiencyIsentropic", VariableType.INPUT,
+	  "", "Isentropic efficiency"));
       handledOutlets = true;
     }
 
     // Gibbs reactor (and other TwoPortEquipment reactors)
     if (unit instanceof GibbsReactor) {
       vars.add(new SimulationVariable(unitName + ".power", "power", VariableType.OUTPUT, "kW",
-          "Reactor power (heat of reaction)"));
+	  "Reactor power (heat of reaction)"));
       addOutletStreamVariables(vars, unitName, unit);
       handledOutlets = true;
     }
 
     // Distillation column
     if (unit instanceof DistillationColumn) {
-      vars.add(new SimulationVariable(unitName + ".condenserRefluxRatio", "condenserRefluxRatio",
-          VariableType.INPUT, "", "Condenser reflux ratio"));
+      vars.add(new SimulationVariable(unitName + ".condenserRefluxRatio", "condenserRefluxRatio", VariableType.INPUT,
+	  "", "Condenser reflux ratio"));
       handledOutlets = true;
     }
 
     // Recycle
     if (unit instanceof Recycle) {
-      vars.add(new SimulationVariable(unitName + ".errorTemperature", "errorTemperature",
-          VariableType.OUTPUT, "", "Temperature convergence error"));
+      vars.add(new SimulationVariable(unitName + ".errorTemperature", "errorTemperature", VariableType.OUTPUT, "",
+	  "Temperature convergence error"));
       vars.add(new SimulationVariable(unitName + ".errorFlow", "errorFlow", VariableType.OUTPUT, "",
-          "Flow rate convergence error"));
+	  "Flow rate convergence error"));
       addOutletStreamVariables(vars, unitName, unit);
       handledOutlets = true;
     }
@@ -1039,7 +1005,7 @@ public class ProcessAutomation {
     if (unit instanceof Splitter && !(unit instanceof ComponentSplitter)) {
       List<StreamInterface> splitStreams = unit.getOutletStreams();
       for (int i = 0; i < splitStreams.size(); i++) {
-        addStreamOutputVariables(vars, unitName + ".splitStream_" + i, splitStreams.get(i));
+	addStreamOutputVariables(vars, unitName + ".splitStream_" + i, splitStreams.get(i));
       }
       handledOutlets = true;
     }
@@ -1074,34 +1040,28 @@ public class ProcessAutomation {
    */
   private SimulationVariable enrichVariableMetadata(SimulationVariable variable) {
     SimulationVariable enriched = variable.withCategory(inferVariableCategory(variable))
-        .withWritableSafety(variable.getType() == VariableType.INPUT,
-            variable.getType() == VariableType.INPUT)
-        .withApplicability(inferApplicability(variable));
+	.withWritableSafety(variable.getType() == VariableType.INPUT, variable.getType() == VariableType.INPUT)
+	.withApplicability(inferApplicability(variable));
     String name = variable.getName();
 
     if ("temperature".equals(name) || "outletTemperature".equals(name)) {
-      return enriched.withBounds(Double.valueOf(1.0), Double.valueOf(2000.0))
-          .withUnitFamily("temperature");
+      return enriched.withBounds(Double.valueOf(1.0), Double.valueOf(2000.0)).withUnitFamily("temperature");
     }
-    if ("pressure".equals(name) || "outletPressure".equals(name)
-        || "dischargePressure".equals(name)) {
-      return enriched.withBounds(Double.valueOf(1.0e-6), Double.valueOf(10000.0))
-          .withUnitFamily("pressure");
+    if ("pressure".equals(name) || "outletPressure".equals(name) || "dischargePressure".equals(name)) {
+      return enriched.withBounds(Double.valueOf(1.0e-6), Double.valueOf(10000.0)).withUnitFamily("pressure");
     }
     if ("flowRate".equals(name)) {
       return enriched.withBounds(Double.valueOf(0.0), null).withUnitFamily("flow");
     }
     if (name.toLowerCase().contains("efficiency")) {
-      return enriched.withBounds(Double.valueOf(0.0), Double.valueOf(1.0))
-          .withUnitFamily("fraction");
+      return enriched.withBounds(Double.valueOf(0.0), Double.valueOf(1.0)).withUnitFamily("fraction");
     }
     if ("percentValveOpening".equals(name)) {
-      return enriched.withBounds(Double.valueOf(0.0), Double.valueOf(100.0))
-          .withUnitFamily("fraction");
+      return enriched.withBounds(Double.valueOf(0.0), Double.valueOf(100.0)).withUnitFamily("fraction");
     }
     if ("Cv".equals(name) || "UAvalue".equals(name) || "speed".equals(name) || "length".equals(name)
-        || "diameter".equals(name) || "pipeWallRoughness".equals(name) || "volume".equals(name)
-        || "condenserRefluxRatio".equals(name)) {
+	|| "diameter".equals(name) || "pipeWallRoughness".equals(name) || "volume".equals(name)
+	|| "condenserRefluxRatio".equals(name)) {
       return enriched.withBounds(Double.valueOf(0.0), null);
     }
     return enriched;
@@ -1122,8 +1082,7 @@ public class ProcessAutomation {
     if (name.toLowerCase().contains("efficiency") || "power".equals(name) || "duty".equals(name)) {
       return "performance";
     }
-    if ("length".equals(name) || "diameter".equals(name) || "volume".equals(name)
-        || "pipeWallRoughness".equals(name)) {
+    if ("length".equals(name) || "diameter".equals(name) || "volume".equals(name) || "pipeWallRoughness".equals(name)) {
       return "geometry";
     }
     return variable.getType() == VariableType.INPUT ? "equipment_input" : "equipment_output";
@@ -1154,35 +1113,30 @@ public class ProcessAutomation {
   /**
    * Adds stream variables (temperature, pressure, flowRate) with appropriate INPUT/OUTPUT type.
    *
-   * @param vars the list to add to
-   * @param prefix the address prefix
-   * @param stream the stream
+   * @param vars    the list to add to
+   * @param prefix  the address prefix
+   * @param stream  the stream
    * @param isInput whether the stream properties are settable
    */
-  private void addStreamVariables(List<SimulationVariable> vars, String prefix,
-      StreamInterface stream, boolean isInput) {
+  private void addStreamVariables(List<SimulationVariable> vars, String prefix, StreamInterface stream,
+      boolean isInput) {
     VariableType inputType = isInput ? VariableType.INPUT : VariableType.OUTPUT;
-    vars.add(new SimulationVariable(prefix + ".temperature", "temperature", inputType, "K",
-        "Stream temperature"));
-    vars.add(new SimulationVariable(prefix + ".pressure", "pressure", inputType, "bara",
-        "Stream pressure"));
-    vars.add(new SimulationVariable(prefix + ".flowRate", "flowRate", inputType, "kg/hr",
-        "Stream mass flow rate"));
-    vars.add(new SimulationVariable(prefix + ".density", "density", VariableType.OUTPUT, "kg/m3",
-        "Stream density"));
-    vars.add(new SimulationVariable(prefix + ".molarMass", "molarMass", VariableType.OUTPUT,
-        "kg/mol", "Stream molar mass"));
+    vars.add(new SimulationVariable(prefix + ".temperature", "temperature", inputType, "K", "Stream temperature"));
+    vars.add(new SimulationVariable(prefix + ".pressure", "pressure", inputType, "bara", "Stream pressure"));
+    vars.add(new SimulationVariable(prefix + ".flowRate", "flowRate", inputType, "kg/hr", "Stream mass flow rate"));
+    vars.add(new SimulationVariable(prefix + ".density", "density", VariableType.OUTPUT, "kg/m3", "Stream density"));
+    vars.add(
+	new SimulationVariable(prefix + ".molarMass", "molarMass", VariableType.OUTPUT, "kg/mol", "Stream molar mass"));
   }
 
   /**
    * Adds read-only stream variables for an output stream.
    *
-   * @param vars the list to add to
+   * @param vars   the list to add to
    * @param prefix the address prefix including port name
    * @param stream the stream
    */
-  private void addStreamOutputVariables(List<SimulationVariable> vars, String prefix,
-      StreamInterface stream) {
+  private void addStreamOutputVariables(List<SimulationVariable> vars, String prefix, StreamInterface stream) {
     if (stream == null) {
       return;
     }
@@ -1192,9 +1146,9 @@ public class ProcessAutomation {
   /**
    * Adds outlet stream variables for single-outlet equipment.
    *
-   * @param vars the list to add to
+   * @param vars     the list to add to
    * @param unitName the unit name
-   * @param unit the equipment
+   * @param unit     the equipment
    */
   private void addOutletStreamVariables(List<SimulationVariable> vars, String unitName,
       ProcessEquipmentInterface unit) {
@@ -1207,483 +1161,479 @@ public class ProcessAutomation {
   /**
    * Gets a property value directly from an equipment object.
    *
-   * @param unit the equipment
+   * @param unit     the equipment
    * @param property the property name
-   * @param uom the desired unit of measure
+   * @param uom      the desired unit of measure
    * @return the property value
    */
   private double getEquipmentProperty(ProcessEquipmentInterface unit, String property, String uom) {
     boolean hasUnit = uom != null && !uom.trim().isEmpty();
 
     switch (property) {
-      case "temperature":
-        if (unit.getFluid() == null) {
-          return Double.NaN;
-        }
-        return hasUnit ? unit.getTemperature(uom) : unit.getTemperature();
-      case "pressure":
-        if (unit.getFluid() == null) {
-          return Double.NaN;
-        }
-        return hasUnit ? unit.getPressure(uom) : unit.getPressure();
-      case "outletPressure":
-        if (unit instanceof Compressor) {
-          return ((Compressor) unit).getOutletPressure();
-        }
-        if (unit instanceof Pump) {
-          return ((Pump) unit).getOutletPressure();
-        }
-        if (unit instanceof ThrottlingValve) {
-          return ((ThrottlingValve) unit).getOutletPressure();
-        }
-        break;
-      case "power":
-        if (unit instanceof Compressor) {
-          return hasUnit ? ((Compressor) unit).getPower(uom) : ((Compressor) unit).getPower();
-        }
-        if (unit instanceof Pump) {
-          return hasUnit ? ((Pump) unit).getPower(uom) : ((Pump) unit).getPower();
-        }
-        if (unit instanceof CompressorTrain) {
-          return hasUnit ? ((CompressorTrain) unit).getPower(uom)
-              : ((CompressorTrain) unit).getPower();
-        }
-        if (unit instanceof GibbsReactor) {
-          return hasUnit ? ((GibbsReactor) unit).getPower(uom) : ((GibbsReactor) unit).getPower();
-        }
-        break;
-      case "duty":
-        if (unit instanceof Heater) {
-          return hasUnit ? ((Heater) unit).getDuty(uom) : ((Heater) unit).getDuty();
-        }
-        if (unit instanceof HeatExchanger) {
-          return ((HeatExchanger) unit).getDuty();
-        }
-        break;
-      case "polytropicEfficiency":
-        if (unit instanceof Compressor) {
-          return ((Compressor) unit).getPolytropicEfficiency();
-        }
-        if (unit instanceof CompressorTrain) {
-          return ((CompressorTrain) unit).getPolytropicEfficiency();
-        }
-        break;
-      case "isentropicEfficiency":
-        if (unit instanceof Compressor) {
-          return ((Compressor) unit).getIsentropicEfficiency();
-        }
-        if (unit instanceof Pump) {
-          return ((Pump) unit).getIsentropicEfficiency();
-        }
-        break;
-      case "Cv":
-        if (unit instanceof ThrottlingValve) {
-          return hasUnit ? ((ThrottlingValve) unit).getCv(uom) : ((ThrottlingValve) unit).getCv();
-        }
-        break;
-      case "percentValveOpening":
-        if (unit instanceof ThrottlingValve) {
-          return ((ThrottlingValve) unit).getPercentValveOpening();
-        }
-        if (unit instanceof WaterHammerPipe) {
-          return ((WaterHammerPipe) unit).getValveOpeningPercent();
-        }
-        break;
-      case "valveOpening":
-        if (unit instanceof WaterHammerPipe) {
-          return ((WaterHammerPipe) unit).getValveOpening();
-        }
-        break;
-      case "valveOpeningPercent":
-        if (unit instanceof WaterHammerPipe) {
-          return ((WaterHammerPipe) unit).getValveOpeningPercent();
-        }
-        break;
-      case "UAvalue":
-        if (unit instanceof HeatExchanger) {
-          return ((HeatExchanger) unit).getUAvalue();
-        }
-        break;
-      case "thermalEffectiveness":
-        if (unit instanceof HeatExchanger) {
-          return ((HeatExchanger) unit).getThermalEffectiveness();
-        }
-        break;
-      case "outletTemperature":
-        return hasUnit ? unit.getOutletTemperature(uom) : unit.getOutletTemperature("K");
-      case "flowRate":
-        if (unit instanceof StreamInterface) {
-          return hasUnit ? ((StreamInterface) unit).getFlowRate(uom)
-              : ((StreamInterface) unit).getFlowRate("kg/hr");
-        }
-        break;
-      case "density":
-        if (unit instanceof StreamInterface) {
-          StreamInterface s = (StreamInterface) unit;
-          return s.getFluid() != null ? s.getFluid().getDensity("kg/m3") : Double.NaN;
-        }
-        break;
-      case "molarMass":
-        if (unit instanceof StreamInterface) {
-          StreamInterface s = (StreamInterface) unit;
-          return s.getFluid() != null ? s.getFluid().getMolarMass("kg/mol") : Double.NaN;
-        }
-        break;
-      case "speed":
-        if (unit instanceof Compressor) {
-          return ((Compressor) unit).getSpeed();
-        }
-        if (unit instanceof Pump) {
-          return ((Pump) unit).getSpeed();
-        }
-        break;
-      case "polytropicHead":
-        if (unit instanceof Compressor) {
-          return hasUnit ? ((Compressor) unit).getPolytropicHead(uom)
-              : ((Compressor) unit).getPolytropicHead();
-        }
-        break;
-      case "compressionRatio":
-        if (unit instanceof Compressor) {
-          return ((Compressor) unit).getCompressionRatio();
-        }
-        break;
+    case "temperature":
+      if (unit.getFluid() == null) {
+	return Double.NaN;
+      }
+      return hasUnit ? unit.getTemperature(uom) : unit.getTemperature();
+    case "pressure":
+      if (unit.getFluid() == null) {
+	return Double.NaN;
+      }
+      return hasUnit ? unit.getPressure(uom) : unit.getPressure();
+    case "outletPressure":
+      if (unit instanceof Compressor) {
+	return ((Compressor) unit).getOutletPressure();
+      }
+      if (unit instanceof Pump) {
+	return ((Pump) unit).getOutletPressure();
+      }
+      if (unit instanceof ThrottlingValve) {
+	return ((ThrottlingValve) unit).getOutletPressure();
+      }
+      break;
+    case "power":
+      if (unit instanceof Compressor) {
+	return hasUnit ? ((Compressor) unit).getPower(uom) : ((Compressor) unit).getPower();
+      }
+      if (unit instanceof Pump) {
+	return hasUnit ? ((Pump) unit).getPower(uom) : ((Pump) unit).getPower();
+      }
+      if (unit instanceof CompressorTrain) {
+	return hasUnit ? ((CompressorTrain) unit).getPower(uom) : ((CompressorTrain) unit).getPower();
+      }
+      if (unit instanceof GibbsReactor) {
+	return hasUnit ? ((GibbsReactor) unit).getPower(uom) : ((GibbsReactor) unit).getPower();
+      }
+      break;
+    case "duty":
+      if (unit instanceof Heater) {
+	return hasUnit ? ((Heater) unit).getDuty(uom) : ((Heater) unit).getDuty();
+      }
+      if (unit instanceof HeatExchanger) {
+	return ((HeatExchanger) unit).getDuty();
+      }
+      break;
+    case "polytropicEfficiency":
+      if (unit instanceof Compressor) {
+	return ((Compressor) unit).getPolytropicEfficiency();
+      }
+      if (unit instanceof CompressorTrain) {
+	return ((CompressorTrain) unit).getPolytropicEfficiency();
+      }
+      break;
+    case "isentropicEfficiency":
+      if (unit instanceof Compressor) {
+	return ((Compressor) unit).getIsentropicEfficiency();
+      }
+      if (unit instanceof Pump) {
+	return ((Pump) unit).getIsentropicEfficiency();
+      }
+      break;
+    case "Cv":
+      if (unit instanceof ThrottlingValve) {
+	return hasUnit ? ((ThrottlingValve) unit).getCv(uom) : ((ThrottlingValve) unit).getCv();
+      }
+      break;
+    case "percentValveOpening":
+      if (unit instanceof ThrottlingValve) {
+	return ((ThrottlingValve) unit).getPercentValveOpening();
+      }
+      if (unit instanceof WaterHammerPipe) {
+	return ((WaterHammerPipe) unit).getValveOpeningPercent();
+      }
+      break;
+    case "valveOpening":
+      if (unit instanceof WaterHammerPipe) {
+	return ((WaterHammerPipe) unit).getValveOpening();
+      }
+      break;
+    case "valveOpeningPercent":
+      if (unit instanceof WaterHammerPipe) {
+	return ((WaterHammerPipe) unit).getValveOpeningPercent();
+      }
+      break;
+    case "UAvalue":
+      if (unit instanceof HeatExchanger) {
+	return ((HeatExchanger) unit).getUAvalue();
+      }
+      break;
+    case "thermalEffectiveness":
+      if (unit instanceof HeatExchanger) {
+	return ((HeatExchanger) unit).getThermalEffectiveness();
+      }
+      break;
+    case "outletTemperature":
+      return hasUnit ? unit.getOutletTemperature(uom) : unit.getOutletTemperature("K");
+    case "flowRate":
+      if (unit instanceof StreamInterface) {
+	return hasUnit ? ((StreamInterface) unit).getFlowRate(uom) : ((StreamInterface) unit).getFlowRate("kg/hr");
+      }
+      break;
+    case "density":
+      if (unit instanceof StreamInterface) {
+	StreamInterface s = (StreamInterface) unit;
+	return s.getFluid() != null ? s.getFluid().getDensity("kg/m3") : Double.NaN;
+      }
+      break;
+    case "molarMass":
+      if (unit instanceof StreamInterface) {
+	StreamInterface s = (StreamInterface) unit;
+	return s.getFluid() != null ? s.getFluid().getMolarMass("kg/mol") : Double.NaN;
+      }
+      break;
+    case "speed":
+      if (unit instanceof Compressor) {
+	return ((Compressor) unit).getSpeed();
+      }
+      if (unit instanceof Pump) {
+	return ((Pump) unit).getSpeed();
+      }
+      break;
+    case "polytropicHead":
+      if (unit instanceof Compressor) {
+	return hasUnit ? ((Compressor) unit).getPolytropicHead(uom) : ((Compressor) unit).getPolytropicHead();
+      }
+      break;
+    case "compressionRatio":
+      if (unit instanceof Compressor) {
+	return ((Compressor) unit).getCompressionRatio();
+      }
+      break;
 
-      case "condenserRefluxRatio":
-        if (unit instanceof DistillationColumn) {
-          return ((DistillationColumn) unit).getCondenser().getRefluxRatio();
-        }
-        break;
-      case "length":
-        if (unit instanceof Pipeline) {
-          return ((Pipeline) unit).getLength();
-        }
-        break;
-      case "diameter":
-        if (unit instanceof Pipeline) {
-          return ((Pipeline) unit).getDiameter();
-        }
-        break;
-      case "pipeWallRoughness":
-        if (unit instanceof Pipeline) {
-          return ((Pipeline) unit).getPipeWallRoughness();
-        }
-        break;
-      case "wallThickness":
-        if (unit instanceof Pipeline) {
-          return ((Pipeline) unit).getWallThickness();
-        }
-        break;
-      case "elevation":
-        if (unit instanceof Pipeline) {
-          return ((Pipeline) unit).getElevation();
-        }
-        break;
-      case "pressureDrop":
-        if (unit instanceof Pipeline) {
-          return ((Pipeline) unit).getPressureDrop();
-        }
-        break;
-      case "numberOfNodes":
-        if (unit instanceof WaterHammerPipe) {
-          return ((WaterHammerPipe) unit).getNumberOfNodes();
-        }
-        break;
-      case "courantNumber":
-        if (unit instanceof WaterHammerPipe) {
-          return ((WaterHammerPipe) unit).getCourantNumber();
-        }
-        break;
-      case "waveSpeed":
-        if (unit instanceof WaterHammerPipe) {
-          return ((WaterHammerPipe) unit).getWaveSpeed();
-        }
-        break;
-      case "maxStableTimeStep":
-        if (unit instanceof WaterHammerPipe) {
-          return ((WaterHammerPipe) unit).getMaxStableTimeStep();
-        }
-        break;
-      case "waveRoundTripTime":
-        if (unit instanceof WaterHammerPipe) {
-          return ((WaterHammerPipe) unit).getWaveRoundTripTime();
-        }
-        break;
-      case "maxPressure":
-        if (unit instanceof WaterHammerPipe) {
-          return ((WaterHammerPipe) unit).getMaxPressure(hasUnit ? uom : "bar");
-        }
-        break;
-      case "minPressure":
-        if (unit instanceof WaterHammerPipe) {
-          return ((WaterHammerPipe) unit).getMinPressure(hasUnit ? uom : "bar");
-        }
-        break;
-      case "dischargePressure":
-        if (unit instanceof Ejector) {
-          return ((Ejector) unit).getOutStream().getPressure();
-        }
-        break;
-      case "entrainmentRatio":
-        if (unit instanceof Ejector) {
-          return ((Ejector) unit).getEntrainmentRatio();
-        }
-        break;
-      case "efficiencyIsentropic":
-        if (unit instanceof Ejector) {
-          return ((Ejector) unit).getEfficiencyIsentropic();
-        }
-        break;
-      case "liquidLevel":
-        if (unit instanceof Tank) {
-          return ((Tank) unit).getLiquidLevel();
-        }
-        break;
-      case "volume":
-        if (unit instanceof Tank) {
-          return ((Tank) unit).getVolume();
-        }
-        break;
-      case "errorTemperature":
-        if (unit instanceof Recycle) {
-          return ((Recycle) unit).getErrorTemperature();
-        }
-        break;
-      case "errorFlow":
-        if (unit instanceof Recycle) {
-          return ((Recycle) unit).getErrorFlow();
-        }
-        break;
-      default:
-        break;
+    case "condenserRefluxRatio":
+      if (unit instanceof DistillationColumn) {
+	return ((DistillationColumn) unit).getCondenser().getRefluxRatio();
+      }
+      break;
+    case "length":
+      if (unit instanceof Pipeline) {
+	return ((Pipeline) unit).getLength();
+      }
+      break;
+    case "diameter":
+      if (unit instanceof Pipeline) {
+	return ((Pipeline) unit).getDiameter();
+      }
+      break;
+    case "pipeWallRoughness":
+      if (unit instanceof Pipeline) {
+	return ((Pipeline) unit).getPipeWallRoughness();
+      }
+      break;
+    case "wallThickness":
+      if (unit instanceof Pipeline) {
+	return ((Pipeline) unit).getWallThickness();
+      }
+      break;
+    case "elevation":
+      if (unit instanceof Pipeline) {
+	return ((Pipeline) unit).getElevation();
+      }
+      break;
+    case "pressureDrop":
+      if (unit instanceof Pipeline) {
+	return ((Pipeline) unit).getPressureDrop();
+      }
+      break;
+    case "numberOfNodes":
+      if (unit instanceof WaterHammerPipe) {
+	return ((WaterHammerPipe) unit).getNumberOfNodes();
+      }
+      break;
+    case "courantNumber":
+      if (unit instanceof WaterHammerPipe) {
+	return ((WaterHammerPipe) unit).getCourantNumber();
+      }
+      break;
+    case "waveSpeed":
+      if (unit instanceof WaterHammerPipe) {
+	return ((WaterHammerPipe) unit).getWaveSpeed();
+      }
+      break;
+    case "maxStableTimeStep":
+      if (unit instanceof WaterHammerPipe) {
+	return ((WaterHammerPipe) unit).getMaxStableTimeStep();
+      }
+      break;
+    case "waveRoundTripTime":
+      if (unit instanceof WaterHammerPipe) {
+	return ((WaterHammerPipe) unit).getWaveRoundTripTime();
+      }
+      break;
+    case "maxPressure":
+      if (unit instanceof WaterHammerPipe) {
+	return ((WaterHammerPipe) unit).getMaxPressure(hasUnit ? uom : "bar");
+      }
+      break;
+    case "minPressure":
+      if (unit instanceof WaterHammerPipe) {
+	return ((WaterHammerPipe) unit).getMinPressure(hasUnit ? uom : "bar");
+      }
+      break;
+    case "dischargePressure":
+      if (unit instanceof Ejector) {
+	return ((Ejector) unit).getOutStream().getPressure();
+      }
+      break;
+    case "entrainmentRatio":
+      if (unit instanceof Ejector) {
+	return ((Ejector) unit).getEntrainmentRatio();
+      }
+      break;
+    case "efficiencyIsentropic":
+      if (unit instanceof Ejector) {
+	return ((Ejector) unit).getEfficiencyIsentropic();
+      }
+      break;
+    case "liquidLevel":
+      if (unit instanceof Tank) {
+	return ((Tank) unit).getLiquidLevel();
+      }
+      break;
+    case "volume":
+      if (unit instanceof Tank) {
+	return ((Tank) unit).getVolume();
+      }
+      break;
+    case "errorTemperature":
+      if (unit instanceof Recycle) {
+	return ((Recycle) unit).getErrorTemperature();
+      }
+      break;
+    case "errorFlow":
+      if (unit instanceof Recycle) {
+	return ((Recycle) unit).getErrorFlow();
+      }
+      break;
+    default:
+      break;
     }
-    throw new IllegalArgumentException("Unknown property '" + property + "' for unit "
-        + unit.getName() + " (" + unit.getClass().getSimpleName() + ")");
+    throw new IllegalArgumentException("Unknown property '" + property + "' for unit " + unit.getName() + " ("
+	+ unit.getClass().getSimpleName() + ")");
   }
 
   /**
    * Sets a property value directly on an equipment object.
    *
-   * @param unit the equipment
+   * @param unit     the equipment
    * @param property the property name
-   * @param value the value to set
-   * @param uom the unit of measure for the value
+   * @param value    the value to set
+   * @param uom      the unit of measure for the value
    */
-  private void setEquipmentProperty(ProcessEquipmentInterface unit, String property, double value,
-      String uom) {
+  private void setEquipmentProperty(ProcessEquipmentInterface unit, String property, double value, String uom) {
     boolean hasUnit = uom != null && !uom.trim().isEmpty();
 
     switch (property) {
-      case "outletPressure":
-        if (unit instanceof Compressor) {
-          if (hasUnit) {
-            ((Compressor) unit).setOutletPressure(value, uom);
-          } else {
-            ((Compressor) unit).setOutletPressure(value);
-          }
-          return;
-        }
-        if (unit instanceof Pump) {
-          if (hasUnit) {
-            ((Pump) unit).setOutletPressure(value, uom);
-          } else {
-            ((Pump) unit).setOutletPressure(value);
-          }
-          return;
-        }
-        if (unit instanceof ThrottlingValve) {
-          if (hasUnit) {
-            ((ThrottlingValve) unit).setOutletPressure(value, uom);
-          } else {
-            ((ThrottlingValve) unit).setOutletPressure(value);
-          }
-          return;
-        }
-        break;
-      case "outletTemperature":
-        if (unit instanceof Heater) {
-          if (hasUnit) {
-            ((Heater) unit).setOutletTemperature(value, uom);
-          } else {
-            ((Heater) unit).setOutletTemperature(value);
-          }
-          return;
-        }
-        break;
-      case "polytropicEfficiency":
-        if (unit instanceof Compressor) {
-          ((Compressor) unit).setPolytropicEfficiency(value);
-          return;
-        }
-        break;
-      case "isentropicEfficiency":
-        if (unit instanceof Compressor) {
-          ((Compressor) unit).setIsentropicEfficiency(value);
-          return;
-        }
-        if (unit instanceof Pump) {
-          ((Pump) unit).setIsentropicEfficiency(value);
-          return;
-        }
-        break;
-      case "speed":
-        if (unit instanceof Compressor) {
-          ((Compressor) unit).setSpeed(value);
-          return;
-        }
-        if (unit instanceof Pump) {
-          ((Pump) unit).setSpeed(value);
-          return;
-        }
-        break;
-      case "Cv":
-        if (unit instanceof ThrottlingValve) {
-          if (hasUnit) {
-            ((ThrottlingValve) unit).setCv(value, uom);
-          } else {
-            ((ThrottlingValve) unit).setCv(value);
-          }
-          return;
-        }
-        break;
-      case "percentValveOpening":
-        if (unit instanceof ThrottlingValve) {
-          ((ThrottlingValve) unit).setPercentValveOpening(value);
-          return;
-        }
-        if (unit instanceof WaterHammerPipe) {
-          ((WaterHammerPipe) unit).setValveOpeningPercent(value);
-          return;
-        }
-        break;
-      case "UAvalue":
-        if (unit instanceof HeatExchanger) {
-          ((HeatExchanger) unit).setUAvalue(value);
-          return;
-        }
-        break;
-      case "temperature":
-        if (unit instanceof StreamInterface) {
-          if (hasUnit) {
-            ((Stream) unit).setTemperature(value, uom);
-          } else {
-            unit.setTemperature(value);
-          }
-          return;
-        }
-        break;
-      case "pressure":
-        if (unit instanceof StreamInterface) {
-          if (hasUnit) {
-            ((Stream) unit).setPressure(value, uom);
-          } else {
-            unit.setPressure(value);
-          }
-          return;
-        }
-        break;
-      case "flowRate":
-        if (unit instanceof StreamInterface) {
-          String flowUnit = hasUnit ? uom : "kg/hr";
-          ((Stream) unit).setFlowRate(value, flowUnit);
-          return;
-        }
-        break;
-      case "length":
-        if (unit instanceof Pipeline) {
-          ((Pipeline) unit).setLength(value);
-          return;
-        }
-        break;
-      case "diameter":
-        if (unit instanceof Pipeline) {
-          ((Pipeline) unit).setDiameter(value);
-          return;
-        }
-        break;
-      case "pipeWallRoughness":
-        if (unit instanceof Pipeline) {
-          ((Pipeline) unit).setPipeWallRoughness(value);
-          return;
-        }
-        break;
-      case "wallThickness":
-        if (unit instanceof Pipeline) {
-          ((Pipeline) unit).setWallThickness(value);
-          return;
-        }
-        break;
-      case "elevation":
-        if (unit instanceof Pipeline) {
-          ((Pipeline) unit).setElevation(value);
-          return;
-        }
-        break;
-      case "valveOpening":
-        if (unit instanceof WaterHammerPipe) {
-          ((WaterHammerPipe) unit).setValveOpening(value);
-          return;
-        }
-        break;
-      case "valveOpeningPercent":
-        if (unit instanceof WaterHammerPipe) {
-          ((WaterHammerPipe) unit).setValveOpeningPercent(value);
-          return;
-        }
-        break;
-      case "numberOfNodes":
-        if (unit instanceof WaterHammerPipe) {
-          ((WaterHammerPipe) unit).setNumberOfNodes((int) Math.round(value));
-          return;
-        }
-        break;
-      case "courantNumber":
-        if (unit instanceof WaterHammerPipe) {
-          ((WaterHammerPipe) unit).setCourantNumber(value);
-          return;
-        }
-        break;
-      case "waveSpeed":
-        if (unit instanceof WaterHammerPipe) {
-          ((WaterHammerPipe) unit).setWaveSpeed(value);
-          return;
-        }
-        break;
-      case "dischargePressure":
-        if (unit instanceof Ejector) {
-          ((Ejector) unit).setDischargePressure(value);
-          return;
-        }
-        break;
-      case "efficiencyIsentropic":
-        if (unit instanceof Ejector) {
-          ((Ejector) unit).setEfficiencyIsentropic(value);
-          return;
-        }
-        break;
-      case "volume":
-        if (unit instanceof Tank) {
-          ((Tank) unit).setVolume(value);
-          return;
-        }
-        break;
-      case "condenserRefluxRatio":
-        if (unit instanceof DistillationColumn) {
-          ((DistillationColumn) unit).setCondenserRefluxRatio(value);
-          return;
-        }
-        break;
-      default:
-        break;
+    case "outletPressure":
+      if (unit instanceof Compressor) {
+	if (hasUnit) {
+	  ((Compressor) unit).setOutletPressure(value, uom);
+	} else {
+	  ((Compressor) unit).setOutletPressure(value);
+	}
+	return;
+      }
+      if (unit instanceof Pump) {
+	if (hasUnit) {
+	  ((Pump) unit).setOutletPressure(value, uom);
+	} else {
+	  ((Pump) unit).setOutletPressure(value);
+	}
+	return;
+      }
+      if (unit instanceof ThrottlingValve) {
+	if (hasUnit) {
+	  ((ThrottlingValve) unit).setOutletPressure(value, uom);
+	} else {
+	  ((ThrottlingValve) unit).setOutletPressure(value);
+	}
+	return;
+      }
+      break;
+    case "outletTemperature":
+      if (unit instanceof Heater) {
+	if (hasUnit) {
+	  ((Heater) unit).setOutletTemperature(value, uom);
+	} else {
+	  ((Heater) unit).setOutletTemperature(value);
+	}
+	return;
+      }
+      break;
+    case "polytropicEfficiency":
+      if (unit instanceof Compressor) {
+	((Compressor) unit).setPolytropicEfficiency(value);
+	return;
+      }
+      break;
+    case "isentropicEfficiency":
+      if (unit instanceof Compressor) {
+	((Compressor) unit).setIsentropicEfficiency(value);
+	return;
+      }
+      if (unit instanceof Pump) {
+	((Pump) unit).setIsentropicEfficiency(value);
+	return;
+      }
+      break;
+    case "speed":
+      if (unit instanceof Compressor) {
+	((Compressor) unit).setSpeed(value);
+	return;
+      }
+      if (unit instanceof Pump) {
+	((Pump) unit).setSpeed(value);
+	return;
+      }
+      break;
+    case "Cv":
+      if (unit instanceof ThrottlingValve) {
+	if (hasUnit) {
+	  ((ThrottlingValve) unit).setCv(value, uom);
+	} else {
+	  ((ThrottlingValve) unit).setCv(value);
+	}
+	return;
+      }
+      break;
+    case "percentValveOpening":
+      if (unit instanceof ThrottlingValve) {
+	((ThrottlingValve) unit).setPercentValveOpening(value);
+	return;
+      }
+      if (unit instanceof WaterHammerPipe) {
+	((WaterHammerPipe) unit).setValveOpeningPercent(value);
+	return;
+      }
+      break;
+    case "UAvalue":
+      if (unit instanceof HeatExchanger) {
+	((HeatExchanger) unit).setUAvalue(value);
+	return;
+      }
+      break;
+    case "temperature":
+      if (unit instanceof StreamInterface) {
+	if (hasUnit) {
+	  ((Stream) unit).setTemperature(value, uom);
+	} else {
+	  unit.setTemperature(value);
+	}
+	return;
+      }
+      break;
+    case "pressure":
+      if (unit instanceof StreamInterface) {
+	if (hasUnit) {
+	  ((Stream) unit).setPressure(value, uom);
+	} else {
+	  unit.setPressure(value);
+	}
+	return;
+      }
+      break;
+    case "flowRate":
+      if (unit instanceof StreamInterface) {
+	String flowUnit = hasUnit ? uom : "kg/hr";
+	((Stream) unit).setFlowRate(value, flowUnit);
+	return;
+      }
+      break;
+    case "length":
+      if (unit instanceof Pipeline) {
+	((Pipeline) unit).setLength(value);
+	return;
+      }
+      break;
+    case "diameter":
+      if (unit instanceof Pipeline) {
+	((Pipeline) unit).setDiameter(value);
+	return;
+      }
+      break;
+    case "pipeWallRoughness":
+      if (unit instanceof Pipeline) {
+	((Pipeline) unit).setPipeWallRoughness(value);
+	return;
+      }
+      break;
+    case "wallThickness":
+      if (unit instanceof Pipeline) {
+	((Pipeline) unit).setWallThickness(value);
+	return;
+      }
+      break;
+    case "elevation":
+      if (unit instanceof Pipeline) {
+	((Pipeline) unit).setElevation(value);
+	return;
+      }
+      break;
+    case "valveOpening":
+      if (unit instanceof WaterHammerPipe) {
+	((WaterHammerPipe) unit).setValveOpening(value);
+	return;
+      }
+      break;
+    case "valveOpeningPercent":
+      if (unit instanceof WaterHammerPipe) {
+	((WaterHammerPipe) unit).setValveOpeningPercent(value);
+	return;
+      }
+      break;
+    case "numberOfNodes":
+      if (unit instanceof WaterHammerPipe) {
+	((WaterHammerPipe) unit).setNumberOfNodes((int) Math.round(value));
+	return;
+      }
+      break;
+    case "courantNumber":
+      if (unit instanceof WaterHammerPipe) {
+	((WaterHammerPipe) unit).setCourantNumber(value);
+	return;
+      }
+      break;
+    case "waveSpeed":
+      if (unit instanceof WaterHammerPipe) {
+	((WaterHammerPipe) unit).setWaveSpeed(value);
+	return;
+      }
+      break;
+    case "dischargePressure":
+      if (unit instanceof Ejector) {
+	((Ejector) unit).setDischargePressure(value);
+	return;
+      }
+      break;
+    case "efficiencyIsentropic":
+      if (unit instanceof Ejector) {
+	((Ejector) unit).setEfficiencyIsentropic(value);
+	return;
+      }
+      break;
+    case "volume":
+      if (unit instanceof Tank) {
+	((Tank) unit).setVolume(value);
+	return;
+      }
+      break;
+    case "condenserRefluxRatio":
+      if (unit instanceof DistillationColumn) {
+	((DistillationColumn) unit).setCondenserRefluxRatio(value);
+	return;
+      }
+      break;
+    default:
+      break;
     }
-    throw new IllegalArgumentException("Cannot set property '" + property + "' on unit "
-        + unit.getName() + " (" + unit.getClass().getSimpleName() + ")");
+    throw new IllegalArgumentException("Cannot set property '" + property + "' on unit " + unit.getName() + " ("
+	+ unit.getClass().getSimpleName() + ")");
   }
 
   /**
    * Resolves a stream port name to the actual stream object.
    *
-   * @param unit the equipment
+   * @param unit     the equipment
    * @param portName the port name, e.g. "gasOutStream", "liquidOutStream", "outletStream"
    * @return the resolved stream, or null if not found
    */
@@ -1692,38 +1642,38 @@ public class ProcessAutomation {
 
     try {
       switch (normalizedPort) {
-        case "gasoutstream":
-        case "gasout":
-          return (StreamInterface) unit.getClass().getMethod("getGasOutStream").invoke(unit);
-        case "liquidoutstream":
-        case "liquidout":
-          return (StreamInterface) unit.getClass().getMethod("getLiquidOutStream").invoke(unit);
-        case "oiloutstream":
-        case "oilout":
-          return (StreamInterface) unit.getClass().getMethod("getOilOutStream").invoke(unit);
-        case "wateroutstream":
-        case "waterout":
-          return (StreamInterface) unit.getClass().getMethod("getWaterOutStream").invoke(unit);
-        case "outletstream":
-        case "outlet":
-          return (StreamInterface) unit.getClass().getMethod("getOutletStream").invoke(unit);
-        case "inletstream":
-        case "inlet":
-          List<StreamInterface> inlets = unit.getInletStreams();
-          return inlets.isEmpty() ? null : inlets.get(0);
-        default:
-          break;
+      case "gasoutstream":
+      case "gasout":
+	return (StreamInterface) unit.getClass().getMethod("getGasOutStream").invoke(unit);
+      case "liquidoutstream":
+      case "liquidout":
+	return (StreamInterface) unit.getClass().getMethod("getLiquidOutStream").invoke(unit);
+      case "oiloutstream":
+      case "oilout":
+	return (StreamInterface) unit.getClass().getMethod("getOilOutStream").invoke(unit);
+      case "wateroutstream":
+      case "waterout":
+	return (StreamInterface) unit.getClass().getMethod("getWaterOutStream").invoke(unit);
+      case "outletstream":
+      case "outlet":
+	return (StreamInterface) unit.getClass().getMethod("getOutletStream").invoke(unit);
+      case "inletstream":
+      case "inlet":
+	List<StreamInterface> inlets = unit.getInletStreams();
+	return inlets.isEmpty() ? null : inlets.get(0);
+      default:
+	break;
       }
     } catch (NoSuchMethodException e) {
       // Try fallback: some equipment uses getOutStream (e.g., Ejector) instead of getOutletStream
       if (normalizedPort.equals("outletstream") || normalizedPort.equals("outlet")) {
-        try {
-          return (StreamInterface) unit.getClass().getMethod("getOutStream").invoke(unit);
-        } catch (Exception ex) {
-          // Fall through to getOutletStreams fallback
-        }
-        List<StreamInterface> outlets = unit.getOutletStreams();
-        return outlets.isEmpty() ? null : outlets.get(0);
+	try {
+	  return (StreamInterface) unit.getClass().getMethod("getOutStream").invoke(unit);
+	} catch (Exception ex) {
+	  // Fall through to getOutletStreams fallback
+	}
+	List<StreamInterface> outlets = unit.getOutletStreams();
+	return outlets.isEmpty() ? null : outlets.get(0);
       }
     } catch (Exception e) {
       // reflection failure
@@ -1732,13 +1682,13 @@ public class ProcessAutomation {
     // Try indexed port: "outletStream0", "outletStream1", etc.
     if (normalizedPort.startsWith("outletstream") && normalizedPort.length() > 12) {
       try {
-        int idx = Integer.parseInt(normalizedPort.substring(12));
-        List<StreamInterface> outlets = unit.getOutletStreams();
-        if (idx >= 0 && idx < outlets.size()) {
-          return outlets.get(idx);
-        }
+	int idx = Integer.parseInt(normalizedPort.substring(12));
+	List<StreamInterface> outlets = unit.getOutletStreams();
+	if (idx >= 0 && idx < outlets.size()) {
+	  return outlets.get(idx);
+	}
       } catch (NumberFormatException e) {
-        // ignore
+	// ignore
       }
     }
 
@@ -1748,27 +1698,27 @@ public class ProcessAutomation {
   /**
    * Gets a property value from a stream.
    *
-   * @param stream the stream
+   * @param stream   the stream
    * @param property the property name
-   * @param uom the desired unit of measure
+   * @param uom      the desired unit of measure
    * @return the property value
    */
   private double getStreamProperty(StreamInterface stream, String property, String uom) {
     boolean hasUnit = uom != null && !uom.trim().isEmpty();
 
     switch (property) {
-      case "temperature":
-        return hasUnit ? stream.getTemperature(uom) : stream.getTemperature();
-      case "pressure":
-        return hasUnit ? stream.getPressure(uom) : stream.getPressure();
-      case "flowRate":
-        return hasUnit ? stream.getFlowRate(uom) : stream.getFlowRate("kg/hr");
-      case "density":
-        return stream.getFluid() != null ? stream.getFluid().getDensity("kg/m3") : Double.NaN;
-      case "molarMass":
-        return stream.getFluid() != null ? stream.getFluid().getMolarMass("kg/mol") : Double.NaN;
-      default:
-        break;
+    case "temperature":
+      return hasUnit ? stream.getTemperature(uom) : stream.getTemperature();
+    case "pressure":
+      return hasUnit ? stream.getPressure(uom) : stream.getPressure();
+    case "flowRate":
+      return hasUnit ? stream.getFlowRate(uom) : stream.getFlowRate("kg/hr");
+    case "density":
+      return stream.getFluid() != null ? stream.getFluid().getDensity("kg/m3") : Double.NaN;
+    case "molarMass":
+      return stream.getFluid() != null ? stream.getFluid().getMolarMass("kg/mol") : Double.NaN;
+    default:
+      break;
     }
     throw new IllegalArgumentException("Unknown stream property: " + property);
   }
@@ -1776,41 +1726,40 @@ public class ProcessAutomation {
   /**
    * Sets a property value on a stream.
    *
-   * @param stream the stream
+   * @param stream   the stream
    * @param property the property name
-   * @param value the value to set
-   * @param uom the unit of measure
+   * @param value    the value to set
+   * @param uom      the unit of measure
    */
-  private void setStreamProperty(StreamInterface stream, String property, double value,
-      String uom) {
+  private void setStreamProperty(StreamInterface stream, String property, double value, String uom) {
     boolean hasUnit = uom != null && !uom.trim().isEmpty();
 
     if (!(stream instanceof Stream)) {
       throw new IllegalArgumentException(
-          "Cannot set properties on non-Stream type: " + stream.getClass().getSimpleName());
+	  "Cannot set properties on non-Stream type: " + stream.getClass().getSimpleName());
     }
     Stream s = (Stream) stream;
 
     switch (property) {
-      case "temperature":
-        if (hasUnit) {
-          s.setTemperature(value, uom);
-        } else {
-          s.setTemperature(value);
-        }
-        return;
-      case "pressure":
-        if (hasUnit) {
-          s.setPressure(value, uom);
-        } else {
-          s.setPressure(value);
-        }
-        return;
-      case "flowRate":
-        s.setFlowRate(value, hasUnit ? uom : "kg/hr");
-        return;
-      default:
-        break;
+    case "temperature":
+      if (hasUnit) {
+	s.setTemperature(value, uom);
+      } else {
+	s.setTemperature(value);
+      }
+      return;
+    case "pressure":
+      if (hasUnit) {
+	s.setPressure(value, uom);
+      } else {
+	s.setPressure(value);
+      }
+      return;
+    case "flowRate":
+      s.setFlowRate(value, hasUnit ? uom : "kg/hr");
+      return;
+    default:
+      break;
     }
     throw new IllegalArgumentException("Cannot set stream property: " + property);
   }
@@ -1821,7 +1770,7 @@ public class ProcessAutomation {
    * Diagnoses an address resolution failure and attempts recovery via fuzzy matching.
    *
    * @param address the failed address
-   * @param error the caught exception
+   * @param error   the caught exception
    * @return a diagnostic result with suggestions and possible auto-correction
    */
   private AutomationDiagnostics.DiagnosticResult diagnoseAndAttemptRecovery(String address,
@@ -1848,8 +1797,8 @@ public class ProcessAutomation {
 
     // Stream port not found
     if (msg.contains("Stream port not found") || msg.contains("port")) {
-      List<String> validPorts = java.util.Arrays.asList("gasOutStream", "liquidOutStream",
-          "oilOutStream", "waterOutStream", "outletStream", "inletStream");
+      List<String> validPorts = java.util.Arrays.asList("gasOutStream", "liquidOutStream", "oilOutStream",
+	  "waterOutStream", "outletStream", "inletStream");
       String portName = parts.length > 1 ? parts[1] : "";
       return diagnostics.diagnosePortNotFound(address, unitName, portName, validPorts);
     }
@@ -1857,65 +1806,61 @@ public class ProcessAutomation {
     // Property not found (Unknown property, Unknown stream property)
     if (msg.contains("Unknown property") || msg.contains("Unknown stream property")) {
       try {
-        List<SimulationVariable> vars = getVariableList(unitName);
-        String propertyName = parts.length > 1 ? parts[parts.length - 1] : "";
-        return diagnostics.diagnosePropertyNotFound(address, unitName, propertyName, vars);
+	List<SimulationVariable> vars = getVariableList(unitName);
+	String propertyName = parts.length > 1 ? parts[parts.length - 1] : "";
+	return diagnostics.diagnosePropertyNotFound(address, unitName, propertyName, vars);
       } catch (Exception e) {
-        // Can't get variable list - fall through
+	// Can't get variable list - fall through
       }
     }
 
     // Read-only variable (set attempted on an OUTPUT-type property)
     if (msg.contains("Cannot set property") || msg.contains("Cannot set stream")
-        || msg.toLowerCase(java.util.Locale.ROOT).contains("read-only")
-        || msg.toLowerCase(java.util.Locale.ROOT).contains("read only")) {
+	|| msg.toLowerCase(java.util.Locale.ROOT).contains("read-only")
+	|| msg.toLowerCase(java.util.Locale.ROOT).contains("read only")) {
       java.util.Map<String, Object> ctx = new java.util.LinkedHashMap<String, Object>();
       ctx.put("errorMessage", msg);
-      return new AutomationDiagnostics.DiagnosticResult(
-          AutomationDiagnostics.ErrorCategory.READ_ONLY_VARIABLE, address, msg,
-          new ArrayList<String>(), null,
-          "This variable is an OUTPUT (computed by the simulation) and cannot be set. "
-              + "Use getVariableList() to discover INPUT-type variables that can be modified.",
-          ctx);
+      return new AutomationDiagnostics.DiagnosticResult(AutomationDiagnostics.ErrorCategory.READ_ONLY_VARIABLE, address,
+	  msg, new ArrayList<String>(), null,
+	  "This variable is an OUTPUT (computed by the simulation) and cannot be set. "
+	      + "Use getVariableList() to discover INPUT-type variables that can be modified.",
+	  ctx);
     }
 
     // Unknown unit-of-measure
     if (msg.toLowerCase(java.util.Locale.ROOT).contains("unknown unit")
-        || msg.toLowerCase(java.util.Locale.ROOT).contains("unit not supported")
-        || msg.toLowerCase(java.util.Locale.ROOT).contains("invalid unit")) {
+	|| msg.toLowerCase(java.util.Locale.ROOT).contains("unit not supported")
+	|| msg.toLowerCase(java.util.Locale.ROOT).contains("invalid unit")) {
       java.util.Map<String, Object> ctx = new java.util.LinkedHashMap<String, Object>();
       ctx.put("errorMessage", msg);
-      return new AutomationDiagnostics.DiagnosticResult(
-          AutomationDiagnostics.ErrorCategory.UNKNOWN_UNIT, address, msg, new ArrayList<String>(),
-          null, "Unsupported unit of measure. Call getAllowedUnits(address) for a list of "
-              + "valid UOM strings, or pass null to use the variable's default unit.",
-          ctx);
+      return new AutomationDiagnostics.DiagnosticResult(AutomationDiagnostics.ErrorCategory.UNKNOWN_UNIT, address, msg,
+	  new ArrayList<String>(), null, "Unsupported unit of measure. Call getAllowedUnits(address) for a list of "
+	      + "valid UOM strings, or pass null to use the variable's default unit.",
+	  ctx);
     }
 
     // Convergence failure during write+run
     String lower = msg.toLowerCase(java.util.Locale.ROOT);
-    if (lower.contains("not converge") || lower.contains("did not converge")
-        || lower.contains("convergence") || lower.contains("solver failed")) {
+    if (lower.contains("not converge") || lower.contains("did not converge") || lower.contains("convergence")
+	|| lower.contains("solver failed")) {
       java.util.Map<String, Object> ctx = new java.util.LinkedHashMap<String, Object>();
       ctx.put("errorMessage", msg);
-      return new AutomationDiagnostics.DiagnosticResult(
-          AutomationDiagnostics.ErrorCategory.CONVERGENCE_FAILURE, address, msg,
-          new ArrayList<String>(), null,
-          "Solver did not converge after the change. Try a smaller step, relax recycle "
-              + "tolerance, or revert the change. Inspect the diagnostics log for residuals.",
-          ctx);
+      return new AutomationDiagnostics.DiagnosticResult(AutomationDiagnostics.ErrorCategory.CONVERGENCE_FAILURE,
+	  address, msg, new ArrayList<String>(), null,
+	  "Solver did not converge after the change. Try a smaller step, relax recycle "
+	      + "tolerance, or revert the change. Inspect the diagnostics log for residuals.",
+	  ctx);
     }
 
     // Invalid address format or generic error
     java.util.Map<String, Object> context = new java.util.LinkedHashMap<String, Object>();
     context.put("errorMessage", msg);
     context.put("addressFormat", "unitName.property or unitName.port.property");
-    return new AutomationDiagnostics.DiagnosticResult(
-        AutomationDiagnostics.ErrorCategory.INVALID_ADDRESS_FORMAT, address, msg,
-        new java.util.ArrayList<String>(), null,
-        "Check address format. Expected: 'unitName.property' or 'unitName.port.property'. "
-            + "Use getUnitList() and getVariableList(unitName) to discover valid addresses.",
-        context);
+    return new AutomationDiagnostics.DiagnosticResult(AutomationDiagnostics.ErrorCategory.INVALID_ADDRESS_FORMAT,
+	address, msg, new java.util.ArrayList<String>(), null,
+	"Check address format. Expected: 'unitName.property' or 'unitName.port.property'. "
+	    + "Use getUnitList() and getVariableList(unitName) to discover valid addresses.",
+	context);
   }
 
   /**
@@ -1941,8 +1886,8 @@ public class ProcessAutomation {
    * Builds a success JSON response for a get operation.
    *
    * @param address the address
-   * @param value the value
-   * @param unit the unit of measure
+   * @param value   the value
+   * @param unit    the unit of measure
    * @return JSON string
    */
   private String buildSuccessJson(String address, double value, String unit) {
@@ -1959,15 +1904,15 @@ public class ProcessAutomation {
   /**
    * Builds a JSON response for a successful auto-corrected get operation.
    *
-   * @param originalAddress the original address that failed
+   * @param originalAddress  the original address that failed
    * @param correctedAddress the corrected address that succeeded
-   * @param value the value read
-   * @param unit the unit of measure
-   * @param diag the diagnostic result
+   * @param value            the value read
+   * @param unit             the unit of measure
+   * @param diag             the diagnostic result
    * @return JSON string
    */
-  private String buildAutoCorrectedJson(String originalAddress, String correctedAddress,
-      double value, String unit, AutomationDiagnostics.DiagnosticResult diag) {
+  private String buildAutoCorrectedJson(String originalAddress, String correctedAddress, double value, String unit,
+      AutomationDiagnostics.DiagnosticResult diag) {
     com.google.gson.JsonObject result = new com.google.gson.JsonObject();
     result.addProperty("status", "auto_corrected");
     result.addProperty("originalAddress", originalAddress);
@@ -1976,22 +1921,21 @@ public class ProcessAutomation {
     if (unit != null) {
       result.addProperty("unit", unit);
     }
-    result.addProperty("remediation", "Address was auto-corrected from '" + originalAddress
-        + "' to '" + correctedAddress + "'. Use the corrected address in future calls.");
+    result.addProperty("remediation", "Address was auto-corrected from '" + originalAddress + "' to '"
+	+ correctedAddress + "'. Use the corrected address in future calls.");
     return result.toString();
   }
 
   /**
    * Builds a success JSON response for a set operation.
    *
-   * @param address the address
-   * @param value the value set
-   * @param unit the unit of measure
+   * @param address     the address
+   * @param value       the value set
+   * @param unit        the unit of measure
    * @param warningJson JSON warning from bounds validation, or null
    * @return JSON string
    */
-  private String buildSetSuccessJson(String address, double value, String unit,
-      String warningJson) {
+  private String buildSetSuccessJson(String address, double value, String unit, String warningJson) {
     com.google.gson.JsonObject result = new com.google.gson.JsonObject();
     result.addProperty("status", "success");
     result.addProperty("address", address);
@@ -2008,15 +1952,15 @@ public class ProcessAutomation {
   /**
    * Builds a JSON response for a successful auto-corrected set operation.
    *
-   * @param originalAddress the original address that failed
+   * @param originalAddress  the original address that failed
    * @param correctedAddress the corrected address that succeeded
-   * @param value the value set
-   * @param unit the unit of measure
-   * @param diag the diagnostic result
+   * @param value            the value set
+   * @param unit             the unit of measure
+   * @param diag             the diagnostic result
    * @return JSON string
    */
-  private String buildAutoCorrectedSetJson(String originalAddress, String correctedAddress,
-      double value, String unit, AutomationDiagnostics.DiagnosticResult diag) {
+  private String buildAutoCorrectedSetJson(String originalAddress, String correctedAddress, double value, String unit,
+      AutomationDiagnostics.DiagnosticResult diag) {
     com.google.gson.JsonObject result = new com.google.gson.JsonObject();
     result.addProperty("status", "auto_corrected");
     result.addProperty("originalAddress", originalAddress);
@@ -2025,8 +1969,8 @@ public class ProcessAutomation {
     if (unit != null) {
       result.addProperty("unit", unit);
     }
-    result.addProperty("remediation", "Address was auto-corrected from '" + originalAddress
-        + "' to '" + correctedAddress + "'. Use the corrected address in future calls.");
+    result.addProperty("remediation", "Address was auto-corrected from '" + originalAddress + "' to '"
+	+ correctedAddress + "'. Use the corrected address in future calls.");
     return result.toString();
   }
 
@@ -2035,8 +1979,8 @@ public class ProcessAutomation {
   // ===================================================================================
 
   /**
-   * Returns the stable schema version of JSON responses produced by this facade. Agents and MCP
-   * clients can branch on this value when parsing responses (see {@link #SCHEMA_VERSION}).
+   * Returns the stable schema version of JSON responses produced by this facade. Agents and MCP clients can branch on
+   * this value when parsing responses (see {@link #SCHEMA_VERSION}).
    *
    * @return the schema version string, e.g. "1.0"
    */
@@ -2047,9 +1991,9 @@ public class ProcessAutomation {
   // ----------------------------- Dirty / run-policy tracking ------------------------------
 
   /**
-   * Returns whether any input has been set via {@link #setVariableValue} since the last successful
-   * {@link #run()} or {@link #runIfDirty()}. When {@code true}, outputs returned by
-   * {@link #getVariableValue} may be stale and should be refreshed by calling {@link #run()}.
+   * Returns whether any input has been set via {@link #setVariableValue} since the last successful {@link #run()} or
+   * {@link #runIfDirty()}. When {@code true}, outputs returned by {@link #getVariableValue} may be stale and should be
+   * refreshed by calling {@link #run()}.
    *
    * @return {@code true} if the underlying process needs to be re-run, {@code false} otherwise
    */
@@ -2058,16 +2002,15 @@ public class ProcessAutomation {
   }
 
   /**
-   * Manually marks this facade as dirty, e.g. after modifying the underlying process system
-   * directly through other Java APIs.
+   * Manually marks this facade as dirty, e.g. after modifying the underlying process system directly through other Java
+   * APIs.
    */
   public void markDirty() {
     this.dirty = true;
   }
 
   /**
-   * Runs the underlying {@link ProcessSystem} or {@link ProcessModel} and clears the dirty flag on
-   * success.
+   * Runs the underlying {@link ProcessSystem} or {@link ProcessModel} and clears the dirty flag on success.
    *
    * @throws RuntimeException if the underlying solver fails
    */
@@ -2081,8 +2024,7 @@ public class ProcessAutomation {
   }
 
   /**
-   * Runs the underlying process only if {@link #isDirty()} is true. Returns whether a run was
-   * actually performed.
+   * Runs the underlying process only if {@link #isDirty()} is true. Returns whether a run was actually performed.
    *
    * @return {@code true} if a run was triggered, {@code false} if the process was already clean
    */
@@ -2096,14 +2038,14 @@ public class ProcessAutomation {
 
   /**
    * Sets an input variable then immediately runs the process. Equivalent to
-   * {@link #setVariableValue(String, double, String)} followed by {@link #run()} but provided as a
-   * single atomic call for agents that want the result of one specific change.
+   * {@link #setVariableValue(String, double, String)} followed by {@link #run()} but provided as a single atomic call
+   * for agents that want the result of one specific change.
    *
-   * @param address the dot-notation address
-   * @param value the value to set
+   * @param address       the dot-notation address
+   * @param value         the value to set
    * @param unitOfMeasure the unit of the provided value, or null for default units
    * @throws IllegalArgumentException if the address cannot be resolved
-   * @throws RuntimeException if the subsequent run fails
+   * @throws RuntimeException         if the subsequent run fails
    */
   public void setVariableValueAndRun(String address, double value, String unitOfMeasure) {
     setVariableValue(address, value, unitOfMeasure);
@@ -2113,9 +2055,8 @@ public class ProcessAutomation {
   // ----------------------------- Agentic run gating & evaluation ------------------------------
 
   /**
-   * Returns the structured outcome of the most recent run as a JSON string. Lets agents inspect
-   * whether the last run succeeded and, if not, which unit failed, without catching and parsing a
-   * {@link RuntimeException}.
+   * Returns the structured outcome of the most recent run as a JSON string. Lets agents inspect whether the last run
+   * succeeded and, if not, which unit failed, without catching and parsing a {@link RuntimeException}.
    *
    * @return schema-versioned JSON describing the last run outcome (see
    *         {@link neqsim.process.processmodel.RunStatus#toJson()})
@@ -2128,19 +2069,18 @@ public class ProcessAutomation {
   }
 
   /**
-   * Runs the underlying process and returns the structured
-   * {@link neqsim.process.processmodel.RunStatus RunStatus} as JSON, <strong>never
-   * throwing</strong> on a solver failure. This is the run primitive recommended for agentic loops:
-   * a diverging or failing trial is reported as {@code "success": false} with the offending unit
-   * named, instead of crashing the agent's control loop with an exception.
+   * Runs the underlying process and returns the structured {@link neqsim.process.processmodel.RunStatus RunStatus} as
+   * JSON, <strong>never throwing</strong> on a solver failure. This is the run primitive recommended for agentic loops:
+   * a diverging or failing trial is reported as {@code "success": false} with the offending unit named, instead of
+   * crashing the agent's control loop with an exception.
    *
    * <p>
-   * The dirty flag is cleared whether or not the run succeeded, so a subsequent
-   * {@link #runIfDirty()} will not re-run a known-failing configuration.
+   * The dirty flag is cleared whether or not the run succeeded, so a subsequent {@link #runIfDirty()} will not re-run a
+   * known-failing configuration.
    * </p>
    *
-   * @return schema-versioned run-status JSON, with {@code success}, {@code failedUnitName} and
-   *         {@code failedUnitError} fields
+   * @return schema-versioned run-status JSON, with {@code success}, {@code failedUnitName} and {@code failedUnitError}
+   *         fields
    */
   public String runJson() {
     try {
@@ -2154,39 +2094,34 @@ public class ProcessAutomation {
   }
 
   /**
-   * Runs the process until convergence (or an iteration limit) and returns a unified JSON report
-   * suitable for per-trial feasibility gating in agentic optimization. Never throws on a solver
-   * failure.
+   * Runs the process until convergence (or an iteration limit) and returns a unified JSON report suitable for per-trial
+   * feasibility gating in agentic optimization. Never throws on a solver failure.
    *
    * <p>
-   * For a multi-area {@link ProcessModel}, this delegates to
-   * {@link ProcessModel#runUntilConverged(int, double)} and merges
-   * {@link ProcessModel#getConvergenceReportJson()} with the run status. For a single
-   * {@link ProcessSystem}, a normal {@link ProcessSystem#run()} already iterates internal recycles;
-   * the {@code converged} flag then reflects whether the run completed without a failed unit (the
-   * {@link neqsim.process.processmodel.RunStatus RunStatus} success flag).
+   * For a multi-area {@link ProcessModel}, this delegates to {@link ProcessModel#runUntilConverged(int, double)} and
+   * merges {@link ProcessModel#getConvergenceReportJson()} with the run status. For a single {@link ProcessSystem}, a
+   * normal {@link ProcessSystem#run()} already iterates internal recycles; the {@code converged} flag then reflects
+   * whether the run completed without a failed unit (the {@link neqsim.process.processmodel.RunStatus RunStatus}
+   * success flag).
    * </p>
    *
    * <p>
-   * Top-level fields: {@code schemaVersion}, {@code converged}, {@code runSucceeded},
-   * {@code failedUnitName}, {@code failedUnitError}, {@code iterations}, {@code maxIterations},
-   * {@code maxError}, and (multi-area only) the nested {@code convergence} report and {@code areas}
-   * array.
+   * Top-level fields: {@code schemaVersion}, {@code converged}, {@code runSucceeded}, {@code failedUnitName},
+   * {@code failedUnitError}, {@code iterations}, {@code maxIterations}, {@code maxError}, and (multi-area only) the
+   * nested {@code convergence} report and {@code areas} array.
    * </p>
    *
    * @param maxIterations maximum outer iterations (multi-area only); must be at least 1
-   * @param tolerance relative convergence tolerance (multi-area only); must be finite and positive
+   * @param tolerance     relative convergence tolerance (multi-area only); must be finite and positive
    * @return schema-versioned convergence/run JSON
-   * @throws IllegalArgumentException if {@code maxIterations < 1} or {@code tolerance} is not a
-   *         finite positive number
+   * @throws IllegalArgumentException if {@code maxIterations < 1} or {@code tolerance} is not a finite positive number
    */
   public String runUntilConvergedJson(int maxIterations, double tolerance) {
     if (maxIterations < 1) {
       throw new IllegalArgumentException("maxIterations must be at least 1, was " + maxIterations);
     }
     if (Double.isNaN(tolerance) || Double.isInfinite(tolerance) || tolerance <= 0.0) {
-      throw new IllegalArgumentException(
-          "tolerance must be a finite positive number, was " + tolerance);
+      throw new IllegalArgumentException("tolerance must be a finite positive number, was " + tolerance);
     }
 
     com.google.gson.JsonObject root = new com.google.gson.JsonObject();
@@ -2197,30 +2132,30 @@ public class ProcessAutomation {
     boolean converged;
     if (processModel != null) {
       try {
-        converged = processModel.runUntilConverged(maxIterations, tolerance);
+	converged = processModel.runUntilConverged(maxIterations, tolerance);
       } catch (RuntimeException e) {
-        runSucceeded = false;
-        converged = false;
+	runSucceeded = false;
+	converged = false;
       }
       root.addProperty("converged", converged);
       root.addProperty("iterations", processModel.getLastIterationCount());
       root.addProperty("maxError", processModel.getError());
       // Embed the full structured convergence report for area-level diagnostics.
       try {
-        com.google.gson.JsonElement report =
-            com.google.gson.JsonParser.parseString(processModel.getConvergenceReportJson());
-        root.add("convergence", report);
-        if (report.isJsonObject() && report.getAsJsonObject().has("areas")) {
-          root.add("areas", report.getAsJsonObject().get("areas"));
-        }
+	com.google.gson.JsonElement report = com.google.gson.JsonParser
+	    .parseString(processModel.getConvergenceReportJson());
+	root.add("convergence", report);
+	if (report.isJsonObject() && report.getAsJsonObject().has("areas")) {
+	  root.add("areas", report.getAsJsonObject().get("areas"));
+	}
       } catch (RuntimeException e) {
-        // convergence report unavailable; primary fields above are sufficient
+	// convergence report unavailable; primary fields above are sufficient
       }
     } else {
       try {
-        processSystem.run();
+	processSystem.run();
       } catch (RuntimeException e) {
-        runSucceeded = false;
+	runSucceeded = false;
       }
       converged = runSucceeded && processSystem.getRunStatus().isSuccess();
       root.addProperty("converged", converged);
@@ -2233,18 +2168,17 @@ public class ProcessAutomation {
   }
 
   /**
-   * Atomic <em>evaluate</em> step for closed-loop agentic optimization: applies a batch of decision
-   * variables, runs the process until convergence, gates the result on the run status, and reads
-   * back the requested objective / constraint variables &mdash; all returned as a single JSON
-   * document. This method <strong>never throws</strong>; an infeasible trial (rejected setpoint,
-   * diverged solver, or failed unit) is reported as {@code "feasible": false} so the optimizer can
-   * penalise it instead of crashing.
+   * Atomic <em>evaluate</em> step for closed-loop agentic optimization: applies a batch of decision variables, runs the
+   * process until convergence, gates the result on the run status, and reads back the requested objective / constraint
+   * variables &mdash; all returned as a single JSON document. This method <strong>never throws</strong>; an infeasible
+   * trial (rejected setpoint, diverged solver, or failed unit) is reported as {@code "feasible": false} so the
+   * optimizer can penalise it instead of crashing.
    *
    * <p>
-   * This is the recommended one-call primitive for SQP / particle-swarm / grid sweeps over a
-   * flowsheet. It removes the boilerplate of set &rarr; run &rarr; try/catch &rarr; read and avoids
-   * the common jpype pitfall of mixing {@code java.lang.String} JSON with Python parsing, because
-   * the entire trial outcome is returned as one ready-to-parse string.
+   * This is the recommended one-call primitive for SQP / particle-swarm / grid sweeps over a flowsheet. It removes the
+   * boilerplate of set &rarr; run &rarr; try/catch &rarr; read and avoids the common jpype pitfall of mixing
+   * {@code java.lang.String} JSON with Python parsing, because the entire trial outcome is returned as one
+   * ready-to-parse string.
    * </p>
    *
    * <p>
@@ -2252,26 +2186,25 @@ public class ProcessAutomation {
    * </p>
    * <ul>
    * <li>{@code schemaVersion} &mdash; stable schema version</li>
-   * <li>{@code feasible} &mdash; {@code true} only when every setpoint was applied, the run did not
-   * fail, and the model converged</li>
-   * <li>{@code converged}, {@code runSucceeded}, {@code failedUnitName}, {@code failedUnitError},
-   * {@code iterations}, {@code maxError}</li>
+   * <li>{@code feasible} &mdash; {@code true} only when every setpoint was applied, the run did not fail, and the model
+   * converged</li>
+   * <li>{@code converged}, {@code runSucceeded}, {@code failedUnitName}, {@code failedUnitError}, {@code iterations},
+   * {@code maxError}</li>
    * <li>{@code setpointsApplied} &mdash; map of address &rarr; value that were set</li>
    * <li>{@code setpointsRejected} &mdash; map of address &rarr; rejection reason</li>
    * <li>{@code readbacks} &mdash; map of address &rarr; value for successfully read outputs</li>
    * <li>{@code readbackErrors} &mdash; map of address &rarr; reason for unreadable outputs</li>
    * </ul>
    *
-   * @param setpoints ordered map of decision-variable address &rarr; value to apply; may be null or
-   *        empty to evaluate the current configuration
-   * @param setpointUnit unit applied to every setpoint, or null for default units
-   * @param readbacks objective / constraint addresses to read after the run; may be null or empty
-   * @param readbackUnit unit applied to every read-back, or null for default units
+   * @param setpoints     ordered map of decision-variable address &rarr; value to apply; may be null or empty to
+   *                      evaluate the current configuration
+   * @param setpointUnit  unit applied to every setpoint, or null for default units
+   * @param readbacks     objective / constraint addresses to read after the run; may be null or empty
+   * @param readbackUnit  unit applied to every read-back, or null for default units
    * @param maxIterations maximum outer iterations for the convergence run; must be at least 1
-   * @param tolerance relative convergence tolerance; must be finite and positive
+   * @param tolerance     relative convergence tolerance; must be finite and positive
    * @return schema-versioned JSON describing the trial outcome
-   * @throws IllegalArgumentException if {@code maxIterations < 1} or {@code tolerance} is not a
-   *         finite positive number
+   * @throws IllegalArgumentException if {@code maxIterations < 1} or {@code tolerance} is not a finite positive number
    */
   public String evaluate(Map<String, Double> setpoints, String setpointUnit, List<String> readbacks,
       String readbackUnit, int maxIterations, double tolerance) {
@@ -2279,8 +2212,7 @@ public class ProcessAutomation {
       throw new IllegalArgumentException("maxIterations must be at least 1, was " + maxIterations);
     }
     if (Double.isNaN(tolerance) || Double.isInfinite(tolerance) || tolerance <= 0.0) {
-      throw new IllegalArgumentException(
-          "tolerance must be a finite positive number, was " + tolerance);
+      throw new IllegalArgumentException("tolerance must be a finite positive number, was " + tolerance);
     }
 
     com.google.gson.JsonObject root = new com.google.gson.JsonObject();
@@ -2291,14 +2223,14 @@ public class ProcessAutomation {
     com.google.gson.JsonObject rejected = new com.google.gson.JsonObject();
     if (setpoints != null) {
       for (Map.Entry<String, Double> e : setpoints.entrySet()) {
-        try {
-          setVariableValue(e.getKey(), e.getValue(), setpointUnit);
-          applied.addProperty(e.getKey(), e.getValue());
-        } catch (RuntimeException ex) {
-          rejected.addProperty(e.getKey(), ex.getMessage());
-          diagnostics.recordFailure("set", e.getKey(),
-              AutomationDiagnostics.ErrorCategory.INVALID_ADDRESS_FORMAT, null);
-        }
+	try {
+	  setVariableValue(e.getKey(), e.getValue(), setpointUnit);
+	  applied.addProperty(e.getKey(), e.getValue());
+	} catch (RuntimeException ex) {
+	  rejected.addProperty(e.getKey(), ex.getMessage());
+	  diagnostics.recordFailure("set", e.getKey(), AutomationDiagnostics.ErrorCategory.INVALID_ADDRESS_FORMAT,
+	      null);
+	}
       }
     }
     root.add("setpointsApplied", applied);
@@ -2309,18 +2241,18 @@ public class ProcessAutomation {
     boolean converged;
     if (processModel != null) {
       try {
-        converged = processModel.runUntilConverged(maxIterations, tolerance);
+	converged = processModel.runUntilConverged(maxIterations, tolerance);
       } catch (RuntimeException ex) {
-        runSucceeded = false;
-        converged = false;
+	runSucceeded = false;
+	converged = false;
       }
       root.addProperty("iterations", processModel.getLastIterationCount());
       root.addProperty("maxError", processModel.getError());
     } else {
       try {
-        processSystem.run();
+	processSystem.run();
       } catch (RuntimeException ex) {
-        runSucceeded = false;
+	runSucceeded = false;
       }
       converged = runSucceeded && processSystem.getRunStatus().isSuccess();
     }
@@ -2338,11 +2270,11 @@ public class ProcessAutomation {
     com.google.gson.JsonObject readErrors = new com.google.gson.JsonObject();
     if (readbacks != null) {
       for (String addr : readbacks) {
-        try {
-          reads.addProperty(addr, getVariableValue(addr, readbackUnit));
-        } catch (RuntimeException ex) {
-          readErrors.addProperty(addr, ex.getMessage());
-        }
+	try {
+	  reads.addProperty(addr, getVariableValue(addr, readbackUnit));
+	} catch (RuntimeException ex) {
+	  readErrors.addProperty(addr, ex.getMessage());
+	}
       }
     }
     root.add("readbacks", reads);
@@ -2352,32 +2284,29 @@ public class ProcessAutomation {
   }
 
   /**
-   * Convenience overload of {@link #evaluate(Map, String, List, String, int, double)} that uses the
-   * same unit for setpoints and read-backs and sensible default convergence settings (30
-   * iterations, relative tolerance 5e-3, which is robust for plants with near-zero-flow anti-surge
-   * recycles).
+   * Convenience overload of {@link #evaluate(Map, String, List, String, int, double)} that uses the same unit for
+   * setpoints and read-backs and sensible default convergence settings (30 iterations, relative tolerance 5e-3, which
+   * is robust for plants with near-zero-flow anti-surge recycles).
    *
-   * @param setpoints decision-variable address &rarr; value map; may be null or empty
+   * @param setpoints     decision-variable address &rarr; value map; may be null or empty
    * @param unitOfMeasure unit applied to setpoints and read-backs, or null for default units
-   * @param readbacks objective / constraint addresses to read after the run; may be null or empty
+   * @param readbacks     objective / constraint addresses to read after the run; may be null or empty
    * @return schema-versioned JSON describing the trial outcome
    */
-  public String evaluate(Map<String, Double> setpoints, String unitOfMeasure,
-      List<String> readbacks) {
+  public String evaluate(Map<String, Double> setpoints, String unitOfMeasure, List<String> readbacks) {
     return evaluate(setpoints, unitOfMeasure, readbacks, unitOfMeasure, 30, 5.0e-3);
   }
 
   /**
-   * Merges the most recent {@link neqsim.process.processmodel.RunStatus RunStatus} fields
-   * ({@code success}, {@code failedUnitName}, {@code failedUnitError}) into the supplied JSON
-   * object. Used by {@link #runUntilConvergedJson(int, double)} and
-   * {@link #evaluate(Map, String, List, String, int, double)}.
+   * Merges the most recent {@link neqsim.process.processmodel.RunStatus RunStatus} fields ({@code success},
+   * {@code failedUnitName}, {@code failedUnitError}) into the supplied JSON object. Used by
+   * {@link #runUntilConvergedJson(int, double)} and {@link #evaluate(Map, String, List, String, int, double)}.
    *
    * @param root the JSON object to enrich with run-status fields
    */
   private void mergeRunStatus(com.google.gson.JsonObject root) {
-    neqsim.process.processmodel.RunStatus status =
-        processModel != null ? processModel.getRunStatus() : processSystem.getRunStatus();
+    neqsim.process.processmodel.RunStatus status = processModel != null ? processModel.getRunStatus()
+	: processSystem.getRunStatus();
     if (status == null) {
       return;
     }
@@ -2396,18 +2325,17 @@ public class ProcessAutomation {
   // ----------------------------- Batch get / set ------------------------------
 
   /**
-   * Reads many variables in a single call. Reduces round-trip latency for MCP/HTTP agents that
-   * otherwise issue one call per variable.
+   * Reads many variables in a single call. Reduces round-trip latency for MCP/HTTP agents that otherwise issue one call
+   * per variable.
    *
    * <p>
-   * Each value is read in the requested unit if {@code unitOfMeasure} is non-null, otherwise in the
-   * variable's default unit. Addresses that fail to resolve are skipped and recorded in the
-   * diagnostics; the returned map only contains successfully read entries. To detect failures,
-   * compare {@code addresses.size()} to the returned map size and consult
-   * {@link #getDiagnostics()}.
+   * Each value is read in the requested unit if {@code unitOfMeasure} is non-null, otherwise in the variable's default
+   * unit. Addresses that fail to resolve are skipped and recorded in the diagnostics; the returned map only contains
+   * successfully read entries. To detect failures, compare {@code addresses.size()} to the returned map size and
+   * consult {@link #getDiagnostics()}.
    * </p>
    *
-   * @param addresses dot-notation addresses to read
+   * @param addresses     dot-notation addresses to read
    * @param unitOfMeasure unit applied to every address, or null for defaults
    * @return ordered map from address to value (Linked) with only successfully read entries
    * @throws IllegalArgumentException if {@code addresses} is null
@@ -2419,10 +2347,9 @@ public class ProcessAutomation {
     Map<String, Double> out = new LinkedHashMap<String, Double>();
     for (String addr : addresses) {
       try {
-        out.put(addr, getVariableValue(addr, unitOfMeasure));
+	out.put(addr, getVariableValue(addr, unitOfMeasure));
       } catch (Exception e) {
-        diagnostics.recordFailure("get", addr,
-            AutomationDiagnostics.ErrorCategory.INVALID_ADDRESS_FORMAT, null);
+	diagnostics.recordFailure("get", addr, AutomationDiagnostics.ErrorCategory.INVALID_ADDRESS_FORMAT, null);
       }
     }
     return out;
@@ -2431,10 +2358,10 @@ public class ProcessAutomation {
   /**
    * Sets many input variables in a single call.
    *
-   * @param updates ordered map from address to value
+   * @param updates       ordered map from address to value
    * @param unitOfMeasure unit applied to every update, or null for defaults
-   * @param runAfter when {@code true}, calls {@link #run()} once after all writes succeed; when
-   *        {@code false}, leaves the facade dirty
+   * @param runAfter      when {@code true}, calls {@link #run()} once after all writes succeed; when {@code false},
+   *                      leaves the facade dirty
    * @return number of variables that were successfully set
    * @throws IllegalArgumentException if {@code updates} is null
    */
@@ -2445,11 +2372,10 @@ public class ProcessAutomation {
     int ok = 0;
     for (Map.Entry<String, Double> e : updates.entrySet()) {
       try {
-        setVariableValue(e.getKey(), e.getValue(), unitOfMeasure);
-        ok++;
+	setVariableValue(e.getKey(), e.getValue(), unitOfMeasure);
+	ok++;
       } catch (Exception ex) {
-        diagnostics.recordFailure("set", e.getKey(),
-            AutomationDiagnostics.ErrorCategory.INVALID_ADDRESS_FORMAT, null);
+	diagnostics.recordFailure("set", e.getKey(), AutomationDiagnostics.ErrorCategory.INVALID_ADDRESS_FORMAT, null);
       }
     }
     if (runAfter && ok > 0) {
@@ -2462,11 +2388,9 @@ public class ProcessAutomation {
 
   /**
    * Returns the registry of typed {@link WriteValidator write validators} consulted by
-   * {@link #setVariableValueValidated(String, double, String)} and
-   * {@link #setValuesTransactional(Map, String)}. Defaults to
-   * {@link WriteValidatorRegistry#createDefault()}; replace it via
-   * {@link #setWriteValidatorRegistry(WriteValidatorRegistry)} to disable validation or to add
-   * project-specific checks.
+   * {@link #setVariableValueValidated(String, double, String)} and {@link #setValuesTransactional(Map, String)}.
+   * Defaults to {@link WriteValidatorRegistry#createDefault()}; replace it via
+   * {@link #setWriteValidatorRegistry(WriteValidatorRegistry)} to disable validation or to add project-specific checks.
    *
    * @return the current registry; never null
    */
@@ -2487,9 +2411,9 @@ public class ProcessAutomation {
   }
 
   /**
-   * Resolves the {@link ProcessEquipmentInterface} addressed by an automation address (handling the
-   * optional area prefix and stripping any port/property suffix). Returns {@code null} when the
-   * address cannot be resolved; never throws.
+   * Resolves the {@link ProcessEquipmentInterface} addressed by an automation address (handling the optional area
+   * prefix and stripping any port/property suffix). Returns {@code null} when the address cannot be resolved; never
+   * throws.
    *
    * @param address the dot-notation address
    * @return the equipment, or null when unresolvable
@@ -2514,10 +2438,9 @@ public class ProcessAutomation {
   }
 
   /**
-   * Returns the property path that the typed validators see (the portion of the address after the
-   * unit name). For a two-part address {@code "Compressor.outletPressure"} this is
-   * {@code "outletPressure"}; for a three-part address {@code "Sep1.gasOut.pressure"} this is
-   * {@code "gasOut.pressure"}.
+   * Returns the property path that the typed validators see (the portion of the address after the unit name). For a
+   * two-part address {@code "Compressor.outletPressure"} this is {@code "outletPressure"}; for a three-part address
+   * {@code "Sep1.gasOut.pressure"} this is {@code "gasOut.pressure"}.
    *
    * @param address the dot-notation address
    * @return the property path, or null when the address has no property part
@@ -2539,11 +2462,11 @@ public class ProcessAutomation {
   }
 
   /**
-   * Reads the current value of an address without throwing. Returns {@code null} when the value is
-   * unreadable for any reason (typically because the variable is INPUT-only and has not yet been
-   * set, or because the equipment has not been run).
+   * Reads the current value of an address without throwing. Returns {@code null} when the value is unreadable for any
+   * reason (typically because the variable is INPUT-only and has not yet been set, or because the equipment has not
+   * been run).
    *
-   * @param address the dot-notation address
+   * @param address       the dot-notation address
    * @param unitOfMeasure the unit of measure, or null for the default
    * @return the current value, or null when unreadable
    */
@@ -2556,28 +2479,25 @@ public class ProcessAutomation {
   }
 
   /**
-   * Like {@link #setVariableValue(String, double, String)} but first runs the
-   * {@link WriteValidatorRegistry} against the proposed write. When validation returns
-   * {@link WriteValidationResult.Severity#ERROR ERROR} the write is rejected with an
-   * {@link IllegalArgumentException} and the simulation is left unchanged.
+   * Like {@link #setVariableValue(String, double, String)} but first runs the {@link WriteValidatorRegistry} against
+   * the proposed write. When validation returns {@link WriteValidationResult.Severity#ERROR ERROR} the write is
+   * rejected with an {@link IllegalArgumentException} and the simulation is left unchanged.
    *
-   * @param address the dot-notation address
-   * @param value the value to set
+   * @param address       the dot-notation address
+   * @param value         the value to set
    * @param unitOfMeasure the unit of measure, or null for the default
    * @return the validation result (always non-null; {@link WriteValidationResult.Severity#OK OK} or
    *         {@link WriteValidationResult.Severity#WARNING WARNING})
    * @throws IllegalArgumentException if validation fails or the address cannot be resolved
    */
-  public WriteValidationResult setVariableValueValidated(String address, double value,
-      String unitOfMeasure) {
+  public WriteValidationResult setVariableValueValidated(String address, double value, String unitOfMeasure) {
     ProcessEquipmentInterface eq = tryResolveEquipment(address);
     WriteValidationResult vr = WriteValidationResult.ok();
     if (eq != null) {
       String propertyPath = extractPropertyPath(address);
       vr = validatorRegistry.validate(eq, propertyPath, value, unitOfMeasure);
       if (!vr.isAllowed()) {
-        throw new IllegalArgumentException(
-            "Write rejected by validator [" + vr.getCode() + "]: " + vr.getMessage());
+	throw new IllegalArgumentException("Write rejected by validator [" + vr.getCode() + "]: " + vr.getMessage());
       }
     }
     setVariableValue(address, value, unitOfMeasure);
@@ -2585,47 +2505,42 @@ public class ProcessAutomation {
   }
 
   /**
-   * Applies many input writes atomically: validates every write up-front, snapshots the current
-   * values, applies the writes, runs the simulation, and rolls back to the snapshot when any phase
-   * fails.
+   * Applies many input writes atomically: validates every write up-front, snapshots the current values, applies the
+   * writes, runs the simulation, and rolls back to the snapshot when any phase fails.
    *
    * <p>
    * Rollback semantics:
    * </p>
    * <ul>
-   * <li><strong>Validation failure</strong> — if any validator returns
-   * {@link WriteValidationResult.Severity#ERROR ERROR}, the batch is rejected without touching the
-   * simulation and {@link TransactionalBatchResult#getRollbackCategory()} returns
+   * <li><strong>Validation failure</strong> — if any validator returns {@link WriteValidationResult.Severity#ERROR
+   * ERROR}, the batch is rejected without touching the simulation and
+   * {@link TransactionalBatchResult#getRollbackCategory()} returns
    * {@link TransactionalBatchResult.RollbackCategory#VALIDATION_FAILED VALIDATION_FAILED}.</li>
-   * <li><strong>Apply failure</strong> — if a write throws when applied, the snapshot is restored
-   * and the simulation is re-run to coherence;
-   * {@link TransactionalBatchResult.RollbackCategory#APPLY_FAILED APPLY_FAILED} is returned.</li>
-   * <li><strong>Run failure</strong> — if the writes apply cleanly but {@link #run()} throws, the
-   * snapshot is restored and re-run; {@link TransactionalBatchResult.RollbackCategory#RUN_FAILED
-   * RUN_FAILED} is returned.</li>
+   * <li><strong>Apply failure</strong> — if a write throws when applied, the snapshot is restored and the simulation is
+   * re-run to coherence; {@link TransactionalBatchResult.RollbackCategory#APPLY_FAILED APPLY_FAILED} is returned.</li>
+   * <li><strong>Run failure</strong> — if the writes apply cleanly but {@link #run()} throws, the snapshot is restored
+   * and re-run; {@link TransactionalBatchResult.RollbackCategory#RUN_FAILED RUN_FAILED} is returned.</li>
    * </ul>
    *
    * <p>
-   * Previous values that cannot be read (typically because the variable is INPUT-only and was not
-   * previously set) are recorded as {@code null} in the per-write outcome and skipped during
-   * rollback. For best results, ensure inputs have been set at least once before relying on
-   * transactional rollback.
+   * Previous values that cannot be read (typically because the variable is INPUT-only and was not previously set) are
+   * recorded as {@code null} in the per-write outcome and skipped during rollback. For best results, ensure inputs have
+   * been set at least once before relying on transactional rollback.
    * </p>
    *
-   * @param updates ordered map from address to value
+   * @param updates       ordered map from address to value
    * @param unitOfMeasure unit applied to every update, or null for defaults
    * @return the {@link TransactionalBatchResult}; never null
    * @throws IllegalArgumentException if {@code updates} is null
    */
-  public TransactionalBatchResult setValuesTransactional(Map<String, Double> updates,
-      String unitOfMeasure) {
+  public TransactionalBatchResult setValuesTransactional(Map<String, Double> updates, String unitOfMeasure) {
     if (updates == null) {
       throw new IllegalArgumentException("updates must not be null");
     }
 
     // Phase 0 — snapshot + validate
-    List<TransactionalBatchResult.WriteOutcome> outcomes =
-        new ArrayList<TransactionalBatchResult.WriteOutcome>(updates.size());
+    List<TransactionalBatchResult.WriteOutcome> outcomes = new ArrayList<TransactionalBatchResult.WriteOutcome>(
+	updates.size());
     boolean anyValidationError = false;
     String firstValidationFailure = null;
     for (Map.Entry<String, Double> e : updates.entrySet()) {
@@ -2635,24 +2550,22 @@ public class ProcessAutomation {
       ProcessEquipmentInterface eq = tryResolveEquipment(address);
       WriteValidationResult vr = WriteValidationResult.ok();
       if (eq != null) {
-        vr = validatorRegistry.validate(eq, extractPropertyPath(address), value, unitOfMeasure);
+	vr = validatorRegistry.validate(eq, extractPropertyPath(address), value, unitOfMeasure);
       }
-      outcomes.add(new TransactionalBatchResult.WriteOutcome(address, value, unitOfMeasure,
-          previous, vr, false, null));
+      outcomes.add(new TransactionalBatchResult.WriteOutcome(address, value, unitOfMeasure, previous, vr, false, null));
       if (!vr.isAllowed() && !anyValidationError) {
-        anyValidationError = true;
-        firstValidationFailure = address + " — " + vr.getCode() + ": " + vr.getMessage();
+	anyValidationError = true;
+	firstValidationFailure = address + " — " + vr.getCode() + ": " + vr.getMessage();
       }
     }
     if (anyValidationError) {
-      return TransactionalBatchResult.rolledBack(
-          TransactionalBatchResult.RollbackCategory.VALIDATION_FAILED,
-          "Validation failed: " + firstValidationFailure, outcomes);
+      return TransactionalBatchResult.rolledBack(TransactionalBatchResult.RollbackCategory.VALIDATION_FAILED,
+	  "Validation failed: " + firstValidationFailure, outcomes);
     }
 
     // Phase 1 — apply
-    List<TransactionalBatchResult.WriteOutcome> applied =
-        new ArrayList<TransactionalBatchResult.WriteOutcome>(outcomes.size());
+    List<TransactionalBatchResult.WriteOutcome> applied = new ArrayList<TransactionalBatchResult.WriteOutcome>(
+	outcomes.size());
     int idx = 0;
     String applyError = null;
     String applyErrorAddress = null;
@@ -2661,15 +2574,15 @@ public class ProcessAutomation {
       double value = e.getValue();
       TransactionalBatchResult.WriteOutcome existing = outcomes.get(idx++);
       try {
-        setVariableValue(address, value, unitOfMeasure);
-        applied.add(new TransactionalBatchResult.WriteOutcome(address, value, unitOfMeasure,
-            existing.getPreviousValue(), existing.getValidation(), true, null));
+	setVariableValue(address, value, unitOfMeasure);
+	applied.add(new TransactionalBatchResult.WriteOutcome(address, value, unitOfMeasure,
+	    existing.getPreviousValue(), existing.getValidation(), true, null));
       } catch (Exception ex) {
-        applyError = ex.getMessage();
-        applyErrorAddress = address;
-        applied.add(new TransactionalBatchResult.WriteOutcome(address, value, unitOfMeasure,
-            existing.getPreviousValue(), existing.getValidation(), false, ex.getMessage()));
-        break;
+	applyError = ex.getMessage();
+	applyErrorAddress = address;
+	applied.add(new TransactionalBatchResult.WriteOutcome(address, value, unitOfMeasure,
+	    existing.getPreviousValue(), existing.getValidation(), false, ex.getMessage()));
+	break;
       }
     }
     // Carry over any not-yet-attempted outcomes so the result lists every requested write
@@ -2679,9 +2592,8 @@ public class ProcessAutomation {
 
     if (applyError != null) {
       rollbackSnapshot(applied, unitOfMeasure);
-      return TransactionalBatchResult.rolledBack(
-          TransactionalBatchResult.RollbackCategory.APPLY_FAILED,
-          "Apply failed at " + applyErrorAddress + ": " + applyError, applied);
+      return TransactionalBatchResult.rolledBack(TransactionalBatchResult.RollbackCategory.APPLY_FAILED,
+	  "Apply failed at " + applyErrorAddress + ": " + applyError, applied);
     }
 
     // Phase 2 — run
@@ -2690,57 +2602,52 @@ public class ProcessAutomation {
     } catch (Exception ex) {
       String runError = ex.getMessage();
       rollbackSnapshot(applied, unitOfMeasure);
-      return TransactionalBatchResult.rolledBack(
-          TransactionalBatchResult.RollbackCategory.RUN_FAILED,
-          "Run failed after applying writes: " + runError, applied);
+      return TransactionalBatchResult.rolledBack(TransactionalBatchResult.RollbackCategory.RUN_FAILED,
+	  "Run failed after applying writes: " + runError, applied);
     }
 
     return TransactionalBatchResult.committed(applied);
   }
 
   /**
-   * Restores values from a snapshot stored in {@link TransactionalBatchResult.WriteOutcome} entries
-   * and re-runs the simulation to leave it in a coherent state. Values whose snapshot is
-   * {@code null} are skipped. Restore-time errors are logged through the diagnostics but never
-   * thrown.
+   * Restores values from a snapshot stored in {@link TransactionalBatchResult.WriteOutcome} entries and re-runs the
+   * simulation to leave it in a coherent state. Values whose snapshot is {@code null} are skipped. Restore-time errors
+   * are logged through the diagnostics but never thrown.
    *
-   * @param snapshot the snapshot entries from the failed batch
+   * @param snapshot      the snapshot entries from the failed batch
    * @param unitOfMeasure the unit of measure used for the original writes
    */
-  private void rollbackSnapshot(List<TransactionalBatchResult.WriteOutcome> snapshot,
-      String unitOfMeasure) {
+  private void rollbackSnapshot(List<TransactionalBatchResult.WriteOutcome> snapshot, String unitOfMeasure) {
     for (TransactionalBatchResult.WriteOutcome wo : snapshot) {
       if (!wo.isApplied()) {
-        continue;
+	continue;
       }
       Double prev = wo.getPreviousValue();
       if (prev == null) {
-        continue;
+	continue;
       }
       try {
-        setVariableValue(wo.getAddress(), prev.doubleValue(), unitOfMeasure);
+	setVariableValue(wo.getAddress(), prev.doubleValue(), unitOfMeasure);
       } catch (Exception ex) {
-        diagnostics.recordFailure("rollback", wo.getAddress(),
-            AutomationDiagnostics.ErrorCategory.INVALID_ADDRESS_FORMAT, null);
+	diagnostics.recordFailure("rollback", wo.getAddress(),
+	    AutomationDiagnostics.ErrorCategory.INVALID_ADDRESS_FORMAT, null);
       }
     }
     try {
       run();
     } catch (Exception ex) {
-      diagnostics.recordFailure("rollback-run", "*",
-          AutomationDiagnostics.ErrorCategory.CONVERGENCE_FAILURE, null);
+      diagnostics.recordFailure("rollback-run", "*", AutomationDiagnostics.ErrorCategory.CONVERGENCE_FAILURE, null);
     }
   }
 
   // ----------------------------- Snapshot ------------------------------
 
   /**
-   * Returns a JSON snapshot of all variables for a unit, an area, or the entire process. Useful for
-   * agent observation and for building model-vs-plant comparisons.
+   * Returns a JSON snapshot of all variables for a unit, an area, or the entire process. Useful for agent observation
+   * and for building model-vs-plant comparisons.
    *
-   * @param scope unit name (e.g. {@code "HP Sep"}), area-qualified unit name (e.g.
-   *        {@code "Separation::HP Sep"}), area name (e.g. {@code "Separation"}), or {@code "*"} /
-   *        {@code null} for the whole process
+   * @param scope unit name (e.g. {@code "HP Sep"}), area-qualified unit name (e.g. {@code "Separation::HP Sep"}), area
+   *              name (e.g. {@code "Separation"}), or {@code "*"} / {@code null} for the whole process
    * @return JSON string {@code {schemaVersion, scope, units:[{name, area, type, variables:{...}}]}}
    */
   public String snapshot(String scope) {
@@ -2755,29 +2662,29 @@ public class ProcessAutomation {
       com.google.gson.JsonObject u = new com.google.gson.JsonObject();
       u.addProperty("name", unitAddr);
       try {
-        u.addProperty("type", getEquipmentType(unitAddr));
+	u.addProperty("type", getEquipmentType(unitAddr));
       } catch (Exception e) {
-        // skip type if unresolvable
+	// skip type if unresolvable
       }
       com.google.gson.JsonObject vars = new com.google.gson.JsonObject();
       try {
-        List<SimulationVariable> vlist = getVariableList(unitAddr);
-        for (SimulationVariable v : vlist) {
-          try {
-            double val = getVariableValue(v.getAddress(), v.getDefaultUnit());
-            com.google.gson.JsonObject vobj = new com.google.gson.JsonObject();
-            vobj.addProperty("value", val);
-            if (v.getDefaultUnit() != null) {
-              vobj.addProperty("unit", v.getDefaultUnit());
-            }
-            vobj.addProperty("type", v.getType().name());
-            vars.add(stripUnitPrefix(v.getAddress(), unitAddr), vobj);
-          } catch (Exception e) {
-            // skip individual variable read failures
-          }
-        }
+	List<SimulationVariable> vlist = getVariableList(unitAddr);
+	for (SimulationVariable v : vlist) {
+	  try {
+	    double val = getVariableValue(v.getAddress(), v.getDefaultUnit());
+	    com.google.gson.JsonObject vobj = new com.google.gson.JsonObject();
+	    vobj.addProperty("value", val);
+	    if (v.getDefaultUnit() != null) {
+	      vobj.addProperty("unit", v.getDefaultUnit());
+	    }
+	    vobj.addProperty("type", v.getType().name());
+	    vars.add(stripUnitPrefix(v.getAddress(), unitAddr), vobj);
+	  } catch (Exception e) {
+	    // skip individual variable read failures
+	  }
+	}
       } catch (Exception e) {
-        // skip unit
+	// skip unit
       }
       u.add("variables", vars);
       unitsArr.add(u);
@@ -2790,25 +2697,23 @@ public class ProcessAutomation {
    * Returns a stable, side-effect-free JSON utilization snapshot of every unit in the flowsheet.
    *
    * <p>
-   * This is the recommended observation endpoint for machine-learning / reinforcement-learning
-   * optimization loops. Whereas {@link #snapshot(String)} reports raw process variables, this
-   * method reports capacity <i>utilization</i> &mdash; for every unit the maximum constraint
-   * utilization, the limiting constraint, a per-constraint breakdown, feasibility, and (for
-   * compressors and pumps) shaft power, plus the plant-wide {@code bottleneck} and
+   * This is the recommended observation endpoint for machine-learning / reinforcement-learning optimization loops.
+   * Whereas {@link #snapshot(String)} reports raw process variables, this method reports capacity <i>utilization</i>
+   * &mdash; for every unit the maximum constraint utilization, the limiting constraint, a per-constraint breakdown,
+   * feasibility, and (for compressors and pumps) shaft power, plus the plant-wide {@code bottleneck} and
    * {@code anyOverloaded} flags. Pair it with
-   * {@link #evaluate(java.util.Map, String, java.util.List, String, int, double) evaluate(...)}
-   * (action + reward) to close an optimization loop: {@code evaluate} applies setpoints and runs
-   * the model; {@code getUtilizationSnapshot} reads back the resulting capacity observation.
+   * {@link #evaluate(java.util.Map, String, java.util.List, String, int, double) evaluate(...)} (action + reward) to
+   * close an optimization loop: {@code evaluate} applies setpoints and runs the model; {@code getUtilizationSnapshot}
+   * reads back the resulting capacity observation.
    * </p>
    *
    * <p>
-   * The method does <b>not</b> run the model; call {@link #evaluate} or {@link #run()} first so the
-   * reported utilization reflects the latest setpoints. For a multi-area model each unit entry
-   * carries an {@code "area"} property.
+   * The method does <b>not</b> run the model; call {@link #evaluate} or {@link #run()} first so the reported
+   * utilization reflects the latest setpoints. For a multi-area model each unit entry carries an {@code "area"}
+   * property.
    * </p>
    *
-   * @return JSON string {@code {schemaVersion, units:[...], bottleneck:{...}, anyOverloaded,
-   *         anyHardLimitExceeded}}
+   * @return JSON string {@code {schemaVersion, units:[...], bottleneck:{...}, anyOverloaded, anyHardLimitExceeded}}
    */
   public String getUtilizationSnapshot() {
     if (processModel != null) {
@@ -2831,7 +2736,7 @@ public class ProcessAutomation {
     if (processModel != null && !scope.contains(AREA_SEPARATOR) && !scope.contains(".")) {
       List<String> areas = processModel.getProcessSystemNames();
       if (areas.contains(scope)) {
-        return getUnitList(scope);
+	return getUnitList(scope);
       }
     }
     // Treat as a single unit address
@@ -2843,7 +2748,7 @@ public class ProcessAutomation {
   /**
    * Removes a unit-name prefix from a variable address, leaving the property path.
    *
-   * @param address full variable address
+   * @param address  full variable address
    * @param unitAddr unit prefix (possibly area-qualified)
    * @return the property portion of the address
    */
@@ -2858,9 +2763,8 @@ public class ProcessAutomation {
   // ----------------------------- Describe / discovery ------------------------------
 
   /**
-   * Returns a single JSON manifest describing the entire flowsheet schema: areas (if any), units
-   * with type and variables, and stable schema version. This is the recommended single-tool-call
-   * discovery endpoint for LLM agents.
+   * Returns a single JSON manifest describing the entire flowsheet schema: areas (if any), units with type and
+   * variables, and stable schema version. This is the recommended single-tool-call discovery endpoint for LLM agents.
    *
    * @return JSON string with schema, areas, units, and variable descriptors
    */
@@ -2873,7 +2777,7 @@ public class ProcessAutomation {
     if (isMultiArea()) {
       com.google.gson.JsonArray areasArr = new com.google.gson.JsonArray();
       for (String a : getAreaList()) {
-        areasArr.add(a);
+	areasArr.add(a);
       }
       root.add("areas", areasArr);
     }
@@ -2883,33 +2787,33 @@ public class ProcessAutomation {
       com.google.gson.JsonObject u = new com.google.gson.JsonObject();
       u.addProperty("name", unitAddr);
       try {
-        u.addProperty("type", getEquipmentType(unitAddr));
+	u.addProperty("type", getEquipmentType(unitAddr));
       } catch (Exception e) {
-        // ignore
+	// ignore
       }
       com.google.gson.JsonArray varsArr = new com.google.gson.JsonArray();
       try {
-        for (SimulationVariable v : getVariableList(unitAddr)) {
-          com.google.gson.JsonObject vo = new com.google.gson.JsonObject();
-          vo.addProperty("address", v.getAddress());
-          vo.addProperty("name", v.getName());
-          vo.addProperty("type", v.getType().name());
-          if (v.getDefaultUnit() != null) {
-            vo.addProperty("unit", v.getDefaultUnit());
-          }
-          if (v.getDescription() != null) {
-            vo.addProperty("description", v.getDescription());
-          }
-          if (v.getUnitFamily() != null) {
-            vo.addProperty("unitFamily", v.getUnitFamily());
-          }
-          if (v.getCategory() != null) {
-            vo.addProperty("category", v.getCategory());
-          }
-          varsArr.add(vo);
-        }
+	for (SimulationVariable v : getVariableList(unitAddr)) {
+	  com.google.gson.JsonObject vo = new com.google.gson.JsonObject();
+	  vo.addProperty("address", v.getAddress());
+	  vo.addProperty("name", v.getName());
+	  vo.addProperty("type", v.getType().name());
+	  if (v.getDefaultUnit() != null) {
+	    vo.addProperty("unit", v.getDefaultUnit());
+	  }
+	  if (v.getDescription() != null) {
+	    vo.addProperty("description", v.getDescription());
+	  }
+	  if (v.getUnitFamily() != null) {
+	    vo.addProperty("unitFamily", v.getUnitFamily());
+	  }
+	  if (v.getCategory() != null) {
+	    vo.addProperty("category", v.getCategory());
+	  }
+	  varsArr.add(vo);
+	}
       } catch (Exception e) {
-        // ignore unit
+	// ignore unit
       }
       u.add("variables", varsArr);
       unitsArr.add(u);
@@ -2921,12 +2825,11 @@ public class ProcessAutomation {
   // ----------------------------- Topology / connections ------------------------------
 
   /**
-   * Returns a JSON description of the flowsheet topology: equipment with their declared inlet and
-   * outlet streams, and explicit {@link neqsim.process.processmodel.ProcessConnection
-   * ProcessConnection} edges when available.
+   * Returns a JSON description of the flowsheet topology: equipment with their declared inlet and outlet streams, and
+   * explicit {@link neqsim.process.processmodel.ProcessConnection ProcessConnection} edges when available.
    *
-   * @return JSON string {@code {schemaVersion, equipment:[{name, type, inlets, outlets}],
-   *         connections:[{source, target, type, label}]}}
+   * @return JSON string {@code {schemaVersion, equipment:[{name, type, inlets, outlets}], connections:[{source, target,
+   *         type, label}]}}
    */
   public String getTopology() {
     com.google.gson.JsonObject root = new com.google.gson.JsonObject();
@@ -2936,7 +2839,7 @@ public class ProcessAutomation {
     List<ProcessSystem> systems = new ArrayList<ProcessSystem>();
     if (processModel != null) {
       for (String a : processModel.getProcessSystemNames()) {
-        systems.add(processModel.get(a));
+	systems.add(processModel.get(a));
       }
     } else {
       systems.add(processSystem);
@@ -2944,56 +2847,57 @@ public class ProcessAutomation {
 
     for (ProcessSystem sys : systems) {
       for (ProcessEquipmentInterface unit : sys.getUnitOperations()) {
-        com.google.gson.JsonObject u = new com.google.gson.JsonObject();
-        u.addProperty("name", unit.getName());
-        u.addProperty("type", unit.getClass().getSimpleName());
-        com.google.gson.JsonArray inlets = new com.google.gson.JsonArray();
-        com.google.gson.JsonArray outlets = new com.google.gson.JsonArray();
-        try {
-          for (StreamInterface s : unit.getInletStreams()) {
-            if (s != null) {
-              inlets.add(s.getName());
-            }
-          }
-        } catch (Exception e) {
-          // ignore - not all equipment exposes inlets
-        }
-        try {
-          for (StreamInterface s : unit.getOutletStreams()) {
-            if (s != null) {
-              outlets.add(s.getName());
-            }
-          }
-        } catch (Exception e) {
-          // ignore
-        }
-        u.add("inlets", inlets);
-        u.add("outlets", outlets);
-        equipArr.add(u);
+	com.google.gson.JsonObject u = new com.google.gson.JsonObject();
+	u.addProperty("name", unit.getName());
+	u.addProperty("type", unit.getClass().getSimpleName());
+	com.google.gson.JsonArray inlets = new com.google.gson.JsonArray();
+	com.google.gson.JsonArray outlets = new com.google.gson.JsonArray();
+	try {
+	  for (StreamInterface s : unit.getInletStreams()) {
+	    if (s != null) {
+	      inlets.add(s.getName());
+	    }
+	  }
+	} catch (Exception e) {
+	  // ignore - not all equipment exposes inlets
+	}
+	try {
+	  for (StreamInterface s : unit.getOutletStreams()) {
+	    if (s != null) {
+	      outlets.add(s.getName());
+	    }
+	  }
+	} catch (Exception e) {
+	  // ignore
+	}
+	u.add("inlets", inlets);
+	u.add("outlets", outlets);
+	equipArr.add(u);
       }
     }
     root.add("equipment", equipArr);
 
     com.google.gson.JsonArray connsArr = new com.google.gson.JsonArray();
     try {
-      List<neqsim.process.processmodel.ProcessConnection> conns =
-          (processSystem != null) ? processSystem.getConnections() : null;
+      List<neqsim.process.processmodel.ProcessConnection> conns = (processSystem != null)
+	  ? processSystem.getConnections()
+	  : null;
       if (conns != null) {
-        for (neqsim.process.processmodel.ProcessConnection c : conns) {
-          com.google.gson.JsonObject co = new com.google.gson.JsonObject();
-          co.addProperty("source", c.getSourceEquipment());
-          co.addProperty("target", c.getTargetEquipment());
-          if (c.getType() != null) {
-            co.addProperty("type", c.getType().name());
-          }
-          if (c.getSourcePort() != null) {
-            co.addProperty("sourcePort", c.getSourcePort());
-          }
-          if (c.getTargetPort() != null) {
-            co.addProperty("targetPort", c.getTargetPort());
-          }
-          connsArr.add(co);
-        }
+	for (neqsim.process.processmodel.ProcessConnection c : conns) {
+	  com.google.gson.JsonObject co = new com.google.gson.JsonObject();
+	  co.addProperty("source", c.getSourceEquipment());
+	  co.addProperty("target", c.getTargetEquipment());
+	  if (c.getType() != null) {
+	    co.addProperty("type", c.getType().name());
+	  }
+	  if (c.getSourcePort() != null) {
+	    co.addProperty("sourcePort", c.getSourcePort());
+	  }
+	  if (c.getTargetPort() != null) {
+	    co.addProperty("targetPort", c.getTargetPort());
+	  }
+	  connsArr.add(co);
+	}
       }
     } catch (Exception e) {
       // ignore - connections are optional metadata
@@ -3004,8 +2908,8 @@ public class ProcessAutomation {
   }
 
   /**
-   * Returns the upstream and downstream neighbors of a unit, derived from its inlet and outlet
-   * streams. Useful for multi-hop agent reasoning ("what feeds the HP separator?").
+   * Returns the upstream and downstream neighbors of a unit, derived from its inlet and outlet streams. Useful for
+   * multi-hop agent reasoning ("what feeds the HP separator?").
    *
    * @param unitName unit name (or area-qualified unit name in multi-area mode)
    * @return JSON string {@code {unit, upstream:[...], downstream:[...]}}
@@ -3025,18 +2929,18 @@ public class ProcessAutomation {
     java.util.Set<String> outletStreamNames = new java.util.LinkedHashSet<String>();
     try {
       for (StreamInterface s : target.getInletStreams()) {
-        if (s != null) {
-          inletStreamNames.add(s.getName());
-        }
+	if (s != null) {
+	  inletStreamNames.add(s.getName());
+	}
       }
     } catch (Exception e) {
       // ignore
     }
     try {
       for (StreamInterface s : target.getOutletStreams()) {
-        if (s != null) {
-          outletStreamNames.add(s.getName());
-        }
+	if (s != null) {
+	  outletStreamNames.add(s.getName());
+	}
       }
     } catch (Exception e) {
       // ignore
@@ -3051,7 +2955,7 @@ public class ProcessAutomation {
     List<ProcessSystem> systems = new ArrayList<ProcessSystem>();
     if (processModel != null) {
       for (String a : processModel.getProcessSystemNames()) {
-        systems.add(processModel.get(a));
+	systems.add(processModel.get(a));
       }
     } else {
       systems.add(processSystem);
@@ -3059,29 +2963,29 @@ public class ProcessAutomation {
 
     for (ProcessSystem sys : systems) {
       for (ProcessEquipmentInterface other : sys.getUnitOperations()) {
-        if (other == target) {
-          continue;
-        }
-        try {
-          for (StreamInterface s : other.getOutletStreams()) {
-            if (s != null && inletStreamNames.contains(s.getName())) {
-              up.add(other.getName());
-              break;
-            }
-          }
-        } catch (Exception e) {
-          // ignore
-        }
-        try {
-          for (StreamInterface s : other.getInletStreams()) {
-            if (s != null && outletStreamNames.contains(s.getName())) {
-              down.add(other.getName());
-              break;
-            }
-          }
-        } catch (Exception e) {
-          // ignore
-        }
+	if (other == target) {
+	  continue;
+	}
+	try {
+	  for (StreamInterface s : other.getOutletStreams()) {
+	    if (s != null && inletStreamNames.contains(s.getName())) {
+	      up.add(other.getName());
+	      break;
+	    }
+	  }
+	} catch (Exception e) {
+	  // ignore
+	}
+	try {
+	  for (StreamInterface s : other.getInletStreams()) {
+	    if (s != null && outletStreamNames.contains(s.getName())) {
+	      down.add(other.getName());
+	      break;
+	    }
+	  }
+	} catch (Exception e) {
+	  // ignore
+	}
       }
     }
     root.add("upstream", up);
@@ -3092,9 +2996,9 @@ public class ProcessAutomation {
   // ----------------------------- Structured / composition / vector access ------------------------
 
   /**
-   * Returns a structured JSON element for a variable address. Unlike
-   * {@link #getVariableValue(String, String)} which is scalar-only, this method supports vector and
-   * object-valued variables such as stream compositions, per-phase properties, and K-values.
+   * Returns a structured JSON element for a variable address. Unlike {@link #getVariableValue(String, String)} which is
+   * scalar-only, this method supports vector and object-valued variables such as stream compositions, per-phase
+   * properties, and K-values.
    *
    * <p>
    * <strong>Supported address suffixes</strong> (case-insensitive):
@@ -3109,8 +3013,8 @@ public class ProcessAutomation {
    * </ul>
    *
    * <p>
-   * Any address not matching one of these patterns is delegated to
-   * {@link #getVariableValue(String, String)} and wrapped as a JSON number.
+   * Any address not matching one of these patterns is delegated to {@link #getVariableValue(String, String)} and
+   * wrapped as a JSON number.
    * </p>
    *
    * @param address the dot-notation address
@@ -3134,41 +3038,39 @@ public class ProcessAutomation {
       ProcessEquipmentInterface unit = findUnit(areaName, parts[0]);
       StreamInterface stream = resolveStreamPort(unit, parts[1]);
       if (stream == null) {
-        throw new IllegalArgumentException(
-            "Stream port not found: " + parts[1] + " on unit " + parts[0]);
+	throw new IllegalArgumentException("Stream port not found: " + parts[1] + " on unit " + parts[0]);
       }
       neqsim.thermo.system.SystemInterface fluid = stream.getFluid();
       if ("composition".equals(last) || "molarcomposition".equals(last)) {
-        return compositionJson(fluid, false);
+	return compositionJson(fluid, false);
       }
       if ("masscomposition".equals(last)) {
-        return compositionJson(fluid, true);
+	return compositionJson(fluid, true);
       }
       if ("components".equals(last)) {
-        com.google.gson.JsonArray arr = new com.google.gson.JsonArray();
-        for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
-          arr.add(fluid.getComponent(i).getComponentName());
-        }
-        return arr;
+	com.google.gson.JsonArray arr = new com.google.gson.JsonArray();
+	for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
+	  arr.add(fluid.getComponent(i).getComponentName());
+	}
+	return arr;
       }
       if ("phasefractions".equals(last)) {
-        com.google.gson.JsonObject obj = new com.google.gson.JsonObject();
-        for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-          obj.addProperty(fluid.getPhase(i).getPhaseTypeName(), fluid.getBeta(i));
-        }
-        return obj;
+	com.google.gson.JsonObject obj = new com.google.gson.JsonObject();
+	for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
+	  obj.addProperty(fluid.getPhase(i).getPhaseTypeName(), fluid.getBeta(i));
+	}
+	return obj;
       }
       if ("kvalues".equals(last)) {
-        com.google.gson.JsonObject obj = new com.google.gson.JsonObject();
-        if (fluid.getNumberOfPhases() >= 2) {
-          for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
-            double yi = fluid.getPhase(0).getComponent(i).getx();
-            double xi = fluid.getPhase(1).getComponent(i).getx();
-            obj.addProperty(fluid.getComponent(i).getComponentName(),
-                xi > 0.0 ? yi / xi : Double.NaN);
-          }
-        }
-        return obj;
+	com.google.gson.JsonObject obj = new com.google.gson.JsonObject();
+	if (fluid.getNumberOfPhases() >= 2) {
+	  for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
+	    double yi = fluid.getPhase(0).getComponent(i).getx();
+	    double xi = fluid.getPhase(1).getComponent(i).getx();
+	    obj.addProperty(fluid.getComponent(i).getComponentName(), xi > 0.0 ? yi / xi : Double.NaN);
+	  }
+	}
+	return obj;
       }
     }
     // Fallback to scalar
@@ -3180,27 +3082,25 @@ public class ProcessAutomation {
    * Builds a {component → fraction} JSON object for a fluid.
    *
    * @param fluid the thermo system
-   * @param mass if {@code true} returns mass fractions, otherwise mole fractions (overall)
+   * @param mass  if {@code true} returns mass fractions, otherwise mole fractions (overall)
    * @return JSON object
    */
-  private com.google.gson.JsonObject compositionJson(neqsim.thermo.system.SystemInterface fluid,
-      boolean mass) {
+  private com.google.gson.JsonObject compositionJson(neqsim.thermo.system.SystemInterface fluid, boolean mass) {
     com.google.gson.JsonObject obj = new com.google.gson.JsonObject();
     double totalMoles = fluid.getTotalNumberOfMoles();
     double totalMass = 0.0;
     if (mass) {
       for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
-        totalMass +=
-            fluid.getComponent(i).getNumberOfmoles() * fluid.getComponent(i).getMolarMass();
+	totalMass += fluid.getComponent(i).getNumberOfmoles() * fluid.getComponent(i).getMolarMass();
       }
     }
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
       double frac;
       if (mass) {
-        double m = fluid.getComponent(i).getNumberOfmoles() * fluid.getComponent(i).getMolarMass();
-        frac = totalMass > 0.0 ? m / totalMass : 0.0;
+	double m = fluid.getComponent(i).getNumberOfmoles() * fluid.getComponent(i).getMolarMass();
+	frac = totalMass > 0.0 ? m / totalMass : 0.0;
       } else {
-        frac = totalMoles > 0.0 ? fluid.getComponent(i).getNumberOfmoles() / totalMoles : 0.0;
+	frac = totalMoles > 0.0 ? fluid.getComponent(i).getNumberOfmoles() / totalMoles : 0.0;
       }
       obj.addProperty(fluid.getComponent(i).getComponentName(), frac);
     }
@@ -3210,20 +3110,18 @@ public class ProcessAutomation {
   // ----------------------------- Address validation ------------------------------
 
   /**
-   * Validates an address without throwing. Returns {@code null} if the address resolves, or a
-   * diagnostic describing why it does not.
+   * Validates an address without throwing. Returns {@code null} if the address resolves, or a diagnostic describing why
+   * it does not.
    *
    * @param address the dot-notation address
    * @return diagnostic on failure, {@code null} on success
    */
   public AutomationDiagnostics.DiagnosticResult validateAddress(String address) {
     if (address == null || address.trim().isEmpty()) {
-      return new AutomationDiagnostics.DiagnosticResult(
-          AutomationDiagnostics.ErrorCategory.INVALID_ADDRESS_FORMAT,
-          address == null ? "" : address, "Address must not be null or empty",
-          new ArrayList<String>(), null,
-          "Pass a non-empty address of the form 'unit.property' or 'unit.port.property'.",
-          new LinkedHashMap<String, Object>());
+      return new AutomationDiagnostics.DiagnosticResult(AutomationDiagnostics.ErrorCategory.INVALID_ADDRESS_FORMAT,
+	  address == null ? "" : address, "Address must not be null or empty", new ArrayList<String>(), null,
+	  "Pass a non-empty address of the form 'unit.property' or 'unit.port.property'.",
+	  new LinkedHashMap<String, Object>());
     }
     try {
       // Resolve unit (and stream port if present) without touching property
@@ -3231,17 +3129,17 @@ public class ProcessAutomation {
       String areaName = null;
       int areaSepIdx = address.indexOf(AREA_SEPARATOR);
       if (areaSepIdx >= 0) {
-        areaName = address.substring(0, areaSepIdx);
-        localAddress = address.substring(areaSepIdx + AREA_SEPARATOR.length());
+	areaName = address.substring(0, areaSepIdx);
+	localAddress = address.substring(areaSepIdx + AREA_SEPARATOR.length());
       }
       String[] parts = localAddress.split("\\.", 3);
       ProcessEquipmentInterface unit = findUnit(areaName, parts[0]);
       if (parts.length == 3) {
-        StreamInterface s = resolveStreamPort(unit, parts[1]);
-        if (s == null) {
-          return diagnoseAndAttemptRecovery(address,
-              new IllegalArgumentException("Stream port not found: " + parts[1]));
-        }
+	StreamInterface s = resolveStreamPort(unit, parts[1]);
+	if (s == null) {
+	  return diagnoseAndAttemptRecovery(address,
+	      new IllegalArgumentException("Stream port not found: " + parts[1]));
+	}
       }
       return null;
     } catch (IllegalArgumentException e) {
@@ -3250,9 +3148,9 @@ public class ProcessAutomation {
   }
 
   /**
-   * Returns a list of unit-of-measure strings that are valid for a given address. For now this uses
-   * the variable's {@link SimulationVariable#getUnitFamily() unit family} to suggest typical UOMs;
-   * agents can also pass {@code null} to use the variable's default unit.
+   * Returns a list of unit-of-measure strings that are valid for a given address. For now this uses the variable's
+   * {@link SimulationVariable#getUnitFamily() unit family} to suggest typical UOMs; agents can also pass {@code null}
+   * to use the variable's default unit.
    *
    * @param address dot-notation address
    * @return ordered list of suggested UOM strings (may be empty if the unit family is unknown)
@@ -3264,47 +3162,47 @@ public class ProcessAutomation {
       String areaName = null;
       int areaSepIdx = address.indexOf(AREA_SEPARATOR);
       if (areaSepIdx >= 0) {
-        areaName = address.substring(0, areaSepIdx);
-        localAddress = address.substring(areaSepIdx + AREA_SEPARATOR.length());
+	areaName = address.substring(0, areaSepIdx);
+	localAddress = address.substring(areaSepIdx + AREA_SEPARATOR.length());
       }
       String unitName = localAddress.split("\\.", 2)[0];
       String prefix = (areaName != null ? areaName + AREA_SEPARATOR : "") + unitName;
       for (SimulationVariable v : getVariableList(prefix)) {
-        if (v.getAddress().equals(address)) {
-          String family = v.getUnitFamily();
-          if (family == null) {
-            return out;
-          }
-          if ("temperature".equalsIgnoreCase(family)) {
-            out.add("K");
-            out.add("C");
-            out.add("F");
-          } else if ("pressure".equalsIgnoreCase(family)) {
-            out.add("bara");
-            out.add("Pa");
-            out.add("psi");
-            out.add("barg");
-          } else if ("massFlow".equalsIgnoreCase(family)) {
-            out.add("kg/sec");
-            out.add("kg/hr");
-            out.add("tonnes/hr");
-          } else if ("molarFlow".equalsIgnoreCase(family)) {
-            out.add("mole/sec");
-          } else if ("density".equalsIgnoreCase(family)) {
-            out.add("kg/m3");
-          } else if ("power".equalsIgnoreCase(family)) {
-            out.add("W");
-            out.add("kW");
-            out.add("MW");
-          } else if ("length".equalsIgnoreCase(family)) {
-            out.add("m");
-          } else if ("volume".equalsIgnoreCase(family)) {
-            out.add("m3");
-          } else if ("rotationalSpeed".equalsIgnoreCase(family)) {
-            out.add("rpm");
-          }
-          return out;
-        }
+	if (v.getAddress().equals(address)) {
+	  String family = v.getUnitFamily();
+	  if (family == null) {
+	    return out;
+	  }
+	  if ("temperature".equalsIgnoreCase(family)) {
+	    out.add("K");
+	    out.add("C");
+	    out.add("F");
+	  } else if ("pressure".equalsIgnoreCase(family)) {
+	    out.add("bara");
+	    out.add("Pa");
+	    out.add("psi");
+	    out.add("barg");
+	  } else if ("massFlow".equalsIgnoreCase(family)) {
+	    out.add("kg/sec");
+	    out.add("kg/hr");
+	    out.add("tonnes/hr");
+	  } else if ("molarFlow".equalsIgnoreCase(family)) {
+	    out.add("mole/sec");
+	  } else if ("density".equalsIgnoreCase(family)) {
+	    out.add("kg/m3");
+	  } else if ("power".equalsIgnoreCase(family)) {
+	    out.add("W");
+	    out.add("kW");
+	    out.add("MW");
+	  } else if ("length".equalsIgnoreCase(family)) {
+	    out.add("m");
+	  } else if ("volume".equalsIgnoreCase(family)) {
+	    out.add("m3");
+	  } else if ("rotationalSpeed".equalsIgnoreCase(family)) {
+	    out.add("rpm");
+	  }
+	  return out;
+	}
       }
     } catch (Exception e) {
       // fall through, return empty

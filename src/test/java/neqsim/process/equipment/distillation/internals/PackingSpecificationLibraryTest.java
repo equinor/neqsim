@@ -94,11 +94,10 @@ public class PackingSpecificationLibraryTest {
     calculator.calculate();
 
     Assertions.assertTrue(calculator.getHETP() >= 0.15 && calculator.getHETP() <= 1.0,
-        "Structured-packing HETP should stay inside a broad published design band");
-    Assertions.assertTrue(calculator.getPressureDropPerMeter() >= 0.0
-        && calculator.getPressureDropPerMeter() < 3000.0,
-        "Structured-packing pressure drop should stay in a realistic distillation band");
+	"Structured-packing HETP should stay inside a broad published design band");
+    Assertions.assertTrue(calculator.getPressureDropPerMeter() >= 0.0 && calculator.getPressureDropPerMeter() < 3000.0,
+	"Structured-packing pressure drop should stay in a realistic distillation band");
     Assertions.assertTrue(calculator.getPercentFlood() >= 0.0 && calculator.getPercentFlood() < 90.0,
-        "Distillation benchmark case should remain below flooding");
+	"Distillation benchmark case should remain below flooding");
   }
 }

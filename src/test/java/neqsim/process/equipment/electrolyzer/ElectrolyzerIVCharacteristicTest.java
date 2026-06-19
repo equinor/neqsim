@@ -6,9 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 /**
- * Unit tests for {@link ElectrolyzerIVCharacteristic}. Validates against textbook electrochemistry
- * benchmarks: reversible voltage at 25 &deg;C, PEM operating-point voltage at 80 &deg;C and 2
- * A/cm&sup2;, and qualitative ordering between technologies.
+ * Unit tests for {@link ElectrolyzerIVCharacteristic}. Validates against textbook electrochemistry benchmarks:
+ * reversible voltage at 25 &deg;C, PEM operating-point voltage at 80 &deg;C and 2 A/cm&sup2;, and qualitative ordering
+ * between technologies.
  */
 class ElectrolyzerIVCharacteristicTest {
 
@@ -24,8 +24,7 @@ class ElectrolyzerIVCharacteristicTest {
     ElectrolyzerIVCharacteristic iv = new ElectrolyzerIVCharacteristic(ElectrolyzerTechnology.PEM);
     double eRev25 = iv.getReversibleVoltage(298.15);
     double eRev80 = iv.getReversibleVoltage(353.15);
-    assertTrue(eRev80 < eRev25,
-        "Reversible voltage should decrease with temperature, got " + eRev25 + " -> " + eRev80);
+    assertTrue(eRev80 < eRev25, "Reversible voltage should decrease with temperature, got " + eRev25 + " -> " + eRev80);
   }
 
   @Test
@@ -33,30 +32,25 @@ class ElectrolyzerIVCharacteristicTest {
     ElectrolyzerIVCharacteristic iv = new ElectrolyzerIVCharacteristic(ElectrolyzerTechnology.PEM);
     double v = iv.getCellVoltage(2.0, 353.15);
     // Textbook PEM stack: ~1.85 V at j=2 A/cm2 and 80 C. Allow ±10% engineering tolerance.
-    assertTrue(v > 1.6 && v < 2.05,
-        "PEM cell voltage at 2 A/cm2, 80 C should be ~1.85 V, got " + v);
+    assertTrue(v > 1.6 && v < 2.05, "PEM cell voltage at 2 A/cm2, 80 C should be ~1.85 V, got " + v);
   }
 
   @Test
   void testAlkalineAtOperatingPoint() {
-    ElectrolyzerIVCharacteristic iv =
-        new ElectrolyzerIVCharacteristic(ElectrolyzerTechnology.ALKALINE);
+    ElectrolyzerIVCharacteristic iv = new ElectrolyzerIVCharacteristic(ElectrolyzerTechnology.ALKALINE);
     double v = iv.getCellVoltage(0.4, 353.15);
     // Textbook alkaline: ~1.85 V at j=0.4 A/cm2, 80 C.
-    assertTrue(v > 1.7 && v < 2.05,
-        "Alkaline cell voltage at 0.4 A/cm2, 80 C should be ~1.85 V, got " + v);
+    assertTrue(v > 1.7 && v < 2.05, "Alkaline cell voltage at 0.4 A/cm2, 80 C should be ~1.85 V, got " + v);
   }
 
   @Test
   void testSoecBelowPemAtSameCurrentDensity() {
     ElectrolyzerIVCharacteristic pem = new ElectrolyzerIVCharacteristic(ElectrolyzerTechnology.PEM);
-    ElectrolyzerIVCharacteristic soec =
-        new ElectrolyzerIVCharacteristic(ElectrolyzerTechnology.SOEC);
+    ElectrolyzerIVCharacteristic soec = new ElectrolyzerIVCharacteristic(ElectrolyzerTechnology.SOEC);
     double pemVoltage = pem.getCellVoltage(1.0, 353.15);
     double soecVoltage = soec.getCellVoltage(1.0, 1073.15);
     assertTrue(soecVoltage < pemVoltage,
-        "SOEC voltage at 800 C should be below PEM voltage at 80 C, got " + soecVoltage + " vs "
-            + pemVoltage);
+	"SOEC voltage at 800 C should be below PEM voltage at 80 C, got " + soecVoltage + " vs " + pemVoltage);
   }
 
   @Test

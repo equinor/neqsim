@@ -45,9 +45,9 @@ public class VCEModel implements Serializable {
   /**
    * Construct a TNO multi-energy VCE model.
    *
-   * @param cloudFuelMassKg mass of fuel in the flammable portion of the cloud, kg
+   * @param cloudFuelMassKg        mass of fuel in the flammable portion of the cloud, kg
    * @param heatOfCombustionJPerKg lower heating value, J/kg
-   * @param strengthClass TNO strength class 1..10 (4 typical for petrochemical plants)
+   * @param strengthClass          TNO strength class 1..10 (4 typical for petrochemical plants)
    */
   public VCEModel(double cloudFuelMassKg, double heatOfCombustionJPerKg, int strengthClass) {
     if (cloudFuelMassKg < 0.0 || heatOfCombustionJPerKg <= 0.0) {
@@ -97,8 +97,8 @@ public class VCEModel implements Serializable {
    * Dimensionless overpressure ΔP̅ from strength-class curve.
    *
    * <p>
-   * Implements an analytic fit to TNO Fig. 4.10 curves:
-   * far-field (R̅ &gt; 1) ΔP̅ = ΔP̅_near · (1/R̅)^β with class-dependent constants.
+   * Implements an analytic fit to TNO Fig. 4.10 curves: far-field (R̅ &gt; 1) ΔP̅ = ΔP̅_near · (1/R̅)^β with
+   * class-dependent constants.
    *
    * @param distanceM physical distance from cloud centre in m
    * @return dimensionless overpressure ΔP/p₀
@@ -109,7 +109,7 @@ public class VCEModel implements Serializable {
       return Double.POSITIVE_INFINITY;
     }
     // Near-field plateau values (TNO Fig 4.10 at R̅ → 1)
-    double[] plateau = {0.01, 0.02, 0.05, 0.10, 0.20, 0.50, 1.00, 2.00, 5.00, 10.0};
+    double[] plateau = { 0.01, 0.02, 0.05, 0.10, 0.20, 0.50, 1.00, 2.00, 5.00, 10.0 };
     double dpNear = plateau[strengthClass - 1];
     if (Rbar <= 1.0) {
       return dpNear;
@@ -130,8 +130,8 @@ public class VCEModel implements Serializable {
   }
 
   /**
-   * Distance to a target side-on overpressure threshold (e.g. 6.9 kPa window damage,
-   * 20.7 kPa structural damage, 100 kPa fatality).
+   * Distance to a target side-on overpressure threshold (e.g. 6.9 kPa window damage, 20.7 kPa structural damage, 100
+   * kPa fatality).
    *
    * @param targetDpPa target side-on overpressure in Pa
    * @return distance in m
@@ -148,9 +148,9 @@ public class VCEModel implements Serializable {
     for (int i = 0; i < 80; i++) {
       double mid = 0.5 * (lo + hi);
       if (overpressurePa(mid) > targetDpPa) {
-        lo = mid;
+	lo = mid;
       } else {
-        hi = mid;
+	hi = mid;
       }
     }
     return 0.5 * (lo + hi);

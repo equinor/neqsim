@@ -135,8 +135,7 @@ public class SubseaCostEstimatorTest {
   @Test
   public void testRegionalCostVariation() {
     // Create fresh estimators for each region - note they calculate rates at construction
-    SubseaCostEstimator norwayEstimator =
-        new SubseaCostEstimator(SubseaCostEstimator.Region.NORWAY);
+    SubseaCostEstimator norwayEstimator = new SubseaCostEstimator(SubseaCostEstimator.Region.NORWAY);
     norwayEstimator.calculatePLETCost(25.0, 12.0, 350.0, false, false);
     double norwayTotal = norwayEstimator.getTotalCost();
 

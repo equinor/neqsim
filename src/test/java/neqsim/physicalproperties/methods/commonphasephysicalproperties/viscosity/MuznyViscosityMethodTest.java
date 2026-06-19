@@ -21,8 +21,7 @@ public class MuznyViscosityMethodTest {
     testOps.TPflash();
     testSystem.getPhase("gas").getPhysicalProperties().setViscosityModel("Muzny");
     testSystem.initProperties();
-    assertEquals(9.084162247540838E-6,
-        testSystem.getPhase(0).getPhysicalProperties().getViscosity(), 1e-10);
+    assertEquals(9.084162247540838E-6, testSystem.getPhase(0).getPhysicalProperties().getViscosity(), 1e-10);
     // double viscosity = testSystem.getPhase(0).getPhysicalProperties().getViscosity();
     // logger.info("Viscosity_Muzny: " + viscosity);
   }

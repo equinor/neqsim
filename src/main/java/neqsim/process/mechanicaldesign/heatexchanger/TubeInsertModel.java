@@ -9,40 +9,34 @@ import com.google.gson.GsonBuilder;
  * Enhanced tube insert models for heat exchanger performance improvement.
  *
  * <p>
- * Models the effect of tube-side inserts on heat transfer and pressure drop. These devices are
- * commonly used for debottlenecking existing heat exchangers — increasing heat transfer at the
- * expense of higher pressure drop.
+ * Models the effect of tube-side inserts on heat transfer and pressure drop. These devices are commonly used for
+ * debottlenecking existing heat exchangers — increasing heat transfer at the expense of higher pressure drop.
  * </p>
  *
  * <p>
  * Supported insert types:
  * </p>
  * <ul>
- * <li><b>Twisted tape:</b> A flat strip of metal twisted into a helical shape and inserted into the
- * tube. Creates swirl flow that disrupts the boundary layer. Characterized by the twist ratio y =
- * H/(2*D), where H is the 180-degree twist pitch and D is the tube ID. The Manglik-Bergles (1993)
- * correlation is used.</li>
- * <li><b>Wire matrix (HiTRAN):</b> A wire coil or matrix insert that promotes turbulence throughout
- * the tube cross-section. Modeled using the manufacturer's published j and f factor
- * correlations.</li>
- * <li><b>Coiled wire:</b> A helical wire inserted along the tube wall. Creates local turbulence at
- * lower pressure drop penalty than twisted tape. Uses the Ravigururajan-Bergles (1996)
- * correlation.</li>
+ * <li><b>Twisted tape:</b> A flat strip of metal twisted into a helical shape and inserted into the tube. Creates swirl
+ * flow that disrupts the boundary layer. Characterized by the twist ratio y = H/(2*D), where H is the 180-degree twist
+ * pitch and D is the tube ID. The Manglik-Bergles (1993) correlation is used.</li>
+ * <li><b>Wire matrix (HiTRAN):</b> A wire coil or matrix insert that promotes turbulence throughout the tube
+ * cross-section. Modeled using the manufacturer's published j and f factor correlations.</li>
+ * <li><b>Coiled wire:</b> A helical wire inserted along the tube wall. Creates local turbulence at lower pressure drop
+ * penalty than twisted tape. Uses the Ravigururajan-Bergles (1996) correlation.</li>
  * </ul>
  *
  * <p>
  * References:
  * </p>
  * <ul>
- * <li>Manglik, R.M. and Bergles, A.E. (1993). "Heat transfer and pressure drop correlations for
- * twisted-tape inserts in isothermal tubes: Part I—Laminar flows." J. Heat Transfer, 115(4),
- * 881-889.</li>
- * <li>Manglik, R.M. and Bergles, A.E. (1993). "Heat transfer and pressure drop correlations for
- * twisted-tape inserts in isothermal tubes: Part II—Transition and turbulent flows." J. Heat
- * Transfer, 115(4), 890-896.</li>
- * <li>Ravigururajan, T.S. and Bergles, A.E. (1996). "Development and verification of general
- * correlations for pressure drop and heat transfer in single-phase turbulent flow in enhanced
- * tubes." Exp. Thermal and Fluid Science, 13, 55-70.</li>
+ * <li>Manglik, R.M. and Bergles, A.E. (1993). "Heat transfer and pressure drop correlations for twisted-tape inserts in
+ * isothermal tubes: Part I—Laminar flows." J. Heat Transfer, 115(4), 881-889.</li>
+ * <li>Manglik, R.M. and Bergles, A.E. (1993). "Heat transfer and pressure drop correlations for twisted-tape inserts in
+ * isothermal tubes: Part II—Transition and turbulent flows." J. Heat Transfer, 115(4), 890-896.</li>
+ * <li>Ravigururajan, T.S. and Bergles, A.E. (1996). "Development and verification of general correlations for pressure
+ * drop and heat transfer in single-phase turbulent flow in enhanced tubes." Exp. Thermal and Fluid Science, 13,
+ * 55-70.</li>
  * </ul>
  *
  * @author NeqSim Development Team
@@ -106,7 +100,8 @@ public class TubeInsertModel implements Serializable {
   /**
    * Constructs a TubeInsertModel with no insert (plain tube).
    */
-  public TubeInsertModel() {}
+  public TubeInsertModel() {
+  }
 
   /**
    * Constructs a TubeInsertModel with a specified insert type.
@@ -126,14 +121,14 @@ public class TubeInsertModel implements Serializable {
    */
   public double getHeatTransferEnhancementRatio(double Re, double Pr) {
     switch (insertType) {
-      case TWISTED_TAPE:
-        return calcTwistedTapeHeatEnhancement(Re, Pr);
-      case WIRE_MATRIX:
-        return calcWireMatrixHeatEnhancement(Re, Pr);
-      case COILED_WIRE:
-        return calcCoiledWireHeatEnhancement(Re, Pr);
-      default:
-        return 1.0;
+    case TWISTED_TAPE:
+      return calcTwistedTapeHeatEnhancement(Re, Pr);
+    case WIRE_MATRIX:
+      return calcWireMatrixHeatEnhancement(Re, Pr);
+    case COILED_WIRE:
+      return calcCoiledWireHeatEnhancement(Re, Pr);
+    default:
+      return 1.0;
     }
   }
 
@@ -145,14 +140,14 @@ public class TubeInsertModel implements Serializable {
    */
   public double getPressureDropPenaltyRatio(double Re) {
     switch (insertType) {
-      case TWISTED_TAPE:
-        return calcTwistedTapeFrictionPenalty(Re);
-      case WIRE_MATRIX:
-        return calcWireMatrixFrictionPenalty(Re);
-      case COILED_WIRE:
-        return calcCoiledWireFrictionPenalty(Re);
-      default:
-        return 1.0;
+    case TWISTED_TAPE:
+      return calcTwistedTapeFrictionPenalty(Re);
+    case WIRE_MATRIX:
+      return calcWireMatrixFrictionPenalty(Re);
+    case COILED_WIRE:
+      return calcCoiledWireFrictionPenalty(Re);
+    default:
+      return 1.0;
     }
   }
 
@@ -180,17 +175,16 @@ public class TubeInsertModel implements Serializable {
   /**
    * Applies the insert enhancement to a plain-tube HTC and pressure drop.
    *
-   * @param plainHTC plain-tube heat transfer coefficient (W/(m2*K))
+   * @param plainHTC          plain-tube heat transfer coefficient (W/(m2*K))
    * @param plainPressureDrop plain-tube pressure drop (Pa)
-   * @param Re Reynolds number
-   * @param Pr Prandtl number
+   * @param Re                Reynolds number
+   * @param Pr                Prandtl number
    * @return array of [enhanced HTC (W/(m2*K)), enhanced pressure drop (Pa)]
    */
-  public double[] applyEnhancement(double plainHTC, double plainPressureDrop, double Re,
-      double Pr) {
+  public double[] applyEnhancement(double plainHTC, double plainPressureDrop, double Re, double Pr) {
     double hRatio = getHeatTransferEnhancementRatio(Re, Pr);
     double fRatio = getPressureDropPenaltyRatio(Re);
-    return new double[] {plainHTC * hRatio, plainPressureDrop * fRatio};
+    return new double[] { plainHTC * hRatio, plainPressureDrop * fRatio };
   }
 
   // ============================================================================
@@ -204,10 +198,10 @@ public class TubeInsertModel implements Serializable {
    * Manglik-Bergles (1993) correlation:
    * </p>
    * <ul>
-   * <li>Laminar (Re &lt; 2300): Nu_tt/Nu_plain = (pi/(pi - 4*delta/D)) * (pi + 2 - 2*delta/D)/(pi -
-   * 4*delta/D) * (1 + 0.769/y)^(1/3)</li>
-   * <li>Turbulent: Nu_tt = 0.023 * Re_sw^0.8 * Pr^0.4 * (pi/(pi - 4*delta/D))^0.8 * (pi + 2 -
-   * 2*delta/D)^0.2 * (pi/(pi - 4*delta/D))^0.2 * phi^n</li>
+   * <li>Laminar (Re &lt; 2300): Nu_tt/Nu_plain = (pi/(pi - 4*delta/D)) * (pi + 2 - 2*delta/D)/(pi - 4*delta/D) * (1 +
+   * 0.769/y)^(1/3)</li>
+   * <li>Turbulent: Nu_tt = 0.023 * Re_sw^0.8 * Pr^0.4 * (pi/(pi - 4*delta/D))^0.8 * (pi + 2 - 2*delta/D)^0.2 * (pi/(pi
+   * - 4*delta/D))^0.2 * phi^n</li>
    * </ul>
    *
    * <p>
@@ -228,8 +222,7 @@ public class TubeInsertModel implements Serializable {
     double deltaOverD = tapeThickness / (tapeThickness / 0.05); // Approximate
 
     // Geometric correction for blocked area
-    double blockageFactor =
-        Math.PI / (Math.PI - 4.0 * tapeThickness * tapeWidthFraction / (tapeThickness / 0.05));
+    double blockageFactor = Math.PI / (Math.PI - 4.0 * tapeThickness * tapeWidthFraction / (tapeThickness / 0.05));
     blockageFactor = Math.max(1.0, Math.min(blockageFactor, 1.5));
 
     if (Re < 2300) {
@@ -262,8 +255,7 @@ public class TubeInsertModel implements Serializable {
   private double calcTwistedTapeFrictionPenalty(double Re) {
     double y = Math.max(2.0, twistRatio);
 
-    double blockageFactor =
-        Math.PI / (Math.PI - 4.0 * tapeThickness * tapeWidthFraction / (tapeThickness / 0.05));
+    double blockageFactor = Math.PI / (Math.PI - 4.0 * tapeThickness * tapeWidthFraction / (tapeThickness / 0.05));
     blockageFactor = Math.max(1.0, Math.min(blockageFactor, 1.5));
 
     if (Re < 2300) {
@@ -284,8 +276,8 @@ public class TubeInsertModel implements Serializable {
    * Calculates heat transfer enhancement for wire matrix insert.
    *
    * <p>
-   * Based on published HiTRAN data fits: typical enhancement 2-5x for turbulent flow, 3-8x for
-   * laminar flow (due to early transition to turbulence).
+   * Based on published HiTRAN data fits: typical enhancement 2-5x for turbulent flow, 3-8x for laminar flow (due to
+   * early transition to turbulence).
    * </p>
    *
    * @param Re Reynolds number
@@ -363,9 +355,8 @@ public class TubeInsertModel implements Serializable {
     }
 
     // Ravigururajan-Bergles enhancement factor
-    double A = 2.64 * Math.pow(Re, 0.036) * Math.pow(eOverD, 0.212)
-        * Math.pow(Math.max(pOverD, 0.1), -0.21) * Math.pow(alphaAngle / 90.0, 0.29)
-        * Math.pow(Pr, -0.024);
+    double A = 2.64 * Math.pow(Re, 0.036) * Math.pow(eOverD, 0.212) * Math.pow(Math.max(pOverD, 0.1), -0.21)
+	* Math.pow(alphaAngle / 90.0, 0.29) * Math.pow(Pr, -0.024);
 
     return Math.pow(1.0 + Math.pow(A, 7), 1.0 / 7.0);
   }
@@ -385,8 +376,7 @@ public class TubeInsertModel implements Serializable {
 
     // Moody diagram: rough vs smooth
     // f_rough/f_smooth approximately (1 + a * (e/D)^b * Re^c)
-    double penalty = 1.0
-        + 29.1 * Math.pow(eOverD, 0.67) * Math.pow(Re, -0.06) * Math.pow(helixAngle / 90.0, 0.49);
+    double penalty = 1.0 + 29.1 * Math.pow(eOverD, 0.67) * Math.pow(Re, -0.06) * Math.pow(helixAngle / 90.0, 0.49);
 
     return Math.max(1.0, penalty);
   }
@@ -410,22 +400,22 @@ public class TubeInsertModel implements Serializable {
 
     Map<String, Object> params = new LinkedHashMap<String, Object>();
     switch (insertType) {
-      case TWISTED_TAPE:
-        params.put("twistRatio", twistRatio);
-        params.put("tapeThickness_m", tapeThickness);
-        params.put("tapeWidthFraction", tapeWidthFraction);
-        break;
-      case WIRE_MATRIX:
-        params.put("wireDiameter_m", wireDiameter);
-        params.put("wireCoilPitch_m", wireCoilPitch);
-        params.put("matrixDensity", matrixDensity);
-        break;
-      case COILED_WIRE:
-        params.put("roughnessRatio_eOverD", roughnessRatio);
-        params.put("helixAngle_deg", helixAngle);
-        break;
-      default:
-        break;
+    case TWISTED_TAPE:
+      params.put("twistRatio", twistRatio);
+      params.put("tapeThickness_m", tapeThickness);
+      params.put("tapeWidthFraction", tapeWidthFraction);
+      break;
+    case WIRE_MATRIX:
+      params.put("wireDiameter_m", wireDiameter);
+      params.put("wireCoilPitch_m", wireCoilPitch);
+      params.put("matrixDensity", matrixDensity);
+      break;
+    case COILED_WIRE:
+      params.put("roughnessRatio_eOverD", roughnessRatio);
+      params.put("helixAngle_deg", helixAngle);
+      break;
+    default:
+      break;
     }
     result.put("insertParameters", params);
 
@@ -440,8 +430,7 @@ public class TubeInsertModel implements Serializable {
    * @return JSON string
    */
   public String toJson(double Re, double Pr) {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap(Re, Pr));
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap(Re, Pr));
   }
 
   // ============================================================================
@@ -476,7 +465,7 @@ public class TubeInsertModel implements Serializable {
    * Creates a coiled wire insert model.
    *
    * @param roughnessRatio wire roughness e/D (0.01-0.05)
-   * @param helixAngle helix angle in degrees (30-70)
+   * @param helixAngle     helix angle in degrees (30-70)
    * @return configured TubeInsertModel
    */
   public static TubeInsertModel createCoiledWire(double roughnessRatio, double helixAngle) {

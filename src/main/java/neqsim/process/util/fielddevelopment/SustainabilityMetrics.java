@@ -11,9 +11,9 @@ import com.google.gson.GsonBuilder;
  * Sustainability and life-cycle metrics tracker for biorefinery processes.
  *
  * <p>
- * Computes CO2-equivalent emissions, carbon intensity, renewable energy fraction, and other
- * sustainability key performance indicators (KPIs) from process simulation results. Designed to
- * integrate with NeqSim process equipment and the emissions agent infrastructure.
+ * Computes CO2-equivalent emissions, carbon intensity, renewable energy fraction, and other sustainability key
+ * performance indicators (KPIs) from process simulation results. Designed to integrate with NeqSim process equipment
+ * and the emissions agent infrastructure.
  * </p>
  *
  * <h2>Tracked Metrics</h2>
@@ -299,7 +299,7 @@ public class SustainabilityMetrics implements Serializable {
   /**
    * Sets feedstock transport parameters.
    *
-   * @param distanceKm one-way transport distance in km
+   * @param distanceKm    one-way transport distance in km
    * @param tonnesPerYear feedstock tonnage per year
    */
   public void setFeedstockTransport(double distanceKm, double tonnesPerYear) {
@@ -346,8 +346,8 @@ public class SustainabilityMetrics implements Serializable {
   /**
    * Adds a custom emission source.
    *
-   * @param source emission source type
-   * @param description description of the emission
+   * @param source        emission source type
+   * @param description   description of the emission
    * @param tCO2eqPerYear annual CO2-equivalent emissions in tonnes
    */
   public void addEmission(EmissionSource source, String description, double tCO2eqPerYear) {
@@ -379,48 +379,43 @@ public class SustainabilityMetrics implements Serializable {
 
     // ── 3. Renewable energy fraction ──
     double totalEnergyInput = methaneEnergyMWhPerYear + importedElectricityMWhPerYear;
-    renewableEnergyFraction =
-        totalEnergyInput > 0 ? methaneEnergyMWhPerYear / totalEnergyInput : 1.0;
+    renewableEnergyFraction = totalEnergyInput > 0 ? methaneEnergyMWhPerYear / totalEnergyInput : 1.0;
 
     // ── 4. EROI ──
-    double totalEnergyOutput =
-        electricityProductionMWhPerYear + heatProductionMWhPerYear + biomethaneEnergyMWh;
-    double totalEnergyConsumed =
-        parasiticElectricityMWhPerYear + parasiticHeatMWhPerYear + importedElectricityMWhPerYear;
-    energyReturnOnInvestment =
-        totalEnergyConsumed > 0 ? totalEnergyOutput / totalEnergyConsumed : 0.0;
+    double totalEnergyOutput = electricityProductionMWhPerYear + heatProductionMWhPerYear + biomethaneEnergyMWh;
+    double totalEnergyConsumed = parasiticElectricityMWhPerYear + parasiticHeatMWhPerYear
+	+ importedElectricityMWhPerYear;
+    energyReturnOnInvestment = totalEnergyConsumed > 0 ? totalEnergyOutput / totalEnergyConsumed : 0.0;
 
     // ── 5. Emissions calculation (tCO2eq/year) ──
-    double emissionsMethaneSlip =
-        methaneNm3PerYear * (methaneSlipPercent / 100.0) * 0.678 * GWP_CH4 / 1000.0;
+    double emissionsMethaneSlip = methaneNm3PerYear * (methaneSlipPercent / 100.0) * 0.678 * GWP_CH4 / 1000.0;
     // 0.678 kg/Nm3 methane density at 0C
 
     double emissionsGridElectricity = importedElectricityMWhPerYear * gridElectricityEmissionFactor; // MWh
-                                                                                                     // *
-                                                                                                     // kgCO2/kWh
-                                                                                                     // ->
-                                                                                                     // tCO2
+												     // *
+												     // kgCO2/kWh
+												     // ->
+												     // tCO2
 
     double emissionsDiesel = dieselConsumptionLPerYear * 2.68 / 1000.0; // 2.68 kgCO2/L diesel
 
-    double emissionsN2O =
-        digestateNitrogenKgPerYear * n2oEmissionFraction * (44.0 / 28.0) * GWP_N2O / 1000.0;
+    double emissionsN2O = digestateNitrogenKgPerYear * n2oEmissionFraction * (44.0 / 28.0) * GWP_N2O / 1000.0;
 
-    double emissionsTransport = feedstockTransportDistanceKm * feedstockTransportTonnesPerYear
-        * transportEmissionFactor * 2.0 / 1000.0; // round trip factor 2
+    double emissionsTransport = feedstockTransportDistanceKm * feedstockTransportTonnesPerYear * transportEmissionFactor
+	* 2.0 / 1000.0; // round trip factor 2
 
     double emissionsCustom = 0.0;
     for (EmissionEntry entry : customEmissions) {
       emissionsCustom += entry.tCO2eqPerYear;
     }
 
-    totalEmissionsTCO2eqPerYear = emissionsMethaneSlip + emissionsGridElectricity + emissionsDiesel
-        + emissionsN2O + emissionsTransport + emissionsCustom;
+    totalEmissionsTCO2eqPerYear = emissionsMethaneSlip + emissionsGridElectricity + emissionsDiesel + emissionsN2O
+	+ emissionsTransport + emissionsCustom;
 
     // ── 6. Carbon intensity ──
     carbonIntensityKgCO2PerMWh = netEnergyProductionMWhPerYear > 0
-        ? totalEmissionsTCO2eqPerYear * 1000.0 / netEnergyProductionMWhPerYear
-        : 0.0;
+	? totalEmissionsTCO2eqPerYear * 1000.0 / netEnergyProductionMWhPerYear
+	: 0.0;
 
     // ── 7. Fossil fuel displacement ──
     double displacedElectricity = netElectricity * fossilReferenceEmissionFactor; // MWh * kgCO2/kWh
@@ -538,11 +533,11 @@ public class SustainabilityMetrics implements Serializable {
     if (!customEmissions.isEmpty()) {
       List<Map<String, Object>> emissionList = new ArrayList<Map<String, Object>>();
       for (EmissionEntry entry : customEmissions) {
-        Map<String, Object> eMap = new LinkedHashMap<String, Object>();
-        eMap.put("source", entry.source.name());
-        eMap.put("description", entry.description);
-        eMap.put("tCO2eq_per_year", entry.tCO2eqPerYear);
-        emissionList.add(eMap);
+	Map<String, Object> eMap = new LinkedHashMap<String, Object>();
+	eMap.put("source", entry.source.name());
+	eMap.put("description", entry.description);
+	eMap.put("tCO2eq_per_year", entry.tCO2eqPerYear);
+	emissionList.add(eMap);
       }
       results.put("customEmissions", emissionList);
     }
@@ -556,8 +551,7 @@ public class SustainabilityMetrics implements Serializable {
    * @return JSON string
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(getResults());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(getResults());
   }
 
   /**
@@ -575,8 +569,8 @@ public class SustainabilityMetrics implements Serializable {
     /**
      * Creates an emission entry.
      *
-     * @param source emission source type
-     * @param description description
+     * @param source        emission source type
+     * @param description   description
      * @param tCO2eqPerYear annual emissions in tCO2eq
      */
     EmissionEntry(EmissionSource source, String description, double tCO2eqPerYear) {

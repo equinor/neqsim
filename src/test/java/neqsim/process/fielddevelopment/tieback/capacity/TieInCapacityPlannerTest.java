@@ -26,14 +26,11 @@ class TieInCapacityPlannerTest {
   @Test
   void baseFirstPolicyHoldsBackSatelliteAgainstNameplateGasCapacity() {
     HostFacility host = HostFacility.builder("Host A").gasCapacity(5.0).build();
-    ProductionProfileSeries base =
-        new ProductionProfileSeries("base").addPeriod(2028, 4.0, 0.0, 0.0, 0.0);
-    ProductionProfileSeries satellite =
-        new ProductionProfileSeries("satellite").addPeriod(2028, 3.0, 0.0, 0.0, 0.0);
+    ProductionProfileSeries base = new ProductionProfileSeries("base").addPeriod(2028, 4.0, 0.0, 0.0, 0.0);
+    ProductionProfileSeries satellite = new ProductionProfileSeries("satellite").addPeriod(2028, 3.0, 0.0, 0.0, 0.0);
 
     TieInCapacityResult result = new TieInCapacityPlanner(host).setHostProductionProfile(base)
-        .setSatelliteProductionProfile(satellite)
-        .setAllocationPolicy(CapacityAllocationPolicy.BASE_FIRST).run();
+	.setSatelliteProductionProfile(satellite).setAllocationPolicy(CapacityAllocationPolicy.BASE_FIRST).run();
 
     TieInPeriodResult period = result.getPeriodResults().get(0);
     assertEquals(1.0, period.getAcceptedSatellite().getGasRateMSm3d(), 1.0e-9);
@@ -48,14 +45,11 @@ class TieInCapacityPlannerTest {
   @Test
   void proRataPolicySharesConstrainedGasCapacity() {
     HostFacility host = HostFacility.builder("Host B").gasCapacity(6.0).build();
-    ProductionProfileSeries base =
-        new ProductionProfileSeries("base").addPeriod(2028, 4.0, 0.0, 0.0, 0.0);
-    ProductionProfileSeries satellite =
-        new ProductionProfileSeries("satellite").addPeriod(2028, 4.0, 0.0, 0.0, 0.0);
+    ProductionProfileSeries base = new ProductionProfileSeries("base").addPeriod(2028, 4.0, 0.0, 0.0, 0.0);
+    ProductionProfileSeries satellite = new ProductionProfileSeries("satellite").addPeriod(2028, 4.0, 0.0, 0.0, 0.0);
 
     TieInCapacityResult result = new TieInCapacityPlanner(host).setHostProductionProfile(base)
-        .setSatelliteProductionProfile(satellite)
-        .setAllocationPolicy(CapacityAllocationPolicy.PRO_RATA).run();
+	.setSatelliteProductionProfile(satellite).setAllocationPolicy(CapacityAllocationPolicy.PRO_RATA).run();
 
     TieInPeriodResult period = result.getPeriodResults().get(0);
     assertEquals(3.0, period.getAcceptedBase().getGasRateMSm3d(), 1.0e-9);
@@ -69,14 +63,13 @@ class TieInCapacityPlannerTest {
   @Test
   void deferPolicyCarriesHoldbackIntoLaterYears() {
     HostFacility host = HostFacility.builder("Host C").gasCapacity(5.0).build();
-    ProductionProfileSeries base = new ProductionProfileSeries("base")
-        .addPeriod(2028, 4.0, 0.0, 0.0, 0.0).addPeriod(2029, 4.0, 0.0, 0.0, 0.0);
-    ProductionProfileSeries satellite = new ProductionProfileSeries("satellite")
-        .addPeriod(2028, 3.0, 0.0, 0.0, 0.0).addPeriod(2029, 0.0, 0.0, 0.0, 0.0);
+    ProductionProfileSeries base = new ProductionProfileSeries("base").addPeriod(2028, 4.0, 0.0, 0.0, 0.0)
+	.addPeriod(2029, 4.0, 0.0, 0.0, 0.0);
+    ProductionProfileSeries satellite = new ProductionProfileSeries("satellite").addPeriod(2028, 3.0, 0.0, 0.0, 0.0)
+	.addPeriod(2029, 0.0, 0.0, 0.0, 0.0);
 
     TieInCapacityResult result = new TieInCapacityPlanner(host).setHostProductionProfile(base)
-        .setSatelliteProductionProfile(satellite)
-        .setHoldbackPolicy(HoldbackPolicy.DEFER_TO_LATER_YEARS).run();
+	.setSatelliteProductionProfile(satellite).setHoldbackPolicy(HoldbackPolicy.DEFER_TO_LATER_YEARS).run();
 
     TieInPeriodResult first = result.getPeriodResults().get(0);
     TieInPeriodResult second = result.getPeriodResults().get(1);
@@ -92,25 +85,19 @@ class TieInCapacityPlannerTest {
   @Test
   void processModelInjectionFindsCapacityBottleneckAndRestoresFeedRate() {
     final Stream hostFeed = createHostFeed();
-    hostFeed
-        .addCapacityConstraint(new CapacityConstraint("hostFeedFlow", "kg/hr", ConstraintType.HARD)
-            .setDesignValue(2500.0).setValueSupplier(() -> hostFeed.getFlowRate("kg/hr")));
+    hostFeed.addCapacityConstraint(new CapacityConstraint("hostFeedFlow", "kg/hr", ConstraintType.HARD)
+	.setDesignValue(2500.0).setValueSupplier(() -> hostFeed.getFlowRate("kg/hr")));
     ProcessSystem process = new ProcessSystem("host process");
     process.add(hostFeed);
     process.run();
 
-    HostFacility host =
-        HostFacility.builder("Host D").gasCapacity(10.0).processSystem(process).build();
-    ProductionProfileSeries base =
-        new ProductionProfileSeries("base").addPeriod(2028, 1.0, 0.0, 0.0, 0.0);
-    ProductionProfileSeries satellite =
-        new ProductionProfileSeries("satellite").addPeriod(2028, 4.0, 0.0, 0.0, 0.0);
-    HostTieInPoint tieInPoint =
-        new HostTieInPoint("Host Feed", "kg/hr").setGasToProcessRateFactor(1000.0);
+    HostFacility host = HostFacility.builder("Host D").gasCapacity(10.0).processSystem(process).build();
+    ProductionProfileSeries base = new ProductionProfileSeries("base").addPeriod(2028, 1.0, 0.0, 0.0, 0.0);
+    ProductionProfileSeries satellite = new ProductionProfileSeries("satellite").addPeriod(2028, 4.0, 0.0, 0.0, 0.0);
+    HostTieInPoint tieInPoint = new HostTieInPoint("Host Feed", "kg/hr").setGasToProcessRateFactor(1000.0);
 
     TieInCapacityResult result = new TieInCapacityPlanner(host).setHostProductionProfile(base)
-        .setSatelliteProductionProfile(satellite).setTieInPoint(tieInPoint)
-        .setProcessUtilizationLimit(1.0).run();
+	.setSatelliteProductionProfile(satellite).setTieInPoint(tieInPoint).setProcessUtilizationLimit(1.0).run();
 
     TieInPeriodResult period = result.getPeriodResults().get(0);
     assertTrue(period.isProcessModelUsed());

@@ -14,9 +14,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Rate-based packed column absorber using the two-film model with mass transfer coefficients.
  *
  * <p>
- * This class implements a rigorous rate-based absorber/stripper model using the two-film theory
- * with Onda (1968) or Billet-Schultes (1999) correlations for mass transfer coefficients. It
- * supports chemical enhancement factors for reactive absorption (e.g., amine-CO2, amine-H2S).
+ * This class implements a rigorous rate-based absorber/stripper model using the two-film theory with Onda (1968) or
+ * Billet-Schultes (1999) correlations for mass transfer coefficients. It supports chemical enhancement factors for
+ * reactive absorption (e.g., amine-CO2, amine-H2S).
  * </p>
  *
  * <p>
@@ -42,8 +42,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <ul>
  * <li><b>NONE</b> — Physical absorption only (E = 1.0)</li>
  * <li><b>HATTA_PSEUDO_FIRST_ORDER</b> — E = Ha/tanh(Ha) for pseudo-first-order reactions</li>
- * <li><b>VAN_KREVELEN_HOFTIJZER</b> — Generalized enhancement for fast reactions with finite
- * reactant</li>
+ * <li><b>VAN_KREVELEN_HOFTIJZER</b> — Generalized enhancement for fast reactions with finite reactant</li>
  * </ul>
  *
  * <h2>Usage Example</h2>
@@ -77,14 +76,14 @@ public class RateBasedAbsorber extends SimpleAbsorber {
    */
   public enum MassTransferModel {
     /**
-     * Onda, Takeuchi &amp; Okumoto (1968). Standard correlation for random and structured packing.
-     * Applicable for Reynolds numbers 0.04-500 (liquid), Schmidt numbers 0.1-10000.
+     * Onda, Takeuchi &amp; Okumoto (1968). Standard correlation for random and structured packing. Applicable for
+     * Reynolds numbers 0.04-500 (liquid), Schmidt numbers 0.1-10000.
      */
     ONDA_1968,
 
     /**
-     * Billet &amp; Schultes (1999). More accurate for structured packing. Uses packing-specific
-     * constants CL and CV from vendor data.
+     * Billet &amp; Schultes (1999). More accurate for structured packing. Uses packing-specific constants CL and CV
+     * from vendor data.
      */
     BILLET_SCHULTES_1999
   }
@@ -97,14 +96,14 @@ public class RateBasedAbsorber extends SimpleAbsorber {
     NONE,
 
     /**
-     * Pseudo-first-order approximation. E = Ha / tanh(Ha) where Ha = sqrt(k2 * D_A * C_B) / kL.
-     * Valid when Hatta number is large and reactant is in excess.
+     * Pseudo-first-order approximation. E = Ha / tanh(Ha) where Ha = sqrt(k2 * D_A * C_B) / kL. Valid when Hatta number
+     * is large and reactant is in excess.
      */
     HATTA_PSEUDO_FIRST_ORDER,
 
     /**
-     * Van Krevelen-Hoftijzer model for fast reactions with finite reactant concentration. Accounts
-     * for depletion of reactant B at the interface.
+     * Van Krevelen-Hoftijzer model for fast reactions with finite reactant concentration. Accounts for depletion of
+     * reactant B at the interface.
      */
     VAN_KREVELEN_HOFTIJZER
   }
@@ -483,11 +482,10 @@ public class RateBasedAbsorber extends SimpleAbsorber {
 
     // Calculate NTU and HTU
     if (overallKGa > 0.0) {
-      double gasVelocity =
-          gasInStream.getFlowRate("kg/hr") / 3600.0 / gasPhase.getDensity("kg/m3") / columnArea;
+      double gasVelocity = gasInStream.getFlowRate("kg/hr") / 3600.0 / gasPhase.getDensity("kg/m3") / columnArea;
       heightOfTransferUnit = gasVelocity / overallKGa;
       if (heightOfTransferUnit > 0.0) {
-        numberOfTransferUnits = packedHeight / heightOfTransferUnit;
+	numberOfTransferUnits = packedHeight / heightOfTransferUnit;
       }
     }
 
@@ -506,14 +504,14 @@ public class RateBasedAbsorber extends SimpleAbsorber {
   /**
    * Calculate mass transfer for a single stage.
    *
-   * @param gasPhase gas-phase system (modified in place)
+   * @param gasPhase    gas-phase system (modified in place)
    * @param liquidPhase liquid-phase system (modified in place)
    * @param stageHeight height of this stage segment [m]
-   * @param stageIndex stage number (0-based)
+   * @param stageIndex  stage number (0-based)
    * @return stage calculation result
    */
-  private StageResult calculateStage(SystemInterface gasPhase, SystemInterface liquidPhase,
-      double stageHeight, int stageIndex) {
+  private StageResult calculateStage(SystemInterface gasPhase, SystemInterface liquidPhase, double stageHeight,
+      int stageIndex) {
 
     StageResult result = new StageResult();
     result.stageNumber = stageIndex + 1;
@@ -547,8 +545,7 @@ public class RateBasedAbsorber extends SimpleAbsorber {
       kL = ondaResult[1];
       aw = ondaResult[2];
     } else {
-      double[] billetResult =
-          calculateBilletSchultesMassTransfer(uG, uL, rhoG, rhoL, muG, muL, sigmaL);
+      double[] billetResult = calculateBilletSchultesMassTransfer(uG, uL, rhoG, rhoL, muG, muL, sigmaL);
       kG = billetResult[0];
       kL = billetResult[1];
       aw = billetResult[2];
@@ -570,7 +567,7 @@ public class RateBasedAbsorber extends SimpleAbsorber {
       String compName = gasPhase.getComponent(i).getName();
       // Check if this component exists in liquid phase
       if (!liquidPhase.hasComponent(compName)) {
-        continue;
+	continue;
       }
 
       // Mole fractions
@@ -578,21 +575,21 @@ public class RateBasedAbsorber extends SimpleAbsorber {
       double xBulk = 0.0;
       int liqIndex = liquidPhase.getPhase(0).getComponent(compName).getComponentNumber();
       if (liqIndex >= 0) {
-        xBulk = liquidPhase.getPhase(0).getComponent(liqIndex).getx();
+	xBulk = liquidPhase.getPhase(0).getComponent(liqIndex).getx();
       }
 
       // Equilibrium: y* = K * x (VLE K-value)
       double Ki = gasPhase.getPhase(0).getComponent(i).getFugacityCoefficient()
-          / liquidPhase.getPhase(0).getComponent(liqIndex).getFugacityCoefficient();
+	  / liquidPhase.getPhase(0).getComponent(liqIndex).getFugacityCoefficient();
       if (Ki <= 0.0) {
-        Ki = 1.0;
+	Ki = 1.0;
       }
       double yEquil = Ki * xBulk;
 
       // Overall driving force (gas-side)
       double drivingForce = yBulk - yEquil;
       if (Math.abs(drivingForce) < 1e-15) {
-        continue;
+	continue;
       }
 
       // Overall gas-phase mass transfer coefficient: 1/KOG = 1/kG + m/kL_enhanced
@@ -600,7 +597,7 @@ public class RateBasedAbsorber extends SimpleAbsorber {
       double mSlope = Ki;
       double koG = 0.0;
       if (kG > 0 && kLEnhanced > 0) {
-        koG = 1.0 / (1.0 / kG + mSlope / kLEnhanced);
+	koG = 1.0 / (1.0 / kG + mSlope / kLEnhanced);
       }
 
       // Molar flux [mol/(m2·s)]
@@ -614,13 +611,13 @@ public class RateBasedAbsorber extends SimpleAbsorber {
 
       // Update compositions: remove from gas, add to liquid
       if (molesTransferred > 0) {
-        // Positive = transfer from gas to liquid (absorption)
-        double maxRemovable = gasPhase.getComponent(i).getNumberOfmoles() * 0.9;
-        double actualTransfer = Math.min(molesTransferred, maxRemovable);
-        if (actualTransfer > 1e-20) {
-          gasPhase.addComponent(i, -actualTransfer);
-          liquidPhase.addComponent(liqIndex, actualTransfer);
-        }
+	// Positive = transfer from gas to liquid (absorption)
+	double maxRemovable = gasPhase.getComponent(i).getNumberOfmoles() * 0.9;
+	double actualTransfer = Math.min(molesTransferred, maxRemovable);
+	if (actualTransfer > 1e-20) {
+	  gasPhase.addComponent(i, -actualTransfer);
+	  liquidPhase.addComponent(liqIndex, actualTransfer);
+	}
       }
     }
 
@@ -653,25 +650,23 @@ public class RateBasedAbsorber extends SimpleAbsorber {
    * Gas-side: kG = C1 * (a_p * D_G) * (Re_G)^0.7 * (Sc_G)^(1/3) * (a_p * d_p)^(-2.0)
    * </p>
    * <p>
-   * Liquid-side: kL = 0.0051 * (Re_L)^(2/3) * (Sc_L)^(-0.5) * (a_p * d_p)^0.4 * (mu_L *
-   * g/rho_L)^(1/3)
+   * Liquid-side: kL = 0.0051 * (Re_L)^(2/3) * (Sc_L)^(-0.5) * (a_p * d_p)^0.4 * (mu_L * g/rho_L)^(1/3)
    * </p>
    * <p>
-   * Wetted area: a_w/a_p = 1 - exp(-1.45 * (sigma_c/sigma_L)^0.75 * Re_L^0.1 * Fr_L^(-0.05) *
-   * We_L^0.2)
+   * Wetted area: a_w/a_p = 1 - exp(-1.45 * (sigma_c/sigma_L)^0.75 * Re_L^0.1 * Fr_L^(-0.05) * We_L^0.2)
    * </p>
    *
-   * @param uG gas superficial velocity [m/s]
-   * @param uL liquid superficial velocity [m/s]
-   * @param rhoG gas density [kg/m3]
-   * @param rhoL liquid density [kg/m3]
-   * @param muG gas viscosity [Pa.s]
-   * @param muL liquid viscosity [Pa.s]
+   * @param uG     gas superficial velocity [m/s]
+   * @param uL     liquid superficial velocity [m/s]
+   * @param rhoG   gas density [kg/m3]
+   * @param rhoL   liquid density [kg/m3]
+   * @param muG    gas viscosity [Pa.s]
+   * @param muL    liquid viscosity [Pa.s]
    * @param sigmaL liquid surface tension [N/m]
    * @return array [kG, kL, aw] where kG in [mol/(m2.s.Pa)], kL in [m/s], aw in [m2/m3]
    */
-  private double[] calculateOndaMassTransfer(double uG, double uL, double rhoG, double rhoL,
-      double muG, double muL, double sigmaL) {
+  private double[] calculateOndaMassTransfer(double uG, double uL, double rhoG, double rhoL, double muG, double muL,
+      double sigmaL) {
     double g = 9.81;
     double ap = packingSpecificArea;
     double dp = packingNominalSize;
@@ -697,9 +692,8 @@ public class RateBasedAbsorber extends SimpleAbsorber {
     // Wetted area ratio (Onda 1968)
     double sigmaRatio = sigmaC / sigmaL;
     sigmaRatio = Math.min(sigmaRatio, 1.0); // Cap at 1.0 per Onda
-    double awRatio =
-        1.0 - Math.exp(-1.45 * Math.pow(sigmaRatio, 0.75) * Math.pow(Math.max(reL, 0.01), 0.1)
-            * Math.pow(Math.max(frL, 1e-6), -0.05) * Math.pow(Math.max(weL, 1e-6), 0.2));
+    double awRatio = 1.0 - Math.exp(-1.45 * Math.pow(sigmaRatio, 0.75) * Math.pow(Math.max(reL, 0.01), 0.1)
+	* Math.pow(Math.max(frL, 1e-6), -0.05) * Math.pow(Math.max(weL, 1e-6), 0.2));
     awRatio = Math.max(awRatio, 0.1);
     awRatio = Math.min(awRatio, 1.0);
     double aw = awRatio * ap;
@@ -708,32 +702,32 @@ public class RateBasedAbsorber extends SimpleAbsorber {
     // kG * R * T / (a_p * D_G) = C1 * Re_G^0.7 * Sc_G^(1/3) * (a_p * d_p)^(-2.0)
     double c1 = 5.23; // Onda constant for kG
     double kGDimensionless = c1 * Math.pow(Math.max(reG, 0.01), 0.7) * Math.pow(scG, 1.0 / 3.0)
-        * Math.pow(ap * dp, -2.0);
+	* Math.pow(ap * dp, -2.0);
     double kG = kGDimensionless * ap * dG; // [m/s] gas-side MTC
 
     // Liquid-phase mass transfer coefficient (Onda 1968)
     // kL * (rho_L / (mu_L * g))^(1/3) = 0.0051 * (Re_L)^(2/3) * (Sc_L)^(-0.5) * (a_p*d_p)^0.4
     double kLDimensionless = 0.0051 * Math.pow(Math.max(reL, 0.01), 2.0 / 3.0) * Math.pow(scL, -0.5)
-        * Math.pow(ap * dp, 0.4);
+	* Math.pow(ap * dp, 0.4);
     double kL = kLDimensionless * Math.pow(muL * g / rhoL, 1.0 / 3.0); // [m/s]
 
-    return new double[] {kG, kL, aw};
+    return new double[] { kG, kL, aw };
   }
 
   /**
    * Calculate mass transfer coefficients using the Billet-Schultes (1999) correlation.
    *
-   * @param uG gas superficial velocity [m/s]
-   * @param uL liquid superficial velocity [m/s]
-   * @param rhoG gas density [kg/m3]
-   * @param rhoL liquid density [kg/m3]
-   * @param muG gas viscosity [Pa.s]
-   * @param muL liquid viscosity [Pa.s]
+   * @param uG     gas superficial velocity [m/s]
+   * @param uL     liquid superficial velocity [m/s]
+   * @param rhoG   gas density [kg/m3]
+   * @param rhoL   liquid density [kg/m3]
+   * @param muG    gas viscosity [Pa.s]
+   * @param muL    liquid viscosity [Pa.s]
    * @param sigmaL liquid surface tension [N/m]
    * @return array [kG, kL, aw] where kG in [m/s], kL in [m/s], aw in [m2/m3]
    */
-  private double[] calculateBilletSchultesMassTransfer(double uG, double uL, double rhoG,
-      double rhoL, double muG, double muL, double sigmaL) {
+  private double[] calculateBilletSchultesMassTransfer(double uG, double uL, double rhoG, double rhoL, double muG,
+      double muL, double sigmaL) {
     double g = 9.81;
     double ap = packingSpecificArea;
     double eps = packingVoidFraction;
@@ -758,24 +752,24 @@ public class RateBasedAbsorber extends SimpleAbsorber {
 
     // Billet-Schultes gas-side MTC
     double kG = billetCV / Math.pow(dh, 0.5) * Math.sqrt(dG) * Math.pow(Math.max(reG, 0.01), 0.75)
-        * Math.pow(scG, 1.0 / 3.0);
+	* Math.pow(scG, 1.0 / 3.0);
 
     // Billet-Schultes liquid-side MTC
-    double kL = billetCL * Math.pow(12.0, 1.0 / 6.0) * Math.pow(dL / dh, 0.5)
-        * Math.pow(uLe, 1.0 / 3.0) * Math.pow(g, 1.0 / 6.0);
+    double kL = billetCL * Math.pow(12.0, 1.0 / 6.0) * Math.pow(dL / dh, 0.5) * Math.pow(uLe, 1.0 / 3.0)
+	* Math.pow(g, 1.0 / 6.0);
 
     // Wetted area (simplified — same as Onda for random, or vendor data)
     double aw = 0.85 * ap; // Default fraction for structured packing
 
-    return new double[] {kG, kL, aw};
+    return new double[] { kG, kL, aw };
   }
 
   /**
    * Calculate operating liquid holdup (simplified Stichlmair model).
    *
-   * @param uL liquid superficial velocity [m/s]
+   * @param uL   liquid superficial velocity [m/s]
    * @param rhoL liquid density [kg/m3]
-   * @param muL liquid viscosity [Pa.s]
+   * @param muL  liquid viscosity [Pa.s]
    * @return liquid holdup fraction [-]
    */
   private double calculateLiquidHoldup(double uL, double rhoL, double muL) {
@@ -783,8 +777,7 @@ public class RateBasedAbsorber extends SimpleAbsorber {
     double ap = packingSpecificArea;
     double reL = uL * rhoL / (muL * ap);
     reL = Math.max(reL, 1e-6);
-    double hL = 0.555 * Math.pow(reL, 1.0 / 3.0) * Math.pow(ap, 2.0 / 3.0)
-        / Math.pow(rhoL * g / muL, 1.0 / 3.0);
+    double hL = 0.555 * Math.pow(reL, 1.0 / 3.0) * Math.pow(ap, 2.0 / 3.0) / Math.pow(rhoL * g / muL, 1.0 / 3.0);
     hL = Math.max(hL, 0.01);
     hL = Math.min(hL, 0.3);
     return hL;
@@ -793,14 +786,13 @@ public class RateBasedAbsorber extends SimpleAbsorber {
   /**
    * Calculate enhancement factor for chemical absorption.
    *
-   * @param kL physical liquid-side mass transfer coefficient [m/s]
+   * @param kL          physical liquid-side mass transfer coefficient [m/s]
    * @param liquidPhase liquid phase system
-   * @param rhoL liquid density [kg/m3]
-   * @param muL liquid viscosity [Pa.s]
+   * @param rhoL        liquid density [kg/m3]
+   * @param muL         liquid viscosity [Pa.s]
    * @return enhancement factor E [-]
    */
-  private double calculateEnhancementFactor(double kL, SystemInterface liquidPhase, double rhoL,
-      double muL) {
+  private double calculateEnhancementFactor(double kL, SystemInterface liquidPhase, double rhoL, double muL) {
     if (enhancementModel == EnhancementModel.NONE || reactionRateConstant <= 0.0) {
       return 1.0;
     }
@@ -814,7 +806,7 @@ public class RateBasedAbsorber extends SimpleAbsorber {
       double cB = rhoL / 0.1; // Approximate reactant concentration [mol/m3]
       double ha = Math.sqrt(reactionRateConstant * cB * dL) / Math.max(kL, 1e-10);
       if (ha < 0.3) {
-        return 1.0; // Slow reaction regime
+	return 1.0; // Slow reaction regime
       }
       return ha / Math.tanh(ha);
     }

@@ -21,16 +21,16 @@ public class ComponentSrkPeneloux extends ComponentSrk {
    * Constructor for ComponentSrkPeneloux.
    * </p>
    *
-   * @param name Name of component.
-   * @param moles Total number of moles of component.
+   * @param name         Name of component.
+   * @param moles        Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex Index number of component in phase object component array.
+   * @param compIndex    Index number of component in phase object component array.
    */
   public ComponentSrkPeneloux(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
 
-    a = 1.0 / (9.0 * (Math.pow(2.0, 1.0 / 3.0) - 1.0)) * R * R * criticalTemperature
-        * criticalTemperature / criticalPressure;
+    a = 1.0 / (9.0 * (Math.pow(2.0, 1.0 / 3.0) - 1.0)) * R * R * criticalTemperature * criticalTemperature
+	/ criticalPressure;
     b = (Math.pow(2.0, 1.0 / 3.0) - 1.0) / 3.0 * R * criticalTemperature / criticalPressure;
     // double volCorr = getVolumeCorrection() / 1.0e5 * 0.0;
     // b -= volCorr;
@@ -40,8 +40,7 @@ public class ComponentSrkPeneloux extends ComponentSrk {
     // attractiveParameter = new AttractiveTermSchwartzentruber(this);
     setAttractiveParameter(new AttractiveTermSrk(this));
 
-    double[] surfTensInfluenceParamtemp =
-        {-0.7708158524, 0.4990571549, 0.8645478315, -0.3509810630, -0.1611763157};
+    double[] surfTensInfluenceParamtemp = { -0.7708158524, 0.4990571549, 0.8645478315, -0.3509810630, -0.1611763157 };
     this.surfTensInfluenceParam = surfTensInfluenceParamtemp;
   }
 
@@ -51,11 +50,11 @@ public class ComponentSrkPeneloux extends ComponentSrk {
    * </p>
    *
    * @param number a int. Not used.
-   * @param TC Critical temperature [K]
-   * @param PC Critical pressure [bara]
-   * @param M Molar mass
-   * @param a Acentric factor
-   * @param moles Total number of moles of component.
+   * @param TC     Critical temperature [K]
+   * @param PC     Critical pressure [bara]
+   * @param M      Molar mass
+   * @param a      Acentric factor
+   * @param moles  Total number of moles of component.
    */
   public ComponentSrkPeneloux(int number, double TC, double PC, double M, double a, double moles) {
     super(number, TC, PC, M, a, moles);

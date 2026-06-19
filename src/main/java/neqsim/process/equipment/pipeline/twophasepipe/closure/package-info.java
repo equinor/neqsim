@@ -2,8 +2,8 @@
  * Closure relations for two-fluid multiphase pipe flow model.
  *
  * <p>
- * This package provides closure correlations required by the two-fluid model to close the system of
- * conservation equations. These include:
+ * This package provides closure correlations required by the two-fluid model to close the system of conservation
+ * equations. These include:
  * </p>
  * <ul>
  * <li>Wall friction correlations for each phase (τ_wg, τ_wL)</li>
@@ -14,12 +14,10 @@
  *
  * <h2>Key Classes</h2>
  * <ul>
- * <li>{@link neqsim.process.equipment.pipeline.twophasepipe.closure.WallFriction} - Phase-specific
- * wall friction</li>
- * <li>{@link neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction} -
- * Gas-liquid interface friction</li>
- * <li>{@link neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculator} -
- * Stratified flow geometry</li>
+ * <li>{@link neqsim.process.equipment.pipeline.twophasepipe.closure.WallFriction} - Phase-specific wall friction</li>
+ * <li>{@link neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction} - Gas-liquid interface
+ * friction</li>
+ * <li>{@link neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculator} - Stratified flow geometry</li>
  * </ul>
  *
  * <h2>References</h2>

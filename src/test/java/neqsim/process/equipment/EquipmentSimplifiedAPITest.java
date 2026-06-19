@@ -18,8 +18,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Tests for simplified API additions: convenience factory methods,
- * unified outlet property access, and getEquipmentState().
+ * Tests for simplified API additions: convenience factory methods, unified outlet property access, and
+ * getEquipmentState().
  */
 class EquipmentSimplifiedAPITest {
 
@@ -38,8 +38,7 @@ class EquipmentSimplifiedAPITest {
 
   @Test
   void testCreateStream() {
-    Stream stream = EquipmentFactory.createStream("Feed", gasFluid.clone(),
-        10000.0, "kg/hr", 60.0, "bara", 25.0, "C");
+    Stream stream = EquipmentFactory.createStream("Feed", gasFluid.clone(), 10000.0, "kg/hr", 60.0, "bara", 25.0, "C");
 
     assertEquals("Feed", stream.getName());
 
@@ -54,8 +53,7 @@ class EquipmentSimplifiedAPITest {
 
   @Test
   void testCreateCompressor() {
-    Stream feed = EquipmentFactory.createStream("CompFeed", gasFluid.clone(),
-        5000.0, "kg/hr", 30.0, "bara", 20.0, "C");
+    Stream feed = EquipmentFactory.createStream("CompFeed", gasFluid.clone(), 5000.0, "kg/hr", 30.0, "bara", 20.0, "C");
     Compressor comp = EquipmentFactory.createCompressor("Comp1", feed, 80.0, 0.85);
 
     assertEquals("Comp1", comp.getName());
@@ -71,8 +69,7 @@ class EquipmentSimplifiedAPITest {
 
   @Test
   void testCreateCooler() {
-    Stream feed = EquipmentFactory.createStream("CoolFeed", gasFluid.clone(),
-        5000.0, "kg/hr", 50.0, "bara", 80.0, "C");
+    Stream feed = EquipmentFactory.createStream("CoolFeed", gasFluid.clone(), 5000.0, "kg/hr", 50.0, "bara", 80.0, "C");
     Cooler cooler = EquipmentFactory.createCooler("Cooler1", feed, 30.0, "C");
 
     assertEquals("Cooler1", cooler.getName());
@@ -87,8 +84,7 @@ class EquipmentSimplifiedAPITest {
 
   @Test
   void testCreateHeater() {
-    Stream feed = EquipmentFactory.createStream("HeatFeed", gasFluid.clone(),
-        5000.0, "kg/hr", 50.0, "bara", 20.0, "C");
+    Stream feed = EquipmentFactory.createStream("HeatFeed", gasFluid.clone(), 5000.0, "kg/hr", 50.0, "bara", 20.0, "C");
     Heater heater = EquipmentFactory.createHeater("Heater1", feed, 80.0, "C");
 
     assertEquals("Heater1", heater.getName());
@@ -103,8 +99,8 @@ class EquipmentSimplifiedAPITest {
 
   @Test
   void testCreateValve() {
-    Stream feed = EquipmentFactory.createStream("ValveFeed", gasFluid.clone(),
-        5000.0, "kg/hr", 80.0, "bara", 25.0, "C");
+    Stream feed = EquipmentFactory.createStream("ValveFeed", gasFluid.clone(), 5000.0, "kg/hr", 80.0, "bara", 25.0,
+	"C");
     ThrottlingValve valve = EquipmentFactory.createValve("Valve1", feed, 30.0, 50.0);
 
     assertEquals("Valve1", valve.getName());
@@ -123,8 +119,7 @@ class EquipmentSimplifiedAPITest {
     liqFluid.addComponent("water", 1.0);
     liqFluid.setMixingRule("classic");
 
-    Stream feed = EquipmentFactory.createStream("PumpFeed", liqFluid,
-        2000.0, "kg/hr", 5.0, "bara", 20.0, "C");
+    Stream feed = EquipmentFactory.createStream("PumpFeed", liqFluid, 2000.0, "kg/hr", 5.0, "bara", 20.0, "C");
     Pump pump = EquipmentFactory.createPump("Pump1", feed, 30.0);
 
     assertEquals("Pump1", pump.getName());
@@ -140,25 +135,21 @@ class EquipmentSimplifiedAPITest {
   @Test
   void testCreateSeparator() {
     Separator sep = EquipmentFactory.createSeparator("Sep1",
-        EquipmentFactory.createStream("SepFeed", gasFluid.clone(),
-            5000.0, "kg/hr", 50.0, "bara", 25.0, "C"));
+	EquipmentFactory.createStream("SepFeed", gasFluid.clone(), 5000.0, "kg/hr", 50.0, "bara", 25.0, "C"));
     assertEquals("Sep1", sep.getName());
   }
 
   @Test
   void testCreateThreePhaseSeparator() {
     ThreePhaseSeparator sep = EquipmentFactory.createThreePhaseSeparator("3PSep",
-        EquipmentFactory.createStream("3PSepFeed", gasFluid.clone(),
-            5000.0, "kg/hr", 50.0, "bara", 25.0, "C"));
+	EquipmentFactory.createStream("3PSepFeed", gasFluid.clone(), 5000.0, "kg/hr", 50.0, "bara", 25.0, "C"));
     assertEquals("3PSep", sep.getName());
   }
 
   @Test
   void testCreateMixer() {
-    Stream s1 = EquipmentFactory.createStream("Mix1", gasFluid.clone(),
-        3000.0, "kg/hr", 50.0, "bara", 25.0, "C");
-    Stream s2 = EquipmentFactory.createStream("Mix2", gasFluid.clone(),
-        2000.0, "kg/hr", 50.0, "bara", 30.0, "C");
+    Stream s1 = EquipmentFactory.createStream("Mix1", gasFluid.clone(), 3000.0, "kg/hr", 50.0, "bara", 25.0, "C");
+    Stream s2 = EquipmentFactory.createStream("Mix2", gasFluid.clone(), 2000.0, "kg/hr", 50.0, "bara", 30.0, "C");
     Mixer mixer = EquipmentFactory.createMixer("Mixer1", s1, s2);
 
     assertEquals("Mixer1", mixer.getName());
@@ -178,8 +169,7 @@ class EquipmentSimplifiedAPITest {
 
   @Test
   void testUnifiedOutletPropertyAccess() {
-    Stream feed = EquipmentFactory.createStream("UniFeed", gasFluid.clone(),
-        5000.0, "kg/hr", 50.0, "bara", 25.0, "C");
+    Stream feed = EquipmentFactory.createStream("UniFeed", gasFluid.clone(), 5000.0, "kg/hr", 50.0, "bara", 25.0, "C");
     Compressor comp = EquipmentFactory.createCompressor("UniComp", feed, 80.0, 0.85);
     Cooler cooler = EquipmentFactory.createCooler("UniCool", comp.getOutletStream(), 30.0, "C");
 
@@ -204,8 +194,8 @@ class EquipmentSimplifiedAPITest {
 
   @Test
   void testGetEquipmentStateCompressor() {
-    Stream feed = EquipmentFactory.createStream("StateFeed", gasFluid.clone(),
-        5000.0, "kg/hr", 50.0, "bara", 25.0, "C");
+    Stream feed = EquipmentFactory.createStream("StateFeed", gasFluid.clone(), 5000.0, "kg/hr", 50.0, "bara", 25.0,
+	"C");
     Compressor comp = EquipmentFactory.createCompressor("StateComp", feed, 80.0, 0.85);
 
     ProcessSystem process = new ProcessSystem();
@@ -231,8 +221,8 @@ class EquipmentSimplifiedAPITest {
 
   @Test
   void testGetEquipmentStateHeater() {
-    Stream feed = EquipmentFactory.createStream("HStateFeed", gasFluid.clone(),
-        5000.0, "kg/hr", 50.0, "bara", 25.0, "C");
+    Stream feed = EquipmentFactory.createStream("HStateFeed", gasFluid.clone(), 5000.0, "kg/hr", 50.0, "bara", 25.0,
+	"C");
     Heater heater = EquipmentFactory.createHeater("HStateHeater", feed, 80.0, "C");
 
     ProcessSystem process = new ProcessSystem();
@@ -257,8 +247,7 @@ class EquipmentSimplifiedAPITest {
     wetGas.addComponent("water", 0.05);
     wetGas.setMixingRule("classic");
 
-    Stream feed = EquipmentFactory.createStream("SepStateFeed", wetGas,
-        10000.0, "kg/hr", 50.0, "bara", 25.0, "C");
+    Stream feed = EquipmentFactory.createStream("SepStateFeed", wetGas, 10000.0, "kg/hr", 50.0, "bara", 25.0, "C");
     Separator sep = EquipmentFactory.createSeparator("SepState", feed);
 
     ProcessSystem process = new ProcessSystem();
@@ -276,8 +265,8 @@ class EquipmentSimplifiedAPITest {
 
   @Test
   void testGetEquipmentStateValve() {
-    Stream feed = EquipmentFactory.createStream("VStateFeed", gasFluid.clone(),
-        5000.0, "kg/hr", 80.0, "bara", 25.0, "C");
+    Stream feed = EquipmentFactory.createStream("VStateFeed", gasFluid.clone(), 5000.0, "kg/hr", 80.0, "bara", 25.0,
+	"C");
     ThrottlingValve valve = EquipmentFactory.createValve("VState", feed, 30.0, 50.0);
 
     ProcessSystem process = new ProcessSystem();
@@ -298,8 +287,7 @@ class EquipmentSimplifiedAPITest {
     liqFluid.addComponent("water", 1.0);
     liqFluid.setMixingRule("classic");
 
-    Stream feed = EquipmentFactory.createStream("PStateFeed", liqFluid,
-        2000.0, "kg/hr", 5.0, "bara", 20.0, "C");
+    Stream feed = EquipmentFactory.createStream("PStateFeed", liqFluid, 2000.0, "kg/hr", 5.0, "bara", 20.0, "C");
     Pump pump = EquipmentFactory.createPump("PState", feed, 30.0);
 
     ProcessSystem process = new ProcessSystem();
@@ -320,8 +308,8 @@ class EquipmentSimplifiedAPITest {
     // Use equipment that relies on the default implementation of getOutletStreams()
     // from TwoPortEquipment. Heater overrides getEquipmentState, so test via
     // the unified outlet property accessors on a compressor.
-    Stream feed = EquipmentFactory.createStream("DefaultFeed", gasFluid.clone(),
-        5000.0, "kg/hr", 50.0, "bara", 25.0, "C");
+    Stream feed = EquipmentFactory.createStream("DefaultFeed", gasFluid.clone(), 5000.0, "kg/hr", 50.0, "bara", 25.0,
+	"C");
     Compressor comp = EquipmentFactory.createCompressor("DefaultComp", feed, 80.0, 0.85);
 
     ProcessSystem process = new ProcessSystem();

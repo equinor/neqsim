@@ -66,13 +66,13 @@ import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
- * Utility for exporting {@link ProcessSystem}s created from DEXPI data back into a lightweight
- * DEXPI XML representation.
+ * Utility for exporting {@link ProcessSystem}s created from DEXPI data back into a lightweight DEXPI XML
+ * representation.
  *
  * <p>
- * The writer groups all discovered {@link DexpiStream} segments by line number (or fluid code when
- * a line is not available) to generate simple {@code <PipingNetworkSystem>} elements with
- * associated {@code <PipingNetworkSegment>} children.
+ * The writer groups all discovered {@link DexpiStream} segments by line number (or fluid code when a line is not
+ * available) to generate simple {@code <PipingNetworkSystem>} elements with associated {@code <PipingNetworkSegment>}
+ * children.
  * </p>
  *
  * @author NeqSim
@@ -80,67 +80,63 @@ import neqsim.process.processmodel.ProcessSystem;
  * @see <a href="https://dexpi.org/">DEXPI Standard</a>
  */
 public final class DexpiXmlWriter {
-  private static final org.apache.logging.log4j.Logger logger =
-      org.apache.logging.log4j.LogManager.getLogger(DexpiXmlWriter.class);
+  private static final org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager
+      .getLogger(DexpiXmlWriter.class);
   private static final Pattern NON_IDENTIFIER = Pattern.compile("[^A-Za-z0-9_-]");
-  private static final transient ThreadLocal<DecimalFormat> DECIMAL_FORMAT =
-      ThreadLocal.withInitial(() -> {
-        DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance(Locale.ROOT);
-        DecimalFormat format = new DecimalFormat("0.############", symbols);
-        format.setMaximumFractionDigits(12);
-        format.setGroupingUsed(false);
-        return format;
-      });
+  private static final transient ThreadLocal<DecimalFormat> DECIMAL_FORMAT = ThreadLocal.withInitial(() -> {
+    DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance(Locale.ROOT);
+    DecimalFormat format = new DecimalFormat("0.############", symbols);
+    format.setMaximumFractionDigits(12);
+    format.setGroupingUsed(false);
+    return format;
+  });
 
   /**
-   * Thread-local flag controlling whether the root {@code PlantModel} element declares the DEXPI
-   * default XML namespace. When {@code true} the default {@code xmlns} attribute is omitted so the
-   * resulting document can be parsed directly by tools (such as pyDEXPI) whose Proteus reader looks
-   * up element tags without a namespace prefix.
+   * Thread-local flag controlling whether the root {@code PlantModel} element declares the DEXPI default XML namespace.
+   * When {@code true} the default {@code xmlns} attribute is omitted so the resulting document can be parsed directly
+   * by tools (such as pyDEXPI) whose Proteus reader looks up element tags without a namespace prefix.
    */
-  private static final transient ThreadLocal<Boolean> OMIT_DEFAULT_NAMESPACE =
-      ThreadLocal.withInitial(() -> Boolean.FALSE);
+  private static final transient ThreadLocal<Boolean> OMIT_DEFAULT_NAMESPACE = ThreadLocal
+      .withInitial(() -> Boolean.FALSE);
 
   /**
-   * Thread-local flag controlling whether standard ISA-5.1 instrumentation (pressure, temperature,
-   * level and flow loops with matched controllers) is automatically synthesized for a
-   * {@link ProcessSystem} that defines no measurement devices or controllers of its own. When
-   * {@code true} (the default) every separator, compressor, cooler/heater and pump receives a
-   * realistic set of indicating/controlling loops so the exported P&amp;ID resembles a real
-   * engineering diagram instead of a bare block flow sketch. Set to {@code false} to export only
-   * the instrumentation that is explicitly present in the model.
+   * Thread-local flag controlling whether standard ISA-5.1 instrumentation (pressure, temperature, level and flow loops
+   * with matched controllers) is automatically synthesized for a {@link ProcessSystem} that defines no measurement
+   * devices or controllers of its own. When {@code true} (the default) every separator, compressor, cooler/heater and
+   * pump receives a realistic set of indicating/controlling loops so the exported P&amp;ID resembles a real engineering
+   * diagram instead of a bare block flow sketch. Set to {@code false} to export only the instrumentation that is
+   * explicitly present in the model.
    */
-  private static final transient ThreadLocal<Boolean> AUTO_SYNTHESIZE_INSTRUMENTS =
-      ThreadLocal.withInitial(() -> Boolean.TRUE);
+  private static final transient ThreadLocal<Boolean> AUTO_SYNTHESIZE_INSTRUMENTS = ThreadLocal
+      .withInitial(() -> Boolean.TRUE);
 
   /**
-   * Enables or disables automatic synthesis of standard ISA-5.1 instrumentation for process systems
-   * that contain no explicit measurement devices or controllers.
+   * Enables or disables automatic synthesis of standard ISA-5.1 instrumentation for process systems that contain no
+   * explicit measurement devices or controllers.
    *
-   * @param enabled {@code true} to synthesize standard control loops (default), {@code false} to
-   *        export only explicitly modelled instrumentation
+   * @param enabled {@code true} to synthesize standard control loops (default), {@code false} to export only explicitly
+   *                modelled instrumentation
    */
   public static void setAutoSynthesizeInstrumentation(boolean enabled) {
     AUTO_SYNTHESIZE_INSTRUMENTS.set(Boolean.valueOf(enabled));
   }
 
-  private DexpiXmlWriter() {}
+  private DexpiXmlWriter() {
+  }
 
   /**
-   * Performs a bi-directional DEXPI round-trip: reads an existing DEXPI XML P&amp;ID, creates a
-   * NeqSim process model from it using the provided fluid template, runs the simulation, and writes
-   * the enriched results back to DEXPI XML.
+   * Performs a bi-directional DEXPI round-trip: reads an existing DEXPI XML P&amp;ID, creates a NeqSim process model
+   * from it using the provided fluid template, runs the simulation, and writes the enriched results back to DEXPI XML.
    *
    * <p>
-   * This enables a "digital twin" workflow where P&amp;ID designs are imported, simulated with
-   * rigorous thermodynamics, and exported back with updated process data (temperatures, pressures,
-   * flow rates, compositions).
+   * This enables a "digital twin" workflow where P&amp;ID designs are imported, simulated with rigorous thermodynamics,
+   * and exported back with updated process data (temperatures, pressures, flow rates, compositions).
    * </p>
    *
-   * @param inputFile the source DEXPI XML file to read
-   * @param outputFile the destination file for the enriched DEXPI XML
+   * @param inputFile      the source DEXPI XML file to read
+   * @param outputFile     the destination file for the enriched DEXPI XML
    * @param templateStream the template stream providing fluid composition for simulation
-   * @throws IOException if reading or writing fails
+   * @throws IOException             if reading or writing fails
    * @throws DexpiXmlReaderException if the DEXPI XML cannot be parsed
    */
   public static void roundTrip(File inputFile, File outputFile, Stream templateStream)
@@ -158,7 +154,7 @@ public final class DexpiXmlWriter {
    * Writes the provided {@link ProcessSystem} to a DEXPI XML file.
    *
    * @param processSystem process model to export
-   * @param file output file
+   * @param file          output file
    * @throws IOException if writing fails
    */
   public static void write(ProcessSystem processSystem, File file) throws IOException {
@@ -166,20 +162,18 @@ public final class DexpiXmlWriter {
   }
 
   /**
-   * Writes the provided {@link ProcessSystem} to a DEXPI XML file using a namespace-free root
-   * element so the document can be parsed directly by pyDEXPI (and other Proteus readers that
-   * resolve element tags without a namespace prefix).
+   * Writes the provided {@link ProcessSystem} to a DEXPI XML file using a namespace-free root element so the document
+   * can be parsed directly by pyDEXPI (and other Proteus readers that resolve element tags without a namespace prefix).
    *
    * <p>
-   * NeqSim normally declares the DEXPI default namespace {@code http://sandbox.dexpi.org/xml} on
-   * the root {@code PlantModel}. pyDEXPI's Proteus parser performs unqualified tag lookups and
-   * therefore fails to find {@code PlantInformation} when that namespace is present. This method
-   * emits the same content with the default {@code xmlns} attribute omitted, removing the need to
-   * post-process the file with a manual namespace strip.
+   * NeqSim normally declares the DEXPI default namespace {@code http://sandbox.dexpi.org/xml} on the root
+   * {@code PlantModel}. pyDEXPI's Proteus parser performs unqualified tag lookups and therefore fails to find
+   * {@code PlantInformation} when that namespace is present. This method emits the same content with the default
+   * {@code xmlns} attribute omitted, removing the need to post-process the file with a manual namespace strip.
    * </p>
    *
    * @param processSystem process model to export
-   * @param file output file
+   * @param file          output file
    * @throws IOException if writing fails
    */
   public static void writeForPyDexpi(ProcessSystem processSystem, File file) throws IOException {
@@ -194,16 +188,15 @@ public final class DexpiXmlWriter {
   }
 
   /**
-   * Writes the provided {@link ProcessSystem} to a DEXPI XML stream using a namespace-free root
-   * element so the document can be parsed directly by pyDEXPI.
+   * Writes the provided {@link ProcessSystem} to a DEXPI XML stream using a namespace-free root element so the document
+   * can be parsed directly by pyDEXPI.
    *
    * @param processSystem process model to export
-   * @param outputStream destination stream
+   * @param outputStream  destination stream
    * @throws IOException if writing fails
    * @see #writeForPyDexpi(ProcessSystem, File)
    */
-  public static void writeForPyDexpi(ProcessSystem processSystem, OutputStream outputStream)
-      throws IOException {
+  public static void writeForPyDexpi(ProcessSystem processSystem, OutputStream outputStream) throws IOException {
     Objects.requireNonNull(processSystem, "processSystem");
     Objects.requireNonNull(outputStream, "outputStream");
     OMIT_DEFAULT_NAMESPACE.set(Boolean.TRUE);
@@ -218,15 +211,14 @@ public final class DexpiXmlWriter {
    * Writes a multi-area {@link ProcessModel} to a single combined DEXPI XML file.
    *
    * <p>
-   * All process areas are flattened into one transient {@link ProcessSystem} (sharing equipment by
-   * object identity so cross-area streams are not duplicated) and exported through the standard
-   * single-system writer. Equipment whose name collides with an item already collected from an
-   * earlier area is skipped with a logged warning, since a DEXPI {@code PlantModel} requires unique
-   * tags.
+   * All process areas are flattened into one transient {@link ProcessSystem} (sharing equipment by object identity so
+   * cross-area streams are not duplicated) and exported through the standard single-system writer. Equipment whose name
+   * collides with an item already collected from an earlier area is skipped with a logged warning, since a DEXPI
+   * {@code PlantModel} requires unique tags.
    * </p>
    *
    * @param plant the process model to export
-   * @param file output file
+   * @param file  output file
    * @throws IOException if writing fails
    */
   public static void write(ProcessModel plant, File file) throws IOException {
@@ -244,7 +236,7 @@ public final class DexpiXmlWriter {
   /**
    * Writes a multi-area {@link ProcessModel} to a single combined DEXPI XML stream.
    *
-   * @param plant the process model to export
+   * @param plant        the process model to export
    * @param outputStream destination stream
    * @throws IOException if writing fails
    * @see #write(ProcessModel, File)
@@ -256,22 +248,21 @@ public final class DexpiXmlWriter {
   }
 
   /**
-   * Writes each process area of a {@link ProcessModel} to its own DEXPI XML sheet in the given
-   * directory. Each file is named after the (sanitised) area name with a {@code .xml} extension.
+   * Writes each process area of a {@link ProcessModel} to its own DEXPI XML sheet in the given directory. Each file is
+   * named after the (sanitised) area name with a {@code .xml} extension.
    *
    * <p>
-   * Per-sheet export keeps the equipment count per drawing manageable and mirrors the multi-sheet
-   * convention used in real P&amp;ID packages. Streams that originate in another area appear as
-   * boundary feeds on the receiving sheet and are terminated with off-page connectors.
+   * Per-sheet export keeps the equipment count per drawing manageable and mirrors the multi-sheet convention used in
+   * real P&amp;ID packages. Streams that originate in another area appear as boundary feeds on the receiving sheet and
+   * are terminated with off-page connectors.
    * </p>
    *
-   * @param plant the process model to export
+   * @param plant           the process model to export
    * @param outputDirectory the directory to write the per-area sheets into (created if absent)
    * @return the list of files written, one per area
    * @throws IOException if writing fails
    */
-  public static List<File> writeSheets(ProcessModel plant, File outputDirectory)
-      throws IOException {
+  public static List<File> writeSheets(ProcessModel plant, File outputDirectory) throws IOException {
     Objects.requireNonNull(plant, "plant");
     Objects.requireNonNull(outputDirectory, "outputDirectory");
     Files.createDirectories(outputDirectory.toPath());
@@ -280,7 +271,7 @@ public final class DexpiXmlWriter {
     for (String areaName : plant.getProcessSystemNames()) {
       ProcessSystem area = plant.get(areaName);
       if (area == null) {
-        continue;
+	continue;
       }
       String safe = sanitizeFileName(areaName, "Area-" + index);
       File sheet = new File(outputDirectory, safe + ".xml");
@@ -295,9 +286,9 @@ public final class DexpiXmlWriter {
    * Flattens a {@link ProcessModel} into a single {@link ProcessSystem} for combined export.
    *
    * <p>
-   * Equipment is added by object identity so a stream shared between two areas is registered once.
-   * Genuine name collisions between distinct equipment from different areas are skipped (with a
-   * logged warning) because the DEXPI export requires unique tags.
+   * Equipment is added by object identity so a stream shared between two areas is registered once. Genuine name
+   * collisions between distinct equipment from different areas are skipped (with a logged warning) because the DEXPI
+   * export requires unique tags.
    * </p>
    *
    * @param plant the process model to flatten
@@ -310,27 +301,26 @@ public final class DexpiXmlWriter {
     Set<Integer> addedIdentities = new HashSet<>();
     for (ProcessSystem area : plant.getAllProcesses()) {
       if (area == null) {
-        continue;
+	continue;
       }
       for (ProcessEquipmentInterface unit : area.getUnitOperations()) {
-        if (unit == null) {
-          continue;
-        }
-        if (!addedIdentities.add(System.identityHashCode(unit))) {
-          continue;
-        }
-        String name = unit.getName();
-        if (name != null && !usedNames.add(name)) {
-          logger.warn("Skipping duplicate equipment name '{}' from area '{}' during"
-              + " ProcessModel DEXPI flatten", name, area.getName());
-          continue;
-        }
-        try {
-          combined.add(unit);
-        } catch (RuntimeException ex) {
-          logger.warn("Could not add equipment '{}' to combined DEXPI model: {}", name,
-              ex.getMessage());
-        }
+	if (unit == null) {
+	  continue;
+	}
+	if (!addedIdentities.add(System.identityHashCode(unit))) {
+	  continue;
+	}
+	String name = unit.getName();
+	if (name != null && !usedNames.add(name)) {
+	  logger.warn("Skipping duplicate equipment name '{}' from area '{}' during" + " ProcessModel DEXPI flatten",
+	      name, area.getName());
+	  continue;
+	}
+	try {
+	  combined.add(unit);
+	} catch (RuntimeException ex) {
+	  logger.warn("Could not add equipment '{}' to combined DEXPI model: {}", name, ex.getMessage());
+	}
       }
     }
     return combined;
@@ -339,7 +329,7 @@ public final class DexpiXmlWriter {
   /**
    * Produces a filesystem-safe file name from an area name.
    *
-   * @param name the raw area name (may be null or blank)
+   * @param name     the raw area name (may be null or blank)
    * @param fallback the fallback base name when {@code name} is blank
    * @return a sanitised base file name containing only identifier-safe characters
    */
@@ -352,17 +342,16 @@ public final class DexpiXmlWriter {
   }
 
   /**
-   * Writes the provided {@link ProcessSystem} to a DEXPI XML file, including instrument and
-   * controller data when provided.
+   * Writes the provided {@link ProcessSystem} to a DEXPI XML file, including instrument and controller data when
+   * provided.
    *
    * @param processSystem process model to export
-   * @param file output file
-   * @param transmitters map of tag name to transmitter (may be null)
-   * @param controllers map of tag name to controller (may be null)
+   * @param file          output file
+   * @param transmitters  map of tag name to transmitter (may be null)
+   * @param controllers   map of tag name to controller (may be null)
    * @throws IOException if writing fails
    */
-  public static void write(ProcessSystem processSystem, File file,
-      Map<String, MeasurementDeviceInterface> transmitters,
+  public static void write(ProcessSystem processSystem, File file, Map<String, MeasurementDeviceInterface> transmitters,
       Map<String, ControllerDeviceInterface> controllers) throws IOException {
     Objects.requireNonNull(processSystem, "processSystem");
     Objects.requireNonNull(file, "file");
@@ -379,27 +368,26 @@ public final class DexpiXmlWriter {
    * Writes the provided {@link ProcessSystem} to a DEXPI XML stream.
    *
    * @param processSystem process model to export
-   * @param outputStream destination stream
+   * @param outputStream  destination stream
    * @throws IOException if writing fails
    */
-  public static void write(ProcessSystem processSystem, OutputStream outputStream)
-      throws IOException {
+  public static void write(ProcessSystem processSystem, OutputStream outputStream) throws IOException {
     write(processSystem, outputStream, null, null);
   }
 
   /**
-   * Writes the provided {@link ProcessSystem} to a DEXPI XML stream, including instrument and
-   * controller data when provided.
+   * Writes the provided {@link ProcessSystem} to a DEXPI XML stream, including instrument and controller data when
+   * provided.
    *
    * @param processSystem process model to export
-   * @param outputStream destination stream
-   * @param transmitters map of tag name to transmitter (may be null)
-   * @param controllers map of tag name to controller (may be null)
+   * @param outputStream  destination stream
+   * @param transmitters  map of tag name to transmitter (may be null)
+   * @param controllers   map of tag name to controller (may be null)
    * @throws IOException if writing fails
    */
   public static void write(ProcessSystem processSystem, OutputStream outputStream,
-      Map<String, MeasurementDeviceInterface> transmitters,
-      Map<String, ControllerDeviceInterface> controllers) throws IOException {
+      Map<String, MeasurementDeviceInterface> transmitters, Map<String, ControllerDeviceInterface> controllers)
+      throws IOException {
     Objects.requireNonNull(processSystem, "processSystem");
     Objects.requireNonNull(outputStream, "outputStream");
 
@@ -409,15 +397,14 @@ public final class DexpiXmlWriter {
       root.setAttribute("xmlns", "http://sandbox.dexpi.org/xml");
       root.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
       root.setAttribute("xsi:schemaLocation",
-          "http://sandbox.dexpi.org/xml http://sandbox.dexpi.org/xml/dexpi-4.1.1.xsd");
+	  "http://sandbox.dexpi.org/xml http://sandbox.dexpi.org/xml/dexpi-4.1.1.xsd");
     }
     document.appendChild(root);
 
     root.appendChild(createPlantInformation(document));
 
     // Compute auto-layout positions for graphical rendering
-    Map<String, DexpiLayoutEngine.EquipmentPosition> layoutPositions =
-        DexpiLayoutEngine.computeLayout(processSystem);
+    Map<String, DexpiLayoutEngine.EquipmentPosition> layoutPositions = DexpiLayoutEngine.computeLayout(processSystem);
     int labelCounter = 1;
 
     Set<String> usedIds = new LinkedHashSet<>();
@@ -436,56 +423,54 @@ public final class DexpiXmlWriter {
 
     for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
       if (unit instanceof DexpiStream) {
-        DexpiStream stream = (DexpiStream) unit;
-        String systemKey = stream.getLineNumber();
-        if (isBlank(systemKey)) {
-          systemKey = stream.getFluidCode();
-        }
-        if (isBlank(systemKey)) {
-          systemKey = "Segment";
-        }
-        segmentsBySystem.computeIfAbsent(systemKey, key -> new ArrayList<>()).add(stream);
+	DexpiStream stream = (DexpiStream) unit;
+	String systemKey = stream.getLineNumber();
+	if (isBlank(systemKey)) {
+	  systemKey = stream.getFluidCode();
+	}
+	if (isBlank(systemKey)) {
+	  systemKey = "Segment";
+	}
+	segmentsBySystem.computeIfAbsent(systemKey, key -> new ArrayList<>()).add(stream);
       } else if (unit instanceof DexpiProcessUnit) {
-        String inNozzle = "Nozzle-" + nozzleCounter++;
-        List<String> outNozzles = new ArrayList<>();
-        outNozzles.add("Nozzle-" + nozzleCounter++);
-        if (DexpiStreamUtils.isMultiOutlet(unit)) {
-          outNozzles.add("Nozzle-" + nozzleCounter++);
-          if (unit instanceof ThreePhaseSeparator) {
-            outNozzles.add("Nozzle-" + nozzleCounter++);
-          }
-        }
-        registerNozzlePositions(layoutPositions.get(unit.getName()), inNozzle, outNozzles,
-            nozzlePositions);
-        appendProcessUnit(document, root, (DexpiProcessUnit) unit, usedIds, inNozzle, outNozzles,
-            layoutPositions.get(unit.getName()), labelCounter++, nozzlePositions);
-        equipmentInletNozzle.put(unit.getName(), inNozzle);
-        registerOutletNozzles(unit, outNozzles, outletStreamToNozzle);
+	String inNozzle = "Nozzle-" + nozzleCounter++;
+	List<String> outNozzles = new ArrayList<>();
+	outNozzles.add("Nozzle-" + nozzleCounter++);
+	if (DexpiStreamUtils.isMultiOutlet(unit)) {
+	  outNozzles.add("Nozzle-" + nozzleCounter++);
+	  if (unit instanceof ThreePhaseSeparator) {
+	    outNozzles.add("Nozzle-" + nozzleCounter++);
+	  }
+	}
+	registerNozzlePositions(layoutPositions.get(unit.getName()), inNozzle, outNozzles, nozzlePositions);
+	appendProcessUnit(document, root, (DexpiProcessUnit) unit, usedIds, inNozzle, outNozzles,
+	    layoutPositions.get(unit.getName()), labelCounter++, nozzlePositions);
+	equipmentInletNozzle.put(unit.getName(), inNozzle);
+	registerOutletNozzles(unit, outNozzles, outletStreamToNozzle);
       } else if (!(unit instanceof Stream)) {
-        // Native NeqSim equipment — use reverse mapping
-        String inNozzle = "Nozzle-" + nozzleCounter++;
-        List<String> outNozzles = new ArrayList<>();
-        outNozzles.add("Nozzle-" + nozzleCounter++);
-        if (DexpiStreamUtils.isMultiOutlet(unit)) {
-          outNozzles.add("Nozzle-" + nozzleCounter++);
-          if (unit instanceof ThreePhaseSeparator) {
-            outNozzles.add("Nozzle-" + nozzleCounter++);
-          }
-        }
-        registerNozzlePositions(layoutPositions.get(unit.getName()), inNozzle, outNozzles,
-            nozzlePositions);
-        if (isValveType(unit)) {
-          // Valves are PipingComponents in DEXPI — embed in PipingNetworkSegment, not
-          // top-level
-          Element valveElement = buildValvePipingComponent(document, unit, usedIds, inNozzle,
-              outNozzles, layoutPositions.get(unit.getName()), labelCounter++, nozzlePositions);
-          valvePipingComponents.put(inNozzle, valveElement);
-        } else {
-          appendNativeEquipment(document, root, unit, usedIds, inNozzle, outNozzles,
-              layoutPositions.get(unit.getName()), labelCounter++, nozzlePositions);
-        }
-        equipmentInletNozzle.put(unit.getName(), inNozzle);
-        registerOutletNozzles(unit, outNozzles, outletStreamToNozzle);
+	// Native NeqSim equipment — use reverse mapping
+	String inNozzle = "Nozzle-" + nozzleCounter++;
+	List<String> outNozzles = new ArrayList<>();
+	outNozzles.add("Nozzle-" + nozzleCounter++);
+	if (DexpiStreamUtils.isMultiOutlet(unit)) {
+	  outNozzles.add("Nozzle-" + nozzleCounter++);
+	  if (unit instanceof ThreePhaseSeparator) {
+	    outNozzles.add("Nozzle-" + nozzleCounter++);
+	  }
+	}
+	registerNozzlePositions(layoutPositions.get(unit.getName()), inNozzle, outNozzles, nozzlePositions);
+	if (isValveType(unit)) {
+	  // Valves are PipingComponents in DEXPI — embed in PipingNetworkSegment, not
+	  // top-level
+	  Element valveElement = buildValvePipingComponent(document, unit, usedIds, inNozzle, outNozzles,
+	      layoutPositions.get(unit.getName()), labelCounter++, nozzlePositions);
+	  valvePipingComponents.put(inNozzle, valveElement);
+	} else {
+	  appendNativeEquipment(document, root, unit, usedIds, inNozzle, outNozzles,
+	      layoutPositions.get(unit.getName()), labelCounter++, nozzlePositions);
+	}
+	equipmentInletNozzle.put(unit.getName(), inNozzle);
+	registerOutletNozzles(unit, outNozzles, outletStreamToNozzle);
       }
     }
 
@@ -501,34 +486,32 @@ public final class DexpiXmlWriter {
 
     // Write Connection elements and valve PipingComponents in a PipingNetworkSystem
     if (!connections.isEmpty() || !valvePipingComponents.isEmpty()) {
-      appendConnectionSystem(document, root, connections, usedIds, valvePipingComponents,
-          nozzlePositions);
+      appendConnectionSystem(document, root, connections, usedIds, valvePipingComponents, nozzlePositions);
     }
 
     // Off-page connectors (ISO 10628): mark battery-limit feeds and products that are not wired to
     // another unit on this sheet, so the reader knows the line continues off the diagram.
-    appendBoundaryConnectors(document, root, connections, equipmentInletNozzle,
-        outletStreamToNozzle, nozzlePositions);
+    appendBoundaryConnectors(document, root, connections, equipmentInletNozzle, outletStreamToNozzle, nozzlePositions);
 
     // Auto-collect instruments from ProcessSystem if not explicitly provided
     Map<String, MeasurementDeviceInterface> effectiveTransmitters = transmitters;
     Map<String, ControllerDeviceInterface> effectiveControllers = controllers;
     if ((effectiveTransmitters == null || effectiveTransmitters.isEmpty())
-        && !processSystem.getMeasurementDevices().isEmpty()) {
+	&& !processSystem.getMeasurementDevices().isEmpty()) {
       effectiveTransmitters = new LinkedHashMap<>();
       for (MeasurementDeviceInterface md : processSystem.getMeasurementDevices()) {
-        if (md.getName() != null && !md.getName().trim().isEmpty()) {
-          effectiveTransmitters.put(md.getName(), md);
-        }
+	if (md.getName() != null && !md.getName().trim().isEmpty()) {
+	  effectiveTransmitters.put(md.getName(), md);
+	}
       }
     }
     if ((effectiveControllers == null || effectiveControllers.isEmpty())
-        && !processSystem.getControllerDevices().isEmpty()) {
+	&& !processSystem.getControllerDevices().isEmpty()) {
       effectiveControllers = new LinkedHashMap<>();
       for (ControllerDeviceInterface cd : processSystem.getControllerDevices()) {
-        if (cd.getName() != null && !cd.getName().trim().isEmpty()) {
-          effectiveControllers.put(cd.getName(), cd);
-        }
+	if (cd.getName() != null && !cd.getName().trim().isEmpty()) {
+	  effectiveControllers.put(cd.getName(), cd);
+	}
       }
     }
 
@@ -538,18 +521,17 @@ public final class DexpiXmlWriter {
     // to the rich pyDEXPI/P&ID export path; the plain write(...) overloads stay backwards
     // compatible and emit only the instrumentation explicitly present in the model.
     if ((effectiveTransmitters == null || effectiveTransmitters.isEmpty())
-        && AUTO_SYNTHESIZE_INSTRUMENTS.get().booleanValue()
-        && Boolean.TRUE.equals(OMIT_DEFAULT_NAMESPACE.get())) {
+	&& AUTO_SYNTHESIZE_INSTRUMENTS.get().booleanValue() && Boolean.TRUE.equals(OMIT_DEFAULT_NAMESPACE.get())) {
       effectiveTransmitters = new LinkedHashMap<>();
       if (effectiveControllers == null) {
-        effectiveControllers = new LinkedHashMap<>();
+	effectiveControllers = new LinkedHashMap<>();
       }
       synthesizeStandardInstrumentation(processSystem, effectiveTransmitters, effectiveControllers);
     }
 
     if (effectiveTransmitters != null && !effectiveTransmitters.isEmpty()) {
-      appendInstruments(document, root, effectiveTransmitters, effectiveControllers, usedIds,
-          layoutPositions, nozzlePositions, processSystem);
+      appendInstruments(document, root, effectiveTransmitters, effectiveControllers, usedIds, layoutPositions,
+	  nozzlePositions, processSystem);
     }
 
     // Collect stream data for stream table
@@ -565,22 +547,21 @@ public final class DexpiXmlWriter {
     double[] sheetSize = DexpiLayoutEngine.computeSheetSize(layoutPositions);
     String drawingName = processSystem.getName();
     String today = LocalDate.now().toString();
-    DexpiLayoutEngine.appendDrawing(document, root, drawingName, "PID-001", "0", today,
-        sheetSize[0], sheetSize[1]);
+    DexpiLayoutEngine.appendDrawing(document, root, drawingName, "PID-001", "0", today, sheetSize[0], sheetSize[1]);
 
     // Battery limit boundary (NORSOK Z-003)
     DexpiLayoutEngine.appendBatteryLimitBoundary(document, root, layoutPositions, drawingName);
 
     // Symbol legend (ISO 10628)
     List<String[]> legendEntries = new ArrayList<>();
-    legendEntries.add(new String[] {"Process", "Process Line", "0"});
-    legendEntries.add(new String[] {"Signal", "Signal Line (dashed)", "1"});
-    legendEntries.add(new String[] {"Utility", "Utility Line (dash-dot)", "3"});
+    legendEntries.add(new String[] { "Process", "Process Line", "0" });
+    legendEntries.add(new String[] { "Signal", "Signal Line (dashed)", "1" });
+    legendEntries.add(new String[] { "Utility", "Utility Line (dash-dot)", "3" });
     DexpiLayoutEngine.appendSymbolLegend(document, root, legendEntries);
 
     // Revision history (NORSOK Z-003)
     List<String[]> revisions = new ArrayList<>();
-    revisions.add(new String[] {"0", today, "Issued for Design", "NeqSim", ""});
+    revisions.add(new String[] { "0", today, "Issued for Design", "NeqSim", "" });
     DexpiLayoutEngine.appendRevisionHistory(document, root, revisions, sheetSize[0]);
 
     writeDocument(document, outputStream);
@@ -607,9 +588,8 @@ public final class DexpiXmlWriter {
 
   private static Element createPlantInformation(Document document) {
     Element plantInformation = document.createElement("PlantInformation");
-    String applicationVersion =
-        ProcessSystem.class.getPackage().getImplementationVersion() == null ? "1.0"
-            : ProcessSystem.class.getPackage().getImplementationVersion();
+    String applicationVersion = ProcessSystem.class.getPackage().getImplementationVersion() == null ? "1.0"
+	: ProcessSystem.class.getPackage().getImplementationVersion();
     plantInformation.setAttribute("Application", "NeqSim");
     plantInformation.setAttribute("ApplicationVersion", applicationVersion);
     plantInformation.setAttribute("OriginatingSystem", "NeqSim");
@@ -629,16 +609,14 @@ public final class DexpiXmlWriter {
     return plantInformation;
   }
 
-  private static void appendProcessUnit(Document document, Element parent,
-      DexpiProcessUnit processUnit, Set<String> usedIds, String inletNozzleId,
-      List<String> outletNozzleIds, DexpiLayoutEngine.EquipmentPosition position, int labelIndex,
-      Map<String, double[]> nozzlePositions) {
+  private static void appendProcessUnit(Document document, Element parent, DexpiProcessUnit processUnit,
+      Set<String> usedIds, String inletNozzleId, List<String> outletNozzleIds,
+      DexpiLayoutEngine.EquipmentPosition position, int labelIndex, Map<String, double[]> nozzlePositions) {
     EquipmentEnum mapped = processUnit.getMappedEquipment();
     String elementName = "Equipment";
     Element element = document.createElement(elementName);
 
-    String componentClass =
-        firstNonBlank(processUnit.getDexpiClass(), defaultComponentClass(mapped, elementName));
+    String componentClass = firstNonBlank(processUnit.getDexpiClass(), defaultComponentClass(mapped, elementName));
     element.setAttribute("ComponentClass", componentClass);
     String equipmentId = uniqueIdentifier(elementName, processUnit.getName(), usedIds);
     element.setAttribute("ID", equipmentId);
@@ -660,8 +638,7 @@ public final class DexpiXmlWriter {
       DexpiLayoutEngine.appendPosition(document, element, position);
       DexpiLayoutEngine.appendScale(document, element, position);
       String labelId = "EquipmentTagNameLabel-" + labelIndex;
-      DexpiLayoutEngine.appendTagNameLabel(document, element, processUnit.getName(), position,
-          labelId, equipmentId);
+      DexpiLayoutEngine.appendTagNameLabel(document, element, processUnit.getName(), position, labelId, equipmentId);
     }
 
     // Add Nozzle children
@@ -672,12 +649,9 @@ public final class DexpiXmlWriter {
 
     Element genericAttributes = document.createElement("GenericAttributes");
     genericAttributes.setAttribute("Set", "DexpiAttributes");
-    appendGenericAttribute(document, genericAttributes, DexpiMetadata.TAG_NAME,
-        processUnit.getName());
-    appendGenericAttribute(document, genericAttributes, DexpiMetadata.LINE_NUMBER,
-        processUnit.getLineNumber());
-    appendGenericAttribute(document, genericAttributes, DexpiMetadata.FLUID_CODE,
-        processUnit.getFluidCode());
+    appendGenericAttribute(document, genericAttributes, DexpiMetadata.TAG_NAME, processUnit.getName());
+    appendGenericAttribute(document, genericAttributes, DexpiMetadata.LINE_NUMBER, processUnit.getLineNumber());
+    appendGenericAttribute(document, genericAttributes, DexpiMetadata.FLUID_CODE, processUnit.getFluidCode());
 
     // Export sizing attributes
     for (Map.Entry<String, String> sizing : processUnit.getSizingAttributes().entrySet()) {
@@ -694,20 +668,19 @@ public final class DexpiXmlWriter {
   /**
    * Appends a native NeqSim equipment (non-DEXPI-origin) to the document using reverse mapping.
    *
-   * @param document the XML document
-   * @param parent the parent element
-   * @param unit the process equipment
-   * @param usedIds set of used IDs
-   * @param inletNozzleId the inlet nozzle ID to create
+   * @param document        the XML document
+   * @param parent          the parent element
+   * @param unit            the process equipment
+   * @param usedIds         set of used IDs
+   * @param inletNozzleId   the inlet nozzle ID to create
    * @param outletNozzleIds the outlet nozzle IDs to create
-   * @param position the computed layout position (may be null)
-   * @param labelIndex label counter for unique IDs
+   * @param position        the computed layout position (may be null)
+   * @param labelIndex      label counter for unique IDs
    * @param nozzlePositions map of nozzle positions for graphical rendering
    */
-  private static void appendNativeEquipment(Document document, Element parent,
-      ProcessEquipmentInterface unit, Set<String> usedIds, String inletNozzleId,
-      List<String> outletNozzleIds, DexpiLayoutEngine.EquipmentPosition position, int labelIndex,
-      Map<String, double[]> nozzlePositions) {
+  private static void appendNativeEquipment(Document document, Element parent, ProcessEquipmentInterface unit,
+      Set<String> usedIds, String inletNozzleId, List<String> outletNozzleIds,
+      DexpiLayoutEngine.EquipmentPosition position, int labelIndex, Map<String, double[]> nozzlePositions) {
     String componentClass = reverseMapComponentClass(unit);
     String elementName = "Equipment";
     Element element = document.createElement(elementName);
@@ -733,16 +706,14 @@ public final class DexpiXmlWriter {
       DexpiLayoutEngine.appendPosition(document, element, position);
       DexpiLayoutEngine.appendScale(document, element, position);
       String labelId = "EquipmentTagNameLabel-" + labelIndex;
-      DexpiLayoutEngine.appendTagNameLabel(document, element, unit.getName(), position, labelId,
-          equipmentId);
+      DexpiLayoutEngine.appendTagNameLabel(document, element, unit.getName(), position, labelId, equipmentId);
       // Add equipment bar label with P/T/flow data
-      appendEquipmentBarFromSimulation(document, element, unit, position,
-          "EquipmentBarLabel-" + labelIndex, equipmentId);
+      appendEquipmentBarFromSimulation(document, element, unit, position, "EquipmentBarLabel-" + labelIndex,
+	  equipmentId);
       // Equipment orientation marker (ISO 10628)
       String orientation = detectOrientation(unit);
       if (orientation != null) {
-        DexpiLayoutEngine.appendOrientationMarker(document, element, orientation, position.x,
-            position.y);
+	DexpiLayoutEngine.appendOrientationMarker(document, element, orientation, position.x, position.y);
       }
     }
 
@@ -775,14 +746,14 @@ public final class DexpiXmlWriter {
   /**
    * Appends a Nozzle child element to the parent equipment element with optional position.
    *
-   * @param document the XML document
-   * @param parent the equipment element
-   * @param nozzleId the nozzle ID
-   * @param usedIds set of used IDs
+   * @param document        the XML document
+   * @param parent          the equipment element
+   * @param nozzleId        the nozzle ID
+   * @param usedIds         set of used IDs
    * @param nozzlePositions map of nozzle positions (may be null)
    */
-  private static void appendNozzle(Document document, Element parent, String nozzleId,
-      Set<String> usedIds, Map<String, double[]> nozzlePositions) {
+  private static void appendNozzle(Document document, Element parent, String nozzleId, Set<String> usedIds,
+      Map<String, double[]> nozzlePositions) {
     if (isBlank(nozzleId)) {
       return;
     }
@@ -796,7 +767,7 @@ public final class DexpiXmlWriter {
     if (nozzlePositions != null) {
       double[] pos = nozzlePositions.get(nozzleId);
       if (pos != null) {
-        DexpiLayoutEngine.appendNozzlePosition(document, nozzle, pos[0], pos[1]);
+	DexpiLayoutEngine.appendNozzlePosition(document, nozzle, pos[0], pos[1]);
       }
     }
 
@@ -807,9 +778,9 @@ public final class DexpiXmlWriter {
   /**
    * Appends simulation result attributes (P, T, flow) from equipment outlet streams.
    *
-   * @param document the XML document
+   * @param document          the XML document
    * @param genericAttributes the GenericAttributes element to append to
-   * @param unit the process equipment
+   * @param unit              the process equipment
    */
   private static void appendSimulationResults(Document document, Element genericAttributes,
       ProcessEquipmentInterface unit) {
@@ -819,28 +790,28 @@ public final class DexpiXmlWriter {
     }
     try {
       double pressure = outStream.getPressure(DexpiMetadata.DEFAULT_PRESSURE_UNIT);
-      appendNumericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_PRESSURE_VALUE,
-          pressure, DexpiMetadata.DEFAULT_PRESSURE_UNIT);
+      appendNumericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_PRESSURE_VALUE, pressure,
+	  DexpiMetadata.DEFAULT_PRESSURE_UNIT);
 
       double temperature = outStream.getTemperature(DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
-      appendNumericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_TEMPERATURE_VALUE,
-          temperature, DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
+      appendNumericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_TEMPERATURE_VALUE, temperature,
+	  DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
 
       double flowRate = outStream.getFlowRate(DexpiMetadata.DEFAULT_FLOW_UNIT);
-      appendNumericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_FLOW_VALUE,
-          flowRate, DexpiMetadata.DEFAULT_FLOW_UNIT);
+      appendNumericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_FLOW_VALUE, flowRate,
+	  DexpiMetadata.DEFAULT_FLOW_UNIT);
     } catch (RuntimeException ignored) {
       // Simulation may not have been run — properties unavailable
     }
   }
 
   /**
-   * Appends a GenericAttributes set with mechanical design parameters for the equipment. Only
-   * attributes with non-zero/non-default values are exported.
+   * Appends a GenericAttributes set with mechanical design parameters for the equipment. Only attributes with
+   * non-zero/non-default values are exported.
    *
    * @param document the XML document
-   * @param parent the equipment element
-   * @param unit the process equipment
+   * @param parent   the equipment element
+   * @param unit     the process equipment
    */
   private static void appendMechanicalDesignAttributes(Document document, Element parent,
       ProcessEquipmentInterface unit) {
@@ -869,12 +840,10 @@ public final class DexpiXmlWriter {
       appendGenericAttribute(document, attrs, "ConstructionMaterial", material);
     }
     if (md.getMaxOperationPressure() > 0) {
-      appendNumericAttribute(document, attrs, "MaxOperationPressure", md.getMaxOperationPressure(),
-          "bara");
+      appendNumericAttribute(document, attrs, "MaxOperationPressure", md.getMaxOperationPressure(), "bara");
     }
     if (md.getMaxDesignPressure() > 0 && md.getMaxOperationPressure() > 0) {
-      appendNumericAttribute(document, attrs, "MaxDesignPressure", md.getMaxDesignPressure(),
-          "bara");
+      appendNumericAttribute(document, attrs, "MaxDesignPressure", md.getMaxDesignPressure(), "bara");
     }
     if (md.getMaxOperationTemperature() > 0) {
       // Design temperature is typically 1.1x max operating temperature
@@ -899,11 +868,11 @@ public final class DexpiXmlWriter {
   /**
    * Appends an EquipmentBarLabel using simulation results from the equipment outlet.
    *
-   * @param document the XML document
-   * @param element the equipment element
-   * @param unit the process equipment
-   * @param position the equipment position
-   * @param labelId the unique label ID
+   * @param document    the XML document
+   * @param element     the equipment element
+   * @param unit        the process equipment
+   * @param position    the equipment position
+   * @param labelId     the unique label ID
    * @param equipmentId the equipment element ID
    */
   private static void appendEquipmentBarFromSimulation(Document document, Element element,
@@ -915,30 +884,29 @@ public final class DexpiXmlWriter {
     double flowRate = Double.NaN;
     if (outStream != null) {
       try {
-        pressure = outStream.getPressure(DexpiMetadata.DEFAULT_PRESSURE_UNIT);
-        temperature = outStream.getTemperature(DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
-        flowRate = outStream.getFlowRate(DexpiMetadata.DEFAULT_FLOW_UNIT);
+	pressure = outStream.getPressure(DexpiMetadata.DEFAULT_PRESSURE_UNIT);
+	temperature = outStream.getTemperature(DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
+	flowRate = outStream.getFlowRate(DexpiMetadata.DEFAULT_FLOW_UNIT);
       } catch (RuntimeException ignored) {
-        // Simulation unavailable
+	// Simulation unavailable
       }
     }
 
     // Collect mechanical design parameters
     List<String[]> mechRows = collectMechanicalDesignRows(unit);
 
-    boolean hasSimData =
-        !Double.isNaN(pressure) || !Double.isNaN(temperature) || !Double.isNaN(flowRate);
+    boolean hasSimData = !Double.isNaN(pressure) || !Double.isNaN(temperature) || !Double.isNaN(flowRate);
     if (!hasSimData && mechRows.isEmpty()) {
       return;
     }
 
-    DexpiLayoutEngine.appendEquipmentBarLabel(document, element, unit.getName(), position, labelId,
-        equipmentId, pressure, temperature, flowRate, mechRows.isEmpty() ? null : mechRows);
+    DexpiLayoutEngine.appendEquipmentBarLabel(document, element, unit.getName(), position, labelId, equipmentId,
+	pressure, temperature, flowRate, mechRows.isEmpty() ? null : mechRows);
   }
 
   /**
-   * Collects mechanical design parameters from equipment for display in the bar label. Returns rows
-   * only for parameters that have been set (non-zero, non-default).
+   * Collects mechanical design parameters from equipment for display in the bar label. Returns rows only for parameters
+   * that have been set (non-zero, non-default).
    *
    * @param unit the process equipment
    * @return list of label-value pairs (may be empty)
@@ -953,21 +921,21 @@ public final class DexpiXmlWriter {
     // Mechanical-design lengths (inner diameter, wall thickness, tan-to-tan length) are stored
     // internally in metres. Convert to millimetres for the P&ID data bar.
     if (md.getInnerDiameter() > 0) {
-      rows.add(new String[] {"ID", formatMechValue(md.getInnerDiameter() * 1000.0) + " mm"});
+      rows.add(new String[] { "ID", formatMechValue(md.getInnerDiameter() * 1000.0) + " mm" });
     }
     if (md.getWallThickness() > 0) {
-      rows.add(new String[] {"Wall Thk.", formatMechValue(md.getWallThickness() * 1000.0) + " mm"});
+      rows.add(new String[] { "Wall Thk.", formatMechValue(md.getWallThickness() * 1000.0) + " mm" });
     }
     if (md.getTantanLength() > 0) {
-      rows.add(new String[] {"Length", formatMechValue(md.getTantanLength() * 1000.0) + " mm"});
+      rows.add(new String[] { "Length", formatMechValue(md.getTantanLength() * 1000.0) + " mm" });
     }
     String material = md.getConstrutionMaterial();
     if (material != null && !material.trim().isEmpty() && !"steel".equals(material)) {
-      rows.add(new String[] {"Material", material});
+      rows.add(new String[] { "Material", material });
     }
     boolean designPressureSet = md.getMaxDesignPressure() > 0 && md.getMaxOperationPressure() > 0;
     if (designPressureSet) {
-      rows.add(new String[] {"Design P.", formatMechValue(md.getMaxDesignPressure()) + " bara"});
+      rows.add(new String[] { "Design P.", formatMechValue(md.getMaxDesignPressure()) + " bara" });
     }
     // Only emit a design temperature when it has been meaningfully set. The field defaults to the
     // placeholder value 100.0 K (-173.1 C); emitting that for every unmodified unit produced a
@@ -975,10 +943,10 @@ public final class DexpiXmlWriter {
     boolean designTemperatureSet = Math.abs(md.getMaxOperationTemperature() - 100.0) > 0.5;
     if (designTemperatureSet) {
       double designTempC = md.getMaxOperationTemperature() - 273.15;
-      rows.add(new String[] {"Design T.", formatMechValue(designTempC) + " \u00B0C"});
+      rows.add(new String[] { "Design T.", formatMechValue(designTempC) + " \u00B0C" });
     }
     if (md.getWeightTotal() > 0) {
-      rows.add(new String[] {"Weight", formatMechValue(md.getWeightTotal()) + " kg"});
+      rows.add(new String[] { "Weight", formatMechValue(md.getWeightTotal()) + " kg" });
     }
     return rows;
   }
@@ -1059,9 +1027,9 @@ public final class DexpiXmlWriter {
   }
 
   /**
-   * Returns {@code true} if the unit represents a DEXPI piping component (valve) rather than an
-   * Equipment element. In the DEXPI schema, valves are PipingComponent elements and should be
-   * embedded inside PipingNetworkSegment elements rather than exported as top-level Equipment.
+   * Returns {@code true} if the unit represents a DEXPI piping component (valve) rather than an Equipment element. In
+   * the DEXPI schema, valves are PipingComponent elements and should be embedded inside PipingNetworkSegment elements
+   * rather than exported as top-level Equipment.
    *
    * @param unit the process equipment to check
    * @return true if the unit should be rendered as a PipingComponent
@@ -1073,20 +1041,19 @@ public final class DexpiXmlWriter {
   /**
    * Builds a PipingComponent XML element for a valve unit.
    *
-   * @param document the XML document
-   * @param unit the valve unit
-   * @param usedIds set of used IDs
-   * @param inletNozzleId the inlet nozzle ID
+   * @param document        the XML document
+   * @param unit            the valve unit
+   * @param usedIds         set of used IDs
+   * @param inletNozzleId   the inlet nozzle ID
    * @param outletNozzleIds the outlet nozzle IDs
-   * @param position the computed layout position (may be null)
-   * @param labelIndex label counter for unique IDs
+   * @param position        the computed layout position (may be null)
+   * @param labelIndex      label counter for unique IDs
    * @param nozzlePositions map of nozzle positions for graphical rendering
    * @return the PipingComponent element
    */
-  private static Element buildValvePipingComponent(Document document,
-      ProcessEquipmentInterface unit, Set<String> usedIds, String inletNozzleId,
-      List<String> outletNozzleIds, DexpiLayoutEngine.EquipmentPosition position, int labelIndex,
-      Map<String, double[]> nozzlePositions) {
+  private static Element buildValvePipingComponent(Document document, ProcessEquipmentInterface unit,
+      Set<String> usedIds, String inletNozzleId, List<String> outletNozzleIds,
+      DexpiLayoutEngine.EquipmentPosition position, int labelIndex, Map<String, double[]> nozzlePositions) {
     String componentClass = reverseMapComponentClass(unit);
     Element element = document.createElement("PipingComponent");
     element.setAttribute("ComponentClass", componentClass);
@@ -1102,8 +1069,7 @@ public final class DexpiXmlWriter {
       DexpiLayoutEngine.appendPosition(document, element, position);
       DexpiLayoutEngine.appendScale(document, element, position);
       String labelId = "ValveTagNameLabel-" + labelIndex;
-      DexpiLayoutEngine.appendTagNameLabel(document, element, unit.getName(), position, labelId,
-          valveId);
+      DexpiLayoutEngine.appendTagNameLabel(document, element, unit.getName(), position, labelId, valveId);
     }
 
     appendNozzle(document, element, inletNozzleId, usedIds, nozzlePositions);
@@ -1121,8 +1087,7 @@ public final class DexpiXmlWriter {
     if (failPos != null) {
       appendGenericAttribute(document, genericAttributes, DexpiMetadata.FAIL_POSITION, failPos);
       if (position != null) {
-        DexpiLayoutEngine.appendFailPositionMarker(document, element, failPos, position.x,
-            position.y);
+	DexpiLayoutEngine.appendFailPositionMarker(document, element, failPos, position.x, position.y);
       }
     }
 
@@ -1130,7 +1095,7 @@ public final class DexpiXmlWriter {
     if (unit instanceof ThrottlingValve) {
       double cv = ((ThrottlingValve) unit).getCv();
       if (cv > 0 && !Double.isNaN(cv) && !Double.isInfinite(cv)) {
-        appendNumericAttribute(document, genericAttributes, DexpiMetadata.VALVE_CV, cv, "");
+	appendNumericAttribute(document, genericAttributes, DexpiMetadata.VALVE_CV, cv, "");
       }
     }
 
@@ -1164,13 +1129,13 @@ public final class DexpiXmlWriter {
    * Registers outlet stream identity hashes to their nozzle IDs.
    *
    * <p>
-   * For single-outlet equipment, the first (and only) nozzle maps to the gas/primary outlet. For
-   * separators, the first nozzle maps to the gas outlet, the second to the liquid outlet, and for
-   * three-phase separators, the third maps to the water outlet.
+   * For single-outlet equipment, the first (and only) nozzle maps to the gas/primary outlet. For separators, the first
+   * nozzle maps to the gas outlet, the second to the liquid outlet, and for three-phase separators, the third maps to
+   * the water outlet.
    * </p>
    *
-   * @param unit the process equipment
-   * @param outNozzles the list of outlet nozzle IDs
+   * @param unit                 the process equipment
+   * @param outNozzles           the list of outlet nozzle IDs
    * @param outletStreamToNozzle map to populate with identity hash to nozzle ID
    */
   private static void registerOutletNozzles(ProcessEquipmentInterface unit, List<String> outNozzles,
@@ -1182,13 +1147,13 @@ public final class DexpiXmlWriter {
     if (outNozzles.size() > 1) {
       StreamInterface liqOut = DexpiStreamUtils.getLiquidOutletStream(unit);
       if (liqOut != null) {
-        outletStreamToNozzle.put(System.identityHashCode(liqOut), outNozzles.get(1));
+	outletStreamToNozzle.put(System.identityHashCode(liqOut), outNozzles.get(1));
       }
     }
     if (outNozzles.size() > 2) {
       StreamInterface waterOut = DexpiStreamUtils.getWaterOutletStream(unit);
       if (waterOut != null) {
-        outletStreamToNozzle.put(System.identityHashCode(waterOut), outNozzles.get(2));
+	outletStreamToNozzle.put(System.identityHashCode(waterOut), outNozzles.get(2));
       }
     }
   }
@@ -1197,22 +1162,22 @@ public final class DexpiXmlWriter {
    * Registers nozzle positions for connection line geometry.
    *
    * <p>
-   * Inlet nozzles are placed at the left edge of the equipment shape (x - 10), and outlet nozzles
-   * at the right edge (x + 10). Multiple outlets are vertically offset to match the layout.
+   * Inlet nozzles are placed at the left edge of the equipment shape (x - 10), and outlet nozzles at the right edge (x
+   * + 10). Multiple outlets are vertically offset to match the layout.
    * </p>
    *
-   * @param position the equipment position (may be null)
-   * @param inNozzle the inlet nozzle ID
-   * @param outNozzles the outlet nozzle IDs
+   * @param position        the equipment position (may be null)
+   * @param inNozzle        the inlet nozzle ID
+   * @param outNozzles      the outlet nozzle IDs
    * @param nozzlePositions map to populate with nozzle ID to {x, y} coordinates
    */
-  private static void registerNozzlePositions(DexpiLayoutEngine.EquipmentPosition position,
-      String inNozzle, List<String> outNozzles, Map<String, double[]> nozzlePositions) {
+  private static void registerNozzlePositions(DexpiLayoutEngine.EquipmentPosition position, String inNozzle,
+      List<String> outNozzles, Map<String, double[]> nozzlePositions) {
     if (position == null) {
       return;
     }
     // Inlet nozzle at left edge of equipment shape (center height)
-    nozzlePositions.put(inNozzle, new double[] {position.x - 18.0, position.y});
+    nozzlePositions.put(inNozzle, new double[] { position.x - 18.0, position.y });
 
     // Phase-aware nozzle placement per P&ID convention (ISO 10628):
     // Gas exits TOP of equipment (highest Y in Y-up coords)
@@ -1220,21 +1185,21 @@ public final class DexpiXmlWriter {
     // Water exits below oil (heaviest phase at very bottom)
     if (outNozzles.size() == 1) {
       // Single outlet — same height as center (TwoPortEquipment)
-      nozzlePositions.put(outNozzles.get(0), new double[] {position.x + 18.0, position.y});
+      nozzlePositions.put(outNozzles.get(0), new double[] { position.x + 18.0, position.y });
     } else if (outNozzles.size() == 2) {
       // 2-phase separator: gas at top, liquid at bottom
-      nozzlePositions.put(outNozzles.get(0), new double[] {position.x + 18.0, position.y + 8.0}); // gas
-                                                                                                  // (top)
-      nozzlePositions.put(outNozzles.get(1), new double[] {position.x + 18.0, position.y - 8.0}); // liquid
-                                                                                                  // (bottom)
+      nozzlePositions.put(outNozzles.get(0), new double[] { position.x + 18.0, position.y + 8.0 }); // gas
+												    // (top)
+      nozzlePositions.put(outNozzles.get(1), new double[] { position.x + 18.0, position.y - 8.0 }); // liquid
+												    // (bottom)
     } else if (outNozzles.size() >= 3) {
       // 3-phase separator: gas top, oil middle, water bottom
-      nozzlePositions.put(outNozzles.get(0), new double[] {position.x + 18.0, position.y + 8.0}); // gas
-                                                                                                  // (top)
-      nozzlePositions.put(outNozzles.get(1), new double[] {position.x + 18.0, position.y - 4.0}); // oil
-                                                                                                  // (middle-low)
-      nozzlePositions.put(outNozzles.get(2), new double[] {position.x + 18.0, position.y - 12.0}); // water
-                                                                                                   // (bottom)
+      nozzlePositions.put(outNozzles.get(0), new double[] { position.x + 18.0, position.y + 8.0 }); // gas
+												    // (top)
+      nozzlePositions.put(outNozzles.get(1), new double[] { position.x + 18.0, position.y - 4.0 }); // oil
+												    // (middle-low)
+      nozzlePositions.put(outNozzles.get(2), new double[] { position.x + 18.0, position.y - 12.0 }); // water
+												     // (bottom)
     }
   }
 
@@ -1242,13 +1207,12 @@ public final class DexpiXmlWriter {
    * Registers pass-through Streams in the outlet-stream-to-nozzle map.
    *
    * <p>
-   * When a user creates {@code new Stream("gas-out", separator.getGasOutStream())}, the wrapping
-   * Stream delegates {@code getFluid()} to the source. This method detects such wrappers by
-   * matching fluid identity and registers the wrapper itself so downstream equipment that took the
-   * wrapper as its inlet can be connected.
+   * When a user creates {@code new Stream("gas-out", separator.getGasOutStream())}, the wrapping Stream delegates
+   * {@code getFluid()} to the source. This method detects such wrappers by matching fluid identity and registers the
+   * wrapper itself so downstream equipment that took the wrapper as its inlet can be connected.
    * </p>
    *
-   * @param processSystem the process system
+   * @param processSystem        the process system
    * @param outletStreamToNozzle map of outlet stream identity hash to nozzle ID
    */
   private static void registerPassThroughStreams(ProcessSystem processSystem,
@@ -1258,67 +1222,63 @@ public final class DexpiXmlWriter {
     for (Map.Entry<Integer, String> entry : outletStreamToNozzle.entrySet()) {
       // Find the stream object matching this identity hash
       for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
-        StreamInterface outStream = DexpiStreamUtils.getGasOutletStream(unit);
-        if (outStream != null && System.identityHashCode(outStream) == entry.getKey()
-            && outStream.getFluid() != null) {
-          fluidToNozzle.put(System.identityHashCode(outStream.getFluid()), entry.getValue());
-        }
-        StreamInterface liqStream = DexpiStreamUtils.getLiquidOutletStream(unit);
-        if (liqStream != null && System.identityHashCode(liqStream) == entry.getKey()
-            && liqStream.getFluid() != null) {
-          fluidToNozzle.put(System.identityHashCode(liqStream.getFluid()), entry.getValue());
-        }
-        StreamInterface waterStream = DexpiStreamUtils.getWaterOutletStream(unit);
-        if (waterStream != null && System.identityHashCode(waterStream) == entry.getKey()
-            && waterStream.getFluid() != null) {
-          fluidToNozzle.put(System.identityHashCode(waterStream.getFluid()), entry.getValue());
-        }
+	StreamInterface outStream = DexpiStreamUtils.getGasOutletStream(unit);
+	if (outStream != null && System.identityHashCode(outStream) == entry.getKey() && outStream.getFluid() != null) {
+	  fluidToNozzle.put(System.identityHashCode(outStream.getFluid()), entry.getValue());
+	}
+	StreamInterface liqStream = DexpiStreamUtils.getLiquidOutletStream(unit);
+	if (liqStream != null && System.identityHashCode(liqStream) == entry.getKey() && liqStream.getFluid() != null) {
+	  fluidToNozzle.put(System.identityHashCode(liqStream.getFluid()), entry.getValue());
+	}
+	StreamInterface waterStream = DexpiStreamUtils.getWaterOutletStream(unit);
+	if (waterStream != null && System.identityHashCode(waterStream) == entry.getKey()
+	    && waterStream.getFluid() != null) {
+	  fluidToNozzle.put(System.identityHashCode(waterStream.getFluid()), entry.getValue());
+	}
       }
     }
     // For each plain Stream in the process, check if its fluid delegates to a
     // registered outlet
     for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
       if (unit instanceof Stream && !(unit instanceof DexpiStream)) {
-        Stream stream = (Stream) unit;
-        if (stream.getFluid() != null) {
-          String nozzle = fluidToNozzle.get(System.identityHashCode(stream.getFluid()));
-          if (nozzle != null) {
-            outletStreamToNozzle.put(System.identityHashCode(stream), nozzle);
-          }
-        }
+	Stream stream = (Stream) unit;
+	if (stream.getFluid() != null) {
+	  String nozzle = fluidToNozzle.get(System.identityHashCode(stream.getFluid()));
+	  if (nozzle != null) {
+	    outletStreamToNozzle.put(System.identityHashCode(stream), nozzle);
+	  }
+	}
       }
     }
   }
 
   /**
-   * Builds connections between equipment by matching inlet stream identity to outlet stream
-   * nozzles.
+   * Builds connections between equipment by matching inlet stream identity to outlet stream nozzles.
    *
    * <p>
    * For each equipment that extends {@link TwoPortEquipment}, the inlet stream is looked up in the
-   * outlet-stream-to-nozzle map to find the upstream nozzle. This correctly resolves branching
-   * (e.g. separator gas and liquid outlets going to different downstream equipment).
+   * outlet-stream-to-nozzle map to find the upstream nozzle. This correctly resolves branching (e.g. separator gas and
+   * liquid outlets going to different downstream equipment).
    * </p>
    *
-   * @param processSystem the process system
+   * @param processSystem        the process system
    * @param outletStreamToNozzle map of outlet stream identity hash to nozzle ID
-   * @param inletNozzles map of equipment name to inlet nozzle ID
-   * @param connections list to populate with connections
+   * @param inletNozzles         map of equipment name to inlet nozzle ID
+   * @param connections          list to populate with connections
    */
-  private static void buildConnections(ProcessSystem processSystem,
-      Map<Integer, String> outletStreamToNozzle, Map<String, String> inletNozzles,
-      List<NozzleConnection> connections) {
+  private static void buildConnections(ProcessSystem processSystem, Map<Integer, String> outletStreamToNozzle,
+      Map<String, String> inletNozzles, List<NozzleConnection> connections) {
     for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
       if (unit instanceof Stream || unit instanceof DexpiStream) {
-        continue;
+	continue;
       }
       List<StreamInterface> inStreams = DexpiLayoutEngine.resolveInletStreams(unit);
       for (StreamInterface inletStream : inStreams) {
-        String fromNozzle = outletStreamToNozzle.get(System.identityHashCode(inletStream));
-        String toNozzle = inletNozzles.get(unit.getName());
-        if (fromNozzle != null && toNozzle != null) {
-          connections.add(new NozzleConnection(fromNozzle, toNozzle, inletStream));
-        }
+	String fromNozzle = outletStreamToNozzle.get(System.identityHashCode(inletStream));
+	String toNozzle = inletNozzles.get(unit.getName());
+	if (fromNozzle != null && toNozzle != null) {
+	  connections.add(new NozzleConnection(fromNozzle, toNozzle, inletStream));
+	}
       }
     }
   }
@@ -1326,21 +1286,18 @@ public final class DexpiXmlWriter {
   /**
    * Appends a PipingNetworkSystem containing Connection elements for equipment wiring.
    *
-   * @param document the XML document
-   * @param parent the root element
-   * @param connections the list of connections
-   * @param usedIds set of used IDs
-   * @param valvePipingComponents pre-built PipingComponent elements for valves, keyed by inlet
-   *        nozzle ID
-   * @param nozzlePositions map of nozzle ID to {x, y} coordinates for line geometry
+   * @param document              the XML document
+   * @param parent                the root element
+   * @param connections           the list of connections
+   * @param usedIds               set of used IDs
+   * @param valvePipingComponents pre-built PipingComponent elements for valves, keyed by inlet nozzle ID
+   * @param nozzlePositions       map of nozzle ID to {x, y} coordinates for line geometry
    */
-  private static void appendConnectionSystem(Document document, Element parent,
-      List<NozzleConnection> connections, Set<String> usedIds,
-      Map<String, Element> valvePipingComponents, Map<String, double[]> nozzlePositions) {
+  private static void appendConnectionSystem(Document document, Element parent, List<NozzleConnection> connections,
+      Set<String> usedIds, Map<String, Element> valvePipingComponents, Map<String, double[]> nozzlePositions) {
     Element systemElement = document.createElement("PipingNetworkSystem");
     systemElement.setAttribute("ComponentClass", "PipingNetworkSystem");
-    systemElement.setAttribute("ID",
-        uniqueIdentifier("PipingNetworkSystem", "Connections", usedIds));
+    systemElement.setAttribute("ID", uniqueIdentifier("PipingNetworkSystem", "Connections", usedIds));
 
     Set<String> consumedValveNozzles = new HashSet<>();
     int streamCounter = 1;
@@ -1357,25 +1314,22 @@ public final class DexpiXmlWriter {
       // Add connection line geometry if nozzle positions are available
       double[] fromPos = nozzlePositions.get(conn.fromNozzle);
       double[] toPos = nozzlePositions.get(conn.toNozzle);
-      DexpiServiceClassifier.ServiceType service =
-          DexpiServiceClassifier.classify(conn.stream, 0.0);
+      DexpiServiceClassifier.ServiceType service = DexpiServiceClassifier.classify(conn.stream, 0.0);
       if (fromPos != null && toPos != null) {
-        DexpiLayoutEngine.appendServiceConnectionLine(document, segmentElement, fromPos[0],
-            fromPos[1], toPos[0], toPos[1], service);
-        // Add flow direction arrow at midpoint of connection line
-        DexpiLayoutEngine.appendFlowArrow(document, segmentElement, fromPos[0], fromPos[1],
-            toPos[0], toPos[1]);
-        // Add stream number label above line midpoint
-        DexpiLayoutEngine.appendStreamLabel(document, segmentElement, String.valueOf(streamCounter),
-            fromPos[0], fromPos[1], toPos[0], toPos[1]);
-        // Add a NORSOK Z-003 line-identification label (size-fluidcode-sequence) below the line.
-        String lineId = new NorsokLineNumber().fluidCode(service.getFluidCode())
-            .sequence(String.format(Locale.ROOT, "%03d", streamCounter)).build();
-        DexpiLayoutEngine.appendLineIdLabel(document, segmentElement, lineId, fromPos[0],
-            fromPos[1], toPos[0], toPos[1]);
-        // Record the routed sub-segments for the crossing-hop post-pass.
-        collectRouteSegments(fromPos[0], fromPos[1], toPos[0], toPos[1], horizontalSegments,
-            verticalSegments);
+	DexpiLayoutEngine.appendServiceConnectionLine(document, segmentElement, fromPos[0], fromPos[1], toPos[0],
+	    toPos[1], service);
+	// Add flow direction arrow at midpoint of connection line
+	DexpiLayoutEngine.appendFlowArrow(document, segmentElement, fromPos[0], fromPos[1], toPos[0], toPos[1]);
+	// Add stream number label above line midpoint
+	DexpiLayoutEngine.appendStreamLabel(document, segmentElement, String.valueOf(streamCounter), fromPos[0],
+	    fromPos[1], toPos[0], toPos[1]);
+	// Add a NORSOK Z-003 line-identification label (size-fluidcode-sequence) below the line.
+	String lineId = new NorsokLineNumber().fluidCode(service.getFluidCode())
+	    .sequence(String.format(Locale.ROOT, "%03d", streamCounter)).build();
+	DexpiLayoutEngine.appendLineIdLabel(document, segmentElement, lineId, fromPos[0], fromPos[1], toPos[0],
+	    toPos[1]);
+	// Record the routed sub-segments for the crossing-hop post-pass.
+	collectRouteSegments(fromPos[0], fromPos[1], toPos[0], toPos[1], horizontalSegments, verticalSegments);
       }
 
       // Attach operating line data (service, P, T, flow) as DEXPI generic attributes.
@@ -1385,25 +1339,25 @@ public final class DexpiXmlWriter {
       // Check if the target nozzle belongs to a pre-built valve PipingComponent
       Element valveElement = valvePipingComponents.get(conn.toNozzle);
       if (valveElement != null) {
-        // Embed the valve as a PipingComponent inside this segment
-        segmentElement.appendChild(valveElement);
-        consumedValveNozzles.add(conn.toNozzle);
+	// Embed the valve as a PipingComponent inside this segment
+	segmentElement.appendChild(valveElement);
+	consumedValveNozzles.add(conn.toNozzle);
       } else {
-        // Add an inline PipingComponent so the segment has at least one item.
-        // pyDEXPI requires non-empty segment items for connection resolution.
-        String pipeId = uniqueIdentifier("PipingComponent", "Conn", usedIds);
-        Element pipeElement = document.createElement("PipingComponent");
-        pipeElement.setAttribute("ComponentClass", "PipingComponent");
-        pipeElement.setAttribute("ID", pipeId);
-        String pipeNozzleIn = uniqueIdentifier("Nozzle", pipeId + "-in", usedIds);
-        String pipeNozzleOut = uniqueIdentifier("Nozzle", pipeId + "-out", usedIds);
-        Element pipeNzIn = document.createElement("Nozzle");
-        pipeNzIn.setAttribute("ID", pipeNozzleIn);
-        pipeElement.appendChild(pipeNzIn);
-        Element pipeNzOut = document.createElement("Nozzle");
-        pipeNzOut.setAttribute("ID", pipeNozzleOut);
-        pipeElement.appendChild(pipeNzOut);
-        segmentElement.appendChild(pipeElement);
+	// Add an inline PipingComponent so the segment has at least one item.
+	// pyDEXPI requires non-empty segment items for connection resolution.
+	String pipeId = uniqueIdentifier("PipingComponent", "Conn", usedIds);
+	Element pipeElement = document.createElement("PipingComponent");
+	pipeElement.setAttribute("ComponentClass", "PipingComponent");
+	pipeElement.setAttribute("ID", pipeId);
+	String pipeNozzleIn = uniqueIdentifier("Nozzle", pipeId + "-in", usedIds);
+	String pipeNozzleOut = uniqueIdentifier("Nozzle", pipeId + "-out", usedIds);
+	Element pipeNzIn = document.createElement("Nozzle");
+	pipeNzIn.setAttribute("ID", pipeNozzleIn);
+	pipeElement.appendChild(pipeNzIn);
+	Element pipeNzOut = document.createElement("Nozzle");
+	pipeNzOut.setAttribute("ID", pipeNozzleOut);
+	pipeElement.appendChild(pipeNzOut);
+	segmentElement.appendChild(pipeElement);
       }
 
       // Single Connection element per segment (pyDEXPI requirement)
@@ -1419,12 +1373,11 @@ public final class DexpiXmlWriter {
     // connections
     for (Map.Entry<String, Element> entry : valvePipingComponents.entrySet()) {
       if (!consumedValveNozzles.contains(entry.getKey())) {
-        Element segmentElement = document.createElement("PipingNetworkSegment");
-        segmentElement.setAttribute("ComponentClass", "PipingNetworkSegment");
-        segmentElement.setAttribute("ID",
-            uniqueIdentifier("PipingNetworkSegment", "Valve", usedIds));
-        segmentElement.appendChild(entry.getValue());
-        systemElement.appendChild(segmentElement);
+	Element segmentElement = document.createElement("PipingNetworkSegment");
+	segmentElement.setAttribute("ComponentClass", "PipingNetworkSegment");
+	segmentElement.setAttribute("ID", uniqueIdentifier("PipingNetworkSegment", "Valve", usedIds));
+	segmentElement.appendChild(entry.getValue());
+	systemElement.appendChild(segmentElement);
       }
     }
 
@@ -1437,15 +1390,15 @@ public final class DexpiXmlWriter {
   }
 
   /**
-   * Splits an orthogonal connection route into its horizontal and vertical sub-segments and records
-   * them for the later line-crossing-hop pass.
+   * Splits an orthogonal connection route into its horizontal and vertical sub-segments and records them for the later
+   * line-crossing-hop pass.
    *
-   * @param fromX source X coordinate
-   * @param fromY source Y coordinate
-   * @param toX target X coordinate
-   * @param toY target Y coordinate
+   * @param fromX              source X coordinate
+   * @param fromY              source Y coordinate
+   * @param toX                target X coordinate
+   * @param toY                target Y coordinate
    * @param horizontalSegments collector of {x1, x2, y} horizontal sub-segments
-   * @param verticalSegments collector of {x, y1, y2} vertical sub-segments
+   * @param verticalSegments   collector of {x, y1, y2} vertical sub-segments
    */
   private static void collectRouteSegments(double fromX, double fromY, double toX, double toY,
       List<double[]> horizontalSegments, List<double[]> verticalSegments) {
@@ -1456,46 +1409,46 @@ public final class DexpiXmlWriter {
       double x2 = points[i + 1][0];
       double y2 = points[i + 1][1];
       if (Math.abs(y1 - y2) < 0.5) {
-        horizontalSegments.add(new double[] {x1, x2, y1});
+	horizontalSegments.add(new double[] { x1, x2, y1 });
       } else if (Math.abs(x1 - x2) < 0.5) {
-        verticalSegments.add(new double[] {x1, y1, y2});
+	verticalSegments.add(new double[] { x1, y1, y2 });
       }
     }
   }
 
   /**
-   * Appends line-crossing hop arcs for every horizontal sub-segment that crosses the interior of a
-   * vertical sub-segment.
+   * Appends line-crossing hop arcs for every horizontal sub-segment that crosses the interior of a vertical
+   * sub-segment.
    *
-   * @param document the XML document
-   * @param parent the PipingNetworkSystem element to append the hop arcs to
+   * @param document           the XML document
+   * @param parent             the PipingNetworkSystem element to append the hop arcs to
    * @param horizontalSegments {x1, x2, y} horizontal sub-segments
-   * @param verticalSegments {x, y1, y2} vertical sub-segments
+   * @param verticalSegments   {x, y1, y2} vertical sub-segments
    */
-  private static void appendCrossingHops(Document document, Element parent,
-      List<double[]> horizontalSegments, List<double[]> verticalSegments) {
+  private static void appendCrossingHops(Document document, Element parent, List<double[]> horizontalSegments,
+      List<double[]> verticalSegments) {
     for (double[] h : horizontalSegments) {
       for (double[] v : verticalSegments) {
-        DexpiLayoutEngine.appendCrossingHop(document, parent, h[0], h[1], h[2], v[0], v[1], v[2]);
+	DexpiLayoutEngine.appendCrossingHop(document, parent, h[0], h[1], h[2], v[0], v[1], v[2]);
       }
     }
   }
 
   /**
-   * Appends off-page connector symbols for battery-limit feeds and products. A feed is a unit inlet
-   * nozzle that is never the destination of an internal connection; a product is an outlet nozzle
-   * that is never the source of an internal connection.
+   * Appends off-page connector symbols for battery-limit feeds and products. A feed is a unit inlet nozzle that is
+   * never the destination of an internal connection; a product is an outlet nozzle that is never the source of an
+   * internal connection.
    *
-   * @param document the XML document
-   * @param parent the root PlantModel element
-   * @param connections the internal nozzle-to-nozzle connections
+   * @param document             the XML document
+   * @param parent               the root PlantModel element
+   * @param connections          the internal nozzle-to-nozzle connections
    * @param equipmentInletNozzle map of unit name to its inlet nozzle ID
    * @param outletStreamToNozzle map of outlet stream identity hash to its nozzle ID
-   * @param nozzlePositions map of nozzle ID to {x, y} coordinates
+   * @param nozzlePositions      map of nozzle ID to {x, y} coordinates
    */
-  private static void appendBoundaryConnectors(Document document, Element parent,
-      List<NozzleConnection> connections, Map<String, String> equipmentInletNozzle,
-      Map<Integer, String> outletStreamToNozzle, Map<String, double[]> nozzlePositions) {
+  private static void appendBoundaryConnectors(Document document, Element parent, List<NozzleConnection> connections,
+      Map<String, String> equipmentInletNozzle, Map<Integer, String> outletStreamToNozzle,
+      Map<String, double[]> nozzlePositions) {
     Set<String> wiredToNozzles = new HashSet<>();
     Set<String> wiredFromNozzles = new HashSet<>();
     for (NozzleConnection conn : connections) {
@@ -1507,77 +1460,70 @@ public final class DexpiXmlWriter {
     for (Map.Entry<String, String> entry : equipmentInletNozzle.entrySet()) {
       String inNozzle = entry.getValue();
       if (wiredToNozzles.contains(inNozzle)) {
-        continue;
+	continue;
       }
       double[] pos = nozzlePositions.get(inNozzle);
       if (pos == null) {
-        continue;
+	continue;
       }
       String reference = "FEED " + entry.getKey();
-      DexpiLayoutEngine.appendOffPageConnector(document, parent, pos[0] - 18.0, pos[1], reference,
-          true);
+      DexpiLayoutEngine.appendOffPageConnector(document, parent, pos[0] - 18.0, pos[1], reference, true);
     }
 
     // Product connectors: an outlet nozzle that feeds nothing on this sheet.
     for (String outNozzle : outletStreamToNozzle.values()) {
       if (wiredFromNozzles.contains(outNozzle)) {
-        continue;
+	continue;
       }
       double[] pos = nozzlePositions.get(outNozzle);
       if (pos == null) {
-        continue;
+	continue;
       }
-      DexpiLayoutEngine.appendOffPageConnector(document, parent, pos[0] + 18.0, pos[1], "PRODUCT",
-          true);
+      DexpiLayoutEngine.appendOffPageConnector(document, parent, pos[0] + 18.0, pos[1], "PRODUCT", true);
     }
   }
 
   /**
-   * Appends the operating line data (service category, fluid code, pressure, temperature and flow)
-   * for a connection as DEXPI {@code GenericAttribute} elements so the pipe carries real process
-   * data rather than only geometry.
+   * Appends the operating line data (service category, fluid code, pressure, temperature and flow) for a connection as
+   * DEXPI {@code GenericAttribute} elements so the pipe carries real process data rather than only geometry.
    *
-   * @param document the XML document
+   * @param document       the XML document
    * @param segmentElement the PipingNetworkSegment element to attach attributes to
-   * @param stream the process stream carried by the connection (may be null)
-   * @param service the classified service category (may be null)
+   * @param stream         the process stream carried by the connection (may be null)
+   * @param service        the classified service category (may be null)
    */
-  private static void appendConnectionLineAttributes(Document document, Element segmentElement,
-      StreamInterface stream, DexpiServiceClassifier.ServiceType service) {
+  private static void appendConnectionLineAttributes(Document document, Element segmentElement, StreamInterface stream,
+      DexpiServiceClassifier.ServiceType service) {
     Element genericAttributes = document.createElement("GenericAttributes");
     genericAttributes.setAttribute("Set", "DexpiAttributes");
     if (service != null) {
-      appendGenericAttribute(document, genericAttributes, DexpiMetadata.FLUID_CODE,
-          service.getFluidCode());
+      appendGenericAttribute(document, genericAttributes, DexpiMetadata.FLUID_CODE, service.getFluidCode());
       appendGenericAttribute(document, genericAttributes, "ServiceCategory", service.name());
     }
     if (stream != null) {
       try {
-        appendNumericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_PRESSURE_VALUE,
-            stream.getPressure(DexpiMetadata.DEFAULT_PRESSURE_UNIT),
-            DexpiMetadata.DEFAULT_PRESSURE_UNIT);
-        appendGenericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_PRESSURE_UNIT,
-            DexpiMetadata.DEFAULT_PRESSURE_UNIT);
+	appendNumericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_PRESSURE_VALUE,
+	    stream.getPressure(DexpiMetadata.DEFAULT_PRESSURE_UNIT), DexpiMetadata.DEFAULT_PRESSURE_UNIT);
+	appendGenericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_PRESSURE_UNIT,
+	    DexpiMetadata.DEFAULT_PRESSURE_UNIT);
       } catch (RuntimeException ignored) {
-        // pressure not available on this stream — skip
+	// pressure not available on this stream — skip
       }
       try {
-        appendNumericAttribute(document, genericAttributes,
-            DexpiMetadata.OPERATING_TEMPERATURE_VALUE,
-            stream.getTemperature(DexpiMetadata.DEFAULT_TEMPERATURE_UNIT),
-            DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
-        appendGenericAttribute(document, genericAttributes,
-            DexpiMetadata.OPERATING_TEMPERATURE_UNIT, DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
+	appendNumericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_TEMPERATURE_VALUE,
+	    stream.getTemperature(DexpiMetadata.DEFAULT_TEMPERATURE_UNIT), DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
+	appendGenericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_TEMPERATURE_UNIT,
+	    DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
       } catch (RuntimeException ignored) {
-        // temperature not available on this stream — skip
+	// temperature not available on this stream — skip
       }
       try {
-        appendNumericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_FLOW_VALUE,
-            stream.getFlowRate(DexpiMetadata.DEFAULT_FLOW_UNIT), DexpiMetadata.DEFAULT_FLOW_UNIT);
-        appendGenericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_FLOW_UNIT,
-            DexpiMetadata.DEFAULT_FLOW_UNIT);
+	appendNumericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_FLOW_VALUE,
+	    stream.getFlowRate(DexpiMetadata.DEFAULT_FLOW_UNIT), DexpiMetadata.DEFAULT_FLOW_UNIT);
+	appendGenericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_FLOW_UNIT,
+	    DexpiMetadata.DEFAULT_FLOW_UNIT);
       } catch (RuntimeException ignored) {
-        // flow not available on this stream — skip
+	// flow not available on this stream — skip
       }
     }
     if (genericAttributes.hasChildNodes()) {
@@ -1593,11 +1539,11 @@ public final class DexpiXmlWriter {
 
     Element systemAttributes = document.createElement("GenericAttributes");
     systemAttributes.setAttribute("Set", "DexpiAttributes");
-    String lineNumber = streams.stream().map(DexpiStream::getLineNumber)
-        .filter(value -> !isBlank(value)).findFirst().orElse(null);
+    String lineNumber = streams.stream().map(DexpiStream::getLineNumber).filter(value -> !isBlank(value)).findFirst()
+	.orElse(null);
     appendGenericAttribute(document, systemAttributes, DexpiMetadata.LINE_NUMBER, lineNumber);
-    String fluidCode = streams.stream().map(DexpiStream::getFluidCode)
-        .filter(value -> !isBlank(value)).findFirst().orElse(null);
+    String fluidCode = streams.stream().map(DexpiStream::getFluidCode).filter(value -> !isBlank(value)).findFirst()
+	.orElse(null);
     appendGenericAttribute(document, systemAttributes, DexpiMetadata.FLUID_CODE, fluidCode);
     appendGenericAttribute(document, systemAttributes, "NeqSimGroupingKey", key);
     if (systemAttributes.hasChildNodes()) {
@@ -1611,8 +1557,8 @@ public final class DexpiXmlWriter {
     parent.appendChild(systemElement);
   }
 
-  private static void appendPipingNetworkSegment(Document document, Element parent,
-      DexpiStream stream, Set<String> usedIds) {
+  private static void appendPipingNetworkSegment(Document document, Element parent, DexpiStream stream,
+      Set<String> usedIds) {
     Element segmentElement = document.createElement("PipingNetworkSegment");
     String componentClass = firstNonBlank(stream.getDexpiClass(), "PipingNetworkSegment");
     segmentElement.setAttribute("ComponentClass", componentClass);
@@ -1620,26 +1566,21 @@ public final class DexpiXmlWriter {
 
     Element genericAttributes = document.createElement("GenericAttributes");
     genericAttributes.setAttribute("Set", "DexpiAttributes");
-    appendGenericAttribute(document, genericAttributes, DexpiMetadata.SEGMENT_NUMBER,
-        stream.getName());
-    appendGenericAttribute(document, genericAttributes, DexpiMetadata.LINE_NUMBER,
-        stream.getLineNumber());
-    appendGenericAttribute(document, genericAttributes, DexpiMetadata.FLUID_CODE,
-        stream.getFluidCode());
+    appendGenericAttribute(document, genericAttributes, DexpiMetadata.SEGMENT_NUMBER, stream.getName());
+    appendGenericAttribute(document, genericAttributes, DexpiMetadata.LINE_NUMBER, stream.getLineNumber());
+    appendGenericAttribute(document, genericAttributes, DexpiMetadata.FLUID_CODE, stream.getFluidCode());
     appendNumericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_PRESSURE_VALUE,
-        stream.getPressure(DexpiMetadata.DEFAULT_PRESSURE_UNIT),
-        DexpiMetadata.DEFAULT_PRESSURE_UNIT);
+	stream.getPressure(DexpiMetadata.DEFAULT_PRESSURE_UNIT), DexpiMetadata.DEFAULT_PRESSURE_UNIT);
     appendGenericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_PRESSURE_UNIT,
-        DexpiMetadata.DEFAULT_PRESSURE_UNIT);
+	DexpiMetadata.DEFAULT_PRESSURE_UNIT);
     appendNumericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_TEMPERATURE_VALUE,
-        stream.getTemperature(DexpiMetadata.DEFAULT_TEMPERATURE_UNIT),
-        DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
+	stream.getTemperature(DexpiMetadata.DEFAULT_TEMPERATURE_UNIT), DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
     appendGenericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_TEMPERATURE_UNIT,
-        DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
+	DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
     appendNumericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_FLOW_VALUE,
-        stream.getFlowRate(DexpiMetadata.DEFAULT_FLOW_UNIT), DexpiMetadata.DEFAULT_FLOW_UNIT);
+	stream.getFlowRate(DexpiMetadata.DEFAULT_FLOW_UNIT), DexpiMetadata.DEFAULT_FLOW_UNIT);
     appendGenericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_FLOW_UNIT,
-        DexpiMetadata.DEFAULT_FLOW_UNIT);
+	DexpiMetadata.DEFAULT_FLOW_UNIT);
 
     // Piping class and line size (exported when DexpiStream carries metadata)
     // These are currently placeholder attributes — populated when the stream source provides
@@ -1654,13 +1595,12 @@ public final class DexpiXmlWriter {
     parent.appendChild(segmentElement);
   }
 
-  private static void appendGenericAttribute(Document document, Element parent, String name,
-      String value) {
+  private static void appendGenericAttribute(Document document, Element parent, String name, String value) {
     appendGenericAttribute(document, parent, name, value, null);
   }
 
-  private static void appendGenericAttribute(Document document, Element parent, String name,
-      String value, String unit) {
+  private static void appendGenericAttribute(Document document, Element parent, String name, String value,
+      String unit) {
     if (isBlank(value)) {
       return;
     }
@@ -1673,8 +1613,8 @@ public final class DexpiXmlWriter {
     parent.appendChild(attribute);
   }
 
-  private static void appendNumericAttribute(Document document, Element parent, String name,
-      double value, String unit) {
+  private static void appendNumericAttribute(Document document, Element parent, String name, double value,
+      String unit) {
     if (Double.isNaN(value) || Double.isInfinite(value)) {
       return;
     }
@@ -1685,25 +1625,23 @@ public final class DexpiXmlWriter {
    * Appends DEXPI instrumentation elements for transmitters and controllers.
    *
    * <p>
-   * Each transmitter becomes a {@code ProcessInstrumentationFunction} with a
-   * {@code ProcessSignalGeneratingFunction} child. Controllers that share a loop tag with a
-   * transmitter are linked via {@code SignalConveyingFunction} and {@code ActuatingFunction}.
-   * Finally, an {@code InstrumentationLoopFunction} groups each loop's elements.
+   * Each transmitter becomes a {@code ProcessInstrumentationFunction} with a {@code ProcessSignalGeneratingFunction}
+   * child. Controllers that share a loop tag with a transmitter are linked via {@code SignalConveyingFunction} and
+   * {@code ActuatingFunction}. Finally, an {@code InstrumentationLoopFunction} groups each loop's elements.
    * </p>
    *
-   * @param document the XML document
-   * @param parent the root element to append to
-   * @param transmitters map of tag to transmitter
-   * @param controllers map of tag to controller (may be null)
-   * @param usedIds set of already used XML IDs
+   * @param document        the XML document
+   * @param parent          the root element to append to
+   * @param transmitters    map of tag to transmitter
+   * @param controllers     map of tag to controller (may be null)
+   * @param usedIds         set of already used XML IDs
    * @param layoutPositions equipment layout positions keyed by equipment name
    * @param nozzlePositions nozzle positions keyed by nozzle ID
-   * @param processSystem the process system for stream-to-equipment matching
+   * @param processSystem   the process system for stream-to-equipment matching
    */
   private static void appendInstruments(Document document, Element parent,
-      Map<String, MeasurementDeviceInterface> transmitters,
-      Map<String, ControllerDeviceInterface> controllers, Set<String> usedIds,
-      Map<String, DexpiLayoutEngine.EquipmentPosition> layoutPositions,
+      Map<String, MeasurementDeviceInterface> transmitters, Map<String, ControllerDeviceInterface> controllers,
+      Set<String> usedIds, Map<String, DexpiLayoutEngine.EquipmentPosition> layoutPositions,
       Map<String, double[]> nozzlePositions, ProcessSystem processSystem) {
 
     // Group transmitters by parent equipment for correct positioning
@@ -1712,13 +1650,13 @@ public final class DexpiXmlWriter {
     for (Map.Entry<String, MeasurementDeviceInterface> entry : transmitters.entrySet()) {
       String parentName = findParentEquipment(entry.getValue(), processSystem);
       if (parentName != null) {
-        tagToEquipment.put(entry.getKey(), parentName);
-        List<String> list = equipmentTransmitters.get(parentName);
-        if (list == null) {
-          list = new ArrayList<>();
-          equipmentTransmitters.put(parentName, list);
-        }
-        list.add(entry.getKey());
+	tagToEquipment.put(entry.getKey(), parentName);
+	List<String> list = equipmentTransmitters.get(parentName);
+	if (list == null) {
+	  list = new ArrayList<>();
+	  equipmentTransmitters.put(parentName, list);
+	}
+	list.add(entry.getKey());
       }
     }
 
@@ -1735,18 +1673,17 @@ public final class DexpiXmlWriter {
 
       // Compute instrument position above parent equipment
       String parentName = tagToEquipment.get(tag);
-      DexpiLayoutEngine.EquipmentPosition eqPos =
-          parentName != null ? layoutPositions.get(parentName) : null;
+      DexpiLayoutEngine.EquipmentPosition eqPos = parentName != null ? layoutPositions.get(parentName) : null;
       double cx = 0;
       double cy = 0;
       boolean hasPosition = false;
       if (eqPos != null && equipmentTransmitters.containsKey(parentName)) {
-        List<String> siblings = equipmentTransmitters.get(parentName);
-        int idx = siblings.indexOf(tag);
-        double[] pos = DexpiLayoutEngine.computeInstrumentPosition(eqPos, idx, siblings.size());
-        cx = pos[0];
-        cy = pos[1];
-        hasPosition = true;
+	List<String> siblings = equipmentTransmitters.get(parentName);
+	int idx = siblings.indexOf(tag);
+	double[] pos = DexpiLayoutEngine.computeInstrumentPosition(eqPos, idx, siblings.size());
+	cx = pos[0];
+	cy = pos[1];
+	hasPosition = true;
       }
 
       // ProcessInstrumentationFunction (the instrument bubble)
@@ -1754,79 +1691,69 @@ public final class DexpiXmlWriter {
       Element pif = document.createElement("ProcessInstrumentationFunction");
       pif.setAttribute("ID", pifId);
       pif.setAttribute("ComponentClass", "ProcessInstrumentationFunction");
-      pif.setAttribute("ComponentClassURI",
-          "http://sandbox.dexpi.org/rdl/ProcessInstrumentationFunction");
+      pif.setAttribute("ComponentClassURI", "http://sandbox.dexpi.org/rdl/ProcessInstrumentationFunction");
       pif.setAttribute("ComponentName", DexpiShapeCatalog.INSTRUMENT_BUBBLE_FIELD_SHAPE);
 
       // Position element
       if (hasPosition) {
-        appendInstrumentPosition(document, pif, cx, cy);
+	appendInstrumentPosition(document, pif, cx, cy);
       }
 
       // Label with function letters and loop number
       if (hasPosition) {
-        String labelId = uniqueIdentifier("ProcessInstrumentationFunctionLabel", tag, usedIds);
-        Element label = document.createElement("Label");
-        label.setAttribute("ID", labelId);
-        label.setAttribute("ComponentClass", "ProcessInstrumentationFunctionLabel");
-        label.setAttribute("ComponentClassURI",
-            "http://sandbox.dexpi.org/rdl/ProcessInstrumentationFunctionLabel");
+	String labelId = uniqueIdentifier("ProcessInstrumentationFunctionLabel", tag, usedIds);
+	Element label = document.createElement("Label");
+	label.setAttribute("ID", labelId);
+	label.setAttribute("ComponentClass", "ProcessInstrumentationFunctionLabel");
+	label.setAttribute("ComponentClassURI", "http://sandbox.dexpi.org/rdl/ProcessInstrumentationFunctionLabel");
 
-        String topText = category + functions;
-        appendInstrumentLabelText(document, label, topText, cx, cy + 2.25, pifId, new String[] {
-            "ProcessInstrumentationFunctionCategory", "ProcessInstrumentationFunctions"});
-        appendInstrumentLabelText(document, label, loopNumber, cx, cy - 1.2, pifId,
-            new String[] {"ProcessInstrumentationFunctionNumber"});
+	String topText = category + functions;
+	appendInstrumentLabelText(document, label, topText, cx, cy + 2.25, pifId,
+	    new String[] { "ProcessInstrumentationFunctionCategory", "ProcessInstrumentationFunctions" });
+	appendInstrumentLabelText(document, label, loopNumber, cx, cy - 1.2, pifId,
+	    new String[] { "ProcessInstrumentationFunctionNumber" });
 
-        pif.appendChild(label);
+	pif.appendChild(label);
       }
 
       // GenericAttributes
       Element pifAttrs = document.createElement("GenericAttributes");
       pifAttrs.setAttribute("Set", "DexpiAttributes");
-      appendGenericAttribute(document, pifAttrs,
-          "ProcessInstrumentationFunctionCategoryAssignmentClass", category);
-      appendGenericAttribute(document, pifAttrs,
-          "ProcessInstrumentationFunctionNumberAssignmentClass", loopNumber);
-      appendGenericAttribute(document, pifAttrs, "ProcessInstrumentationFunctionsAssignmentClass",
-          functions);
+      appendGenericAttribute(document, pifAttrs, "ProcessInstrumentationFunctionCategoryAssignmentClass", category);
+      appendGenericAttribute(document, pifAttrs, "ProcessInstrumentationFunctionNumberAssignmentClass", loopNumber);
+      appendGenericAttribute(document, pifAttrs, "ProcessInstrumentationFunctionsAssignmentClass", functions);
       appendGenericAttribute(document, pifAttrs, DexpiMetadata.TAG_NAME, tag);
       appendGenericAttribute(document, pifAttrs, "MeasurementUnit", device.getUnit());
       // ISA-5.1 tag conformance check: flag non-conforming instrument tags so the diagram and the
       // exported data record the deviation rather than silently emitting an invalid tag.
       IsaTagValidator.ValidationResult tagCheck = IsaTagValidator.validate(tag);
       if (!tagCheck.isValid()) {
-        logger.warn("Instrument tag '{}' is not ISA-5.1 conformant: {}", tag,
-            tagCheck.getMessage());
-        appendGenericAttribute(document, pifAttrs, "TagConformanceWarning", tagCheck.getMessage());
+	logger.warn("Instrument tag '{}' is not ISA-5.1 conformant: {}", tag, tagCheck.getMessage());
+	appendGenericAttribute(document, pifAttrs, "TagConformanceWarning", tagCheck.getMessage());
       }
       pif.appendChild(pifAttrs);
 
       // ConnectionPoints (5 signal nodes)
       if (hasPosition) {
-        double r = DexpiLayoutEngine.INSTRUMENT_BUBBLE_RADIUS;
-        double halfW = 6.75;
-        Element connPoints = document.createElement("ConnectionPoints");
-        connPoints.setAttribute("NumPoints", "5");
+	double r = DexpiLayoutEngine.INSTRUMENT_BUBBLE_RADIUS;
+	double halfW = 6.75;
+	Element connPoints = document.createElement("ConnectionPoints");
+	connPoints.setAttribute("NumPoints", "5");
 
-        Element defaultNode = document.createElement("Node");
-        defaultNode.setAttribute("ID", pifId + "-DefaultNode");
-        connPoints.appendChild(defaultNode);
+	Element defaultNode = document.createElement("Node");
+	defaultNode.setAttribute("ID", pifId + "-DefaultNode");
+	connPoints.appendChild(defaultNode);
 
-        appendSignalNode(document, connPoints,
-            uniqueIdentifier("InstrumentationNodePosition", String.valueOf(nodeCounter++), usedIds),
-            cx, cy - r);
-        appendSignalNode(document, connPoints,
-            uniqueIdentifier("InstrumentationNodePosition", String.valueOf(nodeCounter++), usedIds),
-            cx, cy + r);
-        appendSignalNode(document, connPoints,
-            uniqueIdentifier("InstrumentationNodePosition", String.valueOf(nodeCounter++), usedIds),
-            cx - halfW, cy);
-        appendSignalNode(document, connPoints,
-            uniqueIdentifier("InstrumentationNodePosition", String.valueOf(nodeCounter++), usedIds),
-            cx + halfW, cy);
+	appendSignalNode(document, connPoints,
+	    uniqueIdentifier("InstrumentationNodePosition", String.valueOf(nodeCounter++), usedIds), cx, cy - r);
+	appendSignalNode(document, connPoints,
+	    uniqueIdentifier("InstrumentationNodePosition", String.valueOf(nodeCounter++), usedIds), cx, cy + r);
+	appendSignalNode(document, connPoints,
+	    uniqueIdentifier("InstrumentationNodePosition", String.valueOf(nodeCounter++), usedIds), cx - halfW, cy);
+	appendSignalNode(document, connPoints,
+	    uniqueIdentifier("InstrumentationNodePosition", String.valueOf(nodeCounter++), usedIds), cx + halfW, cy);
 
-        pif.appendChild(connPoints);
+	pif.appendChild(connPoints);
       }
 
       // MeasuringLineFunction as InformationFlow child
@@ -1834,53 +1761,50 @@ public final class DexpiXmlWriter {
       String psgfId = uniqueIdentifier("ProcessSignalGeneratingFunction", tag, usedIds);
 
       if (hasPosition) {
-        Element assocEnd = document.createElement("Association");
-        assocEnd.setAttribute("Type", "is logical end of");
-        assocEnd.setAttribute("ItemID", mlfId);
-        pif.appendChild(assocEnd);
+	Element assocEnd = document.createElement("Association");
+	assocEnd.setAttribute("Type", "is logical end of");
+	assocEnd.setAttribute("ItemID", mlfId);
+	pif.appendChild(assocEnd);
       }
 
       // InformationFlow with CenterLine from process line to instrument bubble
       if (hasPosition && eqPos != null) {
-        Element infoFlow = document.createElement("InformationFlow");
-        infoFlow.setAttribute("ID", mlfId);
-        infoFlow.setAttribute("ComponentClass", "MeasuringLineFunction");
-        infoFlow.setAttribute("ComponentClassURI",
-            "http://sandbox.dexpi.org/rdl/MeasuringLineFunction");
+	Element infoFlow = document.createElement("InformationFlow");
+	infoFlow.setAttribute("ID", mlfId);
+	infoFlow.setAttribute("ComponentClass", "MeasuringLineFunction");
+	infoFlow.setAttribute("ComponentClassURI", "http://sandbox.dexpi.org/rdl/MeasuringLineFunction");
 
-        Element assocStart = document.createElement("Association");
-        assocStart.setAttribute("Type", "has logical start");
-        assocStart.setAttribute("ItemID", psgfId);
-        infoFlow.appendChild(assocStart);
+	Element assocStart = document.createElement("Association");
+	assocStart.setAttribute("Type", "has logical start");
+	assocStart.setAttribute("ItemID", psgfId);
+	infoFlow.appendChild(assocStart);
 
-        Element assocEndInner = document.createElement("Association");
-        assocEndInner.setAttribute("Type", "has logical end");
-        assocEndInner.setAttribute("ItemID", pifId);
-        infoFlow.appendChild(assocEndInner);
+	Element assocEndInner = document.createElement("Association");
+	assocEndInner.setAttribute("Type", "has logical end");
+	assocEndInner.setAttribute("ItemID", pifId);
+	infoFlow.appendChild(assocEndInner);
 
-        DexpiLayoutEngine.appendMeasuringLine(document, infoFlow, cx, eqPos.y, cx, cy);
+	DexpiLayoutEngine.appendMeasuringLine(document, infoFlow, cx, eqPos.y, cx, cy);
 
-        pif.appendChild(infoFlow);
+	pif.appendChild(infoFlow);
       }
 
       // ProcessSignalGeneratingFunction (the sensor)
       Element psgf = document.createElement("ProcessSignalGeneratingFunction");
       psgf.setAttribute("ID", psgfId);
       psgf.setAttribute("ComponentClass", "ProcessSignalGeneratingFunction");
-      psgf.setAttribute("ComponentClassURI",
-          "http://sandbox.dexpi.org/rdl/ProcessSignalGeneratingFunction");
+      psgf.setAttribute("ComponentClassURI", "http://sandbox.dexpi.org/rdl/ProcessSignalGeneratingFunction");
 
       Element psgfAttrs = document.createElement("GenericAttributes");
       psgfAttrs.setAttribute("Set", "DexpiAttributes");
-      appendGenericAttribute(document, psgfAttrs,
-          "ProcessSignalGeneratingFunctionNumberAssignmentClass", tag);
+      appendGenericAttribute(document, psgfAttrs, "ProcessSignalGeneratingFunctionNumberAssignmentClass", tag);
       psgf.appendChild(psgfAttrs);
 
       if (hasPosition) {
-        Element startAssoc = document.createElement("Association");
-        startAssoc.setAttribute("Type", "is logical start of");
-        startAssoc.setAttribute("ItemID", mlfId);
-        psgf.appendChild(startAssoc);
+	Element startAssoc = document.createElement("Association");
+	startAssoc.setAttribute("Type", "is logical start of");
+	startAssoc.setAttribute("ItemID", mlfId);
+	psgf.appendChild(startAssoc);
       }
 
       pif.appendChild(psgf);
@@ -1894,146 +1818,134 @@ public final class DexpiXmlWriter {
 
       // SIL marking for safety-instrumented functions (NORSOK Z-003 / IEC 61511)
       if ("SIS".equals(systemAssignment) && hasPosition) {
-        DexpiLayoutEngine.appendSilMarker(document, pif, 1, cx, cy);
+	DexpiLayoutEngine.appendSilMarker(document, pif, 1, cx, cy);
       }
 
       // Look for matching controller (e.g. PT-xxx -> PC-xxx)
       String controllerTag = deriveControllerTag(tag);
       ControllerDeviceInterface matchedController = null;
       if (controllers != null && controllerTag != null) {
-        matchedController = controllers.get(controllerTag);
+	matchedController = controllers.get(controllerTag);
       }
 
       String controllerPifId = null;
       if (matchedController != null) {
-        // SignalConveyingFunction on the transmitter PIF
-        String scfId = uniqueIdentifier("SignalConveyingFunction", tag, usedIds);
-        Element scf = document.createElement("SignalConveyingFunction");
-        scf.setAttribute("ID", scfId);
-        scf.setAttribute("ComponentClass", "SignalConveyingFunction");
-        pif.appendChild(scf);
+	// SignalConveyingFunction on the transmitter PIF
+	String scfId = uniqueIdentifier("SignalConveyingFunction", tag, usedIds);
+	Element scf = document.createElement("SignalConveyingFunction");
+	scf.setAttribute("ID", scfId);
+	scf.setAttribute("ComponentClass", "SignalConveyingFunction");
+	pif.appendChild(scf);
 
-        // ActuatingFunction on the transmitter PIF
-        String afId = uniqueIdentifier("ActuatingFunction", controllerTag, usedIds);
-        Element af = document.createElement("ActuatingFunction");
-        af.setAttribute("ID", afId);
-        af.setAttribute("ComponentClass", "ActuatingFunction");
+	// ActuatingFunction on the transmitter PIF
+	String afId = uniqueIdentifier("ActuatingFunction", controllerTag, usedIds);
+	Element af = document.createElement("ActuatingFunction");
+	af.setAttribute("ID", afId);
+	af.setAttribute("ComponentClass", "ActuatingFunction");
 
-        Element afAttrs = document.createElement("GenericAttributes");
-        afAttrs.setAttribute("Set", "DexpiAttributes");
-        appendGenericAttribute(document, afAttrs, "ActuatingFunctionNumberAssignmentClass",
-            controllerTag);
-        af.appendChild(afAttrs);
-        pif.appendChild(af);
+	Element afAttrs = document.createElement("GenericAttributes");
+	afAttrs.setAttribute("Set", "DexpiAttributes");
+	appendGenericAttribute(document, afAttrs, "ActuatingFunctionNumberAssignmentClass", controllerTag);
+	af.appendChild(afAttrs);
+	pif.appendChild(af);
 
-        // Controller bubble (separate ProcessInstrumentationFunction)
-        String[] ctrlParsed = parseIsaTag(controllerTag);
-        String ctrlCategory = ctrlParsed[0];
-        String ctrlFunctions = ctrlParsed[1];
+	// Controller bubble (separate ProcessInstrumentationFunction)
+	String[] ctrlParsed = parseIsaTag(controllerTag);
+	String ctrlCategory = ctrlParsed[0];
+	String ctrlFunctions = ctrlParsed[1];
 
-        controllerPifId =
-            uniqueIdentifier("ProcessInstrumentationFunction", controllerTag, usedIds);
-        Element ctrlPif = document.createElement("ProcessInstrumentationFunction");
-        ctrlPif.setAttribute("ID", controllerPifId);
-        ctrlPif.setAttribute("ComponentClass", "ProcessInstrumentationFunction");
-        ctrlPif.setAttribute("ComponentClassURI",
-            "http://sandbox.dexpi.org/rdl/ProcessInstrumentationFunction");
-        ctrlPif.setAttribute("ComponentName", DexpiShapeCatalog.INSTRUMENT_BUBBLE_FIELD_SHAPE);
+	controllerPifId = uniqueIdentifier("ProcessInstrumentationFunction", controllerTag, usedIds);
+	Element ctrlPif = document.createElement("ProcessInstrumentationFunction");
+	ctrlPif.setAttribute("ID", controllerPifId);
+	ctrlPif.setAttribute("ComponentClass", "ProcessInstrumentationFunction");
+	ctrlPif.setAttribute("ComponentClassURI", "http://sandbox.dexpi.org/rdl/ProcessInstrumentationFunction");
+	ctrlPif.setAttribute("ComponentName", DexpiShapeCatalog.INSTRUMENT_BUBBLE_FIELD_SHAPE);
 
-        // Position controller bubble to the right of the transmitter bubble
-        double ctrlCx = cx + DexpiLayoutEngine.INSTRUMENT_X_SPACING;
-        double ctrlCy = cy;
-        if (hasPosition) {
-          appendInstrumentPosition(document, ctrlPif, ctrlCx, ctrlCy);
+	// Position controller bubble to the right of the transmitter bubble
+	double ctrlCx = cx + DexpiLayoutEngine.INSTRUMENT_X_SPACING;
+	double ctrlCy = cy;
+	if (hasPosition) {
+	  appendInstrumentPosition(document, ctrlPif, ctrlCx, ctrlCy);
 
-          // Controller label
-          String ctrlLabelId =
-              uniqueIdentifier("ProcessInstrumentationFunctionLabel", controllerTag, usedIds);
-          Element ctrlLabel = document.createElement("Label");
-          ctrlLabel.setAttribute("ID", ctrlLabelId);
-          ctrlLabel.setAttribute("ComponentClass", "ProcessInstrumentationFunctionLabel");
-          ctrlLabel.setAttribute("ComponentClassURI",
-              "http://sandbox.dexpi.org/rdl/ProcessInstrumentationFunctionLabel");
+	  // Controller label
+	  String ctrlLabelId = uniqueIdentifier("ProcessInstrumentationFunctionLabel", controllerTag, usedIds);
+	  Element ctrlLabel = document.createElement("Label");
+	  ctrlLabel.setAttribute("ID", ctrlLabelId);
+	  ctrlLabel.setAttribute("ComponentClass", "ProcessInstrumentationFunctionLabel");
+	  ctrlLabel.setAttribute("ComponentClassURI",
+	      "http://sandbox.dexpi.org/rdl/ProcessInstrumentationFunctionLabel");
 
-          String ctrlTopText = ctrlCategory + ctrlFunctions;
-          appendInstrumentLabelText(document, ctrlLabel, ctrlTopText, ctrlCx, ctrlCy + 2.25,
-              controllerPifId, new String[] {"ProcessInstrumentationFunctionCategory",
-                  "ProcessInstrumentationFunctions"});
-          appendInstrumentLabelText(document, ctrlLabel, loopNumber, ctrlCx, ctrlCy - 1.2,
-              controllerPifId, new String[] {"ProcessInstrumentationFunctionNumber"});
-          ctrlPif.appendChild(ctrlLabel);
-        }
+	  String ctrlTopText = ctrlCategory + ctrlFunctions;
+	  appendInstrumentLabelText(document, ctrlLabel, ctrlTopText, ctrlCx, ctrlCy + 2.25, controllerPifId,
+	      new String[] { "ProcessInstrumentationFunctionCategory", "ProcessInstrumentationFunctions" });
+	  appendInstrumentLabelText(document, ctrlLabel, loopNumber, ctrlCx, ctrlCy - 1.2, controllerPifId,
+	      new String[] { "ProcessInstrumentationFunctionNumber" });
+	  ctrlPif.appendChild(ctrlLabel);
+	}
 
-        // Controller GenericAttributes with PID parameters
-        Element ctrlAttrSet = document.createElement("GenericAttributes");
-        ctrlAttrSet.setAttribute("Set", "DexpiAttributes");
-        appendGenericAttribute(document, ctrlAttrSet,
-            "ProcessInstrumentationFunctionCategoryAssignmentClass", ctrlCategory);
-        appendGenericAttribute(document, ctrlAttrSet,
-            "ProcessInstrumentationFunctionNumberAssignmentClass", loopNumber);
-        appendGenericAttribute(document, ctrlAttrSet,
-            "ProcessInstrumentationFunctionsAssignmentClass", ctrlFunctions);
-        appendGenericAttribute(document, ctrlAttrSet, DexpiMetadata.TAG_NAME, controllerTag);
-        ctrlPif.appendChild(ctrlAttrSet);
+	// Controller GenericAttributes with PID parameters
+	Element ctrlAttrSet = document.createElement("GenericAttributes");
+	ctrlAttrSet.setAttribute("Set", "DexpiAttributes");
+	appendGenericAttribute(document, ctrlAttrSet, "ProcessInstrumentationFunctionCategoryAssignmentClass",
+	    ctrlCategory);
+	appendGenericAttribute(document, ctrlAttrSet, "ProcessInstrumentationFunctionNumberAssignmentClass",
+	    loopNumber);
+	appendGenericAttribute(document, ctrlAttrSet, "ProcessInstrumentationFunctionsAssignmentClass", ctrlFunctions);
+	appendGenericAttribute(document, ctrlAttrSet, DexpiMetadata.TAG_NAME, controllerTag);
+	ctrlPif.appendChild(ctrlAttrSet);
 
-        // PID tuning parameters
-        Element pidAttrs = document.createElement("GenericAttributes");
-        pidAttrs.setAttribute("Set", "PIDParameters");
-        appendGenericAttribute(document, pidAttrs, "ControllerSetPoint",
-            String.valueOf(matchedController.getControllerSetPoint()));
-        if (matchedController instanceof ControllerDeviceBaseClass) {
-          ControllerDeviceBaseClass pidCtrl = (ControllerDeviceBaseClass) matchedController;
-          appendGenericAttribute(document, pidAttrs, "ProportionalGain",
-              String.valueOf(pidCtrl.getKp()));
-          appendGenericAttribute(document, pidAttrs, "IntegralTime",
-              String.valueOf(pidCtrl.getTi()), "s");
-          appendGenericAttribute(document, pidAttrs, "DerivativeTime",
-              String.valueOf(pidCtrl.getTd()), "s");
-        }
-        if (matchedController.isReverseActing()) {
-          appendGenericAttribute(document, pidAttrs, "ControlAction", "Reverse");
-        } else {
-          appendGenericAttribute(document, pidAttrs, "ControlAction", "Direct");
-        }
-        ctrlPif.appendChild(pidAttrs);
+	// PID tuning parameters
+	Element pidAttrs = document.createElement("GenericAttributes");
+	pidAttrs.setAttribute("Set", "PIDParameters");
+	appendGenericAttribute(document, pidAttrs, "ControllerSetPoint",
+	    String.valueOf(matchedController.getControllerSetPoint()));
+	if (matchedController instanceof ControllerDeviceBaseClass) {
+	  ControllerDeviceBaseClass pidCtrl = (ControllerDeviceBaseClass) matchedController;
+	  appendGenericAttribute(document, pidAttrs, "ProportionalGain", String.valueOf(pidCtrl.getKp()));
+	  appendGenericAttribute(document, pidAttrs, "IntegralTime", String.valueOf(pidCtrl.getTi()), "s");
+	  appendGenericAttribute(document, pidAttrs, "DerivativeTime", String.valueOf(pidCtrl.getTd()), "s");
+	}
+	if (matchedController.isReverseActing()) {
+	  appendGenericAttribute(document, pidAttrs, "ControlAction", "Reverse");
+	} else {
+	  appendGenericAttribute(document, pidAttrs, "ControlAction", "Direct");
+	}
+	ctrlPif.appendChild(pidAttrs);
 
-        // System assignment on controller
-        Element ctrlSysAttrs = document.createElement("GenericAttributes");
-        ctrlSysAttrs.setAttribute("Set", "SystemAssignment");
-        appendGenericAttribute(document, ctrlSysAttrs, "ControlSystem", systemAssignment);
-        ctrlPif.appendChild(ctrlSysAttrs);
+	// System assignment on controller
+	Element ctrlSysAttrs = document.createElement("GenericAttributes");
+	ctrlSysAttrs.setAttribute("Set", "SystemAssignment");
+	appendGenericAttribute(document, ctrlSysAttrs, "ControlSystem", systemAssignment);
+	ctrlPif.appendChild(ctrlSysAttrs);
 
-        // Signal line between transmitter bubble and controller bubble (dashed blue)
-        if (hasPosition) {
-          String sigFlowId = uniqueIdentifier("SignalInformationFlow", controllerTag, usedIds);
-          Element sigFlow = document.createElement("InformationFlow");
-          sigFlow.setAttribute("ID", sigFlowId);
-          sigFlow.setAttribute("ComponentClass", "SignalConveyingFunction");
-          sigFlow.setAttribute("ComponentClassURI",
-              "http://sandbox.dexpi.org/rdl/SignalConveyingFunction");
+	// Signal line between transmitter bubble and controller bubble (dashed blue)
+	if (hasPosition) {
+	  String sigFlowId = uniqueIdentifier("SignalInformationFlow", controllerTag, usedIds);
+	  Element sigFlow = document.createElement("InformationFlow");
+	  sigFlow.setAttribute("ID", sigFlowId);
+	  sigFlow.setAttribute("ComponentClass", "SignalConveyingFunction");
+	  sigFlow.setAttribute("ComponentClassURI", "http://sandbox.dexpi.org/rdl/SignalConveyingFunction");
 
-          // Measurement side (sensor -> controller): ISA-5.1 electric signal.
-          DexpiLayoutEngine.appendSignalLine(document, sigFlow, cx, cy, ctrlCx, ctrlCy,
-              DexpiLayoutEngine.SignalLineKind.ELECTRIC);
-          ctrlPif.appendChild(sigFlow);
+	  // Measurement side (sensor -> controller): ISA-5.1 electric signal.
+	  DexpiLayoutEngine.appendSignalLine(document, sigFlow, cx, cy, ctrlCx, ctrlCy,
+	      DexpiLayoutEngine.SignalLineKind.ELECTRIC);
+	  ctrlPif.appendChild(sigFlow);
 
-          // Signal line from controller bubble down to the process line (to the valve)
-          String actuateFlowId =
-              uniqueIdentifier("ActuatingInformationFlow", controllerTag, usedIds);
-          Element actuateFlow = document.createElement("InformationFlow");
-          actuateFlow.setAttribute("ID", actuateFlowId);
-          actuateFlow.setAttribute("ComponentClass", "ActuatingSystemFunction");
-          actuateFlow.setAttribute("ComponentClassURI",
-              "http://sandbox.dexpi.org/rdl/ActuatingSystemFunction");
+	  // Signal line from controller bubble down to the process line (to the valve)
+	  String actuateFlowId = uniqueIdentifier("ActuatingInformationFlow", controllerTag, usedIds);
+	  Element actuateFlow = document.createElement("InformationFlow");
+	  actuateFlow.setAttribute("ID", actuateFlowId);
+	  actuateFlow.setAttribute("ComponentClass", "ActuatingSystemFunction");
+	  actuateFlow.setAttribute("ComponentClassURI", "http://sandbox.dexpi.org/rdl/ActuatingSystemFunction");
 
-          // Command side (controller -> final control element): ISA-5.1 pneumatic signal.
-          DexpiLayoutEngine.appendSignalLine(document, actuateFlow, ctrlCx, ctrlCy, ctrlCx,
-              eqPos != null ? eqPos.y : cy - DexpiLayoutEngine.INSTRUMENT_OFFSET_Y,
-              DexpiLayoutEngine.SignalLineKind.PNEUMATIC);
-          ctrlPif.appendChild(actuateFlow);
-        }
+	  // Command side (controller -> final control element): ISA-5.1 pneumatic signal.
+	  DexpiLayoutEngine.appendSignalLine(document, actuateFlow, ctrlCx, ctrlCy, ctrlCx,
+	      eqPos != null ? eqPos.y : cy - DexpiLayoutEngine.INSTRUMENT_OFFSET_Y,
+	      DexpiLayoutEngine.SignalLineKind.PNEUMATIC);
+	  ctrlPif.appendChild(actuateFlow);
+	}
 
-        parent.appendChild(ctrlPif);
+	parent.appendChild(ctrlPif);
       }
 
       parent.appendChild(pif);
@@ -2056,10 +1968,10 @@ public final class DexpiXmlWriter {
 
       // Include controller in the loop group
       if (controllerPifId != null) {
-        Element ctrlLoopAssoc = document.createElement("Association");
-        ctrlLoopAssoc.setAttribute("Type", "is a collection including");
-        ctrlLoopAssoc.setAttribute("ItemID", controllerPifId);
-        loop.appendChild(ctrlLoopAssoc);
+	Element ctrlLoopAssoc = document.createElement("Association");
+	ctrlLoopAssoc.setAttribute("Type", "is a collection including");
+	ctrlLoopAssoc.setAttribute("ItemID", controllerPifId);
+	loop.appendChild(ctrlLoopAssoc);
       }
 
       parent.appendChild(loop);
@@ -2068,10 +1980,9 @@ public final class DexpiXmlWriter {
   }
 
   /**
-   * Synthesizes a standard set of ISA-5.1 instrumentation loops for a process system that defines
-   * no measurement devices or controllers of its own. The generated loops give every common piece
-   * of equipment a realistic indicating/controlling scheme so the exported P&amp;ID resembles a
-   * real engineering diagram:
+   * Synthesizes a standard set of ISA-5.1 instrumentation loops for a process system that defines no measurement
+   * devices or controllers of its own. The generated loops give every common piece of equipment a realistic
+   * indicating/controlling scheme so the exported P&amp;ID resembles a real engineering diagram:
    *
    * <table>
    * <caption>Synthesized control loops by equipment type</caption>
@@ -2098,73 +2009,68 @@ public final class DexpiXmlWriter {
    * </table>
    *
    * <p>
-   * The transmitters are bound to live process streams (or, for level, to the separator) so the
-   * downstream positioning logic can place each bubble above its parent equipment. Controller
-   * set-points are seeded from the current simulated stream conditions.
+   * The transmitters are bound to live process streams (or, for level, to the separator) so the downstream positioning
+   * logic can place each bubble above its parent equipment. Controller set-points are seeded from the current simulated
+   * stream conditions.
    * </p>
    *
    * @param processSystem the process system to instrument
-   * @param transmitters the (initially empty) transmitter map to populate, keyed by ISA tag
-   * @param controllers the controller map to populate, keyed by derived ISA controller tag
+   * @param transmitters  the (initially empty) transmitter map to populate, keyed by ISA tag
+   * @param controllers   the controller map to populate, keyed by derived ISA controller tag
    */
   private static void synthesizeStandardInstrumentation(ProcessSystem processSystem,
-      Map<String, MeasurementDeviceInterface> transmitters,
-      Map<String, ControllerDeviceInterface> controllers) {
+      Map<String, MeasurementDeviceInterface> transmitters, Map<String, ControllerDeviceInterface> controllers) {
     int eqIndex = 0;
     for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
       if (unit instanceof Stream || unit instanceof Mixer || unit instanceof Splitter) {
-        continue;
+	continue;
       }
       int base = 2000 + eqIndex * 10;
       eqIndex++;
 
       if (unit instanceof Separator) {
-        Separator sep = (Separator) unit;
-        StreamInterface gas = sep.getGasOutStream();
-        if (gas != null) {
-          String pt = "PT-" + (base + 1);
-          transmitters.put(pt, new PressureTransmitter(pt, gas));
-          controllers.put("PC-" + (base + 1),
-              makeSynthController("PC-" + (base + 1), safePressure(gas)));
-          String tt = "TT-" + (base + 3);
-          transmitters.put(tt, new TemperatureTransmitter(tt, gas));
-        }
-        String lt = "LT-" + (base + 2);
-        transmitters.put(lt, new LevelTransmitter(lt, sep));
-        controllers.put("LC-" + (base + 2), makeSynthController("LC-" + (base + 2), 0.5));
+	Separator sep = (Separator) unit;
+	StreamInterface gas = sep.getGasOutStream();
+	if (gas != null) {
+	  String pt = "PT-" + (base + 1);
+	  transmitters.put(pt, new PressureTransmitter(pt, gas));
+	  controllers.put("PC-" + (base + 1), makeSynthController("PC-" + (base + 1), safePressure(gas)));
+	  String tt = "TT-" + (base + 3);
+	  transmitters.put(tt, new TemperatureTransmitter(tt, gas));
+	}
+	String lt = "LT-" + (base + 2);
+	transmitters.put(lt, new LevelTransmitter(lt, sep));
+	controllers.put("LC-" + (base + 2), makeSynthController("LC-" + (base + 2), 0.5));
       } else if (unit instanceof Compressor) {
-        StreamInterface out = firstOutlet(unit);
-        if (out != null) {
-          String pt = "PT-" + (base + 1);
-          transmitters.put(pt, new PressureTransmitter(pt, out));
-          controllers.put("PC-" + (base + 1),
-              makeSynthController("PC-" + (base + 1), safePressure(out)));
-          String tt = "TT-" + (base + 3);
-          transmitters.put(tt, new TemperatureTransmitter(tt, out));
-        }
-        StreamInterface in = firstInlet(unit);
-        if (in != null) {
-          String ft = "FT-" + (base + 4);
-          transmitters.put(ft, new VolumeFlowTransmitter(ft, in));
-        }
+	StreamInterface out = firstOutlet(unit);
+	if (out != null) {
+	  String pt = "PT-" + (base + 1);
+	  transmitters.put(pt, new PressureTransmitter(pt, out));
+	  controllers.put("PC-" + (base + 1), makeSynthController("PC-" + (base + 1), safePressure(out)));
+	  String tt = "TT-" + (base + 3);
+	  transmitters.put(tt, new TemperatureTransmitter(tt, out));
+	}
+	StreamInterface in = firstInlet(unit);
+	if (in != null) {
+	  String ft = "FT-" + (base + 4);
+	  transmitters.put(ft, new VolumeFlowTransmitter(ft, in));
+	}
       } else if (unit instanceof Heater) {
-        // Cooler and HeatExchanger both extend Heater, so a single instanceof Heater check
-        // covers every cooling/heating service (a Cooler is not an instanceof HeatExchanger).
-        StreamInterface out = firstOutlet(unit);
-        if (out != null) {
-          String tt = "TT-" + (base + 3);
-          transmitters.put(tt, new TemperatureTransmitter(tt, out));
-          controllers.put("TC-" + (base + 3),
-              makeSynthController("TC-" + (base + 3), safeTemperature(out)));
-        }
+	// Cooler and HeatExchanger both extend Heater, so a single instanceof Heater check
+	// covers every cooling/heating service (a Cooler is not an instanceof HeatExchanger).
+	StreamInterface out = firstOutlet(unit);
+	if (out != null) {
+	  String tt = "TT-" + (base + 3);
+	  transmitters.put(tt, new TemperatureTransmitter(tt, out));
+	  controllers.put("TC-" + (base + 3), makeSynthController("TC-" + (base + 3), safeTemperature(out)));
+	}
       } else if (unit instanceof Pump) {
-        StreamInterface out = firstOutlet(unit);
-        if (out != null) {
-          String pt = "PT-" + (base + 1);
-          transmitters.put(pt, new PressureTransmitter(pt, out));
-          controllers.put("PC-" + (base + 1),
-              makeSynthController("PC-" + (base + 1), safePressure(out)));
-        }
+	StreamInterface out = firstOutlet(unit);
+	if (out != null) {
+	  String pt = "PT-" + (base + 1);
+	  transmitters.put(pt, new PressureTransmitter(pt, out));
+	  controllers.put("PC-" + (base + 1), makeSynthController("PC-" + (base + 1), safePressure(out)));
+	}
       }
     }
   }
@@ -2172,7 +2078,7 @@ public final class DexpiXmlWriter {
   /**
    * Builds a PID controller seeded with a realistic set-point for synthesized instrumentation.
    *
-   * @param name the ISA controller tag
+   * @param name     the ISA controller tag
    * @param setPoint the controller set-point value
    * @return a configured controller device
    */
@@ -2220,8 +2126,7 @@ public final class DexpiXmlWriter {
   }
 
   /**
-   * Reads the temperature of a stream in degrees Celsius, returning {@code 0.0} if the value cannot
-   * be obtained.
+   * Reads the temperature of a stream in degrees Celsius, returning {@code 0.0} if the value cannot be obtained.
    *
    * @param stream the stream to read
    * @return the temperature in degrees Celsius, or {@code 0.0} on error
@@ -2237,12 +2142,11 @@ public final class DexpiXmlWriter {
   /**
    * Finds the name of the equipment whose inlet or outlet stream matches the transmitter's stream.
    *
-   * @param device the measurement device
+   * @param device        the measurement device
    * @param processSystem the process system
    * @return the equipment name, or null if not found
    */
-  private static String findParentEquipment(MeasurementDeviceInterface device,
-      ProcessSystem processSystem) {
+  private static String findParentEquipment(MeasurementDeviceInterface device, ProcessSystem processSystem) {
     if (processSystem == null) {
       return null;
     }
@@ -2258,30 +2162,27 @@ public final class DexpiXmlWriter {
       return null;
     }
     int streamHash = System.identityHashCode(measuredStream);
-    int fluidHash =
-        measuredStream.getFluid() != null ? System.identityHashCode(measuredStream.getFluid()) : -1;
+    int fluidHash = measuredStream.getFluid() != null ? System.identityHashCode(measuredStream.getFluid()) : -1;
 
     for (ProcessEquipmentInterface eq : processSystem.getUnitOperations()) {
       if (eq instanceof Stream) {
-        continue;
+	continue;
       }
       for (StreamInterface s : eq.getOutletStreams()) {
-        if (System.identityHashCode(s) == streamHash) {
-          return eq.getName();
-        }
-        if (fluidHash > 0 && s.getFluid() != null
-            && System.identityHashCode(s.getFluid()) == fluidHash) {
-          return eq.getName();
-        }
+	if (System.identityHashCode(s) == streamHash) {
+	  return eq.getName();
+	}
+	if (fluidHash > 0 && s.getFluid() != null && System.identityHashCode(s.getFluid()) == fluidHash) {
+	  return eq.getName();
+	}
       }
       for (StreamInterface s : eq.getInletStreams()) {
-        if (System.identityHashCode(s) == streamHash) {
-          return eq.getName();
-        }
-        if (fluidHash > 0 && s.getFluid() != null
-            && System.identityHashCode(s.getFluid()) == fluidHash) {
-          return eq.getName();
-        }
+	if (System.identityHashCode(s) == streamHash) {
+	  return eq.getName();
+	}
+	if (fluidHash > 0 && s.getFluid() != null && System.identityHashCode(s.getFluid()) == fluidHash) {
+	  return eq.getName();
+	}
       }
     }
     return null;
@@ -2291,12 +2192,11 @@ public final class DexpiXmlWriter {
    * Appends a Position element with Location, Axis, and Reference for an instrument bubble.
    *
    * @param document the XML document
-   * @param parent the element to append to
-   * @param x the X coordinate
-   * @param y the Y coordinate
+   * @param parent   the element to append to
+   * @param x        the X coordinate
+   * @param y        the Y coordinate
    */
-  private static void appendInstrumentPosition(Document document, Element parent, double x,
-      double y) {
+  private static void appendInstrumentPosition(Document document, Element parent, double x, double y) {
     Element position = document.createElement("Position");
     Element location = document.createElement("Location");
     location.setAttribute("X", String.valueOf(x));
@@ -2322,16 +2222,16 @@ public final class DexpiXmlWriter {
   /**
    * Appends a Text element inside an instrument label.
    *
-   * @param document the XML document
-   * @param label the Label element
-   * @param text the display text
-   * @param x X position of the text
-   * @param y Y position of the text
-   * @param pifId the parent ProcessInstrumentationFunction ID
+   * @param document            the XML document
+   * @param label               the Label element
+   * @param text                the display text
+   * @param x                   X position of the text
+   * @param y                   Y position of the text
+   * @param pifId               the parent ProcessInstrumentationFunction ID
    * @param dependantAttributes the DependantAttribute names for TextStringFormatSpecification
    */
-  private static void appendInstrumentLabelText(Document document, Element label, String text,
-      double x, double y, String pifId, String[] dependantAttributes) {
+  private static void appendInstrumentLabelText(Document document, Element label, String text, double x, double y,
+      String pifId, String[] dependantAttributes) {
     Element textElem = document.createElement("Text");
     textElem.setAttribute("String", text);
     textElem.setAttribute("Font", "Calibri");
@@ -2364,13 +2264,12 @@ public final class DexpiXmlWriter {
    * Appends a signal Node with position inside a ConnectionPoints element.
    *
    * @param document the XML document
-   * @param parent the ConnectionPoints element
-   * @param nodeId the unique node ID
-   * @param x the X coordinate
-   * @param y the Y coordinate
+   * @param parent   the ConnectionPoints element
+   * @param nodeId   the unique node ID
+   * @param x        the X coordinate
+   * @param y        the Y coordinate
    */
-  private static void appendSignalNode(Document document, Element parent, String nodeId, double x,
-      double y) {
+  private static void appendSignalNode(Document document, Element parent, String nodeId, double x, double y) {
     Element node = document.createElement("Node");
     node.setAttribute("Type", "signal");
     node.setAttribute("ID", nodeId);
@@ -2386,11 +2285,11 @@ public final class DexpiXmlWriter {
    */
   private static String[] parseIsaTag(String tag) {
     if (tag == null || tag.isEmpty()) {
-      return new String[] {"", "", tag};
+      return new String[] { "", "", tag };
     }
     int dashIndex = tag.indexOf('-');
     if (dashIndex <= 0) {
-      return new String[] {"", "", tag};
+      return new String[] { "", "", tag };
     }
     String prefix = tag.substring(0, dashIndex);
     String loopNumber = tag.substring(dashIndex + 1);
@@ -2400,12 +2299,12 @@ public final class DexpiXmlWriter {
     // Remaining letters are the function (T, IC, C, etc.)
     String functions = prefix.length() > 1 ? prefix.substring(1) : "T";
 
-    return new String[] {category, functions, loopNumber};
+    return new String[] { category, functions, loopNumber };
   }
 
   /**
-   * Derives the controller tag from a transmitter tag. For example, "PT-HP sep" becomes "PC-HP
-   * sep", "LT-HP sep" becomes "LC-HP sep".
+   * Derives the controller tag from a transmitter tag. For example, "PT-HP sep" becomes "PC-HP sep", "LT-HP sep"
+   * becomes "LC-HP sep".
    *
    * @param transmitterTag the transmitter tag
    * @return the expected controller tag, or null if not derivable
@@ -2438,44 +2337,41 @@ public final class DexpiXmlWriter {
    * Collects stream data for the stream table from process system equipment.
    *
    * <p>
-   * Iterates through all equipment in the process system, extracting temperature, pressure, flow
-   * rate, and phase information from each outlet stream.
+   * Iterates through all equipment in the process system, extracting temperature, pressure, flow rate, and phase
+   * information from each outlet stream.
    * </p>
    *
    * @param processSystem the process system to extract stream data from
    * @return list of stream table entries for rendering
    */
-  private static List<DexpiLayoutEngine.StreamTableEntry> collectStreamTableData(
-      ProcessSystem processSystem) {
+  private static List<DexpiLayoutEngine.StreamTableEntry> collectStreamTableData(ProcessSystem processSystem) {
     List<DexpiLayoutEngine.StreamTableEntry> entries = new ArrayList<>();
     DecimalFormat df = DECIMAL_FORMAT.get();
     int streamNum = 1;
 
     for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
       if (unit instanceof Stream || unit instanceof DexpiStream) {
-        continue;
+	continue;
       }
 
       // Collect primary (gas) outlet
       StreamInterface gasOut = DexpiStreamUtils.getGasOutletStream(unit);
       if (gasOut != null) {
-        DexpiLayoutEngine.StreamTableEntry entry =
-            buildStreamEntry(df, String.valueOf(streamNum++), gasOut);
-        if (entry != null) {
-          entries.add(entry);
-        }
+	DexpiLayoutEngine.StreamTableEntry entry = buildStreamEntry(df, String.valueOf(streamNum++), gasOut);
+	if (entry != null) {
+	  entries.add(entry);
+	}
       }
 
       // Collect liquid outlet for multi-outlet equipment
       if (DexpiStreamUtils.isMultiOutlet(unit)) {
-        StreamInterface liqOut = DexpiStreamUtils.getLiquidOutletStream(unit);
-        if (liqOut != null) {
-          DexpiLayoutEngine.StreamTableEntry entry =
-              buildStreamEntry(df, String.valueOf(streamNum++), liqOut);
-          if (entry != null) {
-            entries.add(entry);
-          }
-        }
+	StreamInterface liqOut = DexpiStreamUtils.getLiquidOutletStream(unit);
+	if (liqOut != null) {
+	  DexpiLayoutEngine.StreamTableEntry entry = buildStreamEntry(df, String.valueOf(streamNum++), liqOut);
+	  if (entry != null) {
+	    entries.add(entry);
+	  }
+	}
       }
     }
     return entries;
@@ -2484,13 +2380,13 @@ public final class DexpiXmlWriter {
   /**
    * Builds a single stream table entry from a stream's simulation results.
    *
-   * @param df the decimal format for numeric values
+   * @param df          the decimal format for numeric values
    * @param streamLabel the stream label/number
-   * @param stream the stream to extract data from
+   * @param stream      the stream to extract data from
    * @return the stream table entry, or null if data is unavailable
    */
-  private static DexpiLayoutEngine.StreamTableEntry buildStreamEntry(DecimalFormat df,
-      String streamLabel, StreamInterface stream) {
+  private static DexpiLayoutEngine.StreamTableEntry buildStreamEntry(DecimalFormat df, String streamLabel,
+      StreamInterface stream) {
     try {
       double tempC = stream.getTemperature("C");
       double pressBara = stream.getPressure("bara");
@@ -2498,14 +2394,13 @@ public final class DexpiXmlWriter {
       int numPhases = stream.getFluid() != null ? stream.getFluid().getNumberOfPhases() : 1;
       String phase;
       if (numPhases <= 1) {
-        boolean hasGas = stream.getFluid() != null && stream.getFluid().hasPhaseType("gas");
-        phase = hasGas ? "Gas" : "Liquid";
+	boolean hasGas = stream.getFluid() != null && stream.getFluid().hasPhaseType("gas");
+	phase = hasGas ? "Gas" : "Liquid";
       } else {
-        phase = "Two-phase";
+	phase = "Two-phase";
       }
-      return new DexpiLayoutEngine.StreamTableEntry(streamLabel,
-          String.format(Locale.ROOT, "%.1f", tempC), String.format(Locale.ROOT, "%.1f", pressBara),
-          String.format(Locale.ROOT, "%.0f", flowKgHr), phase);
+      return new DexpiLayoutEngine.StreamTableEntry(streamLabel, String.format(Locale.ROOT, "%.1f", tempC),
+	  String.format(Locale.ROOT, "%.1f", pressBara), String.format(Locale.ROOT, "%.0f", flowKgHr), phase);
     } catch (RuntimeException ignored) {
       // Simulation may not have been run
       return null;
@@ -2517,16 +2412,16 @@ public final class DexpiXmlWriter {
       return elementName;
     }
     switch (mapped) {
-      case HeatExchanger:
-        return "HeatExchanger";
-      case Pump:
-        return "Pump";
-      case Tank:
-        return "Tank";
-      case ThrottlingValve:
-        return "GlobeValve";
-      default:
-        return elementName;
+    case HeatExchanger:
+      return "HeatExchanger";
+    case Pump:
+      return "Pump";
+    case Tank:
+      return "Tank";
+    case ThrottlingValve:
+      return "GlobeValve";
+    default:
+      return elementName;
     }
   }
 
@@ -2568,8 +2463,7 @@ public final class DexpiXmlWriter {
    *
    * <p>
    * If the equipment has an IEC 81346 reference designation set (via
-   * {@link neqsim.process.equipment.iec81346.ReferenceDesignationGenerator}), the following
-   * attributes are added:
+   * {@link neqsim.process.equipment.iec81346.ReferenceDesignationGenerator}), the following attributes are added:
    * </p>
    * <ul>
    * <li>{@code IEC81346ReferenceDesignation}: The full reference designation string</li>
@@ -2579,9 +2473,9 @@ public final class DexpiXmlWriter {
    * <li>{@code IEC81346LetterCode}: The equipment letter code (e.g. "B", "K", "Q")</li>
    * </ul>
    *
-   * @param document the XML document
+   * @param document          the XML document
    * @param genericAttributes the parent element for generic attributes
-   * @param unit the process equipment
+   * @param unit              the process equipment
    */
   private static void appendIEC81346Attributes(Document document, Element genericAttributes,
       ProcessEquipmentInterface unit) {
@@ -2590,15 +2484,14 @@ public final class DexpiXmlWriter {
       return;
     }
     appendGenericAttribute(document, genericAttributes, "IEC81346ReferenceDesignation",
-        refDes.toReferenceDesignationString());
+	refDes.toReferenceDesignationString());
     appendGenericAttribute(document, genericAttributes, "IEC81346FunctionDesignation",
-        refDes.getFormattedFunctionDesignation());
+	refDes.getFormattedFunctionDesignation());
     appendGenericAttribute(document, genericAttributes, "IEC81346ProductDesignation",
-        refDes.getFormattedProductDesignation());
+	refDes.getFormattedProductDesignation());
     appendGenericAttribute(document, genericAttributes, "IEC81346LocationDesignation",
-        refDes.getFormattedLocationDesignation());
-    appendGenericAttribute(document, genericAttributes, "IEC81346LetterCode",
-        refDes.getLetterCode().name());
+	refDes.getFormattedLocationDesignation());
+    appendGenericAttribute(document, genericAttributes, "IEC81346LetterCode", refDes.getLetterCode().name());
   }
 
   private static String stripHyphens(String value) {
@@ -2619,7 +2512,7 @@ public final class DexpiXmlWriter {
     }
     for (String value : values) {
       if (!isBlank(value)) {
-        return value.trim();
+	return value.trim();
       }
     }
     return null;
@@ -2630,8 +2523,8 @@ public final class DexpiXmlWriter {
   }
 
   /**
-   * Detects equipment orientation from the type. Per ISO 10628, separators are typically marked
-   * vertical (V) while rotating and heat-transfer equipment are horizontal (H).
+   * Detects equipment orientation from the type. Per ISO 10628, separators are typically marked vertical (V) while
+   * rotating and heat-transfer equipment are horizontal (H).
    *
    * @param unit the process equipment
    * @return "V" for vertical, "H" for horizontal, or null if not applicable
@@ -2640,8 +2533,8 @@ public final class DexpiXmlWriter {
     if (unit instanceof ThreePhaseSeparator || unit instanceof Separator) {
       return "V";
     }
-    if (unit instanceof Compressor || unit instanceof Pump || unit instanceof HeatExchanger
-        || unit instanceof Cooler || unit instanceof Heater) {
+    if (unit instanceof Compressor || unit instanceof Pump || unit instanceof HeatExchanger || unit instanceof Cooler
+	|| unit instanceof Heater) {
       return "H";
     }
     return null;
@@ -2651,8 +2544,8 @@ public final class DexpiXmlWriter {
    * Detects valve fail position from the tag name convention per NORSOK Z-003.
    *
    * <p>
-   * Tags starting with "XV", "ESD", or "HIPPS" are assumed fail-closed (FC). Tags starting with
-   * "HV" are assumed fail-open (FO). Other valves return null (no automatic fail position).
+   * Tags starting with "XV", "ESD", or "HIPPS" are assumed fail-closed (FC). Tags starting with "HV" are assumed
+   * fail-open (FO). Other valves return null (no automatic fail position).
    * </p>
    *
    * @param unit the valve equipment
@@ -2664,8 +2557,7 @@ public final class DexpiXmlWriter {
       return null;
     }
     String upper = name.toUpperCase(Locale.ROOT);
-    if (upper.startsWith("XV") || upper.contains("ESD") || upper.contains("HIPPS")
-        || upper.contains("SDV")) {
+    if (upper.startsWith("XV") || upper.contains("ESD") || upper.contains("HIPPS") || upper.contains("SDV")) {
       return "FC";
     }
     if (upper.startsWith("HV")) {
@@ -2675,8 +2567,8 @@ public final class DexpiXmlWriter {
   }
 
   /**
-   * Determines the DEXPI valve ComponentClass from the tag name. Different valve prefixes indicate
-   * different valve types per ISA/NORSOK conventions.
+   * Determines the DEXPI valve ComponentClass from the tag name. Different valve prefixes indicate different valve
+   * types per ISA/NORSOK conventions.
    *
    * @param unit the valve equipment
    * @return the DEXPI ComponentClass (GlobeValve, GateValve, BallValve, CheckValve, ButterflyValve)
@@ -2686,25 +2578,25 @@ public final class DexpiXmlWriter {
     if (name != null) {
       String upper = name.toUpperCase(Locale.ROOT);
       if (upper.startsWith("XV") || upper.contains("ESD") || upper.contains("SDV")) {
-        return "GateValve";
+	return "GateValve";
       }
       if (upper.startsWith("BV")) {
-        return "BallValve";
+	return "BallValve";
       }
       if (upper.startsWith("NRV") || upper.contains("CHECK")) {
-        return "CheckValve";
+	return "CheckValve";
       }
       if (upper.startsWith("BFV") || upper.contains("BUTTERFLY")) {
-        return "ButterflyValve";
+	return "ButterflyValve";
       }
     }
     return "GlobeValve";
   }
 
   /**
-   * Detects whether an instrument tag indicates a Safety Instrumented System (SIS) device rather
-   * than a DCS device. Safety tags typically have key letters like XV (shutdown), SD (shutdown), ZS
-   * (limit switch on safety valve), or SV (safety valve).
+   * Detects whether an instrument tag indicates a Safety Instrumented System (SIS) device rather than a DCS device.
+   * Safety tags typically have key letters like XV (shutdown), SD (shutdown), ZS (limit switch on safety valve), or SV
+   * (safety valve).
    *
    * @param tag the ISA instrument tag
    * @return true if the tag indicates a safety-instrumented function
@@ -2716,8 +2608,8 @@ public final class DexpiXmlWriter {
     int dashIndex = tag.indexOf('-');
     String prefix = dashIndex > 0 ? tag.substring(0, dashIndex) : tag;
     String upper = prefix.toUpperCase(Locale.ROOT);
-    return upper.startsWith("XV") || upper.startsWith("SD") || upper.startsWith("ZS")
-        || upper.startsWith("SV") || upper.contains("ESD") || upper.contains("HIPPS");
+    return upper.startsWith("XV") || upper.startsWith("SD") || upper.startsWith("ZS") || upper.startsWith("SV")
+	|| upper.contains("ESD") || upper.contains("HIPPS");
   }
 
   /**
@@ -2731,75 +2623,74 @@ public final class DexpiXmlWriter {
       return null;
     }
     switch (componentClass) {
-      case "Separator":
-        return "http://data.posccaesar.org/rdl/RDS327962";
-      case "ThreePhaseSeparator":
-        return "http://data.posccaesar.org/rdl/RDS327962";
-      case "CentrifugalCompressor":
-        return "http://data.posccaesar.org/rdl/RDS414622";
-      case "CentrifugalPump":
-        return "http://data.posccaesar.org/rdl/RDS415550";
-      case "AirCoolingSystem":
-        return "http://data.posccaesar.org/rdl/RDS327938";
-      case "ShellAndTubeHeatExchanger":
-        return "http://data.posccaesar.org/rdl/RDS327918";
-      case "FiredHeater":
-        return "http://data.posccaesar.org/rdl/RDS327914";
-      case "Tank":
-        return "http://data.posccaesar.org/rdl/RDS328462";
-      case "Filter":
-        return "http://data.posccaesar.org/rdl/RDS327894";
-      case "GlobeValve":
-        return "http://data.posccaesar.org/rdl/RDS415212";
-      case "GateValve":
-        return "http://data.posccaesar.org/rdl/RDS415208";
-      case "BallValve":
-        return "http://data.posccaesar.org/rdl/RDS415196";
-      case "CheckValve":
-        return "http://data.posccaesar.org/rdl/RDS415204";
-      case "ButterflyValve":
-        return "http://data.posccaesar.org/rdl/RDS415200";
-      case "Expander":
-        return "http://data.posccaesar.org/rdl/RDS414776";
-      case "Mixer":
-        return "http://data.posccaesar.org/rdl/RDS4149564";
-      case "Splitter":
-        return "http://data.posccaesar.org/rdl/RDS4112354";
-      case "DistillationColumn":
-        return "http://data.posccaesar.org/rdl/RDS327902";
-      case "ProcessColumn":
-        return "http://data.posccaesar.org/rdl/RDS327902";
-      case "ReciprocatingPump":
-        return "http://data.posccaesar.org/rdl/RDS415554";
-      case "PositiveDisplacementPump":
-        return "http://data.posccaesar.org/rdl/RDS415554";
-      case "ReciprocatingCompressor":
-        return "http://data.posccaesar.org/rdl/RDS414626";
-      case "PlateHeatExchanger":
-        return "http://data.posccaesar.org/rdl/RDS327922";
-      case "HeatExchanger":
-        return "http://data.posccaesar.org/rdl/RDS327918";
-      case "Cooler":
-        return "http://data.posccaesar.org/rdl/RDS327938";
-      case "Heater":
-        return "http://data.posccaesar.org/rdl/RDS327914";
-      case "Vessel":
-        return "http://data.posccaesar.org/rdl/RDS328462";
-      case "PressureVessel":
-        return "http://data.posccaesar.org/rdl/RDS328462";
-      case "ControlValve":
-        return "http://data.posccaesar.org/rdl/RDS415212";
-      case "PipingComponent":
-        return "http://data.posccaesar.org/rdl/RDS415018";
-      case "PipingNetworkSegment":
-        return "http://data.posccaesar.org/rdl/RDS14313438";
-      default:
-        return null;
+    case "Separator":
+      return "http://data.posccaesar.org/rdl/RDS327962";
+    case "ThreePhaseSeparator":
+      return "http://data.posccaesar.org/rdl/RDS327962";
+    case "CentrifugalCompressor":
+      return "http://data.posccaesar.org/rdl/RDS414622";
+    case "CentrifugalPump":
+      return "http://data.posccaesar.org/rdl/RDS415550";
+    case "AirCoolingSystem":
+      return "http://data.posccaesar.org/rdl/RDS327938";
+    case "ShellAndTubeHeatExchanger":
+      return "http://data.posccaesar.org/rdl/RDS327918";
+    case "FiredHeater":
+      return "http://data.posccaesar.org/rdl/RDS327914";
+    case "Tank":
+      return "http://data.posccaesar.org/rdl/RDS328462";
+    case "Filter":
+      return "http://data.posccaesar.org/rdl/RDS327894";
+    case "GlobeValve":
+      return "http://data.posccaesar.org/rdl/RDS415212";
+    case "GateValve":
+      return "http://data.posccaesar.org/rdl/RDS415208";
+    case "BallValve":
+      return "http://data.posccaesar.org/rdl/RDS415196";
+    case "CheckValve":
+      return "http://data.posccaesar.org/rdl/RDS415204";
+    case "ButterflyValve":
+      return "http://data.posccaesar.org/rdl/RDS415200";
+    case "Expander":
+      return "http://data.posccaesar.org/rdl/RDS414776";
+    case "Mixer":
+      return "http://data.posccaesar.org/rdl/RDS4149564";
+    case "Splitter":
+      return "http://data.posccaesar.org/rdl/RDS4112354";
+    case "DistillationColumn":
+      return "http://data.posccaesar.org/rdl/RDS327902";
+    case "ProcessColumn":
+      return "http://data.posccaesar.org/rdl/RDS327902";
+    case "ReciprocatingPump":
+      return "http://data.posccaesar.org/rdl/RDS415554";
+    case "PositiveDisplacementPump":
+      return "http://data.posccaesar.org/rdl/RDS415554";
+    case "ReciprocatingCompressor":
+      return "http://data.posccaesar.org/rdl/RDS414626";
+    case "PlateHeatExchanger":
+      return "http://data.posccaesar.org/rdl/RDS327922";
+    case "HeatExchanger":
+      return "http://data.posccaesar.org/rdl/RDS327918";
+    case "Cooler":
+      return "http://data.posccaesar.org/rdl/RDS327938";
+    case "Heater":
+      return "http://data.posccaesar.org/rdl/RDS327914";
+    case "Vessel":
+      return "http://data.posccaesar.org/rdl/RDS328462";
+    case "PressureVessel":
+      return "http://data.posccaesar.org/rdl/RDS328462";
+    case "ControlValve":
+      return "http://data.posccaesar.org/rdl/RDS415212";
+    case "PipingComponent":
+      return "http://data.posccaesar.org/rdl/RDS415018";
+    case "PipingNetworkSegment":
+      return "http://data.posccaesar.org/rdl/RDS14313438";
+    default:
+      return null;
     }
   }
 
-  private static void writeDocument(Document document, OutputStream outputStream)
-      throws IOException {
+  private static void writeDocument(Document document, OutputStream outputStream) throws IOException {
     try {
       TransformerFactory factory = TransformerFactory.newInstance();
       factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");

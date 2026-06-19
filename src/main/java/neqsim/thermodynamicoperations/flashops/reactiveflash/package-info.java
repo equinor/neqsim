@@ -2,28 +2,27 @@
  * Reactive multiphase flash algorithms using the modified RAND method.
  *
  * <p>
- * This package implements simultaneous chemical and phase equilibrium (CPE) calculations using the
- * non-stoichiometric approach. The main classes are:
+ * This package implements simultaneous chemical and phase equilibrium (CPE) calculations using the non-stoichiometric
+ * approach. The main classes are:
  * </p>
  *
  * <ul>
- * <li>{@link neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphaseTPflash} —
- * Main entry point for the reactive TP flash algorithm.</li>
- * <li>{@link neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphasePHflash} —
- * Reactive PH flash: finds equilibrium temperature given pressure and enthalpy. Also supports PS
- * (entropy) specification.</li>
- * <li>{@link neqsim.thermodynamicoperations.flashops.reactiveflash.ModifiedRANDSolver} — Core
- * Newton-based solver for the modified RAND method.</li>
- * <li>{@link neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveStabilityAnalysis} —
- * Tangent plane distance analysis adapted for reactive systems.</li>
- * <li>{@link neqsim.thermodynamicoperations.flashops.reactiveflash.FormulaMatrix} —
- * Element-component formula matrix A that maps elemental composition.</li>
+ * <li>{@link neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphaseTPflash} — Main entry point for
+ * the reactive TP flash algorithm.</li>
+ * <li>{@link neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphasePHflash} — Reactive PH flash:
+ * finds equilibrium temperature given pressure and enthalpy. Also supports PS (entropy) specification.</li>
+ * <li>{@link neqsim.thermodynamicoperations.flashops.reactiveflash.ModifiedRANDSolver} — Core Newton-based solver for
+ * the modified RAND method.</li>
+ * <li>{@link neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveStabilityAnalysis} — Tangent plane distance
+ * analysis adapted for reactive systems.</li>
+ * <li>{@link neqsim.thermodynamicoperations.flashops.reactiveflash.FormulaMatrix} — Element-component formula matrix A
+ * that maps elemental composition.</li>
  * </ul>
  *
  * <p>
- * The non-stoichiometric approach minimizes the total Gibbs energy subject to element balance
- * constraints A * n = b. This avoids the need to specify explicit reaction stoichiometry — the
- * number and nature of reactions are determined automatically from the formula matrix rank.
+ * The non-stoichiometric approach minimizes the total Gibbs energy subject to element balance constraints A * n = b.
+ * This avoids the need to specify explicit reaction stoichiometry — the number and nature of reactions are determined
+ * automatically from the formula matrix rank.
  * </p>
  *
  * <p>

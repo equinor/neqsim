@@ -71,7 +71,6 @@ public class ESDValveExample {
     logger.info("  - Cv: 800");
     logger.info("  - Fail-safe position: Closed (fail-closed)");
 
-
     // =========================================================================
     // SCENARIO 1: NORMAL OPERATION
     // =========================================================================
@@ -89,15 +88,14 @@ public class ESDValveExample {
 
     logger.info("═══ NORMAL OPERATION STATUS ═══");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Valve status: %s%n",
-        esdInletValve.isEnergized() ? "ENERGIZED" : "DE-ENERGIZED");
+	esdInletValve.isEnergized() ? "ENERGIZED" : "DE-ENERGIZED");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Valve opening: %.1f%%%n",
-        esdInletValve.getPercentValveOpening());
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Feed pressure: %.1f bara%n",
-        feedStream.getPressure("bara"));
+	esdInletValve.getPercentValveOpening());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Feed pressure: %.1f bara%n", feedStream.getPressure("bara"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Separator inlet pressure: %.1f bara%n",
-        separatorInlet.getPressure("bara"));
+	separatorInlet.getPressure("bara"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Separator inlet flow: %.1f kg/hr%n",
-        separatorInlet.getFlowRate("kg/hr"));
+	separatorInlet.getFlowRate("kg/hr"));
     logger.info("✓ System operating normally with ESD valve open\n");
 
     // =========================================================================
@@ -118,14 +116,14 @@ public class ESDValveExample {
       esdInletValve.runTransient(0.5, id);
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "%8.1f | %17.1f | %s%n", time,
-          esdInletValve.getPercentValveOpening(),
-          esdInletValve.isPartialStrokeTestActive() ? "PST ACTIVE" : "PST COMPLETE");
+	  esdInletValve.getPercentValveOpening(),
+	  esdInletValve.isPartialStrokeTestActive() ? "PST ACTIVE" : "PST COMPLETE");
     }
 
     logger.info("\nCompleting partial stroke test...");
     esdInletValve.completePartialStrokeTest();
     logger.printf(org.apache.logging.log4j.Level.INFO, "Valve returned to: %.1f%%%n",
-        esdInletValve.getPercentValveOpening());
+	esdInletValve.getPercentValveOpening());
     logger.info("✓ Partial stroke test completed - valve functionality verified\n");
 
     // =========================================================================
@@ -142,10 +140,8 @@ public class ESDValveExample {
     esdInletValve.trip();
 
     logger.info("═══ ESD VALVE CLOSURE SIMULATION ═══");
-    logger
-        .info("Time (s) | Valve Opening (%) | Status      | Elapsed (s) | Sep Inlet Flow (kg/hr)");
-    logger
-        .info("---------|-------------------|-------------|-------------|------------------------");
+    logger.info("Time (s) | Valve Opening (%) | Status      | Elapsed (s) | Sep Inlet Flow (kg/hr)");
+    logger.info("---------|-------------------|-------------|-------------|------------------------");
 
     // Switch separator to transient mode
     separator.setCalculateSteadyState(false);
@@ -157,46 +153,44 @@ public class ESDValveExample {
 
       // Control feed flow based on valve position
       if (esdInletValve.getPercentValveOpening() < 1.0) {
-        separatorInlet.getThermoSystem().setTotalFlowRate(0.1, "kg/hr");
+	separatorInlet.getThermoSystem().setTotalFlowRate(0.1, "kg/hr");
       } else {
-        feedStream.run();
-        esdInletValve.run();
-        separatorInlet.run();
+	feedStream.run();
+	esdInletValve.run();
+	separatorInlet.run();
       }
 
       separator.runTransient(timeStep, UUID.randomUUID());
 
       String status;
       if (esdInletValve.isClosing()) {
-        status = "CLOSING";
+	status = "CLOSING";
       } else if (esdInletValve.hasTripCompleted()) {
-        status = "CLOSED";
+	status = "CLOSED";
       } else {
-        status = "OPEN";
+	status = "OPEN";
       }
 
-      logger.printf(org.apache.logging.log4j.Level.INFO,
-          "%8.1f | %17.1f | %-11s | %11.1f | %22.1f%n", time,
-          esdInletValve.getPercentValveOpening(), status, esdInletValve.getTimeElapsedSinceTrip(),
-          separatorInlet.getFlowRate("kg/hr"));
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%8.1f | %17.1f | %-11s | %11.1f | %22.1f%n", time,
+	  esdInletValve.getPercentValveOpening(), status, esdInletValve.getTimeElapsedSinceTrip(),
+	  separatorInlet.getFlowRate("kg/hr"));
     }
 
     logger.info("\n═══ ESD TRIP SUMMARY ═══");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Valve energized: %s%n",
-        esdInletValve.isEnergized() ? "YES" : "NO");
+	esdInletValve.isEnergized() ? "YES" : "NO");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Trip completed: %s%n",
-        esdInletValve.hasTripCompleted() ? "YES" : "NO");
+	esdInletValve.hasTripCompleted() ? "YES" : "NO");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Final valve opening: %.1f%%%n",
-        esdInletValve.getPercentValveOpening());
+	esdInletValve.getPercentValveOpening());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Total closure time: %.1f seconds%n",
-        esdInletValve.getTimeElapsedSinceTrip());
+	esdInletValve.getTimeElapsedSinceTrip());
 
     if (esdInletValve.hasTripCompleted() && esdInletValve.getPercentValveOpening() < 1.0) {
       logger.info("✓ ESD valve successfully closed - process isolated");
     } else {
       logger.info("✗ WARNING: ESD valve closure not completed");
     }
-
 
     // =========================================================================
     // SCENARIO 4: RESET AND RESTART
@@ -213,13 +207,13 @@ public class ESDValveExample {
 
     logger.info("═══ POST-RESET STATUS ═══");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Valve energized: %s%n",
-        esdInletValve.isEnergized() ? "YES" : "NO");
+	esdInletValve.isEnergized() ? "YES" : "NO");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Valve opening: %.1f%%%n",
-        esdInletValve.getPercentValveOpening());
+	esdInletValve.getPercentValveOpening());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Trip completed flag: %s%n",
-        esdInletValve.hasTripCompleted() ? "YES" : "NO");
+	esdInletValve.hasTripCompleted() ? "YES" : "NO");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Elapsed time reset: %.1f seconds%n",
-        esdInletValve.getTimeElapsedSinceTrip());
+	esdInletValve.getTimeElapsedSinceTrip());
 
     // Restart process
     separator.setCalculateSteadyState(true);
@@ -229,7 +223,7 @@ public class ESDValveExample {
     separator.run();
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "\nProcess flow restored: %.1f kg/hr%n",
-        separatorInlet.getFlowRate("kg/hr"));
+	separatorInlet.getFlowRate("kg/hr"));
     logger.info("✓ System successfully restarted\n");
 
     // =========================================================================
@@ -241,10 +235,9 @@ public class ESDValveExample {
 
     logger.info("═══ COMPARING DIFFERENT STROKE TIMES ═══\n");
 
-    double[] strokeTimes = {5.0, 10.0, 20.0};
+    double[] strokeTimes = { 5.0, 10.0, 20.0 };
     for (double strokeTime : strokeTimes) {
-      logger.printf(org.apache.logging.log4j.Level.INFO, "Testing with stroke time: %.1f seconds%n",
-          strokeTime);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Testing with stroke time: %.1f seconds%n", strokeTime);
 
       ESDValve testValve = new ESDValve("Test-ESD", feedStream);
       testValve.setStrokeTime(strokeTime);
@@ -253,15 +246,15 @@ public class ESDValveExample {
 
       // Simulate closure
       for (int i = 0; i < 25; i++) {
-        testValve.runTransient(1.0, UUID.randomUUID());
+	testValve.runTransient(1.0, UUID.randomUUID());
       }
 
       logger.printf(org.apache.logging.log4j.Level.INFO, "  - Closure completed: %s%n",
-          testValve.hasTripCompleted() ? "YES" : "NO");
+	  testValve.hasTripCompleted() ? "YES" : "NO");
       logger.printf(org.apache.logging.log4j.Level.INFO, "  - Time elapsed: %.1f seconds%n",
-          testValve.getTimeElapsedSinceTrip());
+	  testValve.getTimeElapsedSinceTrip());
       logger.printf(org.apache.logging.log4j.Level.INFO, "  - Final opening: %.1f%%%n%n",
-          testValve.getPercentValveOpening());
+	  testValve.getPercentValveOpening());
     }
 
     logger.info("✓ Faster stroke times provide quicker isolation");

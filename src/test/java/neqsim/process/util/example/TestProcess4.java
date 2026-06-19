@@ -21,8 +21,8 @@ public class TestProcess4 {
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 28.0), 90.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 28.0),
+	90.0);
     testSystem.addComponent("methane", 79.034);
     testSystem.addComponent("ethane", 7.102);
     testSystem.addComponent("propane", 5.121);
@@ -49,8 +49,7 @@ public class TestProcess4 {
 
     Stream liquidStream = new Stream("liquidStream", separator.getLiquidOutStream());
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(separator);
     // operations.add(valve_1);

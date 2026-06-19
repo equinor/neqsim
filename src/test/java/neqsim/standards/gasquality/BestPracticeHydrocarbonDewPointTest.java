@@ -47,8 +47,7 @@ class BestPracticeHydrocarbonDewPointTest extends neqsim.NeqSimTest {
     standard.calculate();
     double dewPoint = standard.getValue("hydrocarbondewpointTemperature", "C");
     // HC dew point for rich gas should be a real temperature
-    assertTrue(dewPoint > -100 && dewPoint < 100,
-        "HC dew point should be between -100 and 100 C but was " + dewPoint);
+    assertTrue(dewPoint > -100 && dewPoint < 100, "HC dew point should be between -100 and 100 C but was " + dewPoint);
   }
 
   /**

@@ -39,8 +39,8 @@ public class OilInWaterDecisionSupportTest {
   @Test
   public void testDoseResponseCalibrationReducesError() {
     DemulsifierDoseResponseModel model = new DemulsifierDoseResponseModel();
-    double[] doses = {0.0, 10.0, 20.0, 40.0, 80.0};
-    double[] observedOiw = {120.0, 82.0, 58.0, 40.0, 48.0};
+    double[] doses = { 0.0, 10.0, 20.0, 40.0, 80.0 };
+    double[] observedOiw = { 120.0, 82.0, 58.0, 40.0, 48.0 };
 
     double rmse = model.calibrate(doses, observedOiw, 120.0);
     double noChemical = model.predictOilInWater(120.0, 0.0);
@@ -129,8 +129,7 @@ public class OilInWaterDecisionSupportTest {
     assertNotNull(recommendation);
     assertTrue(recommendation.isFeasible(), recommendation.getMessage());
     assertTrue(recommendation.getSetpointDosePpm() > 0.0);
-    assertTrue(recommendation.getPredictedMeasuredOilInWaterMgL() <= recommendation
-        .getTargetOilInWaterMgL());
+    assertTrue(recommendation.getPredictedMeasuredOilInWaterMgL() <= recommendation.getTargetOilInWaterMgL());
     assertTrue(optimizer.toJson().contains("lastRecommendation"));
   }
 

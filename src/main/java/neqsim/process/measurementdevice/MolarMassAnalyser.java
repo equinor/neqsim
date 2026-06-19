@@ -31,7 +31,7 @@ public class MolarMassAnalyser extends StreamMeasurementDeviceBaseClass {
    * Constructor for MolarMassAnalyser.
    * </p>
    *
-   * @param name Name of MolarMassAnalyser
+   * @param name   Name of MolarMassAnalyser
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public MolarMassAnalyser(String name, StreamInterface stream) {
@@ -49,8 +49,8 @@ public class MolarMassAnalyser extends StreamMeasurementDeviceBaseClass {
   @Override
   public double getMeasuredValue(String unit) {
     if (!unit.equalsIgnoreCase("gr/mol")) {
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
-          "getMeasuredValue", "unit", "currently only supports \"gr/mol\""));
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getMeasuredValue", "unit",
+	  "currently only supports \"gr/mol\""));
     }
     return applySignalModifiers(stream.getThermoSystem().getMolarMass() * 1000.0);
   }

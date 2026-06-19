@@ -8,13 +8,13 @@ import java.util.List;
  * Event Tree Analysis (ETA) — quantitative outcome-frequency calculator.
  *
  * <p>
- * An event tree starts from an initiating event and branches at each safety barrier or pivotal
- * event into a "success" path and a "failure" path with given probabilities. Each leaf
- * (consequence) frequency = initiating frequency × ∏ branch probabilities.
+ * An event tree starts from an initiating event and branches at each safety barrier or pivotal event into a "success"
+ * path and a "failure" path with given probabilities. Each leaf (consequence) frequency = initiating frequency × ∏
+ * branch probabilities.
  *
  * <p>
- * Typical use: ignition probability tree (immediate, delayed, no-ignition), barrier failure tree
- * (ESD success/fail × blowdown success/fail × deluge success/fail).
+ * Typical use: ignition probability tree (immediate, delayed, no-ignition), barrier failure tree (ESD success/fail ×
+ * blowdown success/fail × deluge success/fail).
  *
  * <p>
  * <b>Reference:</b> ISO 31010 §B.18; CCPS — Guidelines for Hazard Evaluation Procedures, 3rd Ed.
@@ -32,7 +32,7 @@ public class EventTreeAnalyzer implements Serializable {
   /**
    * Construct an event tree.
    *
-   * @param initiatingEventName description of the initiating event
+   * @param initiatingEventName        description of the initiating event
    * @param initiatingFrequencyPerYear frequency of the initiating event in 1/year
    */
   public EventTreeAnalyzer(String initiatingEventName, double initiatingFrequencyPerYear) {
@@ -46,7 +46,7 @@ public class EventTreeAnalyzer implements Serializable {
   /**
    * Add a pivotal-event branch (barrier, decision). Branches are evaluated in the order added.
    *
-   * @param name pivotal event name (e.g. "Immediate ignition", "ESD success")
+   * @param name             pivotal event name (e.g. "Immediate ignition", "ESD success")
    * @param probabilityOfYes probability that the pivotal event occurs (true branch)
    * @return this analyzer for chaining
    */
@@ -71,16 +71,15 @@ public class EventTreeAnalyzer implements Serializable {
       double prob = 1.0;
       StringBuilder path = new StringBuilder();
       for (int b = 0; b < n; b++) {
-        boolean yes = ((i >> b) & 1) == 1;
-        Branch br = branches.get(b);
-        prob *= yes ? br.probabilityOfYes : (1.0 - br.probabilityOfYes);
-        path.append(br.name).append("=").append(yes ? "Y" : "N");
-        if (b < n - 1) {
-          path.append("; ");
-        }
+	boolean yes = ((i >> b) & 1) == 1;
+	Branch br = branches.get(b);
+	prob *= yes ? br.probabilityOfYes : (1.0 - br.probabilityOfYes);
+	path.append(br.name).append("=").append(yes ? "Y" : "N");
+	if (b < n - 1) {
+	  path.append("; ");
+	}
       }
-      outcomes.add(
-          new Outcome(path.toString(), prob, prob * initiatingFrequencyPerYear));
+      outcomes.add(new Outcome(path.toString(), prob, prob * initiatingFrequencyPerYear));
     }
     return outcomes;
   }
@@ -92,11 +91,10 @@ public class EventTreeAnalyzer implements Serializable {
    */
   public String report() {
     StringBuilder sb = new StringBuilder();
-    sb.append("Event Tree: ").append(initiatingEventName).append("  (")
-        .append(initiatingFrequencyPerYear).append(" /yr)\n");
+    sb.append("Event Tree: ").append(initiatingEventName).append("  (").append(initiatingFrequencyPerYear)
+	.append(" /yr)\n");
     for (Outcome o : evaluate()) {
-      sb.append(String.format("  P=%.4e  F=%.4e /yr  | %s%n",
-          o.probability, o.frequencyPerYear, o.path));
+      sb.append(String.format("  P=%.4e  F=%.4e /yr  | %s%n", o.probability, o.frequencyPerYear, o.path));
     }
     return sb.toString();
   }

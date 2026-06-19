@@ -33,11 +33,9 @@ class InletDeviceModelTest {
     model.setInletNozzleDiameter(0.15); // 150mm nozzle
     DropletSizeDistribution dsd = DropletSizeDistribution.rosinRammler(100e-6, 2.6);
 
-    model.calculate(dsd, GAS_DENSITY, LIQUID_DENSITY, GAS_VOLUME_FLOW, LIQUID_VOLUME_FLOW,
-        SURFACE_TENSION);
+    model.calculate(dsd, GAS_DENSITY, LIQUID_DENSITY, GAS_VOLUME_FLOW, LIQUID_VOLUME_FLOW, SURFACE_TENSION);
 
-    assertTrue(model.getBulkSeparationEfficiency() > 0.0,
-        "Inlet vane should have positive bulk efficiency");
+    assertTrue(model.getBulkSeparationEfficiency() > 0.0, "Inlet vane should have positive bulk efficiency");
     assertTrue(model.getBulkSeparationEfficiency() <= 1.0, "Bulk efficiency should be <= 1.0");
     assertTrue(model.getNozzleVelocity() > 0.0, "Nozzle velocity should be positive");
     assertTrue(model.getMomentumFlux() > 0.0, "Momentum flux should be positive");
@@ -54,13 +52,10 @@ class InletDeviceModelTest {
     model.setInletNozzleDiameter(0.15);
     DropletSizeDistribution dsd = DropletSizeDistribution.rosinRammler(100e-6, 2.6);
 
-    model.calculate(dsd, GAS_DENSITY, LIQUID_DENSITY, GAS_VOLUME_FLOW, LIQUID_VOLUME_FLOW,
-        SURFACE_TENSION);
+    model.calculate(dsd, GAS_DENSITY, LIQUID_DENSITY, GAS_VOLUME_FLOW, LIQUID_VOLUME_FLOW, SURFACE_TENSION);
 
-    assertTrue(model.getBulkSeparationEfficiency() >= 0.0,
-        "Deflector should have non-negative efficiency");
-    assertTrue(model.getBulkSeparationEfficiency() < 0.9,
-        "Deflector shouldn't be extremely efficient");
+    assertTrue(model.getBulkSeparationEfficiency() >= 0.0, "Deflector should have non-negative efficiency");
+    assertTrue(model.getBulkSeparationEfficiency() < 0.9, "Deflector shouldn't be extremely efficient");
   }
 
   /**
@@ -72,11 +67,9 @@ class InletDeviceModelTest {
     model.setInletNozzleDiameter(0.15);
     DropletSizeDistribution dsd = DropletSizeDistribution.rosinRammler(100e-6, 2.6);
 
-    model.calculate(dsd, GAS_DENSITY, LIQUID_DENSITY, GAS_VOLUME_FLOW, LIQUID_VOLUME_FLOW,
-        SURFACE_TENSION);
+    model.calculate(dsd, GAS_DENSITY, LIQUID_DENSITY, GAS_VOLUME_FLOW, LIQUID_VOLUME_FLOW, SURFACE_TENSION);
 
-    assertTrue(model.getBulkSeparationEfficiency() > 0.0,
-        "Inlet cyclone should have positive efficiency");
+    assertTrue(model.getBulkSeparationEfficiency() > 0.0, "Inlet cyclone should have positive efficiency");
   }
 
   /**
@@ -88,11 +81,9 @@ class InletDeviceModelTest {
     model.setInletNozzleDiameter(0.15);
     DropletSizeDistribution dsd = DropletSizeDistribution.rosinRammler(100e-6, 2.6);
 
-    model.calculate(dsd, GAS_DENSITY, LIQUID_DENSITY, GAS_VOLUME_FLOW, LIQUID_VOLUME_FLOW,
-        SURFACE_TENSION);
+    model.calculate(dsd, GAS_DENSITY, LIQUID_DENSITY, GAS_VOLUME_FLOW, LIQUID_VOLUME_FLOW, SURFACE_TENSION);
 
-    assertEquals(0.0, model.getBulkSeparationEfficiency(), 1e-10,
-        "No device should have zero bulk efficiency");
+    assertEquals(0.0, model.getBulkSeparationEfficiency(), 1e-10, "No device should have zero bulk efficiency");
   }
 
   /**
@@ -105,14 +96,12 @@ class InletDeviceModelTest {
     DropletSizeDistribution dsd = DropletSizeDistribution.rosinRammler(100e-6, 2.6);
 
     // Normal momentum
-    model.calculate(dsd, GAS_DENSITY, LIQUID_DENSITY, GAS_VOLUME_FLOW, LIQUID_VOLUME_FLOW,
-        SURFACE_TENSION);
+    model.calculate(dsd, GAS_DENSITY, LIQUID_DENSITY, GAS_VOLUME_FLOW, LIQUID_VOLUME_FLOW, SURFACE_TENSION);
     double normalEff = model.getBulkSeparationEfficiency();
 
     // Very high momentum (small nozzle, very high flows)
     model.setInletNozzleDiameter(0.05);
-    model.calculate(dsd, GAS_DENSITY, LIQUID_DENSITY, GAS_VOLUME_FLOW * 5.0,
-        LIQUID_VOLUME_FLOW * 5.0, SURFACE_TENSION);
+    model.calculate(dsd, GAS_DENSITY, LIQUID_DENSITY, GAS_VOLUME_FLOW * 5.0, LIQUID_VOLUME_FLOW * 5.0, SURFACE_TENSION);
     double highMomEff = model.getBulkSeparationEfficiency();
 
     assertTrue(highMomEff >= 0.0 && highMomEff <= 1.0, "Efficiency should be valid");
@@ -127,8 +116,7 @@ class InletDeviceModelTest {
     model.setInletNozzleDiameter(0.15);
     DropletSizeDistribution originalDsd = DropletSizeDistribution.rosinRammler(100e-6, 2.6);
 
-    model.calculate(originalDsd, GAS_DENSITY, LIQUID_DENSITY, GAS_VOLUME_FLOW, LIQUID_VOLUME_FLOW,
-        SURFACE_TENSION);
+    model.calculate(originalDsd, GAS_DENSITY, LIQUID_DENSITY, GAS_VOLUME_FLOW, LIQUID_VOLUME_FLOW, SURFACE_TENSION);
 
     DropletSizeDistribution downstreamDsd = model.getDownstreamDSD();
     assertNotNull(downstreamDsd);
@@ -149,8 +137,7 @@ class InletDeviceModelTest {
 
     for (InletDeviceModel.InletDeviceType type : types) {
       assertNotNull(type.getDisplayName(), "Display name should not be null for " + type);
-      assertTrue(type.getPressureDropCoefficient() >= 0.0,
-          "Pressure drop coeff should be non-negative for " + type);
+      assertTrue(type.getPressureDropCoefficient() >= 0.0, "Pressure drop coeff should be non-negative for " + type);
     }
   }
 }

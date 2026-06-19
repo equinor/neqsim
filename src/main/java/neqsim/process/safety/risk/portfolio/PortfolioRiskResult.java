@@ -12,8 +12,8 @@ import com.google.gson.GsonBuilder;
  * Results from Portfolio Risk Analysis.
  *
  * <p>
- * Contains aggregated results from multi-asset Monte Carlo simulation, including portfolio-level
- * statistics, asset contributions, common cause impacts, and diversification benefits.
+ * Contains aggregated results from multi-asset Monte Carlo simulation, including portfolio-level statistics, asset
+ * contributions, common cause impacts, and diversification benefits.
  * </p>
  *
  * @author NeqSim Development Team
@@ -303,14 +303,14 @@ public class PortfolioRiskResult implements Serializable {
    */
   public double getValueAtRisk(int confidencePercent) {
     switch (confidencePercent) {
-      case 90:
-        return p90PortfolioLoss;
-      case 99:
-        return p99PortfolioLoss;
-      default:
-        // Approximate using normal distribution
-        double z = getNormalZ(confidencePercent / 100.0);
-        return expectedPortfolioLoss + z * portfolioLossStdDev;
+    case 90:
+      return p90PortfolioLoss;
+    case 99:
+      return p99PortfolioLoss;
+    default:
+      // Approximate using normal distribution
+      double z = getNormalZ(confidencePercent / 100.0);
+      return expectedPortfolioLoss + z * portfolioLossStdDev;
     }
   }
 
@@ -388,8 +388,7 @@ public class PortfolioRiskResult implements Serializable {
    * @return JSON representation
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   /**
@@ -403,8 +402,7 @@ public class PortfolioRiskResult implements Serializable {
     sb.append(StringUtils.repeat("═", 70)).append("\n\n");
 
     sb.append("Analysis: ").append(analysisName).append("\n");
-    sb.append(String.format("Simulations: %,d over %.1f years%n", numberOfSimulations,
-        simulationPeriodYears));
+    sb.append(String.format("Simulations: %,d over %.1f years%n", numberOfSimulations, simulationPeriodYears));
     sb.append("\n");
 
     sb.append("PORTFOLIO PRODUCTION\n");
@@ -426,8 +424,8 @@ public class PortfolioRiskResult implements Serializable {
 
     sb.append("COMMON CAUSE ANALYSIS\n");
     sb.append(StringUtils.repeat("─", 40)).append("\n");
-    sb.append(String.format("  Common Cause Loss: %,.0f boe (%.1f%% of total)%n",
-        expectedCommonCauseLoss, commonCauseFraction * 100));
+    sb.append(String.format("  Common Cause Loss: %,.0f boe (%.1f%% of total)%n", expectedCommonCauseLoss,
+	commonCauseFraction * 100));
     sb.append(String.format("  Diversification:   %.1f%% benefit%n", diversificationBenefit * 100));
     sb.append("\n");
 
@@ -436,9 +434,8 @@ public class PortfolioRiskResult implements Serializable {
     sb.append(String.format("%-20s %12s %12s %12s%n", "Asset", "Production", "Loss", "% Risk"));
     sb.append(StringUtils.repeat("─", 60)).append("\n");
     for (AssetResult ar : assetResults) {
-      sb.append(String.format("%-20s %,12.0f %,12.0f %11.1f%%%n", ar.getAssetName(),
-          ar.getExpectedProduction(), ar.getExpectedLoss(),
-          ar.getContributionToPortfolioRisk() * 100));
+      sb.append(String.format("%-20s %,12.0f %,12.0f %11.1f%%%n", ar.getAssetName(), ar.getExpectedProduction(),
+	  ar.getExpectedLoss(), ar.getContributionToPortfolioRisk() * 100));
     }
 
     return sb.toString();
@@ -446,7 +443,7 @@ public class PortfolioRiskResult implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("PortfolioRiskResult[%s: %.0f boe expected loss, %.1f%% availability]",
-        analysisName, expectedPortfolioLoss, portfolioAvailability * 100);
+    return String.format("PortfolioRiskResult[%s: %.0f boe expected loss, %.1f%% availability]", analysisName,
+	expectedPortfolioLoss, portfolioAvailability * 100);
   }
 }

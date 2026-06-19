@@ -11,8 +11,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Test class for CompressorChartGenerator, verifying that generated curves work correctly with
- * different chart types including "interpolate and extrapolate".
+ * Test class for CompressorChartGenerator, verifying that generated curves work correctly with different chart types
+ * including "interpolate and extrapolate".
  *
  * @author AGAS
  * @version 1.0
@@ -64,7 +64,7 @@ public class CompressorChartGeneratorTest {
 
     assertNotNull(chart, "Chart should not be null");
     assertTrue(chart instanceof CompressorChartAlternativeMapLookupExtrapolate,
-        "Chart should be CompressorChartAlternativeMapLookupExtrapolate for interpolate and extrapolate");
+	"Chart should be CompressorChartAlternativeMapLookupExtrapolate for interpolate and extrapolate");
 
     // Set chart and run compressor
     compressor.setCompressorChart(chart);
@@ -72,7 +72,7 @@ public class CompressorChartGeneratorTest {
 
     // Verify compressor runs without errors
     assertTrue(compressor.getOutletPressure() > compressor.getInletStream().getPressure("bara"),
-        "Outlet pressure should be higher than inlet pressure");
+	"Outlet pressure should be higher than inlet pressure");
   }
 
   /**
@@ -89,7 +89,7 @@ public class CompressorChartGeneratorTest {
 
     assertNotNull(chart, "Chart should not be null");
     assertTrue(chart instanceof CompressorChartAlternativeMapLookupExtrapolate,
-        "Chart should be CompressorChartAlternativeMapLookupExtrapolate for interpolate and extrapolate");
+	"Chart should be CompressorChartAlternativeMapLookupExtrapolate for interpolate and extrapolate");
 
     // Verify chart data
     double[] speeds = chart.getSpeeds();
@@ -127,7 +127,7 @@ public class CompressorChartGeneratorTest {
 
     assertNotNull(chart, "Template chart should not be null");
     assertTrue(chart instanceof CompressorChartAlternativeMapLookupExtrapolate,
-        "Template chart should be CompressorChartAlternativeMapLookupExtrapolate");
+	"Template chart should be CompressorChartAlternativeMapLookupExtrapolate");
 
     // Set chart and run compressor
     compressor.setCompressorChart(chart);
@@ -197,7 +197,7 @@ public class CompressorChartGeneratorTest {
 
     assertNotNull(chart, "Chart should not be null");
     assertTrue(chart instanceof CompressorChartAlternativeMapLookup,
-        "Chart should be CompressorChartAlternativeMapLookup for interpolate");
+	"Chart should be CompressorChartAlternativeMapLookup for interpolate");
 
     compressor.setCompressorChart(chart);
     compressor.run();
@@ -261,10 +261,9 @@ public class CompressorChartGeneratorTest {
       assertTrue(effs[i].length > 0, "Efficiency curve " + i + " should have data points");
 
       // Verify dimensions match within each speed
-      assertEquals(flows[i].length, heads[i].length,
-          "Flow and head curve " + i + " should have same number of points");
+      assertEquals(flows[i].length, heads[i].length, "Flow and head curve " + i + " should have same number of points");
       assertEquals(flows[i].length, effs[i].length,
-          "Flow and efficiency curve " + i + " should have same number of points");
+	  "Flow and efficiency curve " + i + " should have same number of points");
     }
   }
 
@@ -295,8 +294,7 @@ public class CompressorChartGeneratorTest {
     // Test no-arg version
     compressor.generateCompressorChart();
     assertNotNull(compressor.getCompressorChart(), "Chart should not be null after generation");
-    assertTrue(compressor.getCompressorChart().isUseCompressorChart(),
-        "Chart should be active after generation");
+    assertTrue(compressor.getCompressorChart().isUseCompressorChart(), "Chart should be active after generation");
 
     // Test with number of speeds
     compressor.generateCompressorChart(5);
@@ -310,8 +308,7 @@ public class CompressorChartGeneratorTest {
 
     // Test with generation option and number of speeds
     compressor.generateCompressorChart("mid range", 3);
-    assertEquals(3, compressor.getCompressorChart().getSpeeds().length,
-        "Should have 3 speed curves");
+    assertEquals(3, compressor.getCompressorChart().getSpeeds().length, "Should have 3 speed curves");
   }
 
   /**
@@ -326,8 +323,7 @@ public class CompressorChartGeneratorTest {
 
     CompressorChartInterface chart = compressor.getCompressorChart();
     assertNotNull(chart, "Chart should not be null");
-    assertTrue(chart instanceof CompressorChartAlternativeMapLookupExtrapolate,
-        "Should be correct chart type");
+    assertTrue(chart instanceof CompressorChartAlternativeMapLookupExtrapolate, "Should be correct chart type");
 
     double[] speeds = chart.getSpeeds();
     assertEquals(5, speeds.length, "Should have 5 speed curves");
@@ -345,7 +341,7 @@ public class CompressorChartGeneratorTest {
     compressor.setCompressorChartType("interpolate and extrapolate");
     compressor.run();
 
-    double[] speeds = {8000, 9000, 10000, 11000, 12000};
+    double[] speeds = { 8000, 9000, 10000, 11000, 12000 };
     compressor.generateCompressorChart("normal curves", speeds);
 
     CompressorChartInterface chart = compressor.getCompressorChart();
@@ -376,8 +372,8 @@ public class CompressorChartGeneratorTest {
    * Test that power curves are generated correctly.
    *
    * <p>
-   * Power is calculated as: P = mass_flow * head / efficiency. This is critical for driver
-   * selection and energy analysis.
+   * Power is calculated as: P = mass_flow * head / efficiency. This is critical for driver selection and energy
+   * analysis.
    * </p>
    */
   @Test
@@ -397,11 +393,11 @@ public class CompressorChartGeneratorTest {
     double[][] flows = chart.getFlows();
     for (int i = 0; i < powers.length; i++) {
       assertEquals(flows[i].length, powers[i].length,
-          "Power curve " + i + " should have same number of points as flow curve");
+	  "Power curve " + i + " should have same number of points as flow curve");
 
       // Verify all power values are positive
       for (int j = 0; j < powers[i].length; j++) {
-        assertTrue(powers[i][j] > 0, "Power at speed " + i + " point " + j + " should be positive");
+	assertTrue(powers[i][j] > 0, "Power at speed " + i + " point " + j + " should be positive");
       }
     }
 
@@ -409,7 +405,7 @@ public class CompressorChartGeneratorTest {
     int designPointIdx = flows[0].length / 2;
     for (int i = 1; i < powers.length; i++) {
       assertTrue(powers[i][designPointIdx] > powers[i - 1][designPointIdx],
-          "Power should increase with speed at design point");
+	  "Power should increase with speed at design point");
     }
   }
 
@@ -417,8 +413,8 @@ public class CompressorChartGeneratorTest {
    * Test that pressure ratio curves are generated correctly.
    *
    * <p>
-   * Pressure ratio is calculated from polytropic head using thermodynamic relations. Useful for
-   * process design and control system configuration.
+   * Pressure ratio is calculated from polytropic head using thermodynamic relations. Useful for process design and
+   * control system configuration.
    * </p>
    */
   @Test
@@ -438,12 +434,11 @@ public class CompressorChartGeneratorTest {
     double[][] flows = chart.getFlows();
     for (int i = 0; i < pressureRatios.length; i++) {
       assertEquals(flows[i].length, pressureRatios[i].length,
-          "Pressure ratio curve " + i + " should have same number of points as flow curve");
+	  "Pressure ratio curve " + i + " should have same number of points as flow curve");
 
       // Verify all pressure ratios are >= 1.0
       for (int j = 0; j < pressureRatios[i].length; j++) {
-        assertTrue(pressureRatios[i][j] >= 1.0,
-            "Pressure ratio at speed " + i + " point " + j + " should be >= 1.0");
+	assertTrue(pressureRatios[i][j] >= 1.0, "Pressure ratio at speed " + i + " point " + j + " should be >= 1.0");
       }
     }
 
@@ -453,7 +448,7 @@ public class CompressorChartGeneratorTest {
       int surgeIdx = 0;
       int stonewallIdx = pressureRatios[i].length - 1;
       assertTrue(pressureRatios[i][surgeIdx] > pressureRatios[i][stonewallIdx],
-          "Pressure ratio at surge should be higher than at stonewall for speed " + i);
+	  "Pressure ratio at surge should be higher than at stonewall for speed " + i);
     }
   }
 
@@ -477,15 +472,14 @@ public class CompressorChartGeneratorTest {
     assertTrue(density > 0, "Reference density should be positive");
     assertTrue(inletPressure > 0, "Inlet pressure should be positive");
     assertTrue(polytropicExp > 1.0 && polytropicExp < 2.0,
-        "Polytropic exponent should be between 1 and 2 for typical gases");
+	"Polytropic exponent should be between 1 and 2 for typical gases");
   }
 
   /**
    * Test power and pressure ratio calculations consistency.
    *
    * <p>
-   * Verifies that power follows P = mass_flow * head / efficiency and pressure ratio follows
-   * polytropic relations.
+   * Verifies that power follows P = mass_flow * head / efficiency and pressure ratio follows polytropic relations.
    * </p>
    */
   @Test
@@ -515,7 +509,7 @@ public class CompressorChartGeneratorTest {
 
       // Allow 1% tolerance for numerical differences
       assertEquals(expectedPower, actualPower, expectedPower * 0.01,
-          "Power calculation should be consistent at speed " + i);
+	  "Power calculation should be consistent at speed " + i);
     }
   }
 
@@ -523,8 +517,8 @@ public class CompressorChartGeneratorTest {
    * Test that discharge temperature curves are generated correctly.
    *
    * <p>
-   * Discharge temperature is calculated from inlet temperature and pressure ratio using polytropic
-   * relations. This is critical for downstream equipment design and material temperature limits.
+   * Discharge temperature is calculated from inlet temperature and pressure ratio using polytropic relations. This is
+   * critical for downstream equipment design and material temperature limits.
    * </p>
    */
   @Test
@@ -538,20 +532,19 @@ public class CompressorChartGeneratorTest {
     double[][] dischargeTemps = chart.getDischargeTemperatures();
 
     assertNotNull(dischargeTemps, "Discharge temperature curves should not be null");
-    assertEquals(3, dischargeTemps.length,
-        "Should have 3 discharge temperature curves (one per speed)");
+    assertEquals(3, dischargeTemps.length, "Should have 3 discharge temperature curves (one per speed)");
 
     // Verify discharge temperature curves have correct dimensions
     double[][] flows = chart.getFlows();
     for (int i = 0; i < dischargeTemps.length; i++) {
       assertEquals(flows[i].length, dischargeTemps[i].length,
-          "Discharge temp curve " + i + " should have same number of points as flow curve");
+	  "Discharge temp curve " + i + " should have same number of points as flow curve");
 
       // Verify all temperatures are above inlet temperature (compression heats the gas)
       double inletTemp = chart.getInletTemperature();
       for (int j = 0; j < dischargeTemps[i].length; j++) {
-        assertTrue(dischargeTemps[i][j] >= inletTemp, "Discharge temp at speed " + i + " point " + j
-            + " should be >= inlet temp (compression heats gas)");
+	assertTrue(dischargeTemps[i][j] >= inletTemp,
+	    "Discharge temp at speed " + i + " point " + j + " should be >= inlet temp (compression heats gas)");
       }
     }
 
@@ -561,7 +554,7 @@ public class CompressorChartGeneratorTest {
       int surgeIdx = 0;
       int stonewallIdx = dischargeTemps[i].length - 1;
       assertTrue(dischargeTemps[i][surgeIdx] > dischargeTemps[i][stonewallIdx],
-          "Discharge temp at surge should be higher than at stonewall for speed " + i);
+	  "Discharge temp at surge should be higher than at stonewall for speed " + i);
     }
   }
 
@@ -581,9 +574,8 @@ public class CompressorChartGeneratorTest {
     assertTrue(!Double.isNaN(gamma), "Gamma should be set");
 
     assertTrue(inletTemp > 200 && inletTemp < 500,
-        "Inlet temperature should be reasonable (200-500 K), got: " + inletTemp);
-    assertTrue(gamma > 1.0 && gamma < 2.0,
-        "Gamma should be between 1 and 2 for typical gases, got: " + gamma);
+	"Inlet temperature should be reasonable (200-500 K), got: " + inletTemp);
+    assertTrue(gamma > 1.0 && gamma < 2.0, "Gamma should be between 1 and 2 for typical gases, got: " + gamma);
   }
 
   /**
@@ -614,7 +606,7 @@ public class CompressorChartGeneratorTest {
 
       // Allow 5% tolerance for numerical differences
       assertEquals(expectedT2, t2, expectedT2 * 0.05,
-          "Discharge temperature should follow polytropic relation at speed " + i);
+	  "Discharge temperature should follow polytropic relation at speed " + i);
     }
   }
 }

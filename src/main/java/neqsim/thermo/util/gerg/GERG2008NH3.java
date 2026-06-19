@@ -7,18 +7,17 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * GERG-2008-NH3 class.
  *
  * <p>
- * Extension of the GERG-2008 equation of state with ammonia (NH3) as the 22nd component, based on:
- * Neumann, T., Thol, M., Bell, I.H., Lemmon, E.W., Span, R. (2020). "Fundamental Thermodynamic
- * Models for Mixtures Containing Ammonia". Fluid Phase Equilibria, 511, 112496. Corrigendum: Fluid
- * Phase Equilibria, 521, 112749 (2020) — corrects GBS parameter column labels in Tables 4 and 5.
+ * Extension of the GERG-2008 equation of state with ammonia (NH3) as the 22nd component, based on: Neumann, T., Thol,
+ * M., Bell, I.H., Lemmon, E.W., Span, R. (2020). "Fundamental Thermodynamic Models for Mixtures Containing Ammonia".
+ * Fluid Phase Equilibria, 511, 112496. Corrigendum: Fluid Phase Equilibria, 521, 112749 (2020) — corrects GBS parameter
+ * column labels in Tables 4 and 5.
  * </p>
  *
  * <p>
- * Pure ammonia EOS from: Gao, K., Wu, J., Zhang, P., Lemmon, E.W. (2020). JPCRD. The full 20-term
- * Gao reference EOS is evaluated directly for the pure component contribution (8 power + 10
- * Gaussian + 2 GaoB terms), bypassing the standard SFE-12 short-form approximation. This ensures
- * exact consistency between the reducing parameters (Tc=405.56K, rhoc=13.696 mol/L) and the
- * residual Helmholtz energy. Coefficients sourced from CoolProp (Gao-JPCRD-2020).
+ * Pure ammonia EOS from: Gao, K., Wu, J., Zhang, P., Lemmon, E.W. (2020). JPCRD. The full 20-term Gao reference EOS is
+ * evaluated directly for the pure component contribution (8 power + 10 Gaussian + 2 GaoB terms), bypassing the standard
+ * SFE-12 short-form approximation. This ensures exact consistency between the reducing parameters (Tc=405.56K,
+ * rhoc=13.696 mol/L) and the residual Helmholtz energy. Coefficients sourced from CoolProp (Gao-JPCRD-2020).
  * </p>
  *
  * <p>
@@ -33,11 +32,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * </ul>
  *
  * <p>
- * The GBS departure function form is: n_k * delta^d_k * tau^t_k * exp(-eta_k*(delta-eps_k)^2 -
- * beta_k*(tau-gamma_k)^2) This differs from the standard GERG-2008 exponential form which uses
- * exp(-eta*(delta-eps)^2 - beta*(delta-gamma)) — both Gaussians in delta, with the beta term
- * LINEAR. The GBS form has a QUADRATIC tau-Gaussian, requiring a separate evaluation path with
- * modified tau-derivatives.
+ * The GBS departure function form is: n_k * delta^d_k * tau^t_k * exp(-eta_k*(delta-eps_k)^2 - beta_k*(tau-gamma_k)^2)
+ * This differs from the standard GERG-2008 exponential form which uses exp(-eta*(delta-eps)^2 - beta*(delta-gamma)) —
+ * both Gaussians in delta, with the beta term LINEAR. The GBS form has a QUADRATIC tau-Gaussian, requiring a separate
+ * evaluation path with modified tau-derivatives.
  * </p>
  *
  * @author NeqSim team
@@ -102,56 +100,54 @@ public class GERG2008NH3 extends GERG2008 {
   /** Number of polynomial power terms (l=0). */
   private static final int GAO_NPOL = 5;
   /** Gao power term amplitudes. */
-  private static final double[] gaoPowN = {0.006132232, 1.7395866, -2.2261792, -0.30127553,
-      0.08967023, -0.076387037, -0.84063963, -0.27026327};
+  private static final double[] gaoPowN = { 0.006132232, 1.7395866, -2.2261792, -0.30127553, 0.08967023, -0.076387037,
+      -0.84063963, -0.27026327 };
   /** Gao power term d exponents. */
-  private static final int[] gaoPowD = {4, 1, 1, 2, 3, 3, 2, 3};
+  private static final int[] gaoPowD = { 4, 1, 1, 2, 3, 3, 2, 3 };
   /** Gao power term t exponents. */
-  private static final double[] gaoPowT = {1.0, 0.382, 1.0, 1.0, 0.677, 2.915, 3.51, 1.063};
+  private static final double[] gaoPowT = { 1.0, 0.382, 1.0, 1.0, 0.677, 2.915, 3.51, 1.063 };
   /** Gao power term l exponents (0=polynomial, &gt;0=exponential). */
-  private static final int[] gaoPowL = {0, 0, 0, 0, 0, 2, 2, 1};
+  private static final int[] gaoPowL = { 0, 0, 0, 0, 0, 2, 2, 1 };
 
   /** Number of Gaussian terms in Gao EOS. */
   private static final int GAO_NGAUSS = 10;
   /** Gao Gaussian term amplitudes. */
-  private static final double[] gaoGaussN = {6.212578, -5.7844357, 2.4817542, -2.3739168,
-      0.01493697, -3.7749264, 6.254348E-4, -1.7359E-5, -0.13462033, 0.07749072839};
+  private static final double[] gaoGaussN = { 6.212578, -5.7844357, 2.4817542, -2.3739168, 0.01493697, -3.7749264,
+      6.254348E-4, -1.7359E-5, -0.13462033, 0.07749072839 };
   /** Gao Gaussian term d exponents. */
-  private static final int[] gaoGaussD = {1, 1, 1, 2, 2, 1, 3, 3, 1, 1};
+  private static final int[] gaoGaussD = { 1, 1, 1, 2, 2, 1, 3, 3, 1, 1 };
   /** Gao Gaussian term t exponents. */
-  private static final double[] gaoGaussT =
-      {0.655, 1.3, 3.1, 1.4395, 1.623, 0.643, 1.13, 4.5, 1.0, 4.0};
+  private static final double[] gaoGaussT = { 0.655, 1.3, 3.1, 1.4395, 1.623, 0.643, 1.13, 4.5, 1.0, 4.0 };
   /** Gao Gaussian term eta (delta Gaussian width). */
-  private static final double[] gaoGaussEta =
-      {0.42776, 0.6424, 0.8175, 0.7995, 0.91, 0.3574, 1.21, 4.14, 22.56, 22.68};
+  private static final double[] gaoGaussEta = { 0.42776, 0.6424, 0.8175, 0.7995, 0.91, 0.3574, 1.21, 4.14, 22.56,
+      22.68 };
   /** Gao Gaussian term beta (tau Gaussian width). */
-  private static final double[] gaoGaussBeta =
-      {1.708, 1.4865, 2.0915, 2.43, 0.488, 1.1, 0.85, 1.14, 945.64, 993.85};
+  private static final double[] gaoGaussBeta = { 1.708, 1.4865, 2.0915, 2.43, 0.488, 1.1, 0.85, 1.14, 945.64, 993.85 };
   /** Gao Gaussian term gamma (tau Gaussian center). */
-  private static final double[] gaoGaussGamma =
-      {1.036, 1.2777, 1.083, 1.2906, 0.928, 0.934, 0.919, 1.852, 1.05897, 1.05277};
+  private static final double[] gaoGaussGamma = { 1.036, 1.2777, 1.083, 1.2906, 0.928, 0.934, 0.919, 1.852, 1.05897,
+      1.05277 };
   /** Gao Gaussian term epsilon (delta Gaussian center). */
-  private static final double[] gaoGaussEps =
-      {-0.0726, -0.1274, 0.7527, 0.57, 2.2, -0.243, 2.96, 3.02, 0.9574, 0.9576};
+  private static final double[] gaoGaussEps = { -0.0726, -0.1274, 0.7527, 0.57, 2.2, -0.243, 2.96, 3.02, 0.9574,
+      0.9576 };
 
   /** Number of GaoB near-critical terms. */
   private static final int GAO_NGAOB = 2;
   /** GaoB term amplitudes. */
-  private static final double[] gaoBN = {-1.6909858, 0.93739074};
+  private static final double[] gaoBN = { -1.6909858, 0.93739074 };
   /** GaoB term d exponents. */
-  private static final int[] gaoBD = {1, 1};
+  private static final int[] gaoBD = { 1, 1 };
   /** GaoB term t exponents. */
-  private static final double[] gaoBT = {4.3315, 4.015};
+  private static final double[] gaoBT = { 4.3315, 4.015 };
   /** GaoB term eta (stored negative for Gaussian damping). */
-  private static final double[] gaoBEta = {-2.8452, -2.8342};
+  private static final double[] gaoBEta = { -2.8452, -2.8342 };
   /** GaoB term beta. */
-  private static final double[] gaoBBeta = {0.3696, 0.2962};
+  private static final double[] gaoBBeta = { 0.3696, 0.2962 };
   /** GaoB term gamma. */
-  private static final double[] gaoBGamma = {1.108, 1.313};
+  private static final double[] gaoBGamma = { 1.108, 1.313 };
   /** GaoB term epsilon. */
-  private static final double[] gaoBEps = {0.4478, 0.44689};
+  private static final double[] gaoBEps = { 0.4478, 0.44689 };
   /** GaoB term b (denominator constant). */
-  private static final double[] gaoBb = {1.244, 0.6826};
+  private static final double[] gaoBb = { 1.244, 0.6826 };
 
   /**
    * Default constructor for GERG2008NH3.
@@ -163,9 +159,8 @@ public class GERG2008NH3 extends GERG2008 {
    * Setup GERG-2008-NH3 equation of state with ammonia as the 22nd component.
    *
    * <p>
-   * Initializes the standard GERG-2008 parameters for components 1-21, then adds ammonia pure
-   * component parameters, binary reducing parameters for all 21 NH3 pairs, and GBS departure
-   * functions for Ar+NH3 and H2+NH3.
+   * Initializes the standard GERG-2008 parameters for components 1-21, then adds ammonia pure component parameters,
+   * binary reducing parameters for all 21 NH3 pairs, and GBS departure functions for Ar+NH3 and H2+NH3.
    * </p>
    */
   @Override
@@ -193,10 +188,10 @@ public class GERG2008NH3 extends GERG2008 {
    * Set up pure ammonia critical properties and ideal gas parameters.
    *
    * <p>
-   * Critical properties from Gao et al. (2020) Table 2 of Neumann et al.: Tc = 405.56 K, rhoc =
-   * 13.696 mol/L, M = 17.03052 g/mol. The standard SFE-12 residual contribution is disabled
-   * (kpol=kexp=0); the full 20-term Gao reference EOS is evaluated in evaluateGaoPureNH3(). Ideal
-   * gas PlanckEinstein parameters from Gao et al. (CoolProp Ammonia.json).
+   * Critical properties from Gao et al. (2020) Table 2 of Neumann et al.: Tc = 405.56 K, rhoc = 13.696 mol/L, M =
+   * 17.03052 g/mol. The standard SFE-12 residual contribution is disabled (kpol=kexp=0); the full 20-term Gao reference
+   * EOS is evaluated in evaluateGaoPureNH3(). Ideal gas PlanckEinstein parameters from Gao et al. (CoolProp
+   * Ammonia.json).
    * </p>
    */
   private void setupPureAmmoniaParameters() {
@@ -239,8 +234,8 @@ public class GERG2008NH3 extends GERG2008 {
    * Apply the ideal gas parameter transformation for a single component.
    *
    * <p>
-   * Replicates the transformation from SetupGERG (n0i adjustments for reference state and Rsr
-   * scaling) for a newly added component.
+   * Replicates the transformation from SetupGERG (n0i adjustments for reference state and Rsr scaling) for a newly
+   * added component.
    * </p>
    *
    * @param idx component index to transform
@@ -264,11 +259,10 @@ public class GERG2008NH3 extends GERG2008 {
    * Set up binary reducing parameters for all 21 NH3 binary pairs.
    *
    * <p>
-   * Six pairs use fitted parameters from Neumann et al. (2020) Table 3: CH4+NH3, N2+NH3, H2+NH3,
-   * Ar+NH3, CO+NH3, O2+NH3. The remaining 15 pairs use Lorentz-Berthelot combining rules (bvij =
-   * btij = 1, gvij = gtij = 1). Only Ar+NH3 and H2+NH3 have departure functions (Fij=1); the other
-   * four have Fij=0 (reducing parameters only). No model number assignments are made in the base
-   * class arrays to avoid overwriting the GeneralizedAlkane model (model 10).
+   * Six pairs use fitted parameters from Neumann et al. (2020) Table 3: CH4+NH3, N2+NH3, H2+NH3, Ar+NH3, CO+NH3,
+   * O2+NH3. The remaining 15 pairs use Lorentz-Berthelot combining rules (bvij = btij = 1, gvij = gtij = 1). Only
+   * Ar+NH3 and H2+NH3 have departure functions (Fij=1); the other four have Fij=0 (reducing parameters only). No model
+   * number assignments are made in the base class arrays to avoid overwriting the GeneralizedAlkane model (model 10).
    * </p>
    */
   private void setupBinaryReducingParameters() {
@@ -332,14 +326,14 @@ public class GERG2008NH3 extends GERG2008 {
    * Set up GBS departure functions for Ar+NH3 and H2+NH3.
    *
    * <p>
-   * Parameters from Neumann et al. (2020) Tables 4-5 with column label correction from the
-   * corrigendum (FPE 521, 112749). The corrected column order for GBS terms is: n, d, t, eta,
-   * epsilon, beta, gamma (the original paper had gamma and beta swapped).
+   * Parameters from Neumann et al. (2020) Tables 4-5 with column label correction from the corrigendum (FPE 521,
+   * 112749). The corrected column order for GBS terms is: n, d, t, eta, epsilon, beta, gamma (the original paper had
+   * gamma and beta swapped).
    * </p>
    *
    * <p>
-   * Ar+NH3 (Table 4): 1 polynomial + 2 GBS terms. H2+NH3 (Table 5): 2 polynomial + 2 GBS terms. All
-   * terms use non-integer d exponents.
+   * Ar+NH3 (Table 4): 1 polynomial + 2 GBS terms. H2+NH3 (Table 5): 2 polynomial + 2 GBS terms. All terms use
+   * non-integer d exponents.
    * </p>
    */
   private void setupNH3DepartureFunctions() {
@@ -408,11 +402,10 @@ public class GERG2008NH3 extends GERG2008 {
    * Recalculate derived parameters for ammonia.
    *
    * <p>
-   * Transforms binary reducing parameters (bvij, gvij, btij, gtij) from paper notation (beta,
-   * gamma) to the code's internal form (beta^2, gamma*beta*(Vc3_i+Vc3_j)^3), matching the
-   * transformation in the parent SetupGERG. No departure function transformation is needed since
-   * NH3 departure functions are evaluated directly from the paper notation in the overridden
-   * AlpharGERG.
+   * Transforms binary reducing parameters (bvij, gvij, btij, gtij) from paper notation (beta, gamma) to the code's
+   * internal form (beta^2, gamma*beta*(Vc3_i+Vc3_j)^3), matching the transformation in the parent SetupGERG. No
+   * departure function transformation is needed since NH3 departure functions are evaluated directly from the paper
+   * notation in the overridden AlpharGERG.
    * </p>
    */
   private void recalculateAmmoniaParameters() {
@@ -440,18 +433,17 @@ public class GERG2008NH3 extends GERG2008 {
    * Calculate dimensionless residual Helmholtz energy and derivatives.
    *
    * <p>
-   * Calls the parent GERG-2008 evaluation for all standard components and departure functions, then
-   * adds the GBS departure contributions for Ar+NH3 and H2+NH3. The GBS form uses non-integer d
-   * exponents and a tau-Gaussian damping term that cannot be represented in the standard GERG
-   * departure function arrays.
+   * Calls the parent GERG-2008 evaluation for all standard components and departure functions, then adds the GBS
+   * departure contributions for Ar+NH3 and H2+NH3. The GBS form uses non-integer d exponents and a tau-Gaussian damping
+   * term that cannot be represented in the standard GERG departure function arrays.
    * </p>
    *
-   * @param itau set to 1 to calculate tau derivatives, 0 otherwise
+   * @param itau   set to 1 to calculate tau derivatives, 0 otherwise
    * @param idelta reserved for future use
-   * @param T temperature in K
-   * @param D density in mol/L
-   * @param x composition array (mole fractions, 1-indexed)
-   * @param ar dimensionless Helmholtz energy derivatives array
+   * @param T      temperature in K
+   * @param D      density in mol/L
+   * @param x      composition array (mole fractions, 1-indexed)
+   * @param ar     dimensionless Helmholtz energy derivatives array
    */
   @Override
   void AlpharGERG(int itau, int idelta, double T, double D, double[] x, doubleW[][] ar) {
@@ -470,10 +462,9 @@ public class GERG2008NH3 extends GERG2008 {
    * Evaluate the full Gao et al. (2020) reference EOS for pure ammonia.
    *
    * <p>
-   * Replaces the SFE-12 approximation with the complete 20-term Gao EOS: 8 power terms (5
-   * polynomial + 3 exponential), 10 Gaussian terms, and 2 GaoB near-critical terms. Coefficients
-   * from CoolProp (Gao-JPCRD-2020). The contribution is multiplied by x[NH3] and added to the
-   * ar[][] derivatives array.
+   * Replaces the SFE-12 approximation with the complete 20-term Gao EOS: 8 power terms (5 polynomial + 3 exponential),
+   * 10 Gaussian terms, and 2 GaoB near-critical terms. Coefficients from CoolProp (Gao-JPCRD-2020). The contribution is
+   * multiplied by x[NH3] and added to the ar[][] derivatives array.
    * </p>
    * <p>
    * Term forms:
@@ -486,10 +477,10 @@ public class GERG2008NH3 extends GERG2008 {
    * </ul>
    *
    * @param itau set to 1 to calculate tau derivatives
-   * @param T temperature in K
-   * @param D density in mol/L
-   * @param x composition array
-   * @param ar Helmholtz derivatives array (accumulated)
+   * @param T    temperature in K
+   * @param D    density in mol/L
+   * @param x    composition array
+   * @param ar   Helmholtz derivatives array (accumulated)
    */
   private void evaluateGaoPureNH3(int itau, double T, double D, double[] x, doubleW[][] ar) {
     if (x[NH3_IDX] <= epsilon) {
@@ -508,7 +499,7 @@ public class GERG2008NH3 extends GERG2008 {
     double del2 = del * del;
     double del3 = del2 * del;
     double del4 = del2 * del2;
-    double[] delp = {1.0, del, del2, del3, del4};
+    double[] delp = { 1.0, del, del2, del3, del4 };
 
     // Precompute exp(-delta^l) for l=1,2
     double expDel1 = Math.exp(-del);
@@ -522,33 +513,33 @@ public class GERG2008NH3 extends GERG2008 {
       double ndt = xi * gaoPowN[k] * delp[d] * Math.exp(t * lntau);
 
       if (l == 0) {
-        // Polynomial: n * delta^d * tau^t
-        ar[0][1].val += ndt * d;
-        ar[0][2].val += ndt * d * (d - 1);
-        if (itau > 0) {
-          ar[0][0].val += ndt;
-          ar[1][0].val += ndt * t;
-          ar[2][0].val += ndt * t * (t - 1);
-          ar[1][1].val += ndt * t * d;
-          ar[1][2].val += ndt * t * d * (d - 1);
-          ar[0][3].val += ndt * d * (d - 1) * (d - 2);
-        }
+	// Polynomial: n * delta^d * tau^t
+	ar[0][1].val += ndt * d;
+	ar[0][2].val += ndt * d * (d - 1);
+	if (itau > 0) {
+	  ar[0][0].val += ndt;
+	  ar[1][0].val += ndt * t;
+	  ar[2][0].val += ndt * t * (t - 1);
+	  ar[1][1].val += ndt * t * d;
+	  ar[1][2].val += ndt * t * d * (d - 1);
+	  ar[0][3].val += ndt * d * (d - 1) * (d - 2);
+	}
       } else {
-        // Exponential: n * delta^d * tau^t * exp(-delta^l)
-        ndt *= (l == 1) ? expDel1 : expDel2;
-        double ex = l * delp[l];
-        double ex2 = d - ex;
-        double ex3 = ex2 * (ex2 - 1);
-        ar[0][1].val += ndt * ex2;
-        ar[0][2].val += ndt * (ex3 - l * ex);
-        if (itau > 0) {
-          ar[0][0].val += ndt;
-          ar[1][0].val += ndt * t;
-          ar[2][0].val += ndt * t * (t - 1);
-          ar[1][1].val += ndt * t * ex2;
-          ar[1][2].val += ndt * t * (ex3 - l * ex);
-          ar[0][3].val += ndt * (ex3 * (ex2 - 2) - ex * (3 * ex2 - 3 + l) * l);
-        }
+	// Exponential: n * delta^d * tau^t * exp(-delta^l)
+	ndt *= (l == 1) ? expDel1 : expDel2;
+	double ex = l * delp[l];
+	double ex2 = d - ex;
+	double ex3 = ex2 * (ex2 - 1);
+	ar[0][1].val += ndt * ex2;
+	ar[0][2].val += ndt * (ex3 - l * ex);
+	if (itau > 0) {
+	  ar[0][0].val += ndt;
+	  ar[1][0].val += ndt * t;
+	  ar[2][0].val += ndt * t * (t - 1);
+	  ar[1][1].val += ndt * t * ex2;
+	  ar[1][2].val += ndt * t * (ex3 - l * ex);
+	  ar[0][3].val += ndt * (ex3 * (ex2 - 2) - ex * (3 * ex2 - 3 + l) * l);
+	}
       }
     }
 
@@ -578,15 +569,15 @@ public class GERG2008NH3 extends GERG2008 {
       ar[0][2].val += ndt * xi2d;
 
       if (itau > 0) {
-        double omega = t - 2.0 * bet * tau * tDiff;
-        double omega2 = omega * omega - t - 2.0 * bet * tau * tau;
+	double omega = t - 2.0 * bet * tau * tDiff;
+	double omega2 = omega * omega - t - 2.0 * bet * tau * tau;
 
-        ar[0][0].val += ndt;
-        ar[1][0].val += ndt * omega;
-        ar[2][0].val += ndt * omega2;
-        ar[1][1].val += ndt * omega * xid;
-        ar[1][2].val += ndt * omega * xi2d;
-        ar[0][3].val += ndt * (xid * (xi2d - 2.0 * (d + 2.0 * cij0)) + 2.0 * d);
+	ar[0][0].val += ndt;
+	ar[1][0].val += ndt * omega;
+	ar[2][0].val += ndt * omega2;
+	ar[1][1].val += ndt * omega * xid;
+	ar[1][2].val += ndt * omega * xi2d;
+	ar[0][3].val += ndt * (xid * (xi2d - 2.0 * (d + 2.0 * cij0)) + 2.0 * d);
       }
     }
 
@@ -618,21 +609,21 @@ public class GERG2008NH3 extends GERG2008 {
       ar[0][2].val += ndt * xi2d;
 
       if (itau > 0) {
-        // Tau-derivatives for GaoB: exp(1/D) where D = b + beta*(tau-gamma)^2
-        double bigD2 = bigD * bigD;
-        double bigD3 = bigD2 * bigD;
-        double dhdtau = -2.0 * bet * tDiff / bigD2;
-        double ct = t + tau * dhdtau;
-        double d2hdtau2 = -2.0 * bet / bigD2 + 8.0 * bet * bet * tDiff * tDiff / bigD3;
-        double dctdtau = dhdtau + tau * d2hdtau2;
-        double ct2 = ct * ct - ct + tau * dctdtau;
+	// Tau-derivatives for GaoB: exp(1/D) where D = b + beta*(tau-gamma)^2
+	double bigD2 = bigD * bigD;
+	double bigD3 = bigD2 * bigD;
+	double dhdtau = -2.0 * bet * tDiff / bigD2;
+	double ct = t + tau * dhdtau;
+	double d2hdtau2 = -2.0 * bet / bigD2 + 8.0 * bet * bet * tDiff * tDiff / bigD3;
+	double dctdtau = dhdtau + tau * d2hdtau2;
+	double ct2 = ct * ct - ct + tau * dctdtau;
 
-        ar[0][0].val += ndt;
-        ar[1][0].val += ndt * ct;
-        ar[2][0].val += ndt * ct2;
-        ar[1][1].val += ndt * ct * xid;
-        ar[1][2].val += ndt * ct * xi2d;
-        ar[0][3].val += ndt * (xid * (xi2d - 2.0 * (d + 2.0 * cij0)) + 2.0 * d);
+	ar[0][0].val += ndt;
+	ar[1][0].val += ndt * ct;
+	ar[2][0].val += ndt * ct2;
+	ar[1][1].val += ndt * ct * xid;
+	ar[1][2].val += ndt * ct * xi2d;
+	ar[0][3].val += ndt * (xid * (xi2d - 2.0 * (d + 2.0 * cij0)) + 2.0 * d);
       }
     }
   }
@@ -641,9 +632,8 @@ public class GERG2008NH3 extends GERG2008 {
    * Evaluate GBS departure function contributions for Ar+NH3 and H2+NH3.
    *
    * <p>
-   * For each pair, evaluates polynomial terms (n * delta^d * tau^t with non-integer d) and GBS
-   * terms (n * delta^d * tau^t * exp(-eta*(delta-eps)^2 - beta*(tau-gamma)^2)). The GBS
-   * tau-derivatives are:
+   * For each pair, evaluates polynomial terms (n * delta^d * tau^t with non-integer d) and GBS terms (n * delta^d *
+   * tau^t * exp(-eta*(delta-eps)^2 - beta*(tau-gamma)^2)). The GBS tau-derivatives are:
    * </p>
    * <ul>
    * <li>omega = t - 2*beta*tau*(tau - gamma)</li>
@@ -652,10 +642,10 @@ public class GERG2008NH3 extends GERG2008 {
    * </ul>
    *
    * @param itau set to 1 to calculate tau derivatives
-   * @param T temperature in K
-   * @param D density in mol/L
-   * @param x composition array
-   * @param ar Helmholtz derivatives array (accumulated)
+   * @param T    temperature in K
+   * @param D    density in mol/L
+   * @param x    composition array
+   * @param ar   Helmholtz derivatives array (accumulated)
    */
   private void evaluateNH3Departure(int itau, double T, double D, double[] x, doubleW[][] ar) {
     // Compute reducing parameters (uses cache from super call)
@@ -670,69 +660,68 @@ public class GERG2008NH3 extends GERG2008 {
     for (int p = 0; p < NH3_DEP_PAIRS; ++p) {
       int i = nh3DepI[p];
       if (x[i] <= epsilon || x[NH3_IDX] <= epsilon) {
-        continue;
+	continue;
       }
       double xijf = x[i] * x[NH3_IDX] * nh3DepFij[p];
 
       // Polynomial terms: n * delta^d * tau^t (non-integer d)
       for (int k = 0; k < nh3DepKpol[p]; ++k) {
-        double d = nh3PolD[p][k];
-        double t = nh3PolT[p][k];
-        double ndt = xijf * nh3PolN[p][k] * Math.exp(d * lndel + t * Math.log(tau));
+	double d = nh3PolD[p][k];
+	double t = nh3PolT[p][k];
+	double ndt = xijf * nh3PolN[p][k] * Math.exp(d * lndel + t * Math.log(tau));
 
-        ar[0][1].val += ndt * d;
-        ar[0][2].val += ndt * d * (d - 1);
-        if (itau > 0) {
-          ar[0][0].val += ndt;
-          ar[1][0].val += ndt * t;
-          ar[2][0].val += ndt * t * (t - 1);
-          ar[1][1].val += ndt * t * d;
-          ar[1][2].val += ndt * t * d * (d - 1);
-          ar[0][3].val += ndt * d * (d - 1) * (d - 2);
-        }
+	ar[0][1].val += ndt * d;
+	ar[0][2].val += ndt * d * (d - 1);
+	if (itau > 0) {
+	  ar[0][0].val += ndt;
+	  ar[1][0].val += ndt * t;
+	  ar[2][0].val += ndt * t * (t - 1);
+	  ar[1][1].val += ndt * t * d;
+	  ar[1][2].val += ndt * t * d * (d - 1);
+	  ar[0][3].val += ndt * d * (d - 1) * (d - 2);
+	}
       }
 
       // GBS terms: n * delta^d * tau^t * exp(-eta*(delta-eps)^2 - beta*(tau-gamma)^2)
       for (int k = 0; k < nh3DepKgbs[p]; ++k) {
-        double d = nh3GbsD[p][k];
-        double t = nh3GbsT[p][k];
-        double eta = nh3GbsEta[p][k];
-        double eps = nh3GbsEps[p][k];
-        double bet = nh3GbsBet[p][k];
-        double gam = nh3GbsGam[p][k];
+	double d = nh3GbsD[p][k];
+	double t = nh3GbsT[p][k];
+	double eta = nh3GbsEta[p][k];
+	double eps = nh3GbsEps[p][k];
+	double bet = nh3GbsBet[p][k];
+	double gam = nh3GbsGam[p][k];
 
-        // Delta and tau Gaussian damping factors
-        double dDiff = del - eps;
-        double tDiff = tau - gam;
-        double sigDel = Math.exp(-eta * dDiff * dDiff);
-        double sigTau = Math.exp(-bet * tDiff * tDiff);
+	// Delta and tau Gaussian damping factors
+	double dDiff = del - eps;
+	double tDiff = tau - gam;
+	double sigDel = Math.exp(-eta * dDiff * dDiff);
+	double sigTau = Math.exp(-bet * tDiff * tDiff);
 
-        double ndt =
-            xijf * nh3GbsN[p][k] * Math.exp(d * lndel + t * Math.log(tau)) * sigDel * sigTau;
+	double ndt = xijf * nh3GbsN[p][k] * Math.exp(d * lndel + t * Math.log(tau)) * sigDel * sigTau;
 
-        // Delta-derivative multipliers (same structure as GERG exp with c=-eta, e=2*eta*eps)
-        double cEff = -eta;
-        double del2 = del * del;
-        double cij0 = cEff * del2;
-        double eij0 = 2.0 * eta * eps * del;
-        double xi = d + 2.0 * cij0 + eij0;
-        double xi2 = xi * xi - d + 2.0 * cij0;
+	// Delta-derivative multipliers (same structure as GERG exp with c=-eta, e=2*eta*eps)
+	double cEff = -eta;
+	double del2 = del * del;
+	double cij0 = cEff * del2;
+	double eij0 = 2.0 * eta * eps * del;
+	double xi = d + 2.0 * cij0 + eij0;
+	double xi2 = xi * xi - d + 2.0 * cij0;
 
-        ar[0][1].val += ndt * xi;
-        ar[0][2].val += ndt * xi2;
+	ar[0][1].val += ndt * xi;
+	ar[0][2].val += ndt * xi2;
 
-        if (itau > 0) {
-          // Tau-derivative multipliers (GBS-specific: tau-Gaussian)
-          double omega = t - 2.0 * bet * tau * tDiff;
-          double omega2 = omega * omega - t - 2.0 * bet * tau * tau;
+	if (itau > 0) {
+	  // Tau-derivative multipliers (GBS-specific: tau-Gaussian)
+	  double omega = t - 2.0 * bet * tau * tDiff;
+	  double omega2 = omega * omega - t - 2.0 * bet * tau * tau;
 
-          ar[0][0].val += ndt;
-          ar[1][0].val += ndt * omega;
-          ar[2][0].val += ndt * omega2;
-          ar[1][1].val += ndt * omega * xi;
-          ar[1][2].val += ndt * omega * xi2;
-          ar[0][3].val += ndt * (xi * (xi2 - 2.0 * (d + 2.0 * cij0)) + 2.0 * d);
-        }
+	  ar[0][0].val += ndt;
+	  ar[1][0].val += ndt * omega;
+	  ar[2][0].val += ndt * omega2;
+	  ar[1][1].val += ndt * omega * xi;
+	  ar[1][2].val += ndt * omega * xi2;
+	  ar[0][3].val += ndt * (xi * (xi2 - 2.0 * (d + 2.0 * cij0)) + 2.0 * d);
+	}
       }
     }
   }

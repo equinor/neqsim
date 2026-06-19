@@ -37,37 +37,34 @@ public final class PseudoComponentCombiner {
   private static final Logger logger = LogManager.getLogger(PseudoComponentCombiner.class);
   private static final double MASS_TOLERANCE = 1e-12;
 
-  private PseudoComponentCombiner() {}
+  private PseudoComponentCombiner() {
+  }
 
   /**
-   * Combine one or more reservoir fluids and redistribute their pseudo components into a specified
-   * number of new pseudo components. The new pseudo components are calculated using the weighting
-   * scheme described in Chapter 5.5 of Pedersen et al. (mixing of multiple fluids), i.e. the
-   * properties of each resulting pseudo component are weighted by the fluid fraction and the mole
-   * fraction of the contributing pseudo components.
+   * Combine one or more reservoir fluids and redistribute their pseudo components into a specified number of new pseudo
+   * components. The new pseudo components are calculated using the weighting scheme described in Chapter 5.5 of
+   * Pedersen et al. (mixing of multiple fluids), i.e. the properties of each resulting pseudo component are weighted by
+   * the fluid fraction and the mole fraction of the contributing pseudo components.
    *
    * @param targetPseudoComponents number of pseudo components in the combined fluid
-   * @param fluids input fluids
+   * @param fluids                 input fluids
    * @return combined fluid with the requested number of pseudo components
    */
-  public static SystemInterface combineReservoirFluids(int targetPseudoComponents,
-      SystemInterface... fluids) {
+  public static SystemInterface combineReservoirFluids(int targetPseudoComponents, SystemInterface... fluids) {
     return combineReservoirFluids(targetPseudoComponents, Arrays.asList(fluids));
   }
 
   /**
-   * Combine one or more reservoir fluids and redistribute their pseudo components into a specified
-   * number of new pseudo components. The new pseudo components are calculated using the weighting
-   * scheme described in Chapter 5.5 of Pedersen et al. (mixing of multiple fluids), i.e. the
-   * properties of each resulting pseudo component are weighted by the fluid fraction and the mole
-   * fraction of the contributing pseudo components.
+   * Combine one or more reservoir fluids and redistribute their pseudo components into a specified number of new pseudo
+   * components. The new pseudo components are calculated using the weighting scheme described in Chapter 5.5 of
+   * Pedersen et al. (mixing of multiple fluids), i.e. the properties of each resulting pseudo component are weighted by
+   * the fluid fraction and the mole fraction of the contributing pseudo components.
    *
    * @param targetPseudoComponents number of pseudo components in the combined fluid
-   * @param fluids input fluids
+   * @param fluids                 input fluids
    * @return combined fluid with the requested number of pseudo components
    */
-  public static SystemInterface combineReservoirFluids(int targetPseudoComponents,
-      Collection<SystemInterface> fluids) {
+  public static SystemInterface combineReservoirFluids(int targetPseudoComponents, Collection<SystemInterface> fluids) {
     if (targetPseudoComponents <= 0) {
       throw new IllegalArgumentException("Number of pseudo components must be positive");
     }
@@ -79,7 +76,7 @@ public final class PseudoComponentCombiner {
     List<SystemInterface> fluidList = new ArrayList<>();
     for (SystemInterface fluid : fluids) {
       if (fluid != null) {
-        fluidList.add(fluid);
+	fluidList.add(fluid);
       }
     }
 
@@ -110,45 +107,42 @@ public final class PseudoComponentCombiner {
       return combined;
     }
 
-    List<Double> boundaries =
-        determineQuantileBoundaries(allPseudoContributions, targetPseudoComponents);
+    List<Double> boundaries = determineQuantileBoundaries(allPseudoContributions, targetPseudoComponents);
 
     List<List<PseudoComponentProfile>> perFluidProfiles = new ArrayList<>();
     double[] fluidMassTotals = new double[perFluidContributions.size()];
     double[] fluidMoleTotals = new double[perFluidContributions.size()];
 
     for (int i = 0; i < perFluidContributions.size(); i++) {
-      List<PseudoComponentProfile> profiles =
-          distributeToProfiles(perFluidContributions.get(i), boundaries, targetPseudoComponents);
+      List<PseudoComponentProfile> profiles = distributeToProfiles(perFluidContributions.get(i), boundaries,
+	  targetPseudoComponents);
       perFluidProfiles.add(profiles);
 
       double totalMass = 0.0;
       double totalMoles = 0.0;
       for (PseudoComponentProfile profile : profiles) {
-        totalMass += profile.getMass();
-        totalMoles += profile.getMoles();
+	totalMass += profile.getMass();
+	totalMoles += profile.getMoles();
       }
       fluidMassTotals[i] = totalMass;
       fluidMoleTotals[i] = totalMoles;
     }
 
-    List<PseudoComponentProfile> combinedProfiles =
-        combineProfiles(perFluidProfiles, fluidMassTotals, fluidMoleTotals);
+    List<PseudoComponentProfile> combinedProfiles = combineProfiles(perFluidProfiles, fluidMassTotals, fluidMoleTotals);
 
     int pseudoCounter = 1;
     for (PseudoComponentProfile profile : combinedProfiles) {
       if (!profile.isValid()) {
-        continue;
+	continue;
       }
 
       String baseName = "PC" + pseudoCounter++;
-      combined.addTBPfraction(baseName, profile.getMoles(), profile.getMolarMass(),
-          profile.getDensity());
+      combined.addTBPfraction(baseName, profile.getMoles(), profile.getMolarMass(), profile.getDensity());
 
       ComponentInterface component = combined.getComponent(baseName + "_PC");
       if (component == null) {
-        logger.warn("Failed to locate newly added pseudo component {}", baseName);
-        continue;
+	logger.warn("Failed to locate newly added pseudo component {}", baseName);
+	continue;
       }
 
       profile.applyTo(component);
@@ -159,16 +153,15 @@ public final class PseudoComponentCombiner {
   }
 
   /**
-   * Characterize a fluid to another fluid's pseudo component definition (Pedersen et al., Chapter
-   * 5.6). The pseudo component cut points are derived from the reference fluid's pseudo component
-   * ordering and applied to the source fluid.
+   * Characterize a fluid to another fluid's pseudo component definition (Pedersen et al., Chapter 5.6). The pseudo
+   * component cut points are derived from the reference fluid's pseudo component ordering and applied to the source
+   * fluid.
    *
-   * @param source fluid to characterize
+   * @param source    fluid to characterize
    * @param reference fluid defining the pseudo component characterization
    * @return characterized fluid containing pseudo components compatible with the reference fluid
    */
-  public static SystemInterface characterizeToReference(SystemInterface source,
-      SystemInterface reference) {
+  public static SystemInterface characterizeToReference(SystemInterface source, SystemInterface reference) {
     Objects.requireNonNull(source, "source");
     Objects.requireNonNull(reference, "reference");
 
@@ -188,24 +181,23 @@ public final class PseudoComponentCombiner {
     }
 
     List<Double> boundaries = determineReferenceBoundaries(referenceExtraction.pseudoComponents);
-    List<PseudoComponentProfile> profiles = distributeToProfiles(sourceExtraction.pseudoComponents,
-        boundaries, referenceExtraction.pseudoComponents.size());
+    List<PseudoComponentProfile> profiles = distributeToProfiles(sourceExtraction.pseudoComponents, boundaries,
+	referenceExtraction.pseudoComponents.size());
 
     for (int i = 0; i < referenceExtraction.pseudoComponents.size(); i++) {
       PseudoComponentProfile profile = profiles.get(i);
       if (!profile.isValid()) {
-        continue;
+	continue;
       }
 
       String referenceName = referenceExtraction.pseudoComponents.get(i).name;
       String baseName = stripPcSuffix(referenceName);
-      characterized.addTBPfraction(baseName, profile.getMoles(), profile.getMolarMass(),
-          profile.getDensity());
+      characterized.addTBPfraction(baseName, profile.getMoles(), profile.getMolarMass(), profile.getDensity());
 
       ComponentInterface component = characterized.getComponent(baseName + "_PC");
       if (component == null) {
-        logger.warn("Failed to locate newly added pseudo component {}", baseName);
-        continue;
+	logger.warn("Failed to locate newly added pseudo component {}", baseName);
+	continue;
       }
 
       profile.applyTo(component);
@@ -221,13 +213,13 @@ public final class PseudoComponentCombiner {
    * <p>
    * This overload allows specifying options for BIP transfer, normalization, and validation.
    *
-   * @param source fluid to characterize
+   * @param source    fluid to characterize
    * @param reference fluid defining the pseudo component characterization
-   * @param options characterization options
+   * @param options   characterization options
    * @return characterized fluid containing pseudo components compatible with the reference fluid
    */
-  public static SystemInterface characterizeToReference(SystemInterface source,
-      SystemInterface reference, CharacterizationOptions options) {
+  public static SystemInterface characterizeToReference(SystemInterface source, SystemInterface reference,
+      CharacterizationOptions options) {
     Objects.requireNonNull(options, "options");
 
     SystemInterface characterized = characterizeToReference(source, reference);
@@ -241,8 +233,8 @@ public final class PseudoComponentCombiner {
     }
 
     if (options.isGenerateValidationReport()) {
-      CharacterizationValidationReport report =
-          CharacterizationValidationReport.generate(source, reference, characterized);
+      CharacterizationValidationReport report = CharacterizationValidationReport.generate(source, reference,
+	  characterized);
       logger.info("Characterization validation:\n{}", report.toReportString());
     }
 
@@ -253,14 +245,13 @@ public final class PseudoComponentCombiner {
    * Transfer binary interaction parameters from a reference fluid to a target fluid.
    *
    * <p>
-   * This method copies BIPs between components that exist in both fluids. For pseudo-components, it
-   * matches by position (first PC to first PC, etc.) since names may differ.
+   * This method copies BIPs between components that exist in both fluids. For pseudo-components, it matches by position
+   * (first PC to first PC, etc.) since names may differ.
    *
    * @param reference the fluid containing BIPs to copy
-   * @param target the fluid to receive the BIPs
+   * @param target    the fluid to receive the BIPs
    */
-  public static void transferBinaryInteractionParameters(SystemInterface reference,
-      SystemInterface target) {
+  public static void transferBinaryInteractionParameters(SystemInterface reference, SystemInterface target) {
     Objects.requireNonNull(reference, "reference");
     Objects.requireNonNull(target, "target");
 
@@ -276,40 +267,40 @@ public final class PseudoComponentCombiner {
     for (String refName : reference.getComponentNames()) {
       ComponentInterface refComp = reference.getComponent(refName);
       if (refComp.isIsTBPfraction() || refComp.isIsPlusFraction()) {
-        continue; // Handle PCs separately
+	continue; // Handle PCs separately
       }
 
       ComponentInterface targetComp = target.getComponent(refName);
       if (targetComp == null) {
-        continue;
+	continue;
       }
 
       // Transfer BIPs between this base component and all other components
       for (String refName2 : reference.getComponentNames()) {
-        if (refName.equals(refName2)) {
-          continue;
-        }
+	if (refName.equals(refName2)) {
+	  continue;
+	}
 
-        double kij = getBinaryInteractionParameter(reference, refName, refName2);
-        if (kij != 0.0) {
-          // Find corresponding component in target
-          ComponentInterface refComp2 = reference.getComponent(refName2);
-          String targetName2;
+	double kij = getBinaryInteractionParameter(reference, refName, refName2);
+	if (kij != 0.0) {
+	  // Find corresponding component in target
+	  ComponentInterface refComp2 = reference.getComponent(refName2);
+	  String targetName2;
 
-          if (refComp2.isIsTBPfraction() || refComp2.isIsPlusFraction()) {
-            // Find corresponding PC by index
-            int pcIndex = refPCs.indexOf(refComp2);
-            if (pcIndex >= 0 && pcIndex < targetPCs.size()) {
-              targetName2 = targetPCs.get(pcIndex).getComponentName();
-            } else {
-              continue;
-            }
-          } else {
-            targetName2 = refName2;
-          }
+	  if (refComp2.isIsTBPfraction() || refComp2.isIsPlusFraction()) {
+	    // Find corresponding PC by index
+	    int pcIndex = refPCs.indexOf(refComp2);
+	    if (pcIndex >= 0 && pcIndex < targetPCs.size()) {
+	      targetName2 = targetPCs.get(pcIndex).getComponentName();
+	    } else {
+	      continue;
+	    }
+	  } else {
+	    targetName2 = refName2;
+	  }
 
-          target.setBinaryInteractionParameter(refName, targetName2, kij);
-        }
+	  target.setBinaryInteractionParameter(refName, targetName2, kij);
+	}
       }
     }
 
@@ -318,14 +309,14 @@ public final class PseudoComponentCombiner {
       String refPcName = refPCs.get(i).getComponentName();
 
       for (int j = i + 1; j < Math.min(refPCs.size(), targetPCs.size()); j++) {
-        String refPcName2 = refPCs.get(j).getComponentName();
-        double kij = getBinaryInteractionParameter(reference, refPcName, refPcName2);
+	String refPcName2 = refPCs.get(j).getComponentName();
+	double kij = getBinaryInteractionParameter(reference, refPcName, refPcName2);
 
-        if (kij != 0.0) {
-          String targetPcName = targetPCs.get(i).getComponentName();
-          String targetPcName2 = targetPCs.get(j).getComponentName();
-          target.setBinaryInteractionParameter(targetPcName, targetPcName2, kij);
-        }
+	if (kij != 0.0) {
+	  String targetPcName = targetPCs.get(i).getComponentName();
+	  String targetPcName2 = targetPCs.get(j).getComponentName();
+	  target.setBinaryInteractionParameter(targetPcName, targetPcName2, kij);
+	}
       }
     }
 
@@ -340,15 +331,14 @@ public final class PseudoComponentCombiner {
    * @param comp2 second component name
    * @return the BIP value, or 0.0 if not found
    */
-  private static double getBinaryInteractionParameter(SystemInterface fluid, String comp1,
-      String comp2) {
+  private static double getBinaryInteractionParameter(SystemInterface fluid, String comp1, String comp2) {
     try {
       PhaseInterface phase = fluid.getPhase(0);
       if (phase instanceof PhaseEos) {
-        PhaseEos eosPhase = (PhaseEos) phase;
-        int i = fluid.getComponent(comp1).getComponentNumber();
-        int j = fluid.getComponent(comp2).getComponentNumber();
-        return eosPhase.getMixingRule().getBinaryInteractionParameter(i, j);
+	PhaseEos eosPhase = (PhaseEos) phase;
+	int i = fluid.getComponent(comp1).getComponentNumber();
+	int j = fluid.getComponent(comp2).getComponentNumber();
+	return eosPhase.getMixingRule().getBinaryInteractionParameter(i, j);
       }
     } catch (Exception e) {
       logger.trace("Could not get BIP for {}-{}: {}", comp1, comp2, e.getMessage());
@@ -367,7 +357,7 @@ public final class PseudoComponentCombiner {
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
       ComponentInterface comp = fluid.getComponent(i);
       if (comp.isIsTBPfraction() || comp.isIsPlusFraction()) {
-        pcs.add(comp);
+	pcs.add(comp);
       }
     }
     return pcs;
@@ -392,8 +382,8 @@ public final class PseudoComponentCombiner {
   /**
    * Generate a validation report comparing source and characterized fluids.
    *
-   * @param source the original source fluid
-   * @param reference the reference fluid used for characterization
+   * @param source        the original source fluid
+   * @param reference     the reference fluid used for characterization
    * @param characterized the resulting characterized fluid
    * @return validation report
    */
@@ -435,18 +425,18 @@ public final class PseudoComponentCombiner {
     for (String name : fluid.getComponentNames()) {
       ComponentInterface component = fluid.getComponent(name);
       if (component == null) {
-        continue;
+	continue;
       }
 
       double moles = component.getNumberOfmoles();
       if (!(moles > 0.0)) {
-        continue;
+	continue;
       }
 
       if (component.isIsTBPfraction() || component.isIsPlusFraction()) {
-        pseudoComponents.add(new PseudoComponentContribution(name, component));
+	pseudoComponents.add(new PseudoComponentContribution(name, component));
       } else {
-        baseComponents.merge(component.getComponentName(), moles, Double::sum);
+	baseComponents.merge(component.getComponentName(), moles, Double::sum);
       }
     }
 
@@ -463,8 +453,8 @@ public final class PseudoComponentCombiner {
     return result;
   }
 
-  private static List<Double> determineQuantileBoundaries(
-      List<PseudoComponentContribution> contributions, int targetPseudoComponents) {
+  private static List<Double> determineQuantileBoundaries(List<PseudoComponentContribution> contributions,
+      int targetPseudoComponents) {
     if (targetPseudoComponents <= 1 || contributions.isEmpty()) {
       return Collections.emptyList();
     }
@@ -491,10 +481,9 @@ public final class PseudoComponentCombiner {
     int targetIndex = 0;
     for (PseudoComponentContribution contribution : sorted) {
       double nextCumulative = cumulative + contribution.mass;
-      while (targetIndex < targets.length
-          && nextCumulative >= targets[targetIndex] - MASS_TOLERANCE) {
-        boundaries.add(contribution.sortingKey());
-        targetIndex++;
+      while (targetIndex < targets.length && nextCumulative >= targets[targetIndex] - MASS_TOLERANCE) {
+	boundaries.add(contribution.sortingKey());
+	targetIndex++;
       }
       cumulative = nextCumulative;
     }
@@ -506,8 +495,7 @@ public final class PseudoComponentCombiner {
     return boundaries;
   }
 
-  private static List<Double> determineReferenceBoundaries(
-      List<PseudoComponentContribution> referenceContributions) {
+  private static List<Double> determineReferenceBoundaries(List<PseudoComponentContribution> referenceContributions) {
     if (referenceContributions.size() <= 1) {
       return Collections.emptyList();
     }
@@ -516,16 +504,14 @@ public final class PseudoComponentCombiner {
     for (int i = 0; i < referenceContributions.size() - 1; i++) {
       double key1 = referenceContributions.get(i).sortingKey();
       double key2 = referenceContributions.get(i + 1).sortingKey();
-      double boundary = Double.isFinite(key1) && Double.isFinite(key2) ? 0.5 * (key1 + key2)
-          : Math.max(key1, key2);
+      double boundary = Double.isFinite(key1) && Double.isFinite(key2) ? 0.5 * (key1 + key2) : Math.max(key1, key2);
       boundaries.add(boundary);
     }
     return boundaries;
   }
 
-  private static List<PseudoComponentProfile> distributeToProfiles(
-      List<PseudoComponentContribution> contributions, List<Double> boundaries,
-      int targetPseudoComponents) {
+  private static List<PseudoComponentProfile> distributeToProfiles(List<PseudoComponentContribution> contributions,
+      List<Double> boundaries, int targetPseudoComponents) {
     if (targetPseudoComponents <= 0) {
       return Collections.emptyList();
     }
@@ -538,7 +524,7 @@ public final class PseudoComponentCombiner {
     if (contributions.isEmpty()) {
       List<PseudoComponentProfile> emptyProfiles = new ArrayList<>(targetPseudoComponents);
       for (int i = 0; i < targetPseudoComponents; i++) {
-        emptyProfiles.add(PseudoComponentProfile.empty());
+	emptyProfiles.add(PseudoComponentProfile.empty());
       }
       return emptyProfiles;
     }
@@ -549,9 +535,8 @@ public final class PseudoComponentCombiner {
     for (PseudoComponentContribution contribution : contributions) {
       double key = contribution.sortingKey();
       while (groupIndex < targetPseudoComponents - 1 && key > currentBoundary) {
-        groupIndex++;
-        currentBoundary =
-            groupIndex < boundaries.size() ? boundaries.get(groupIndex) : Double.POSITIVE_INFINITY;
+	groupIndex++;
+	currentBoundary = groupIndex < boundaries.size() ? boundaries.get(groupIndex) : Double.POSITIVE_INFINITY;
       }
       builders.get(groupIndex).addContribution(contribution, contribution.mass);
     }
@@ -563,9 +548,8 @@ public final class PseudoComponentCombiner {
     return profiles;
   }
 
-  private static List<PseudoComponentProfile> combineProfiles(
-      List<List<PseudoComponentProfile>> perFluidProfiles, double[] fluidMassTotals,
-      double[] fluidMoleTotals) {
+  private static List<PseudoComponentProfile> combineProfiles(List<List<PseudoComponentProfile>> perFluidProfiles,
+      double[] fluidMassTotals, double[] fluidMoleTotals) {
     if (perFluidProfiles.isEmpty()) {
       return Collections.emptyList();
     }
@@ -594,37 +578,36 @@ public final class PseudoComponentCombiner {
       double omegaDenominator = 0.0;
 
       for (int fluid = 0; fluid < perFluidProfiles.size(); fluid++) {
-        PseudoComponentProfile profile = perFluidProfiles.get(fluid).get(group);
-        builder.addProfile(profile);
+	PseudoComponentProfile profile = perFluidProfiles.get(fluid).get(group);
+	builder.addProfile(profile);
 
-        double fluidMass = fluidMassTotals[fluid];
-        double fluidMoles = fluidMoleTotals[fluid];
-        double fluidFraction = totalFluidMass > MASS_TOLERANCE ? fluidMass / totalFluidMass : 0.0;
-        double moleFraction = fluidMoles > MASS_TOLERANCE ? profile.getMoles() / fluidMoles : 0.0;
+	double fluidMass = fluidMassTotals[fluid];
+	double fluidMoles = fluidMoleTotals[fluid];
+	double fluidFraction = totalFluidMass > MASS_TOLERANCE ? fluidMass / totalFluidMass : 0.0;
+	double moleFraction = fluidMoles > MASS_TOLERANCE ? profile.getMoles() / fluidMoles : 0.0;
 
-        if (Double.isFinite(profile.getNormalBoilingPoint())) {
-          tbNumerator += fluidFraction * moleFraction * profile.getNormalBoilingPoint();
-          tbDenominator += fluidFraction * moleFraction;
-        }
-        if (Double.isFinite(profile.getCriticalTemperature())) {
-          tcNumerator += fluidFraction * moleFraction * profile.getCriticalTemperature();
-          tcDenominator += fluidFraction * moleFraction;
-        }
-        if (Double.isFinite(profile.getCriticalPressure())) {
-          pcNumerator += fluidFraction * moleFraction * profile.getCriticalPressure();
-          pcDenominator += fluidFraction * moleFraction;
-        }
-        if (Double.isFinite(profile.getAcentricFactor())) {
-          omegaNumerator += fluidFraction * moleFraction * profile.getAcentricFactor();
-          omegaDenominator += fluidFraction * moleFraction;
-        }
+	if (Double.isFinite(profile.getNormalBoilingPoint())) {
+	  tbNumerator += fluidFraction * moleFraction * profile.getNormalBoilingPoint();
+	  tbDenominator += fluidFraction * moleFraction;
+	}
+	if (Double.isFinite(profile.getCriticalTemperature())) {
+	  tcNumerator += fluidFraction * moleFraction * profile.getCriticalTemperature();
+	  tcDenominator += fluidFraction * moleFraction;
+	}
+	if (Double.isFinite(profile.getCriticalPressure())) {
+	  pcNumerator += fluidFraction * moleFraction * profile.getCriticalPressure();
+	  pcDenominator += fluidFraction * moleFraction;
+	}
+	if (Double.isFinite(profile.getAcentricFactor())) {
+	  omegaNumerator += fluidFraction * moleFraction * profile.getAcentricFactor();
+	  omegaDenominator += fluidFraction * moleFraction;
+	}
       }
 
       Double tbOverride = tbDenominator > MASS_TOLERANCE ? tbNumerator / tbDenominator : null;
       Double tcOverride = tcDenominator > MASS_TOLERANCE ? tcNumerator / tcDenominator : null;
       Double pcOverride = pcDenominator > MASS_TOLERANCE ? pcNumerator / pcDenominator : null;
-      Double omegaOverride =
-          omegaDenominator > MASS_TOLERANCE ? omegaNumerator / omegaDenominator : null;
+      Double omegaOverride = omegaDenominator > MASS_TOLERANCE ? omegaNumerator / omegaDenominator : null;
 
       result.add(builder.buildWithOverrides(tbOverride, tcOverride, pcOverride, omegaOverride));
     }
@@ -636,8 +619,7 @@ public final class PseudoComponentCombiner {
     private final Map<String, Double> baseComponents;
     private final List<PseudoComponentContribution> pseudoComponents;
 
-    private FluidExtraction(Map<String, Double> baseComponents,
-        List<PseudoComponentContribution> pseudoComponents) {
+    private FluidExtraction(Map<String, Double> baseComponents, List<PseudoComponentContribution> pseudoComponents) {
       this.baseComponents = baseComponents;
       this.pseudoComponents = pseudoComponents;
     }
@@ -696,7 +678,7 @@ public final class PseudoComponentCombiner {
     private double sortingKey() {
       double key = normalBoilingPoint;
       if (!Double.isFinite(key) || key <= 0.0) {
-        key = molarMass;
+	key = molarMass;
       }
       return key;
     }
@@ -749,7 +731,7 @@ public final class PseudoComponentCombiner {
 
     private void addContribution(PseudoComponentContribution source, double massPortion) {
       if (!(massPortion > massTolerance) || !(source.mass > 0.0)) {
-        return;
+	return;
       }
 
       double ratio = massPortion / source.mass;
@@ -759,99 +741,99 @@ public final class PseudoComponentCombiner {
       moles += molesPortion;
 
       if (source.density > 0.0) {
-        volume += massPortion / source.density;
-        densityMass += massPortion * source.density;
+	volume += massPortion / source.density;
+	densityMass += massPortion * source.density;
       }
 
       if (Double.isFinite(source.normalBoilingPoint)) {
-        tbMass += massPortion * source.normalBoilingPoint;
-        hasTb = true;
+	tbMass += massPortion * source.normalBoilingPoint;
+	hasTb = true;
       }
 
       if (Double.isFinite(source.criticalTemperature)) {
-        tcMass += massPortion * source.criticalTemperature;
-        hasTc = true;
+	tcMass += massPortion * source.criticalTemperature;
+	hasTc = true;
       }
 
       if (Double.isFinite(source.criticalPressure)) {
-        pcMass += massPortion * source.criticalPressure;
-        hasPc = true;
+	pcMass += massPortion * source.criticalPressure;
+	hasPc = true;
       }
 
       if (Double.isFinite(source.acentricFactor)) {
-        omegaMass += massPortion * source.acentricFactor;
-        hasOmega = true;
+	omegaMass += massPortion * source.acentricFactor;
+	hasOmega = true;
       }
 
       if (Double.isFinite(source.criticalVolume)) {
-        criticalVolumeMass += massPortion * source.criticalVolume;
-        hasCriticalVolume = true;
+	criticalVolumeMass += massPortion * source.criticalVolume;
+	hasCriticalVolume = true;
       }
 
       if (Double.isFinite(source.racketZ)) {
-        racketZMass += massPortion * source.racketZ;
-        hasRacketZ = true;
+	racketZMass += massPortion * source.racketZ;
+	hasRacketZ = true;
       }
 
       if (Double.isFinite(source.racketZCpa)) {
-        racketZCpaMass += massPortion * source.racketZCpa;
-        hasRacketZCpa = true;
+	racketZCpaMass += massPortion * source.racketZCpa;
+	hasRacketZCpa = true;
       }
 
       if (Double.isFinite(source.parachor)) {
-        parachorMass += massPortion * source.parachor;
-        hasParachor = true;
+	parachorMass += massPortion * source.parachor;
+	hasParachor = true;
       }
 
       if (Double.isFinite(source.criticalViscosity)) {
-        criticalViscosityMass += massPortion * source.criticalViscosity;
-        hasCriticalViscosity = true;
+	criticalViscosityMass += massPortion * source.criticalViscosity;
+	hasCriticalViscosity = true;
       }
 
       if (Double.isFinite(source.triplePointTemperature)) {
-        triplePointMass += massPortion * source.triplePointTemperature;
-        hasTriplePoint = true;
+	triplePointMass += massPortion * source.triplePointTemperature;
+	hasTriplePoint = true;
       }
 
       if (Double.isFinite(source.heatOfFusion)) {
-        heatOfFusionMass += massPortion * source.heatOfFusion;
-        hasHeatOfFusion = true;
+	heatOfFusionMass += massPortion * source.heatOfFusion;
+	hasHeatOfFusion = true;
       }
 
       if (Double.isFinite(source.idealGasEnthalpyOfFormation)) {
-        idealGasEnthalpyMass += massPortion * source.idealGasEnthalpyOfFormation;
-        hasIdealGasEnthalpy = true;
+	idealGasEnthalpyMass += massPortion * source.idealGasEnthalpyOfFormation;
+	hasIdealGasEnthalpy = true;
       }
 
       if (Double.isFinite(source.cpA)) {
-        cpAMass += massPortion * source.cpA;
-        hasCpA = true;
+	cpAMass += massPortion * source.cpA;
+	hasCpA = true;
       }
 
       if (Double.isFinite(source.cpB)) {
-        cpBMass += massPortion * source.cpB;
-        hasCpB = true;
+	cpBMass += massPortion * source.cpB;
+	hasCpB = true;
       }
 
       if (Double.isFinite(source.cpC)) {
-        cpCMass += massPortion * source.cpC;
-        hasCpC = true;
+	cpCMass += massPortion * source.cpC;
+	hasCpC = true;
       }
 
       if (Double.isFinite(source.cpD)) {
-        cpDMass += massPortion * source.cpD;
-        hasCpD = true;
+	cpDMass += massPortion * source.cpD;
+	hasCpD = true;
       }
 
       if (Double.isFinite(source.attractiveM)) {
-        attractiveMMass += massPortion * source.attractiveM;
-        hasAttractiveM = true;
+	attractiveMMass += massPortion * source.attractiveM;
+	hasAttractiveM = true;
       }
     }
 
     private void addProfile(PseudoComponentProfile profile) {
       if (!profile.isValid()) {
-        return;
+	return;
       }
 
       double massPortion = profile.getMass();
@@ -860,135 +842,131 @@ public final class PseudoComponentCombiner {
 
       double density = profile.getDensity();
       if (density > 0.0) {
-        volume += massPortion / density;
-        densityMass += massPortion * density;
+	volume += massPortion / density;
+	densityMass += massPortion * density;
       }
 
       double tb = profile.getNormalBoilingPoint();
       if (Double.isFinite(tb)) {
-        tbMass += massPortion * tb;
-        hasTb = true;
+	tbMass += massPortion * tb;
+	hasTb = true;
       }
 
       double tc = profile.getCriticalTemperature();
       if (Double.isFinite(tc)) {
-        tcMass += massPortion * tc;
-        hasTc = true;
+	tcMass += massPortion * tc;
+	hasTc = true;
       }
 
       double pc = profile.getCriticalPressure();
       if (Double.isFinite(pc)) {
-        pcMass += massPortion * pc;
-        hasPc = true;
+	pcMass += massPortion * pc;
+	hasPc = true;
       }
 
       double omega = profile.getAcentricFactor();
       if (Double.isFinite(omega)) {
-        omegaMass += massPortion * omega;
-        hasOmega = true;
+	omegaMass += massPortion * omega;
+	hasOmega = true;
       }
 
       double criticalVol = profile.getCriticalVolume();
       if (Double.isFinite(criticalVol)) {
-        criticalVolumeMass += massPortion * criticalVol;
-        hasCriticalVolume = true;
+	criticalVolumeMass += massPortion * criticalVol;
+	hasCriticalVolume = true;
       }
 
       double racket = profile.getRacketZ();
       if (Double.isFinite(racket)) {
-        racketZMass += massPortion * racket;
-        hasRacketZ = true;
+	racketZMass += massPortion * racket;
+	hasRacketZ = true;
       }
 
       double racketCpa = profile.getRacketZCpa();
       if (Double.isFinite(racketCpa)) {
-        racketZCpaMass += massPortion * racketCpa;
-        hasRacketZCpa = true;
+	racketZCpaMass += massPortion * racketCpa;
+	hasRacketZCpa = true;
       }
 
       double parachor = profile.getParachor();
       if (Double.isFinite(parachor)) {
-        parachorMass += massPortion * parachor;
-        hasParachor = true;
+	parachorMass += massPortion * parachor;
+	hasParachor = true;
       }
 
       double criticalVisc = profile.getCriticalViscosity();
       if (Double.isFinite(criticalVisc)) {
-        criticalViscosityMass += massPortion * criticalVisc;
-        hasCriticalViscosity = true;
+	criticalViscosityMass += massPortion * criticalVisc;
+	hasCriticalViscosity = true;
       }
 
       double triple = profile.getTriplePointTemperature();
       if (Double.isFinite(triple)) {
-        triplePointMass += massPortion * triple;
-        hasTriplePoint = true;
+	triplePointMass += massPortion * triple;
+	hasTriplePoint = true;
       }
 
       double heatFusion = profile.getHeatOfFusion();
       if (Double.isFinite(heatFusion)) {
-        heatOfFusionMass += massPortion * heatFusion;
-        hasHeatOfFusion = true;
+	heatOfFusionMass += massPortion * heatFusion;
+	hasHeatOfFusion = true;
       }
 
       double idealGas = profile.getIdealGasEnthalpyOfFormation();
       if (Double.isFinite(idealGas)) {
-        idealGasEnthalpyMass += massPortion * idealGas;
-        hasIdealGasEnthalpy = true;
+	idealGasEnthalpyMass += massPortion * idealGas;
+	hasIdealGasEnthalpy = true;
       }
 
       double cpAValue = profile.getCpA();
       if (Double.isFinite(cpAValue)) {
-        cpAMass += massPortion * cpAValue;
-        hasCpA = true;
+	cpAMass += massPortion * cpAValue;
+	hasCpA = true;
       }
 
       double cpBValue = profile.getCpB();
       if (Double.isFinite(cpBValue)) {
-        cpBMass += massPortion * cpBValue;
-        hasCpB = true;
+	cpBMass += massPortion * cpBValue;
+	hasCpB = true;
       }
 
       double cpCValue = profile.getCpC();
       if (Double.isFinite(cpCValue)) {
-        cpCMass += massPortion * cpCValue;
-        hasCpC = true;
+	cpCMass += massPortion * cpCValue;
+	hasCpC = true;
       }
 
       double cpDValue = profile.getCpD();
       if (Double.isFinite(cpDValue)) {
-        cpDMass += massPortion * cpDValue;
-        hasCpD = true;
+	cpDMass += massPortion * cpDValue;
+	hasCpD = true;
       }
 
       double attractive = profile.getAttractiveM();
       if (Double.isFinite(attractive)) {
-        attractiveMMass += massPortion * attractive;
-        hasAttractiveM = true;
+	attractiveMMass += massPortion * attractive;
+	hasAttractiveM = true;
       }
     }
 
-    private PseudoComponentProfile buildWithOverrides(Double tbOverride, Double tcOverride,
-        Double pcOverride, Double omegaOverride) {
+    private PseudoComponentProfile buildWithOverrides(Double tbOverride, Double tcOverride, Double pcOverride,
+	Double omegaOverride) {
       if (!(mass > massTolerance) || !(moles > massTolerance)) {
-        return PseudoComponentProfile.empty();
+	return PseudoComponentProfile.empty();
       }
 
       double molarMass = mass / moles;
       double density = Double.NaN;
       if (volume > massTolerance) {
-        density = mass / volume;
+	density = mass / volume;
       } else if (densityMass > massTolerance) {
-        density = densityMass / mass;
+	density = densityMass / mass;
       }
 
-      double tb =
-          tbOverride != null ? tbOverride.doubleValue() : hasTb ? tbMass / mass : Double.NaN;
-      double tc =
-          tcOverride != null ? tcOverride.doubleValue() : hasTc ? tcMass / mass : Double.NaN;
-      double pc =
-          pcOverride != null ? pcOverride.doubleValue() : hasPc ? pcMass / mass : Double.NaN;
-      double omega = omegaOverride != null ? omegaOverride.doubleValue()
-          : hasOmega ? omegaMass / mass : Double.NaN;
+      double tb = tbOverride != null ? tbOverride.doubleValue() : hasTb ? tbMass / mass : Double.NaN;
+      double tc = tcOverride != null ? tcOverride.doubleValue() : hasTc ? tcMass / mass : Double.NaN;
+      double pc = pcOverride != null ? pcOverride.doubleValue() : hasPc ? pcMass / mass : Double.NaN;
+      double omega = omegaOverride != null ? omegaOverride.doubleValue() : hasOmega ? omegaMass / mass : Double.NaN;
 
       double criticalVol = hasCriticalVolume ? criticalVolumeMass / mass : Double.NaN;
       double racket = hasRacketZ ? racketZMass / mass : Double.NaN;
@@ -1004,9 +982,8 @@ public final class PseudoComponentCombiner {
       double cpDValue = hasCpD ? cpDMass / mass : Double.NaN;
       double attractive = hasAttractiveM ? attractiveMMass / mass : Double.NaN;
 
-      return new PseudoComponentProfile(moles, molarMass, density, tb, tc, pc, omega, criticalVol,
-          racket, racketCpa, parachor, criticalVisc, triple, heatFusion, idealGas, cpAValue,
-          cpBValue, cpCValue, cpDValue, attractive);
+      return new PseudoComponentProfile(moles, molarMass, density, tb, tc, pc, omega, criticalVol, racket, racketCpa,
+	  parachor, criticalVisc, triple, heatFusion, idealGas, cpAValue, cpBValue, cpCValue, cpDValue, attractive);
     }
   }
 
@@ -1032,12 +1009,11 @@ public final class PseudoComponentCombiner {
     private final double cpD;
     private final double attractiveM;
 
-    private PseudoComponentProfile(double moles, double molarMass, double density,
-        double normalBoilingPoint, double criticalTemperature, double criticalPressure,
-        double acentricFactor, double criticalVolume, double racketZ, double racketZCpa,
-        double parachor, double criticalViscosity, double triplePointTemperature,
-        double heatOfFusion, double idealGasEnthalpyOfFormation, double cpA, double cpB, double cpC,
-        double cpD, double attractiveM) {
+    private PseudoComponentProfile(double moles, double molarMass, double density, double normalBoilingPoint,
+	double criticalTemperature, double criticalPressure, double acentricFactor, double criticalVolume,
+	double racketZ, double racketZCpa, double parachor, double criticalViscosity, double triplePointTemperature,
+	double heatOfFusion, double idealGasEnthalpyOfFormation, double cpA, double cpB, double cpC, double cpD,
+	double attractiveM) {
       this.moles = moles;
       this.molarMass = molarMass;
       this.density = density;
@@ -1061,9 +1037,9 @@ public final class PseudoComponentCombiner {
     }
 
     private static PseudoComponentProfile empty() {
-      return new PseudoComponentProfile(0.0, 0.0, Double.NaN, Double.NaN, Double.NaN, Double.NaN,
-          Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN,
-          Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN);
+      return new PseudoComponentProfile(0.0, 0.0, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN,
+	  Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN,
+	  Double.NaN, Double.NaN, Double.NaN, Double.NaN);
     }
 
     private boolean isValid() {
@@ -1158,55 +1134,55 @@ public final class PseudoComponentCombiner {
       Objects.requireNonNull(component, "component");
 
       if (Double.isFinite(normalBoilingPoint)) {
-        component.setNormalBoilingPoint(normalBoilingPoint);
+	component.setNormalBoilingPoint(normalBoilingPoint);
       }
       if (Double.isFinite(criticalTemperature)) {
-        component.setTC(criticalTemperature);
+	component.setTC(criticalTemperature);
       }
       if (Double.isFinite(criticalPressure)) {
-        component.setPC(criticalPressure);
+	component.setPC(criticalPressure);
       }
       if (Double.isFinite(acentricFactor)) {
-        component.setAcentricFactor(acentricFactor);
+	component.setAcentricFactor(acentricFactor);
       }
       if (Double.isFinite(criticalVolume)) {
-        component.setCriticalVolume(criticalVolume);
+	component.setCriticalVolume(criticalVolume);
       }
       if (Double.isFinite(racketZ)) {
-        component.setRacketZ(racketZ);
+	component.setRacketZ(racketZ);
       }
       if (Double.isFinite(racketZCpa)) {
-        component.setRacketZCPA(racketZCpa);
+	component.setRacketZCPA(racketZCpa);
       }
       if (Double.isFinite(parachor)) {
-        component.setParachorParameter(parachor);
+	component.setParachorParameter(parachor);
       }
       if (Double.isFinite(criticalViscosity)) {
-        component.setCriticalViscosity(criticalViscosity);
+	component.setCriticalViscosity(criticalViscosity);
       }
       if (Double.isFinite(triplePointTemperature)) {
-        component.setTriplePointTemperature(triplePointTemperature);
+	component.setTriplePointTemperature(triplePointTemperature);
       }
       if (Double.isFinite(heatOfFusion)) {
-        component.setHeatOfFusion(heatOfFusion);
+	component.setHeatOfFusion(heatOfFusion);
       }
       if (Double.isFinite(idealGasEnthalpyOfFormation)) {
-        component.setIdealGasEnthalpyOfFormation(idealGasEnthalpyOfFormation);
+	component.setIdealGasEnthalpyOfFormation(idealGasEnthalpyOfFormation);
       }
       if (Double.isFinite(cpA)) {
-        component.setCpA(cpA);
+	component.setCpA(cpA);
       }
       if (Double.isFinite(cpB)) {
-        component.setCpB(cpB);
+	component.setCpB(cpB);
       }
       if (Double.isFinite(cpC)) {
-        component.setCpC(cpC);
+	component.setCpC(cpC);
       }
       if (Double.isFinite(cpD)) {
-        component.setCpD(cpD);
+	component.setCpD(cpD);
       }
       if (Double.isFinite(attractiveM) && component.getAttractiveTerm() != null) {
-        component.getAttractiveTerm().setm(attractiveM);
+	component.getAttractiveTerm().setm(attractiveM);
       }
     }
   }

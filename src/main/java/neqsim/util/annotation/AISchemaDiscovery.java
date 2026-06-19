@@ -14,8 +14,8 @@ import java.util.stream.Collectors;
  * Discovers and documents AI-exposed NeqSim functionality.
  *
  * <p>
- * This class uses reflection to find methods marked with {@link AIExposable} and generates
- * structured documentation that AI agents can parse.
+ * This class uses reflection to find methods marked with {@link AIExposable} and generates structured documentation
+ * that AI agents can parse.
  * </p>
  *
  * <h2>Usage:</h2>
@@ -61,20 +61,19 @@ public class AISchemaDiscovery implements Serializable {
     /**
      * Constructor.
      *
-     * @param className class exposing the method
-     * @param methodName exposed method name
+     * @param className   class exposing the method
+     * @param methodName  exposed method name
      * @param description method description
-     * @param category method category
-     * @param example example invocation text
-     * @param priority discovery priority, where higher values sort first
-     * @param safe whether invoking the method is expected to avoid state changes
-     * @param tags discovery tags
-     * @param parameters parameter schemas
-     * @param returnType method return type
+     * @param category    method category
+     * @param example     example invocation text
+     * @param priority    discovery priority, where higher values sort first
+     * @param safe        whether invoking the method is expected to avoid state changes
+     * @param tags        discovery tags
+     * @param parameters  parameter schemas
+     * @param returnType  method return type
      */
-    public MethodSchema(String className, String methodName, String description, String category,
-        String example, int priority, boolean safe, String[] tags, List<ParameterSchema> parameters,
-        String returnType) {
+    public MethodSchema(String className, String methodName, String description, String category, String example,
+	int priority, boolean safe, String[] tags, List<ParameterSchema> parameters, String returnType) {
       this.className = className;
       this.methodName = methodName;
       this.description = description;
@@ -138,20 +137,20 @@ public class AISchemaDiscovery implements Serializable {
       sb.append("**Class:** ").append(className).append("\n");
       sb.append("**Category:** ").append(category).append("\n");
       if (!description.isEmpty()) {
-        sb.append("**Description:** ").append(description).append("\n");
+	sb.append("**Description:** ").append(description).append("\n");
       }
       sb.append("**Returns:** ").append(returnType).append("\n");
       sb.append("**Safe:** ").append(safe ? "Yes" : "No (modifies state)").append("\n");
 
       if (!parameters.isEmpty()) {
-        sb.append("**Parameters:**\n");
-        for (ParameterSchema param : parameters) {
-          sb.append("  - ").append(param.toPromptText()).append("\n");
-        }
+	sb.append("**Parameters:**\n");
+	for (ParameterSchema param : parameters) {
+	  sb.append("  - ").append(param.toPromptText()).append("\n");
+	}
       }
 
       if (!example.isEmpty()) {
-        sb.append("**Example:** `").append(example).append("`\n");
+	sb.append("**Example:** `").append(example).append("`\n");
       }
 
       return sb.toString();
@@ -177,18 +176,18 @@ public class AISchemaDiscovery implements Serializable {
     /**
      * Constructor.
      *
-     * @param name the parameter name
-     * @param type the Java type or schema type name
-     * @param description human-readable parameter description
-     * @param unit engineering unit, or an empty string when unitless
-     * @param minValue minimum allowed value, or {@link Double#NEGATIVE_INFINITY} if unbounded
-     * @param maxValue maximum allowed value, or {@link Double#POSITIVE_INFINITY} if unbounded
+     * @param name         the parameter name
+     * @param type         the Java type or schema type name
+     * @param description  human-readable parameter description
+     * @param unit         engineering unit, or an empty string when unitless
+     * @param minValue     minimum allowed value, or {@link Double#NEGATIVE_INFINITY} if unbounded
+     * @param maxValue     maximum allowed value, or {@link Double#POSITIVE_INFINITY} if unbounded
      * @param defaultValue default value represented as text, or an empty string when absent
-     * @param required whether the parameter is required by the exposed method
-     * @param options allowed option values, or an empty array when unrestricted
+     * @param required     whether the parameter is required by the exposed method
+     * @param options      allowed option values, or an empty array when unrestricted
      */
-    public ParameterSchema(String name, String type, String description, String unit,
-        double minValue, double maxValue, String defaultValue, boolean required, String[] options) {
+    public ParameterSchema(String name, String type, String description, String unit, double minValue, double maxValue,
+	String defaultValue, boolean required, String[] options) {
       this.name = name;
       this.type = type;
       this.description = description;
@@ -227,20 +226,20 @@ public class AISchemaDiscovery implements Serializable {
       StringBuilder sb = new StringBuilder();
       sb.append("`").append(name).append("` (").append(type).append(")");
       if (!description.isEmpty()) {
-        sb.append(": ").append(description);
+	sb.append(": ").append(description);
       }
       if (!unit.isEmpty()) {
-        sb.append(" [").append(unit).append("]");
+	sb.append(" [").append(unit).append("]");
       }
       if (minValue != Double.NEGATIVE_INFINITY || maxValue != Double.POSITIVE_INFINITY) {
-        sb.append(" Range: [").append(minValue).append(", ").append(maxValue).append("]");
+	sb.append(" Range: [").append(minValue).append(", ").append(maxValue).append("]");
       }
       if (!required) {
-        sb.append(" (optional");
-        if (!defaultValue.isEmpty()) {
-          sb.append(", default: ").append(defaultValue);
-        }
-        sb.append(")");
+	sb.append(" (optional");
+	if (!defaultValue.isEmpty()) {
+	  sb.append(", default: ").append(defaultValue);
+	}
+	sb.append(")");
       }
       return sb.toString();
     }
@@ -258,7 +257,7 @@ public class AISchemaDiscovery implements Serializable {
     for (Method method : clazz.getMethods()) {
       AIExposable annotation = method.getAnnotation(AIExposable.class);
       if (annotation != null) {
-        schemas.add(createMethodSchema(clazz, method, annotation));
+	schemas.add(createMethodSchema(clazz, method, annotation));
       }
     }
 
@@ -281,14 +280,14 @@ public class AISchemaDiscovery implements Serializable {
     List<MethodSchema> schemas = new ArrayList<>();
 
     // Common thermodynamic methods
-    List<String> commonMethods = Arrays.asList("addComponent", "setTemperature", "setPressure",
-        "setMixingRule", "init", "run", "getTemperature", "getPressure", "getDensity",
-        "getEnthalpy", "getEntropy", "getZ", "getBeta", "getViscosity", "getThermalConductivity",
-        "getMolarMass", "setFlowRate", "getFlowRate", "getFluid", "getThermoSystem", "clone");
+    List<String> commonMethods = Arrays.asList("addComponent", "setTemperature", "setPressure", "setMixingRule", "init",
+	"run", "getTemperature", "getPressure", "getDensity", "getEnthalpy", "getEntropy", "getZ", "getBeta",
+	"getViscosity", "getThermalConductivity", "getMolarMass", "setFlowRate", "getFlowRate", "getFluid",
+	"getThermoSystem", "clone");
 
     for (Method method : clazz.getMethods()) {
       if (commonMethods.contains(method.getName())) {
-        schemas.add(createMethodSchemaFromMethod(clazz, method));
+	schemas.add(createMethodSchemaFromMethod(clazz, method));
       }
     }
 
@@ -298,8 +297,8 @@ public class AISchemaDiscovery implements Serializable {
   /**
    * Create MethodSchema from annotation.
    *
-   * @param clazz class declaring the method
-   * @param method reflected method
+   * @param clazz      class declaring the method
+   * @param method     reflected method
    * @param annotation AI exposure annotation on the method
    * @return generated method schema
    */
@@ -308,41 +307,39 @@ public class AISchemaDiscovery implements Serializable {
     for (Parameter param : method.getParameters()) {
       AIParameter paramAnnotation = param.getAnnotation(AIParameter.class);
       if (paramAnnotation != null) {
-        params.add(new ParameterSchema(
-            paramAnnotation.name().isEmpty() ? param.getName() : paramAnnotation.name(),
-            param.getType().getSimpleName(), paramAnnotation.description(), paramAnnotation.unit(),
-            paramAnnotation.minValue(), paramAnnotation.maxValue(), paramAnnotation.defaultValue(),
-            paramAnnotation.required(), paramAnnotation.options()));
+	params.add(new ParameterSchema(paramAnnotation.name().isEmpty() ? param.getName() : paramAnnotation.name(),
+	    param.getType().getSimpleName(), paramAnnotation.description(), paramAnnotation.unit(),
+	    paramAnnotation.minValue(), paramAnnotation.maxValue(), paramAnnotation.defaultValue(),
+	    paramAnnotation.required(), paramAnnotation.options()));
       } else {
-        params.add(new ParameterSchema(param.getName(), param.getType().getSimpleName(), "", "",
-            Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, "", true, new String[0]));
+	params.add(new ParameterSchema(param.getName(), param.getType().getSimpleName(), "", "",
+	    Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, "", true, new String[0]));
       }
     }
 
-    return new MethodSchema(clazz.getSimpleName(), method.getName(), annotation.description(),
-        annotation.category(), annotation.example(), annotation.priority(), annotation.safe(),
-        annotation.tags(), params, method.getReturnType().getSimpleName());
+    return new MethodSchema(clazz.getSimpleName(), method.getName(), annotation.description(), annotation.category(),
+	annotation.example(), annotation.priority(), annotation.safe(), annotation.tags(), params,
+	method.getReturnType().getSimpleName());
   }
 
   /**
    * Create MethodSchema from method without annotation.
    *
-   * @param clazz class declaring the method
+   * @param clazz  class declaring the method
    * @param method reflected method
    * @return generated method schema
    */
   private MethodSchema createMethodSchemaFromMethod(Class<?> clazz, Method method) {
     List<ParameterSchema> params = new ArrayList<>();
     for (Parameter param : method.getParameters()) {
-      params.add(new ParameterSchema(param.getName(), param.getType().getSimpleName(), "", "",
-          Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, "", true, new String[0]));
+      params.add(new ParameterSchema(param.getName(), param.getType().getSimpleName(), "", "", Double.NEGATIVE_INFINITY,
+	  Double.POSITIVE_INFINITY, "", true, new String[0]));
     }
 
     String description = generateDescriptionFromName(method.getName());
 
     return new MethodSchema(clazz.getSimpleName(), method.getName(), description, "general", "", 50,
-        !method.getName().startsWith("set"), new String[0], params,
-        method.getReturnType().getSimpleName());
+	!method.getName().startsWith("set"), new String[0], params, method.getReturnType().getSimpleName());
   }
 
   /**
@@ -385,13 +382,13 @@ public class AISchemaDiscovery implements Serializable {
     sb.append("# Available NeqSim Methods\n\n");
 
     // Group by category
-    Map<String, List<MethodSchema>> byCategory =
-        methods.stream().collect(Collectors.groupingBy(MethodSchema::getCategory));
+    Map<String, List<MethodSchema>> byCategory = methods.stream()
+	.collect(Collectors.groupingBy(MethodSchema::getCategory));
 
     for (Map.Entry<String, List<MethodSchema>> entry : byCategory.entrySet()) {
       sb.append("## ").append(entry.getKey()).append("\n\n");
       for (MethodSchema method : entry.getValue()) {
-        sb.append(method.toPromptText()).append("\n");
+	sb.append(method.toPromptText()).append("\n");
       }
     }
 
@@ -408,29 +405,25 @@ public class AISchemaDiscovery implements Serializable {
 
     // Core thermodynamic classes
     try {
-      apis.put("SystemSrkEos",
-          discoverCommonMethods(Class.forName("neqsim.thermo.system.SystemSrkEos")));
+      apis.put("SystemSrkEos", discoverCommonMethods(Class.forName("neqsim.thermo.system.SystemSrkEos")));
     } catch (ClassNotFoundException e) {
       // Ignore if class not found
     }
 
     try {
-      apis.put("Stream",
-          discoverCommonMethods(Class.forName("neqsim.process.equipment.stream.Stream")));
+      apis.put("Stream", discoverCommonMethods(Class.forName("neqsim.process.equipment.stream.Stream")));
     } catch (ClassNotFoundException e) {
       // Ignore
     }
 
     try {
-      apis.put("Separator",
-          discoverCommonMethods(Class.forName("neqsim.process.equipment.separator.Separator")));
+      apis.put("Separator", discoverCommonMethods(Class.forName("neqsim.process.equipment.separator.Separator")));
     } catch (ClassNotFoundException e) {
       // Ignore
     }
 
     try {
-      apis.put("ProcessSystem",
-          discoverCommonMethods(Class.forName("neqsim.process.processmodel.ProcessSystem")));
+      apis.put("ProcessSystem", discoverCommonMethods(Class.forName("neqsim.process.processmodel.ProcessSystem")));
     } catch (ClassNotFoundException e) {
       // Ignore
     }

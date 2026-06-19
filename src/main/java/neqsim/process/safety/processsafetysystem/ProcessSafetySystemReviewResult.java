@@ -16,8 +16,7 @@ public class ProcessSafetySystemReviewResult implements Serializable {
   private static final long serialVersionUID = 1000L;
 
   private final ProcessSafetySystemReviewItem item;
-  private final List<ProcessSafetySystemAssessment> assessments =
-      new ArrayList<ProcessSafetySystemAssessment>();
+  private final List<ProcessSafetySystemAssessment> assessments = new ArrayList<ProcessSafetySystemAssessment>();
   private String verdict = "NOT_EVALUATED";
   private double confidence;
 
@@ -108,10 +107,8 @@ public class ProcessSafetySystemReviewResult implements Serializable {
     map.put("equipmentTag", item == null ? "" : item.getEquipmentTag());
     map.put("verdict", verdict);
     map.put("confidence", confidence);
-    map.put("sourceReferences",
-        item == null ? new ArrayList<String>() : item.getSourceReferences());
-    map.put("evidenceValues",
-        item == null ? new LinkedHashMap<String, Object>() : item.getValues());
+    map.put("sourceReferences", item == null ? new ArrayList<String>() : item.getSourceReferences());
+    map.put("evidenceValues", item == null ? new LinkedHashMap<String, Object>() : item.getValues());
     List<Map<String, Object>> assessmentMaps = new ArrayList<Map<String, Object>>();
     for (ProcessSafetySystemAssessment assessment : assessments) {
       assessmentMaps.add(assessment.toMap());

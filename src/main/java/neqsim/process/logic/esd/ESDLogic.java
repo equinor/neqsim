@@ -11,8 +11,8 @@ import neqsim.process.logic.ProcessLogic;
  * Simplified ESD (Emergency Shutdown) logic implementation.
  *
  * <p>
- * This class manages a sequence of actions that should be executed when an ESD is triggered. The
- * actions are executed in order with configurable delays between steps.
+ * This class manages a sequence of actions that should be executed when an ESD is triggered. The actions are executed
+ * in order with configurable delays between steps.
  *
  * <p>
  * Example usage:
@@ -21,7 +21,7 @@ import neqsim.process.logic.ProcessLogic;
  * ESDLogic esdLogic = new ESDLogic("ESD Level 1");
  * esdLogic.addAction(new TripValveAction(esdValve), 0.0); // Immediate
  * esdLogic.addAction(new ActivateBlowdownAction(bdValve), 0.5); // After 0.5s
- * esdLogic.addAction(new SetSplitterAction(splitter, new double[] {0.0, 1.0}), 0.5);
+ * esdLogic.addAction(new SetSplitterAction(splitter, new double[] { 0.0, 1.0 }), 0.5);
  *
  * // In simulation loop:
  * esdLogic.activate(); // Trigger ESD
@@ -56,7 +56,7 @@ public class ESDLogic implements ProcessLogic {
    * Adds an action to the ESD sequence.
    *
    * @param action action to execute
-   * @param delay delay in seconds before executing this action (relative to previous action)
+   * @param delay  delay in seconds before executing this action (relative to previous action)
    */
   public void addAction(LogicAction action, double delay) {
     actions.add(new ActionWithDelay(action, delay));
@@ -82,9 +82,9 @@ public class ESDLogic implements ProcessLogic {
 
       // Reset all actions
       for (ActionWithDelay actionWithDelay : actions) {
-        if (actionWithDelay.action instanceof ResettableAction) {
-          ((ResettableAction) actionWithDelay.action).reset();
-        }
+	if (actionWithDelay.action instanceof ResettableAction) {
+	  ((ResettableAction) actionWithDelay.action).reset();
+	}
       }
     }
   }
@@ -119,8 +119,8 @@ public class ESDLogic implements ProcessLogic {
 
       // Wait for delay
       if (currentDelay < currentActionWithDelay.delay) {
-        currentDelay += timeStep;
-        return;
+	currentDelay += timeStep;
+	return;
       }
 
       // Execute action if not yet executed
@@ -128,13 +128,13 @@ public class ESDLogic implements ProcessLogic {
 
       // Check if action is complete
       if (currentActionWithDelay.action.isComplete()) {
-        // Move to next action
-        currentActionIndex++;
-        currentDelay = 0.0;
+	// Move to next action
+	currentActionIndex++;
+	currentDelay = 0.0;
 
-        if (currentActionIndex >= actions.size()) {
-          state = LogicState.COMPLETED;
-        }
+	if (currentActionIndex >= actions.size()) {
+	  state = LogicState.COMPLETED;
+	}
       }
     } else {
       state = LogicState.COMPLETED;
@@ -163,12 +163,11 @@ public class ESDLogic implements ProcessLogic {
       return name + " - IDLE (not triggered)";
     } else if (state == LogicState.RUNNING) {
       if (currentActionIndex < actions.size()) {
-        ActionWithDelay current = actions.get(currentActionIndex);
-        return String.format("%s - RUNNING (Step %d/%d: %s, delay: %.1fs)", name,
-            currentActionIndex + 1, actions.size(), current.action.getDescription(),
-            Math.max(0, current.delay - currentDelay));
+	ActionWithDelay current = actions.get(currentActionIndex);
+	return String.format("%s - RUNNING (Step %d/%d: %s, delay: %.1fs)", name, currentActionIndex + 1,
+	    actions.size(), current.action.getDescription(), Math.max(0, current.delay - currentDelay));
       } else {
-        return name + " - RUNNING (finalizing)";
+	return name + " - RUNNING (finalizing)";
       }
     } else if (state == LogicState.COMPLETED) {
       return String.format("%s - COMPLETED (%.1fs)", name, elapsedTime);

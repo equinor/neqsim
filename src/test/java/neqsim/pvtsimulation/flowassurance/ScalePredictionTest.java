@@ -11,8 +11,8 @@ import org.junit.jupiter.api.Test;
  * Comprehensive test suite for mineral scale prediction improvements.
  *
  * <p>
- * Covers ScalePredictionCalculator, ScaleMassCalculator, BariteCelestiteSolidSolution,
- * WaterCompatibilityScreener, and FlowlineScaleProfile.
+ * Covers ScalePredictionCalculator, ScaleMassCalculator, BariteCelestiteSolidSolution, WaterCompatibilityScreener, and
+ * FlowlineScaleProfile.
  * </p>
  */
 public class ScalePredictionTest {
@@ -62,8 +62,8 @@ public class ScalePredictionTest {
     calc.calculate();
 
     double si = calc.getBaSO4SaturationIndex();
-    assertTrue(si > 0.0, "BaSO4 SI should be positive (supersaturated) with 200 mg/L Ba + 2000 "
-        + "mg/L SO4, got " + si);
+    assertTrue(si > 0.0,
+	"BaSO4 SI should be positive (supersaturated) with 200 mg/L Ba + 2000 " + "mg/L SO4, got " + si);
   }
 
   @Test
@@ -84,8 +84,7 @@ public class ScalePredictionTest {
 
     double si = calc.getBaSO4SaturationIndex();
     // With zero Ba, BaSO4 SI should be very negative or NaN
-    assertTrue(Double.isNaN(si) || si < -10.0,
-        "BaSO4 SI with zero Ba should be very negative or NaN, got " + si);
+    assertTrue(Double.isNaN(si) || si < -10.0, "BaSO4 SI with zero Ba should be very negative or NaN, got " + si);
   }
 
   @Test
@@ -94,8 +93,8 @@ public class ScalePredictionTest {
     double si25 = calcCaCO3SI(25.0, 1.013);
     double si80 = calcCaCO3SI(80.0, 1.013);
 
-    assertTrue(si80 > si25, "CaCO3 SI at 80C (" + si80 + ") should exceed SI at 25C (" + si25
-        + ") due to retrograde solubility");
+    assertTrue(si80 > si25,
+	"CaCO3 SI at 80C (" + si80 + ") should exceed SI at 25C (" + si25 + ") due to retrograde solubility");
   }
 
   @Test
@@ -104,8 +103,8 @@ public class ScalePredictionTest {
     double si1 = calcCaCO3SI(80.0, 1.013);
     double si500 = calcCaCO3SI(80.0, 500.0);
 
-    assertTrue(si500 < si1, "CaCO3 SI at 500 bar (" + si500 + ") should be lower than at 1 bar ("
-        + si1 + ") due to pressure correction");
+    assertTrue(si500 < si1,
+	"CaCO3 SI at 500 bar (" + si500 + ") should be lower than at 1 bar (" + si1 + ") due to pressure correction");
   }
 
   @Test
@@ -145,8 +144,7 @@ public class ScalePredictionTest {
     calcPaired.calculate();
     double siPaired = calcPaired.getBaSO4SaturationIndex();
 
-    assertTrue(siPaired < siPlain,
-        "Ion pairing with Mg/Na should reduce BaSO4 SI from " + siPlain + " to " + siPaired);
+    assertTrue(siPaired < siPlain, "Ion pairing with Mg/Na should reduce BaSO4 SI from " + siPlain + " to " + siPaired);
   }
 
   @Test
@@ -287,8 +285,7 @@ public class ScalePredictionTest {
     ss.setEndMemberKsp(1.08e-10, 3.44e-7);
     ss.calculate();
 
-    assertEquals(1.0, ss.getBaSO4MoleFraction(), 0.01,
-        "With zero Sr activity, solid should be pure BaSO4");
+    assertEquals(1.0, ss.getBaSO4MoleFraction(), 0.01, "With zero Sr activity, solid should be pure BaSO4");
   }
 
   @Test
@@ -299,8 +296,7 @@ public class ScalePredictionTest {
     ss.setEndMemberKsp(1.08e-10, 3.44e-7);
     ss.calculate();
 
-    assertEquals(0.0, ss.getBaSO4MoleFraction(), 0.01,
-        "With zero Ba activity, solid should be pure SrSO4");
+    assertEquals(0.0, ss.getBaSO4MoleFraction(), 0.01, "With zero Ba activity, solid should be pure SrSO4");
   }
 
   @Test
@@ -348,7 +344,7 @@ public class ScalePredictionTest {
     WaterCompatibilityScreener screener = new WaterCompatibilityScreener();
     screener.setFormationWater(400, 200, 5, 0, 150, 10, 50000, 80, 100, 2.0, 6.5);
     screener.setInjectionWater(20, 0, 0, 0, 100, 2700, 35000, 20, 100, 0.5, 8.0);
-    screener.setMixingRatios(new double[] {0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100});
+    screener.setMixingRatios(new double[] { 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100 });
     screener.calculate();
 
     double worstRatio = screener.getWorstCaseRatio();
@@ -372,7 +368,7 @@ public class ScalePredictionTest {
     WaterCompatibilityScreener screener = new WaterCompatibilityScreener();
     screener.setFormationWater(400, 10, 5, 0, 150, 10, 50000, 80, 100, 2.0, 6.5);
     screener.setInjectionWater(20, 0, 0, 0, 100, 2700, 35000, 20, 100, 0.5, 8.0);
-    screener.setMixingRatios(new double[] {0});
+    screener.setMixingRatios(new double[] { 0 });
     screener.calculate();
 
     List<WaterCompatibilityScreener.MixingResult> results = screener.getResults();
@@ -466,8 +462,7 @@ public class ScalePredictionTest {
     double siInlet = results.get(0).siCaCO3;
     double siOutlet = results.get(1).siCaCO3;
 
-    assertTrue(siInlet > siOutlet,
-        "CaCO3 SI at inlet (80C): " + siInlet + " should exceed outlet (20C): " + siOutlet);
+    assertTrue(siInlet > siOutlet, "CaCO3 SI at inlet (80C): " + siInlet + " should exceed outlet (20C): " + siOutlet);
   }
 
   // ────────────────────────────────────────────────────────────────
@@ -477,7 +472,7 @@ public class ScalePredictionTest {
   /**
    * Helper: compute CaCO3 SI at given T and P with standard brine composition.
    *
-   * @param tempC temperature Celsius
+   * @param tempC    temperature Celsius
    * @param pressBar pressure bara
    * @return CaCO3 saturation index
    */

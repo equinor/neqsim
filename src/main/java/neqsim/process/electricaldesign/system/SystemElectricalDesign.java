@@ -7,18 +7,16 @@ import neqsim.process.processmodel.ProcessSystem;
  * Plant-wide electrical design summary and power distribution analysis.
  *
  * <p>
- * Aggregates electrical loads across all equipment in a {@link ProcessSystem}, calculates power
- * distribution requirements, and sizes the main incoming transformer and emergency/essential power
- * systems. This class complements equipment-level electrical designs by providing a system-level
- * view.
+ * Aggregates electrical loads across all equipment in a {@link ProcessSystem}, calculates power distribution
+ * requirements, and sizes the main incoming transformer and emergency/essential power systems. This class complements
+ * equipment-level electrical designs by providing a system-level view.
  * </p>
  *
  * <p>
  * Typical plant-wide additions beyond equipment loads:
  * </p>
  * <ul>
- * <li><b>Utility loads:</b> HVAC, plant lighting, fire and gas detection (5-10% of process
- * load)</li>
+ * <li><b>Utility loads:</b> HVAC, plant lighting, fire and gas detection (5-10% of process load)</li>
  * <li><b>UPS loads:</b> Critical instrumentation and safety systems (1-3% of process load)</li>
  * <li><b>Future expansion margin:</b> Typically 10-20% of total demand</li>
  * </ul>
@@ -63,8 +61,8 @@ public class SystemElectricalDesign implements java.io.Serializable {
    * Run the system-level electrical design.
    *
    * <p>
-   * Calls runAllElectricalDesigns() on the process system, then aggregates loads and sizes the main
-   * transformer and emergency power.
+   * Calls runAllElectricalDesigns() on the process system, then aggregates loads and sizes the main transformer and
+   * emergency power.
    * </p>
    */
   public void calcDesign() {

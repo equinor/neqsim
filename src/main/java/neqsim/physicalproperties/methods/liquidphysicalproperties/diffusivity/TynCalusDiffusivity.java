@@ -6,9 +6,8 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * Tyn-Calus method for liquid-phase binary diffusion coefficients at infinite dilution.
  *
  * <p>
- * This correlation is particularly accurate for non-polar / hydrocarbon systems. It avoids the need
- * for an association parameter (unlike Wilke-Chang) by using molar volumes of both solute and
- * solvent at their normal boiling points.
+ * This correlation is particularly accurate for non-polar / hydrocarbon systems. It avoids the need for an association
+ * parameter (unlike Wilke-Chang) by using molar volumes of both solute and solvent at their normal boiling points.
  * </p>
  *
  * <p>
@@ -20,24 +19,23 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * </pre>
  *
  * <p>
- * where D_AB^0 is diffusivity at infinite dilution in cm^2/s, V_A and V_B are molar volumes at
- * normal boiling point in cm^3/mol, T is temperature in K, and eta_B is solvent viscosity in cP.
+ * where D_AB^0 is diffusivity at infinite dilution in cm^2/s, V_A and V_B are molar volumes at normal boiling point in
+ * cm^3/mol, T is temperature in K, and eta_B is solvent viscosity in cP.
  * </p>
  *
  * <p>
- * For systems involving water or other associated solvents, the Wilke-Chang method may be more
- * appropriate. The Tyn-Calus method is recommended for oil/gas applications involving hydrocarbon
- * solvents.
+ * For systems involving water or other associated solvents, the Wilke-Chang method may be more appropriate. The
+ * Tyn-Calus method is recommended for oil/gas applications involving hydrocarbon solvents.
  * </p>
  *
  * <p>
  * References:
  * </p>
  * <ul>
- * <li>Tyn, M.T. and Calus, W.F. (1975). "Diffusion coefficients in dilute binary liquid mixtures."
- * J. Chem. Eng. Data, 20, 106-109.</li>
- * <li>Poling, B.E., Prausnitz, J.M. and O'Connell, J.P. (2001). "The Properties of Gases and
- * Liquids." 5th ed., McGraw-Hill, Section 11-9.</li>
+ * <li>Tyn, M.T. and Calus, W.F. (1975). "Diffusion coefficients in dilute binary liquid mixtures." J. Chem. Eng. Data,
+ * 20, 106-109.</li>
+ * <li>Poling, B.E., Prausnitz, J.M. and O'Connell, J.P. (2001). "The Properties of Gases and Liquids." 5th ed.,
+ * McGraw-Hill, Section 11-9.</li>
  * </ul>
  *
  * @author Even Solbraa
@@ -60,8 +58,8 @@ public class TynCalusDiffusivity extends Diffusivity {
    * Get the molar volume at normal boiling point for component k in cm^3/mol.
    *
    * <p>
-   * Uses normal liquid density if available, otherwise estimates from critical volume: V_b = 0.285
-   * * Vc^1.048 (Tyn-Calus correlation).
+   * Uses normal liquid density if available, otherwise estimates from critical volume: V_b = 0.285 * Vc^1.048
+   * (Tyn-Calus correlation).
    * </p>
    *
    * @param k the component index

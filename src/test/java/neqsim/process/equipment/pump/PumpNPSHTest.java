@@ -55,8 +55,7 @@ public class PumpNPSHTest extends neqsim.NeqSimTest {
     feedStream.run();
     double npsha2 = pump.getNPSHAvailable();
 
-    Assertions.assertTrue(npsha2 < npsha1,
-        "NPSH available should decrease with higher temperature");
+    Assertions.assertTrue(npsha2 < npsha1, "NPSH available should decrease with higher temperature");
   }
 
   @Test
@@ -70,8 +69,7 @@ public class PumpNPSHTest extends neqsim.NeqSimTest {
     feedStream.run();
     double npsha2 = pump.getNPSHAvailable();
 
-    Assertions.assertTrue(npsha2 > npsha1,
-        "NPSH available should increase with higher suction pressure");
+    Assertions.assertTrue(npsha2 > npsha1, "NPSH available should increase with higher suction pressure");
   }
 
   @Test
@@ -95,8 +93,7 @@ public class PumpNPSHTest extends neqsim.NeqSimTest {
     double npshr = pump.getNPSHRequired();
 
     Assertions.assertTrue(npshr > 0.0, "NPSH required should be positive");
-    Assertions.assertTrue(npshr < 20.0,
-        "NPSH required should be reasonable for typical pumps (< 20 m)");
+    Assertions.assertTrue(npshr < 20.0, "NPSH required should be reasonable for typical pumps (< 20 m)");
   }
 
   @Test

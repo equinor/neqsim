@@ -9,14 +9,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Virtual Flow Meter for calculating multiphase flow rates from pressure and temperature
- * measurements.
+ * Virtual Flow Meter for calculating multiphase flow rates from pressure and temperature measurements.
  *
  * <p>
- * This class implements a physics-based virtual flow meter using NeqSim's thermodynamic models to
- * estimate oil, gas, and water flow rates. It is designed for integration with AI-powered
- * production optimization platforms that require accurate flow estimates with uncertainty
- * quantification.
+ * This class implements a physics-based virtual flow meter using NeqSim's thermodynamic models to estimate oil, gas,
+ * and water flow rates. It is designed for integration with AI-powered production optimization platforms that require
+ * accurate flow estimates with uncertainty quantification.
  * </p>
  *
  * <p>
@@ -63,8 +61,8 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
     private final double temperature;
     private final double chokeOpening;
 
-    public WellTestData(Instant timestamp, double oilRate, double gasRate, double waterRate,
-        double pressure, double temperature, double chokeOpening) {
+    public WellTestData(Instant timestamp, double oilRate, double gasRate, double waterRate, double pressure,
+	double temperature, double chokeOpening) {
       this.timestamp = timestamp;
       this.oilRate = oilRate;
       this.gasRate = gasRate;
@@ -106,7 +104,7 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
   /**
    * Creates a new Virtual Flow Meter.
    *
-   * @param name the meter name/tag
+   * @param name   the meter name/tag
    * @param stream the stream to measure
    */
   public VirtualFlowMeter(String name, StreamInterface stream) {
@@ -152,7 +150,7 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
   /**
    * Sets the measurement uncertainties.
    *
-   * @param pressureRelative relative pressure uncertainty (e.g., 0.01 for 1%)
+   * @param pressureRelative    relative pressure uncertainty (e.g., 0.01 for 1%)
    * @param temperatureAbsolute absolute temperature uncertainty in K
    */
   public void setMeasurementUncertainties(double pressureRelative, double temperatureAbsolute) {
@@ -172,13 +170,12 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
   /**
    * Calculates flow rates from specified P, T, dP conditions.
    *
-   * @param pressure upstream pressure in bara
-   * @param temperature temperature in K
+   * @param pressure             upstream pressure in bara
+   * @param temperature          temperature in K
    * @param differentialPressure pressure drop in bar
    * @return VFM result with flow rates and uncertainties
    */
-  public VFMResult calculateFlowRates(double pressure, double differentialPressure,
-      double temperature) {
+  public VFMResult calculateFlowRates(double pressure, double differentialPressure, double temperature) {
     StreamInterface str = getStream();
     if (str == null || str.getFluid() == null) {
       return VFMResult.builder().quality(VFMResult.Quality.INVALID).build();
@@ -221,17 +218,15 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
     // Calculate uncertainties using error propagation
     double oilStdDev = calculateUncertainty(oilRate, pressureUncertainty, temperatureUncertainty);
     double gasStdDev = calculateUncertainty(gasRate, pressureUncertainty, temperatureUncertainty);
-    double waterStdDev =
-        calculateUncertainty(waterRate, pressureUncertainty, temperatureUncertainty);
+    double waterStdDev = calculateUncertainty(waterRate, pressureUncertainty, temperatureUncertainty);
 
     // Determine quality based on calibration recency and conditions
     VFMResult.Quality quality = determineQuality(pressure, temperature);
 
-    lastResult = VFMResult.builder().timestamp(Instant.now())
-        .oilFlowRate(oilRate, oilStdDev, "Sm3/d").gasFlowRate(gasRate, gasStdDev, "Sm3/d")
-        .waterFlowRate(waterRate, waterStdDev, "Sm3/d").quality(quality)
-        .addProperty("pressure", pressure).addProperty("temperature", temperature)
-        .addProperty("chokeOpening", chokeOpening).build();
+    lastResult = VFMResult.builder().timestamp(Instant.now()).oilFlowRate(oilRate, oilStdDev, "Sm3/d")
+	.gasFlowRate(gasRate, gasStdDev, "Sm3/d").waterFlowRate(waterRate, waterStdDev, "Sm3/d").quality(quality)
+	.addProperty("pressure", pressure).addProperty("temperature", temperature)
+	.addProperty("chokeOpening", chokeOpening).build();
 
     return lastResult;
   }
@@ -239,22 +234,22 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
   /**
    * Calculates uncertainty using simplified error propagation.
    *
-   * @param rate phase flow rate in Sm3/d
+   * @param rate           phase flow rate in Sm3/d
    * @param pressureUncert relative pressure uncertainty (fraction)
-   * @param tempUncert absolute temperature uncertainty (K)
+   * @param tempUncert     absolute temperature uncertainty (K)
    * @return one standard deviation of the flow-rate estimate
    */
   private double calculateUncertainty(double rate, double pressureUncert, double tempUncert) {
     // Simplified uncertainty model: combine relative uncertainties
     double relativeUncert = Math.sqrt(pressureUncert * pressureUncert + 0.02 * 0.02); // 2% model
-                                                                                      // uncertainty
+										      // uncertainty
     return rate * relativeUncert;
   }
 
   /**
    * Determines result quality based on operating conditions and calibration.
    *
-   * @param pressure current operating pressure in bara
+   * @param pressure    current operating pressure in bara
    * @param temperature current operating temperature in Kelvin
    * @return quality indicator based on calibration range and age
    */
@@ -274,19 +269,17 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
       maxT = Math.max(maxT, test.getTemperature());
     }
 
-    if (pressure < minP * 0.9 || pressure > maxP * 1.1 || temperature < minT - 10
-        || temperature > maxT + 10) {
+    if (pressure < minP * 0.9 || pressure > maxP * 1.1 || temperature < minT - 10 || temperature > maxT + 10) {
       return VFMResult.Quality.EXTRAPOLATED;
     }
 
     // Check calibration age
     if (lastCalibration != null) {
-      long daysSinceCalibration =
-          java.time.Duration.between(lastCalibration, Instant.now()).toDays();
+      long daysSinceCalibration = java.time.Duration.between(lastCalibration, Instant.now()).toDays();
       if (daysSinceCalibration < 7) {
-        return VFMResult.Quality.HIGH;
+	return VFMResult.Quality.HIGH;
       } else if (daysSinceCalibration < 30) {
-        return VFMResult.Quality.NORMAL;
+	return VFMResult.Quality.NORMAL;
       }
     }
 
@@ -310,12 +303,11 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
     int count = 0;
 
     for (WellTestData test : wellTests) {
-      VFMResult calculated =
-          calculateFlowRates(test.getPressure(), test.getPressure() * 0.1, test.getTemperature());
+      VFMResult calculated = calculateFlowRates(test.getPressure(), test.getPressure() * 0.1, test.getTemperature());
 
       if (calculated.isUsable() && calculated.getOilFlowRate() > 0 && test.getOilRate() > 0) {
-        sumError += test.getOilRate() / calculated.getOilFlowRate();
-        count++;
+	sumError += test.getOilRate() / calculated.getOilFlowRate();
+	count++;
       }
     }
 

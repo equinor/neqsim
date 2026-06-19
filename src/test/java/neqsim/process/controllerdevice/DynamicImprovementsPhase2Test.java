@@ -13,9 +13,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Tests for Phase 2 dynamic simulation improvements: 2-DOF PID, valve stick-slip/hysteresis, SFC
- * sequencer, separator internals, dynamic heat exchanger, dynamic distillation, semi-implicit
- * integration, adaptive timestep, and parallel transient execution.
+ * Tests for Phase 2 dynamic simulation improvements: 2-DOF PID, valve stick-slip/hysteresis, SFC sequencer, separator
+ * internals, dynamic heat exchanger, dynamic distillation, semi-implicit integration, adaptive timestep, and parallel
+ * transient execution.
  */
 class DynamicImprovementsPhase2Test {
 
@@ -73,8 +73,7 @@ class DynamicImprovementsPhase2Test {
     double resp2 = pid2.getResponse();
     // With b=0, proportional kick from SP change is eliminated, so response should differ
     // b=1 should show larger immediate change than b=0
-    Assertions.assertNotEquals(resp1, resp2, 0.001,
-        "Setpoint weight should affect proportional response");
+    Assertions.assertNotEquals(resp1, resp2, 0.001, "Setpoint weight should affect proportional response");
   }
 
   // ─── Valve stick-slip/hysteresis ───
@@ -114,27 +113,27 @@ class DynamicImprovementsPhase2Test {
   void testSFCBasicSequence() {
     SequentialFunctionChart sfc = new SequentialFunctionChart("SFC-1");
 
-    final boolean[] stepActions = {false, false, false};
+    final boolean[] stepActions = { false, false, false };
 
     SequentialFunctionChart.SfcStep stepA = new SequentialFunctionChart.SfcStep("StepA");
     stepA.setEntryAction(new Runnable() {
       @Override
       public void run() {
-        stepActions[0] = true;
+	stepActions[0] = true;
       }
     });
     SequentialFunctionChart.SfcStep stepB = new SequentialFunctionChart.SfcStep("StepB");
     stepB.setEntryAction(new Runnable() {
       @Override
       public void run() {
-        stepActions[1] = true;
+	stepActions[1] = true;
       }
     });
     SequentialFunctionChart.SfcStep stepC = new SequentialFunctionChart.SfcStep("StepC");
     stepC.setEntryAction(new Runnable() {
       @Override
       public void run() {
-        stepActions[2] = true;
+	stepActions[2] = true;
       }
     });
 
@@ -146,7 +145,7 @@ class DynamicImprovementsPhase2Test {
     java.util.function.BooleanSupplier alwaysTrue = new java.util.function.BooleanSupplier() {
       @Override
       public boolean getAsBoolean() {
-        return true;
+	return true;
       }
     };
     sfc.addTransition("StepA", "StepB", alwaysTrue);
@@ -300,16 +299,14 @@ class DynamicImprovementsPhase2Test {
   @Test
   void testProcessSystemIntegrationMethodDefault() {
     ProcessSystem process = new ProcessSystem();
-    Assertions.assertEquals(ProcessSystem.IntegrationMethod.EXPLICIT_EULER,
-        process.getIntegrationMethod());
+    Assertions.assertEquals(ProcessSystem.IntegrationMethod.EXPLICIT_EULER, process.getIntegrationMethod());
   }
 
   @Test
   void testProcessSystemSemiImplicitSet() {
     ProcessSystem process = new ProcessSystem();
     process.setIntegrationMethod(ProcessSystem.IntegrationMethod.SEMI_IMPLICIT);
-    Assertions.assertEquals(ProcessSystem.IntegrationMethod.SEMI_IMPLICIT,
-        process.getIntegrationMethod());
+    Assertions.assertEquals(ProcessSystem.IntegrationMethod.SEMI_IMPLICIT, process.getIntegrationMethod());
   }
 
   // ─── Adaptive Timestep ───
@@ -396,7 +393,7 @@ class DynamicImprovementsPhase2Test {
     double wallT = hx.getWallTemperature();
     Assertions.assertFalse(Double.isNaN(wallT), "Wall temperature should be initialized");
     Assertions.assertTrue(wallT > 273.15 + 20.0 && wallT < 273.15 + 80.0,
-        "Wall T should be between inlet temps, got " + (wallT - 273.15) + " C");
+	"Wall T should be between inlet temps, got " + (wallT - 273.15) + " C");
   }
 
   // ─── Integration Test: Semi-implicit with process ───

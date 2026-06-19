@@ -191,8 +191,8 @@ public final class WellsInput implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("WellsInput[producers=%d, injectors=%d, THP=%.0f bara, rate=%.0f %s/well]",
-        producerCount, injectorCount, thp, ratePerWell, rateUnit);
+    return String.format("WellsInput[producers=%d, injectors=%d, THP=%.0f bara, rate=%.0f %s/well]", producerCount,
+	injectorCount, thp, ratePerWell, rateUnit);
   }
 
   /**
@@ -213,11 +213,12 @@ public final class WellsInput implements Serializable {
     private double gasLiftRate = 0.0;
     private String gasLiftUnit = "MSm3/d";
 
-    private Builder() {}
+    private Builder() {
+    }
 
     public Builder producerCount(int count) {
       if (count < 0) {
-        throw new IllegalArgumentException("Producer count cannot be negative");
+	throw new IllegalArgumentException("Producer count cannot be negative");
       }
       this.producerCount = count;
       return this;
@@ -225,7 +226,7 @@ public final class WellsInput implements Serializable {
 
     public Builder injectorCount(int count) {
       if (count < 0) {
-        throw new IllegalArgumentException("Injector count cannot be negative");
+	throw new IllegalArgumentException("Injector count cannot be negative");
       }
       this.injectorCount = count;
       return this;

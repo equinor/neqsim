@@ -152,13 +152,12 @@ public class MercuryRemovalBedTest {
   public void testOutletMercuryReduction() {
     bed.run(UUID.randomUUID());
 
-    double inletHgMoles = feedStream.getThermoSystem().getPhase(0).getComponent("mercury")
-        .getNumberOfmoles();
-    double outletHgMoles = bed.getOutletStream().getThermoSystem().getPhase(0)
-        .getComponent("mercury").getNumberOfmoles();
+    double inletHgMoles = feedStream.getThermoSystem().getPhase(0).getComponent("mercury").getNumberOfmoles();
+    double outletHgMoles = bed.getOutletStream().getThermoSystem().getPhase(0).getComponent("mercury")
+	.getNumberOfmoles();
 
     assertTrue(outletHgMoles < inletHgMoles,
-        "Outlet mercury should be less than inlet: in=" + inletHgMoles + " out=" + outletHgMoles);
+	"Outlet mercury should be less than inlet: in=" + inletHgMoles + " out=" + outletHgMoles);
   }
 
   /**
@@ -207,8 +206,7 @@ public class MercuryRemovalBedTest {
     double degradedEfficiency = degradedBed.getRemovalEfficiency();
 
     assertTrue(degradedEfficiency < freshEfficiency,
-        "Degraded bed should have lower efficiency: fresh=" + freshEfficiency + " degraded="
-            + degradedEfficiency);
+	"Degraded bed should have lower efficiency: fresh=" + freshEfficiency + " degraded=" + degradedEfficiency);
   }
 
   /**
@@ -295,8 +293,7 @@ public class MercuryRemovalBedTest {
     }
     double util2 = bed.getBedUtilisation();
 
-    assertTrue(util2 >= util1,
-        "Bed utilisation should not decrease: t1=" + util1 + " t2=" + util2);
+    assertTrue(util2 >= util1, "Bed utilisation should not decrease: t1=" + util1 + " t2=" + util2);
   }
 
   /**
@@ -369,15 +366,11 @@ public class MercuryRemovalBedTest {
     mechDesign.calcDesign();
 
     assertTrue(mechDesign.getWallThickness() > 0,
-        "Wall thickness should be positive: " + mechDesign.getWallThickness());
-    assertTrue(mechDesign.getWeightTotal() > 0,
-        "Total weight should be positive: " + mechDesign.getWeightTotal());
-    assertTrue(mechDesign.getWeigthVesselShell() > 0,
-        "Vessel shell weight should be positive");
-    assertTrue(mechDesign.getSorbentChargeWeight() > 0,
-        "Sorbent charge weight should be positive");
-    assertTrue(mechDesign.getOuterDiameter() > mechDesign.innerDiameter,
-        "Outer diameter should exceed inner diameter");
+	"Wall thickness should be positive: " + mechDesign.getWallThickness());
+    assertTrue(mechDesign.getWeightTotal() > 0, "Total weight should be positive: " + mechDesign.getWeightTotal());
+    assertTrue(mechDesign.getWeigthVesselShell() > 0, "Vessel shell weight should be positive");
+    assertTrue(mechDesign.getSorbentChargeWeight() > 0, "Sorbent charge weight should be positive");
+    assertTrue(mechDesign.getOuterDiameter() > mechDesign.innerDiameter, "Outer diameter should exceed inner diameter");
   }
 
   /**
@@ -432,12 +425,9 @@ public class MercuryRemovalBedTest {
     MercuryRemovalCostEstimate costEst = mechDesign.getCostEstimate();
     costEst.calculateCostEstimate();
 
-    assertTrue(costEst.getPurchasedEquipmentCost() > 0,
-        "PEC should be positive");
-    assertTrue(costEst.getTotalModuleCost() > 0,
-        "Total module cost should be positive");
-    assertTrue(costEst.getSorbentReplacementCost() > 0,
-        "Sorbent replacement cost should be positive");
+    assertTrue(costEst.getPurchasedEquipmentCost() > 0, "PEC should be positive");
+    assertTrue(costEst.getTotalModuleCost() > 0, "Total module cost should be positive");
+    assertTrue(costEst.getSorbentReplacementCost() > 0, "Sorbent replacement cost should be positive");
   }
 
   /**

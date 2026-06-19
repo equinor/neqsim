@@ -21,7 +21,8 @@ public final class FluidCreator {
   /**
    * Dummy constructor, not for use. Class is to be considered static.
    */
-  private FluidCreator() {}
+  private FluidCreator() {
+  }
 
   /**
    * Create SystemInterface.
@@ -42,8 +43,8 @@ public final class FluidCreator {
    * Create SystemInterface.
    *
    * @param componentNames name of components to be added to a fluid
-   * @param flowrate flow rate
-   * @param unit unit of flow rate
+   * @param flowrate       flow rate
+   * @param unit           unit of flow rate
    * @return a fluid object (SystemInterface)
    */
   public static SystemInterface create(String[] componentNames, double[] flowrate, String unit) {
@@ -58,8 +59,7 @@ public final class FluidCreator {
   /**
    * Create SystemInterface.
    *
-   * @param fluidType fluid type can be "dry gas", "water", "air", "gas condensate", "combustion
-   *        air"...
+   * @param fluidType fluid type can be "dry gas", "water", "air", "gas condensate", "combustion air"...
    * @return a fluid object (SystemInterface)
    */
   public static SystemInterface create(String fluidType) {

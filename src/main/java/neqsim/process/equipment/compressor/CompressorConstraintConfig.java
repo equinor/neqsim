@@ -7,8 +7,7 @@ import neqsim.process.equipment.compressor.driver.DriverCurve;
  * Configuration class for compressor operational constraints.
  *
  * <p>
- * This class consolidates all configurable constraint parameters for compressor operation
- * including:
+ * This class consolidates all configurable constraint parameters for compressor operation including:
  * </p>
  * <ul>
  * <li>Surge and stonewall margins</li>
@@ -19,7 +18,9 @@ import neqsim.process.equipment.compressor.driver.DriverCurve;
  * <li>Driver constraints</li>
  * </ul>
  *
- * <p><strong>Example Usage</strong></p>
+ * <p>
+ * <strong>Example Usage</strong>
+ * </p>
  *
  * <pre>
  * CompressorConstraintConfig config = new CompressorConstraintConfig();
@@ -119,12 +120,13 @@ public class CompressorConstraintConfig implements Serializable {
   /**
    * Default constructor with industry-standard defaults.
    */
-  public CompressorConstraintConfig() {}
+  public CompressorConstraintConfig() {
+  }
 
   /**
    * Constructor with surge and stonewall margins.
    *
-   * @param surgeMargin minimum surge margin (0-1)
+   * @param surgeMargin     minimum surge margin (0-1)
    * @param stonewallMargin minimum stonewall margin (0-1)
    */
   public CompressorConstraintConfig(double surgeMargin, double stonewallMargin) {

@@ -17,9 +17,8 @@ import neqsim.thermo.system.SystemSrkEos;
 public class SulfurDepositionAnalyserTest {
 
   /**
-   * Test basic sulfur solubility analysis with S8 in natural gas. Verifies that
-   * the temperature
-   * sweep produces results and S8 solubility is calculated.
+   * Test basic sulfur solubility analysis with S8 in natural gas. Verifies that the temperature sweep produces results
+   * and S8 solubility is calculated.
    */
   @Test
   public void testSulfurSolubilityInNaturalGas() {
@@ -49,8 +48,7 @@ public class SulfurDepositionAnalyserTest {
 
     // S8 solubility should be calculated (positive value)
     double solubility = analyser.getSulfurSolubilityInGas();
-    Assertions.assertTrue(solubility > 0 || Double.isNaN(solubility),
-        "S8 solubility should be positive or NaN");
+    Assertions.assertTrue(solubility > 0 || Double.isNaN(solubility), "S8 solubility should be positive or NaN");
   }
 
   /**
@@ -90,8 +88,7 @@ public class SulfurDepositionAnalyserTest {
     // JSON output should be valid
     String json = analyser.getResultsAsJson();
     Assertions.assertNotNull(json, "JSON results should not be null");
-    Assertions.assertTrue(json.contains("chemicalEquilibrium"),
-        "JSON should contain chemical equilibrium section");
+    Assertions.assertTrue(json.contains("chemicalEquilibrium"), "JSON should contain chemical equilibrium section");
   }
 
   /**
@@ -118,13 +115,11 @@ public class SulfurDepositionAnalyserTest {
     analyser.run();
 
     // Should identify corrosion risk
-    Assertions.assertTrue(analyser.hasCorrosionRisk(),
-        "Should identify corrosion risk with 1000 ppm H2S and water");
+    Assertions.assertTrue(analyser.hasCorrosionRisk(), "Should identify corrosion risk with 1000 ppm H2S and water");
 
     Map<String, Object> corr = analyser.getCorrosionAssessment();
     Assertions.assertNotNull(corr.get("sourSeverityNACE"), "Should have sour severity");
-    Assertions.assertEquals(true, corr.get("FeS_formationRisk"),
-        "FeS formation should be at risk with H2S and water");
+    Assertions.assertEquals(true, corr.get("FeS_formationRisk"), "FeS formation should be at risk with H2S and water");
     Assertions.assertEquals(true, corr.get("waterPresent"), "Water should be detected");
   }
 
@@ -164,10 +159,8 @@ public class SulfurDepositionAnalyserTest {
     Assertions.assertNotNull(json, "JSON should not be null");
     Assertions.assertTrue(json.contains("sulfurSolubility"), "Should have solubility data");
     Assertions.assertTrue(json.contains("depositionOnset"), "Should have deposition onset data");
-    Assertions.assertTrue(json.contains("corrosionAssessment"),
-        "Should have corrosion assessment data");
-    Assertions.assertTrue(json.contains("temperatureSweep"),
-        "Should have temperature sweep data");
+    Assertions.assertTrue(json.contains("corrosionAssessment"), "Should have corrosion assessment data");
+    Assertions.assertTrue(json.contains("temperatureSweep"), "Should have temperature sweep data");
 
     // Print summary for manual inspection
     analyser.printSummary();
@@ -227,9 +220,8 @@ public class SulfurDepositionAnalyserTest {
   }
 
   /**
-   * Test kinetic analysis with H2S-containing gas at different temperatures.
-   * Verifies that reaction rate estimates, FeS morphology, and root cause
-   * classification are produced.
+   * Test kinetic analysis with H2S-containing gas at different temperatures. Verifies that reaction rate estimates, FeS
+   * morphology, and root cause classification are produced.
    */
   @Test
   public void testKineticAnalysis() {
@@ -257,32 +249,28 @@ public class SulfurDepositionAnalyserTest {
 
     // At 40 C, H2S oxidation should be kinetically negligible
     Assertions.assertEquals(false, kinetics.get("H2S_oxidation_kineticallyFeasible"),
-        "H2S oxidation should be infeasible at 40 C");
+	"H2S oxidation should be infeasible at 40 C");
 
     // FeS corrosion rate should be calculated
     Object crRate = kinetics.get("FeS_corrosionRate_mmYear");
     Assertions.assertNotNull(crRate, "FeS corrosion rate should be calculated");
-    Assertions.assertTrue(((Number) crRate).doubleValue() > 0,
-        "Corrosion rate should be positive for 5% H2S");
+    Assertions.assertTrue(((Number) crRate).doubleValue() > 0, "Corrosion rate should be positive for 5% H2S");
 
     // FeS morphology at 40 C should be mackinawite
     String morphology = (String) kinetics.get("FeS_scaleMorphology");
-    Assertions.assertTrue(morphology.contains("Mackinawite"),
-        "At 40 C FeS should be mackinawite");
+    Assertions.assertTrue(morphology.contains("Mackinawite"), "At 40 C FeS should be mackinawite");
 
     // Root cause should be thermodynamic precipitation at low T
     @SuppressWarnings("unchecked")
     List<String> rootCauses = (List<String>) kinetics.get("rootCauseClassification");
     Assertions.assertFalse(rootCauses.isEmpty(), "Root causes should be identified");
     Assertions.assertTrue(rootCauses.get(0).contains("Thermodynamic precipitation"),
-        "Primary root cause at low T should be thermodynamic");
+	"Primary root cause at low T should be thermodynamic");
 
     // JSON should include kinetic analysis
     String json = analyser.getResultsAsJson();
-    Assertions.assertTrue(json.contains("kineticAnalysis"),
-        "JSON should contain kinetic analysis");
-    Assertions.assertTrue(json.contains("rootCauseClassification"),
-        "JSON should contain root cause classification");
+    Assertions.assertTrue(json.contains("kineticAnalysis"), "JSON should contain kinetic analysis");
+    Assertions.assertTrue(json.contains("rootCauseClassification"), "JSON should contain root cause classification");
   }
 
   /**
@@ -307,19 +295,15 @@ public class SulfurDepositionAnalyserTest {
     analyser.run();
 
     Map<String, Object> supersat = analyser.getSupersaturationAnalysis();
-    Assertions.assertFalse(supersat.isEmpty(),
-        "Supersaturation analysis should have results");
+    Assertions.assertFalse(supersat.isEmpty(), "Supersaturation analysis should have results");
 
     // Should have supersaturation ratio
-    Assertions.assertNotNull(supersat.get("supersaturationRatio"),
-        "Should calculate supersaturation ratio");
-    Assertions.assertNotNull(supersat.get("supersaturationZone"),
-        "Should classify supersaturation zone");
+    Assertions.assertNotNull(supersat.get("supersaturationRatio"), "Should calculate supersaturation ratio");
+    Assertions.assertNotNull(supersat.get("supersaturationZone"), "Should classify supersaturation zone");
 
     // JSON should include supersaturation analysis
     String json = analyser.getResultsAsJson();
-    Assertions.assertTrue(json.contains("supersaturationAnalysis"),
-        "JSON should contain supersaturation analysis");
+    Assertions.assertTrue(json.contains("supersaturationAnalysis"), "JSON should contain supersaturation analysis");
   }
 
   /**
@@ -348,17 +332,15 @@ public class SulfurDepositionAnalyserTest {
     analyser.run();
 
     Map<String, Object> gasLiq = analyser.getGasVsLiquidSolubility();
-    Assertions.assertFalse(gasLiq.isEmpty(),
-        "Gas vs liquid analysis should have results");
+    Assertions.assertFalse(gasLiq.isEmpty(), "Gas vs liquid analysis should have results");
 
     // Should report whether gas and liquid phases exist
-    Assertions.assertNotNull(gasLiq.get("hasGasPhase"),
-        "Should report gas phase presence");
+    Assertions.assertNotNull(gasLiq.get("hasGasPhase"), "Should report gas phase presence");
 
     // JSON should include the comparison
     String json = analyser.getResultsAsJson();
     Assertions.assertTrue(json.contains("gasVsLiquidSolubility"),
-        "JSON should contain gas-liquid solubility comparison");
+	"JSON should contain gas-liquid solubility comparison");
   }
 
   /**
@@ -388,28 +370,23 @@ public class SulfurDepositionAnalyserTest {
     analyser.run();
 
     Map<String, Object> blockage = analyser.getBlockageRiskAssessment();
-    Assertions.assertFalse(blockage.isEmpty(),
-        "Blockage risk assessment should have results");
+    Assertions.assertFalse(blockage.isEmpty(), "Blockage risk assessment should have results");
 
     // Should have a blockage risk classification
-    Assertions.assertNotNull(blockage.get("blockageRisk"),
-        "Should classify blockage risk");
-    Assertions.assertNotNull(blockage.get("piggingRecommendation"),
-        "Should have pigging recommendation");
+    Assertions.assertNotNull(blockage.get("blockageRisk"), "Should classify blockage risk");
+    Assertions.assertNotNull(blockage.get("piggingRecommendation"), "Should have pigging recommendation");
 
     // JSON should include blockage risk
     String json = analyser.getResultsAsJson();
-    Assertions.assertTrue(json.contains("blockageRiskAssessment"),
-        "JSON should contain blockage risk assessment");
+    Assertions.assertTrue(json.contains("blockageRiskAssessment"), "JSON should contain blockage risk assessment");
 
     // Print summary to verify new sections appear
     analyser.printSummary();
   }
 
   /**
-   * Test catalysis pathway analysis for elemental sulfur formation. Verifies
-   * that all major catalytic pathways are evaluated and composition effects are
-   * assessed.
+   * Test catalysis pathway analysis for elemental sulfur formation. Verifies that all major catalytic pathways are
+   * evaluated and composition effects are assessed.
    */
   @Test
   public void testCatalysisAnalysis() {
@@ -439,25 +416,21 @@ public class SulfurDepositionAnalyserTest {
 
     // Catalysis analysis should be populated
     Map<String, Object> catalysis = analyser.getCatalysisAnalysis();
-    Assertions.assertFalse(catalysis.isEmpty(),
-        "Catalysis analysis should have results");
+    Assertions.assertFalse(catalysis.isEmpty(), "Catalysis analysis should have results");
 
     // Should have pathways list
     Object pathways = catalysis.get("pathways");
     Assertions.assertNotNull(pathways, "Should have catalysis pathways");
-    Assertions.assertTrue(pathways instanceof List,
-        "Pathways should be a List");
+    Assertions.assertTrue(pathways instanceof List, "Pathways should be a List");
     List<?> pathwayList = (List<?>) pathways;
-    Assertions.assertTrue(pathwayList.size() >= 9,
-        "Should evaluate at least 9 catalytic pathways");
+    Assertions.assertTrue(pathwayList.size() >= 9, "Should evaluate at least 9 catalytic pathways");
 
     // Should identify active catalysts (O2 present + H2S + water)
     Object active = catalysis.get("activeCatalysts");
     Assertions.assertNotNull(active, "Should list active catalysts");
     Assertions.assertTrue(active instanceof List, "Active catalysts should be a List");
     List<?> activeList = (List<?>) active;
-    Assertions.assertTrue(activeList.size() >= 2,
-        "With O2, H2S, and water, should have 2+ active catalysts");
+    Assertions.assertTrue(activeList.size() >= 2, "With O2, H2S, and water, should have 2+ active catalysts");
 
     // Should have a dominant mechanism
     Object dominant = catalysis.get("dominantMechanism");
@@ -469,20 +442,17 @@ public class SulfurDepositionAnalyserTest {
 
     // Should be in JSON
     String json = analyser.getResultsAsJson();
-    Assertions.assertTrue(json.contains("catalysisAnalysis"),
-        "JSON should contain catalysis analysis");
-    Assertions.assertTrue(json.contains("dominantMechanism"),
-        "JSON should contain dominant mechanism");
-    Assertions.assertTrue(json.contains("compositionEffects"),
-        "JSON should contain composition effects");
+    Assertions.assertTrue(json.contains("catalysisAnalysis"), "JSON should contain catalysis analysis");
+    Assertions.assertTrue(json.contains("dominantMechanism"), "JSON should contain dominant mechanism");
+    Assertions.assertTrue(json.contains("compositionEffects"), "JSON should contain composition effects");
 
     // Print summary to verify catalysis section appears
     analyser.printSummary();
   }
 
   /**
-   * Test catalysis analysis with lean dry gas (no catalysts active). Verifies
-   * that thermodynamic precipitation is correctly identified as dominant.
+   * Test catalysis analysis with lean dry gas (no catalysts active). Verifies that thermodynamic precipitation is
+   * correctly identified as dominant.
    */
   @Test
   public void testCatalysisAnalysisLeanDryGas() {
@@ -503,15 +473,11 @@ public class SulfurDepositionAnalyserTest {
     analyser.run();
 
     Map<String, Object> catalysis = analyser.getCatalysisAnalysis();
-    Assertions.assertFalse(catalysis.isEmpty(),
-        "Catalysis analysis should still run for lean gas");
+    Assertions.assertFalse(catalysis.isEmpty(), "Catalysis analysis should still run for lean gas");
 
     // Dominant mechanism should be thermodynamic precipitation
     String dominant = String.valueOf(catalysis.get("dominantMechanism"));
-    Assertions.assertTrue(
-        dominant.contains("THERMODYNAMIC PRECIPITATION")
-            || dominant.contains("SURFACE CATALYSIS"),
-        "Lean dry gas should identify thermodynamic precipitation or minimal "
-            + "surface catalysis as dominant");
+    Assertions.assertTrue(dominant.contains("THERMODYNAMIC PRECIPITATION") || dominant.contains("SURFACE CATALYSIS"),
+	"Lean dry gas should identify thermodynamic precipitation or minimal " + "surface catalysis as dominant");
   }
 }

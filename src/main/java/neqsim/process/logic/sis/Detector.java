@@ -4,8 +4,7 @@ package neqsim.process.logic.sis;
  * Represents a fire or gas detector in a Safety Instrumented System.
  *
  * <p>
- * Detectors monitor process conditions and can trigger safety actions when thresholds are exceeded.
- * Each detector has:
+ * Detectors monitor process conditions and can trigger safety actions when thresholds are exceeded. Each detector has:
  * <ul>
  * <li>Alarm level (L, H, HH) indicating severity</li>
  * <li>Trip status (normal or tripped)</li>
@@ -33,14 +32,13 @@ public class Detector {
   /**
    * Creates a detector.
    *
-   * @param name detector tag/name
-   * @param type detector type (FIRE, GAS, PRESSURE, etc.)
+   * @param name       detector tag/name
+   * @param type       detector type (FIRE, GAS, PRESSURE, etc.)
    * @param alarmLevel alarm level (L, H, HH)
-   * @param setpoint trip setpoint
-   * @param unit engineering unit
+   * @param setpoint   trip setpoint
+   * @param unit       engineering unit
    */
-  public Detector(String name, DetectorType type, AlarmLevel alarmLevel, double setpoint,
-      String unit) {
+  public Detector(String name, DetectorType type, AlarmLevel alarmLevel, double setpoint, String unit) {
     this.name = name;
     this.type = type;
     this.alarmLevel = alarmLevel;
@@ -63,14 +61,14 @@ public class Detector {
     // Check trip condition based on alarm level
     boolean shouldTrip = false;
     switch (alarmLevel) {
-      case LOW:
-      case LOW_LOW:
-        shouldTrip = measuredValue < setpoint;
-        break;
-      case HIGH:
-      case HIGH_HIGH:
-        shouldTrip = measuredValue > setpoint;
-        break;
+    case LOW:
+    case LOW_LOW:
+      shouldTrip = measuredValue < setpoint;
+      break;
+    case HIGH:
+    case HIGH_HIGH:
+      shouldTrip = measuredValue > setpoint;
+      break;
     }
 
     if (shouldTrip && !isTripped) {
@@ -241,8 +239,8 @@ public class Detector {
    * Detector type enumeration.
    */
   public enum DetectorType {
-    FIRE("Fire Detector"), GAS("Gas Detector"), PRESSURE("Pressure Transmitter"), TEMPERATURE(
-        "Temperature Transmitter"), LEVEL("Level Transmitter"), FLOW("Flow Transmitter");
+    FIRE("Fire Detector"), GAS("Gas Detector"), PRESSURE("Pressure Transmitter"),
+    TEMPERATURE("Temperature Transmitter"), LEVEL("Level Transmitter"), FLOW("Flow Transmitter");
 
     private final String description;
 

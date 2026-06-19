@@ -90,7 +90,7 @@ public class CalculatorTest {
     calculator.setCalculationMethod((inputs, output) -> {
       double totalFlow = 0.0;
       for (ProcessEquipmentInterface input : inputs) {
-        totalFlow += ((Stream) input).getFlowRate("kg/hr");
+	totalFlow += ((Stream) input).getFlowRate("kg/hr");
       }
       ((Stream) output).setFlowRate(totalFlow, "kg/hr");
     });

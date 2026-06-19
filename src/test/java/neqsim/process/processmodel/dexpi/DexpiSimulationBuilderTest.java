@@ -31,23 +31,19 @@ public class DexpiSimulationBuilderTest extends NeqSimTest {
    * @throws IOException if file creation fails
    */
   private File writeSimpleDexpiXml() throws IOException {
-    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + "<PlantModel>\n"
-        + "  <Equipment ID=\"E-1\">\n"
-        + "    <Separator ComponentClass=\"Separator\" ID=\"Sep-1\" TagName=\"V-100\">\n"
-        + "      <GenericAttributes Set=\"DesignData\">\n"
-        + "        <GenericAttribute Name=\"InsideDiameter\" Value=\"2.0\"/>\n"
-        + "        <GenericAttribute Name=\"TangentToTangentLength\" Value=\"6.0\"/>\n"
-        + "        <GenericAttribute Name=\"Orientation\" Value=\"Horizontal\"/>\n"
-        + "      </GenericAttributes>\n" + "      <Nozzle ID=\"N-1\" TagName=\"VN-101\"/>\n"
-        + "      <Nozzle ID=\"N-2\" TagName=\"VN-102\"/>\n" + "    </Separator>\n"
-        + "  </Equipment>\n" + "  <Equipment ID=\"E-2\">\n"
-        + "    <Compressor ComponentClass=\"CentrifugalCompressor\" ID=\"Comp-1\" "
-        + "TagName=\"K-200\">\n" + "      <Nozzle ID=\"N-3\" TagName=\"KN-201\"/>\n"
-        + "      <Nozzle ID=\"N-4\" TagName=\"KN-202\"/>\n" + "    </Compressor>\n"
-        + "  </Equipment>\n" + "  <PipingNetworkSystem>\n"
-        + "    <PipingNetworkSegment ID=\"PNS-1\">\n"
-        + "      <Connection FromID=\"N-2\" ToID=\"N-3\"/>\n" + "    </PipingNetworkSegment>\n"
-        + "  </PipingNetworkSystem>\n" + "</PlantModel>";
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + "<PlantModel>\n" + "  <Equipment ID=\"E-1\">\n"
+	+ "    <Separator ComponentClass=\"Separator\" ID=\"Sep-1\" TagName=\"V-100\">\n"
+	+ "      <GenericAttributes Set=\"DesignData\">\n"
+	+ "        <GenericAttribute Name=\"InsideDiameter\" Value=\"2.0\"/>\n"
+	+ "        <GenericAttribute Name=\"TangentToTangentLength\" Value=\"6.0\"/>\n"
+	+ "        <GenericAttribute Name=\"Orientation\" Value=\"Horizontal\"/>\n" + "      </GenericAttributes>\n"
+	+ "      <Nozzle ID=\"N-1\" TagName=\"VN-101\"/>\n" + "      <Nozzle ID=\"N-2\" TagName=\"VN-102\"/>\n"
+	+ "    </Separator>\n" + "  </Equipment>\n" + "  <Equipment ID=\"E-2\">\n"
+	+ "    <Compressor ComponentClass=\"CentrifugalCompressor\" ID=\"Comp-1\" " + "TagName=\"K-200\">\n"
+	+ "      <Nozzle ID=\"N-3\" TagName=\"KN-201\"/>\n" + "      <Nozzle ID=\"N-4\" TagName=\"KN-202\"/>\n"
+	+ "    </Compressor>\n" + "  </Equipment>\n" + "  <PipingNetworkSystem>\n"
+	+ "    <PipingNetworkSegment ID=\"PNS-1\">\n" + "      <Connection FromID=\"N-2\" ToID=\"N-3\"/>\n"
+	+ "    </PipingNetworkSegment>\n" + "  </PipingNetworkSystem>\n" + "</PlantModel>";
     File file = new File(tempDir, "simple_plant.xml");
     FileWriter writer = new FileWriter(file);
     try {
@@ -65,11 +61,10 @@ public class DexpiSimulationBuilderTest extends NeqSimTest {
    * @throws IOException if file creation fails
    */
   private File writeSingleEquipmentXml() throws IOException {
-    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + "<PlantModel>\n"
-        + "  <Equipment ID=\"E-1\">\n"
-        + "    <Separator ComponentClass=\"Separator\" ID=\"Sep-1\" TagName=\"V-100\">\n"
-        + "      <Nozzle ID=\"N-1\"/>\n" + "      <Nozzle ID=\"N-2\"/>\n" + "    </Separator>\n"
-        + "  </Equipment>\n" + "</PlantModel>";
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + "<PlantModel>\n" + "  <Equipment ID=\"E-1\">\n"
+	+ "    <Separator ComponentClass=\"Separator\" ID=\"Sep-1\" TagName=\"V-100\">\n"
+	+ "      <Nozzle ID=\"N-1\"/>\n" + "      <Nozzle ID=\"N-2\"/>\n" + "    </Separator>\n" + "  </Equipment>\n"
+	+ "</PlantModel>";
     File file = new File(tempDir, "single_equip.xml");
     FileWriter writer = new FileWriter(file);
     try {
@@ -90,7 +85,7 @@ public class DexpiSimulationBuilderTest extends NeqSimTest {
     File xmlFile = writeSimpleDexpiXml();
 
     ProcessSystem process = new DexpiSimulationBuilder(xmlFile).setFeedPressure(60.0, "bara")
-        .setFeedTemperature(25.0, "C").setFeedFlowRate(0.5, "MSm3/day").build();
+	.setFeedTemperature(25.0, "C").setFeedFlowRate(0.5, "MSm3/day").build();
 
     assertNotNull(process);
     // Should contain at least feed stream + 2 equipment
@@ -112,9 +107,8 @@ public class DexpiSimulationBuilderTest extends NeqSimTest {
     fluid.addComponent("propane", 0.05);
     fluid.setMixingRule("classic");
 
-    ProcessSystem process =
-        new DexpiSimulationBuilder(xmlFile).setFluidTemplate(fluid).setFeedPressure(50.0, "bara")
-            .setFeedTemperature(30.0, "C").setFeedFlowRate(1.0, "MSm3/day").build();
+    ProcessSystem process = new DexpiSimulationBuilder(xmlFile).setFluidTemplate(fluid).setFeedPressure(50.0, "bara")
+	.setFeedTemperature(30.0, "C").setFeedFlowRate(1.0, "MSm3/day").build();
 
     assertNotNull(process);
     assertTrue(process.getUnitOperations().size() >= 2);
@@ -181,9 +175,8 @@ public class DexpiSimulationBuilderTest extends NeqSimTest {
   public void testFluentApiChaining() throws Exception {
     File xmlFile = writeSingleEquipmentXml();
 
-    DexpiSimulationBuilder builder = new DexpiSimulationBuilder(xmlFile)
-        .setFeedPressure(40.0, "bara").setFeedTemperature(20.0, "C")
-        .setFeedFlowRate(2.0, "MSm3/day").setAutoInstrument(false);
+    DexpiSimulationBuilder builder = new DexpiSimulationBuilder(xmlFile).setFeedPressure(40.0, "bara")
+	.setFeedTemperature(20.0, "C").setFeedFlowRate(2.0, "MSm3/day").setAutoInstrument(false);
 
     assertNotNull(builder);
     ProcessSystem process = builder.build();

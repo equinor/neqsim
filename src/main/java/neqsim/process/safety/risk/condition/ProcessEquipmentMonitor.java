@@ -14,9 +14,8 @@ import neqsim.process.equipment.capacity.CapacityConstraint;
  * Physics-based equipment monitor that directly integrates with NeqSim process equipment.
  *
  * <p>
- * This class connects reliability monitoring directly to NeqSim's process simulation physics,
- * automatically extracting condition indicators (temperature, pressure, capacity utilization) from
- * the equipment's actual process state.
+ * This class connects reliability monitoring directly to NeqSim's process simulation physics, automatically extracting
+ * condition indicators (temperature, pressure, capacity utilization) from the equipment's actual process state.
  * </p>
  *
  * <p>
@@ -98,15 +97,15 @@ public class ProcessEquipmentMonitor implements Serializable {
     /**
      * Creates a monitor reading.
      *
-     * @param timestamp reading time
-     * @param temperature temperature in K
-     * @param pressure pressure in bara
+     * @param timestamp           reading time
+     * @param temperature         temperature in K
+     * @param pressure            pressure in bara
      * @param capacityUtilization capacity utilization 0-1
-     * @param healthIndex calculated health index 0-1
-     * @param failureRate adjusted failure rate per hour
+     * @param healthIndex         calculated health index 0-1
+     * @param failureRate         adjusted failure rate per hour
      */
-    public MonitorReading(Instant timestamp, double temperature, double pressure,
-        double capacityUtilization, double healthIndex, double failureRate) {
+    public MonitorReading(Instant timestamp, double temperature, double pressure, double capacityUtilization,
+	double healthIndex, double failureRate) {
       this.timestamp = timestamp;
       this.temperature = temperature;
       this.pressure = pressure;
@@ -184,8 +183,8 @@ public class ProcessEquipmentMonitor implements Serializable {
    * Updates monitor by reading current values from equipment.
    *
    * <p>
-   * This method reads temperature, pressure, and capacity utilization directly from the NeqSim
-   * equipment and recalculates health index and failure rate.
+   * This method reads temperature, pressure, and capacity utilization directly from the NeqSim equipment and
+   * recalculates health index and failure rate.
    * </p>
    */
   public void update() {
@@ -204,7 +203,7 @@ public class ProcessEquipmentMonitor implements Serializable {
 
       CapacityConstraint bottleneck = constrained.getBottleneckConstraint();
       if (bottleneck != null) {
-        bottleneckConstraint = bottleneck.getName();
+	bottleneckConstraint = bottleneck.getName();
       }
     }
 
@@ -213,8 +212,8 @@ public class ProcessEquipmentMonitor implements Serializable {
 
     // Record history
     lastUpdated = Instant.now();
-    history.add(new MonitorReading(lastUpdated, currentTemperature, currentPressure,
-        currentCapacityUtilization, healthIndex, adjustedFailureRate));
+    history.add(new MonitorReading(lastUpdated, currentTemperature, currentPressure, currentCapacityUtilization,
+	healthIndex, adjustedFailureRate));
 
     // Limit history size
     while (history.size() > maxHistorySize) {
@@ -225,8 +224,8 @@ public class ProcessEquipmentMonitor implements Serializable {
   /**
    * Manually sets current values (for testing or external data integration).
    *
-   * @param temperature temperature in Kelvin
-   * @param pressure pressure in bara
+   * @param temperature         temperature in Kelvin
+   * @param pressure            pressure in bara
    * @param capacityUtilization capacity utilization 0-1
    */
   public void setCurrentValues(double temperature, double pressure, double capacityUtilization) {
@@ -236,8 +235,8 @@ public class ProcessEquipmentMonitor implements Serializable {
     recalculateHealth();
 
     lastUpdated = Instant.now();
-    history.add(new MonitorReading(lastUpdated, currentTemperature, currentPressure,
-        currentCapacityUtilization, healthIndex, adjustedFailureRate));
+    history.add(new MonitorReading(lastUpdated, currentTemperature, currentPressure, currentCapacityUtilization,
+	healthIndex, adjustedFailureRate));
 
     while (history.size() > maxHistorySize) {
       history.remove(0);
@@ -254,9 +253,8 @@ public class ProcessEquipmentMonitor implements Serializable {
 
     // Weighted average of health contributions
     double totalWeight = temperatureWeight + pressureWeight + capacityWeight;
-    healthIndex =
-        (tempHealth * temperatureWeight + pressHealth * pressureWeight + capHealth * capacityWeight)
-            / totalWeight;
+    healthIndex = (tempHealth * temperatureWeight + pressHealth * pressureWeight + capHealth * capacityWeight)
+	/ totalWeight;
 
     // Adjust failure rate based on health
     // Lower health = higher failure rate (exponential relationship)
@@ -290,9 +288,9 @@ public class ProcessEquipmentMonitor implements Serializable {
       // Outside design range - health degrades rapidly
       double exceedance = 0;
       if (currentTemperature < minDesignTemperature) {
-        exceedance = (minDesignTemperature - currentTemperature) / range;
+	exceedance = (minDesignTemperature - currentTemperature) / range;
       } else {
-        exceedance = (currentTemperature - maxDesignTemperature) / range;
+	exceedance = (currentTemperature - maxDesignTemperature) / range;
       }
       return Math.max(0, 0.3 - exceedance);
     }
@@ -326,9 +324,9 @@ public class ProcessEquipmentMonitor implements Serializable {
       // Outside design range
       double exceedance = 0;
       if (currentPressure > maxDesignPressure) {
-        exceedance = (currentPressure - maxDesignPressure) / range;
+	exceedance = (currentPressure - maxDesignPressure) / range;
       } else {
-        exceedance = (minDesignPressure - currentPressure) / range;
+	exceedance = (minDesignPressure - currentPressure) / range;
       }
       return Math.max(0, 0.3 - exceedance * 2);
     }
@@ -569,9 +567,9 @@ public class ProcessEquipmentMonitor implements Serializable {
   /**
    * Sets indicator weights for health calculation.
    *
-   * @param tempWeight temperature weight
+   * @param tempWeight  temperature weight
    * @param pressWeight pressure weight
-   * @param capWeight capacity utilization weight
+   * @param capWeight   capacity utilization weight
    */
   public void setWeights(double tempWeight, double pressWeight, double capWeight) {
     this.temperatureWeight = tempWeight;

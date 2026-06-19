@@ -29,8 +29,7 @@ public class DistillationColumnModeTest {
     column.setCondenserMode(DistillationColumn.CondenserMode.TOTAL);
     assertEquals(DistillationColumn.CondenserMode.TOTAL, column.getCondenserMode());
     column.setCondenserLiquidReflux(10.0, "kg/hr");
-    assertEquals(DistillationColumn.CondenserMode.LIQUID_REFLUX_SPLIT,
-        column.getCondenserMode());
+    assertEquals(DistillationColumn.CondenserMode.LIQUID_REFLUX_SPLIT, column.getCondenserMode());
     column.setCondenserMode(DistillationColumn.CondenserMode.PARTIAL);
     assertEquals(DistillationColumn.CondenserMode.PARTIAL, column.getCondenserMode());
   }
@@ -67,16 +66,14 @@ public class DistillationColumnModeTest {
   public void liquidPumparoundCanBeConfiguredAtColumnLevel() {
     DistillationColumn column = new DistillationColumn("pumparound column", 3, true, true);
 
-    DistillationColumn.ColumnPumparound pumparound = column.addLiquidPumparound("PA-1", 2, 1,
-        0.15, 10.0);
+    DistillationColumn.ColumnPumparound pumparound = column.addLiquidPumparound("PA-1", 2, 1, 0.15, 10.0);
 
     assertEquals(1, column.getPumparounds().size());
     assertEquals("PA-1", pumparound.getName());
     assertEquals(2, pumparound.getDrawTrayNumber());
     assertEquals(1, pumparound.getReturnTrayNumber());
     assertEquals(0.15, column.getTray(2).getLiquidPumparoundDrawFraction(), 1.0e-12);
-    assertThrows(IllegalArgumentException.class,
-        () -> column.addLiquidPumparound("duplicate", 2, 1, 0.10, 10.0));
+    assertThrows(IllegalArgumentException.class, () -> column.addLiquidPumparound("duplicate", 2, 1, 0.10, 10.0));
   }
 
   /**
@@ -85,11 +82,9 @@ public class DistillationColumnModeTest {
   @Test
   public void liquidPumparoundRunCreatesFinalReturnStream() {
     Stream feed = createLiquidPentaneFeed("pumparound liquid feed");
-    DistillationColumn column = new DistillationColumn("running pumparound column", 1, false,
-        false);
+    DistillationColumn column = new DistillationColumn("running pumparound column", 1, false, false);
     column.addFeedStream(feed, 0);
-    DistillationColumn.ColumnPumparound pumparound = column.addLiquidPumparound("PA-run", 0, 0,
-        0.20, 5.0);
+    DistillationColumn.ColumnPumparound pumparound = column.addLiquidPumparound("PA-run", 0, 0, 0.20, 5.0);
 
     column.run(UUID.randomUUID());
 
@@ -104,15 +99,13 @@ public class DistillationColumnModeTest {
    */
   @Test
   public void hydraulicPressureDropCouplingCanBeEnabled() {
-    DistillationColumn column = new DistillationColumn("hydraulic coupling column", 2, true,
-        true);
+    DistillationColumn column = new DistillationColumn("hydraulic coupling column", 2, true, true);
 
     column.enableHydraulicPressureDropCoupling("sieve");
 
     assertTrue(column.isHydraulicPressureDropCouplingEnabled());
     assertEquals(0.0, column.getLastHydraulicPressureDropPa(), 1.0e-12);
-    assertThrows(IllegalArgumentException.class,
-        () -> column.setHydraulicPressureDropInternalsType(""));
+    assertThrows(IllegalArgumentException.class, () -> column.setHydraulicPressureDropInternalsType(""));
   }
 
   /**
@@ -124,12 +117,11 @@ public class DistillationColumnModeTest {
     column.setDynamicColumnEnabled(true);
     ValidationResult result = column.validateSetup();
 
-    assertEquals(DistillationColumn.DynamicColumnModel.EXPERIMENTAL_EULER,
-        column.getDynamicColumnModel());
+    assertEquals(DistillationColumn.DynamicColumnModel.EXPERIMENTAL_EULER, column.getDynamicColumnModel());
     assertTrue(column.isDynamicColumnModelExperimental());
     assertTrue(result.hasWarnings());
     assertTrue(result.getWarnings().stream()
-        .anyMatch(warning -> warning.getMessage().contains("explicit-Euler holdup screening")));
+	.anyMatch(warning -> warning.getMessage().contains("explicit-Euler holdup screening")));
   }
 
   /**
@@ -138,8 +130,7 @@ public class DistillationColumnModeTest {
   @Test
   public void nonPhysicalPumparoundReturnTemperatureThrows() {
     Stream feed = createLiquidPentaneFeed("cold pumparound feed");
-    DistillationColumn column = new DistillationColumn("cold pumparound column", 1, false,
-        false);
+    DistillationColumn column = new DistillationColumn("cold pumparound column", 1, false, false);
     column.addFeedStream(feed, 0);
     column.addLiquidPumparound("PA-cold", 0, 0, 0.20, 400.0);
 

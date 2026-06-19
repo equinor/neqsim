@@ -34,7 +34,7 @@ public class Cooler extends Heater {
    * Constructor for Cooler.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name     a {@link java.lang.String} object
    * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public Cooler(String name, StreamInterface inStream) {
@@ -64,8 +64,7 @@ public class Cooler extends Heater {
 
     double heatTransferEntropyProd = coolingMediumTemperature * getDuty();
     System.out.println("heat entropy " + heatTransferEntropyProd);
-    double entrop = getOutletStream().getThermoSystem().getEntropy(unit)
-        - inStream.getThermoSystem().getEntropy(unit);
+    double entrop = getOutletStream().getThermoSystem().getEntropy(unit) - inStream.getThermoSystem().getEntropy(unit);
 
     return entrop;
   }
@@ -73,8 +72,7 @@ public class Cooler extends Heater {
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
-        .toJson(new HeaterResponse(this));
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(new HeaterResponse(this));
   }
 
   /** {@inheritDoc} */

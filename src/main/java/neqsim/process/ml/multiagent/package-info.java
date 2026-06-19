@@ -2,8 +2,8 @@
  * Multi-agent reinforcement learning infrastructure for coordinated process control.
  *
  * <p>
- * This package provides infrastructure for multi-agent systems where multiple RL agents coordinate
- * to control interconnected process equipment:
+ * This package provides infrastructure for multi-agent systems where multiple RL agents coordinate to control
+ * interconnected process equipment:
  * <ul>
  * <li>{@link neqsim.process.ml.multiagent.Agent} - Individual agent interface</li>
  * <li>{@link neqsim.process.ml.multiagent.MultiAgentEnvironment} - Coordinated environment</li>

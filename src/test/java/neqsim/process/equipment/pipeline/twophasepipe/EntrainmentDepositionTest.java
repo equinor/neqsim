@@ -34,9 +34,8 @@ class EntrainmentDepositionTest {
 
   @Test
   void testNoEntrainmentInStratifiedFlow() {
-    EntrainmentResult result = entrainment.calculate(FlowRegime.STRATIFIED_SMOOTH, GAS_VELOCITY,
-        LIQUID_VELOCITY, GAS_DENSITY, LIQUID_DENSITY, GAS_VISCOSITY, LIQUID_VISCOSITY,
-        SURFACE_TENSION, DIAMETER, LIQUID_HOLDUP);
+    EntrainmentResult result = entrainment.calculate(FlowRegime.STRATIFIED_SMOOTH, GAS_VELOCITY, LIQUID_VELOCITY,
+	GAS_DENSITY, LIQUID_DENSITY, GAS_VISCOSITY, LIQUID_VISCOSITY, SURFACE_TENSION, DIAMETER, LIQUID_HOLDUP);
 
     assertEquals(0.0, result.entrainmentRate, 1e-10, "No entrainment in stratified flow");
     assertEquals(0.0, result.depositionRate, 1e-10, "No deposition in stratified flow");
@@ -45,9 +44,8 @@ class EntrainmentDepositionTest {
 
   @Test
   void testEntrainmentInAnnularFlow() {
-    EntrainmentResult result = entrainment.calculate(FlowRegime.ANNULAR, GAS_VELOCITY,
-        LIQUID_VELOCITY, GAS_DENSITY, LIQUID_DENSITY, GAS_VISCOSITY, LIQUID_VISCOSITY,
-        SURFACE_TENSION, DIAMETER, LIQUID_HOLDUP);
+    EntrainmentResult result = entrainment.calculate(FlowRegime.ANNULAR, GAS_VELOCITY, LIQUID_VELOCITY, GAS_DENSITY,
+	LIQUID_DENSITY, GAS_VISCOSITY, LIQUID_VISCOSITY, SURFACE_TENSION, DIAMETER, LIQUID_HOLDUP);
 
     // At high gas velocity, entrainment should occur
     assertTrue(result.entrainmentRate >= 0.0, "Entrainment rate should be non-negative");
@@ -55,30 +53,25 @@ class EntrainmentDepositionTest {
 
   @Test
   void testEntrainmentInMistFlow() {
-    EntrainmentResult result = entrainment.calculate(FlowRegime.MIST, GAS_VELOCITY * 2,
-        LIQUID_VELOCITY, GAS_DENSITY, LIQUID_DENSITY, GAS_VISCOSITY, LIQUID_VISCOSITY,
-        SURFACE_TENSION, DIAMETER, LIQUID_HOLDUP);
+    EntrainmentResult result = entrainment.calculate(FlowRegime.MIST, GAS_VELOCITY * 2, LIQUID_VELOCITY, GAS_DENSITY,
+	LIQUID_DENSITY, GAS_VISCOSITY, LIQUID_VISCOSITY, SURFACE_TENSION, DIAMETER, LIQUID_HOLDUP);
 
-    assertTrue(result.entrainmentRate >= 0.0,
-        "Entrainment rate should be non-negative in mist flow");
+    assertTrue(result.entrainmentRate >= 0.0, "Entrainment rate should be non-negative in mist flow");
   }
 
   @Test
   void testDropletDiameterIsPositive() {
-    EntrainmentResult result = entrainment.calculate(FlowRegime.ANNULAR, GAS_VELOCITY,
-        LIQUID_VELOCITY, GAS_DENSITY, LIQUID_DENSITY, GAS_VISCOSITY, LIQUID_VISCOSITY,
-        SURFACE_TENSION, DIAMETER, LIQUID_HOLDUP);
+    EntrainmentResult result = entrainment.calculate(FlowRegime.ANNULAR, GAS_VELOCITY, LIQUID_VELOCITY, GAS_DENSITY,
+	LIQUID_DENSITY, GAS_VISCOSITY, LIQUID_VISCOSITY, SURFACE_TENSION, DIAMETER, LIQUID_HOLDUP);
 
     assertTrue(result.dropletDiameter > 0, "Droplet diameter should be positive");
-    assertTrue(result.dropletDiameter < DIAMETER,
-        "Droplet diameter should be smaller than pipe diameter");
+    assertTrue(result.dropletDiameter < DIAMETER, "Droplet diameter should be smaller than pipe diameter");
   }
 
   @Test
   void testEntrainmentFractionInRange() {
-    EntrainmentResult result = entrainment.calculate(FlowRegime.ANNULAR, GAS_VELOCITY,
-        LIQUID_VELOCITY, GAS_DENSITY, LIQUID_DENSITY, GAS_VISCOSITY, LIQUID_VISCOSITY,
-        SURFACE_TENSION, DIAMETER, LIQUID_HOLDUP);
+    EntrainmentResult result = entrainment.calculate(FlowRegime.ANNULAR, GAS_VELOCITY, LIQUID_VELOCITY, GAS_DENSITY,
+	LIQUID_DENSITY, GAS_VISCOSITY, LIQUID_VISCOSITY, SURFACE_TENSION, DIAMETER, LIQUID_HOLDUP);
 
     assertTrue(result.entrainmentFraction >= 0.0, "Entrainment fraction should be >= 0");
     assertTrue(result.entrainmentFraction <= 1.0, "Entrainment fraction should be <= 1");
@@ -86,20 +79,17 @@ class EntrainmentDepositionTest {
 
   @Test
   void testNetTransferRateIsConsistent() {
-    EntrainmentResult result = entrainment.calculate(FlowRegime.ANNULAR, GAS_VELOCITY,
-        LIQUID_VELOCITY, GAS_DENSITY, LIQUID_DENSITY, GAS_VISCOSITY, LIQUID_VISCOSITY,
-        SURFACE_TENSION, DIAMETER, LIQUID_HOLDUP);
+    EntrainmentResult result = entrainment.calculate(FlowRegime.ANNULAR, GAS_VELOCITY, LIQUID_VELOCITY, GAS_DENSITY,
+	LIQUID_DENSITY, GAS_VISCOSITY, LIQUID_VISCOSITY, SURFACE_TENSION, DIAMETER, LIQUID_HOLDUP);
 
     double expectedNet = result.entrainmentRate - result.depositionRate;
-    assertEquals(expectedNet, result.netTransferRate, 1e-10,
-        "Net transfer rate should equal entrainment - deposition");
+    assertEquals(expectedNet, result.netTransferRate, 1e-10, "Net transfer rate should equal entrainment - deposition");
   }
 
   @Test
   void testFilmReynoldsNumberIsPositive() {
-    EntrainmentResult result = entrainment.calculate(FlowRegime.ANNULAR, GAS_VELOCITY,
-        LIQUID_VELOCITY, GAS_DENSITY, LIQUID_DENSITY, GAS_VISCOSITY, LIQUID_VISCOSITY,
-        SURFACE_TENSION, DIAMETER, LIQUID_HOLDUP);
+    EntrainmentResult result = entrainment.calculate(FlowRegime.ANNULAR, GAS_VELOCITY, LIQUID_VELOCITY, GAS_DENSITY,
+	LIQUID_DENSITY, GAS_VISCOSITY, LIQUID_VISCOSITY, SURFACE_TENSION, DIAMETER, LIQUID_HOLDUP);
 
     assertTrue(result.filmReynoldsNumber > 0, "Film Reynolds number should be positive");
   }
@@ -110,12 +100,10 @@ class EntrainmentDepositionTest {
     for (EntrainmentModel model : EntrainmentModel.values()) {
       entrainment.setEntrainmentModel(model);
 
-      EntrainmentResult result = entrainment.calculate(FlowRegime.ANNULAR, GAS_VELOCITY,
-          LIQUID_VELOCITY, GAS_DENSITY, LIQUID_DENSITY, GAS_VISCOSITY, LIQUID_VISCOSITY,
-          SURFACE_TENSION, DIAMETER, LIQUID_HOLDUP);
+      EntrainmentResult result = entrainment.calculate(FlowRegime.ANNULAR, GAS_VELOCITY, LIQUID_VELOCITY, GAS_DENSITY,
+	  LIQUID_DENSITY, GAS_VISCOSITY, LIQUID_VISCOSITY, SURFACE_TENSION, DIAMETER, LIQUID_HOLDUP);
 
-      assertTrue(result.entrainmentRate >= 0.0,
-          "Entrainment rate should be non-negative for model " + model);
+      assertTrue(result.entrainmentRate >= 0.0, "Entrainment rate should be non-negative for model " + model);
     }
   }
 
@@ -125,12 +113,10 @@ class EntrainmentDepositionTest {
     for (DepositionModel model : DepositionModel.values()) {
       entrainment.setDepositionModel(model);
 
-      EntrainmentResult result = entrainment.calculate(FlowRegime.ANNULAR, GAS_VELOCITY,
-          LIQUID_VELOCITY, GAS_DENSITY, LIQUID_DENSITY, GAS_VISCOSITY, LIQUID_VISCOSITY,
-          SURFACE_TENSION, DIAMETER, LIQUID_HOLDUP);
+      EntrainmentResult result = entrainment.calculate(FlowRegime.ANNULAR, GAS_VELOCITY, LIQUID_VELOCITY, GAS_DENSITY,
+	  LIQUID_DENSITY, GAS_VISCOSITY, LIQUID_VISCOSITY, SURFACE_TENSION, DIAMETER, LIQUID_HOLDUP);
 
-      assertTrue(result.depositionRate >= 0.0,
-          "Deposition rate should be non-negative for model " + model);
+      assertTrue(result.depositionRate >= 0.0, "Deposition rate should be non-negative for model " + model);
     }
   }
 
@@ -139,18 +125,16 @@ class EntrainmentDepositionTest {
     entrainment.setCriticalWeber(5.0); // Lower threshold for testing
     entrainment.setCriticalReFilm(50.0);
 
-    EntrainmentResult resultLow = entrainment.calculate(FlowRegime.ANNULAR, 10.0, LIQUID_VELOCITY,
-        GAS_DENSITY, LIQUID_DENSITY, GAS_VISCOSITY, LIQUID_VISCOSITY, SURFACE_TENSION, DIAMETER,
-        LIQUID_HOLDUP);
+    EntrainmentResult resultLow = entrainment.calculate(FlowRegime.ANNULAR, 10.0, LIQUID_VELOCITY, GAS_DENSITY,
+	LIQUID_DENSITY, GAS_VISCOSITY, LIQUID_VISCOSITY, SURFACE_TENSION, DIAMETER, LIQUID_HOLDUP);
 
-    EntrainmentResult resultHigh = entrainment.calculate(FlowRegime.ANNULAR, 30.0, LIQUID_VELOCITY,
-        GAS_DENSITY, LIQUID_DENSITY, GAS_VISCOSITY, LIQUID_VISCOSITY, SURFACE_TENSION, DIAMETER,
-        LIQUID_HOLDUP);
+    EntrainmentResult resultHigh = entrainment.calculate(FlowRegime.ANNULAR, 30.0, LIQUID_VELOCITY, GAS_DENSITY,
+	LIQUID_DENSITY, GAS_VISCOSITY, LIQUID_VISCOSITY, SURFACE_TENSION, DIAMETER, LIQUID_HOLDUP);
 
     // Higher gas velocity should lead to more entrainment
     if (resultHigh.isEntraining && resultLow.isEntraining) {
       assertTrue(resultHigh.entrainmentRate >= resultLow.entrainmentRate,
-          "Entrainment should increase with gas velocity");
+	  "Entrainment should increase with gas velocity");
     }
   }
 
@@ -170,19 +154,16 @@ class EntrainmentDepositionTest {
 
   @Test
   void testNoEntrainmentInSlugFlow() {
-    EntrainmentResult result = entrainment.calculate(FlowRegime.SLUG, GAS_VELOCITY, LIQUID_VELOCITY,
-        GAS_DENSITY, LIQUID_DENSITY, GAS_VISCOSITY, LIQUID_VISCOSITY, SURFACE_TENSION, DIAMETER,
-        LIQUID_HOLDUP);
+    EntrainmentResult result = entrainment.calculate(FlowRegime.SLUG, GAS_VELOCITY, LIQUID_VELOCITY, GAS_DENSITY,
+	LIQUID_DENSITY, GAS_VISCOSITY, LIQUID_VISCOSITY, SURFACE_TENSION, DIAMETER, LIQUID_HOLDUP);
 
-    assertEquals(0.0, result.entrainmentRate, 1e-10,
-        "No entrainment expected in slug flow (not annular/mist)");
+    assertEquals(0.0, result.entrainmentRate, 1e-10, "No entrainment expected in slug flow (not annular/mist)");
   }
 
   @Test
   void testDropletConcentrationIsNonNegative() {
-    EntrainmentResult result = entrainment.calculate(FlowRegime.ANNULAR, GAS_VELOCITY,
-        LIQUID_VELOCITY, GAS_DENSITY, LIQUID_DENSITY, GAS_VISCOSITY, LIQUID_VISCOSITY,
-        SURFACE_TENSION, DIAMETER, LIQUID_HOLDUP);
+    EntrainmentResult result = entrainment.calculate(FlowRegime.ANNULAR, GAS_VELOCITY, LIQUID_VELOCITY, GAS_DENSITY,
+	LIQUID_DENSITY, GAS_VISCOSITY, LIQUID_VISCOSITY, SURFACE_TENSION, DIAMETER, LIQUID_HOLDUP);
 
     assertTrue(result.dropletConcentration >= 0.0, "Droplet concentration should be non-negative");
   }

@@ -72,7 +72,8 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
     /** {@inheritDoc} */
     @Override
-    public void run(UUID id) {}
+    public void run(UUID id) {
+    }
 
     /**
      * Gets the inlet stream used by the mass-balance fixture.
@@ -120,15 +121,15 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     private static final long serialVersionUID = 1000L;
     private final List<StreamInterface> inletStreams;
 
-    PassiveMultiInputTestUnit(String name, StreamInterface firstInlet,
-        StreamInterface secondInlet) {
+    PassiveMultiInputTestUnit(String name, StreamInterface firstInlet, StreamInterface secondInlet) {
       super(name);
       this.inletStreams = java.util.Arrays.asList(firstInlet, secondInlet);
     }
 
     /** {@inheritDoc} */
     @Override
-    public void run(UUID id) {}
+    public void run(UUID id) {
+    }
 
     /** {@inheritDoc} */
     @Override
@@ -214,8 +215,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
   @Test
   public void convergenceDiagnosticsIncludeUnsolvedColumnDetails() {
-    neqsim.thermo.system.SystemInterface fluid =
-        new neqsim.thermo.system.SystemSrkEos(289.15, 14.0);
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(289.15, 14.0);
     fluid.addComponent("propane", 0.35);
     fluid.addComponent("n-butane", 0.40);
     fluid.addComponent("n-pentane", 0.25);
@@ -225,8 +225,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     feed.setFlowRate(100.0, "kg/hr");
     feed.run();
 
-    DistillationColumn column =
-        new DistillationColumn("process diagnostic debutanizer", 10, true, true);
+    DistillationColumn column = new DistillationColumn("process diagnostic debutanizer", 10, true, true);
     column.addFeedStream(feed, 9);
     column.getCondenser().setRefluxRatio(0.1);
     p.add(column);
@@ -290,7 +289,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     ProcessEventListener listener = new ProcessEventListener() {
       @Override
       public void onEvent(ProcessEvent event) {
-        captured.add(event);
+	captured.add(event);
       }
     };
 
@@ -300,8 +299,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
       Assertions.assertEquals(1, captured.size());
       Assertions.assertEquals(ProcessEvent.EventType.ERROR, captured.get(0).getType());
       Assertions.assertEquals("FailingUnit", captured.get(0).getSource());
-      Assertions
-          .assertTrue(captured.get(0).getDescription().contains("forced process unit failure"));
+      Assertions.assertTrue(captured.get(0).getDescription().contains("forced process unit failure"));
     } finally {
       bus.unsubscribe(ProcessEvent.EventType.ERROR, listener);
       bus.clearHistory();
@@ -310,14 +308,12 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
   @Test
   public void testRunParallelPropagatesFailureFromSharedInputGroup() throws InterruptedException {
-    neqsim.thermo.system.SystemInterface firstFluid =
-        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    neqsim.thermo.system.SystemInterface firstFluid = new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
     firstFluid.addComponent("methane", 1.0);
     firstFluid.setMixingRule("classic");
     Stream firstInlet = new Stream("shared input feed", firstFluid);
 
-    neqsim.thermo.system.SystemInterface secondFluid =
-        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    neqsim.thermo.system.SystemInterface secondFluid = new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
     secondFluid.addComponent("methane", 1.0);
     secondFluid.setMixingRule("classic");
     Stream secondInlet = new Stream("second input feed", secondFluid);
@@ -329,7 +325,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     process.add(new PassiveMultiInputTestUnit("PassiveMultiInputUnit", firstInlet, secondInlet));
 
     RuntimeException thrown = Assertions.assertThrows(RuntimeException.class,
-        () -> process.runParallel(UUID.randomUUID()));
+	() -> process.runParallel(UUID.randomUUID()));
     Assertions.assertTrue(thrown.getMessage().contains("SharedFailingUnit"));
   }
 
@@ -339,7 +335,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     process.add(new FailingProcessUnit("DataflowFailingUnit"));
 
     RuntimeException thrown = Assertions.assertThrows(RuntimeException.class,
-        () -> process.runDataflow(UUID.randomUUID()));
+	() -> process.runDataflow(UUID.randomUUID()));
     Assertions.assertTrue(thrown.getMessage().contains("DataflowFailingUnit"));
   }
 
@@ -353,9 +349,9 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
       p.add(new Separator(name));
     });
     Assertions.assertEquals(
-        "neqsim.util.exception.InvalidInputException: ProcessSystem:add - Input operation - Process equipment of type Separator named "
-            + name + " already included in ProcessSystem",
-        thrown.getMessage());
+	"neqsim.util.exception.InvalidInputException: ProcessSystem:add - Input operation - Process equipment of type Separator named "
+	    + name + " already included in ProcessSystem",
+	thrown.getMessage());
     p.removeUnit(name);
     Assertions.assertEquals(0, p.size());
     p.add(new Tank(name));
@@ -365,9 +361,9 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
       p.add(new Separator(name));
     });
     Assertions.assertEquals(
-        "neqsim.util.exception.InvalidInputException: ProcessSystem:add - Input operation - Process equipment of type Tank named "
-            + name + " already included in ProcessSystem",
-        thrown2.getMessage());
+	"neqsim.util.exception.InvalidInputException: ProcessSystem:add - Input operation - Process equipment of type Tank named "
+	    + name + " already included in ProcessSystem",
+	thrown2.getMessage());
   }
 
   @Test
@@ -414,90 +410,116 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
   }
 
   @Test
-  void testGetAllUnitNames() {}
+  void testGetAllUnitNames() {
+  }
 
   @Test
-  void testGetConditionMonitor() {}
+  void testGetConditionMonitor() {
+  }
 
   @Test
-  void testGetCoolerDuty() {}
+  void testGetCoolerDuty() {
+  }
 
   @Test
-  void testGetCostEstimator() {}
+  void testGetCostEstimator() {
+  }
 
   @Test
-  void testGetEntropyProduction() {}
+  void testGetEntropyProduction() {
+  }
 
   @Test
-  void testGetExergyChange() {}
+  void testGetExergyChange() {
+  }
 
   @Test
-  void testGetHeaterDuty() {}
+  void testGetHeaterDuty() {
+  }
 
   @Test
-  void testGetMeasurementDevice() {}
+  void testGetMeasurementDevice() {
+  }
 
   @Test
-  void testGetMechanicalWeight() {}
+  void testGetMechanicalWeight() {
+  }
 
   @Test
-  void testGetPower() {}
+  void testGetPower() {
+  }
 
   @Test
-  void testGetSurroundingTemperature() {}
+  void testGetSurroundingTemperature() {
+  }
 
   @Test
-  void testGetSystemMechanicalDesign() {}
+  void testGetSystemMechanicalDesign() {
+  }
 
   @Test
-  void testGetUnit() {}
+  void testGetUnit() {
+  }
 
   @Test
-  void testGetUnitOperations() {}
+  void testGetUnitOperations() {
+  }
 
   @Test
-  void testOpen() {}
+  void testOpen() {
+  }
 
   @Test
-  void testPrintLogFile() {}
+  void testPrintLogFile() {
+  }
 
   @Test
-  void testReplaceObject() {}
+  void testReplaceObject() {
+  }
 
   @Test
-  void testReportMeasuredValues() {}
+  void testReportMeasuredValues() {
+  }
 
   @Test
-  void testReportResults() {}
+  void testReportResults() {
+  }
 
   @Test
-  void testRun() {}
+  void testRun() {
+  }
 
   @Test
-  void testRunAsThread() {}
+  void testRunAsThread() {
+  }
 
   @Test
-  void testSave() {}
+  void testSave() {
+  }
 
   @Test
-  void testSetFluid() {}
+  void testSetFluid() {
+  }
 
   @Test
-  void testSetName() {}
+  void testSetName() {
+  }
 
   @Test
-  void testSetSystemMechanicalDesign() {}
+  void testSetSystemMechanicalDesign() {
+  }
 
   @Test
-  void testSize() {}
+  void testSize() {
+  }
 
   @Test
-  void testView() {}
+  void testView() {
+  }
 
   @Test
   public void runTEGProcessTest2() {
-    neqsim.thermo.system.SystemInterface feedGas =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
+    neqsim.thermo.system.SystemInterface feedGas = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
     feedGas.addComponent("nitrogen", 0.245);
     feedGas.addComponent("CO2", 3.4);
     feedGas.addComponent("methane", 85.7);
@@ -520,18 +542,17 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     dryFeedGasSmorbukk.setTemperature(25.0, "C");
     dryFeedGasSmorbukk.setPressure(40.0, "bara");
 
-    StreamSaturatorUtil saturatedFeedGasSmorbukk =
-        new StreamSaturatorUtil("water saturator Smorbukk", dryFeedGasSmorbukk);
+    StreamSaturatorUtil saturatedFeedGasSmorbukk = new StreamSaturatorUtil("water saturator Smorbukk",
+	dryFeedGasSmorbukk);
 
-    Stream waterSaturatedFeedGasSmorbukk =
-        new Stream("water saturated feed gas Smorbukk", saturatedFeedGasSmorbukk.getOutletStream());
+    Stream waterSaturatedFeedGasSmorbukk = new Stream("water saturated feed gas Smorbukk",
+	saturatedFeedGasSmorbukk.getOutletStream());
 
-    HydrateEquilibriumTemperatureAnalyser hydrateTAnalyserSmorbukk =
-        new HydrateEquilibriumTemperatureAnalyser("hydrate temperature analyser Smorbukk",
-            waterSaturatedFeedGasSmorbukk);
+    HydrateEquilibriumTemperatureAnalyser hydrateTAnalyserSmorbukk = new HydrateEquilibriumTemperatureAnalyser(
+	"hydrate temperature analyser Smorbukk", waterSaturatedFeedGasSmorbukk);
 
     Splitter SmorbukkSplit = new Splitter("Smorbukk Splitter", waterSaturatedFeedGasSmorbukk);
-    double[] splitSmorbukk = {1.0 - 1e-10, 1e-10};
+    double[] splitSmorbukk = { 1.0 - 1e-10, 1e-10 };
     SmorbukkSplit.setSplitFactors(splitSmorbukk);
 
     Stream dryFeedGasMidgard = new Stream("dry feed gas Midgard201", feedGas.clone());
@@ -539,18 +560,16 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     dryFeedGasMidgard.setTemperature(5, "C");
     dryFeedGasMidgard.setPressure(40.0, "bara");
 
-    StreamSaturatorUtil saturatedFeedGasMidgard =
-        new StreamSaturatorUtil("water saturator Midgard", dryFeedGasMidgard);
+    StreamSaturatorUtil saturatedFeedGasMidgard = new StreamSaturatorUtil("water saturator Midgard", dryFeedGasMidgard);
 
-    Stream waterSaturatedFeedGasMidgard =
-        new Stream("water saturated feed gas Midgard", saturatedFeedGasMidgard.getOutletStream());
+    Stream waterSaturatedFeedGasMidgard = new Stream("water saturated feed gas Midgard",
+	saturatedFeedGasMidgard.getOutletStream());
 
-    HydrateEquilibriumTemperatureAnalyser hydrateTAnalyserMidgard =
-        new HydrateEquilibriumTemperatureAnalyser("hydrate temperature analyser Midgard",
-            waterSaturatedFeedGasMidgard);
+    HydrateEquilibriumTemperatureAnalyser hydrateTAnalyserMidgard = new HydrateEquilibriumTemperatureAnalyser(
+	"hydrate temperature analyser Midgard", waterSaturatedFeedGasMidgard);
 
     Splitter MidgardSplit = new Splitter("Midgard Splitter", waterSaturatedFeedGasMidgard);
-    double[] splitMidgard = {1e-10, 1 - 1e-10};
+    double[] splitMidgard = { 1e-10, 1 - 1e-10 };
     MidgardSplit.setSplitFactors(splitMidgard);
 
     StaticMixer TrainB = new StaticMixer("mixer TrainB");
@@ -561,22 +580,18 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     feedTPsetterToAbsorber.setOutPressure(40.0, "bara");
     feedTPsetterToAbsorber.setOutTemperature(37.0, "C");
 
-    Stream feedToAbsorber =
-        new Stream("feed to TEG absorber", feedTPsetterToAbsorber.getOutletStream());
+    Stream feedToAbsorber = new Stream("feed to TEG absorber", feedTPsetterToAbsorber.getOutletStream());
 
-    HydrateEquilibriumTemperatureAnalyser hydrateTAnalyser2 =
-        new HydrateEquilibriumTemperatureAnalyser("hydrate temperature gas to absorber",
-            feedToAbsorber);
+    HydrateEquilibriumTemperatureAnalyser hydrateTAnalyser2 = new HydrateEquilibriumTemperatureAnalyser(
+	"hydrate temperature gas to absorber", feedToAbsorber);
 
-    WaterDewPointAnalyser waterDewPointAnalyserToAbsorber =
-        new WaterDewPointAnalyser("water dew point gas to absorber", feedToAbsorber);
+    WaterDewPointAnalyser waterDewPointAnalyserToAbsorber = new WaterDewPointAnalyser("water dew point gas to absorber",
+	feedToAbsorber);
     waterDewPointAnalyserToAbsorber.setMethod("multiphase");
     waterDewPointAnalyserToAbsorber.setReferencePressure(40.0);
 
-    neqsim.thermo.system.SystemInterface feedTEG =
-        (neqsim.thermo.system.SystemInterface) feedGas.clone();
-    feedTEG.setMolarComposition(
-        new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.99});
+    neqsim.thermo.system.SystemInterface feedTEG = (neqsim.thermo.system.SystemInterface) feedGas.clone();
+    feedTEG.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.99 });
 
     Stream TEGFeed = new Stream("lean TEG to absorber", feedTEG);
     TEGFeed.setFlowRate(8000.0, "kg/hr");
@@ -594,29 +609,24 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
     Stream richTEG = new Stream("rich TEG from absorber", absorber.getLiquidOutStream());
 
-    HydrateEquilibriumTemperatureAnalyser waterDewPointAnalyser =
-        new HydrateEquilibriumTemperatureAnalyser("hydrate dew point analyser", dehydratedGas);
+    HydrateEquilibriumTemperatureAnalyser waterDewPointAnalyser = new HydrateEquilibriumTemperatureAnalyser(
+	"hydrate dew point analyser", dehydratedGas);
     waterDewPointAnalyser.setReferencePressure(70.0);
 
-    WaterDewPointAnalyser waterDewPointAnalyser2 =
-        new WaterDewPointAnalyser("water dew point analyser", dehydratedGas);
+    WaterDewPointAnalyser waterDewPointAnalyser2 = new WaterDewPointAnalyser("water dew point analyser", dehydratedGas);
     waterDewPointAnalyser2.setReferencePressure(70.0);
 
     Heater condHeat = new Heater("Condenser heat exchanger", richTEG);
 
-    ThrottlingValve glycol_flash_valve =
-        new ThrottlingValve("Rich TEG HP flash valve", condHeat.getOutletStream());
+    ThrottlingValve glycol_flash_valve = new ThrottlingValve("Rich TEG HP flash valve", condHeat.getOutletStream());
     glycol_flash_valve.setOutletPressure(7.0);
 
-    HeatExchanger heatEx2 =
-        new HeatExchanger("rich TEG heat exchanger 1", glycol_flash_valve.getOutletStream());
+    HeatExchanger heatEx2 = new HeatExchanger("rich TEG heat exchanger 1", glycol_flash_valve.getOutletStream());
     heatEx2.setGuessOutTemperature(273.15 + 90.0);
     heatEx2.setUAvalue(1450.0);
 
-    neqsim.thermo.system.SystemInterface feedWater =
-        (neqsim.thermo.system.SystemInterface) feedGas.clone();
-    feedWater.setMolarComposition(
-        new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0});
+    neqsim.thermo.system.SystemInterface feedWater = (neqsim.thermo.system.SystemInterface) feedGas.clone();
+    feedWater.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 });
 
     double addedWaterRate = 0.0;
     Stream waterFeed = new Stream("extra water", feedWater);
@@ -632,32 +642,27 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
     Stream flashGas = new Stream("gas from degassing separator", flashSep.getGasOutStream());
 
-    Stream flashLiquid =
-        new Stream("liquid from degassing separator", flashSep.getLiquidOutStream());
+    Stream flashLiquid = new Stream("liquid from degassing separator", flashSep.getLiquidOutStream());
 
     Filter filter = new Filter("TEG fine filter", flashLiquid);
     filter.setDeltaP(0.0, "bara");
 
-    HeatExchanger heatEx =
-        new HeatExchanger("lean/rich TEG heat-exchanger", filter.getOutletStream());
+    HeatExchanger heatEx = new HeatExchanger("lean/rich TEG heat-exchanger", filter.getOutletStream());
     heatEx.setGuessOutTemperature(273.15 + 140.0);
     heatEx.setUAvalue(9140.0);
 
     double reboilerPressure = 1.4;
     double condenserPressure = 1.2;
     double feedPressureGLycol = (reboilerPressure + condenserPressure) / 2.0; // enters middle of
-                                                                              // column
+									      // column
     double feedPressureStripGas = (reboilerPressure + condenserPressure) / 2.0; // enters middle of
-                                                                                // column
+										// column
 
-    ThrottlingValve glycol_flash_valve2 =
-        new ThrottlingValve("Rich TEG LP flash valve", heatEx.getOutStream(0));
+    ThrottlingValve glycol_flash_valve2 = new ThrottlingValve("Rich TEG LP flash valve", heatEx.getOutStream(0));
     glycol_flash_valve2.setOutletPressure(feedPressureGLycol);
 
-    neqsim.thermo.system.SystemInterface stripGas =
-        (neqsim.thermo.system.SystemInterface) feedGas.clone();
-    stripGas.setMolarComposition(
-        new double[] {0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
+    neqsim.thermo.system.SystemInterface stripGas = (neqsim.thermo.system.SystemInterface) feedGas.clone();
+    stripGas.setMolarComposition(new double[] { 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 });
 
     Stream strippingGas = new Stream("stripGas", stripGas);
     strippingGas.setFlowRate(250.0 * 0.8, "kg/hr");
@@ -698,10 +703,8 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     recycleGasFromStripper.setOutletStream(gasToReboiler);
     recycleGasFromStripper.setTolerance(1e-1);
 
-    neqsim.thermo.system.SystemInterface pureTEG =
-        (neqsim.thermo.system.SystemInterface) feedGas.clone();
-    pureTEG.setMolarComposition(
-        new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0});
+    neqsim.thermo.system.SystemInterface pureTEG = (neqsim.thermo.system.SystemInterface) feedGas.clone();
+    pureTEG.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 });
 
     heatEx.setFeedStream(1, stripper.getLiquidOutStream());
 
@@ -741,8 +744,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     recycleLeanTEG.setDownstreamProperty("flow rate");
     recycleLeanTEG.setTolerance(1e-1);
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(dryFeedGasSmorbukk);
     operations.add(saturatedFeedGasSmorbukk);
     operations.add(waterSaturatedFeedGasSmorbukk);
@@ -803,23 +805,19 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     operations.add(recycleLeanTEG);
     operations.run();
     /*
-     * logger.info("flowo " + hotLeanTEGPump.getOutletStream().getFlowRate("kg/hr"));
-     * logger.info("makeup " + makeupTEG.getFlowRate("kg/hr")); logger.info("mixo " +
-     * coolerhOTteg3.getOutletStream().getFlowRate("kg/hr")); logger.info("leantoresirc " +
-     * leanTEGtoabs.getFlowRate("kg/hr")); // operations.run(); logger.info("flowo " +
-     * hotLeanTEGPump.getOutletStream().getFlowRate("kg/hr")); logger.info("makeup " +
-     * makeupTEG.getFlowRate("kg/hr")); logger.info("mixo " +
-     * coolerhOTteg3.getOutletStream().getFlowRate("kg/hr")); logger.info("leantoresirc " +
+     * logger.info("flowo " + hotLeanTEGPump.getOutletStream().getFlowRate("kg/hr")); logger.info("makeup " +
+     * makeupTEG.getFlowRate("kg/hr")); logger.info("mixo " + coolerhOTteg3.getOutletStream().getFlowRate("kg/hr"));
+     * logger.info("leantoresirc " + leanTEGtoabs.getFlowRate("kg/hr")); // operations.run(); logger.info("flowo " +
+     * hotLeanTEGPump.getOutletStream().getFlowRate("kg/hr")); logger.info("makeup " + makeupTEG.getFlowRate("kg/hr"));
+     * logger.info("mixo " + coolerhOTteg3.getOutletStream().getFlowRate("kg/hr")); logger.info("leantoresirc " +
      * leanTEGtoabs.getFlowRate("kg/hr"));
      */
-    assertEquals(1.5449593316401103E-5, dehydratedGas.getFluid().getComponent("water").getx(),
-        1e-3);
+    assertEquals(1.5449593316401103E-5, dehydratedGas.getFluid().getComponent("water").getx(), 1e-3);
   }
 
   @Test
   public void testRun_step() {
-    neqsim.thermo.system.SystemInterface feedGas =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
+    neqsim.thermo.system.SystemInterface feedGas = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
     feedGas.addComponent("nitrogen", 0.245);
     feedGas.addComponent("CO2", 3.4);
     feedGas.addComponent("methane", 85.7);
@@ -842,18 +840,17 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     dryFeedGasSmorbukk.setTemperature(25.0, "C");
     dryFeedGasSmorbukk.setPressure(40.0, "bara");
 
-    StreamSaturatorUtil saturatedFeedGasSmorbukk =
-        new StreamSaturatorUtil("water saturator Smorbukk", dryFeedGasSmorbukk);
+    StreamSaturatorUtil saturatedFeedGasSmorbukk = new StreamSaturatorUtil("water saturator Smorbukk",
+	dryFeedGasSmorbukk);
 
-    Stream waterSaturatedFeedGasSmorbukk =
-        new Stream("water saturated feed gas Smorbukk", saturatedFeedGasSmorbukk.getOutletStream());
+    Stream waterSaturatedFeedGasSmorbukk = new Stream("water saturated feed gas Smorbukk",
+	saturatedFeedGasSmorbukk.getOutletStream());
 
-    HydrateEquilibriumTemperatureAnalyser hydrateTAnalyserSmorbukk =
-        new HydrateEquilibriumTemperatureAnalyser("hydrate temperature analyser Smorbukk",
-            waterSaturatedFeedGasSmorbukk);
+    HydrateEquilibriumTemperatureAnalyser hydrateTAnalyserSmorbukk = new HydrateEquilibriumTemperatureAnalyser(
+	"hydrate temperature analyser Smorbukk", waterSaturatedFeedGasSmorbukk);
 
     Splitter SmorbukkSplit = new Splitter("Smorbukk Splitter", waterSaturatedFeedGasSmorbukk);
-    double[] splitSmorbukk = {1.0 - 1e-10, 1e-10};
+    double[] splitSmorbukk = { 1.0 - 1e-10, 1e-10 };
     SmorbukkSplit.setSplitFactors(splitSmorbukk);
 
     Stream dryFeedGasMidgard = new Stream("dry feed gas Midgard201", feedGas.clone());
@@ -861,18 +858,16 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     dryFeedGasMidgard.setTemperature(5, "C");
     dryFeedGasMidgard.setPressure(40.0, "bara");
 
-    StreamSaturatorUtil saturatedFeedGasMidgard =
-        new StreamSaturatorUtil("water saturator Midgard", dryFeedGasMidgard);
+    StreamSaturatorUtil saturatedFeedGasMidgard = new StreamSaturatorUtil("water saturator Midgard", dryFeedGasMidgard);
 
-    Stream waterSaturatedFeedGasMidgard =
-        new Stream("water saturated feed gas Midgard", saturatedFeedGasMidgard.getOutletStream());
+    Stream waterSaturatedFeedGasMidgard = new Stream("water saturated feed gas Midgard",
+	saturatedFeedGasMidgard.getOutletStream());
 
-    HydrateEquilibriumTemperatureAnalyser hydrateTAnalyserMidgard =
-        new HydrateEquilibriumTemperatureAnalyser("hydrate temperature analyser Midgard",
-            waterSaturatedFeedGasMidgard);
+    HydrateEquilibriumTemperatureAnalyser hydrateTAnalyserMidgard = new HydrateEquilibriumTemperatureAnalyser(
+	"hydrate temperature analyser Midgard", waterSaturatedFeedGasMidgard);
 
     Splitter MidgardSplit = new Splitter("Midgard Splitter", waterSaturatedFeedGasMidgard);
-    double[] splitMidgard = {1e-10, 1 - 1e-10};
+    double[] splitMidgard = { 1e-10, 1 - 1e-10 };
     MidgardSplit.setSplitFactors(splitMidgard);
 
     StaticMixer TrainB = new StaticMixer("mixer TrainB");
@@ -883,22 +878,18 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     feedTPsetterToAbsorber.setOutPressure(40.0, "bara");
     feedTPsetterToAbsorber.setOutTemperature(37.0, "C");
 
-    Stream feedToAbsorber =
-        new Stream("feed to TEG absorber", feedTPsetterToAbsorber.getOutletStream());
+    Stream feedToAbsorber = new Stream("feed to TEG absorber", feedTPsetterToAbsorber.getOutletStream());
 
-    HydrateEquilibriumTemperatureAnalyser hydrateTAnalyser2 =
-        new HydrateEquilibriumTemperatureAnalyser("hydrate temperature gas to absorber",
-            feedToAbsorber);
+    HydrateEquilibriumTemperatureAnalyser hydrateTAnalyser2 = new HydrateEquilibriumTemperatureAnalyser(
+	"hydrate temperature gas to absorber", feedToAbsorber);
 
-    WaterDewPointAnalyser waterDewPointAnalyserToAbsorber =
-        new WaterDewPointAnalyser("water dew point gas to absorber", feedToAbsorber);
+    WaterDewPointAnalyser waterDewPointAnalyserToAbsorber = new WaterDewPointAnalyser("water dew point gas to absorber",
+	feedToAbsorber);
     waterDewPointAnalyserToAbsorber.setMethod("multiphase");
     waterDewPointAnalyserToAbsorber.setReferencePressure(40.0);
 
-    neqsim.thermo.system.SystemInterface feedTEG =
-        (neqsim.thermo.system.SystemInterface) feedGas.clone();
-    feedTEG.setMolarComposition(
-        new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.99});
+    neqsim.thermo.system.SystemInterface feedTEG = (neqsim.thermo.system.SystemInterface) feedGas.clone();
+    feedTEG.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.99 });
 
     Stream TEGFeed = new Stream("lean TEG to absorber", feedTEG);
     TEGFeed.setFlowRate(8000.0, "kg/hr");
@@ -916,29 +907,24 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
     Stream richTEG = new Stream("rich TEG from absorber", absorber.getLiquidOutStream());
 
-    HydrateEquilibriumTemperatureAnalyser waterDewPointAnalyser =
-        new HydrateEquilibriumTemperatureAnalyser("hydrate dew point analyser", dehydratedGas);
+    HydrateEquilibriumTemperatureAnalyser waterDewPointAnalyser = new HydrateEquilibriumTemperatureAnalyser(
+	"hydrate dew point analyser", dehydratedGas);
     waterDewPointAnalyser.setReferencePressure(70.0);
 
-    WaterDewPointAnalyser waterDewPointAnalyser2 =
-        new WaterDewPointAnalyser("water dew point analyser", dehydratedGas);
+    WaterDewPointAnalyser waterDewPointAnalyser2 = new WaterDewPointAnalyser("water dew point analyser", dehydratedGas);
     waterDewPointAnalyser2.setReferencePressure(70.0);
 
     Heater condHeat = new Heater("Condenser heat exchanger", richTEG);
 
-    ThrottlingValve glycol_flash_valve =
-        new ThrottlingValve("Rich TEG HP flash valve", condHeat.getOutletStream());
+    ThrottlingValve glycol_flash_valve = new ThrottlingValve("Rich TEG HP flash valve", condHeat.getOutletStream());
     glycol_flash_valve.setOutletPressure(7.0);
 
-    HeatExchanger heatEx2 =
-        new HeatExchanger("rich TEG heat exchanger 1", glycol_flash_valve.getOutletStream());
+    HeatExchanger heatEx2 = new HeatExchanger("rich TEG heat exchanger 1", glycol_flash_valve.getOutletStream());
     heatEx2.setGuessOutTemperature(273.15 + 90.0);
     heatEx2.setUAvalue(1450.0);
 
-    neqsim.thermo.system.SystemInterface feedWater =
-        (neqsim.thermo.system.SystemInterface) feedGas.clone();
-    feedWater.setMolarComposition(
-        new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0});
+    neqsim.thermo.system.SystemInterface feedWater = (neqsim.thermo.system.SystemInterface) feedGas.clone();
+    feedWater.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 });
 
     double addedWaterRate = 0.0;
     Stream waterFeed = new Stream("extra water", feedWater);
@@ -954,32 +940,27 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
     Stream flashGas = new Stream("gas from degassing separator", flashSep.getGasOutStream());
 
-    Stream flashLiquid =
-        new Stream("liquid from degassing separator", flashSep.getLiquidOutStream());
+    Stream flashLiquid = new Stream("liquid from degassing separator", flashSep.getLiquidOutStream());
 
     Filter filter = new Filter("TEG fine filter", flashLiquid);
     filter.setDeltaP(0.0, "bara");
 
-    HeatExchanger heatEx =
-        new HeatExchanger("lean/rich TEG heat-exchanger", filter.getOutletStream());
+    HeatExchanger heatEx = new HeatExchanger("lean/rich TEG heat-exchanger", filter.getOutletStream());
     heatEx.setGuessOutTemperature(273.15 + 140.0);
     heatEx.setUAvalue(9140.0);
 
     double reboilerPressure = 1.4;
     double condenserPressure = 1.2;
     double feedPressureGLycol = (reboilerPressure + condenserPressure) / 2.0; // enters middle of
-                                                                              // column
+									      // column
     double feedPressureStripGas = (reboilerPressure + condenserPressure) / 2.0; // enters middle of
-                                                                                // column
+										// column
 
-    ThrottlingValve glycol_flash_valve2 =
-        new ThrottlingValve("Rich TEG LP flash valve", heatEx.getOutStream(0));
+    ThrottlingValve glycol_flash_valve2 = new ThrottlingValve("Rich TEG LP flash valve", heatEx.getOutStream(0));
     glycol_flash_valve2.setOutletPressure(feedPressureGLycol);
 
-    neqsim.thermo.system.SystemInterface stripGas =
-        (neqsim.thermo.system.SystemInterface) feedGas.clone();
-    stripGas.setMolarComposition(
-        new double[] {0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
+    neqsim.thermo.system.SystemInterface stripGas = (neqsim.thermo.system.SystemInterface) feedGas.clone();
+    stripGas.setMolarComposition(new double[] { 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 });
 
     Stream strippingGas = new Stream("stripGas", stripGas);
     strippingGas.setFlowRate(250.0 * 0.8, "kg/hr");
@@ -1020,10 +1001,8 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     recycleGasFromStripper.setOutletStream(gasToReboiler);
     recycleGasFromStripper.setTolerance(5.0e-2);
 
-    neqsim.thermo.system.SystemInterface pureTEG =
-        (neqsim.thermo.system.SystemInterface) feedGas.clone();
-    pureTEG.setMolarComposition(
-        new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0});
+    neqsim.thermo.system.SystemInterface pureTEG = (neqsim.thermo.system.SystemInterface) feedGas.clone();
+    pureTEG.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 });
 
     heatEx.setFeedStream(1, stripper.getLiquidOutStream());
 
@@ -1062,8 +1041,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     recycleLeanTEG.setPriority(200);
     recycleLeanTEG.setDownstreamProperty("flow rate");
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(dryFeedGasSmorbukk);
     operations.add(saturatedFeedGasSmorbukk);
     operations.add(waterSaturatedFeedGasSmorbukk);
@@ -1148,15 +1126,13 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     operations.run();
     operations.run();
     operations.run();
-    assertEquals(1.5322819175995646E-5, dehydratedGas.getFluid().getComponent("water").getx(),
-        2e-3);
+    assertEquals(1.5322819175995646E-5, dehydratedGas.getFluid().getComponent("water").getx(), 2e-3);
 
     operations.run();
     operations.run();
     operations.run();
     operations.run();
-    assertEquals(1.5322819175995646E-5, dehydratedGas.getFluid().getComponent("water").getx(),
-        2e-3);
+    assertEquals(1.5322819175995646E-5, dehydratedGas.getFluid().getComponent("water").getx(), 2e-3);
 
     // run as time step as thread
     Thread thread = operations.runAsThread();
@@ -1197,8 +1173,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     Compressor compressor1 = process1.addUnit("Compressor 1", "Compressor");
     compressor1.setOutletPressure(50.0, "bara");
 
-    Compressor compressor2 =
-        process1.addUnit("Compressor 2", "Compressor", separator1.getGasOutStream());
+    Compressor compressor2 = process1.addUnit("Compressor 2", "Compressor", separator1.getGasOutStream());
     compressor2.setOutletPressure(50.0, "bara");
 
     Stream liquidOut = (Stream) process1.addUnit(separator1.getLiquidOutStream());
@@ -1221,8 +1196,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
   @Test
   public void testMassBalanceCheck() {
-    neqsim.thermo.system.SystemInterface fluid1 =
-        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    neqsim.thermo.system.SystemInterface fluid1 = new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
     fluid1.addComponent("methane", 1.0);
     fluid1.setMixingRule("classic");
 
@@ -1246,13 +1220,12 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     assertTrue(results.containsKey("Separator1"));
     ProcessSystem.MassBalanceResult sepResult = results.get("Separator1");
     assertTrue(Math.abs(sepResult.getAbsoluteError()) < 0.01,
-        "Separator mass balance error: " + sepResult.getAbsoluteError());
+	"Separator mass balance error: " + sepResult.getAbsoluteError());
   }
 
   @Test
   public void testMassBalancePercentUsesReportedInletStreams() {
-    neqsim.thermo.system.SystemInterface fluid =
-        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
     fluid.addComponent("methane", 1.0);
     fluid.setMixingRule("classic");
     Stream inletStream = new Stream("mass balance feed", fluid);
@@ -1272,8 +1245,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
   @Test
   public void testMassBalancePercentDoesNotDoubleCountSingularAndListInletStreams() {
-    neqsim.thermo.system.SystemInterface fluid =
-        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
     fluid.addComponent("methane", 1.0);
     fluid.setMixingRule("classic");
     Stream inletStream = new Stream("mass balance feed duplicate APIs", fluid);
@@ -1283,8 +1255,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     process.add(inletStream);
     process.add(new MassBalanceTestUnit("MassBalanceUnitDuplicateApis", inletStream));
 
-    ProcessSystem.MassBalanceResult result =
-        process.checkMassBalance("kg/hr").get("MassBalanceUnitDuplicateApis");
+    ProcessSystem.MassBalanceResult result = process.checkMassBalance("kg/hr").get("MassBalanceUnitDuplicateApis");
 
     Assertions.assertNotNull(result);
     assertEquals(5.0, result.getPercentError(), 1e-12);
@@ -1292,8 +1263,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
   @Test
   public void testMassBalanceWithMixer() {
-    neqsim.thermo.system.SystemInterface fluid1 =
-        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    neqsim.thermo.system.SystemInterface fluid1 = new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
     fluid1.addComponent("methane", 0.9);
     fluid1.addComponent("ethane", 0.1);
     fluid1.setMixingRule("classic");
@@ -1325,7 +1295,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
     ProcessSystem.MassBalanceResult mixerResult = results.get("Mixer1");
     assertTrue(Math.abs(mixerResult.getAbsoluteError()) < 0.01,
-        "Mixer mass balance error: " + mixerResult.getAbsoluteError());
+	"Mixer mass balance error: " + mixerResult.getAbsoluteError());
 
     // Check that mixer balances 50 + 30 = 80 kg/hr
     double expectedFlow = 80.0;
@@ -1335,8 +1305,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
   @Test
   public void testMassBalanceWithSplitter() {
-    neqsim.thermo.system.SystemInterface fluid1 =
-        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    neqsim.thermo.system.SystemInterface fluid1 = new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
     fluid1.addComponent("methane", 1.0);
     fluid1.setMixingRule("classic");
 
@@ -1348,7 +1317,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     stream1.setPressure(10.0, "bara");
 
     Splitter splitter = new Splitter("Splitter1", stream1);
-    splitter.setSplitFactors(new double[] {0.6, 0.4});
+    splitter.setSplitFactors(new double[] { 0.6, 0.4 });
 
     process.add(stream1);
     process.add(splitter);
@@ -1360,13 +1329,12 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
     ProcessSystem.MassBalanceResult splitterResult = results.get("Splitter1");
     assertTrue(Math.abs(splitterResult.getAbsoluteError()) < 0.01,
-        "Splitter mass balance error: " + splitterResult.getAbsoluteError());
+	"Splitter mass balance error: " + splitterResult.getAbsoluteError());
   }
 
   @Test
   public void testGetFailedMassBalance() {
-    neqsim.thermo.system.SystemInterface fluid1 =
-        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    neqsim.thermo.system.SystemInterface fluid1 = new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
     fluid1.addComponent("methane", 1.0);
     fluid1.setMixingRule("classic");
 
@@ -1387,14 +1355,13 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     Map<String, ProcessSystem.MassBalanceResult> failedUnits = process.getFailedMassBalance();
 
     // Separator should not be in failed list (has good mass balance)
-    assertTrue(!failedUnits.containsKey("Separator1")
-        || Math.abs(failedUnits.get("Separator1").getPercentError()) < 0.1);
+    assertTrue(
+	!failedUnits.containsKey("Separator1") || Math.abs(failedUnits.get("Separator1").getPercentError()) < 0.1);
   }
 
   @Test
   public void testMassBalanceErrorThreshold() {
-    neqsim.thermo.system.SystemInterface fluid1 =
-        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    neqsim.thermo.system.SystemInterface fluid1 = new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
     fluid1.addComponent("methane", 1.0);
     fluid1.setMixingRule("classic");
 
@@ -1426,8 +1393,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
   @Test
   public void testMinimumFlowForMassBalanceError() {
-    neqsim.thermo.system.SystemInterface fluid1 =
-        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    neqsim.thermo.system.SystemInterface fluid1 = new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
     fluid1.addComponent("methane", 1.0);
     fluid1.setMixingRule("classic");
 
@@ -1456,13 +1422,12 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     Map<String, ProcessSystem.MassBalanceResult> failedUnits = process.getFailedMassBalance();
     // Separator with insignificant flow should not appear in failed units
     assertTrue(!failedUnits.containsKey("Separator1"),
-        "Separator with insignificant flow should not be in failed units list");
+	"Separator with insignificant flow should not be in failed units list");
   }
 
   @Test
   public void testMassBalanceResultFormatting() {
-    neqsim.thermo.system.SystemInterface fluid1 =
-        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    neqsim.thermo.system.SystemInterface fluid1 = new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
     fluid1.addComponent("methane", 1.0);
     fluid1.setMixingRule("classic");
 
@@ -1493,8 +1458,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
   @Test
   public void testMassBalanceReportGeneration() {
-    neqsim.thermo.system.SystemInterface fluid1 =
-        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    neqsim.thermo.system.SystemInterface fluid1 = new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
     fluid1.addComponent("methane", 1.0);
     fluid1.setMixingRule("classic");
 
@@ -1522,8 +1486,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
   @Test
   public void testMassBalanceComplexProcess() {
     // Test mass balance on a more complex process with multiple units
-    neqsim.thermo.system.SystemInterface fluid1 =
-        new neqsim.thermo.system.SystemSrkEos(298.15, 50.0);
+    neqsim.thermo.system.SystemInterface fluid1 = new neqsim.thermo.system.SystemSrkEos(298.15, 50.0);
     fluid1.addComponent("methane", 0.8);
     fluid1.addComponent("ethane", 0.15);
     fluid1.addComponent("propane", 0.05);
@@ -1562,20 +1525,19 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     // All units should have good mass balance
     for (Map.Entry<String, ProcessSystem.MassBalanceResult> entry : results.entrySet()) {
       assertTrue(Math.abs(entry.getValue().getAbsoluteError()) < 1.0,
-          entry.getKey() + " has mass balance error: " + entry.getValue().getAbsoluteError());
+	  entry.getKey() + " has mass balance error: " + entry.getValue().getAbsoluteError());
     }
 
     // No units should fail with default threshold
     Map<String, ProcessSystem.MassBalanceResult> failedUnits = process.getFailedMassBalance();
     assertTrue(failedUnits.isEmpty() || failedUnits.size() == 0,
-        "Found " + failedUnits.size() + " units with mass balance errors");
+	"Found " + failedUnits.size() + " units with mass balance errors");
   }
 
   @Test
   public void testMassBalanceWithCustomThresholds() {
     // Test adjusting both error threshold and minimum flow threshold
-    neqsim.thermo.system.SystemInterface fluid1 =
-        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    neqsim.thermo.system.SystemInterface fluid1 = new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
     fluid1.addComponent("methane", 1.0);
     fluid1.setMixingRule("classic");
 
@@ -1604,8 +1566,6 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     Map<String, ProcessSystem.MassBalanceResult> failedUnits = process.getFailedMassBalance();
 
     // With lenient threshold, separator should pass
-    assertTrue(!failedUnits.containsKey("Separator"),
-        "Separator should pass with lenient threshold");
+    assertTrue(!failedUnits.containsKey("Separator"), "Separator should pass with lenient threshold");
   }
 }
-

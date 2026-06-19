@@ -20,9 +20,9 @@ import neqsim.process.processmodel.SimulationResult;
  * Stateful session runner that maintains live ProcessSystem instances across multiple MCP calls.
  *
  * <p>
- * Enables incremental flowsheet construction: create a session with a fluid, add equipment
- * one-by-one, modify parameters, and re-run without re-sending the entire JSON each time. Sessions
- * are stored in-memory with configurable TTL and max session count.
+ * Enables incremental flowsheet construction: create a session with a fluid, add equipment one-by-one, modify
+ * parameters, and re-run without re-sending the entire JSON each time. Sessions are stored in-memory with configurable
+ * TTL and max session count.
  * </p>
  *
  * @author Even Solbraa
@@ -30,8 +30,7 @@ import neqsim.process.processmodel.SimulationResult;
  */
 public final class SessionRunner {
 
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   /** Max sessions to prevent unbounded memory growth. */
   private static final int MAX_SESSIONS = 50;
@@ -46,13 +45,13 @@ public final class SessionRunner {
   private static final long SESSION_TTL_MS = 30L * 60L * 1000L;
 
   /** Active sessions keyed by session ID. */
-  private static final ConcurrentHashMap<String, SessionState> SESSIONS =
-      new ConcurrentHashMap<String, SessionState>();
+  private static final ConcurrentHashMap<String, SessionState> SESSIONS = new ConcurrentHashMap<String, SessionState>();
 
   /**
    * Private constructor — all methods are static.
    */
-  private SessionRunner() {}
+  private SessionRunner() {
+  }
 
   /**
    * Routes a session command based on the "action" field in the JSON.
@@ -62,8 +61,7 @@ public final class SessionRunner {
    */
   public static String run(String json) {
     if (json == null || json.trim().isEmpty()) {
-      return errorJson("SESSION_ERROR", "JSON input is null or empty",
-          "Provide a JSON object with 'action' field");
+      return errorJson("SESSION_ERROR", "JSON input is null or empty", "Provide a JSON object with 'action' field");
     }
 
     try {
@@ -71,36 +69,36 @@ public final class SessionRunner {
       String action = input.has("action") ? input.get("action").getAsString() : "";
 
       switch (action) {
-        case "create":
-          return createSession(input);
-        case "addEquipment":
-          return addEquipment(input);
-        case "run":
-          return runSession(input);
-        case "modify":
-          return modifyParameter(input);
-        case "evaluate":
-          return evaluateSession(input);
-        case "getValues":
-          return getValuesSession(input);
-        case "setValues":
-          return setValuesSession(input);
-        case "adjustables":
-          return adjustablesSession(input);
-        case "getState":
-          return getSessionState(input);
-        case "list":
-          return listSessions(input);
-        case "close":
-          return closeSession(input);
-        default:
-          return errorJson("UNKNOWN_ACTION", "Unknown session action: " + action,
-              "Use: create, addEquipment, run, modify, evaluate, getValues, setValues, "
-                  + "adjustables, getState, list, close");
+      case "create":
+	return createSession(input);
+      case "addEquipment":
+	return addEquipment(input);
+      case "run":
+	return runSession(input);
+      case "modify":
+	return modifyParameter(input);
+      case "evaluate":
+	return evaluateSession(input);
+      case "getValues":
+	return getValuesSession(input);
+      case "setValues":
+	return setValuesSession(input);
+      case "adjustables":
+	return adjustablesSession(input);
+      case "getState":
+	return getSessionState(input);
+      case "list":
+	return listSessions(input);
+      case "close":
+	return closeSession(input);
+      default:
+	return errorJson("UNKNOWN_ACTION", "Unknown session action: " + action,
+	    "Use: create, addEquipment, run, modify, evaluate, getValues, setValues, "
+		+ "adjustables, getState, list, close");
       }
     } catch (Exception e) {
       return errorJson("SESSION_ERROR", "Session operation failed: " + e.getMessage(),
-          "Check JSON format and session ID validity");
+	  "Check JSON format and session ID validity");
     }
   }
 
@@ -114,7 +112,7 @@ public final class SessionRunner {
     evictExpiredSessions();
     if (SESSIONS.size() >= MAX_SESSIONS) {
       return errorJson("SESSION_LIMIT", "Maximum session count reached (" + MAX_SESSIONS + ")",
-          "Close existing sessions with action: 'close'");
+	  "Close existing sessions with action: 'close'");
     }
 
     String sessionId = generateSessionId();
@@ -129,10 +127,9 @@ public final class SessionRunner {
       String processJson = GSON.toJson(input.get("processJson"));
       SimulationResult result = ProcessSystem.fromJsonAndRun(processJson);
       if (result.isError()) {
-        String errMsg =
-            result.getErrors().isEmpty() ? "unknown error" : result.getErrors().get(0).getMessage();
-        return errorJson("PROCESS_BUILD_ERROR", "Failed to build process: " + errMsg,
-            "Check the processJson structure");
+	String errMsg = result.getErrors().isEmpty() ? "unknown error" : result.getErrors().get(0).getMessage();
+	return errorJson("PROCESS_BUILD_ERROR", "Failed to build process: " + errMsg,
+	    "Check the processJson structure");
       }
       state.process = result.getProcessSystem();
       state.hasRun = true;
@@ -152,7 +149,7 @@ public final class SessionRunner {
     response.addProperty("name", name);
     response.addProperty("ownerId", ownerId);
     response.addProperty("message",
-        "Session created. Use 'addEquipment' to build flowsheet, " + "then 'run' to simulate.");
+	"Session created. Use 'addEquipment' to build flowsheet, " + "then 'run' to simulate.");
     response.addProperty("equipmentCount", state.process != null ? state.process.size() : 0);
     return GSON.toJson(response);
   }
@@ -167,12 +164,12 @@ public final class SessionRunner {
     SessionState state = getValidSession(input);
     if (state == null) {
       return errorJson("SESSION_NOT_FOUND", "Session not found or expired",
-          "Create a new session with action: 'create'");
+	  "Create a new session with action: 'create'");
     }
 
     if (!input.has("equipment")) {
       return errorJson("MISSING_EQUIPMENT", "No 'equipment' field in request",
-          "Provide equipment as JSON object with 'type', 'name', 'inlet', 'properties'");
+	  "Provide equipment as JSON object with 'type', 'name', 'inlet', 'properties'");
     }
 
     // Build a mini process JSON with the existing fluid + all existing equipment + the new one
@@ -185,10 +182,9 @@ public final class SessionRunner {
     SimulationResult result = ProcessSystem.fromJsonAndRun(fullJson);
     if (result.isError()) {
       state.equipmentDefs.remove(state.equipmentDefs.size() - 1);
-      String errMsg =
-          result.getErrors().isEmpty() ? "unknown error" : result.getErrors().get(0).getMessage();
+      String errMsg = result.getErrors().isEmpty() ? "unknown error" : result.getErrors().get(0).getMessage();
       return errorJson("EQUIPMENT_ADD_ERROR", "Failed to add equipment: " + errMsg,
-          "Check equipment type, name, inlet reference, and properties");
+	  "Check equipment type, name, inlet reference, and properties");
     }
 
     state.process = result.getProcessSystem();
@@ -200,8 +196,7 @@ public final class SessionRunner {
     response.addProperty("sessionId", state.sessionId);
     response.addProperty("ownerId", state.ownerId);
     response.addProperty("equipmentCount", state.process.size());
-    response.addProperty("added",
-        equipment.has("name") ? equipment.get("name").getAsString() : "unnamed");
+    response.addProperty("added", equipment.has("name") ? equipment.get("name").getAsString() : "unnamed");
     response.add("equipmentList", getEquipmentList(state.process));
 
     // Include brief results
@@ -223,7 +218,7 @@ public final class SessionRunner {
     SessionState state = getValidSession(input);
     if (state == null) {
       return errorJson("SESSION_NOT_FOUND", "Session not found or expired",
-          "Create a new session with action: 'create'");
+	  "Create a new session with action: 'create'");
     }
 
     long startTime = System.currentTimeMillis();
@@ -232,10 +227,8 @@ public final class SessionRunner {
     String fullJson = buildFullProcessJson(state);
     SimulationResult result = ProcessSystem.fromJsonAndRun(fullJson);
     if (result.isError()) {
-      String errMsg =
-          result.getErrors().isEmpty() ? "unknown error" : result.getErrors().get(0).getMessage();
-      return errorJson("RUN_ERROR", "Simulation failed: " + errMsg,
-          "Check equipment connections and parameter values");
+      String errMsg = result.getErrors().isEmpty() ? "unknown error" : result.getErrors().get(0).getMessage();
+      return errorJson("RUN_ERROR", "Simulation failed: " + errMsg, "Check equipment connections and parameter values");
     }
 
     state.process = result.getProcessSystem();
@@ -261,7 +254,7 @@ public final class SessionRunner {
     if (result.hasWarnings()) {
       JsonArray warnings = new JsonArray();
       for (String w : result.getWarnings()) {
-        warnings.add(w);
+	warnings.add(w);
       }
       response.add("warnings", warnings);
     }
@@ -279,13 +272,13 @@ public final class SessionRunner {
     SessionState state = getValidSession(input);
     if (state == null) {
       return errorJson("SESSION_NOT_FOUND", "Session not found or expired",
-          "Create a new session with action: 'create'");
+	  "Create a new session with action: 'create'");
     }
 
     String address = input.has("address") ? input.get("address").getAsString() : "";
     if (address.isEmpty()) {
       return errorJson("MISSING_ADDRESS", "No 'address' field",
-          "Provide equipment.property address like 'Compressor.outletPressure'");
+	  "Provide equipment.property address like 'Compressor.outletPressure'");
     }
 
     double value = input.has("value") ? input.get("value").getAsDouble() : 0.0;
@@ -301,8 +294,7 @@ public final class SessionRunner {
     String fullJson = buildFullProcessJson(state);
     SimulationResult buildResult = ProcessSystem.fromJsonAndRun(fullJson);
     if (buildResult.isError()) {
-      String errMsg = buildResult.getErrors().isEmpty() ? "unknown error"
-          : buildResult.getErrors().get(0).getMessage();
+      String errMsg = buildResult.getErrors().isEmpty() ? "unknown error" : buildResult.getErrors().get(0).getMessage();
       return errorJson("REBUILD_ERROR", "Failed to rebuild process", errMsg);
     }
     state.process = buildResult.getProcessSystem();
@@ -310,13 +302,13 @@ public final class SessionRunner {
     try {
       neqsim.process.automation.ProcessAutomation auto = state.process.getAutomation();
       if (unit.isEmpty()) {
-        auto.setVariableValue(address, value, "");
+	auto.setVariableValue(address, value, "");
       } else {
-        auto.setVariableValue(address, value, unit);
+	auto.setVariableValue(address, value, unit);
       }
     } catch (Exception e) {
       return errorJson("SET_ERROR", "Failed to set " + address + ": " + e.getMessage(),
-          "Check address format. Use getState to see available equipment and properties.");
+	  "Check address format. Use getState to see available equipment and properties.");
     }
 
     state.lastAccess = System.currentTimeMillis();
@@ -341,7 +333,7 @@ public final class SessionRunner {
     if (autoRun) {
       String report = state.process.getReport_json();
       if (report != null && !report.isEmpty()) {
-        response.add("results", JsonParser.parseString(report));
+	response.add("results", JsonParser.parseString(report));
       }
     }
 
@@ -349,22 +341,22 @@ public final class SessionRunner {
   }
 
   /**
-   * Runs one closed-loop evaluation step against the cached, already-converged process in a
-   * session. Unlike {@link #modifyParameter(JsonObject)}, this does NOT rebuild the flowsheet from
-   * JSON; it applies a batch of setpoints in place and re-converges via
-   * {@link neqsim.process.automation.ProcessAutomation#evaluate(Map, String, List, String, int, double)},
-   * making it the cheap atomic step for agent optimization loops.
+   * Runs one closed-loop evaluation step against the cached, already-converged process in a session. Unlike
+   * {@link #modifyParameter(JsonObject)}, this does NOT rebuild the flowsheet from JSON; it applies a batch of
+   * setpoints in place and re-converges via
+   * {@link neqsim.process.automation.ProcessAutomation#evaluate(Map, String, List, String, int, double)}, making it the
+   * cheap atomic step for agent optimization loops.
    *
-   * @param input JSON with sessionId, setpoints (object of address-&gt;value), optional readbacks
-   *        (array of addresses), optional setpointUnit, readbackUnit, maxIterations, tolerance
-   * @return JSON envelope containing the schema-versioned evaluation result (including the feasible
-   *         flag, rejected setpoints, and read-back errors)
+   * @param input JSON with sessionId, setpoints (object of address-&gt;value), optional readbacks (array of addresses),
+   *              optional setpointUnit, readbackUnit, maxIterations, tolerance
+   * @return JSON envelope containing the schema-versioned evaluation result (including the feasible flag, rejected
+   *         setpoints, and read-back errors)
    */
   private static String evaluateSession(JsonObject input) {
     SessionState state = getValidSession(input);
     if (state == null) {
       return errorJson("SESSION_NOT_FOUND", "Session not found or expired",
-          "Create a new session with action: 'create'");
+	  "Create a new session with action: 'create'");
     }
     if (state.process == null) {
       return errorJson("NO_PROCESS", "No process in session", "Add equipment first");
@@ -383,7 +375,7 @@ public final class SessionRunner {
       evalJson = auto.evaluate(setpoints, spUnit, readbacks, rbUnit, maxIter, tol);
     } catch (RuntimeException ex) {
       return errorJson("EVALUATE_ERROR", "evaluate failed: " + ex.getMessage(),
-          "Ensure maxIterations >= 1 and tolerance is a finite positive number.");
+	  "Ensure maxIterations >= 1 and tolerance is a finite positive number.");
     }
 
     state.runCount++;
@@ -409,7 +401,7 @@ public final class SessionRunner {
     SessionState state = getValidSession(input);
     if (state == null) {
       return errorJson("SESSION_NOT_FOUND", "Session not found or expired",
-          "Create a new session with action: 'create'");
+	  "Create a new session with action: 'create'");
     }
     if (state.process == null) {
       return errorJson("NO_PROCESS", "No process in session", "Add equipment first");
@@ -437,15 +429,15 @@ public final class SessionRunner {
   /**
    * Writes a batch of input variables to the cached session process, optionally re-running once.
    *
-   * @param input JSON with sessionId, updates (object of address-&gt;value), optional unit,
-   *        optional runAfter (default true)
+   * @param input JSON with sessionId, updates (object of address-&gt;value), optional unit, optional runAfter (default
+   *              true)
    * @return JSON envelope with the count of variables set and whether the process was re-run
    */
   private static String setValuesSession(JsonObject input) {
     SessionState state = getValidSession(input);
     if (state == null) {
       return errorJson("SESSION_NOT_FOUND", "Session not found or expired",
-          "Create a new session with action: 'create'");
+	  "Create a new session with action: 'create'");
     }
     if (state.process == null) {
       return errorJson("NO_PROCESS", "No process in session", "Add equipment first");
@@ -472,15 +464,15 @@ public final class SessionRunner {
     if (runAfter) {
       String report = state.process.getReport_json();
       if (report != null && !report.isEmpty()) {
-        response.add("results", JsonParser.parseString(report));
+	response.add("results", JsonParser.parseString(report));
       }
     }
     return GSON.toJson(response);
   }
 
   /**
-   * Enumerates the bounded decision space (adjustable parameters and adjusters) for the cached
-   * session process so an agent can discover what it may perturb.
+   * Enumerates the bounded decision space (adjustable parameters and adjusters) for the cached session process so an
+   * agent can discover what it may perturb.
    *
    * @param input JSON with sessionId
    * @return JSON envelope with the adjustable-parameter registry
@@ -489,7 +481,7 @@ public final class SessionRunner {
     SessionState state = getValidSession(input);
     if (state == null) {
       return errorJson("SESSION_NOT_FOUND", "Session not found or expired",
-          "Create a new session with action: 'create'");
+	  "Create a new session with action: 'create'");
     }
     if (state.process == null) {
       return errorJson("NO_PROCESS", "No process in session", "Add equipment first");
@@ -510,7 +502,7 @@ public final class SessionRunner {
    * Parses a nested JSON object of address-&gt;number into an ordered map.
    *
    * @param input the parent JSON object
-   * @param key the field name holding the address-&gt;value object
+   * @param key   the field name holding the address-&gt;value object
    * @return an ordered map (never null; empty if the field is absent)
    */
   private static Map<String, Double> parseDoubleMap(JsonObject input, String key) {
@@ -518,7 +510,7 @@ public final class SessionRunner {
     if (input.has(key) && input.get(key).isJsonObject()) {
       JsonObject obj = input.getAsJsonObject(key);
       for (Map.Entry<String, com.google.gson.JsonElement> e : obj.entrySet()) {
-        out.put(e.getKey(), e.getValue().getAsDouble());
+	out.put(e.getKey(), e.getValue().getAsDouble());
       }
     }
     return out;
@@ -528,7 +520,7 @@ public final class SessionRunner {
    * Parses a JSON array field into a list of strings.
    *
    * @param input the parent JSON object
-   * @param key the field name holding the array
+   * @param key   the field name holding the array
    * @return a list of strings (never null; empty if the field is absent)
    */
   private static List<String> parseStringList(JsonObject input, String key) {
@@ -536,7 +528,7 @@ public final class SessionRunner {
     if (input.has(key) && input.get(key).isJsonArray()) {
       com.google.gson.JsonArray arr = input.getAsJsonArray(key);
       for (int i = 0; i < arr.size(); i++) {
-        out.add(arr.get(i).getAsString());
+	out.add(arr.get(i).getAsString());
       }
     }
     return out;
@@ -546,7 +538,7 @@ public final class SessionRunner {
    * Returns a trimmed string field, or {@code null} when the field is absent or blank.
    *
    * @param input the parent JSON object
-   * @param key the field name
+   * @param key   the field name
    * @return the string value, or {@code null} for absent/blank
    */
   private static String optString(JsonObject input, String key) {
@@ -567,7 +559,7 @@ public final class SessionRunner {
     SessionState state = getValidSession(input);
     if (state == null) {
       return errorJson("SESSION_NOT_FOUND", "Session not found or expired",
-          "Create a new session with action: 'create'");
+	  "Create a new session with action: 'create'");
     }
 
     state.lastAccess = System.currentTimeMillis();
@@ -587,19 +579,19 @@ public final class SessionRunner {
 
       // List available variables via automation
       try {
-        neqsim.process.automation.ProcessAutomation auto = state.process.getAutomation();
-        List<String> units = auto.getUnitList();
-        JsonObject variables = new JsonObject();
-        for (String unitName : units) {
-          JsonArray vars = new JsonArray();
-          for (Object sv : auto.getVariableList(unitName)) {
-            vars.add(sv.toString());
-          }
-          variables.add(unitName, vars);
-        }
-        response.add("variables", variables);
+	neqsim.process.automation.ProcessAutomation auto = state.process.getAutomation();
+	List<String> units = auto.getUnitList();
+	JsonObject variables = new JsonObject();
+	for (String unitName : units) {
+	  JsonArray vars = new JsonArray();
+	  for (Object sv : auto.getVariableList(unitName)) {
+	    vars.add(sv.toString());
+	  }
+	  variables.add(unitName, vars);
+	}
+	response.add("variables", variables);
       } catch (Exception e) {
-        response.addProperty("variablesError", e.getMessage());
+	response.addProperty("variablesError", e.getMessage());
       }
     }
 
@@ -625,7 +617,7 @@ public final class SessionRunner {
     for (Map.Entry<String, SessionState> entry : SESSIONS.entrySet()) {
       SessionState s = entry.getValue();
       if (!ownerId.isEmpty() && !ownerId.equals(s.ownerId)) {
-        continue;
+	continue;
       }
       JsonObject info = new JsonObject();
       info.addProperty("sessionId", s.sessionId);
@@ -702,10 +694,10 @@ public final class SessionRunner {
     for (int i = 0; i < units.size(); i++) {
       ProcessEquipmentInterface eq = units.get(i);
       if (eq != null) {
-        JsonObject info = new JsonObject();
-        info.addProperty("name", eq.getName());
-        info.addProperty("type", eq.getClass().getSimpleName());
-        list.add(info);
+	JsonObject info = new JsonObject();
+	info.addProperty("name", eq.getName());
+	info.addProperty("type", eq.getClass().getSimpleName());
+	list.add(info);
       }
     }
     return list;
@@ -767,7 +759,7 @@ public final class SessionRunner {
     List<String> toRemove = new ArrayList<String>();
     for (Map.Entry<String, SessionState> entry : SESSIONS.entrySet()) {
       if (now - entry.getValue().lastAccess > SESSION_TTL_MS) {
-        toRemove.add(entry.getKey());
+	toRemove.add(entry.getKey());
       }
     }
     for (String key : toRemove) {
@@ -778,8 +770,8 @@ public final class SessionRunner {
   /**
    * Creates a standard error JSON string.
    *
-   * @param code the error code
-   * @param message the error message
+   * @param code        the error code
+   * @param message     the error message
    * @param remediation the fix suggestion
    * @return the error JSON string
    */
@@ -838,8 +830,8 @@ public final class SessionRunner {
      * Creates a new session state.
      *
      * @param sessionId the session ID
-     * @param name the session name
-     * @param ownerId the owner identifier
+     * @param name      the session name
+     * @param ownerId   the owner identifier
      */
     SessionState(String sessionId, String name, String ownerId) {
       this.sessionId = sessionId;

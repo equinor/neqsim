@@ -4,8 +4,8 @@ import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 
 /**
- * Feed-forward control structure combining a feedback controller with a feed-forward contribution
- * based on a measured disturbance.
+ * Feed-forward control structure combining a feedback controller with a feed-forward contribution based on a measured
+ * disturbance.
  *
  * @author esol
  */
@@ -21,7 +21,7 @@ public class FeedForwardControllerStructure implements ControlStructureInterface
   /**
    * Create a feed-forward control structure.
    *
-   * @param feedbackController feedback controller
+   * @param feedbackController     feedback controller
    * @param disturbanceMeasurement measurement providing disturbance signal
    */
   public FeedForwardControllerStructure(ControllerDeviceInterface feedbackController,
@@ -47,8 +47,7 @@ public class FeedForwardControllerStructure implements ControlStructureInterface
     }
 
     feedbackController.runTransient(feedbackController.getResponse(), dt);
-    output = feedbackController.getResponse()
-        + feedForwardGain * disturbanceMeasurement.getMeasuredValue();
+    output = feedbackController.getResponse() + feedForwardGain * disturbanceMeasurement.getMeasuredValue();
   }
 
   /** {@inheritDoc} */

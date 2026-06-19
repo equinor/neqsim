@@ -21,8 +21,7 @@ public class AsphalteneCharacterizationTest {
   @Test
   void testConstructorWithSARAFractions() {
     // SARA fractions that sum to 1.0
-    AsphalteneCharacterization characterization =
-        new AsphalteneCharacterization(0.5, 0.3, 0.15, 0.05);
+    AsphalteneCharacterization characterization = new AsphalteneCharacterization(0.5, 0.3, 0.15, 0.05);
 
     assertNotNull(characterization);
     // CII = (0.5 + 0.05) / (0.3 + 0.15) = 0.55 / 0.45 = 1.222
@@ -53,8 +52,7 @@ public class AsphalteneCharacterizationTest {
   @Test
   void testColloidalInstabilityIndex() {
     // Create characterization with known SARA values
-    AsphalteneCharacterization characterization =
-        new AsphalteneCharacterization(0.5, 0.3, 0.15, 0.05);
+    AsphalteneCharacterization characterization = new AsphalteneCharacterization(0.5, 0.3, 0.15, 0.05);
 
     // CII = (Saturates + Asphaltenes) / (Aromatics + Resins)
     // = (0.5 + 0.05) / (0.3 + 0.15) = 0.55 / 0.45 = 1.222
@@ -65,8 +63,7 @@ public class AsphalteneCharacterizationTest {
   @Test
   void testResinToAsphalteneRatio() {
     // Create characterization with known SARA values
-    AsphalteneCharacterization characterization =
-        new AsphalteneCharacterization(0.5, 0.3, 0.15, 0.05);
+    AsphalteneCharacterization characterization = new AsphalteneCharacterization(0.5, 0.3, 0.15, 0.05);
 
     // R/A = Resins / Asphaltenes = 0.15 / 0.05 = 3.0
     assertEquals(3.0, characterization.getResinToAsphalteneRatio(), 0.001);
@@ -75,8 +72,7 @@ public class AsphalteneCharacterizationTest {
   @Test
   void testStabilityEvaluationStable() {
     // Low CII should be stable
-    AsphalteneCharacterization characterization =
-        new AsphalteneCharacterization(0.3, 0.4, 0.25, 0.05);
+    AsphalteneCharacterization characterization = new AsphalteneCharacterization(0.3, 0.4, 0.25, 0.05);
 
     // CII = (0.3 + 0.05) / (0.4 + 0.25) = 0.35 / 0.65 = 0.538 (stable, < 0.7)
     double cii = characterization.getColloidalInstabilityIndex();
@@ -89,8 +85,7 @@ public class AsphalteneCharacterizationTest {
   @Test
   void testStabilityEvaluationUnstable() {
     // High CII should be unstable
-    AsphalteneCharacterization characterization =
-        new AsphalteneCharacterization(0.6, 0.1, 0.1, 0.2);
+    AsphalteneCharacterization characterization = new AsphalteneCharacterization(0.6, 0.1, 0.1, 0.2);
 
     // CII = (0.6 + 0.2) / (0.1 + 0.1) = 0.8 / 0.2 = 4.0 (unstable, > 0.9)
     double cii = characterization.getColloidalInstabilityIndex();
@@ -103,21 +98,19 @@ public class AsphalteneCharacterizationTest {
   @Test
   void testStabilityEvaluationMarginal() {
     // CII between 0.7 and 0.9 is marginal
-    AsphalteneCharacterization characterization =
-        new AsphalteneCharacterization(0.38, 0.32, 0.2, 0.1);
+    AsphalteneCharacterization characterization = new AsphalteneCharacterization(0.38, 0.32, 0.2, 0.1);
 
     // CII = (0.38 + 0.1) / (0.32 + 0.2) = 0.48 / 0.52 = 0.923
     double cii = characterization.getColloidalInstabilityIndex();
     // Should be in the marginal range (0.7 - 0.9)
-    assertTrue(cii >= AsphalteneCharacterization.CII_STABLE_LIMIT
-        || cii <= AsphalteneCharacterization.CII_UNSTABLE_LIMIT);
+    assertTrue(
+	cii >= AsphalteneCharacterization.CII_STABLE_LIMIT || cii <= AsphalteneCharacterization.CII_UNSTABLE_LIMIT);
   }
 
   @Test
   void testResinToAsphalteneRatioZeroAsphaltenes() {
     // With zero asphaltenes, R/A should be infinity
-    AsphalteneCharacterization characterization =
-        new AsphalteneCharacterization(0.55, 0.3, 0.15, 0.0);
+    AsphalteneCharacterization characterization = new AsphalteneCharacterization(0.55, 0.3, 0.15, 0.0);
 
     assertEquals(Double.POSITIVE_INFINITY, characterization.getResinToAsphalteneRatio());
   }
@@ -137,8 +130,7 @@ public class AsphalteneCharacterizationTest {
     // When aromatics + resins = 0, CII should be infinite
     // But this would fail SARA validation since sum != 1
     // So create with valid fractions then check edge case
-    AsphalteneCharacterization characterization =
-        new AsphalteneCharacterization(0.9, 0.0, 0.0, 0.1);
+    AsphalteneCharacterization characterization = new AsphalteneCharacterization(0.9, 0.0, 0.0, 0.1);
 
     // CII = (0.9 + 0.1) / (0 + 0) = infinity
     assertEquals(Double.POSITIVE_INFINITY, characterization.getColloidalInstabilityIndex());

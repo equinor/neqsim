@@ -16,11 +16,11 @@ public class SQPoptimizerTest {
     sqp.setObjectiveFunction(new SQPoptimizer.ObjectiveFunc() {
       @Override
       public double evaluate(double[] x) {
-        return (x[0] - 3.0) * (x[0] - 3.0) + (x[1] - 5.0) * (x[1] - 5.0);
+	return (x[0] - 3.0) * (x[0] - 3.0) + (x[1] - 5.0) * (x[1] - 5.0);
       }
     });
 
-    sqp.setInitialPoint(new double[] {0.0, 0.0});
+    sqp.setInitialPoint(new double[] { 0.0, 0.0 });
     SQPoptimizer.OptimizationResult result = sqp.solve();
 
     Assertions.assertTrue(result.isConverged(), "Should converge for simple quadratic");
@@ -38,18 +38,18 @@ public class SQPoptimizerTest {
     sqp.setObjectiveFunction(new SQPoptimizer.ObjectiveFunc() {
       @Override
       public double evaluate(double[] x) {
-        return x[0] * x[0] + x[1] * x[1];
+	return x[0] * x[0] + x[1] * x[1];
       }
     });
 
     sqp.addInequalityConstraint(new SQPoptimizer.ConstraintFunc() {
       @Override
       public double evaluate(double[] x) {
-        return x[0] + x[1] - 4.0; // h(x) >= 0 convention: x0 + x1 >= 4
+	return x[0] + x[1] - 4.0; // h(x) >= 0 convention: x0 + x1 >= 4
       }
     });
 
-    sqp.setInitialPoint(new double[] {3.0, 3.0});
+    sqp.setInitialPoint(new double[] { 3.0, 3.0 });
     SQPoptimizer.OptimizationResult result = sqp.solve();
 
     Assertions.assertTrue(result.isConverged(), "Should converge with inequality constraint");
@@ -67,18 +67,18 @@ public class SQPoptimizerTest {
     sqp.setObjectiveFunction(new SQPoptimizer.ObjectiveFunc() {
       @Override
       public double evaluate(double[] x) {
-        return (x[0] - 1.0) * (x[0] - 1.0) + (x[1] - 2.0) * (x[1] - 2.0);
+	return (x[0] - 1.0) * (x[0] - 1.0) + (x[1] - 2.0) * (x[1] - 2.0);
       }
     });
 
     sqp.addEqualityConstraint(new SQPoptimizer.ConstraintFunc() {
       @Override
       public double evaluate(double[] x) {
-        return x[0] + x[1] - 5.0;
+	return x[0] + x[1] - 5.0;
       }
     });
 
-    sqp.setInitialPoint(new double[] {0.0, 0.0});
+    sqp.setInitialPoint(new double[] { 0.0, 0.0 });
     SQPoptimizer.OptimizationResult result = sqp.solve();
 
     Assertions.assertTrue(result.isConverged(), "Should converge with equality constraint");
@@ -95,12 +95,12 @@ public class SQPoptimizerTest {
     sqp.setObjectiveFunction(new SQPoptimizer.ObjectiveFunc() {
       @Override
       public double evaluate(double[] x) {
-        return (x[0] - 10.0) * (x[0] - 10.0);
+	return (x[0] - 10.0) * (x[0] - 10.0);
       }
     });
 
-    sqp.setVariableBounds(new double[] {0.0}, new double[] {5.0});
-    sqp.setInitialPoint(new double[] {2.0});
+    sqp.setVariableBounds(new double[] { 0.0 }, new double[] { 5.0 });
+    sqp.setInitialPoint(new double[] { 2.0 });
     SQPoptimizer.OptimizationResult result = sqp.solve();
 
     Assertions.assertTrue(result.isConverged());
@@ -114,10 +114,10 @@ public class SQPoptimizerTest {
     sqp.setObjectiveFunction(new SQPoptimizer.ObjectiveFunc() {
       @Override
       public double evaluate(double[] x) {
-        return x[0] * x[0];
+	return x[0] * x[0];
       }
     });
-    sqp.setInitialPoint(new double[] {5.0});
+    sqp.setInitialPoint(new double[] { 5.0 });
     SQPoptimizer.OptimizationResult result = sqp.solve();
 
     Assertions.assertTrue(result.isConverged());

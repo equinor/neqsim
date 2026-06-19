@@ -9,9 +9,8 @@ import neqsim.fluidmechanics.flownode.FlowPattern;
  * Container class for two-phase pipe flow simulation results.
  *
  * <p>
- * This class provides a convenient way to access all simulation results from a
- * {@link TwoPhasePipeFlowSystem} calculation. It encapsulates profile data, summary statistics, and
- * provides methods for data export.
+ * This class provides a convenient way to access all simulation results from a {@link TwoPhasePipeFlowSystem}
+ * calculation. It encapsulates profile data, summary statistics, and provides methods for data export.
  * </p>
  *
  * <h2>Usage Example</h2>
@@ -325,9 +324,9 @@ public class PipeFlowResult implements Serializable {
   public double getTotalMassTransferRate(String componentName) {
     if (componentNames != null && totalMassTransferRates != null) {
       for (int i = 0; i < componentNames.length; i++) {
-        if (componentNames[i].equalsIgnoreCase(componentName)) {
-          return totalMassTransferRates[i];
-        }
+	if (componentNames[i].equalsIgnoreCase(componentName)) {
+	  return totalMassTransferRates[i];
+	}
       }
     }
     return 0.0;
@@ -348,8 +347,7 @@ public class PipeFlowResult implements Serializable {
    * Converts all profile data to a Map for easy export to data frames or JSON.
    *
    * <p>
-   * This method is particularly useful for integration with Jupyter notebooks and Python via
-   * neqsim-python.
+   * This method is particularly useful for integration with Jupyter notebooks and Python via neqsim-python.
    * </p>
    *
    * @return a Map with column names as keys and double arrays as values
@@ -399,12 +397,12 @@ public class PipeFlowResult implements Serializable {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("=== Two-Phase Pipe Flow Results ===\n");
-    sb.append(String.format("Pipe: %.1f m length, %.1f mm diameter, %d nodes%n", pipeLength,
-        pipeDiameter * 1000, numberOfNodes));
-    sb.append(String.format("Pressure: %.3f bar inlet → %.3f bar outlet (ΔP = %.4f bar)%n",
-        inletPressure, outletPressure, totalPressureDrop));
-    sb.append(String.format("Temperature: %.2f K inlet → %.2f K outlet (ΔT = %.2f K)%n",
-        inletTemperature, outletTemperature, getTemperatureChange()));
+    sb.append(String.format("Pipe: %.1f m length, %.1f mm diameter, %d nodes%n", pipeLength, pipeDiameter * 1000,
+	numberOfNodes));
+    sb.append(String.format("Pressure: %.3f bar inlet → %.3f bar outlet (ΔP = %.4f bar)%n", inletPressure,
+	outletPressure, totalPressureDrop));
+    sb.append(String.format("Temperature: %.2f K inlet → %.2f K outlet (ΔT = %.2f K)%n", inletTemperature,
+	outletTemperature, getTemperatureChange()));
     sb.append(String.format("Heat loss: %.2f W%n", totalHeatLoss));
     sb.append(String.format("Pressure gradient: %.6f bar/m%n", getPressureGradient()));
     return sb.toString();
@@ -591,16 +589,13 @@ public class PipeFlowResult implements Serializable {
     double pipeDiameter = pipe.getNode(0).getGeometry().getDiameter();
 
     return builder().positions(positions).pressures(pressures).temperatures(temperatures)
-        .liquidHoldups(pipe.getLiquidHoldupProfile()).voidFractions(pipe.getVoidFractionProfile())
-        .gasVelocities(pipe.getVelocityProfile(0)).liquidVelocities(pipe.getVelocityProfile(1))
-        .gasDensities(pipe.getDensityProfile(0)).liquidDensities(pipe.getDensityProfile(1))
-        .interfacialAreas(pipe.getInterfacialAreaProfile())
-        .flowPatterns(pipe.getFlowPatternProfile()).inletPressure(pressures[0])
-        .outletPressure(pressures[numNodes - 1]).inletTemperature(temperatures[0])
-        .outletTemperature(temperatures[numNodes - 1])
-        .totalPressureDrop(pressures[0] - pressures[numNodes - 1])
-        .totalHeatLoss(pipe.getTotalHeatLoss()).pipeLength(pipeLength).pipeDiameter(pipeDiameter)
-        .numberOfNodes(numNodes).massTransferRates(massTransferRates).componentNames(componentNames)
-        .build();
+	.liquidHoldups(pipe.getLiquidHoldupProfile()).voidFractions(pipe.getVoidFractionProfile())
+	.gasVelocities(pipe.getVelocityProfile(0)).liquidVelocities(pipe.getVelocityProfile(1))
+	.gasDensities(pipe.getDensityProfile(0)).liquidDensities(pipe.getDensityProfile(1))
+	.interfacialAreas(pipe.getInterfacialAreaProfile()).flowPatterns(pipe.getFlowPatternProfile())
+	.inletPressure(pressures[0]).outletPressure(pressures[numNodes - 1]).inletTemperature(temperatures[0])
+	.outletTemperature(temperatures[numNodes - 1]).totalPressureDrop(pressures[0] - pressures[numNodes - 1])
+	.totalHeatLoss(pipe.getTotalHeatLoss()).pipeLength(pipeLength).pipeDiameter(pipeDiameter)
+	.numberOfNodes(numNodes).massTransferRates(massTransferRates).componentNames(componentNames).build();
   }
 }

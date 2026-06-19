@@ -15,8 +15,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Tests for {@link ProcessModel#runUntilConverged(int, double)} and
- * {@link ProcessModel#getConvergenceReportJson()}.
+ * Tests for {@link ProcessModel#runUntilConverged(int, double)} and {@link ProcessModel#getConvergenceReportJson()}.
  *
  * @author NeqSim
  * @version 1.0
@@ -113,21 +112,21 @@ class ProcessModelRunUntilConvergedTest {
       /** {@inheritDoc} */
       @Override
       public void execute() {
-        model.runUntilConverged(0, 1e-4);
+	model.runUntilConverged(0, 1e-4);
       }
     });
     assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {
       /** {@inheritDoc} */
       @Override
       public void execute() {
-        model.runUntilConverged(10, -1.0);
+	model.runUntilConverged(10, -1.0);
       }
     });
     assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {
       /** {@inheritDoc} */
       @Override
       public void execute() {
-        model.runUntilConverged(10, Double.NaN);
+	model.runUntilConverged(10, Double.NaN);
       }
     });
   }

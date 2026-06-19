@@ -36,8 +36,8 @@ public class TestSeparationTrain {
     double secondstagePressure = 5.00; // bar'
     double thirdstagePressure = 1.50; // bar
 
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(inletTemperatuure, inletPressure);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil(inletTemperatuure,
+	inletPressure);
 
     testSystem.addComponent("methane", 50);
     testSystem.addComponent("propane", 5);
@@ -54,25 +54,21 @@ public class TestSeparationTrain {
     Heater liquidOutHeater = new Heater("liquidOutHeater", inletSeparator.getLiquidOutStream());
     liquidOutHeater.setOutTemperature(273.15 + 55.0);
 
-    ThreePhaseSeparator firstStageSeparator =
-        new ThreePhaseSeparator("1st stage Separator", liquidOutHeater.getOutletStream());
+    ThreePhaseSeparator firstStageSeparator = new ThreePhaseSeparator("1st stage Separator",
+	liquidOutHeater.getOutletStream());
 
-    ThrottlingValve valve1 =
-        new ThrottlingValve("snohvit valve", firstStageSeparator.getOilOutStream());
+    ThrottlingValve valve1 = new ThrottlingValve("snohvit valve", firstStageSeparator.getOilOutStream());
     valve1.setOutletPressure(secondstagePressure);
 
-    ThreePhaseSeparator secondStageSeparator =
-        new ThreePhaseSeparator("2nd stage Separator", valve1.getOutletStream());
+    ThreePhaseSeparator secondStageSeparator = new ThreePhaseSeparator("2nd stage Separator", valve1.getOutletStream());
 
-    ThrottlingValve thirdStageValve =
-        new ThrottlingValve("snohvit valve2", secondStageSeparator.getLiquidOutStream());
+    ThrottlingValve thirdStageValve = new ThrottlingValve("snohvit valve2", secondStageSeparator.getLiquidOutStream());
     thirdStageValve.setOutletPressure(thirdstagePressure);
 
-    ThreePhaseSeparator thirdStageSeparator =
-        new ThreePhaseSeparator("3rd stage Separator", thirdStageValve.getOutletStream());
+    ThreePhaseSeparator thirdStageSeparator = new ThreePhaseSeparator("3rd stage Separator",
+	thirdStageValve.getOutletStream());
 
-    Compressor thirdStageCompressor =
-        new Compressor("thirdStageCompressor", thirdStageSeparator.getGasOutStream());
+    Compressor thirdStageCompressor = new Compressor("thirdStageCompressor", thirdStageSeparator.getGasOutStream());
     thirdStageCompressor.setOutletPressure(secondstagePressure);
 
     Mixer thirdStageMixer = new Mixer("thirdStageMixer");
@@ -82,13 +78,12 @@ public class TestSeparationTrain {
     Cooler thirdSstageCoooler = new Cooler("thirdSstageCoooler", thirdStageMixer.getOutletStream());
     thirdSstageCoooler.setOutTemperature(273.15 + 30.0);
 
-    ThreePhaseSeparator thirdStageScrubber = new ThreePhaseSeparator(
-        "Third stage gas resirc scrubber", thirdSstageCoooler.getOutletStream());
+    ThreePhaseSeparator thirdStageScrubber = new ThreePhaseSeparator("Third stage gas resirc scrubber",
+	thirdSstageCoooler.getOutletStream());
     secondStageSeparator.addStream(thirdStageScrubber.getOilOutStream());
     secondStageSeparator.addStream(thirdStageScrubber.getWaterOutStream());
 
-    Compressor secondStageCompressor =
-        new Compressor("secondStageCompressor", thirdStageScrubber.getGasOutStream());
+    Compressor secondStageCompressor = new Compressor("secondStageCompressor", thirdStageScrubber.getGasOutStream());
     secondStageCompressor.setOutletPressure(inletPressure);
 
     Mixer HPgasMixer = new Mixer("HPgasMixer");
@@ -101,8 +96,7 @@ public class TestSeparationTrain {
     Cooler inletGasCooler = new Cooler("inletGasCooler", HPgasMixer.getOutletStream());
     inletGasCooler.setOutTemperature(273.15 + 30.0);
 
-    Separator gasInletScrubber =
-        new Separator("Gas scrubber inlet", inletGasCooler.getOutletStream());
+    Separator gasInletScrubber = new Separator("Gas scrubber inlet", inletGasCooler.getOutletStream());
 
     Recycle HPliquidRecycle = new Recycle("HPliquidRecycle");
     double tolerance = 1e-10;
@@ -110,8 +104,7 @@ public class TestSeparationTrain {
     HPliquidRecycle.addStream(gasInletScrubber.getLiquidOutStream());
     inletSeparator.addStream(HPliquidRecycle.getOutletStream());
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(wellStream);
     operations.add(inletSeparator);
     operations.add(liquidOutHeater);

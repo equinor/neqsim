@@ -10,8 +10,8 @@ import com.google.gson.GsonBuilder;
  * Monthly weighted oil-in-water compliance monitor for produced-water discharge.
  *
  * <p>
- * The monitor accumulates oil mass and water volume from time-weighted or batch samples, computes
- * the weighted monthly average, and estimates the remaining OIW budget for the rest of the month.
+ * The monitor accumulates oil mass and water volume from time-weighted or batch samples, computes the weighted monthly
+ * average, and estimates the remaining OIW budget for the rest of the month.
  * </p>
  *
  * @author ESOL
@@ -83,16 +83,16 @@ public class OilInWaterMonthlyComplianceMonitor implements Serializable {
     /**
      * Creates a monthly status object.
      *
-     * @param weightedAverageMgL weighted OIW average in mg/L
-     * @param remainingAllowedAverageMgL remaining allowed average in mg/L
+     * @param weightedAverageMgL            weighted OIW average in mg/L
+     * @param remainingAllowedAverageMgL    remaining allowed average in mg/L
      * @param projectedMonthlyWaterVolumeM3 projected monthly water volume in m3
-     * @param remainingWaterVolumeM3 remaining water volume in m3
-     * @param status compliance status
-     * @param recommendation recommendation text
+     * @param remainingWaterVolumeM3        remaining water volume in m3
+     * @param status                        compliance status
+     * @param recommendation                recommendation text
      */
     public MonthlyStatus(double weightedAverageMgL, double remainingAllowedAverageMgL,
-        double projectedMonthlyWaterVolumeM3, double remainingWaterVolumeM3,
-        ComplianceStatus status, String recommendation) {
+	double projectedMonthlyWaterVolumeM3, double remainingWaterVolumeM3, ComplianceStatus status,
+	String recommendation) {
       this.weightedAverageMgL = weightedAverageMgL;
       this.remainingAllowedAverageMgL = remainingAllowedAverageMgL;
       this.projectedMonthlyWaterVolumeM3 = projectedMonthlyWaterVolumeM3;
@@ -159,7 +159,8 @@ public class OilInWaterMonthlyComplianceMonitor implements Serializable {
   /**
    * Creates a monthly monitor with a 30 mg/L limit.
    */
-  public OilInWaterMonthlyComplianceMonitor() {}
+  public OilInWaterMonthlyComplianceMonitor() {
+  }
 
   /**
    * Adds an OIW sample weighted by discharged produced-water volume.
@@ -201,13 +202,12 @@ public class OilInWaterMonthlyComplianceMonitor implements Serializable {
     double remainingVolume = Math.max(0.0, projectedMonthlyVolume - cumulativeWaterVolumeM3);
     double allowedMonthlyOilKg = calculateOilMassKg(monthlyLimitMgL, projectedMonthlyVolume);
     double remainingOilKg = allowedMonthlyOilKg - cumulativeOilMassKg;
-    double remainingAllowedAverage =
-        remainingVolume > 0.0 ? remainingOilKg / (remainingVolume * 0.001) : 0.0;
+    double remainingAllowedAverage = remainingVolume > 0.0 ? remainingOilKg / (remainingVolume * 0.001) : 0.0;
     double weightedAverage = getWeightedAverageMgL();
     ComplianceStatus status = determineStatus(weightedAverage, remainingAllowedAverage);
     String recommendation = buildRecommendation(status);
-    return new MonthlyStatus(weightedAverage, remainingAllowedAverage, projectedMonthlyVolume,
-        remainingVolume, status, recommendation);
+    return new MonthlyStatus(weightedAverage, remainingAllowedAverage, projectedMonthlyVolume, remainingVolume, status,
+	recommendation);
   }
 
   /**
@@ -235,8 +235,7 @@ public class OilInWaterMonthlyComplianceMonitor implements Serializable {
     data.put("cumulativeOilMassKg", cumulativeOilMassKg);
     data.put("sampleCount", sampleCount);
     data.put("weightedAverageMgL", getWeightedAverageMgL());
-    Gson gson =
-        new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+    Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
     return gson.toJson(data);
   }
 
@@ -270,7 +269,7 @@ public class OilInWaterMonthlyComplianceMonitor implements Serializable {
   /**
    * Determines status from weighted average and remaining allowed average.
    *
-   * @param weightedAverage weighted OIW average in mg/L
+   * @param weightedAverage         weighted OIW average in mg/L
    * @param remainingAllowedAverage remaining allowed average in mg/L
    * @return compliance status
    */
@@ -278,12 +277,10 @@ public class OilInWaterMonthlyComplianceMonitor implements Serializable {
     if (weightedAverage > monthlyLimitMgL || remainingAllowedAverage <= 0.0) {
       return ComplianceStatus.EXCEEDED;
     }
-    if (weightedAverage >= monthlyLimitMgL * warningFraction
-        || remainingAllowedAverage < monthlyLimitMgL * 0.75) {
+    if (weightedAverage >= monthlyLimitMgL * warningFraction || remainingAllowedAverage < monthlyLimitMgL * 0.75) {
       return ComplianceStatus.WARNING;
     }
-    if (weightedAverage >= monthlyLimitMgL * watchFraction
-        || remainingAllowedAverage < monthlyLimitMgL) {
+    if (weightedAverage >= monthlyLimitMgL * watchFraction || remainingAllowedAverage < monthlyLimitMgL) {
       return ComplianceStatus.WATCH;
     }
     return ComplianceStatus.NORMAL;
@@ -297,14 +294,14 @@ public class OilInWaterMonthlyComplianceMonitor implements Serializable {
    */
   private String buildRecommendation(ComplianceStatus status) {
     switch (status) {
-      case EXCEEDED:
-        return "Monthly OIW budget exceeded or no remaining oil budget; reduce discharge OIW immediately";
-      case WARNING:
-        return "Monthly OIW budget is tight; increase treatment margin or lower OIW target";
-      case WATCH:
-        return "Track OIW trend and keep dose recommendations below the remaining monthly budget";
-      default:
-        return "Current monthly OIW trajectory is within the configured margin";
+    case EXCEEDED:
+      return "Monthly OIW budget exceeded or no remaining oil budget; reduce discharge OIW immediately";
+    case WARNING:
+      return "Monthly OIW budget is tight; increase treatment margin or lower OIW target";
+    case WATCH:
+      return "Track OIW trend and keep dose recommendations below the remaining monthly budget";
+    default:
+      return "Current monthly OIW trajectory is within the configured margin";
     }
   }
 

@@ -13,10 +13,9 @@ import neqsim.thermo.system.SystemInterface;
  * Dense-phase CO2 corrosion assessment for CCS transport pipelines.
  *
  * <p>
- * Evaluates corrosion risk in dense-phase CO2 transport systems where impurities (H2O, O2, SO2,
- * NOx, H2S) significantly affect phase behavior and corrosion mechanisms. In dry dense-phase CO2,
- * corrosion is negligible — but free water formation from impurity interactions can cause severe
- * attack.
+ * Evaluates corrosion risk in dense-phase CO2 transport systems where impurities (H2O, O2, SO2, NOx, H2S) significantly
+ * affect phase behavior and corrosion mechanisms. In dry dense-phase CO2, corrosion is negligible — but free water
+ * formation from impurity interactions can cause severe attack.
  * </p>
  *
  * <h2>Standards</h2>
@@ -132,7 +131,8 @@ public class DensePhaseCO2Corrosion implements Serializable {
   /**
    * Default constructor.
    */
-  public DensePhaseCO2Corrosion() {}
+  public DensePhaseCO2Corrosion() {
+  }
 
   // ─── Setters ────────────────────────────────────────────
 
@@ -342,12 +342,11 @@ public class DensePhaseCO2Corrosion implements Serializable {
       meetsImpuritySpecs = false;
     }
     if (o2ContentPpmv > 100) {
-      impurityIssues.add(
-          "O2: " + o2ContentPpmv + " ppmv exceeds 100 ppmv limit (10 ppmv" + " preferred for CS)");
+      impurityIssues.add("O2: " + o2ContentPpmv + " ppmv exceeds 100 ppmv limit (10 ppmv" + " preferred for CS)");
       meetsImpuritySpecs = false;
     } else if (o2ContentPpmv > 10) {
-      impurityIssues.add("O2: " + o2ContentPpmv + " ppmv — acceptable with dehydration but"
-          + " above 10 ppmv preferred limit");
+      impurityIssues
+	  .add("O2: " + o2ContentPpmv + " ppmv — acceptable with dehydration but" + " above 10 ppmv preferred limit");
     }
     if (so2ContentPpmv > 100) {
       impurityIssues.add("SO2: " + so2ContentPpmv + " ppmv exceeds 100 ppmv limit");
@@ -365,8 +364,8 @@ public class DensePhaseCO2Corrosion implements Serializable {
       impurityIssues.add("H2: " + h2ContentMolPct + " mol% may affect dense phase properties");
     }
     if (n2ContentMolPct + arContentMolPct > 4.0) {
-      impurityIssues.add("N2+Ar: " + (n2ContentMolPct + arContentMolPct)
-          + " mol% — may affect critical point and two-phase region");
+      impurityIssues.add(
+	  "N2+Ar: " + (n2ContentMolPct + arContentMolPct) + " mol% — may affect critical point and two-phase region");
     }
   }
 
@@ -388,16 +387,16 @@ public class DensePhaseCO2Corrosion implements Serializable {
 
       // SO2 and O2 synergistic effects
       if (so2ContentPpmv > 50 && o2ContentPpmv > 50) {
-        wetCorrosionRateMmYr *= 2.0;
-        notes.add("SO2 + O2 synergy increases corrosion from sulfuric acid formation.");
+	wetCorrosionRateMmYr *= 2.0;
+	notes.add("SO2 + O2 synergy increases corrosion from sulfuric acid formation.");
       }
 
       if (wetCorrosionRateMmYr > 10.0) {
-        riskLevel = "Very High";
+	riskLevel = "Very High";
       } else if (wetCorrosionRateMmYr > 1.0) {
-        riskLevel = "High";
+	riskLevel = "High";
       } else {
-        riskLevel = "Medium";
+	riskLevel = "Medium";
       }
     } else {
       riskLevel = "Medium";
@@ -428,7 +427,7 @@ public class DensePhaseCO2Corrosion implements Serializable {
     } else {
       sb.append("Address impurity exceedances: ");
       for (String issue : impurityIssues) {
-        sb.append(issue).append("; ");
+	sb.append(issue).append("; ");
       }
     }
 
@@ -570,8 +569,7 @@ public class DensePhaseCO2Corrosion implements Serializable {
    * @return JSON representation
    */
   public String toJson() {
-    Gson gson =
-        new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+    Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
     return gson.toJson(toMap());
   }
 }

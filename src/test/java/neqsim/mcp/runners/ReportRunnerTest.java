@@ -17,12 +17,11 @@ class ReportRunnerTest {
 
   @Test
   void testProcessSummaryReport() {
-    String json = "{" + "\"reportType\": \"process_summary\","
-        + "\"title\": \"HP Separation Results\"," + "\"data\": {" + "  \"status\": \"success\","
-        + "  \"report\": {" + "    \"feed\": {\"temperature_C\": 25.0, \"pressure_bara\": 50.0,"
-        + "              \"flowRate_kg_hr\": 10000.0},"
-        + "    \"HP Sep\": {\"gasOut_temperature_C\": 25.0, \"gasOut_pressure_bara\": 50.0}" + "  }"
-        + "}" + "}";
+    String json = "{" + "\"reportType\": \"process_summary\"," + "\"title\": \"HP Separation Results\"," + "\"data\": {"
+	+ "  \"status\": \"success\"," + "  \"report\": {"
+	+ "    \"feed\": {\"temperature_C\": 25.0, \"pressure_bara\": 50.0,"
+	+ "              \"flowRate_kg_hr\": 10000.0},"
+	+ "    \"HP Sep\": {\"gasOut_temperature_C\": 25.0, \"gasOut_pressure_bara\": 50.0}" + "  }" + "}" + "}";
 
     String result = ReportRunner.run(json);
     assertNotNull(result);

@@ -26,7 +26,8 @@ public class EnergyStream implements java.io.Serializable, Cloneable {
    * Constructor for EnergyStream.
    * </p>
    */
-  public EnergyStream() {}
+  public EnergyStream() {
+  }
 
   /**
    * <p>

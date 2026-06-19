@@ -15,7 +15,7 @@ public class Value {
    * </p>
    *
    * @param value a {@link java.lang.String} object
-   * @param unit a {@link java.lang.String} object
+   * @param unit  a {@link java.lang.String} object
    */
   public Value(String value, String unit) {
     this.value = value;

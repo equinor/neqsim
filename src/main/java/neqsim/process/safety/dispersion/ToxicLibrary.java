@@ -9,20 +9,21 @@ import java.util.Map;
  * Reference library of toxic exposure thresholds for common process chemicals.
  *
  * <p>
- * Provides IDLH (Immediately Dangerous to Life and Health, NIOSH), ERPG-2 (Emergency Response
- * Planning Guideline level-2, AIHA), and AEGL-2 (Acute Exposure Guideline Level 2, EPA) values in
- * ppm for use in dispersion screening and emergency planning.
+ * Provides IDLH (Immediately Dangerous to Life and Health, NIOSH), ERPG-2 (Emergency Response Planning Guideline
+ * level-2, AIHA), and AEGL-2 (Acute Exposure Guideline Level 2, EPA) values in ppm for use in dispersion screening and
+ * emergency planning.
  *
  * <p>
- * <b>Sources:</b> NIOSH Pocket Guide; AIHA ERPG &amp; WEEL Handbook (latest); EPA AEGL database.
- * Values are conservative defaults; verify against the latest published edition for design work.
+ * <b>Sources:</b> NIOSH Pocket Guide; AIHA ERPG &amp; WEEL Handbook (latest); EPA AEGL database. Values are
+ * conservative defaults; verify against the latest published edition for design work.
  *
  * @author ESOL
  * @version 1.0
  */
 public final class ToxicLibrary {
 
-  private ToxicLibrary() {}
+  private ToxicLibrary() {
+  }
 
   /**
    * Toxic-exposure threshold record for a chemical.
@@ -40,8 +41,8 @@ public final class ToxicLibrary {
     public final double aegl2Ppm;
 
     /**
-     * @param name chemical name
-     * @param idlhPpm IDLH in ppm
+     * @param name     chemical name
+     * @param idlhPpm  IDLH in ppm
      * @param erpg2Ppm ERPG-2 in ppm
      * @param aegl2Ppm AEGL-2 in ppm
      */
@@ -96,14 +97,13 @@ public final class ToxicLibrary {
   /**
    * Convert a concentration in ppm (mole basis) to kg/m³.
    *
-   * @param ppm concentration in ppm
+   * @param ppm               concentration in ppm
    * @param molarMassKgPerMol component molar mass in kg/mol
-   * @param tempK temperature in K
-   * @param pressureBara pressure in bara
+   * @param tempK             temperature in K
+   * @param pressureBara      pressure in bara
    * @return concentration in kg/m³
    */
-  public static double ppmToKgPerM3(double ppm, double molarMassKgPerMol, double tempK,
-      double pressureBara) {
+  public static double ppmToKgPerM3(double ppm, double molarMassKgPerMol, double tempK, double pressureBara) {
     double R = 8.314;
     double pPa = pressureBara * 1.0e5;
     // n/V = p/(RT); concentration kg/m3 = (ppm/1e6) * MW * p/(R T)

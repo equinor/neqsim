@@ -7,8 +7,8 @@ import neqsim.process.ml.StateVector;
  * Interface for an individual agent in a multi-agent system.
  *
  * <p>
- * Each agent controls a subset of process equipment and can communicate with other agents through
- * shared observations or explicit messages.
+ * Each agent controls a subset of process equipment and can communicate with other agents through shared observations
+ * or explicit messages.
  *
  * @author ESOL
  * @version 1.0
@@ -55,7 +55,7 @@ public interface Agent extends Serializable {
    * Compute agent's local reward.
    *
    * @param globalState current global state
-   * @param action action taken
+   * @param action      action taken
    * @return local reward
    */
   double computeReward(StateVector globalState, double[] action);

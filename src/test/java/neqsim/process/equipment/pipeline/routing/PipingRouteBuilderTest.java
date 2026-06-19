@@ -25,12 +25,12 @@ class PipingRouteBuilderTest {
   @Test
   void testBuildCreatesSerialPipeModel() {
     Stream feed = createFeedStream();
-    PipingRouteBuilder builder =
-        new PipingRouteBuilder().addSegment("S1", "Manifold", "Valve Station", 100.0, "m", 0.2, "m")
-            .setSegmentElevationChange("S1", 10.0, "m").setSegmentWallThickness("S1", 8.0, "mm")
-            .setDefaultPipeWallRoughness(45.0, "micrometer").addMinorLoss("S1", "manual valve", 1.0)
-            .addSegment("S2", "Valve Station", "Compressor Scrubber", 25.0, "m", 8.0, "inch")
-            .addMinorLoss("Valve Station->Compressor Scrubber", "long-radius bend", 0.3);
+    PipingRouteBuilder builder = new PipingRouteBuilder()
+	.addSegment("S1", "Manifold", "Valve Station", 100.0, "m", 0.2, "m").setSegmentElevationChange("S1", 10.0, "m")
+	.setSegmentWallThickness("S1", 8.0, "mm").setDefaultPipeWallRoughness(45.0, "micrometer")
+	.addMinorLoss("S1", "manual valve", 1.0)
+	.addSegment("S2", "Valve Station", "Compressor Scrubber", 25.0, "m", 8.0, "inch")
+	.addMinorLoss("Valve Station->Compressor Scrubber", "long-radius bend", 0.3);
 
     ProcessSystem process = builder.build(feed);
 
@@ -41,10 +41,9 @@ class PipingRouteBuilderTest {
     assertEquals("Pipe S1 Manifold to Valve Station", firstConnection.getTargetEquipment());
     assertEquals(ProcessConnection.ConnectionType.MATERIAL, firstConnection.getType());
 
-    PipeBeggsAndBrills firstPipe =
-        (PipeBeggsAndBrills) process.getUnit("Pipe S1 Manifold to Valve Station");
-    PipeBeggsAndBrills secondPipe =
-        (PipeBeggsAndBrills) process.getUnit("Pipe S2 Valve Station to Compressor Scrubber");
+    PipeBeggsAndBrills firstPipe = (PipeBeggsAndBrills) process.getUnit("Pipe S1 Manifold to Valve Station");
+    PipeBeggsAndBrills secondPipe = (PipeBeggsAndBrills) process
+	.getUnit("Pipe S2 Valve Station to Compressor Scrubber");
     assertNotNull(firstPipe);
     assertNotNull(secondPipe);
     assertEquals(0.2, firstPipe.getDiameter(), 1.0e-12);
@@ -59,9 +58,9 @@ class PipingRouteBuilderTest {
   @Test
   void testGeneratedRouteRunsAndDropsPressure() {
     Stream feed = createFeedStream();
-    PipingRouteBuilder builder = new PipingRouteBuilder()
-        .addSegment("S1", "A", "B", 75.0, "m", 0.20, "m").addMinorLoss("S1", "gate valve", 0.2)
-        .addSegment("S2", "B", "C", 75.0, "m", 0.20, "m").setDefaultNumberOfIncrements(3);
+    PipingRouteBuilder builder = new PipingRouteBuilder().addSegment("S1", "A", "B", 75.0, "m", 0.20, "m")
+	.addMinorLoss("S1", "gate valve", 0.2).addSegment("S2", "B", "C", 75.0, "m", 0.20, "m")
+	.setDefaultNumberOfIncrements(3);
 
     ProcessSystem process = builder.build(feed);
     process.run();
@@ -79,16 +78,15 @@ class PipingRouteBuilderTest {
     Stream feed = createFeedStream();
     ProcessSystem process = new ProcessSystem("Full plant process");
     process.add(feed);
-    PipingRouteBuilder route =
-        new PipingRouteBuilder().addSegment("S1", "Feed", "Route outlet", 50.0, "m", 0.20, "m")
-            .addMinorLoss("S1", "check valve", 0.5);
+    PipingRouteBuilder route = new PipingRouteBuilder().addSegment("S1", "Feed", "Route outlet", 50.0, "m", 0.20, "m")
+	.addMinorLoss("S1", "check valve", 0.5);
 
     StreamInterface routeOutlet = route.addToProcessSystem(process, feed);
     Cooler downstreamCooler = new Cooler("Downstream cooler", routeOutlet);
     downstreamCooler.setOutletTemperature(25.0, "C");
     process.add(downstreamCooler);
-    process.connect(route.getSegment("S1").getPipeName(), "outlet", downstreamCooler.getName(),
-        "inlet", ProcessConnection.ConnectionType.MATERIAL);
+    process.connect(route.getSegment("S1").getPipeName(), "outlet", downstreamCooler.getName(), "inlet",
+	ProcessConnection.ConnectionType.MATERIAL);
 
     process.run();
 
@@ -103,9 +101,8 @@ class PipingRouteBuilderTest {
    */
   @Test
   void testToJsonIncludesRouteAssumptions() {
-    PipingRouteBuilder builder =
-        new PipingRouteBuilder().addSegment("S1", "A", "B", 0.1, "km", 200.0, "mm")
-            .setMinorLossFrictionFactor(0.025).addMinorLoss("A to B", "strainer", 2.5);
+    PipingRouteBuilder builder = new PipingRouteBuilder().addSegment("S1", "A", "B", 0.1, "km", 200.0, "mm")
+	.setMinorLossFrictionFactor(0.025).addMinorLoss("A to B", "strainer", 2.5);
 
     String json = builder.toJson();
 
@@ -122,21 +119,19 @@ class PipingRouteBuilderTest {
   @Test
   void testDocumentationLineListExample() {
     Stream feed = createFeedStream();
-    PipingRouteBuilder route = new PipingRouteBuilder()
-        .setDefaultPipeWallRoughness(45.0, "micrometer").setMinorLossFrictionFactor(0.02)
-        .addSegment("ROUTE-001-S1", "Upstream manifold", "separator outlet", 120.0, "m", 0.508, "m")
-        .setSegmentWallThickness("ROUTE-001-S1", 12.7, "mm")
-        .addMinorLoss("ROUTE-001-S1", "gate valve", 0.15)
-        .addSegment("ROUTE-001-S2", "separator outlet", "compressor scrubber", 65.0, "m", 0.508,
-            "m")
-        .setSegmentElevationChange("ROUTE-001-S2", 4.0, "m")
-        .addMinorLoss("separator outlet->compressor scrubber", "long-radius bend", 0.20);
+    PipingRouteBuilder route = new PipingRouteBuilder().setDefaultPipeWallRoughness(45.0, "micrometer")
+	.setMinorLossFrictionFactor(0.02)
+	.addSegment("ROUTE-001-S1", "Upstream manifold", "separator outlet", 120.0, "m", 0.508, "m")
+	.setSegmentWallThickness("ROUTE-001-S1", 12.7, "mm").addMinorLoss("ROUTE-001-S1", "gate valve", 0.15)
+	.addSegment("ROUTE-001-S2", "separator outlet", "compressor scrubber", 65.0, "m", 0.508, "m")
+	.setSegmentElevationChange("ROUTE-001-S2", 4.0, "m")
+	.addMinorLoss("separator outlet->compressor scrubber", "long-radius bend", 0.20);
 
     ProcessSystem process = route.build(feed);
     process.run();
 
     PipeBeggsAndBrills lastPipe = (PipeBeggsAndBrills) process
-        .getUnit("Pipe ROUTE-001-S2 separator outlet to compressor scrubber");
+	.getUnit("Pipe ROUTE-001-S2 separator outlet to compressor scrubber");
     assertTrue(lastPipe.getOutletStream().getPressure("bara") < feed.getPressure("bara"));
     assertTrue(route.toJson().contains("ROUTE-001-S1"));
   }
@@ -146,11 +141,9 @@ class PipingRouteBuilderTest {
    */
   @Test
   void testRejectsUnknownMinorLossSegment() {
-    PipingRouteBuilder builder =
-        new PipingRouteBuilder().addSegment("S1", "A", "B", 10.0, "m", 0.1, "m");
+    PipingRouteBuilder builder = new PipingRouteBuilder().addSegment("S1", "A", "B", 10.0, "m", 0.1, "m");
 
-    assertThrows(IllegalArgumentException.class,
-        () -> builder.addMinorLoss("unknown", "manual valve", 1.0));
+    assertThrows(IllegalArgumentException.class, () -> builder.addMinorLoss("unknown", "manual valve", 1.0));
   }
 
   /**

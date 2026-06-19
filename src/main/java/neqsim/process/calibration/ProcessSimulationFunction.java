@@ -14,9 +14,8 @@ import org.apache.logging.log4j.Logger;
  * Objective function that bridges process simulation with the Levenberg-Marquardt optimizer.
  *
  * <p>
- * This class extends {@link LevenbergMarquardtFunction} to enable batch parameter estimation for
- * process simulations. It wraps a {@link ProcessSystem} and provides the objective function
- * interface expected by the L-M optimizer.
+ * This class extends {@link LevenbergMarquardtFunction} to enable batch parameter estimation for process simulations.
+ * It wraps a {@link ProcessSystem} and provides the objective function interface expected by the L-M optimizer.
  * </p>
  *
  * <p>
@@ -36,7 +35,7 @@ import org.apache.logging.log4j.Logger;
  * ProcessSimulationFunction function = new ProcessSimulationFunction(process);
  * function.addParameter("Pipe1.heatTransferCoefficient", 1.0, 100.0);
  * function.addMeasurement("Manifold.outletStream.temperature");
- * function.setInitialGuess(new double[] {15.0});
+ * function.setInitialGuess(new double[] { 15.0 });
  * }
  * </pre>
  *
@@ -92,7 +91,7 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
   /**
    * Adds a tunable parameter.
    *
-   * @param path path to the parameter (e.g., "Pipe1.heatTransferCoefficient")
+   * @param path       path to the parameter (e.g., "Pipe1.heatTransferCoefficient")
    * @param lowerBound minimum allowed value
    * @param upperBound maximum allowed value
    * @return this function for chaining
@@ -105,8 +104,8 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
     double[][] newBounds = new double[n][2];
     if (bounds != null) {
       for (int i = 0; i < bounds.length; i++) {
-        newBounds[i][0] = bounds[i][0];
-        newBounds[i][1] = bounds[i][1];
+	newBounds[i][0] = bounds[i][0];
+	newBounds[i][1] = bounds[i][1];
       }
     }
     newBounds[n - 1][0] = lowerBound;
@@ -146,7 +145,7 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
   /**
    * Sets the current data point and measurement indices for evaluation.
    *
-   * @param dataPointIndex index of the data point
+   * @param dataPointIndex   index of the data point
    * @param measurementIndex index of the measurement within the data point
    */
   public void setCurrentIndices(int dataPointIndex, int measurementIndex) {
@@ -158,8 +157,8 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
    * Enables or disables analytical Jacobian computation.
    *
    * <p>
-   * When enabled, uses {@link ProcessSensitivityAnalyzer} to compute the Jacobian more efficiently,
-   * potentially reusing Broyden Jacobians from recycle convergence.
+   * When enabled, uses {@link ProcessSensitivityAnalyzer} to compute the Jacobian more efficiently, potentially reusing
+   * Broyden Jacobians from recycle convergence.
    * </p>
    *
    * @param useAnalytical true to use analytical Jacobian
@@ -201,18 +200,18 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
   private String[] splitPath(String path) {
     int dotIndex = path.indexOf('.');
     if (dotIndex < 0) {
-      throw new IllegalArgumentException("Invalid path format: " + path
-          + ". Expected 'Equipment.property' or 'Equipment.stream.property'");
+      throw new IllegalArgumentException(
+	  "Invalid path format: " + path + ". Expected 'Equipment.property' or 'Equipment.stream.property'");
     }
-    return new String[] {path.substring(0, dotIndex), path.substring(dotIndex + 1)};
+    return new String[] { path.substring(0, dotIndex), path.substring(dotIndex + 1) };
   }
 
   /**
    * {@inheritDoc}
    *
    * <p>
-   * Calculates the model prediction for the current data point and measurement. The dependentValues
-   * array encodes [dataPointIndex, measurementIndex] to identify which prediction is requested.
+   * Calculates the model prediction for the current data point and measurement. The dependentValues array encodes
+   * [dataPointIndex, measurementIndex] to identify which prediction is requested.
    * </p>
    */
   @Override
@@ -275,14 +274,14 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
       Object current = processSystem.getUnit(parts[0]);
 
       for (int i = 1; i < parts.length; i++) {
-        if (current == null) {
-          throw new IllegalArgumentException("Cannot resolve path: " + path);
-        }
-        current = invokeGetter(current, parts[i]);
+	if (current == null) {
+	  throw new IllegalArgumentException("Cannot resolve path: " + path);
+	}
+	current = invokeGetter(current, parts[i]);
       }
 
       if (current instanceof Number) {
-        return ((Number) current).doubleValue();
+	return ((Number) current).doubleValue();
       }
       throw new IllegalArgumentException("Property at path " + path + " is not a number");
     } catch (Exception e) {
@@ -294,7 +293,7 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
   /**
    * Sets a property value in the process using path-based access.
    *
-   * @param path the property path
+   * @param path  the property path
    * @param value the value to set
    */
   private void setPropertyValue(String path, double value) {
@@ -304,15 +303,15 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
 
       // Navigate to the parent of the final property
       for (int i = 1; i < parts.length - 1; i++) {
-        if (current == null) {
-          throw new IllegalArgumentException("Cannot resolve path: " + path);
-        }
-        current = invokeGetter(current, parts[i]);
+	if (current == null) {
+	  throw new IllegalArgumentException("Cannot resolve path: " + path);
+	}
+	current = invokeGetter(current, parts[i]);
       }
 
       // Set the final property
       if (current != null) {
-        invokeSetter(current, parts[parts.length - 1], value);
+	invokeSetter(current, parts[parts.length - 1], value);
       }
     } catch (Exception e) {
       logger.error("Failed to set property value for path: " + path, e);
@@ -322,7 +321,7 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
   /**
    * Invokes a getter method on an object.
    *
-   * @param obj the object to invoke getter on
+   * @param obj      the object to invoke getter on
    * @param property the property name
    * @return the property value
    * @throws Exception if reflection fails
@@ -336,15 +335,15 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
     } catch (NoSuchMethodException e) {
       // Try property() directly
       try {
-        java.lang.reflect.Method method = obj.getClass().getMethod(property);
-        return method.invoke(obj);
+	java.lang.reflect.Method method = obj.getClass().getMethod(property);
+	return method.invoke(obj);
       } catch (NoSuchMethodException e2) {
-        // Try getOutletStream() for stream access
-        if (property.equals("outletStream")) {
-          java.lang.reflect.Method method = obj.getClass().getMethod("getOutletStream");
-          return method.invoke(obj);
-        }
-        throw e2;
+	// Try getOutletStream() for stream access
+	if (property.equals("outletStream")) {
+	  java.lang.reflect.Method method = obj.getClass().getMethod("getOutletStream");
+	  return method.invoke(obj);
+	}
+	throw e2;
       }
     }
   }
@@ -352,9 +351,9 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
   /**
    * Invokes a setter method on an object.
    *
-   * @param obj the object to invoke setter on
+   * @param obj      the object to invoke setter on
    * @param property the property name
-   * @param value the value to set
+   * @param value    the value to set
    * @throws Exception if reflection fails
    */
   private void invokeSetter(Object obj, String property, double value) throws Exception {
@@ -365,10 +364,10 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
     } catch (NoSuchMethodException e) {
       // Try with Double.class
       try {
-        java.lang.reflect.Method method = obj.getClass().getMethod(setterName, Double.class);
-        method.invoke(obj, value);
+	java.lang.reflect.Method method = obj.getClass().getMethod(setterName, Double.class);
+	method.invoke(obj, value);
       } catch (NoSuchMethodException e2) {
-        throw new IllegalArgumentException("No setter found for property: " + property);
+	throw new IllegalArgumentException("No setter found for property: " + property);
       }
     }
   }
@@ -419,8 +418,7 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
    * Computes the Jacobian using ProcessSensitivityAnalyzer if enabled.
    *
    * <p>
-   * This method is called by the L-M optimizer when analytical Jacobian is preferred over numerical
-   * differentiation.
+   * This method is called by the L-M optimizer when analytical Jacobian is preferred over numerical differentiation.
    * </p>
    *
    * @return the sensitivity matrix, or null if analytical Jacobian is disabled
@@ -439,7 +437,7 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
    * Gets the sensitivity for a specific output/input pair from cached Jacobian.
    *
    * @param measurementIndex index of the measurement
-   * @param parameterIndex index of the parameter
+   * @param parameterIndex   index of the parameter
    * @return the sensitivity value, or NaN if not available
    */
   public double getSensitivity(int measurementIndex, int parameterIndex) {
@@ -454,8 +452,7 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
     String[] outParts = splitPath(outputPath);
     String[] inParts = splitPath(inputPath);
 
-    return cachedJacobian.getSensitivity(outParts[0] + "." + outParts[1],
-        inParts[0] + "." + inParts[1]);
+    return cachedJacobian.getSensitivity(outParts[0] + "." + outParts[1], inParts[0] + "." + inParts[1]);
   }
 
   /**

@@ -13,25 +13,24 @@ import neqsim.thermo.system.SystemInterface;
  * Comprehensive hydrogen material compatibility assessment.
  *
  * <p>
- * Evaluates whether materials are suitable for hydrogen-containing service based on multiple
- * degradation mechanisms and industry standards. Integrates with NeqSim thermodynamic systems to
- * extract hydrogen partial pressures and phase conditions.
+ * Evaluates whether materials are suitable for hydrogen-containing service based on multiple degradation mechanisms and
+ * industry standards. Integrates with NeqSim thermodynamic systems to extract hydrogen partial pressures and phase
+ * conditions.
  * </p>
  *
  * <h2>Degradation Mechanisms Assessed</h2>
  * <ul>
- * <li><b>Hydrogen Embrittlement (HE)</b> — Loss of ductility and fracture toughness at ambient
- * temperatures. Controlled by ASME B31.12 and EIGA 121. Severity increases with H2 partial
- * pressure, material strength (SMYS), and cold work.</li>
- * <li><b>High-Temperature Hydrogen Attack (HTHA)</b> — Internal decarburisation at elevated
- * temperatures (&gt;200°C). Carbon reacts with dissolved H2 to form methane at grain boundaries.
- * Assessed using API 941 Nelson curves.</li>
- * <li><b>Hydrogen-Induced Cracking (HIC)</b> — Blistering and stepwise cracking in wet H2S
- * environments. H2S promotes atomic hydrogen uptake. Controlled by NACE MR0175/ISO 15156.</li>
- * <li><b>Stress Corrosion Cracking (SCC)</b> — Combined effect of H2S, chlorides, and stress.
- * Assessed per ISO 15156-2 (carbon steels) and ISO 15156-3 (CRAs).</li>
- * <li><b>Hydrogen Permeation</b> — Molecular and atomic hydrogen transport through steel walls.
- * Relevant for containment integrity and leak rate estimation.</li>
+ * <li><b>Hydrogen Embrittlement (HE)</b> — Loss of ductility and fracture toughness at ambient temperatures. Controlled
+ * by ASME B31.12 and EIGA 121. Severity increases with H2 partial pressure, material strength (SMYS), and cold
+ * work.</li>
+ * <li><b>High-Temperature Hydrogen Attack (HTHA)</b> — Internal decarburisation at elevated temperatures (&gt;200°C).
+ * Carbon reacts with dissolved H2 to form methane at grain boundaries. Assessed using API 941 Nelson curves.</li>
+ * <li><b>Hydrogen-Induced Cracking (HIC)</b> — Blistering and stepwise cracking in wet H2S environments. H2S promotes
+ * atomic hydrogen uptake. Controlled by NACE MR0175/ISO 15156.</li>
+ * <li><b>Stress Corrosion Cracking (SCC)</b> — Combined effect of H2S, chlorides, and stress. Assessed per ISO 15156-2
+ * (carbon steels) and ISO 15156-3 (CRAs).</li>
+ * <li><b>Hydrogen Permeation</b> — Molecular and atomic hydrogen transport through steel walls. Relevant for
+ * containment integrity and leak rate estimation.</li>
  * </ul>
  *
  * <h2>Standards Implemented</h2>
@@ -206,7 +205,8 @@ public class HydrogenMaterialAssessment implements Serializable {
   /**
    * Creates a new HydrogenMaterialAssessment with default parameters.
    */
-  public HydrogenMaterialAssessment() {}
+  public HydrogenMaterialAssessment() {
+  }
 
   // ─── Configuration from NeqSim Fluid ────────────────────
 
@@ -214,8 +214,8 @@ public class HydrogenMaterialAssessment implements Serializable {
    * Sets hydrogen conditions from a NeqSim thermodynamic system.
    *
    * <p>
-   * Extracts hydrogen partial pressure, mole fractions, and system conditions from the fluid. The
-   * fluid should have been flashed (TPflash) before calling this method.
+   * Extracts hydrogen partial pressure, mole fractions, and system conditions from the fluid. The fluid should have
+   * been flashed (TPflash) before calling this method.
    * </p>
    *
    * @param fluid the NeqSim thermodynamic system (must be flashed)
@@ -230,8 +230,8 @@ public class HydrogenMaterialAssessment implements Serializable {
     for (int i = 0; i < fluid.getPhase(0).getNumberOfComponents(); i++) {
       String name = fluid.getPhase(0).getComponent(i).getComponentName();
       if ("hydrogen".equalsIgnoreCase(name) || "H2".equalsIgnoreCase(name)) {
-        h2Index = i;
-        break;
+	h2Index = i;
+	break;
       }
     }
 
@@ -241,12 +241,12 @@ public class HydrogenMaterialAssessment implements Serializable {
 
       // Gas phase mole fraction (if gas phase exists)
       if (fluid.hasPhaseType("gas")) {
-        h2MoleFractionGas = fluid.getPhase("gas").getComponent(h2Index).getx();
-        h2PartialPressureBar = h2MoleFractionGas * totalPressureBar;
+	h2MoleFractionGas = fluid.getPhase("gas").getComponent(h2Index).getx();
+	h2PartialPressureBar = h2MoleFractionGas * totalPressureBar;
       } else {
-        // Single liquid phase — use bulk
-        h2MoleFractionGas = h2MoleFractionBulk;
-        h2PartialPressureBar = h2MoleFractionBulk * totalPressureBar;
+	// Single liquid phase — use bulk
+	h2MoleFractionGas = h2MoleFractionBulk;
+	h2PartialPressureBar = h2MoleFractionBulk * totalPressureBar;
       }
     }
 
@@ -255,8 +255,8 @@ public class HydrogenMaterialAssessment implements Serializable {
     for (int i = 0; i < fluid.getPhase(0).getNumberOfComponents(); i++) {
       String name = fluid.getPhase(0).getComponent(i).getComponentName();
       if ("H2S".equalsIgnoreCase(name)) {
-        h2sIndex = i;
-        break;
+	h2sIndex = i;
+	break;
       }
     }
     if (h2sIndex >= 0 && fluid.hasPhaseType("gas")) {
@@ -430,8 +430,8 @@ public class HydrogenMaterialAssessment implements Serializable {
    * Runs the complete hydrogen material assessment.
    *
    * <p>
-   * Evaluates all degradation mechanisms and produces an overall risk level and material
-   * recommendations. Call setters for all known parameters before invoking this method.
+   * Evaluates all degradation mechanisms and produces an overall risk level and material recommendations. Call setters
+   * for all known parameters before invoking this method.
    * </p>
    */
   public void evaluate() {
@@ -489,8 +489,7 @@ public class HydrogenMaterialAssessment implements Serializable {
 
     // Assess PWHT
     if (!pwhtApplied && h2PartialPressureBar > 5.0) {
-      warnings.add(
-          "PWHT not applied — ASME B31.12 requires PWHT for hydrogen service " + "at pH2 > 5 bar");
+      warnings.add("PWHT not applied — ASME B31.12 requires PWHT for hydrogen service " + "at pH2 > 5 bar");
     }
 
     // Classify HE risk based on H2 partial pressure and material strength
@@ -512,23 +511,20 @@ public class HydrogenMaterialAssessment implements Serializable {
     }
 
     if (!smysOk) {
-      warnings.add("SMYS " + smysMPa + " MPa exceeds ASME B31.12 limit of " + MAX_SMYS_H2
-          + " MPa for H2 service");
+      warnings.add("SMYS " + smysMPa + " MPa exceeds ASME B31.12 limit of " + MAX_SMYS_H2 + " MPa for H2 service");
     }
     if (!hardnessOk) {
-      warnings.add("Hardness " + hardnessHRC + " HRC exceeds " + MAX_HARDNESS_H2
-          + " HRC limit for H2 service");
+      warnings.add("Hardness " + hardnessHRC + " HRC exceeds " + MAX_HARDNESS_H2 + " HRC limit for H2 service");
     }
 
     // Cyclic service increases risk
     if (cyclicService && h2PartialPressureBar > 1.0) {
       warnings.add("Cyclic service in hydrogen — fatigue crack growth rate may be "
-          + "10-100x higher than in air. Consider fracture mechanics assessment "
-          + "per ASME B31.12 Appendix A");
+	  + "10-100x higher than in air. Consider fracture mechanics assessment " + "per ASME B31.12 Appendix A");
       if ("Low".equals(heRisk)) {
-        heRisk = "Medium";
+	heRisk = "Medium";
       } else if ("Medium".equals(heRisk)) {
-        heRisk = "High";
+	heRisk = "High";
       }
     }
   }
@@ -537,8 +533,8 @@ public class HydrogenMaterialAssessment implements Serializable {
    * Evaluates high-temperature hydrogen attack (HTHA) risk per API 941.
    *
    * <p>
-   * Uses Nelson curve boundaries to assess whether operating conditions (temperature, H2 partial
-   * pressure) are within safe limits for the selected material.
+   * Uses Nelson curve boundaries to assess whether operating conditions (temperature, H2 partial pressure) are within
+   * safe limits for the selected material.
    * </p>
    */
   private void evaluateHTHA() {
@@ -563,11 +559,10 @@ public class HydrogenMaterialAssessment implements Serializable {
     hthaRisk = nelsonCurve.getRiskLevel();
 
     if (!hthaAcceptable) {
-      warnings.add("Operating point ABOVE API 941 Nelson curve for " + materialGrade + " at "
-          + maxTemp + "°C, " + h2PartialPressureBar + " bar H2. "
-          + "Risk of high-temperature hydrogen attack (decarburisation).");
-      warnings.add("Consider: (1) low-alloy Cr-Mo steel, (2) reduce temperature, "
-          + "or (3) reduce H2 partial pressure");
+      warnings.add("Operating point ABOVE API 941 Nelson curve for " + materialGrade + " at " + maxTemp + "°C, "
+	  + h2PartialPressureBar + " bar H2. " + "Risk of high-temperature hydrogen attack (decarburisation).");
+      warnings
+	  .add("Consider: (1) low-alloy Cr-Mo steel, (2) reduce temperature, " + "or (3) reduce H2 partial pressure");
     }
   }
 
@@ -575,9 +570,9 @@ public class HydrogenMaterialAssessment implements Serializable {
    * Evaluates sour service requirements per NACE MR0175/ISO 15156.
    *
    * <p>
-   * When H2S is present alongside H2, there is a combined risk: H2S promotes atomic hydrogen uptake
-   * into the steel, increasing susceptibility to HIC, SSC, and SOHIC. Even trace H2S significantly
-   * increases hydrogen-related degradation.
+   * When H2S is present alongside H2, there is a combined risk: H2S promotes atomic hydrogen uptake into the steel,
+   * increasing susceptibility to HIC, SSC, and SOHIC. Even trace H2S significantly increases hydrogen-related
+   * degradation.
    * </p>
    */
   private void evaluateSourService() {
@@ -595,32 +590,32 @@ public class HydrogenMaterialAssessment implements Serializable {
     if (isSour) {
       // SSC region per ISO 15156-2 Figure 1
       if (h2sPartialPressureBar < 0.3) {
-        hicRisk = "SSC Region 1 — Low severity";
-        sourServiceOk = smysMPa <= 690.0 && (hardnessHRC < 0 || hardnessHRC <= 22.0);
+	hicRisk = "SSC Region 1 — Low severity";
+	sourServiceOk = smysMPa <= 690.0 && (hardnessHRC < 0 || hardnessHRC <= 22.0);
       } else if (h2sPartialPressureBar < 1.0) {
-        hicRisk = "SSC Region 2 — Moderate severity";
-        sourServiceOk = smysMPa <= 550.0 && (hardnessHRC < 0 || hardnessHRC <= 22.0);
+	hicRisk = "SSC Region 2 — Moderate severity";
+	sourServiceOk = smysMPa <= 550.0 && (hardnessHRC < 0 || hardnessHRC <= 22.0);
       } else {
-        hicRisk = "SSC Region 3 — High severity";
-        sourServiceOk = smysMPa <= 450.0 && (hardnessHRC < 0 || hardnessHRC <= 22.0);
+	hicRisk = "SSC Region 3 — High severity";
+	sourServiceOk = smysMPa <= 450.0 && (hardnessHRC < 0 || hardnessHRC <= 22.0);
       }
 
       if (!sourServiceOk) {
-        warnings.add("Material may not meet NACE MR0175/ISO 15156 for sour service at pH2S = "
-            + h2sPartialPressureBar + " bar. Max SMYS and hardness limits must be met.");
+	warnings.add("Material may not meet NACE MR0175/ISO 15156 for sour service at pH2S = " + h2sPartialPressureBar
+	    + " bar. Max SMYS and hardness limits must be met.");
       }
 
       // Combined H2S + H2 warning
       if (h2PartialPressureBar > 0.5) {
-        warnings.add("Combined H2S + H2 environment: H2S promotes atomic hydrogen "
-            + "absorption, accelerating embrittlement. Consider HIC-resistant steel "
-            + "grades (e.g., API 5L with HIC testing per NACE TM0284)");
+	warnings.add("Combined H2S + H2 environment: H2S promotes atomic hydrogen "
+	    + "absorption, accelerating embrittlement. Consider HIC-resistant steel "
+	    + "grades (e.g., API 5L with HIC testing per NACE TM0284)");
       }
     } else if (h2sPartialPressureBar >= 0.001) {
       hicRisk = "Trace H2S — Monitor";
       sourServiceOk = true;
       warnings.add("Trace H2S detected (" + h2sPartialPressureBar + " bar) — below NACE sour "
-          + "threshold but monitor for conditions where water may condense");
+	  + "threshold but monitor for conditions where water may condense");
     }
   }
 
@@ -639,8 +634,7 @@ public class HydrogenMaterialAssessment implements Serializable {
     if (!"Negligible".equals(heRisk) && !"Not applicable (T < 200°C)".equals(heRisk)) {
       activeMechanisms++;
     }
-    if (!"Not applicable (T < 200°C)".equals(hthaRisk)
-        && !"Not applicable (no H2S)".equals(hthaRisk)) {
+    if (!"Not applicable (T < 200°C)".equals(hthaRisk) && !"Not applicable (no H2S)".equals(hthaRisk)) {
       activeMechanisms++;
     }
     if (!"Not applicable (no H2S)".equals(hicRisk)) {
@@ -656,7 +650,7 @@ public class HydrogenMaterialAssessment implements Serializable {
     if (!heAcceptable || !hthaAcceptable || !sourServiceOk) {
       overallRiskLevel = "High";
       if (!heAcceptable && !hthaAcceptable) {
-        overallRiskLevel = "Very High";
+	overallRiskLevel = "Very High";
       }
     }
   }
@@ -668,33 +662,33 @@ public class HydrogenMaterialAssessment implements Serializable {
     if (h2PartialPressureBar < 0.1) {
       recommendedMaterial = materialGrade + " (current selection acceptable)";
       recommendations.add("H2 partial pressure is very low (" + h2PartialPressureBar
-          + " bar) — no special hydrogen material requirements per ASME B31.12");
+	  + " bar) — no special hydrogen material requirements per ASME B31.12");
       return;
     }
 
     // Carbon steel recommendations based on H2 partial pressure
     if (h2PartialPressureBar < 10.0) {
       if (smysMPa <= 360.0) {
-        recommendedMaterial = materialGrade + " (acceptable with PWHT)";
-        recommendations.add("Use " + materialGrade + " with PWHT per ASME B31.12");
-        recommendations.add("Hardness must not exceed 22 HRC (200 HBW)");
-        recommendations.add("Design factor: 0.5 (vs 0.72 for natural gas)");
+	recommendedMaterial = materialGrade + " (acceptable with PWHT)";
+	recommendations.add("Use " + materialGrade + " with PWHT per ASME B31.12");
+	recommendations.add("Hardness must not exceed 22 HRC (200 HBW)");
+	recommendations.add("Design factor: 0.5 (vs 0.72 for natural gas)");
       } else {
-        recommendedMaterial = "X52 or lower grade recommended";
-        recommendations.add("Current grade " + materialGrade + " (SMYS " + smysMPa
-            + " MPa) may be too strong for H2 service at " + h2PartialPressureBar + " bar");
-        recommendations.add("Downgrade to X52 (SMYS 358 MPa) or X42 (SMYS 290 MPa)");
+	recommendedMaterial = "X52 or lower grade recommended";
+	recommendations.add("Current grade " + materialGrade + " (SMYS " + smysMPa
+	    + " MPa) may be too strong for H2 service at " + h2PartialPressureBar + " bar");
+	recommendations.add("Downgrade to X52 (SMYS 358 MPa) or X42 (SMYS 290 MPa)");
       }
     } else if (h2PartialPressureBar < 50.0) {
       recommendedMaterial = "X42 or X52 with PWHT and full H2 qualification";
       recommendations.add("High H2 partial pressure (" + h2PartialPressureBar + " bar) — "
-          + "only X42 or X52 with full ASME B31.12 compliance");
+	  + "only X42 or X52 with full ASME B31.12 compliance");
       recommendations.add("Mandatory: PWHT, hardness testing, NDE of all welds");
       recommendations.add("Consider fracture mechanics assessment (ASME B31.12 Appendix A)");
     } else {
       recommendedMaterial = "X42 with full H2 qualification, or consider 316L stainless";
       recommendations.add("Very high H2 partial pressure (" + h2PartialPressureBar
-          + " bar) — X42 only, or consider austenitic stainless (316L)");
+	  + " bar) — X42 only, or consider austenitic stainless (316L)");
       recommendations.add("316L is immune to hydrogen embrittlement but more expensive");
     }
 
@@ -702,15 +696,14 @@ public class HydrogenMaterialAssessment implements Serializable {
     double maxTemp = Math.max(designTemperatureC, maxOperatingTemperatureC);
     if (maxTemp > 200.0 && h2PartialPressureBar > 0.5) {
       recommendations.add("Temperature " + maxTemp + "°C with H2 — verify against "
-          + "API 941 Nelson curves. Consider Cr-Mo steel (1.25Cr-0.5Mo or 2.25Cr-1Mo) "
-          + "for HTHA resistance");
+	  + "API 941 Nelson curves. Consider Cr-Mo steel (1.25Cr-0.5Mo or 2.25Cr-1Mo) " + "for HTHA resistance");
     }
 
     // H2S combined service
     if (h2sPartialPressureBar > 0.05 && h2PartialPressureBar > 0.5) {
       recommendations.add("Combined H2S + H2 service requires HIC-resistant steel: "
-          + "order with supplementary requirement for HIC testing per NACE TM0284 "
-          + "and SSC testing per NACE TM0177");
+	  + "order with supplementary requirement for HIC testing per NACE TM0284 "
+	  + "and SSC testing per NACE TM0177");
     }
   }
 
@@ -1062,8 +1055,7 @@ public class HydrogenMaterialAssessment implements Serializable {
    * @return JSON representation of the assessment
    */
   public String toJson() {
-    Gson gson =
-        new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+    Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
     return gson.toJson(toMap());
   }
 }

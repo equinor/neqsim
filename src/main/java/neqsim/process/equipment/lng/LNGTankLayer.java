@@ -9,19 +9,18 @@ import neqsim.thermo.system.SystemInterface;
  * Represents a single horizontal layer in a stratified LNG tank.
  *
  * <p>
- * Each layer has its own composition, temperature, density, and volume. Layers interact through
- * interfacial heat and mass transfer and can merge when their density difference drops below a
- * threshold.
+ * Each layer has its own composition, temperature, density, and volume. Layers interact through interfacial heat and
+ * mass transfer and can merge when their density difference drops below a threshold.
  * </p>
  *
  * <p>
  * The layer model supports the two key physical mechanisms that drive stratification and rollover:
  * </p>
  * <ul>
- * <li><b>Weathering from top:</b> preferential evaporation of nitrogen and methane from the top
- * layer makes it denser (heavier)</li>
- * <li><b>Heat ingress from bottom/sides:</b> warming of the bottom layer makes it lighter,
- * potentially unstable when topped by a denser layer</li>
+ * <li><b>Weathering from top:</b> preferential evaporation of nitrogen and methane from the top layer makes it denser
+ * (heavier)</li>
+ * <li><b>Heat ingress from bottom/sides:</b> warming of the bottom layer makes it lighter, potentially unstable when
+ * topped by a denser layer</li>
  * </ul>
  *
  * @author NeqSim
@@ -71,10 +70,10 @@ public class LNGTankLayer implements Serializable {
   /**
    * Constructor with full initialisation.
    *
-   * @param layerIndex layer index (0 = bottom)
-   * @param totalMoles total moles in layer (mol)
+   * @param layerIndex  layer index (0 = bottom)
+   * @param totalMoles  total moles in layer (mol)
    * @param temperature layer temperature (K)
-   * @param pressure layer pressure (bara)
+   * @param pressure    layer pressure (bara)
    */
   public LNGTankLayer(int layerIndex, double totalMoles, double temperature, double pressure) {
     this(layerIndex);
@@ -87,8 +86,8 @@ public class LNGTankLayer implements Serializable {
    * Initialize the layer from a NeqSim thermodynamic system.
    *
    * <p>
-   * Extracts composition, density, molar mass, and volume from the thermo system's liquid phase
-   * after a flash calculation has been performed.
+   * Extracts composition, density, molar mass, and volume from the thermo system's liquid phase after a flash
+   * calculation has been performed.
    * </p>
    *
    * @param system thermodynamic system with liquid phase (post-flash)
@@ -108,15 +107,15 @@ public class LNGTankLayer implements Serializable {
       // Extract composition
       composition.clear();
       for (int i = 0; i < liqPhase.getNumberOfComponents(); i++) {
-        String name = liqPhase.getComponent(i).getComponentName();
-        double xFrac = liqPhase.getComponent(i).getx();
-        composition.put(name, xFrac);
+	String name = liqPhase.getComponent(i).getComponentName();
+	double xFrac = liqPhase.getComponent(i).getx();
+	composition.put(name, xFrac);
       }
 
       // Calculate volume from mass and density
       if (density > 0) {
-        double mass = totalMoles * molarMass;
-        this.volume = mass / density;
+	double mass = totalMoles * molarMass;
+	this.volume = mass / density;
       }
     }
   }
@@ -154,11 +153,11 @@ public class LNGTankLayer implements Serializable {
    * Remove moles from this layer (boil-off from top layer).
    *
    * <p>
-   * The composition of the removed vapor is determined by the vapor-liquid equilibrium at the
-   * layer's temperature and pressure.
+   * The composition of the removed vapor is determined by the vapor-liquid equilibrium at the layer's temperature and
+   * pressure.
    * </p>
    *
-   * @param molesToRemove moles of vapor to remove (mol)
+   * @param molesToRemove    moles of vapor to remove (mol)
    * @param vaporComposition composition of the vapor being removed (mole fractions by component)
    */
   public void removeVapor(double molesToRemove, Map<String, Double> vaporComposition) {
@@ -177,7 +176,7 @@ public class LNGTankLayer implements Serializable {
       double yVap = vaporComposition.containsKey(comp) ? vaporComposition.get(comp) : 0.0;
       double newX = (xOld * totalMoles - yVap * molesToRemove) / remainingMoles;
       if (newX < 0) {
-        newX = 0;
+	newX = 0;
       }
       newComp.put(comp, newX);
       sumX += newX;
@@ -186,7 +185,7 @@ public class LNGTankLayer implements Serializable {
     // Normalize
     if (sumX > 0) {
       for (Map.Entry<String, Double> entry : newComp.entrySet()) {
-        entry.setValue(entry.getValue() / sumX);
+	entry.setValue(entry.getValue() / sumX);
       }
     }
 

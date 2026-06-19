@@ -13,8 +13,8 @@ import org.apache.logging.log4j.Logger;
  * Benchmark tests for the reactive multiphase flash against literature data.
  *
  * <p>
- * These tests validate the Modified RAND method against well-known chemical equilibrium cases from
- * thermodynamics textbooks and research papers.
+ * These tests validate the Modified RAND method against well-known chemical equilibrium cases from thermodynamics
+ * textbooks and research papers.
  * </p>
  *
  * <p>
@@ -22,8 +22,7 @@ import org.apache.logging.log4j.Logger;
  * </p>
  * <ul>
  * <li>Smith, Missen (1982) Chemical Reaction Equilibrium Analysis, Wiley</li>
- * <li>Smith, Van Ness, Abbott (2018) Introduction to Chemical Engineering Thermodynamics, 8th
- * ed</li>
+ * <li>Smith, Van Ness, Abbott (2018) Introduction to Chemical Engineering Thermodynamics, 8th ed</li>
  * <li>Tsanas, Stenby, Yan (2017) Ind. Eng. Chem. Res. 56, 11983-11995</li>
  * <li>Ascani, Sadowski, Held (2023) Molecules 28, 1768</li>
  * </ul>
@@ -34,13 +33,12 @@ import org.apache.logging.log4j.Logger;
 public class ReactiveFlashBenchmarkTest {
   private static final Logger logger = LogManager.getLogger(ReactiveFlashBenchmarkTest.class);
 
-
   /**
    * Test ThermodynamicOperations.reactiveTPflash() integration.
    *
    * <p>
-   * Verifies that the reactiveTPflash method on ThermodynamicOperations works correctly and
-   * delegates to the ReactiveMultiphaseTPflash algorithm.
+   * Verifies that the reactiveTPflash method on ThermodynamicOperations works correctly and delegates to the
+   * ReactiveMultiphaseTPflash algorithm.
    * </p>
    */
   @Test
@@ -60,21 +58,20 @@ public class ReactiveFlashBenchmarkTest {
     ops.reactiveTPflash();
 
     // Should complete without errors
-    assertTrue(system.getNumberOfPhases() >= 1,
-        "Should have at least 1 phase after reactive flash");
+    assertTrue(system.getNumberOfPhases() >= 1, "Should have at least 1 phase after reactive flash");
   }
 
   /**
    * Test water-gas shift reaction equilibrium: CO + H2O = CO2 + H2.
    *
    * <p>
-   * At 600 K and 1 bar, the equilibrium constant Kp approximately 14 (strongly favors products).
-   * The system should show significant conversion of CO and H2O to CO2 and H2.
+   * At 600 K and 1 bar, the equilibrium constant Kp approximately 14 (strongly favors products). The system should show
+   * significant conversion of CO and H2O to CO2 and H2.
    * </p>
    *
    * <p>
-   * Reference: Smith, Van Ness, Abbott (2018), Example 13.1; NIST-JANAF tables give ln(Kp) at 600 K
-   * approximately 2.6, so Kp approximately 14.
+   * Reference: Smith, Van Ness, Abbott (2018), Example 13.1; NIST-JANAF tables give ln(Kp) at 600 K approximately 2.6,
+   * so Kp approximately 14.
    * </p>
    */
   @Test
@@ -95,8 +92,7 @@ public class ReactiveFlashBenchmarkTest {
     // Elements: C, O, H -> NE = 3, NC = 4
     // Rank(A) = 3, so NR = 4 - 3 = 1 independent reaction
     FormulaMatrix fm = new FormulaMatrix(system);
-    assertEquals(1, fm.getNumberOfIndependentReactions(),
-        "CO/H2O/CO2/H2 system should have 1 independent reaction");
+    assertEquals(1, fm.getNumberOfIndependentReactions(), "CO/H2O/CO2/H2 system should have 1 independent reaction");
 
     ReactiveMultiphaseTPflash flash = new ReactiveMultiphaseTPflash(system);
     flash.run();
@@ -111,10 +107,8 @@ public class ReactiveFlashBenchmarkTest {
     double xH2 = system.getPhase(0).getComponent("hydrogen").getx();
 
     // Check the direction of reaction is correct (products favored at 600 K)
-    assertTrue(xCO2 > 0.25,
-        "CO2 mole fraction should increase from 0.25 at equilibrium. Got: " + xCO2);
-    assertTrue(xCO < 0.25,
-        "CO mole fraction should decrease from 0.25 at equilibrium. Got: " + xCO);
+    assertTrue(xCO2 > 0.25, "CO2 mole fraction should increase from 0.25 at equilibrium. Got: " + xCO2);
+    assertTrue(xCO < 0.25, "CO mole fraction should decrease from 0.25 at equilibrium. Got: " + xCO);
 
     // Mass balance check: total C should be conserved
     // C: xCO + xCO2 should equal initial value (0.50 of total C-bearing)
@@ -127,21 +121,20 @@ public class ReactiveFlashBenchmarkTest {
     // Kx = (xCO2 * xH2) / (xCO * xH2O)
     // At ideal gas conditions (1 bar), Kp ~ Kx
     double Kx = (xCO2 * xH2) / (Math.max(xCO, 1e-30) * Math.max(xH2O, 1e-30));
-    assertTrue(Kx > 1.0,
-        "Equilibrium constant should be > 1 at 600 K (products favored). Got Kx = " + Kx);
+    assertTrue(Kx > 1.0, "Equilibrium constant should be > 1 at 600 K (products favored). Got Kx = " + Kx);
   }
 
   /**
    * Test steam-methane reforming equilibrium at high temperature.
    *
    * <p>
-   * CH4 + H2O = CO + 3H2 and CO + H2O = CO2 + H2 at 1100 K, 1 bar. The system has 5 components
-   * (CH4, H2O, CO, CO2, H2) and 3 elements (C, H, O), giving NR = 5 - 3 = 2 independent reactions.
+   * CH4 + H2O = CO + 3H2 and CO + H2O = CO2 + H2 at 1100 K, 1 bar. The system has 5 components (CH4, H2O, CO, CO2, H2)
+   * and 3 elements (C, H, O), giving NR = 5 - 3 = 2 independent reactions.
    * </p>
    *
    * <p>
-   * At high temperature, methane should be significantly converted. Reference: standard
-   * thermodynamics textbooks show nearly complete conversion above 1000 K at 1 bar.
+   * At high temperature, methane should be significantly converted. Reference: standard thermodynamics textbooks show
+   * nearly complete conversion above 1000 K at 1 bar.
    * </p>
    */
   @Test
@@ -160,7 +153,7 @@ public class ReactiveFlashBenchmarkTest {
 
     FormulaMatrix fm = new FormulaMatrix(system);
     assertEquals(2, fm.getNumberOfIndependentReactions(),
-        "CH4/H2O/CO/CO2/H2 system should have 2 independent reactions");
+	"CH4/H2O/CO/CO2/H2 system should have 2 independent reactions");
 
     ReactiveMultiphaseTPflash flash = new ReactiveMultiphaseTPflash(system);
     flash.run();
@@ -195,13 +188,13 @@ public class ReactiveFlashBenchmarkTest {
    * Test ammonia synthesis equilibrium: N2 + 3H2 = 2NH3.
    *
    * <p>
-   * At 500 K and 300 bar, ammonia synthesis is thermodynamically favorable. This is the classic
-   * Haber-Bosch process condition. The equilibrium should show significant NH3 formation.
+   * At 500 K and 300 bar, ammonia synthesis is thermodynamically favorable. This is the classic Haber-Bosch process
+   * condition. The equilibrium should show significant NH3 formation.
    * </p>
    *
    * <p>
-   * Reference: Smith and Missen (1982), Table 4.3. At 500 K, Kp approximately 0.0065. High pressure
-   * shifts equilibrium toward products.
+   * Reference: Smith and Missen (1982), Table 4.3. At 500 K, Kp approximately 0.0065. High pressure shifts equilibrium
+   * toward products.
    * </p>
    */
   @Test
@@ -220,8 +213,7 @@ public class ReactiveFlashBenchmarkTest {
     // Elements: N, H -> NE = 2, NC = 3
     // Rank(A) = 2, NR = 3 - 2 = 1
     FormulaMatrix fm = new FormulaMatrix(system);
-    assertEquals(1, fm.getNumberOfIndependentReactions(),
-        "N2/H2/NH3 system should have 1 independent reaction");
+    assertEquals(1, fm.getNumberOfIndependentReactions(), "N2/H2/NH3 system should have 1 independent reaction");
 
     ReactiveMultiphaseTPflash flash = new ReactiveMultiphaseTPflash(system);
     flash.run();
@@ -240,17 +232,16 @@ public class ReactiveFlashBenchmarkTest {
     // N: (2*xN2 + xNH3) * N_total = initial (2*0.25 + 1e-4 ~ 0.5001)
     double Ntot = flash.getEquilibriumTotalMoles();
     double totalN = (2.0 * xN2 + xNH3) * Ntot;
-    assertEquals(2.0 * 0.25 + 1.0e-4, totalN, 0.02,
-        "Nitrogen balance should be conserved. Got: " + totalN);
+    assertEquals(2.0 * 0.25 + 1.0e-4, totalN, 0.02, "Nitrogen balance should be conserved. Got: " + totalN);
   }
 
   /**
    * Test methanol synthesis equilibrium: CO + 2H2 = CH3OH.
    *
    * <p>
-   * At 500 K and 50 bar, methanol synthesis is moderately favorable. Elements: C, H, O. NC = 3, NE
-   * = 3. rank(A) should be 3, but since CO has (C=1, O=1), H2 has (H=2), and CH3OH has (C=1, H=4,
-   * O=1), rank is 2 (C and O are always equal), so NR = 1.
+   * At 500 K and 50 bar, methanol synthesis is moderately favorable. Elements: C, H, O. NC = 3, NE = 3. rank(A) should
+   * be 3, but since CO has (C=1, O=1), H2 has (H=2), and CH3OH has (C=1, H=4, O=1), rank is 2 (C and O are always
+   * equal), so NR = 1.
    * </p>
    */
   @Test
@@ -270,8 +261,7 @@ public class ReactiveFlashBenchmarkTest {
     // CO (C,O), H2 (H), CH3OH (C,H,O) -> NE = 3 (C, H, O)
     // A = [1 0 1; 0 2 4; 1 0 1] -> C and O rows identical -> rank = 2
     // NR = 3 - 2 = 1
-    assertEquals(1, fm.getNumberOfIndependentReactions(),
-        "CO/H2/CH3OH should have 1 independent reaction");
+    assertEquals(1, fm.getNumberOfIndependentReactions(), "CO/H2/CH3OH should have 1 independent reaction");
 
     ReactiveMultiphaseTPflash flash = new ReactiveMultiphaseTPflash(system);
     flash.run();
@@ -282,17 +272,15 @@ public class ReactiveFlashBenchmarkTest {
 
     // At 500 K and 50 bar, some methanol should form from CO + 2H2
     // The exact amount depends on the EOS and Gibbs data, but direction should be correct
-    assertTrue(xCH3OH > 0.01,
-        "Methanol should increase from initial at 500 K / 50 bar. Got: " + xCH3OH);
+    assertTrue(xCH3OH > 0.01, "Methanol should increase from initial at 500 K / 50 bar. Got: " + xCH3OH);
   }
 
   /**
    * Test temperature effect on equilibrium: WGS at two temperatures.
    *
    * <p>
-   * CO + H2O = CO2 + H2 is exothermic (deltaH approximately -41 kJ/mol). Le Chatelier's principle
-   * says lower temperature favors products. The equilibrium constant should decrease with
-   * temperature.
+   * CO + H2O = CO2 + H2 is exothermic (deltaH approximately -41 kJ/mol). Le Chatelier's principle says lower
+   * temperature favors products. The equilibrium constant should decrease with temperature.
    * </p>
    */
   @Test
@@ -301,8 +289,8 @@ public class ReactiveFlashBenchmarkTest {
     double xCO2_highT = runWGSAtTemperature(1000.0);
 
     // WGS is exothermic: lower T -> more products -> higher CO2
-    assertTrue(xCO2_lowT > xCO2_highT, "CO2 should be higher at 500 K than 1000 K (Le Chatelier). "
-        + "Got xCO2_500K=" + xCO2_lowT + ", xCO2_1000K=" + xCO2_highT);
+    assertTrue(xCO2_lowT > xCO2_highT, "CO2 should be higher at 500 K than 1000 K (Le Chatelier). " + "Got xCO2_500K="
+	+ xCO2_lowT + ", xCO2_1000K=" + xCO2_highT);
   }
 
   /**
@@ -333,9 +321,8 @@ public class ReactiveFlashBenchmarkTest {
    * Test pressure effect on ammonia synthesis equilibrium.
    *
    * <p>
-   * N2 + 3H2 = 2NH3 involves a decrease in moles (4 moles -> 2 moles). Le Chatelier's principle
-   * says higher pressure favors products. This test verifies that higher pressure produces more
-   * ammonia.
+   * N2 + 3H2 = 2NH3 involves a decrease in moles (4 moles -> 2 moles). Le Chatelier's principle says higher pressure
+   * favors products. This test verifies that higher pressure produces more ammonia.
    * </p>
    */
   @Test
@@ -344,9 +331,8 @@ public class ReactiveFlashBenchmarkTest {
     double xNH3_highP = runAmmoniaSynthesisAtPressure(300.0);
 
     // Higher pressure favors NH3 formation (fewer moles on product side)
-    assertTrue(xNH3_highP > xNH3_lowP,
-        "NH3 should be higher at 300 bar than 10 bar (Le Chatelier). " + "Got xNH3_10bar="
-            + xNH3_lowP + ", xNH3_300bar=" + xNH3_highP);
+    assertTrue(xNH3_highP > xNH3_lowP, "NH3 should be higher at 300 bar than 10 bar (Le Chatelier). "
+	+ "Got xNH3_10bar=" + xNH3_lowP + ", xNH3_300bar=" + xNH3_highP);
   }
 
   /**
@@ -376,8 +362,8 @@ public class ReactiveFlashBenchmarkTest {
    * Test that elemental species at equilibrium satisfy the Gibbs energy minimum condition.
    *
    * <p>
-   * For an ideal gas mixture at equilibrium, all species with the same elemental formula should
-   * have equal chemical potential per element atom. This is a thermodynamic consistency check.
+   * For an ideal gas mixture at equilibrium, all species with the same elemental formula should have equal chemical
+   * potential per element atom. This is a thermodynamic consistency check.
    * </p>
    */
   @Test
@@ -408,8 +394,8 @@ public class ReactiveFlashBenchmarkTest {
    * Test element balance conservation for a complex system.
    *
    * <p>
-   * After reactive flash, the elemental abundances (A * x_total) should equal the initial element
-   * vector (A * z). This is a hard constraint of the RAND method.
+   * After reactive flash, the elemental abundances (A * x_total) should equal the initial element vector (A * z). This
+   * is a hard constraint of the RAND method.
    * </p>
    */
   @Test
@@ -450,9 +436,8 @@ public class ReactiveFlashBenchmarkTest {
 
     // Element balances should be conserved in moles: bFinal * N_total = bInitial
     for (int k = 0; k < bInitial.length; k++) {
-      assertEquals(bInitial[k], bFinal[k] * Ntot, 0.02,
-          "Element " + fm.getElementNames()[k] + " balance should be conserved: " + "initial="
-              + bInitial[k] + ", final=" + (bFinal[k] * Ntot));
+      assertEquals(bInitial[k], bFinal[k] * Ntot, 0.02, "Element " + fm.getElementNames()[k]
+	  + " balance should be conserved: " + "initial=" + bInitial[k] + ", final=" + (bFinal[k] * Ntot));
     }
   }
 
@@ -460,9 +445,8 @@ public class ReactiveFlashBenchmarkTest {
    * Test SO2 oxidation equilibrium: 2SO2 + O2 = 2SO3.
    *
    * <p>
-   * This test uses sulfur-containing species to verify the algorithm handles S-element correctly.
-   * Check that element data exists for SO2 and verify the formula matrix detects the correct
-   * reactions.
+   * This test uses sulfur-containing species to verify the algorithm handles S-element correctly. Check that element
+   * data exists for SO2 and verify the formula matrix detects the correct reactions.
    * </p>
    */
   @Test
@@ -483,8 +467,7 @@ public class ReactiveFlashBenchmarkTest {
     // NE = 3, NC = 3
     // rank(A) = 3 (all independent), NR = 0
     // Without SO3 in the system, there is no reaction
-    assertEquals(0, fm.getNumberOfIndependentReactions(),
-        "SO2/O2/N2 without SO3 should have 0 independent reactions");
+    assertEquals(0, fm.getNumberOfIndependentReactions(), "SO2/O2/N2 without SO3 should have 0 independent reactions");
 
     // Run flash anyway - should handle gracefully
     ReactiveMultiphaseTPflash flash = new ReactiveMultiphaseTPflash(system);
@@ -497,8 +480,8 @@ public class ReactiveFlashBenchmarkTest {
    * Test that the reactive flash handles a 6-component system correctly.
    *
    * <p>
-   * CH4 + 2O2 = CO2 + 2H2O (combustion) and CH4 + H2O = CO + 3H2 (reforming). Six components: CH4,
-   * O2, CO2, H2O, CO, H2. Three elements: C, H, O. NR = 6 - 3 = 3 independent reactions.
+   * CH4 + 2O2 = CO2 + 2H2O (combustion) and CH4 + H2O = CO + 3H2 (reforming). Six components: CH4, O2, CO2, H2O, CO,
+   * H2. Three elements: C, H, O. NR = 6 - 3 = 3 independent reactions.
    * </p>
    */
   @Test
@@ -520,7 +503,7 @@ public class ReactiveFlashBenchmarkTest {
 
     // 6 components, 3 elements -> 3 independent reactions
     assertEquals(3, fm.getNumberOfIndependentReactions(),
-        "6 components with 3 elements should have 3 independent reactions");
+	"6 components with 3 elements should have 3 independent reactions");
 
     ReactiveMultiphaseTPflash flash = new ReactiveMultiphaseTPflash(system);
     flash.run();
@@ -542,12 +525,11 @@ public class ReactiveFlashBenchmarkTest {
       xFinal[i] = system.getPhase(0).getComponent(i).getx();
     }
     double[] bFinal = fm.computeElementVector(xFinal);
-    double[] z0 = {0.10, 0.05, 0.15, 0.20, 0.15, 0.35};
+    double[] z0 = { 0.10, 0.05, 0.15, 0.20, 0.15, 0.35 };
     double[] bInit = fm.computeElementVector(z0);
 
     for (int k = 0; k < bInit.length; k++) {
-      assertEquals(bInit[k], bFinal[k] * Ntot, 0.03,
-          "Element " + fm.getElementNames()[k] + " balance violated");
+      assertEquals(bInit[k], bFinal[k] * Ntot, 0.03, "Element " + fm.getElementNames()[k] + " balance violated");
     }
   }
 
@@ -555,9 +537,8 @@ public class ReactiveFlashBenchmarkTest {
    * Test that initial composition does not affect the equilibrium result.
    *
    * <p>
-   * For a unique equilibrium (single phase, single minimum), different starting compositions with
-   * the same element vector b should converge to the same equilibrium. This tests
-   * path-independence.
+   * For a unique equilibrium (single phase, single minimum), different starting compositions with the same element
+   * vector b should converge to the same equilibrium. This tests path-independence.
    * </p>
    */
   @Test
@@ -600,8 +581,7 @@ public class ReactiveFlashBenchmarkTest {
 
       // Note: different element vectors b -> different equilibria
       // But the direction of reaction should be consistent
-      assertTrue(xCO2_1 > 0.0 && xCO2_2 > 0.0,
-          "Both cases should have positive CO2 at equilibrium");
+      assertTrue(xCO2_1 > 0.0 && xCO2_2 > 0.0, "Both cases should have positive CO2 at equilibrium");
     }
   }
 
@@ -609,8 +589,8 @@ public class ReactiveFlashBenchmarkTest {
    * Test VLE + reaction: water-gas shift at conditions where liquid water may form.
    *
    * <p>
-   * At 300 K and 50 bar, water may condense. The reactive flash should handle the simultaneous
-   * chemical and phase equilibrium. This is a more challenging case than pure gas-phase CE.
+   * At 300 K and 50 bar, water may condense. The reactive flash should handle the simultaneous chemical and phase
+   * equilibrium. This is a more challenging case than pure gas-phase CE.
    * </p>
    */
   @Test
@@ -639,9 +619,9 @@ public class ReactiveFlashBenchmarkTest {
    * Test ethanol dehydration equilibrium: C2H5OH = C2H4 + H2O.
    *
    * <p>
-   * Two components (ethanol and water) share elements C, H, O. At high temperature, ethanol
-   * dehydration to ethylene (C2H4) + water is favored. Since we don't have ethylene in DB, we test
-   * the ethanol/water/CO2 system as a proxy for element detection.
+   * Two components (ethanol and water) share elements C, H, O. At high temperature, ethanol dehydration to ethylene
+   * (C2H4) + water is favored. Since we don't have ethylene in DB, we test the ethanol/water/CO2 system as a proxy for
+   * element detection.
    * </p>
    */
   @Test
@@ -661,8 +641,7 @@ public class ReactiveFlashBenchmarkTest {
 
     // Ethanol (C2H6O), water (H2O), CO2 (CO2), H2 (H2)
     // Elements: C, H, O -> NE = 3, NC = 4 -> NR = 1
-    assertEquals(1, fm.getNumberOfIndependentReactions(),
-        "Ethanol/H2O/CO2/H2 should have 1 independent reaction");
+    assertEquals(1, fm.getNumberOfIndependentReactions(), "Ethanol/H2O/CO2/H2 should have 1 independent reaction");
 
     ReactiveMultiphaseTPflash flash = new ReactiveMultiphaseTPflash(system);
     flash.run();
@@ -674,17 +653,16 @@ public class ReactiveFlashBenchmarkTest {
    * Quantitative test: Water-Gas Shift Kp values at multiple temperatures.
    *
    * <p>
-   * CO + H2O = CO2 + H2. Since Delta-nu = 0, Kp = Kx (ideal gas). Literature values from NIST-JANAF
-   * tables (Chase, 1998): Kp(600K)=57.3, Kp(800K)=8.58, Kp(1000K)=2.47, Kp(1200K)=1.19. Our
-   * simplified thermochemical model (constant Cp approximation) will differ from exact JANAF
-   * values, so we check that: (1) Kp trends monotonically with temperature, (2) Kp is within an
-   * order of magnitude of literature at each T.
+   * CO + H2O = CO2 + H2. Since Delta-nu = 0, Kp = Kx (ideal gas). Literature values from NIST-JANAF tables (Chase,
+   * 1998): Kp(600K)=57.3, Kp(800K)=8.58, Kp(1000K)=2.47, Kp(1200K)=1.19. Our simplified thermochemical model (constant
+   * Cp approximation) will differ from exact JANAF values, so we check that: (1) Kp trends monotonically with
+   * temperature, (2) Kp is within an order of magnitude of literature at each T.
    * </p>
    */
   @Test
   void testWGSKpQuantitative() {
     // CO + H2O = CO2 + H2 (delta-nu = 0, so Kp = Kx at ideal gas)
-    double[] temps = {600.0, 800.0, 1000.0, 1200.0};
+    double[] temps = { 600.0, 800.0, 1000.0, 1200.0 };
     double prevKp = Double.MAX_VALUE;
 
     for (double T : temps) {
@@ -730,14 +708,14 @@ public class ReactiveFlashBenchmarkTest {
    * Quantitative test: Ammonia synthesis pressure dependence.
    *
    * <p>
-   * N2 + 3H2 = 2NH3, delta-nu = -2. Higher pressure shifts equilibrium toward NH3 (Le Chatelier).
-   * At 500K, we expect x_NH3 to increase significantly with pressure. This verifies the solver
-   * correctly handles total-moles-changing reactions under pressure.
+   * N2 + 3H2 = 2NH3, delta-nu = -2. Higher pressure shifts equilibrium toward NH3 (Le Chatelier). At 500K, we expect
+   * x_NH3 to increase significantly with pressure. This verifies the solver correctly handles total-moles-changing
+   * reactions under pressure.
    * </p>
    */
   @Test
   void testAmmoniaSynthesisPressureSeries() {
-    double[] pressures = {1.0, 10.0, 100.0, 300.0};
+    double[] pressures = { 1.0, 10.0, 100.0, 300.0 };
     double prevNH3 = 0.0;
 
     for (double P : pressures) {
@@ -765,8 +743,7 @@ public class ReactiveFlashBenchmarkTest {
 
       // At high pressure, total moles should decrease (reaction favors fewer moles)
       if (P > 10.0) {
-        assertTrue(Ntot < 1.0,
-            "Total moles should decrease due to Δν=-2. At P=" + P + " N=" + Ntot);
+	assertTrue(Ntot < 1.0, "Total moles should decrease due to Δν=-2. At P=" + P + " N=" + Ntot);
       }
     }
 
@@ -778,8 +755,8 @@ public class ReactiveFlashBenchmarkTest {
    * Test that total Gibbs energy decreases monotonically during iteration.
    *
    * <p>
-   * For the WGS system, verify that the final equilibrium Gibbs energy is lower than the initial
-   * non-equilibrium state, confirming the solver moves toward the minimum.
+   * For the WGS system, verify that the final equilibrium Gibbs energy is lower than the initial non-equilibrium state,
+   * confirming the solver moves toward the minimum.
    * </p>
    */
   @Test
@@ -828,8 +805,8 @@ public class ReactiveFlashBenchmarkTest {
    * Test convergence speed by checking iteration count on standard systems.
    *
    * <p>
-   * The RAND method should converge in fewer than 100 iterations for well-posed single-phase
-   * chemical equilibrium problems. This tests the efficiency of the Eriksson RAND iteration.
+   * The RAND method should converge in fewer than 100 iterations for well-posed single-phase chemical equilibrium
+   * problems. This tests the efficiency of the Eriksson RAND iteration.
    * </p>
    */
   @Test
@@ -851,16 +828,15 @@ public class ReactiveFlashBenchmarkTest {
 
     assertTrue(flash.isConverged(), "WGS should converge");
     assertTrue(flash.getTotalIterations() < 200,
-        "RAND should converge quickly. Iterations: " + flash.getTotalIterations());
+	"RAND should converge quickly. Iterations: " + flash.getTotalIterations());
   }
 
   /**
    * Test equilibrium constant consistency between forward and reverse compositions.
    *
    * <p>
-   * For CO + H2O = CO2 + H2 at 800 K, starting from either pure reactants or pure products with the
-   * same element balance should give the same Kx. verifies the solver reaches the true Gibbs
-   * minimum regardless of starting point.
+   * For CO + H2O = CO2 + H2 at 800 K, starting from either pure reactants or pure products with the same element
+   * balance should give the same Kx. verifies the solver reaches the true Gibbs minimum regardless of starting point.
    * </p>
    */
   @Test
@@ -921,14 +897,13 @@ public class ReactiveFlashBenchmarkTest {
    * Test methane steam reforming system at multiple temperatures.
    *
    * <p>
-   * CH4 + H2O = CO + 3H2 is strongly endothermic (Delta_H = +206 kJ/mol). Higher temperature should
-   * increase methane conversion. This tests the temperature response of a 5-component, 3-element
-   * system with 2 independent reactions.
+   * CH4 + H2O = CO + 3H2 is strongly endothermic (Delta_H = +206 kJ/mol). Higher temperature should increase methane
+   * conversion. This tests the temperature response of a 5-component, 3-element system with 2 independent reactions.
    * </p>
    */
   @Test
   void testSMRTemperatureSensitivity() {
-    double[] tempK = {700.0, 900.0, 1100.0};
+    double[] tempK = { 700.0, 900.0, 1100.0 };
     double prevXCH4 = 1.0; // Start with max
 
     for (double T : tempK) {
@@ -952,8 +927,7 @@ public class ReactiveFlashBenchmarkTest {
       double xCH4 = system.getPhase(0).getComponent("methane").getx();
 
       // SMR is endothermic: higher T -> less methane
-      assertTrue(xCH4 <= prevXCH4 + 0.01,
-          "xCH4 should decrease with T. At T=" + T + " xCH4=" + xCH4);
+      assertTrue(xCH4 <= prevXCH4 + 0.01, "xCH4 should decrease with T. At T=" + T + " xCH4=" + xCH4);
       prevXCH4 = xCH4;
     }
 
@@ -962,13 +936,11 @@ public class ReactiveFlashBenchmarkTest {
   }
 
   /**
-   * Quantitative self-consistency test: verify solver Kp matches Kp computed from database
-   * thermochemistry.
+   * Quantitative self-consistency test: verify solver Kp matches Kp computed from database thermochemistry.
    *
    * <p>
-   * For WGS: CO + H2O = CO2 + H2, compute ΔG_rxn(T) from ΔHf(298), S0(298), and Cp polynomial
-   * coefficients. Then compute Kp_expected = exp(-ΔG_rxn/(RT)). Compare to Kp from solver
-   * equilibrium compositions.
+   * For WGS: CO + H2O = CO2 + H2, compute ΔG_rxn(T) from ΔHf(298), S0(298), and Cp polynomial coefficients. Then
+   * compute Kp_expected = exp(-ΔG_rxn/(RT)). Compare to Kp from solver equilibrium compositions.
    * </p>
    *
    * <p>
@@ -987,39 +959,39 @@ public class ReactiveFlashBenchmarkTest {
     // H2: dHf=0, S0=130.7, CpA=23.969262, CpB=0.030603834,
     // CpC=-6.4184e-5, CpD=5.7e-8, CpE=-1.770882e-11
 
-    double[] dHf = {-110525.0, -241818.0, -393509.0, 0.0};
-    double[] S0 = {197.7, 188.8, 213.8, 130.7};
-    double[][] cpCoeffs = {{32.524368, -0.032532682, 9.8271e-5, -1.08e-7, 4.28171e-11},
-        {36.54003, -0.034802404, 1.16811e-4, -1.3e-7, 5.254448e-11},
-        {18.583021, 0.082379635, -7.93039e-5, 4.22218e-8, -9.5771e-12},
-        {23.969262, 0.030603834, -6.4184e-5, 5.7e-8, -1.770882e-11}};
+    double[] dHf = { -110525.0, -241818.0, -393509.0, 0.0 };
+    double[] S0 = { 197.7, 188.8, 213.8, 130.7 };
+    double[][] cpCoeffs = { { 32.524368, -0.032532682, 9.8271e-5, -1.08e-7, 4.28171e-11 },
+	{ 36.54003, -0.034802404, 1.16811e-4, -1.3e-7, 5.254448e-11 },
+	{ 18.583021, 0.082379635, -7.93039e-5, 4.22218e-8, -9.5771e-12 },
+	{ 23.969262, 0.030603834, -6.4184e-5, 5.7e-8, -1.770882e-11 } };
     // stoichiometry: CO(-1) + H2O(-1) + CO2(+1) + H2(+1)
-    double[] nu = {-1.0, -1.0, 1.0, 1.0};
+    double[] nu = { -1.0, -1.0, 1.0, 1.0 };
 
     double T0 = 298.15;
     double R = 8.314462;
-    double[] temperatures = {600.0, 800.0, 1000.0, 1200.0};
+    double[] temperatures = { 600.0, 800.0, 1000.0, 1200.0 };
 
     for (double T : temperatures) {
       // Compute ΔG_rxn(T)
       double dGrxn = 0.0;
       for (int i = 0; i < 4; i++) {
-        double dT = T - T0;
-        double dT2 = T * T - T0 * T0;
-        double dT3 = T * T * T - T0 * T0 * T0;
-        double dT4 = T * T * T * T - T0 * T0 * T0 * T0;
-        double dT5 = T * T * T * T * T - T0 * T0 * T0 * T0 * T0;
-        double lnTr = Math.log(T / T0);
+	double dT = T - T0;
+	double dT2 = T * T - T0 * T0;
+	double dT3 = T * T * T - T0 * T0 * T0;
+	double dT4 = T * T * T * T - T0 * T0 * T0 * T0;
+	double dT5 = T * T * T * T * T - T0 * T0 * T0 * T0 * T0;
+	double lnTr = Math.log(T / T0);
 
-        double deltaH = cpCoeffs[i][0] * dT + cpCoeffs[i][1] / 2.0 * dT2
-            + cpCoeffs[i][2] / 3.0 * dT3 + cpCoeffs[i][3] / 4.0 * dT4 + cpCoeffs[i][4] / 5.0 * dT5;
-        double deltaS = cpCoeffs[i][0] * lnTr + cpCoeffs[i][1] * dT + cpCoeffs[i][2] / 2.0 * dT2
-            + cpCoeffs[i][3] / 3.0 * dT3 + cpCoeffs[i][4] / 4.0 * dT4;
+	double deltaH = cpCoeffs[i][0] * dT + cpCoeffs[i][1] / 2.0 * dT2 + cpCoeffs[i][2] / 3.0 * dT3
+	    + cpCoeffs[i][3] / 4.0 * dT4 + cpCoeffs[i][4] / 5.0 * dT5;
+	double deltaS = cpCoeffs[i][0] * lnTr + cpCoeffs[i][1] * dT + cpCoeffs[i][2] / 2.0 * dT2
+	    + cpCoeffs[i][3] / 3.0 * dT3 + cpCoeffs[i][4] / 4.0 * dT4;
 
-        double hT = dHf[i] + deltaH;
-        double sT = S0[i] + deltaS;
-        double gT = hT - T * sT;
-        dGrxn += nu[i] * gT;
+	double hT = dHf[i] + deltaH;
+	double sT = S0[i] + deltaS;
+	double gT = hT - T * sT;
+	dGrxn += nu[i] * gT;
       }
 
       double lnKpExpected = -dGrxn / (R * T);
@@ -1061,8 +1033,8 @@ public class ReactiveFlashBenchmarkTest {
       // At 1 bar, fugacity coefficients should be close to 1
       // Allow 20% tolerance to account for EOS non-ideality correction
       double relError = Math.abs(KpSolver - KpExpected) / Math.max(KpExpected, 1.0e-10);
-      assertTrue(relError < 0.30, "WGS Kp self-consistency at T=" + T + ": solver=" + KpSolver
-          + " expected=" + KpExpected + " relError=" + relError);
+      assertTrue(relError < 0.30, "WGS Kp self-consistency at T=" + T + ": solver=" + KpSolver + " expected="
+	  + KpExpected + " relError=" + relError);
     }
   }
 
@@ -1070,9 +1042,9 @@ public class ReactiveFlashBenchmarkTest {
    * Quantitative comparison against NIST-JANAF reference Kp for WGS.
    *
    * <p>
-   * NIST-JANAF Thermochemical Tables (Chase, 1998) provide log10(Kf) values for individual species.
-   * For WGS: CO + H2O(g) = CO2 + H2, the reaction Kp is computed from the species formation Kf
-   * values. Reference values at selected temperatures verify our thermochemical database accuracy.
+   * NIST-JANAF Thermochemical Tables (Chase, 1998) provide log10(Kf) values for individual species. For WGS: CO +
+   * H2O(g) = CO2 + H2, the reaction Kp is computed from the species formation Kf values. Reference values at selected
+   * temperatures verify our thermochemical database accuracy.
    * </p>
    *
    * <p>
@@ -1097,8 +1069,8 @@ public class ReactiveFlashBenchmarkTest {
     // T=800K: 25.025 + 0 - 10.620 - 14.118 = 0.287 -> Kp = 1.94
     // T=1000K: 20.143 + 0 - 9.289 - 11.329 = -0.475 -> Kp = 0.335
     // T=1200K: 17.019 + 0 - 8.509 - 9.740 = -1.230 -> Kp = 0.0589
-    double[] testTempK = {600.0, 800.0, 1000.0, 1200.0};
-    double[] nistLog10Kp = {1.244, 0.287, -0.475, -1.230};
+    double[] testTempK = { 600.0, 800.0, 1000.0, 1200.0 };
+    double[] nistLog10Kp = { 1.244, 0.287, -0.475, -1.230 };
 
     for (int idx = 0; idx < testTempK.length; idx++) {
       double T = testTempK[idx];
@@ -1131,8 +1103,8 @@ public class ReactiveFlashBenchmarkTest {
       // Allow 1.5 log10 units tolerance for database Cp polynomial accuracy
       // (The Cp polynomial approximation introduces some error vs exact NIST tables)
       double error = Math.abs(log10Kx - nistLog10Kp[idx]);
-      assertTrue(error < 1.5, "WGS at T=" + T + "K: log10(Kx)=" + log10Kx + " NIST log10(Kp)="
-          + nistLog10Kp[idx] + " error=" + error);
+      assertTrue(error < 1.5,
+	  "WGS at T=" + T + "K: log10(Kx)=" + log10Kx + " NIST log10(Kp)=" + nistLog10Kp[idx] + " error=" + error);
     }
   }
 
@@ -1159,8 +1131,8 @@ public class ReactiveFlashBenchmarkTest {
     // N2 + 3H2 = 2NH3, delta_nu = -2
     // Kp = (xNH3^2) / (xN2 * xH2^3) * (P/Pref)^delta_nu = Kx * P^(-2)
     // At P=1 bar: Kp = Kx
-    double[] testTempK = {500.0, 700.0, 1000.0};
-    double[] nistLog10Kp = {0.72, -2.50, -4.81};
+    double[] testTempK = { 500.0, 700.0, 1000.0 };
+    double[] nistLog10Kp = { 0.72, -2.50, -4.81 };
 
     for (int idx = 0; idx < testTempK.length; idx++) {
       double T = testTempK[idx];
@@ -1189,8 +1161,8 @@ public class ReactiveFlashBenchmarkTest {
 
       // Allow 2.0 log10 units tolerance for database Cp accuracy
       double error = Math.abs(log10Kx - nistLog10Kp[idx]);
-      assertTrue(error < 2.0, "NH3 at T=" + T + "K: log10(Kx)=" + log10Kx + " NIST log10(Kp)="
-          + nistLog10Kp[idx] + " error=" + error);
+      assertTrue(error < 2.0,
+	  "NH3 at T=" + T + "K: log10(Kx)=" + log10Kx + " NIST log10(Kp)=" + nistLog10Kp[idx] + " error=" + error);
     }
   }
 
@@ -1198,8 +1170,8 @@ public class ReactiveFlashBenchmarkTest {
    * Test multi-phase reactive flash with immiscible liquids.
    *
    * <p>
-   * At low temperature and high pressure, the WGS system may form a water-rich liquid phase. The
-   * solver should handle simultaneous CE + VLE (vapor-liquid equilibrium with reactions).
+   * At low temperature and high pressure, the WGS system may form a water-rich liquid phase. The solver should handle
+   * simultaneous CE + VLE (vapor-liquid equilibrium with reactions).
    * </p>
    */
   @Test
@@ -1231,9 +1203,9 @@ public class ReactiveFlashBenchmarkTest {
    * Test methane partial oxidation equilibrium at multiple O2/CH4 ratios.
    *
    * <p>
-   * CH4 + 0.5*O2 = CO + 2H2 (partial oxidation) competes with CH4 + 2O2 = CO2 + 2H2O (complete
-   * combustion). At high temperature and substoichiometric O2, partial oxidation products (CO, H2)
-   * should dominate. This tests a practical industrial reactor system.
+   * CH4 + 0.5*O2 = CO + 2H2 (partial oxidation) competes with CH4 + 2O2 = CO2 + 2H2O (complete combustion). At high
+   * temperature and substoichiometric O2, partial oxidation products (CO, H2) should dominate. This tests a practical
+   * industrial reactor system.
    * </p>
    */
   @Test
@@ -1276,8 +1248,8 @@ public class ReactiveFlashBenchmarkTest {
    * Test that DIIS acceleration produces the same equilibrium as the base solver.
    *
    * <p>
-   * Runs the WGS system with and without DIIS and verifies that equilibrium compositions agree
-   * within tight tolerance. Also verifies DIIS does not increase iteration count significantly.
+   * Runs the WGS system with and without DIIS and verifies that equilibrium compositions agree within tight tolerance.
+   * Also verifies DIIS does not increase iteration count significantly.
    * </p>
    */
   @Test
@@ -1323,22 +1295,19 @@ public class ReactiveFlashBenchmarkTest {
     double xH2_DIIS = sys2.getPhase(0).getComponent("hydrogen").getx();
 
     // Equilibrium should be the same (DIIS doesn't change the fixed point)
-    assertEquals(xCO2_noDIIS, xCO2_DIIS, 0.01,
-        "CO2 should match: noDIIS=" + xCO2_noDIIS + " DIIS=" + xCO2_DIIS);
-    assertEquals(xH2_noDIIS, xH2_DIIS, 0.01,
-        "H2 should match: noDIIS=" + xH2_noDIIS + " DIIS=" + xH2_DIIS);
+    assertEquals(xCO2_noDIIS, xCO2_DIIS, 0.01, "CO2 should match: noDIIS=" + xCO2_noDIIS + " DIIS=" + xCO2_DIIS);
+    assertEquals(xH2_noDIIS, xH2_DIIS, 0.01, "H2 should match: noDIIS=" + xH2_noDIIS + " DIIS=" + xH2_DIIS);
 
     // DIIS should not increase iterations significantly
-    assertTrue(itersDIIS <= itersNoDIIS + 10, "DIIS should not dramatically increase iters. noDIIS="
-        + itersNoDIIS + " DIIS=" + itersDIIS);
+    assertTrue(itersDIIS <= itersNoDIIS + 10,
+	"DIIS should not dramatically increase iters. noDIIS=" + itersNoDIIS + " DIIS=" + itersDIIS);
   }
 
   /**
    * Test DIIS on a 6-component difficult system with 3 independent reactions.
    *
    * <p>
-   * Verifies DIIS converges and produces reasonable results for a complex combustion/reforming
-   * system.
+   * Verifies DIIS converges and produces reasonable results for a complex combustion/reforming system.
    * </p>
    */
   @Test
@@ -1362,7 +1331,7 @@ public class ReactiveFlashBenchmarkTest {
 
     assertTrue(flash.isConverged(), "DIIS should converge for 6-component system");
     assertTrue(flash.getTotalIterations() < 300,
-        "Should converge in reasonable iterations. Got: " + flash.getTotalIterations());
+	"Should converge in reasonable iterations. Got: " + flash.getTotalIterations());
 
     // Verify DIIS was actually used
     assertTrue(flash.getDiisStepsAccepted() >= 0, "DIIS steps accepted should be reported");
@@ -1372,8 +1341,8 @@ public class ReactiveFlashBenchmarkTest {
    * Test DIIS on ammonia synthesis at high pressure.
    *
    * <p>
-   * The ammonia system with delta-nu = -2 is a challenging case because total moles change
-   * significantly. Verifies DIIS handles this correctly.
+   * The ammonia system with delta-nu = -2 is a challenging case because total moles change significantly. Verifies DIIS
+   * handles this correctly.
    * </p>
    */
   @Test
@@ -1411,8 +1380,7 @@ public class ReactiveFlashBenchmarkTest {
     double xNH3_DIIS = sys2.getPhase(0).getComponent("ammonia").getx();
 
     // Same equilibrium
-    assertEquals(xNH3_noDIIS, xNH3_DIIS, 0.02,
-        "NH3 should match: noDIIS=" + xNH3_noDIIS + " DIIS=" + xNH3_DIIS);
+    assertEquals(xNH3_noDIIS, xNH3_DIIS, 0.02, "NH3 should match: noDIIS=" + xNH3_noDIIS + " DIIS=" + xNH3_DIIS);
   }
 
   // ======================================================================
@@ -1423,8 +1391,8 @@ public class ReactiveFlashBenchmarkTest {
    * Test FormulaMatrix charge balance row for ionic species.
    *
    * <p>
-   * Verifies that when a system contains ionic species (Na+, Cl-), the FormulaMatrix automatically
-   * adds a "Charge" row enforcing electroneutrality: sum_i(n_i * z_i) = 0.
+   * Verifies that when a system contains ionic species (Na+, Cl-), the FormulaMatrix automatically adds a "Charge" row
+   * enforcing electroneutrality: sum_i(n_i * z_i) = 0.
    * </p>
    */
   @Test
@@ -1443,8 +1411,7 @@ public class ReactiveFlashBenchmarkTest {
 
     // Check that the last element is "Charge"
     String[] elems = fm.getElementNames();
-    assertEquals("Charge", elems[elems.length - 1],
-        "Last element should be 'Charge' for electroneutrality");
+    assertEquals("Charge", elems[elems.length - 1], "Last element should be 'Charge' for electroneutrality");
 
     // Check the charge row has correct values
     double[][] A = fm.getMatrix();
@@ -1457,13 +1424,13 @@ public class ReactiveFlashBenchmarkTest {
     int waterIdx = -1;
     for (int i = 0; i < compNames.length; i++) {
       if ("Na+".equals(compNames[i])) {
-        naIdx = i;
+	naIdx = i;
       }
       if ("Cl-".equals(compNames[i])) {
-        clIdx = i;
+	clIdx = i;
       }
       if ("water".equals(compNames[i])) {
-        waterIdx = i;
+	waterIdx = i;
       }
     }
 
@@ -1505,8 +1472,8 @@ public class ReactiveFlashBenchmarkTest {
    * Test RAND solver with simple Na+/Cl- in water (no reactions, only electroneutrality).
    *
    * <p>
-   * Na+ and Cl- are spectator ions in pure water — they should remain conserved with zero net
-   * charge. The reactive flash should converge and preserve the initial charge balance.
+   * Na+ and Cl- are spectator ions in pure water — they should remain conserved with zero net charge. The reactive
+   * flash should converge and preserve the initial charge balance.
    * </p>
    */
   @Test
@@ -1523,16 +1490,15 @@ public class ReactiveFlashBenchmarkTest {
     system.init(1);
 
     FormulaMatrix fm = new FormulaMatrix(system);
-    logger.info("DEBUG NaCl: NE=" + fm.getNumberOfElements() + " NC=" + fm.getNumberOfComponents()
-        + " rank=" + fm.getRank() + " NR=" + fm.getNumberOfIndependentReactions() + " hasIons="
-        + fm.hasIonicSpecies());
+    logger.info("DEBUG NaCl: NE=" + fm.getNumberOfElements() + " NC=" + fm.getNumberOfComponents() + " rank="
+	+ fm.getRank() + " NR=" + fm.getNumberOfIndependentReactions() + " hasIons=" + fm.hasIonicSpecies());
     logger.info("DEBUG NaCl: elements=" + java.util.Arrays.toString(fm.getElementNames()));
     logger.info("DEBUG NaCl: numPhases=" + system.getNumberOfPhases());
 
     ReactiveMultiphaseTPflash flash = new ReactiveMultiphaseTPflash(system);
     flash.run();
-    logger.info("DEBUG NaCl: converged=" + flash.isConverged() + " NR="
-        + flash.getNumberOfReactions() + " iters=" + flash.getTotalIterations());
+    logger.info("DEBUG NaCl: converged=" + flash.isConverged() + " NR=" + flash.getNumberOfReactions() + " iters="
+	+ flash.getTotalIterations());
 
     // Should converge (ions are conserved, no reactions needed)
     assertTrue(flash.isConverged(), "Na+/Cl-/water should converge");
@@ -1552,9 +1518,9 @@ public class ReactiveFlashBenchmarkTest {
    * Test RAND solver with CO2 + water system and ions (chemicalReactionInit simulation).
    *
    * <p>
-   * Manually adds the ionic products of CO2 hydration to test that the reactive flash can handle a
-   * molecular/ionic mixture: CO2 + 2H2O = HCO3- + H3O+, 2H2O = OH- + H3O+. The Gibbs minimization
-   * should produce physically reasonable ionic concentrations.
+   * Manually adds the ionic products of CO2 hydration to test that the reactive flash can handle a molecular/ionic
+   * mixture: CO2 + 2H2O = HCO3- + H3O+, 2H2O = OH- + H3O+. The Gibbs minimization should produce physically reasonable
+   * ionic concentrations.
    * </p>
    */
   @Test
@@ -1611,9 +1577,8 @@ public class ReactiveFlashBenchmarkTest {
    * Test that FormulaMatrix element vector preserves electroneutrality.
    *
    * <p>
-   * For a feed with equal moles of Na+ and Cl-, the charge element of the b vector should be zero.
-   * This is the fundamental constraint that ensures the RAND solver maintains electroneutrality
-   * throughout the iteration.
+   * For a feed with equal moles of Na+ and Cl-, the charge element of the b vector should be zero. This is the
+   * fundamental constraint that ensures the RAND solver maintains electroneutrality throughout the iteration.
    * </p>
    */
   @Test
@@ -1636,16 +1601,15 @@ public class ReactiveFlashBenchmarkTest {
     // The charge element (last) should be ~0 for electroneutral feed
     int chargeIdx = fm.getNumberOfElements() - 1;
     assertEquals("Charge", fm.getElementNames()[chargeIdx]);
-    assertEquals(0.0, bVec[chargeIdx], 1e-10,
-        "Charge balance in feed should be zero for equal Na+/Cl-");
+    assertEquals(0.0, bVec[chargeIdx], 1e-10, "Charge balance in feed should be zero for equal Na+/Cl-");
   }
 
   /**
    * Test that mixed-charge system (Ca++ with 2 Cl-) preserves neutrality.
    *
    * <p>
-   * Verifies that the formula matrix correctly handles divalent ions: Ca++ (charge +2) balanced by
-   * two Cl- (charge -1 each).
+   * Verifies that the formula matrix correctly handles divalent ions: Ca++ (charge +2) balanced by two Cl- (charge -1
+   * each).
    * </p>
    */
   @Test
@@ -1673,16 +1637,15 @@ public class ReactiveFlashBenchmarkTest {
     double chargeTotal = bVec[chargeIdx];
     // Ca++ contributes +2*0.0333 = 0.0666, Cl- contributes -1*0.0667 = -0.0667
     // Net ≈ -0.0001 (small rounding from the chosen mole fractions)
-    assertTrue(Math.abs(chargeTotal) < 0.01,
-        "Charge balance for CaCl2 system should be near zero: " + chargeTotal);
+    assertTrue(Math.abs(chargeTotal) < 0.01, "Charge balance for CaCl2 system should be near zero: " + chargeTotal);
   }
 
   /**
    * Test electrolyte EOS detection in RAND solver.
    *
    * <p>
-   * Verifies that the solver correctly detects when the system uses an electrolyte EOS
-   * (Born/MSA/SR2/CPA) versus a plain SRK EOS, and applies the appropriate g0 computation.
+   * Verifies that the solver correctly detects when the system uses an electrolyte EOS (Born/MSA/SR2/CPA) versus a
+   * plain SRK EOS, and applies the appropriate g0 computation.
    * </p>
    */
   @Test
@@ -1718,8 +1681,8 @@ public class ReactiveFlashBenchmarkTest {
    * Test NaCl/water with electrolyte CPA EOS and chemicalReactionInit disabled.
    *
    * <p>
-   * NaCl/water has NR=0 (no independent reactions), so the RAND solver should detect this and
-   * return immediately, preserving the initial composition exactly. Na+ and Cl- are spectator ions.
+   * NaCl/water has NR=0 (no independent reactions), so the RAND solver should detect this and return immediately,
+   * preserving the initial composition exactly. Na+ and Cl- are spectator ions.
    * </p>
    */
   @Test
@@ -1758,9 +1721,8 @@ public class ReactiveFlashBenchmarkTest {
    * Test chemicalReactionInit integration with CO2/water system.
    *
    * <p>
-   * Verifies that the reactive flash can auto-discover ionic products from the reaction database
-   * when only molecular species (CO2, water) are provided. The chemicalReactionInit step should add
-   * HCO3-, H3O+, OH-, CO3-- automatically.
+   * Verifies that the reactive flash can auto-discover ionic products from the reaction database when only molecular
+   * species (CO2, water) are provided. The chemicalReactionInit step should add HCO3-, H3O+, OH-, CO3-- automatically.
    * </p>
    */
   @Test
@@ -1786,12 +1748,11 @@ public class ReactiveFlashBenchmarkTest {
     flash.run();
 
     int ncAfter = system.getPhase(0).getNumberOfComponents();
-    logger.info("chemicalReactionInit: before=" + ncBefore + " after=" + ncAfter + " converged="
-        + flash.isConverged() + " NR=" + flash.getNumberOfReactions());
+    logger.info("chemicalReactionInit: before=" + ncBefore + " after=" + ncAfter + " converged=" + flash.isConverged()
+	+ " NR=" + flash.getNumberOfReactions());
 
     // chemicalReactionInit should have added ionic species
-    assertTrue(ncAfter > ncBefore,
-        "chemicalReactionInit should add ionic species to CO2/water system");
+    assertTrue(ncAfter > ncBefore, "chemicalReactionInit should add ionic species to CO2/water system");
 
     // The flash should converge
     assertTrue(flash.isConverged(), "CO2/water flash should converge after chemicalReactionInit");
@@ -1812,11 +1773,10 @@ public class ReactiveFlashBenchmarkTest {
    * Test reactive flash with methane/CO2/n-heptane/water and ionic reactions.
    *
    * <p>
-   * This is a realistic multi-component, multi-phase system where CO2 dissolved in the aqueous
-   * phase undergoes hydration reactions producing HCO3-, H3O+, OH-, CO3--. The system should form a
-   * hydrocarbon-rich phase (methane, n-heptane) and an aqueous phase (water, dissolved CO2, ionic
-   * products). The reactive flash should converge, preserve charge balance, and maintain physically
-   * reasonable compositions.
+   * This is a realistic multi-component, multi-phase system where CO2 dissolved in the aqueous phase undergoes
+   * hydration reactions producing HCO3-, H3O+, OH-, CO3--. The system should form a hydrocarbon-rich phase (methane,
+   * n-heptane) and an aqueous phase (water, dissolved CO2, ionic products). The reactive flash should converge,
+   * preserve charge balance, and maintain physically reasonable compositions.
    * </p>
    */
   @Test
@@ -1841,8 +1801,7 @@ public class ReactiveFlashBenchmarkTest {
 
     int nc = system.getPhase(0).getNumberOfComponents();
     logger.info("=== Methane/CO2/nC7/Water reactive flash (VLE+CE) ===");
-    logger.info("NC=" + nc + " T=" + (system.getTemperature() - 273.15) + "C P="
-        + system.getPressure() + " bar");
+    logger.info("NC=" + nc + " T=" + (system.getTemperature() - 273.15) + "C P=" + system.getPressure() + " bar");
 
     // Step 1: Standard VLE flash to get proper 2-phase initial state
     // This separates gas (methane, n-heptane rich) from liquid (water, ions)
@@ -1854,16 +1813,15 @@ public class ReactiveFlashBenchmarkTest {
     // Step 2: Reactive flash for CE on top of the VLE result
     FormulaMatrix fm = new FormulaMatrix(system);
     int nReactions = fm.getNumberOfIndependentReactions();
-    logger.info("NE=" + fm.getNumberOfElements() + " rank=" + fm.getRank() + " NR=" + nReactions
-        + " hasIons=" + fm.hasIonicSpecies());
-    assertTrue(nReactions >= 2,
-        "Multi-component CO2/water/ions system should have >= 2 independent reactions");
+    logger.info("NE=" + fm.getNumberOfElements() + " rank=" + fm.getRank() + " NR=" + nReactions + " hasIons="
+	+ fm.hasIonicSpecies());
+    assertTrue(nReactions >= 2, "Multi-component CO2/water/ions system should have >= 2 independent reactions");
 
     ReactiveMultiphaseTPflash flash = new ReactiveMultiphaseTPflash(system);
     flash.run();
 
-    logger.info("converged=" + flash.isConverged() + " iterations=" + flash.getTotalIterations()
-        + " phases=" + system.getNumberOfPhases());
+    logger.info("converged=" + flash.isConverged() + " iterations=" + flash.getTotalIterations() + " phases="
+	+ system.getNumberOfPhases());
 
     assertTrue(flash.isConverged(), "Methane/CO2/nC7/water reactive flash should converge");
 
@@ -1872,7 +1830,7 @@ public class ReactiveFlashBenchmarkTest {
       String name = system.getPhase(0).getComponent(i).getComponentName();
       double xi = system.getPhase(0).getComponent(i).getx();
       if (xi > 1.0e-20) {
-        logger.printf(org.apache.logging.log4j.Level.INFO, "  %-12s  x=%.6e%n", name, xi);
+	logger.printf(org.apache.logging.log4j.Level.INFO, "  %-12s  x=%.6e%n", name, xi);
       }
     }
 
@@ -1890,9 +1848,9 @@ public class ReactiveFlashBenchmarkTest {
    * Test reactive flash with methane/CO2/n-heptane/water using chemicalReactionInit.
    *
    * <p>
-   * This test starts with only molecular species and uses chemicalReactionInit to auto-discover the
-   * ionic products of CO2/water reactions. Verifies that the full pipeline (auto-discovery + RAND
-   * solve) works for a realistic hydrocarbon/water system.
+   * This test starts with only molecular species and uses chemicalReactionInit to auto-discover the ionic products of
+   * CO2/water reactions. Verifies that the full pipeline (auto-discovery + RAND solve) works for a realistic
+   * hydrocarbon/water system.
    * </p>
    */
   @Test
@@ -1918,15 +1876,13 @@ public class ReactiveFlashBenchmarkTest {
     flash.run();
 
     int ncAfter = system.getPhase(0).getNumberOfComponents();
-    logger.info("NC after = " + ncAfter + " converged=" + flash.isConverged() + " NR="
-        + flash.getNumberOfReactions() + " iters=" + flash.getTotalIterations());
+    logger.info("NC after = " + ncAfter + " converged=" + flash.isConverged() + " NR=" + flash.getNumberOfReactions()
+	+ " iters=" + flash.getTotalIterations());
 
     // chemicalReactionInit should have added ionic species
-    assertTrue(ncAfter > ncBefore,
-        "chemicalReactionInit should add ionic species for CO2/water system");
+    assertTrue(ncAfter > ncBefore, "chemicalReactionInit should add ionic species for CO2/water system");
 
-    assertTrue(flash.isConverged(),
-        "Methane/CO2/nC7/water should converge with auto-discovered reactions");
+    assertTrue(flash.isConverged(), "Methane/CO2/nC7/water should converge with auto-discovered reactions");
 
     // Print all components and compositions
     for (int i = 0; i < ncAfter; i++) {

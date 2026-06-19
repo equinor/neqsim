@@ -12,10 +12,10 @@ import com.google.gson.GsonBuilder;
  * The inlet device is the first separation stage in a separator. It performs two functions:
  * </p>
  * <ol>
- * <li><b>Bulk liquid separation</b> — removes the liquid film and large droplets from the incoming
- * two-phase mixture.</li>
- * <li><b>DSD transformation</b> — changes the downstream droplet size distribution through
- * coalescence (beneficial) and/or re-atomization (detrimental).</li>
+ * <li><b>Bulk liquid separation</b> — removes the liquid film and large droplets from the incoming two-phase
+ * mixture.</li>
+ * <li><b>DSD transformation</b> — changes the downstream droplet size distribution through coalescence (beneficial)
+ * and/or re-atomization (detrimental).</li>
  * </ol>
  *
  * <p>
@@ -79,16 +79,14 @@ import com.google.gson.GsonBuilder;
  * <b>References:</b>
  * </p>
  * <ul>
- * <li>Arnold, K., Stewart, M. (2008), <i>Surface Production Operations</i>, Vol. 1, 3rd ed., Gulf
- * Professional Publishing.</li>
- * <li>Verlaan, C.C.J. (2001), "Performance of novel mist eliminators", PhD Thesis, Delft University
- * of Technology.</li>
- * <li>Grevelink, J.G.H. (2007), "Inlet devices for separation equipment", <i>Shell Global
- * Solutions</i> (public conference paper).</li>
- * <li>Hoffmann, A.C., Stein, L.E. (2008), <i>Gas Cyclones and Swirl Tubes</i>, 2nd ed.,
- * Springer.</li>
- * <li>Bothamley, M. (2013), "Gas/Liquid Separators: Quantifying Separation Performance", <i>Oil and
- * Gas Facilities</i>, SPE 0813-0034-OGF (Part 1-3).</li>
+ * <li>Arnold, K., Stewart, M. (2008), <i>Surface Production Operations</i>, Vol. 1, 3rd ed., Gulf Professional
+ * Publishing.</li>
+ * <li>Verlaan, C.C.J. (2001), "Performance of novel mist eliminators", PhD Thesis, Delft University of Technology.</li>
+ * <li>Grevelink, J.G.H. (2007), "Inlet devices for separation equipment", <i>Shell Global Solutions</i> (public
+ * conference paper).</li>
+ * <li>Hoffmann, A.C., Stein, L.E. (2008), <i>Gas Cyclones and Swirl Tubes</i>, 2nd ed., Springer.</li>
+ * <li>Bothamley, M. (2013), "Gas/Liquid Separators: Quantifying Separation Performance", <i>Oil and Gas Facilities</i>,
+ * SPE 0813-0034-OGF (Part 1-3).</li>
  * </ul>
  *
  * @author NeqSim team
@@ -123,7 +121,7 @@ public class InletDeviceModel implements Serializable {
     private final double pressureDropCoefficient;
 
     InletDeviceType(String displayName, double typicalBulkEfficiency, double dsdMultiplier,
-        double pressureDropCoefficient) {
+	double pressureDropCoefficient) {
       this.displayName = displayName;
       this.typicalBulkEfficiency = typicalBulkEfficiency;
       this.dsdMultiplier = dsdMultiplier;
@@ -149,8 +147,8 @@ public class InletDeviceModel implements Serializable {
     }
 
     /**
-     * Gets the DSD size multiplier (downstream d_50 = multiplier * upstream d_50). Values less than
-     * 1 indicate coalescence (beneficial), greater than 1 indicates re-atomization (detrimental).
+     * Gets the DSD size multiplier (downstream d_50 = multiplier * upstream d_50). Values less than 1 indicate
+     * coalescence (beneficial), greater than 1 indicates re-atomization (detrimental).
      *
      * @return DSD multiplier
      */
@@ -209,20 +207,19 @@ public class InletDeviceModel implements Serializable {
    * <ol>
    * <li>Computes the nozzle velocity and momentum flux from the inlet pipe flow.</li>
    * <li>Determines bulk liquid separation efficiency based on device type and momentum.</li>
-   * <li>Transforms the incoming DSD based on the device's coalescence/re-atomization
-   * behaviour.</li>
+   * <li>Transforms the incoming DSD based on the device's coalescence/re-atomization behaviour.</li>
    * <li>Calculates pressure drop across the device.</li>
    * </ol>
    *
-   * @param incomingDSD droplet size distribution from inlet pipe flow
-   * @param gasDensity gas density [kg/m3]
-   * @param liquidDensity liquid density [kg/m3]
-   * @param gasVolumeFlow gas volume flow rate [m3/s] at actual conditions
+   * @param incomingDSD      droplet size distribution from inlet pipe flow
+   * @param gasDensity       gas density [kg/m3]
+   * @param liquidDensity    liquid density [kg/m3]
+   * @param gasVolumeFlow    gas volume flow rate [m3/s] at actual conditions
    * @param liquidVolumeFlow liquid volume flow rate [m3/s] at actual conditions
-   * @param surfaceTension gas-liquid surface tension [N/m]
+   * @param surfaceTension   gas-liquid surface tension [N/m]
    */
-  public void calculate(DropletSizeDistribution incomingDSD, double gasDensity,
-      double liquidDensity, double gasVolumeFlow, double liquidVolumeFlow, double surfaceTension) {
+  public void calculate(DropletSizeDistribution incomingDSD, double gasDensity, double liquidDensity,
+      double gasVolumeFlow, double liquidVolumeFlow, double surfaceTension) {
 
     // Nozzle area
     double nozzleArea = Math.PI * inletNozzleDiameter * inletNozzleDiameter / 4.0;
@@ -241,8 +238,7 @@ public class InletDeviceModel implements Serializable {
     bulkSeparationEfficiency = calcBulkEfficiency(momentumFlux);
 
     // Pressure drop
-    pressureDrop = deviceType.getPressureDropCoefficient() * 0.5 * mixDensity * nozzleVelocity
-        * nozzleVelocity;
+    pressureDrop = deviceType.getPressureDropCoefficient() * 0.5 * mixDensity * nozzleVelocity * nozzleVelocity;
 
     // Transform DSD
     downstreamDSD = transformDSD(incomingDSD, surfaceTension);
@@ -260,8 +256,7 @@ public class InletDeviceModel implements Serializable {
    * </ul>
    *
    * <p>
-   * Most inlet devices have an optimal momentum range. The Bothamley (2013) recommended momentum
-   * ranges are:
+   * Most inlet devices have an optimal momentum range. The Bothamley (2013) recommended momentum ranges are:
    * </p>
    * <ul>
    * <li>Deflector plate: &lt; 1500 Pa (rho*v^2)</li>
@@ -284,26 +279,26 @@ public class InletDeviceModel implements Serializable {
     // Momentum limits for different devices (Bothamley, 2013)
     double maxMomentum;
     switch (deviceType) {
-      case DEFLECTOR_PLATE:
-        maxMomentum = 1500.0;
-        break;
-      case HALF_PIPE:
-        maxMomentum = 3500.0;
-        break;
-      case INLET_VANE:
-        maxMomentum = 6000.0;
-        break;
-      case INLET_CYCLONE:
-        maxMomentum = 15000.0;
-        break;
-      case SCHOEPENTOETER:
-        maxMomentum = 9000.0;
-        break;
-      case IMPINGEMENT_PLATE:
-        maxMomentum = 2000.0;
-        break;
-      default:
-        return 0.0;
+    case DEFLECTOR_PLATE:
+      maxMomentum = 1500.0;
+      break;
+    case HALF_PIPE:
+      maxMomentum = 3500.0;
+      break;
+    case INLET_VANE:
+      maxMomentum = 6000.0;
+      break;
+    case INLET_CYCLONE:
+      maxMomentum = 15000.0;
+      break;
+    case SCHOEPENTOETER:
+      maxMomentum = 9000.0;
+      break;
+    case IMPINGEMENT_PLATE:
+      maxMomentum = 2000.0;
+      break;
+    default:
+      return 0.0;
     }
 
     // Efficiency degrades above maximum recommended momentum
@@ -330,28 +325,26 @@ public class InletDeviceModel implements Serializable {
    * </p>
    * <ul>
    * <li><b>No device</b>: passes DSD unchanged.</li>
-   * <li><b>Deflector/Half-pipe</b>: removes largest droplets, moderate increase in d_50 through
-   * coalescence on the wall and redistribution.</li>
-   * <li><b>Inlet vane</b>: removes bulk liquid, coalesces small droplets, shifts DSD coarser
-   * (beneficial for downstream gravity).</li>
-   * <li><b>Inlet cyclone</b>: centrifugal separation, very effective at removing fine drops,
-   * significantly reduces DSD downstream.</li>
-   * <li><b>Schoepentoeter</b>: absorbs momentum, moderate coalescence, prevents re-entrainment from
-   * liquid surface.</li>
+   * <li><b>Deflector/Half-pipe</b>: removes largest droplets, moderate increase in d_50 through coalescence on the wall
+   * and redistribution.</li>
+   * <li><b>Inlet vane</b>: removes bulk liquid, coalesces small droplets, shifts DSD coarser (beneficial for downstream
+   * gravity).</li>
+   * <li><b>Inlet cyclone</b>: centrifugal separation, very effective at removing fine drops, significantly reduces DSD
+   * downstream.</li>
+   * <li><b>Schoepentoeter</b>: absorbs momentum, moderate coalescence, prevents re-entrainment from liquid
+   * surface.</li>
    * </ul>
    *
-   * @param incomingDSD upstream DSD from pipe flow
+   * @param incomingDSD    upstream DSD from pipe flow
    * @param surfaceTension used for re-atomization estimate [N/m]
    * @return transformed downstream DSD
    */
-  private DropletSizeDistribution transformDSD(DropletSizeDistribution incomingDSD,
-      double surfaceTension) {
+  private DropletSizeDistribution transformDSD(DropletSizeDistribution incomingDSD, double surfaceTension) {
     if (incomingDSD == null || deviceType == InletDeviceType.NONE) {
       return incomingDSD;
     }
 
-    double multiplier =
-        (overrideDsdMultiplier > 0) ? overrideDsdMultiplier : deviceType.getDsdMultiplier();
+    double multiplier = (overrideDsdMultiplier > 0) ? overrideDsdMultiplier : deviceType.getDsdMultiplier();
 
     // Create new DSD with modified characteristic diameter
     double newD = incomingDSD.getCharacteristicDiameter() * multiplier;
@@ -368,8 +361,8 @@ public class InletDeviceModel implements Serializable {
     // Half-pipe and deflector can re-entrain, producing broader DSD
     if (deviceType == InletDeviceType.HALF_PIPE || deviceType == InletDeviceType.DEFLECTOR_PLATE) {
       if (momentumFlux > 3000) {
-        // High momentum re-atomization
-        newSpread = Math.max(newSpread * 0.8, 1.5); // Broader distribution
+	// High momentum re-atomization
+	newSpread = Math.max(newSpread * 0.8, 1.5); // Broader distribution
       }
     }
 
@@ -397,8 +390,7 @@ public class InletDeviceModel implements Serializable {
       result.put("downstreamDSD_d50_um", downstreamDSD.getD50() * 1e6);
       result.put("downstreamDSD_type", downstreamDSD.getType().name());
     }
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(result);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(result);
   }
 
   // ----- Getters and Setters -----

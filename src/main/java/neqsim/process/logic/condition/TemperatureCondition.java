@@ -34,11 +34,10 @@ public class TemperatureCondition implements LogicCondition {
    * Creates a temperature condition with default tolerance (1.0°C).
    *
    * @param equipment equipment with stream to check
-   * @param setpoint temperature setpoint in °C
-   * @param operator comparison operator (&gt;, &gt;=, &lt;, &lt;=, ==, !=)
+   * @param setpoint  temperature setpoint in °C
+   * @param operator  comparison operator (&gt;, &gt;=, &lt;, &lt;=, ==, !=)
    */
-  public TemperatureCondition(ProcessEquipmentInterface equipment, double setpoint,
-      String operator) {
+  public TemperatureCondition(ProcessEquipmentInterface equipment, double setpoint, String operator) {
     this(equipment, setpoint, operator, 1.0);
   }
 
@@ -46,12 +45,11 @@ public class TemperatureCondition implements LogicCondition {
    * Creates a temperature condition with specified tolerance.
    *
    * @param equipment equipment with stream to check
-   * @param setpoint temperature setpoint in °C
-   * @param operator comparison operator (&gt;, &gt;=, &lt;, &lt;=, ==, !=)
+   * @param setpoint  temperature setpoint in °C
+   * @param operator  comparison operator (&gt;, &gt;=, &lt;, &lt;=, ==, !=)
    * @param tolerance tolerance for equality checks (°C)
    */
-  public TemperatureCondition(ProcessEquipmentInterface equipment, double setpoint, String operator,
-      double tolerance) {
+  public TemperatureCondition(ProcessEquipmentInterface equipment, double setpoint, String operator, double tolerance) {
     this.equipment = equipment;
     this.setpoint = setpoint;
     this.operator = operator;
@@ -66,20 +64,20 @@ public class TemperatureCondition implements LogicCondition {
     }
 
     switch (operator) {
-      case ">":
-        return temperature > setpoint;
-      case ">=":
-        return temperature >= setpoint;
-      case "<":
-        return temperature < setpoint;
-      case "<=":
-        return temperature <= setpoint;
-      case "==":
-        return Math.abs(temperature - setpoint) <= tolerance;
-      case "!=":
-        return Math.abs(temperature - setpoint) > tolerance;
-      default:
-        throw new IllegalArgumentException("Unknown operator: " + operator);
+    case ">":
+      return temperature > setpoint;
+    case ">=":
+      return temperature >= setpoint;
+    case "<":
+      return temperature < setpoint;
+    case "<=":
+      return temperature <= setpoint;
+    case "==":
+      return Math.abs(temperature - setpoint) <= tolerance;
+    case "!=":
+      return Math.abs(temperature - setpoint) > tolerance;
+    default:
+      throw new IllegalArgumentException("Unknown operator: " + operator);
     }
   }
 

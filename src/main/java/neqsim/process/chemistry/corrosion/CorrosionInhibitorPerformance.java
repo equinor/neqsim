@@ -18,15 +18,14 @@ import java.util.Map;
  * </pre>
  *
  * <p>
- * where {@code CR_base} is the uninhibited corrosion rate (e.g. from NORSOK M-506 model) and
- * {@code efficiency} is a function of inhibitor chemistry, dose, temperature, shear, and the
- * presence of organic acids / H2S / O2.
+ * where {@code CR_base} is the uninhibited corrosion rate (e.g. from NORSOK M-506 model) and {@code efficiency} is a
+ * function of inhibitor chemistry, dose, temperature, shear, and the presence of organic acids / H2S / O2.
  * </p>
  *
  * <p>
- * The model is calibrated on rotating cylinder electrode (RCE) and high-pressure autoclave data for
- * typical sweet (CO2) and mildly sour service. It is not appropriate for severe sour, very high
- * shear (above 200 Pa), or extreme temperatures (above 175 C) without bench validation.
+ * The model is calibrated on rotating cylinder electrode (RCE) and high-pressure autoclave data for typical sweet (CO2)
+ * and mildly sour service. It is not appropriate for severe sour, very high shear (above 200 Pa), or extreme
+ * temperatures (above 175 C) without bench validation.
  * </p>
  *
  * <p>
@@ -163,33 +162,29 @@ public class CorrosionInhibitorPerformance implements Serializable {
   }
 
   /**
-   * Pulls the uninhibited corrosion rate from a physics-based De Waard&ndash;Milliams calculator.
-   * Calls
-   * {@link neqsim.pvtsimulation.flowassurance.DeWaardMilliamsCorrosion#calculateBaselineRate()} so
-   * the calculator does not need to be pre-evaluated.
+   * Pulls the uninhibited corrosion rate from a physics-based De Waard&ndash;Milliams calculator. Calls
+   * {@link neqsim.pvtsimulation.flowassurance.DeWaardMilliamsCorrosion#calculateBaselineRate()} so the calculator does
+   * not need to be pre-evaluated.
    *
    * @param baseline configured De Waard&ndash;Milliams calculator
    */
-  public void setFromDeWaardMilliams(
-      neqsim.pvtsimulation.flowassurance.DeWaardMilliamsCorrosion baseline) {
+  public void setFromDeWaardMilliams(neqsim.pvtsimulation.flowassurance.DeWaardMilliamsCorrosion baseline) {
     setBaseCorrosionRateMmYr(baseline.calculateBaselineRate());
   }
 
   /**
-   * Convenience factory: builds a CorrosionInhibitorPerformance with operating conditions seeded
-   * from a stream and a Pa-level wall shear estimate from the bulk velocity (caller still picks
-   * inhibitor chemistry and dose).
+   * Convenience factory: builds a CorrosionInhibitorPerformance with operating conditions seeded from a stream and a
+   * Pa-level wall shear estimate from the bulk velocity (caller still picks inhibitor chemistry and dose).
    *
-   * @param stream produced fluid stream
+   * @param stream       produced fluid stream
    * @param pipeIdMeters pipe inside diameter in meters (for wall-shear estimate)
-   * @param velocityMps bulk flow velocity in m/s (for wall-shear estimate)
+   * @param velocityMps  bulk flow velocity in m/s (for wall-shear estimate)
    * @return configured (but not evaluated) performance model
    */
-  public static CorrosionInhibitorPerformance fromStream(
-      neqsim.process.equipment.stream.StreamInterface stream, double pipeIdMeters,
-      double velocityMps) {
-    neqsim.process.chemistry.util.StreamChemistryAdapter ad =
-        new neqsim.process.chemistry.util.StreamChemistryAdapter(stream);
+  public static CorrosionInhibitorPerformance fromStream(neqsim.process.equipment.stream.StreamInterface stream,
+      double pipeIdMeters, double velocityMps) {
+    neqsim.process.chemistry.util.StreamChemistryAdapter ad = new neqsim.process.chemistry.util.StreamChemistryAdapter(
+	stream);
     CorrosionInhibitorPerformance p = new CorrosionInhibitorPerformance();
     p.setTemperatureCelsius(ad.getTemperatureCelsius());
     p.setH2SPartialPressureBar(ad.getPartialPressureBara("H2S"));
@@ -217,39 +212,36 @@ public class CorrosionInhibitorPerformance implements Serializable {
     double shearPenalty = shearPenalty(wallShearStressPa);
     double oxyPenalty = oxygenPenalty(oxygenPpb);
     double acidPenalty = organicAcidPenalty(organicAcidPpm);
-    double acidServicePenalty =
-        acidicService && chemistry != InhibitorChemistry.PYRIDINE ? 0.6 : 1.0;
+    double acidServicePenalty = acidicService && chemistry != InhibitorChemistry.PYRIDINE ? 0.6 : 1.0;
 
-    efficiency = Math.max(0.0, Math.min(0.999,
-        rawEff * tempPenalty * shearPenalty * oxyPenalty * acidPenalty * acidServicePenalty));
+    efficiency = Math.max(0.0,
+	Math.min(0.999, rawEff * tempPenalty * shearPenalty * oxyPenalty * acidPenalty * acidServicePenalty));
 
     inhibitedCorrosionRateMmYr = baseCorrosionRateMmYr * (1.0 - efficiency);
 
     // Warnings
     if (chemistry != InhibitorChemistry.PHOSPHATE_ESTER && chemistry != InhibitorChemistry.MERCAPTAN
-        && temperatureC > 150.0) {
+	&& temperatureC > 150.0) {
       warnings.put("thermal_degradation",
-          "Most film-forming CIs degrade above 150 C; use phosphate ester or CRA upgrade");
+	  "Most film-forming CIs degrade above 150 C; use phosphate ester or CRA upgrade");
     }
     if (wallShearStressPa > 150.0) {
-      warnings.put("high_shear",
-          "Shear stress above 150 Pa erodes inhibitor film; consider higher dose or CRA");
+      warnings.put("high_shear", "Shear stress above 150 Pa erodes inhibitor film; consider higher dose or CRA");
     }
     if (oxygenPpb > 50.0) {
       warnings.put("oxygen_ingress",
-          "O2 above 50 ppb undermines film-forming CIs; eliminate O2 ingress or use scavenger");
+	  "O2 above 50 ppb undermines film-forming CIs; eliminate O2 ingress or use scavenger");
     }
     if (acidicService && chemistry != InhibitorChemistry.PYRIDINE) {
       warnings.put("acidic_service",
-          "Use a dedicated acid corrosion inhibitor (pyridine-based) during acid stimulation");
+	  "Use a dedicated acid corrosion inhibitor (pyridine-based) during acid stimulation");
     }
     if (h2sPartialPressureBar > 1.0 && chemistry != InhibitorChemistry.MERCAPTAN) {
-      warnings.put("sour_service",
-          "H2S partial pressure above 1 bar — verify with sour-service compatible chemistry");
+      warnings.put("sour_service", "H2S partial pressure above 1 bar — verify with sour-service compatible chemistry");
     }
     if (doseMgL < minimumEffectiveDoseMgL) {
-      warnings.put("under_dose", "Dose below minimum effective level for this chemistry ("
-          + minimumEffectiveDoseMgL + " mg/L)");
+      warnings.put("under_dose",
+	  "Dose below minimum effective level for this chemistry (" + minimumEffectiveDoseMgL + " mg/L)");
     }
     evaluated = true;
   }
@@ -262,20 +254,20 @@ public class CorrosionInhibitorPerformance implements Serializable {
    */
   private static double maxEfficiency(InhibitorChemistry chem) {
     switch (chem) {
-      case IMIDAZOLINE:
-        return 0.95;
-      case QUATERNARY_AMMONIUM:
-        return 0.93;
-      case AMIDO_AMINE:
-        return 0.92;
-      case PHOSPHATE_ESTER:
-        return 0.90;
-      case PYRIDINE:
-        return 0.97;
-      case MERCAPTAN:
-        return 0.93;
-      default:
-        return 0.85;
+    case IMIDAZOLINE:
+      return 0.95;
+    case QUATERNARY_AMMONIUM:
+      return 0.93;
+    case AMIDO_AMINE:
+      return 0.92;
+    case PHOSPHATE_ESTER:
+      return 0.90;
+    case PYRIDINE:
+      return 0.97;
+    case MERCAPTAN:
+      return 0.93;
+    default:
+      return 0.85;
     }
   }
 
@@ -287,20 +279,20 @@ public class CorrosionInhibitorPerformance implements Serializable {
    */
   private static double baseMed(InhibitorChemistry chem) {
     switch (chem) {
-      case IMIDAZOLINE:
-        return 10.0;
-      case QUATERNARY_AMMONIUM:
-        return 15.0;
-      case AMIDO_AMINE:
-        return 12.0;
-      case PHOSPHATE_ESTER:
-        return 25.0;
-      case PYRIDINE:
-        return 1000.0; // acid service uses much higher dose
-      case MERCAPTAN:
-        return 20.0;
-      default:
-        return 25.0;
+    case IMIDAZOLINE:
+      return 10.0;
+    case QUATERNARY_AMMONIUM:
+      return 15.0;
+    case AMIDO_AMINE:
+      return 12.0;
+    case PHOSPHATE_ESTER:
+      return 25.0;
+    case PYRIDINE:
+      return 1000.0; // acid service uses much higher dose
+    case MERCAPTAN:
+      return 20.0;
+    default:
+      return 25.0;
     }
   }
 
@@ -308,32 +300,32 @@ public class CorrosionInhibitorPerformance implements Serializable {
    * Temperature penalty factor.
    *
    * @param chem chemistry
-   * @param tC temperature in Celsius
+   * @param tC   temperature in Celsius
    * @return penalty 0..1 (1 = no penalty)
    */
   private static double temperaturePenalty(InhibitorChemistry chem, double tC) {
     double tMax;
     switch (chem) {
-      case IMIDAZOLINE:
-        tMax = 150.0;
-        break;
-      case QUATERNARY_AMMONIUM:
-        tMax = 130.0;
-        break;
-      case AMIDO_AMINE:
-        tMax = 140.0;
-        break;
-      case PHOSPHATE_ESTER:
-        tMax = 200.0;
-        break;
-      case PYRIDINE:
-        tMax = 120.0;
-        break;
-      case MERCAPTAN:
-        tMax = 175.0;
-        break;
-      default:
-        tMax = 150.0;
+    case IMIDAZOLINE:
+      tMax = 150.0;
+      break;
+    case QUATERNARY_AMMONIUM:
+      tMax = 130.0;
+      break;
+    case AMIDO_AMINE:
+      tMax = 140.0;
+      break;
+    case PHOSPHATE_ESTER:
+      tMax = 200.0;
+      break;
+    case PYRIDINE:
+      tMax = 120.0;
+      break;
+    case MERCAPTAN:
+      tMax = 175.0;
+      break;
+    default:
+      tMax = 150.0;
     }
     if (tC <= tMax - 30.0) {
       return 1.0;
@@ -474,9 +466,9 @@ public class CorrosionInhibitorPerformance implements Serializable {
    */
   public java.util.List<java.util.Map<String, Object>> getStandardsApplied() {
     return neqsim.process.chemistry.util.StandardsRegistry.toMapList(
-        neqsim.process.chemistry.util.StandardsRegistry.NACE_TM0169,
-        neqsim.process.chemistry.util.StandardsRegistry.NACE_SP0775,
-        neqsim.process.chemistry.util.StandardsRegistry.NORSOK_M506,
-        neqsim.process.chemistry.util.StandardsRegistry.ASTM_G31);
+	neqsim.process.chemistry.util.StandardsRegistry.NACE_TM0169,
+	neqsim.process.chemistry.util.StandardsRegistry.NACE_SP0775,
+	neqsim.process.chemistry.util.StandardsRegistry.NORSOK_M506,
+	neqsim.process.chemistry.util.StandardsRegistry.ASTM_G31);
   }
 }

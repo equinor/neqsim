@@ -16,8 +16,7 @@ public class RateBasedAbsorberTest {
     RateBasedAbsorber absorber = new RateBasedAbsorber("test absorber");
     Assertions.assertNotNull(absorber);
     Assertions.assertEquals("test absorber", absorber.getName());
-    Assertions.assertEquals(RateBasedAbsorber.MassTransferModel.ONDA_1968,
-        absorber.getMassTransferModel());
+    Assertions.assertEquals(RateBasedAbsorber.MassTransferModel.ONDA_1968, absorber.getMassTransferModel());
   }
 
   @Test
@@ -40,8 +39,7 @@ public class RateBasedAbsorberTest {
     RateBasedAbsorber.MassTransferModel onda = RateBasedAbsorber.MassTransferModel.ONDA_1968;
     Assertions.assertEquals("ONDA_1968", onda.name());
 
-    RateBasedAbsorber.MassTransferModel billet =
-        RateBasedAbsorber.MassTransferModel.BILLET_SCHULTES_1999;
+    RateBasedAbsorber.MassTransferModel billet = RateBasedAbsorber.MassTransferModel.BILLET_SCHULTES_1999;
     Assertions.assertEquals("BILLET_SCHULTES_1999", billet.name());
   }
 
@@ -50,8 +48,7 @@ public class RateBasedAbsorberTest {
     RateBasedAbsorber.EnhancementModel none = RateBasedAbsorber.EnhancementModel.NONE;
     Assertions.assertEquals("NONE", none.name());
 
-    RateBasedAbsorber.EnhancementModel hatta =
-        RateBasedAbsorber.EnhancementModel.HATTA_PSEUDO_FIRST_ORDER;
+    RateBasedAbsorber.EnhancementModel hatta = RateBasedAbsorber.EnhancementModel.HATTA_PSEUDO_FIRST_ORDER;
     Assertions.assertEquals("HATTA_PSEUDO_FIRST_ORDER", hatta.name());
   }
 
@@ -109,16 +106,14 @@ public class RateBasedAbsorberTest {
 
     // Stage results should be populated
     Assertions.assertNotNull(absorber.getStageResults());
-    Assertions.assertTrue(absorber.getStageResults().size() > 0,
-        "Stage results should be populated");
+    Assertions.assertTrue(absorber.getStageResults().size() > 0, "Stage results should be populated");
   }
 
   @Test
   public void testSetModelTypes() {
     RateBasedAbsorber absorber = new RateBasedAbsorber("model test");
     absorber.setMassTransferModel(RateBasedAbsorber.MassTransferModel.BILLET_SCHULTES_1999);
-    Assertions.assertEquals(RateBasedAbsorber.MassTransferModel.BILLET_SCHULTES_1999,
-        absorber.getMassTransferModel());
+    Assertions.assertEquals(RateBasedAbsorber.MassTransferModel.BILLET_SCHULTES_1999, absorber.getMassTransferModel());
 
     absorber.setEnhancementModel(RateBasedAbsorber.EnhancementModel.HATTA_PSEUDO_FIRST_ORDER);
     // No getter for enhancement model, but this shouldn't throw

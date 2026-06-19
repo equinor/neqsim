@@ -98,20 +98,21 @@ public class OptimizationResultBase implements Serializable {
     /**
      * Default constructor.
      */
-    public ConstraintViolation() {}
+    public ConstraintViolation() {
+    }
 
     /**
      * Constructor with all fields.
      *
-     * @param equipmentName name of equipment
-     * @param constraintName name of constraint
-     * @param currentValue current value
-     * @param limitValue limit value
-     * @param unit unit of measurement
+     * @param equipmentName    name of equipment
+     * @param constraintName   name of constraint
+     * @param currentValue     current value
+     * @param limitValue       limit value
+     * @param unit             unit of measurement
      * @param isHardConstraint whether this is a hard constraint
      */
-    public ConstraintViolation(String equipmentName, String constraintName, double currentValue,
-        double limitValue, String unit, boolean isHardConstraint) {
+    public ConstraintViolation(String equipmentName, String constraintName, double currentValue, double limitValue,
+	String unit, boolean isHardConstraint) {
       this.equipmentName = equipmentName;
       this.constraintName = constraintName;
       this.currentValue = currentValue;
@@ -184,22 +185,23 @@ public class OptimizationResultBase implements Serializable {
      */
     public double getViolationPercent() {
       if (limitValue == 0) {
-        return currentValue > 0 ? Double.POSITIVE_INFINITY : 0.0;
+	return currentValue > 0 ? Double.POSITIVE_INFINITY : 0.0;
       }
       return (currentValue - limitValue) / limitValue * 100.0;
     }
 
     @Override
     public String toString() {
-      return String.format("%s/%s: %.2f > %.2f %s (%.1f%% over)", equipmentName, constraintName,
-          currentValue, limitValue, unit != null ? unit : "", getViolationPercent());
+      return String.format("%s/%s: %.2f > %.2f %s (%.1f%% over)", equipmentName, constraintName, currentValue,
+	  limitValue, unit != null ? unit : "", getViolationPercent());
     }
   }
 
   /**
    * Default constructor.
    */
-  public OptimizationResultBase() {}
+  public OptimizationResultBase() {
+  }
 
   // Status methods
 
@@ -354,10 +356,9 @@ public class OptimizationResultBase implements Serializable {
     this.constraintViolations.add(violation);
   }
 
-  public void addConstraintViolation(String equipment, String constraint, double current,
-      double limit, String unit, boolean hard) {
-    this.constraintViolations
-        .add(new ConstraintViolation(equipment, constraint, current, limit, unit, hard));
+  public void addConstraintViolation(String equipment, String constraint, double current, double limit, String unit,
+      boolean hard) {
+    this.constraintViolations.add(new ConstraintViolation(equipment, constraint, current, limit, unit, hard));
   }
 
   public boolean hasViolations() {
@@ -367,7 +368,7 @@ public class OptimizationResultBase implements Serializable {
   public boolean hasHardViolations() {
     for (ConstraintViolation v : constraintViolations) {
       if (v.isHardConstraint()) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -468,13 +469,12 @@ public class OptimizationResultBase implements Serializable {
     sb.append("Optimal Value: ").append(optimalValue).append("\n");
     sb.append("Iterations: ").append(iterations).append("\n");
     sb.append("Function Evaluations: ").append(functionEvaluations).append("\n");
-    sb.append("Elapsed Time: ").append(String.format("%.3f", getElapsedTimeSeconds()))
-        .append(" s\n");
+    sb.append("Elapsed Time: ").append(String.format("%.3f", getElapsedTimeSeconds())).append(" s\n");
 
     if (bottleneckEquipment != null) {
       sb.append("Bottleneck: ").append(bottleneckEquipment);
       if (bottleneckConstraint != null) {
-        sb.append(" (").append(bottleneckConstraint).append(")");
+	sb.append(" (").append(bottleneckConstraint).append(")");
       }
       sb.append("\n");
     }
@@ -482,7 +482,7 @@ public class OptimizationResultBase implements Serializable {
     if (!constraintViolations.isEmpty()) {
       sb.append("Violations:\n");
       for (ConstraintViolation v : constraintViolations) {
-        sb.append("  - ").append(v.toString()).append("\n");
+	sb.append("  - ").append(v.toString()).append("\n");
       }
     }
 

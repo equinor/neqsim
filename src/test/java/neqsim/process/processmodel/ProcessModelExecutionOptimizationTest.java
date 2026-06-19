@@ -144,7 +144,7 @@ class ProcessModelExecutionOptimizationTest {
    * Adds independent stream nodes so the child ProcessSystem exposes useful inner parallelism.
    *
    * @param process process system to populate
-   * @param count number of independent streams to add
+   * @param count   number of independent streams to add
    */
   private static void addIndependentStreams(ProcessSystem process, int count) {
     for (int i = 0; i < count; i++) {
@@ -186,8 +186,7 @@ class ProcessModelExecutionOptimizationTest {
     model.run();
 
     assertEquals(0, firstProcess.getOptimizedRuns(), "first area should avoid inner optimized run");
-    assertEquals(0, secondProcess.getOptimizedRuns(),
-        "second area should avoid inner optimized run");
+    assertEquals(0, secondProcess.getOptimizedRuns(), "second area should avoid inner optimized run");
     assertTrue(firstProcess.getSequentialRuns() > 0, "first area should run sequentially");
     assertTrue(secondProcess.getSequentialRuns() > 0, "second area should run sequentially");
     assertTrue(firstProcess.isUseOptimizedExecution(), "first child setting should be restored");
@@ -217,8 +216,7 @@ class ProcessModelExecutionOptimizationTest {
     assertTrue(firstProcess.getOptimizedRuns() > 0, "first area should use optimized child run");
     assertTrue(secondProcess.getOptimizedRuns() > 0, "second area should use optimized child run");
     assertEquals(0, firstProcess.getSequentialRuns(), "first area should not be forced sequential");
-    assertEquals(0, secondProcess.getSequentialRuns(),
-        "second area should not be forced sequential");
+    assertEquals(0, secondProcess.getSequentialRuns(), "second area should not be forced sequential");
   }
 
   /**
@@ -236,13 +234,10 @@ class ProcessModelExecutionOptimizationTest {
 
     model.run();
 
-    assertTrue(firstProcess.getOptimizedRuns() > 0,
-        "wide first area should keep child optimized execution");
-    assertTrue(secondProcess.getOptimizedRuns() > 0,
-        "wide second area should keep child optimized execution");
+    assertTrue(firstProcess.getOptimizedRuns() > 0, "wide first area should keep child optimized execution");
+    assertTrue(secondProcess.getOptimizedRuns() > 0, "wide second area should keep child optimized execution");
     assertEquals(0, firstProcess.getSequentialRuns(), "first area should not be forced sequential");
-    assertEquals(0, secondProcess.getSequentialRuns(),
-        "second area should not be forced sequential");
+    assertEquals(0, secondProcess.getSequentialRuns(), "second area should not be forced sequential");
   }
 
   /**
@@ -286,7 +281,7 @@ class ProcessModelExecutionOptimizationTest {
     model.run();
 
     assertEquals(removedRunsBeforeRemoval, removedProcess.getTotalRuns(),
-        "removed area should not run from a stale cached plan");
+	"removed area should not run from a stale cached plan");
   }
 
   /**
@@ -312,16 +307,16 @@ class ProcessModelExecutionOptimizationTest {
     model.setProgressListener(new ProcessModel.ModelProgressListener() {
       /** {@inheritDoc} */
       @Override
-      public void onBeforeProcessArea(String areaName, ProcessSystem process, int areaIndex,
-          int totalAreas, int iterationNumber) {
-        events.add("before:" + areaName);
+      public void onBeforeProcessArea(String areaName, ProcessSystem process, int areaIndex, int totalAreas,
+	  int iterationNumber) {
+	events.add("before:" + areaName);
       }
 
       /** {@inheritDoc} */
       @Override
-      public void onProcessAreaComplete(String areaName, ProcessSystem process, int areaIndex,
-          int totalAreas, int iterationNumber) {
-        events.add("after:" + areaName);
+      public void onProcessAreaComplete(String areaName, ProcessSystem process, int areaIndex, int totalAreas,
+	  int iterationNumber) {
+	events.add("after:" + areaName);
       }
     });
 
@@ -331,8 +326,7 @@ class ProcessModelExecutionOptimizationTest {
     int beforeDownstream = events.indexOf("before:downstream");
     assertTrue(afterUpstream >= 0, "upstream should complete");
     assertTrue(beforeDownstream >= 0, "downstream should start");
-    assertTrue(beforeDownstream > afterUpstream,
-        "downstream should wait for upstream after child topology change");
+    assertTrue(beforeDownstream > afterUpstream, "downstream should wait for upstream after child topology change");
   }
 
   /**
@@ -372,16 +366,16 @@ class ProcessModelExecutionOptimizationTest {
     model.setProgressListener(new ProcessModel.ModelProgressListener() {
       /** {@inheritDoc} */
       @Override
-      public void onBeforeProcessArea(String areaName, ProcessSystem process, int areaIndex,
-          int totalAreas, int iterationNumber) {
-        events.add("before:" + areaName);
+      public void onBeforeProcessArea(String areaName, ProcessSystem process, int areaIndex, int totalAreas,
+	  int iterationNumber) {
+	events.add("before:" + areaName);
       }
 
       /** {@inheritDoc} */
       @Override
-      public void onProcessAreaComplete(String areaName, ProcessSystem process, int areaIndex,
-          int totalAreas, int iterationNumber) {
-        events.add("after:" + areaName);
+      public void onProcessAreaComplete(String areaName, ProcessSystem process, int areaIndex, int totalAreas,
+	  int iterationNumber) {
+	events.add("after:" + areaName);
       }
     });
 
@@ -392,7 +386,7 @@ class ProcessModelExecutionOptimizationTest {
     assertTrue(afterUpstream >= 0, "upstream should complete");
     assertTrue(beforeDownstream >= 0, "downstream should start");
     assertTrue(beforeDownstream > afterUpstream,
-        "downstream should wait for upstream after inter-area link application");
+	"downstream should wait for upstream after inter-area link application");
   }
 
   /**
@@ -411,12 +405,12 @@ class ProcessModelExecutionOptimizationTest {
     assertEquals(1, updatedRecycles, "one recycle should be updated");
     assertTrue(model.isUseFastRecycleConvergence(), "fast recycle convergence should be enabled");
     assertTrue(model.isUseCoordinatedRecycleAcceleration(),
-        "coordinated recycle acceleration should be enabled in fast mode");
+	"coordinated recycle acceleration should be enabled in fast mode");
     assertTrue(process.isUseFlashWarmStart(), "warm-start should be enabled on existing area");
     assertTrue(process.isUseCoordinatedRecycleAcceleration(),
-        "coordinated acceleration should be enabled on existing area");
+	"coordinated acceleration should be enabled on existing area");
     assertEquals(AccelerationMethod.WEGSTEIN, recycle.getAccelerationMethod(),
-        "existing recycle should use Wegstein acceleration");
+	"existing recycle should use Wegstein acceleration");
 
     ProcessSystem laterProcess = new ProcessSystem("later");
     Recycle laterRecycle = new Recycle("laterRecycle");
@@ -424,10 +418,9 @@ class ProcessModelExecutionOptimizationTest {
     model.add("later", laterProcess);
 
     assertTrue(laterProcess.isUseFlashWarmStart(), "warm-start should apply to new area");
-    assertTrue(laterProcess.isUseCoordinatedRecycleAcceleration(),
-        "coordinated acceleration should apply to new area");
+    assertTrue(laterProcess.isUseCoordinatedRecycleAcceleration(), "coordinated acceleration should apply to new area");
     assertEquals(AccelerationMethod.WEGSTEIN, laterRecycle.getAccelerationMethod(),
-        "new recycle should inherit Wegstein acceleration");
+	"new recycle should inherit Wegstein acceleration");
   }
 
   /**
@@ -450,21 +443,16 @@ class ProcessModelExecutionOptimizationTest {
     ProcessModel restored = ProcessModel.fromJson(model.toJson(false));
 
     assertFalse(restored.isUseOptimizedExecution(), "optimized execution flag should round-trip");
-    assertFalse(restored.isPreventNestedParallelExecution(),
-        "nested-parallel prevention flag should round-trip");
-    assertFalse(restored.isUseAdaptiveModelParallelism(),
-        "adaptive parallelism flag should round-trip");
-    assertFalse(restored.isUseIncrementalAreaExecution(),
-        "incremental execution flag should round-trip");
-    assertTrue(restored.isUseFastRecycleConvergence(),
-        "fast recycle convergence flag should round-trip");
+    assertFalse(restored.isPreventNestedParallelExecution(), "nested-parallel prevention flag should round-trip");
+    assertFalse(restored.isUseAdaptiveModelParallelism(), "adaptive parallelism flag should round-trip");
+    assertFalse(restored.isUseIncrementalAreaExecution(), "incremental execution flag should round-trip");
+    assertTrue(restored.isUseFastRecycleConvergence(), "fast recycle convergence flag should round-trip");
     assertTrue(restored.isUseCoordinatedRecycleAcceleration(),
-        "coordinated recycle acceleration flag should round-trip");
+	"coordinated recycle acceleration flag should round-trip");
     assertTrue(restored.isUseFlashWarmStart(), "flash warm-start flag should round-trip");
-    assertTrue(restored.get("area").isUseFlashWarmStart(),
-        "flash warm-start should propagate to rebuilt areas");
+    assertTrue(restored.get("area").isUseFlashWarmStart(), "flash warm-start should propagate to rebuilt areas");
     assertTrue(restored.get("area").isUseCoordinatedRecycleAcceleration(),
-        "coordinated acceleration should propagate to rebuilt areas");
+	"coordinated acceleration should propagate to rebuilt areas");
   }
 
   /**
@@ -488,31 +476,22 @@ class ProcessModelExecutionOptimizationTest {
     ProcessModel restored = state.toProcessModel();
 
     assertFalse(config.isUseOptimizedExecution(), "state should capture optimized execution");
-    assertFalse(config.isPreventNestedParallelExecution(),
-        "state should capture nested-parallel prevention");
-    assertFalse(config.isUseAdaptiveModelParallelism(),
-        "state should capture adaptive parallelism");
-    assertFalse(config.isUseIncrementalAreaExecution(),
-        "state should capture incremental execution");
+    assertFalse(config.isPreventNestedParallelExecution(), "state should capture nested-parallel prevention");
+    assertFalse(config.isUseAdaptiveModelParallelism(), "state should capture adaptive parallelism");
+    assertFalse(config.isUseIncrementalAreaExecution(), "state should capture incremental execution");
     assertTrue(config.isUseFastRecycleConvergence(), "state should capture fast recycle mode");
-    assertTrue(config.isUseCoordinatedRecycleAcceleration(),
-        "state should capture coordinated recycle acceleration");
+    assertTrue(config.isUseCoordinatedRecycleAcceleration(), "state should capture coordinated recycle acceleration");
     assertTrue(config.isUseFlashWarmStart(), "state should capture flash warm-start");
 
     assertFalse(restored.isUseOptimizedExecution(), "optimized execution flag should restore");
-    assertFalse(restored.isPreventNestedParallelExecution(),
-        "nested-parallel prevention flag should restore");
-    assertFalse(restored.isUseAdaptiveModelParallelism(),
-        "adaptive parallelism flag should restore");
-    assertFalse(restored.isUseIncrementalAreaExecution(),
-        "incremental execution flag should restore");
+    assertFalse(restored.isPreventNestedParallelExecution(), "nested-parallel prevention flag should restore");
+    assertFalse(restored.isUseAdaptiveModelParallelism(), "adaptive parallelism flag should restore");
+    assertFalse(restored.isUseIncrementalAreaExecution(), "incremental execution flag should restore");
     assertTrue(restored.isUseFastRecycleConvergence(), "fast recycle flag should restore");
-    assertTrue(restored.isUseCoordinatedRecycleAcceleration(),
-        "coordinated acceleration flag should restore");
+    assertTrue(restored.isUseCoordinatedRecycleAcceleration(), "coordinated acceleration flag should restore");
     assertTrue(restored.isUseFlashWarmStart(), "flash warm-start flag should restore");
-    assertTrue(restored.get("area").isUseFlashWarmStart(),
-        "flash warm-start should propagate to restored areas");
+    assertTrue(restored.get("area").isUseFlashWarmStart(), "flash warm-start should propagate to restored areas");
     assertTrue(restored.get("area").isUseCoordinatedRecycleAcceleration(),
-        "coordinated acceleration should propagate to restored areas");
+	"coordinated acceleration should propagate to restored areas");
   }
 }

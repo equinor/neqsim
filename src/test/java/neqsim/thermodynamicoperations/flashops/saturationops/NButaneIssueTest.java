@@ -18,7 +18,6 @@ import org.apache.logging.log4j.Logger;
 public class NButaneIssueTest {
   private static final Logger logger = LogManager.getLogger(NButaneIssueTest.class);
 
-
   /**
    * Test with n-butane - the problematic case.
    */
@@ -101,7 +100,7 @@ public class NButaneIssueTest {
   public void testTPflashWithNButane() {
     logger.info("=== TPflash with n-butane at different temperatures ===\n");
 
-    double[] temps = {273.15 + 10, 273.15 - 5, 273.15 - 10, 273.15 - 15};
+    double[] temps = { 273.15 + 10, 273.15 - 5, 273.15 - 10, 273.15 - 15 };
 
     for (double temp : temps) {
       SystemInterface fluid = new SystemElectrolyteCPAstatoil(temp, 50.0);
@@ -129,8 +128,8 @@ public class NButaneIssueTest {
       logger.info("  Time: " + (end - start) + " ms");
       logger.info("  Phases: " + fluid.getNumberOfPhases());
       for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-        logger.info("    Phase " + i + ": " + fluid.getPhase(i).getPhaseTypeName() + " beta="
-            + String.format("%.4f", fluid.getBeta(i)));
+	logger.info("    Phase " + i + ": " + fluid.getPhase(i).getPhaseTypeName() + " beta="
+	    + String.format("%.4f", fluid.getBeta(i)));
       }
 
     }
@@ -166,8 +165,7 @@ public class NButaneIssueTest {
     for (int i = 0; i < fluid1.getNumberOfPhases(); i++) {
       logger.info("    Phase " + i + ": " + fluid1.getPhase(i).getPhaseTypeName());
       if (fluid1.getPhase(i).hasComponent("n-butane")) {
-        System.out
-            .println("      n-butane x = " + fluid1.getPhase(i).getComponent("n-butane").getx());
+	System.out.println("      n-butane x = " + fluid1.getPhase(i).getComponent("n-butane").getx());
       }
     }
 
@@ -212,14 +210,10 @@ public class NButaneIssueTest {
     logger.info("n-butane properties:");
     logger.info("  TC = " + fluid.getPhase(0).getComponent("n-butane").getTC() + " K");
     logger.info("  PC = " + fluid.getPhase(0).getComponent("n-butane").getPC() + " bar");
-    System.out
-        .println("  Acentric = " + fluid.getPhase(0).getComponent("n-butane").getAcentricFactor());
-    logger.info(
-        "  Molar mass = " + fluid.getPhase(0).getComponent("n-butane").getMolarMass() + " kg/mol");
-    logger.info(
-        "  Is hydrate former: " + fluid.getPhase(0).getComponent("n-butane").isHydrateFormer());
-    System.out
-        .println("  Ionic charge: " + fluid.getPhase(0).getComponent("n-butane").getIonicCharge());
+    System.out.println("  Acentric = " + fluid.getPhase(0).getComponent("n-butane").getAcentricFactor());
+    logger.info("  Molar mass = " + fluid.getPhase(0).getComponent("n-butane").getMolarMass() + " kg/mol");
+    logger.info("  Is hydrate former: " + fluid.getPhase(0).getComponent("n-butane").isHydrateFormer());
+    System.out.println("  Ionic charge: " + fluid.getPhase(0).getComponent("n-butane").getIonicCharge());
   }
 
   /**
@@ -250,7 +244,7 @@ public class NButaneIssueTest {
     logger.info("Components:");
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
       logger.info("  " + i + ": " + fluid.getComponent(i).getName() + " (ionic charge: "
-          + fluid.getComponent(i).getIonicCharge() + ")");
+	  + fluid.getComponent(i).getIonicCharge() + ")");
     }
 
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);

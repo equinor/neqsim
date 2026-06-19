@@ -9,18 +9,17 @@ import neqsim.thermo.system.SystemInterface;
  * TBP (True Boiling Point) Fraction Model for petroleum characterization.
  *
  * <p>
- * This class provides multiple correlation models for estimating critical properties (Tc, Pc, ω) of
- * petroleum pseudo-components based on molecular weight and density. These properties are essential
- * for equation of state calculations in process simulation.
+ * This class provides multiple correlation models for estimating critical properties (Tc, Pc, ω) of petroleum
+ * pseudo-components based on molecular weight and density. These properties are essential for equation of state
+ * calculations in process simulation.
  * </p>
  *
  * <h2>Background and Theory</h2>
  * <p>
- * Petroleum fluids contain thousands of individual hydrocarbon components that cannot all be
- * individually characterized. Instead, heavy fractions (typically C7+) are lumped into
- * pseudo-components. TBP models estimate the critical properties needed for equation of state
- * calculations from easily measured properties like molecular weight (MW) and specific gravity
- * (SG).
+ * Petroleum fluids contain thousands of individual hydrocarbon components that cannot all be individually
+ * characterized. Instead, heavy fractions (typically C7+) are lumped into pseudo-components. TBP models estimate the
+ * critical properties needed for equation of state calculations from easily measured properties like molecular weight
+ * (MW) and specific gravity (SG).
  * </p>
  *
  * <h2>Available Models</h2>
@@ -80,12 +79,11 @@ import neqsim.thermo.system.SystemInterface;
  *
  * <h3>Critical Temperature</h3>
  * <p>
- * <b>Pedersen:</b> T<sub>c</sub> = a<sub>0</sub>·ρ + a<sub>1</sub>·ln(M) + a<sub>2</sub>·M +
- * a<sub>3</sub>/M
+ * <b>Pedersen:</b> T<sub>c</sub> = a<sub>0</sub>·ρ + a<sub>1</sub>·ln(M) + a<sub>2</sub>·M + a<sub>3</sub>/M
  * </p>
  * <p>
- * <b>Lee-Kesler:</b> T<sub>c</sub> = 189.8 + 450.6·SG + (0.4244 + 0.1174·SG)·T<sub>b</sub> +
- * (0.1441 - 1.0069·SG)·10<sup>5</sup>/T<sub>b</sub>
+ * <b>Lee-Kesler:</b> T<sub>c</sub> = 189.8 + 450.6·SG + (0.4244 + 0.1174·SG)·T<sub>b</sub> + (0.1441 -
+ * 1.0069·SG)·10<sup>5</sup>/T<sub>b</sub>
  * </p>
  * <p>
  * <b>Riazi-Daubert:</b> T<sub>c</sub> = (5/9)·554.4·exp(-1.3478×10<sup>-4</sup>·M -
@@ -94,8 +92,8 @@ import neqsim.thermo.system.SystemInterface;
  *
  * <h3>Critical Pressure</h3>
  * <p>
- * <b>Pedersen:</b> P<sub>c</sub> = exp(b<sub>0</sub> + b<sub>1</sub>·ρ<sup>b<sub>4</sub></sup> +
- * b<sub>2</sub>/M + b<sub>3</sub>/M²)
+ * <b>Pedersen:</b> P<sub>c</sub> = exp(b<sub>0</sub> + b<sub>1</sub>·ρ<sup>b<sub>4</sub></sup> + b<sub>2</sub>/M +
+ * b<sub>3</sub>/M²)
  * </p>
  * <p>
  * <b>Lee-Kesler:</b> ln(P<sub>c</sub>) = 3.3864 - 0.0566/SG - f(T<sub>b</sub>, SG)
@@ -103,12 +101,11 @@ import neqsim.thermo.system.SystemInterface;
  *
  * <h3>Acentric Factor</h3>
  * <p>
- * <b>Edmister:</b> ω =
- * (3/7)·log<sub>10</sub>(P<sub>c</sub>/P<sub>ref</sub>)/(T<sub>c</sub>/T<sub>b</sub> - 1) - 1
+ * <b>Edmister:</b> ω = (3/7)·log<sub>10</sub>(P<sub>c</sub>/P<sub>ref</sub>)/(T<sub>c</sub>/T<sub>b</sub> - 1) - 1
  * </p>
  * <p>
- * <b>Kesler-Lee (T<sub>br</sub> &lt; 0.8):</b> ω = (ln(P<sub>br</sub>) - 5.92714 +
- * 6.09649/T<sub>br</sub> + ...)/(15.2518 - ...)
+ * <b>Kesler-Lee (T<sub>br</sub> &lt; 0.8):</b> ω = (ln(P<sub>br</sub>) - 5.92714 + 6.09649/T<sub>br</sub> +
+ * ...)/(15.2518 - ...)
  * </p>
  *
  * <h3>Watson Characterization Factor</h3>
@@ -198,18 +195,15 @@ import neqsim.thermo.system.SystemInterface;
  *
  * <h2>References</h2>
  * <ol>
- * <li>Pedersen, K.S., Thomassen, P., Fredenslund, A. (1984). "Thermodynamics of Petroleum Mixtures
- * Containing Heavy Hydrocarbons." Ind. Eng. Chem. Process Des. Dev., 23, 566-573.</li>
- * <li>Kesler, M.G., Lee, B.I. (1976). "Improve Prediction of Enthalpy of Fractions." Hydrocarbon
- * Processing, 55(3), 153-158.</li>
- * <li>Riazi, M.R., Daubert, T.E. (1980). "Simplify Property Predictions." Hydrocarbon Processing,
- * 59(3), 115-116.</li>
- * <li>Twu, C.H. (1984). "An Internally Consistent Correlation for Predicting the Critical
- * Properties..." Fluid Phase Equilibria, 16, 137-150.</li>
- * <li>Cavett, R.H. (1962). "Physical Data for Distillation Calculations." Proc. 27th API Meeting,
- * San Francisco.</li>
- * <li>Standing, M.B. (1977). "Volumetric and Phase Behavior of Oil Field Hydrocarbon Systems." SPE,
- * Dallas.</li>
+ * <li>Pedersen, K.S., Thomassen, P., Fredenslund, A. (1984). "Thermodynamics of Petroleum Mixtures Containing Heavy
+ * Hydrocarbons." Ind. Eng. Chem. Process Des. Dev., 23, 566-573.</li>
+ * <li>Kesler, M.G., Lee, B.I. (1976). "Improve Prediction of Enthalpy of Fractions." Hydrocarbon Processing, 55(3),
+ * 153-158.</li>
+ * <li>Riazi, M.R., Daubert, T.E. (1980). "Simplify Property Predictions." Hydrocarbon Processing, 59(3), 115-116.</li>
+ * <li>Twu, C.H. (1984). "An Internally Consistent Correlation for Predicting the Critical Properties..." Fluid Phase
+ * Equilibria, 16, 137-150.</li>
+ * <li>Cavett, R.H. (1962). "Physical Data for Distillation Calculations." Proc. 27th API Meeting, San Francisco.</li>
+ * <li>Standing, M.B. (1977). "Volumetric and Phase Behavior of Oil Field Hydrocarbon Systems." SPE, Dallas.</li>
  * </ol>
  *
  * @author ESOL
@@ -230,16 +224,16 @@ public class TBPfractionModel implements java.io.Serializable {
    * Constructor for TBPfractionModel.
    * </p>
    */
-  public TBPfractionModel() {}
+  public TBPfractionModel() {
+  }
 
   /**
    * Abstract base class for TBP property estimation models.
    *
    * <p>
-   * This class provides default implementations for common property calculations including acentric
-   * factor (Edmister and Kesler-Lee methods), critical volume, parachor parameter, and critical
-   * viscosity. Subclasses must implement the specific correlations for critical temperature (Tc)
-   * and critical pressure (Pc).
+   * This class provides default implementations for common property calculations including acentric factor (Edmister
+   * and Kesler-Lee methods), critical volume, parachor parameter, and critical viscosity. Subclasses must implement the
+   * specific correlations for critical temperature (Tc) and critical pressure (Pc).
    * </p>
    *
    * <p>
@@ -277,7 +271,7 @@ public class TBPfractionModel implements java.io.Serializable {
     @Override
     public double calcTB(double molarMass, double density) {
       if (getBoilingPoint() > 0.0) {
-        return getBoilingPoint();
+	return getBoilingPoint();
       }
       return Math.pow((molarMass / 5.805e-5 * Math.pow(density, 0.9371)), 1.0 / 2.3776);
     }
@@ -298,13 +292,11 @@ public class TBPfractionModel implements java.io.Serializable {
       double TBR = TB / TC;
       double PBR = ThermodynamicConstantsInterface.referencePressure / PC;
       if (TBR < 0.8) {
-        return (Math.log(PBR) - 5.92714 + 6.09649 / TBR + 1.28862 * Math.log(TBR)
-            - 0.169347 * Math.pow(TBR, 6.0))
-            / (15.2518 - 15.6875 / TBR - 13.4721 * Math.log(TBR) + 0.43577 * Math.pow(TBR, 6.0));
+	return (Math.log(PBR) - 5.92714 + 6.09649 / TBR + 1.28862 * Math.log(TBR) - 0.169347 * Math.pow(TBR, 6.0))
+	    / (15.2518 - 15.6875 / TBR - 13.4721 * Math.log(TBR) + 0.43577 * Math.pow(TBR, 6.0));
       } else {
-        double Kw = Math.pow(TB, 1.0 / 3.0) / density;
-        return -7.904 + 0.1352 * Kw - 0.007465 * Kw * Kw + 8.359 * TBR
-            + (1.408 - 0.01063 * Kw) / TBR;
+	double Kw = Math.pow(TB, 1.0 / 3.0) / density;
+	return -7.904 + 0.1352 * Kw - 0.007465 * Kw * Kw + 8.359 * TBR + (1.408 - 0.01063 * Kw) / TBR;
       }
     }
 
@@ -314,8 +306,7 @@ public class TBPfractionModel implements java.io.Serializable {
       double TC = calcTC(molarMass, density);
       double TB = calcTB(molarMass, density);
       double PC = calcPC(molarMass, density);
-      return 3.0 / 7.0 * Math.log10(PC / ThermodynamicConstantsInterface.referencePressure)
-          / (TC / TB - 1.0) - 1.0;
+      return 3.0 / 7.0 * Math.log10(PC / ThermodynamicConstantsInterface.referencePressure) / (TC / TB - 1.0) - 1.0;
     }
 
     /** {@inheritDoc} */
@@ -324,11 +315,10 @@ public class TBPfractionModel implements java.io.Serializable {
       double TC = calcTC(molarMass, density);
       double PC = calcPC(molarMass, density);
       double acs = calcAcentricFactor(molarMass, density); // thermoSystem.getPhase(thermoSystem.getPhaseIndex(0)).getComponent(0).getAcentricFactor();
-      double criticaVol =
-          (0.2918 - 0.0928 * acs) * ThermodynamicConstantsInterface.R * TC / PC * 10.0;
+      double criticaVol = (0.2918 - 0.0928 * acs) * ThermodynamicConstantsInterface.R * TC / PC * 10.0;
       if (criticaVol < 0) {
-        // logger.info("acentric factor in calc critVol " + acs);
-        criticaVol = (0.2918 - 0.0928) * ThermodynamicConstantsInterface.R * TC / PC * 10.0;
+	// logger.info("acentric factor in calc critVol " + acs);
+	criticaVol = (0.2918 - 0.0928) * ThermodynamicConstantsInterface.R * TC / PC * 10.0;
       }
       return criticaVol;
     }
@@ -344,15 +334,13 @@ public class TBPfractionModel implements java.io.Serializable {
     public double calcCriticalViscosity(double molarMass, double density) {
       double TC = calcTC(molarMass, density);
       double PC = calcPC(molarMass, density);
-      return 7.94830 * Math.sqrt(molarMass) * Math.pow(PC, 2.0 / 3.0) / Math.pow(TC, 1.0 / 6.0)
-          * 1e-7;
+      return 7.94830 * Math.sqrt(molarMass) * Math.pow(PC, 2.0 / 3.0) / Math.pow(TC, 1.0 / 6.0) * 1e-7;
     }
 
     /** {@inheritDoc} */
     @Override
     public double calcRacketZ(SystemInterface thermoSystem, double molarMass, double density) {
-      throw new RuntimeException(
-          new neqsim.util.exception.NotImplementedException(this, "calcRacketZ"));
+      throw new RuntimeException(new neqsim.util.exception.NotImplementedException(this, "calcRacketZ"));
     }
 
     /** {@inheritDoc} */
@@ -372,15 +360,14 @@ public class TBPfractionModel implements java.io.Serializable {
    * Pedersen TBP Model for SRK equation of state.
    *
    * <p>
-   * This is the default and most widely used TBP model in NeqSim. It implements the correlations
-   * from Pedersen et al. (1984) for estimating critical properties of petroleum fractions when
-   * using the Soave-Redlich-Kwong (SRK) equation of state.
+   * This is the default and most widely used TBP model in NeqSim. It implements the correlations from Pedersen et al.
+   * (1984) for estimating critical properties of petroleum fractions when using the Soave-Redlich-Kwong (SRK) equation
+   * of state.
    * </p>
    *
    * <p>
-   * The model automatically switches between light oil and heavy oil coefficient sets at a
-   * molecular weight threshold of 1120 g/mol to maintain accuracy across a wide range of petroleum
-   * fractions.
+   * The model automatically switches between light oil and heavy oil coefficient sets at a molecular weight threshold
+   * of 1120 g/mol to maintain accuracy across a wide range of petroleum fractions.
    * </p>
    *
    * <p>
@@ -393,21 +380,19 @@ public class TBPfractionModel implements java.io.Serializable {
    * </ul>
    *
    * <p>
-   * Reference: Pedersen, K.S., Thomassen, P., and Fredenslund, A. (1984). "Thermodynamics of
-   * Petroleum Mixtures Containing Heavy Hydrocarbons." Ind. Eng. Chem. Process Des. Dev., 23,
-   * 566-573.
+   * Reference: Pedersen, K.S., Thomassen, P., and Fredenslund, A. (1984). "Thermodynamics of Petroleum Mixtures
+   * Containing Heavy Hydrocarbons." Ind. Eng. Chem. Process Des. Dev., 23, 566-573.
    * </p>
    */
   public class PedersenTBPModelSRK extends TBPBaseModel {
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
-    double[][] TBPfractionCoefOil = {{163.12, 86.052, 0.43475, -1877.4, 0.0},
-        {-0.13408, 2.5019, 208.46, -3987.2, 1.0}, {0.7431, 0.0048122, 0.0096707, -3.7184e-6, 0.0}};
-    double[][] TBPfractionCoefsHeavyOil = {{8.3063e2, 1.75228e1, 4.55911e-2, -1.13484e4, 0.0},
-        {8.02988e-1, 1.78396, 1.56740e2, -6.96559e3, 0.25},
-        {-4.7268e-2, 6.02931e-2, 1.21051, -5.76676e-3, 0}};
-    double[] TPBracketcoefs = {0.29441, 0.40768};
+    double[][] TBPfractionCoefOil = { { 163.12, 86.052, 0.43475, -1877.4, 0.0 },
+	{ -0.13408, 2.5019, 208.46, -3987.2, 1.0 }, { 0.7431, 0.0048122, 0.0096707, -3.7184e-6, 0.0 } };
+    double[][] TBPfractionCoefsHeavyOil = { { 8.3063e2, 1.75228e1, 4.55911e-2, -1.13484e4, 0.0 },
+	{ 8.02988e-1, 1.78396, 1.56740e2, -6.96559e3, 0.25 }, { -4.7268e-2, 6.02931e-2, 1.21051, -5.76676e-3, 0 } };
+    double[] TPBracketcoefs = { 0.29441, 0.40768 };
     double[][] TBPfractionCoefs = null;
 
     /** {@inheritDoc} */
@@ -415,52 +400,51 @@ public class TBPfractionModel implements java.io.Serializable {
     public double calcTC(double molarMass, double density) {
       // System.out.println("TC ccc " + TBPfractionCoefs[0][0]);
       if (molarMass < 1120) {
-        TBPfractionCoefs = TBPfractionCoefOil;
+	TBPfractionCoefs = TBPfractionCoefOil;
       } else {
-        TBPfractionCoefs = TBPfractionCoefsHeavyOil;
+	TBPfractionCoefs = TBPfractionCoefsHeavyOil;
       }
       // System.out.println("coef " + TBPfractionCoefs[0][0]);
       return TBPfractionCoefs[0][0] * density + TBPfractionCoefs[0][1] * Math.log(molarMass)
-          + TBPfractionCoefs[0][2] * molarMass + TBPfractionCoefs[0][3] / molarMass;
+	  + TBPfractionCoefs[0][2] * molarMass + TBPfractionCoefs[0][3] / molarMass;
     }
 
     /** {@inheritDoc} */
     @Override
     public double calcPC(double molarMass, double density) {
       if (molarMass < 1120) {
-        TBPfractionCoefs = TBPfractionCoefOil;
+	TBPfractionCoefs = TBPfractionCoefOil;
       } else {
-        TBPfractionCoefs = TBPfractionCoefsHeavyOil;
+	TBPfractionCoefs = TBPfractionCoefsHeavyOil;
       }
 
-      return Math.exp(0.01325 + TBPfractionCoefs[1][0]
-          + TBPfractionCoefs[1][1] * Math.pow(density, TBPfractionCoefs[1][4])
-          + TBPfractionCoefs[1][2] / molarMass + TBPfractionCoefs[1][3] / Math.pow(molarMass, 2.0));
+      return Math
+	  .exp(0.01325 + TBPfractionCoefs[1][0] + TBPfractionCoefs[1][1] * Math.pow(density, TBPfractionCoefs[1][4])
+	      + TBPfractionCoefs[1][2] / molarMass + TBPfractionCoefs[1][3] / Math.pow(molarMass, 2.0));
     }
 
     /** {@inheritDoc} */
     @Override
     public double calcm(double molarMass, double density) {
       if (molarMass < 1120) {
-        TBPfractionCoefs = TBPfractionCoefOil;
+	TBPfractionCoefs = TBPfractionCoefOil;
       } else {
-        TBPfractionCoefs = TBPfractionCoefsHeavyOil;
+	TBPfractionCoefs = TBPfractionCoefsHeavyOil;
       }
-      return TBPfractionCoefs[2][0] + TBPfractionCoefs[2][1] * molarMass
-          + TBPfractionCoefs[2][2] * density + TBPfractionCoefs[2][3] * Math.pow(molarMass, 2.0);
+      return TBPfractionCoefs[2][0] + TBPfractionCoefs[2][1] * molarMass + TBPfractionCoefs[2][2] * density
+	  + TBPfractionCoefs[2][3] * Math.pow(molarMass, 2.0);
     }
 
     /** {@inheritDoc} */
     @Override
     public double calcTB(double molarMass, double density) {
       if (getBoilingPoint() > 0.0) {
-        return getBoilingPoint();
+	return getBoilingPoint();
       }
       if (molarMass < 540) {
-        return 2E-06 * Math.pow(molarMass, 3) - 0.0035 * Math.pow(molarMass, 2) + 2.4003 * molarMass
-            + 171.74;
+	return 2E-06 * Math.pow(molarMass, 3) - 0.0035 * Math.pow(molarMass, 2) + 2.4003 * molarMass + 171.74;
       } else {
-        return 97.58 * Math.pow(molarMass, 0.3323) * Math.pow(density, 0.04609);
+	return 97.58 * Math.pow(molarMass, 0.3323) * Math.pow(density, 0.04609);
       }
     }
 
@@ -472,8 +456,8 @@ public class TBPfractionModel implements java.io.Serializable {
       double TC = calcTC(molarMass, density);
       // double TB = calcTB(molarMass, density);
       double PC = calcPC(molarMass, density);
-      return TPBracketcoefs[0] - penelouxC
-          / (TPBracketcoefs[1] * neqsim.thermo.ThermodynamicConstantsInterface.R * TC / PC);
+      return TPBracketcoefs[0]
+	  - penelouxC / (TPBracketcoefs[1] * neqsim.thermo.ThermodynamicConstantsInterface.R * TC / PC);
     }
   }
 
@@ -481,15 +465,13 @@ public class TBPfractionModel implements java.io.Serializable {
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
-    double[][] TBPfractionCoefsHeavyOil = {{8.3063e2, 1.75228e1, 4.55911e-2, -1.13484e4, 0.0},
-        {8.02988e-1, 1.78396, 1.56740e2, -6.96559e3, 0.25},
-        {-4.7268e-2, 6.02931e-2, 1.21051, -5.76676e-3, 0}};
+    double[][] TBPfractionCoefsHeavyOil = { { 8.3063e2, 1.75228e1, 4.55911e-2, -1.13484e4, 0.0 },
+	{ 8.02988e-1, 1.78396, 1.56740e2, -6.96559e3, 0.25 }, { -4.7268e-2, 6.02931e-2, 1.21051, -5.76676e-3, 0 } };
     double[][] TBPfractionCoefOil = TBPfractionCoefsHeavyOil;
 
     public PedersenTBPModelSRKHeavyOil() {
-      TBPfractionCoefsHeavyOil = new double[][] {{8.3063e2, 1.75228e1, 4.55911e-2, -1.13484e4, 0.0},
-          {8.02988e-1, 1.78396, 1.56740e2, -6.96559e3, 0.25},
-          {-4.7268e-2, 6.02931e-2, 1.21051, -5.76676e-3, 0}};
+      TBPfractionCoefsHeavyOil = new double[][] { { 8.3063e2, 1.75228e1, 4.55911e-2, -1.13484e4, 0.0 },
+	  { 8.02988e-1, 1.78396, 1.56740e2, -6.96559e3, 0.25 }, { -4.7268e-2, 6.02931e-2, 1.21051, -5.76676e-3, 0 } };
       TBPfractionCoefOil = TBPfractionCoefsHeavyOil;
     }
   }
@@ -499,13 +481,11 @@ public class TBPfractionModel implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
 
     public PedersenTBPModelPR() {
-      double[][] TBPfractionCoefOil2 = {{73.4043, 97.3562, 0.618744, -2059.32, 0.0},
-          {0.0728462, 2.18811, 163.91, -4043.23, 1.0 / 4.0},
-          {0.373765, 0.00549269, 0.0117934, -4.93049e-6, 0.0}};
-      double[][] TBPfractionCoefHeavyOil2 = {{9.13222e2, 1.01134e1, 4.54194e-2, -1.3587e4, 0.0},
-          {1.28155, 1.26838, 1.67106e2, -8.10164e3, 0.25},
-          {-2.3838e-1, 6.10147e-2, 1.32349, -6.52067e-3, 0.0}};
-      double[] TPBracketcoefs2 = {0.25969, 0.50033};
+      double[][] TBPfractionCoefOil2 = { { 73.4043, 97.3562, 0.618744, -2059.32, 0.0 },
+	  { 0.0728462, 2.18811, 163.91, -4043.23, 1.0 / 4.0 }, { 0.373765, 0.00549269, 0.0117934, -4.93049e-6, 0.0 } };
+      double[][] TBPfractionCoefHeavyOil2 = { { 9.13222e2, 1.01134e1, 4.54194e-2, -1.3587e4, 0.0 },
+	  { 1.28155, 1.26838, 1.67106e2, -8.10164e3, 0.25 }, { -2.3838e-1, 6.10147e-2, 1.32349, -6.52067e-3, 0.0 } };
+      double[] TPBracketcoefs2 = { 0.25969, 0.50033 };
       TBPfractionCoefOil = TBPfractionCoefOil2;
       TBPfractionCoefsHeavyOil = TBPfractionCoefHeavyOil2;
       TPBracketcoefs = TPBracketcoefs2;
@@ -518,13 +498,11 @@ public class TBPfractionModel implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
 
     public PedersenTBPModelPR2() {
-      double[][] TBPfractionCoefOil2 = {{73.4043, 97.3562, 0.618744, -2059.32, 0.0},
-          {0.0728462, 2.18811, 163.91, -4043.23, 1.0 / 4.0},
-          {0.373765, 0.00549269, 0.0117934, -4.93049e-6, 0.0}};
-      double[][] TBPfractionCoefHeavyOil2 = {{9.13222e2, 1.01134e1, 4.54194e-2, -1.3587e4, 0.0},
-          {1.28155, 1.26838, 1.67106e2, -8.10164e3, 0.25},
-          {-2.3838e-1, 6.10147e-2, 1.32349, -6.52067e-3, 0.0}};
-      double[] TPBracketcoefs2 = {0.25969, 0.50033};
+      double[][] TBPfractionCoefOil2 = { { 73.4043, 97.3562, 0.618744, -2059.32, 0.0 },
+	  { 0.0728462, 2.18811, 163.91, -4043.23, 1.0 / 4.0 }, { 0.373765, 0.00549269, 0.0117934, -4.93049e-6, 0.0 } };
+      double[][] TBPfractionCoefHeavyOil2 = { { 9.13222e2, 1.01134e1, 4.54194e-2, -1.3587e4, 0.0 },
+	  { 1.28155, 1.26838, 1.67106e2, -8.10164e3, 0.25 }, { -2.3838e-1, 6.10147e-2, 1.32349, -6.52067e-3, 0.0 } };
+      double[] TPBracketcoefs2 = { 0.25969, 0.50033 };
       TBPfractionCoefOil = TBPfractionCoefOil2;
       TBPfractionCoefsHeavyOil = TBPfractionCoefHeavyOil2;
       TPBracketcoefs = TPBracketcoefs2;
@@ -534,12 +512,11 @@ public class TBPfractionModel implements java.io.Serializable {
     @Override
     public double calcTB(double molarMass, double density) {
       if (getBoilingPoint() > 0.0) {
-        return getBoilingPoint();
+	return getBoilingPoint();
       }
       // Søreide correlation
-      double calculated_TB = (1928.3 - 1.695e5 * Math.pow(molarMass, -0.03522)
-          * Math.pow(density, 3.266)
-          * Math.exp(-4.922e-3 * molarMass - 4.7685 * density + 3.462e-3 * molarMass * density));
+      double calculated_TB = (1928.3 - 1.695e5 * Math.pow(molarMass, -0.03522) * Math.pow(density, 3.266)
+	  * Math.exp(-4.922e-3 * molarMass - 4.7685 * density + 3.462e-3 * molarMass * density));
       return calculated_TB / 1.8;
     }
   }
@@ -549,9 +526,8 @@ public class TBPfractionModel implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
 
     public PedersenTBPModelPRHeavyOil() {
-      double[][] TBPfractionCoefHeavyOil2 = {{9.13222e2, 1.01134e1, 4.54194e-2, -1.3587e4, 0.0},
-          {1.28155, 1.26838, 1.67106e2, -8.10164e3, 0.25},
-          {-2.3838e-1, 6.10147e-2, 1.32349, -6.52067e-3, 0.0}};
+      double[][] TBPfractionCoefHeavyOil2 = { { 9.13222e2, 1.01134e1, 4.54194e-2, -1.3587e4, 0.0 },
+	  { 1.28155, 1.26838, 1.67106e2, -8.10164e3, 0.25 }, { -2.3838e-1, 6.10147e-2, 1.32349, -6.52067e-3, 0.0 } };
       // double[][] TBPfractionCoefOil = TBPfractionCoefHeavyOil2;
       // double[][] TBPfractionCoefsHeavyOil = TBPfractionCoefHeavyOil2;
       TBPfractionCoefOil = TBPfractionCoefHeavyOil2;
@@ -563,9 +539,9 @@ public class TBPfractionModel implements java.io.Serializable {
    * Riazi-Daubert (1980) property estimation method.
    *
    * <p>
-   * The Riazi-Daubert correlations use a simple exponential-power law form that relates critical
-   * properties to molecular weight (M) and specific gravity (SG). This model is particularly
-   * effective for light to medium petroleum fractions with molecular weights below 300 g/mol.
+   * The Riazi-Daubert correlations use a simple exponential-power law form that relates critical properties to
+   * molecular weight (M) and specific gravity (SG). This model is particularly effective for light to medium petroleum
+   * fractions with molecular weights below 300 g/mol.
    * </p>
    *
    * <p>
@@ -575,16 +551,16 @@ public class TBPfractionModel implements java.io.Serializable {
    * <b>Critical Temperature:</b>
    * </p>
    * <p>
-   * T<sub>c</sub> = (5/9) × 554.4 × exp(-1.3478×10<sup>-4</sup>·M - 0.61641·SG) ×
-   * M<sup>0.2998</sup> × SG<sup>1.0555</sup>
+   * T<sub>c</sub> = (5/9) × 554.4 × exp(-1.3478×10<sup>-4</sup>·M - 0.61641·SG) × M<sup>0.2998</sup> ×
+   * SG<sup>1.0555</sup>
    * </p>
    *
    * <p>
    * <b>Critical Pressure:</b>
    * </p>
    * <p>
-   * P<sub>c</sub> = 0.068947 × 4.5203×10<sup>4</sup> × exp(-1.8078×10<sup>-3</sup>·M - 0.3084·SG) ×
-   * M<sup>-0.8063</sup> × SG<sup>1.6015</sup>
+   * P<sub>c</sub> = 0.068947 × 4.5203×10<sup>4</sup> × exp(-1.8078×10<sup>-3</sup>·M - 0.3084·SG) × M<sup>-0.8063</sup>
+   * × SG<sup>1.6015</sup>
    * </p>
    *
    * <p>
@@ -607,14 +583,13 @@ public class TBPfractionModel implements java.io.Serializable {
    * <b>Notes:</b>
    * </p>
    * <p>
-   * The acentric factor is calculated using the Kesler-Lee correlation with switchover at
-   * T<sub>br</sub> = 0.8. The model does not calculate the EOS m-parameter directly (calcm =
-   * false).
+   * The acentric factor is calculated using the Kesler-Lee correlation with switchover at T<sub>br</sub> = 0.8. The
+   * model does not calculate the EOS m-parameter directly (calcm = false).
    * </p>
    *
    * <p>
-   * Reference: Riazi, M.R. and Daubert, T.E. (1980). "Simplify Property Predictions." Hydrocarbon
-   * Processing, 59(3), 115-116.
+   * Reference: Riazi, M.R. and Daubert, T.E. (1980). "Simplify Property Predictions." Hydrocarbon Processing, 59(3),
+   * 115-116.
    * </p>
    */
   public class RiaziDaubert extends PedersenTBPModelSRK {
@@ -630,40 +605,37 @@ public class TBPfractionModel implements java.io.Serializable {
     public double calcTC(double molarMass, double density) {
       // molarMass=molarMass*1e3;
       if (molarMass > 300) {
-        return super.calcTC(molarMass, density);
+	return super.calcTC(molarMass, density);
       }
-      return 5.0 / 9.0 * 554.4
-          * Math.exp(-1.3478e-4 * molarMass - 0.61641 * density + 0.0 * molarMass * density)
-          * Math.pow(molarMass, 0.2998) * Math.pow(density, 1.0555); // Math.pow(sig1, b) *
-                                                                     // Math.pow(sig2, c);
+      return 5.0 / 9.0 * 554.4 * Math.exp(-1.3478e-4 * molarMass - 0.61641 * density + 0.0 * molarMass * density)
+	  * Math.pow(molarMass, 0.2998) * Math.pow(density, 1.0555); // Math.pow(sig1, b) *
+								     // Math.pow(sig2, c);
     }
 
     /** {@inheritDoc} */
     @Override
     public double calcPC(double molarMass, double density) {
       if (molarMass > 300) {
-        return super.calcPC(molarMass, density);
+	return super.calcPC(molarMass, density);
       }
-      return 0.068947 * 4.5203e4
-          * Math.exp(-1.8078e-3 * molarMass + -0.3084 * density + 0.0 * molarMass * density)
-          * Math.pow(molarMass, -0.8063) * Math.pow(density, 1.6015); // Math.pow(sig1, b)
-                                                                      // * Math.pow(sig2,
-                                                                      // c);
+      return 0.068947 * 4.5203e4 * Math.exp(-1.8078e-3 * molarMass + -0.3084 * density + 0.0 * molarMass * density)
+	  * Math.pow(molarMass, -0.8063) * Math.pow(density, 1.6015); // Math.pow(sig1, b)
+								      // * Math.pow(sig2,
+								      // c);
     }
 
     public double calcAcentricFactor2(double molarMass, double density) {
       double TC = calcTC(molarMass, density);
       double TB = calcTB(molarMass, density);
       double PC = calcPC(molarMass, density);
-      return 3.0 / 7.0 * Math.log10(PC / ThermodynamicConstantsInterface.referencePressure)
-          / (TC / TB - 1.0) - 1.0;
+      return 3.0 / 7.0 * Math.log10(PC / ThermodynamicConstantsInterface.referencePressure) / (TC / TB - 1.0) - 1.0;
     }
 
     /** {@inheritDoc} */
     @Override
     public double calcTB(double molarMass, double density) {
       if (getBoilingPoint() > 0.0) {
-        return getBoilingPoint();
+	return getBoilingPoint();
       }
       return 97.58 * Math.pow(molarMass, 0.3323) * Math.pow(density, 0.04609);
     }
@@ -677,13 +649,11 @@ public class TBPfractionModel implements java.io.Serializable {
       double TBR = TB / TC;
       double PBR = ThermodynamicConstantsInterface.referencePressure / PC;
       if (TBR < 0.8) {
-        return (Math.log(PBR) - 5.92714 + 6.09649 / TBR + 1.28862 * Math.log(TBR)
-            - 0.169347 * Math.pow(TBR, 6.0))
-            / (15.2518 - 15.6875 / TBR - 13.4721 * Math.log(TBR) + 0.43577 * Math.pow(TBR, 6.0));
+	return (Math.log(PBR) - 5.92714 + 6.09649 / TBR + 1.28862 * Math.log(TBR) - 0.169347 * Math.pow(TBR, 6.0))
+	    / (15.2518 - 15.6875 / TBR - 13.4721 * Math.log(TBR) + 0.43577 * Math.pow(TBR, 6.0));
       } else {
-        double Kw = Math.pow(TB, 1.0 / 3.0) / density;
-        return -7.904 + 0.1352 * Kw - 0.007465 * Kw * Kw + 8.359 * TBR
-            + (1.408 - 0.01063 * Kw) / TBR;
+	double Kw = Math.pow(TB, 1.0 / 3.0) / density;
+	return -7.904 + 0.1352 * Kw - 0.007465 * Kw * Kw + 8.359 * TBR + (1.408 - 0.01063 * Kw) / TBR;
       }
     }
   }
@@ -692,9 +662,8 @@ public class TBPfractionModel implements java.io.Serializable {
    * Lee-Kesler property estimation method.
    *
    * <p>
-   * The Lee-Kesler (1976) correlations use boiling point and specific gravity as primary inputs to
-   * estimate critical properties. This model is particularly useful when Watson characterization
-   * factor data is available.
+   * The Lee-Kesler (1976) correlations use boiling point and specific gravity as primary inputs to estimate critical
+   * properties. This model is particularly useful when Watson characterization factor data is available.
    * </p>
    *
    * <p>
@@ -707,8 +676,8 @@ public class TBPfractionModel implements java.io.Serializable {
    * </ul>
    *
    * <p>
-   * Reference: Kesler, M.G. and Lee, B.I. (1976). "Improve Prediction of Enthalpy of Fractions."
-   * Hydrocarbon Processing, 55(3), 153-158.
+   * Reference: Kesler, M.G. and Lee, B.I. (1976). "Improve Prediction of Enthalpy of Fractions." Hydrocarbon
+   * Processing, 55(3), 153-158.
    * </p>
    */
   public class LeeKesler extends TBPBaseModel {
@@ -724,8 +693,7 @@ public class TBPfractionModel implements java.io.Serializable {
     public double calcTC(double molarMass, double density) {
       double sg = density;
       double TB = calcTB(molarMass, density);
-      double TC =
-          189.8 + 450.6 * sg + (0.4244 + 0.1174 * sg) * TB + (0.1441 - 1.0069 * sg) * 1e5 / TB;
+      double TC = 189.8 + 450.6 * sg + (0.4244 + 0.1174 * sg) * TB + (0.1441 - 1.0069 * sg) * 1e5 / TB;
       return TC;
     }
 
@@ -734,10 +702,9 @@ public class TBPfractionModel implements java.io.Serializable {
     public double calcPC(double molarMass, double density) {
       double sg = density;
       double TB = calcTB(molarMass, density);
-      double logpc =
-          3.3864 - 0.0566 / sg - ((0.43639 + 4.1216 / sg + 0.21343 / sg / sg) * 1e-3 * TB)
-              + ((0.47579 + 1.182 / sg + 0.15302 / sg / sg) * 1e-6 * TB * TB)
-              - ((2.4505 + 9.9099 / sg / sg) * 1e-10 * TB * TB * TB);
+      double logpc = 3.3864 - 0.0566 / sg - ((0.43639 + 4.1216 / sg + 0.21343 / sg / sg) * 1e-3 * TB)
+	  + ((0.47579 + 1.182 / sg + 0.15302 / sg / sg) * 1e-6 * TB * TB)
+	  - ((2.4505 + 9.9099 / sg / sg) * 1e-10 * TB * TB * TB);
       double PC = Math.exp(logpc) * 10;
       return PC;
     }
@@ -760,15 +727,13 @@ public class TBPfractionModel implements java.io.Serializable {
    * Twu (1984) property estimation method.
    *
    * <p>
-   * The Twu correlations use n-alkanes as reference compounds and apply perturbation corrections
-   * based on specific gravity differences. This approach is particularly accurate for paraffinic
-   * petroleum fractions and gas condensates.
+   * The Twu correlations use n-alkanes as reference compounds and apply perturbation corrections based on specific
+   * gravity differences. This approach is particularly accurate for paraffinic petroleum fractions and gas condensates.
    * </p>
    *
    * <p>
-   * The method first calculates properties for a hypothetical n-alkane with the same boiling point,
-   * then applies correction factors based on the difference between the actual specific gravity and
-   * that of the reference n-alkane.
+   * The method first calculates properties for a hypothetical n-alkane with the same boiling point, then applies
+   * correction factors based on the difference between the actual specific gravity and that of the reference n-alkane.
    * </p>
    *
    * <p>
@@ -782,9 +747,8 @@ public class TBPfractionModel implements java.io.Serializable {
    * </ul>
    *
    * <p>
-   * Reference: Twu, C.H. (1984). "An Internally Consistent Correlation for Predicting the Critical
-   * Properties and Molecular Weights of Petroleum and Coal-Tar Liquids." Fluid Phase Equilibria,
-   * 16, 137-150.
+   * Reference: Twu, C.H. (1984). "An Internally Consistent Correlation for Predicting the Critical Properties and
+   * Molecular Weights of Petroleum and Coal-Tar Liquids." Fluid Phase Equilibria, 16, 137-150.
    * </p>
    */
   public class TwuModel extends TBPBaseModel {
@@ -801,27 +765,24 @@ public class TBPfractionModel implements java.io.Serializable {
       double sg = density;
       double TB = calcTB(molarMass, density);
       double MW = solveMW(TB);
-      double Tcnalkane = TB * 1.0 / (0.533272 + 0.343831e-3 * TB + 2.526167e-7 * TB * TB
-          - 1.65848e-10 * TB * TB * TB + 4.60774e24 * Math.pow(TB, -13));
+      double Tcnalkane = TB * 1.0 / (0.533272 + 0.343831e-3 * TB + 2.526167e-7 * TB * TB - 1.65848e-10 * TB * TB * TB
+	  + 4.60774e24 * Math.pow(TB, -13));
       double phi = 1.0 - TB / Tcnalkane;
-      double SGalkane =
-          0.843593 - 0.128624 * phi - 3.36159 * Math.pow(phi, 3) - 13749 * Math.pow(phi, 12);
-      double PCnalkane = Math.pow(0.318317 + 0.099334 * Math.sqrt(phi) + 2.89698 * phi
-          + 3.0054 * phi * phi + 8.65163 * Math.pow(phi, 4), 2);
-      double VCnalkane = Math.pow(
-          (0.82055 + 0.715468 * phi + 2.21266 * phi * phi * phi + 13411.1 * Math.pow(phi, 14)), -8);
+      double SGalkane = 0.843593 - 0.128624 * phi - 3.36159 * Math.pow(phi, 3) - 13749 * Math.pow(phi, 12);
+      double PCnalkane = Math.pow(
+	  0.318317 + 0.099334 * Math.sqrt(phi) + 2.89698 * phi + 3.0054 * phi * phi + 8.65163 * Math.pow(phi, 4), 2);
+      double VCnalkane = Math.pow((0.82055 + 0.715468 * phi + 2.21266 * phi * phi * phi + 13411.1 * Math.pow(phi, 14)),
+	  -8);
       double deltaST = Math.exp(5.0 * (SGalkane - sg)) - 1.0;
-      double fT = deltaST * (-0.270159 * Math.pow(TB, -0.5)
-          + (0.0398285 - 0.706691 * Math.pow(TB, -0.5) * deltaST));
+      double fT = deltaST * (-0.270159 * Math.pow(TB, -0.5) + (0.0398285 - 0.706691 * Math.pow(TB, -0.5) * deltaST));
       double TC = Tcnalkane * Math.pow(((1 + 2 * fT) / (1 - 2 * fT)), 2);
       return TC;
     }
 
     public double calculateTfunc(double MW_alkane, double TB) {
       double phi = Math.log(MW_alkane);
-      return Math
-          .exp(5.1264 + 2.71579 * phi - 0.28659 * phi * phi - 39.8544 / phi - 0.122488 / phi / phi)
-          - 13.7512 * phi + 19.6197 * phi * phi - TB;
+      return Math.exp(5.1264 + 2.71579 * phi - 0.28659 * phi * phi - 39.8544 / phi - 0.122488 / phi / phi)
+	  - 13.7512 * phi + 19.6197 * phi * phi - TB;
     }
 
     public double computeGradient(double MW_alkane, double TB) {
@@ -839,11 +800,11 @@ public class TBPfractionModel implements java.io.Serializable {
       int iter = 0;
 
       do {
-        iter++;
-        prevMW_alkane = MW_alkane;
-        double gradient = computeGradient(MW_alkane, TB);
-        MW_alkane -= 0.5 * calculateTfunc(MW_alkane, TB) / gradient;
-        error = Math.abs(MW_alkane - prevMW_alkane);
+	iter++;
+	prevMW_alkane = MW_alkane;
+	double gradient = computeGradient(MW_alkane, TB);
+	MW_alkane -= 0.5 * calculateTfunc(MW_alkane, TB) / gradient;
+	error = Math.abs(MW_alkane - prevMW_alkane);
       } while (Math.abs(error) > tolerance && iter < 1000 || iter < 3);
 
       return MW_alkane;
@@ -855,28 +816,24 @@ public class TBPfractionModel implements java.io.Serializable {
       double sg = density;
       double TB = calcTB(molarMass, density);
       double MW = solveMW(TB);
-      double Tcnalkane = TB * 1.0 / (0.533272 + 0.343831e-3 * TB + 2.526167e-7 * TB * TB
-          - 1.65848e-10 * TB * TB * TB + 4.60774e24 * Math.pow(TB, -13));
+      double Tcnalkane = TB * 1.0 / (0.533272 + 0.343831e-3 * TB + 2.526167e-7 * TB * TB - 1.65848e-10 * TB * TB * TB
+	  + 4.60774e24 * Math.pow(TB, -13));
       double phi = 1.0 - TB / Tcnalkane;
-      double SGalkane =
-          0.843593 - 0.128624 * phi - 3.36159 * Math.pow(phi, 3) - 13749 * Math.pow(phi, 12);
-      double PCnalkane = Math.pow(0.318317 + 0.099334 * Math.sqrt(phi) + 2.89698 * phi
-          + 3.0054 * phi * phi + 8.65163 * Math.pow(phi, 4), 2);
-      double VCnalkane = Math.pow(
-          (0.82055 + 0.715468 * phi + 2.21266 * phi * phi * phi + 13411.1 * Math.pow(phi, 14)), -8);
+      double SGalkane = 0.843593 - 0.128624 * phi - 3.36159 * Math.pow(phi, 3) - 13749 * Math.pow(phi, 12);
+      double PCnalkane = Math.pow(
+	  0.318317 + 0.099334 * Math.sqrt(phi) + 2.89698 * phi + 3.0054 * phi * phi + 8.65163 * Math.pow(phi, 4), 2);
+      double VCnalkane = Math.pow((0.82055 + 0.715468 * phi + 2.21266 * phi * phi * phi + 13411.1 * Math.pow(phi, 14)),
+	  -8);
       double deltaST = Math.exp(5.0 * (SGalkane - sg)) - 1.0;
-      double fT = deltaST * (-0.270159 * Math.pow(TB, -0.5)
-          + (0.0398285 - 0.706691 * Math.pow(TB, -0.5) * deltaST));
+      double fT = deltaST * (-0.270159 * Math.pow(TB, -0.5) + (0.0398285 - 0.706691 * Math.pow(TB, -0.5) * deltaST));
       double TC = Tcnalkane * Math.pow(((1 + 2 * fT) / (1 - 2 * fT)), 2);
       double deltaSP = Math.exp(0.5 * (SGalkane - sg)) - 1.0;
       double deltaSV = Math.exp(4.0 * (SGalkane * SGalkane - sg * sg)) - 1.0;
-      double fV = deltaSV
-          * (0.347776 * Math.pow(TB, -0.5) + (-0.182421 + 2.24890 * Math.pow(TB, -0.5)) * deltaSV);
+      double fV = deltaSV * (0.347776 * Math.pow(TB, -0.5) + (-0.182421 + 2.24890 * Math.pow(TB, -0.5)) * deltaSV);
       double VC = VCnalkane * Math.pow(((1 + 2 * fV) / (1 - 2 * fV)), 2);
       double fP = deltaSP * ((2.53262 - 34.4321 * Math.pow(TB, -0.5) - 0.00230193 * TB)
-          + (-11.4277 + 187.934 * Math.pow(TB, -0.5) + 0.00414963 * TB) * deltaSP);
-      double PC = PCnalkane * (TC / Tcnalkane) * (VCnalkane / VC)
-          * Math.pow(((1 + 2 * fP) / (1 - 2 * fP)), 2);
+	  + (-11.4277 + 187.934 * Math.pow(TB, -0.5) + 0.00414963 * TB) * deltaSP);
+      double PC = PCnalkane * (TC / Tcnalkane) * (VCnalkane / VC) * Math.pow(((1 + 2 * fP) / (1 - 2 * fP)), 2);
       return PC * 10.0; // * 10 due to conversion MPa to bar
     }
 
@@ -886,28 +843,24 @@ public class TBPfractionModel implements java.io.Serializable {
       double sg = density;
       double TB = calcTB(molarMass, density);
       double MW = solveMW(TB);
-      double Tcnalkane = TB * 1.0 / (0.533272 + 0.343831e-3 * TB + 2.526167e-7 * TB * TB
-          - 1.65848e-10 * TB * TB * TB + 4.60774e24 * Math.pow(TB, -13));
+      double Tcnalkane = TB * 1.0 / (0.533272 + 0.343831e-3 * TB + 2.526167e-7 * TB * TB - 1.65848e-10 * TB * TB * TB
+	  + 4.60774e24 * Math.pow(TB, -13));
       double phi = 1.0 - TB / Tcnalkane;
-      double SGalkane =
-          0.843593 - 0.128624 * phi - 3.36159 * Math.pow(phi, 3) - 13749 * Math.pow(phi, 12);
-      double PCnalkane = Math.pow(0.318317 + 0.099334 * Math.sqrt(phi) + 2.89698 * phi
-          + 3.0054 * phi * phi + 8.65163 * Math.pow(phi, 4), 2);
-      double VCnalkane = Math.pow(
-          (0.82055 + 0.715468 * phi + 2.21266 * phi * phi * phi + 13411.1 * Math.pow(phi, 14)), -8);
+      double SGalkane = 0.843593 - 0.128624 * phi - 3.36159 * Math.pow(phi, 3) - 13749 * Math.pow(phi, 12);
+      double PCnalkane = Math.pow(
+	  0.318317 + 0.099334 * Math.sqrt(phi) + 2.89698 * phi + 3.0054 * phi * phi + 8.65163 * Math.pow(phi, 4), 2);
+      double VCnalkane = Math.pow((0.82055 + 0.715468 * phi + 2.21266 * phi * phi * phi + 13411.1 * Math.pow(phi, 14)),
+	  -8);
       double deltaST = Math.exp(5.0 * (SGalkane - sg)) - 1.0;
-      double fT = deltaST * (-0.270159 * Math.pow(TB, -0.5)
-          + (0.0398285 - 0.706691 * Math.pow(TB, -0.5) * deltaST));
+      double fT = deltaST * (-0.270159 * Math.pow(TB, -0.5) + (0.0398285 - 0.706691 * Math.pow(TB, -0.5) * deltaST));
       double TC = Tcnalkane * Math.pow(((1 + 2 * fT) / (1 - 2 * fT)), 2);
       double deltaSP = Math.exp(0.5 * (SGalkane - sg)) - 1.0;
       double deltaSV = Math.exp(4.0 * (SGalkane * SGalkane - sg * sg)) - 1.0;
-      double fV = deltaSV
-          * (0.347776 * Math.pow(TB, -0.5) + (-0.182421 + 2.24890 * Math.pow(TB, -0.5)) * deltaSV);
+      double fV = deltaSV * (0.347776 * Math.pow(TB, -0.5) + (-0.182421 + 2.24890 * Math.pow(TB, -0.5)) * deltaSV);
       double VC = VCnalkane * Math.pow(((1 + 2 * fV) / (1 - 2 * fV)), 2);
       double fP = deltaSP * ((2.53262 - 34.4321 * Math.pow(TB, -0.5) - 0.00230193 * TB)
-          + (-11.4277 + 187.934 * Math.pow(TB, -0.5) + 0.00414963 * TB) * deltaSP);
-      double PC = PCnalkane * (TC / Tcnalkane) * (VCnalkane / VC)
-          * Math.pow(((1 + 2 * fP) / (1 - 2 * fP)), 2);
+	  + (-11.4277 + 187.934 * Math.pow(TB, -0.5) + 0.00414963 * TB) * deltaSP);
+      double PC = PCnalkane * (TC / Tcnalkane) * (VCnalkane / VC) * Math.pow(((1 + 2 * fP) / (1 - 2 * fP)), 2);
       return VC * 1e3; // m3/mol
     }
 
@@ -923,10 +876,10 @@ public class TBPfractionModel implements java.io.Serializable {
    * Cavett (1962) property estimation method with Lee-Kesler enhancements.
    *
    * <p>
-   * This implementation combines the Cavett API gravity corrections with the more robust Lee-Kesler
-   * correlations for improved accuracy across a wider range of petroleum fractions. The original
-   * Cavett correlations are known to have issues with light fractions (C7-C10), so this hybrid
-   * approach uses Lee-Kesler as the base with API gravity adjustments.
+   * This implementation combines the Cavett API gravity corrections with the more robust Lee-Kesler correlations for
+   * improved accuracy across a wider range of petroleum fractions. The original Cavett correlations are known to have
+   * issues with light fractions (C7-C10), so this hybrid approach uses Lee-Kesler as the base with API gravity
+   * adjustments.
    * </p>
    *
    * <p>
@@ -964,8 +917,7 @@ public class TBPfractionModel implements java.io.Serializable {
    * <b>Acentric Factor (Edmister):</b>
    * </p>
    * <p>
-   * ω = (3/7) × log<sub>10</sub>(P<sub>c</sub>/P<sub>ref</sub>) / (T<sub>c</sub>/T<sub>b</sub> - 1)
-   * - 1
+   * ω = (3/7) × log<sub>10</sub>(P<sub>c</sub>/P<sub>ref</sub>) / (T<sub>c</sub>/T<sub>b</sub> - 1) - 1
    * </p>
    * <p>
    * Bounded to range [0.0, 1.5] for physical validity
@@ -993,8 +945,8 @@ public class TBPfractionModel implements java.io.Serializable {
    * </ul>
    *
    * <p>
-   * Reference: Cavett, R.H. (1962). "Physical Data for Distillation Calculations, Vapor-Liquid
-   * Equilibria." Proc. 27th API Meeting, San Francisco.
+   * Reference: Cavett, R.H. (1962). "Physical Data for Distillation Calculations, Vapor-Liquid Equilibria." Proc. 27th
+   * API Meeting, San Francisco.
    * </p>
    */
   public class CavettModel extends TBPBaseModel {
@@ -1019,13 +971,13 @@ public class TBPfractionModel implements java.io.Serializable {
      * Calculate boiling point using Riazi-Daubert correlation.
      *
      * @param molarMass molar mass in g/mol
-     * @param density specific gravity (g/cm³)
+     * @param density   specific gravity (g/cm³)
      * @return boiling point in Kelvin
      */
     @Override
     public double calcTB(double molarMass, double density) {
       if (getBoilingPoint() > 0.0) {
-        return getBoilingPoint();
+	return getBoilingPoint();
       }
       // Riazi-Daubert boiling point correlation: Tb = 97.58 * M^0.3323 * SG^0.04609
       return 97.58 * Math.pow(molarMass, 0.3323) * Math.pow(density, 0.04609);
@@ -1035,7 +987,7 @@ public class TBPfractionModel implements java.io.Serializable {
      * Calculate critical temperature using Lee-Kesler correlation with API correction.
      *
      * @param molarMass molar mass in g/mol
-     * @param density specific gravity (g/cm³)
+     * @param density   specific gravity (g/cm³)
      * @return critical temperature in Kelvin
      */
     @Override
@@ -1045,14 +997,13 @@ public class TBPfractionModel implements java.io.Serializable {
       double API = calcAPI(density);
 
       // Lee-Kesler base correlation
-      double TC_base =
-          189.8 + 450.6 * sg + (0.4244 + 0.1174 * sg) * TB + (0.1441 - 1.0069 * sg) * 1e5 / TB;
+      double TC_base = 189.8 + 450.6 * sg + (0.4244 + 0.1174 * sg) * TB + (0.1441 - 1.0069 * sg) * 1e5 / TB;
 
       // Apply Cavett-style API correction for heavy fractions (API < 30)
       // Light fractions (API > 30) use pure Lee-Kesler
       if (API < 30) {
-        double apiCorrection = 1.0 + 0.002 * (30 - API);
-        TC_base = TC_base * apiCorrection;
+	double apiCorrection = 1.0 + 0.002 * (30 - API);
+	TC_base = TC_base * apiCorrection;
       }
       return TC_base;
     }
@@ -1061,7 +1012,7 @@ public class TBPfractionModel implements java.io.Serializable {
      * Calculate critical pressure using Lee-Kesler correlation with API correction.
      *
      * @param molarMass molar mass in g/mol
-     * @param density specific gravity (g/cm³)
+     * @param density   specific gravity (g/cm³)
      * @return critical pressure in bar
      */
     @Override
@@ -1071,16 +1022,15 @@ public class TBPfractionModel implements java.io.Serializable {
       double API = calcAPI(density);
 
       // Lee-Kesler base correlation
-      double logpc =
-          3.3864 - 0.0566 / sg - ((0.43639 + 4.1216 / sg + 0.21343 / sg / sg) * 1e-3 * TB)
-              + ((0.47579 + 1.182 / sg + 0.15302 / sg / sg) * 1e-6 * TB * TB)
-              - ((2.4505 + 9.9099 / sg / sg) * 1e-10 * TB * TB * TB);
+      double logpc = 3.3864 - 0.0566 / sg - ((0.43639 + 4.1216 / sg + 0.21343 / sg / sg) * 1e-3 * TB)
+	  + ((0.47579 + 1.182 / sg + 0.15302 / sg / sg) * 1e-6 * TB * TB)
+	  - ((2.4505 + 9.9099 / sg / sg) * 1e-10 * TB * TB * TB);
       double PC_base = Math.exp(logpc) * 10; // Result in bar
 
       // Apply Cavett-style API correction for heavy fractions
       if (API < 30) {
-        double apiCorrection = 1.0 + 0.001 * (30 - API);
-        PC_base = PC_base * apiCorrection;
+	double apiCorrection = 1.0 + 0.001 * (30 - API);
+	PC_base = PC_base * apiCorrection;
       }
       return PC_base;
     }
@@ -1089,7 +1039,7 @@ public class TBPfractionModel implements java.io.Serializable {
      * Calculate acentric factor using Edmister correlation.
      *
      * @param molarMass molar mass in g/mol
-     * @param density specific gravity (g/cm³)
+     * @param density   specific gravity (g/cm³)
      * @return acentric factor (dimensionless)
      */
     @Override
@@ -1101,18 +1051,17 @@ public class TBPfractionModel implements java.io.Serializable {
       // Edmister correlation: ω = (3/7) * log10(Pc/1.01325) / (Tc/Tb - 1) - 1
       double TBR = TB / TC;
       if (TBR >= 1.0) {
-        return super.calcAcentricFactorKeslerLee(molarMass, density);
+	return super.calcAcentricFactorKeslerLee(molarMass, density);
       }
 
-      double omega =
-          (3.0 / 7.0) * Math.log10(PC / ThermodynamicConstantsInterface.referencePressure)
-              / (TC / TB - 1.0) - 1.0;
+      double omega = (3.0 / 7.0) * Math.log10(PC / ThermodynamicConstantsInterface.referencePressure) / (TC / TB - 1.0)
+	  - 1.0;
 
       // Bounds check
       if (omega < 0.0) {
-        omega = 0.0;
+	omega = 0.0;
       } else if (omega > 1.5) {
-        omega = 1.5;
+	omega = 1.5;
       }
       return omega;
     }
@@ -1129,10 +1078,9 @@ public class TBPfractionModel implements java.io.Serializable {
    * Standing (1977) property estimation method.
    *
    * <p>
-   * This implementation uses Riazi-Daubert style correlations for robust critical property
-   * estimation. While named after Standing's pioneering reservoir engineering work, the actual
-   * correlations follow the Riazi-Daubert exponential-power law form for better numerical stability
-   * and wider applicability.
+   * This implementation uses Riazi-Daubert style correlations for robust critical property estimation. While named
+   * after Standing's pioneering reservoir engineering work, the actual correlations follow the Riazi-Daubert
+   * exponential-power law form for better numerical stability and wider applicability.
    * </p>
    *
    * <p>
@@ -1142,16 +1090,16 @@ public class TBPfractionModel implements java.io.Serializable {
    * <b>Critical Temperature:</b>
    * </p>
    * <p>
-   * T<sub>c</sub> = (5/9) × 554.4 × exp(-1.3478×10<sup>-4</sup>·M - 0.61641·SG) ×
-   * M<sup>0.2998</sup> × SG<sup>1.0555</sup>
+   * T<sub>c</sub> = (5/9) × 554.4 × exp(-1.3478×10<sup>-4</sup>·M - 0.61641·SG) × M<sup>0.2998</sup> ×
+   * SG<sup>1.0555</sup>
    * </p>
    *
    * <p>
    * <b>Critical Pressure:</b>
    * </p>
    * <p>
-   * P<sub>c</sub> = 0.068947 × 4.5203×10<sup>4</sup> × exp(-1.8078×10<sup>-3</sup>·M - 0.3084·SG) ×
-   * M<sup>-0.8063</sup> × SG<sup>1.6015</sup>
+   * P<sub>c</sub> = 0.068947 × 4.5203×10<sup>4</sup> × exp(-1.8078×10<sup>-3</sup>·M - 0.3084·SG) × M<sup>-0.8063</sup>
+   * × SG<sup>1.6015</sup>
    * </p>
    *
    * <p>
@@ -1168,9 +1116,9 @@ public class TBPfractionModel implements java.io.Serializable {
    * <b>Acentric Factor:</b>
    * </p>
    * <p>
-   * Uses the Kesler-Lee correlation for acentric factor estimation, which provides good results
-   * across a wide range of petroleum fractions. The correlation switches between two forms based on
-   * reduced boiling point (T<sub>br</sub> = T<sub>b</sub>/T<sub>c</sub>):
+   * Uses the Kesler-Lee correlation for acentric factor estimation, which provides good results across a wide range of
+   * petroleum fractions. The correlation switches between two forms based on reduced boiling point (T<sub>br</sub> =
+   * T<sub>b</sub>/T<sub>c</sub>):
    * </p>
    * <ul>
    * <li>T<sub>br</sub> &lt; 0.8: Vapor pressure correlation form</li>
@@ -1178,8 +1126,7 @@ public class TBPfractionModel implements java.io.Serializable {
    * </ul>
    *
    * <p>
-   * Reference: Standing, M.B. (1977). "Volumetric and Phase Behavior of Oil Field Hydrocarbon
-   * Systems." SPE, Dallas.
+   * Reference: Standing, M.B. (1977). "Volumetric and Phase Behavior of Oil Field Hydrocarbon Systems." SPE, Dallas.
    * </p>
    */
   public class StandingModel extends TBPBaseModel {
@@ -1198,7 +1145,7 @@ public class TBPfractionModel implements java.io.Serializable {
       // Note: molarMass is passed in g/mol from SystemThermo
       // Uses same formula as RiaziDaubert for consistency
       double TC_K = 5.0 / 9.0 * 554.4 * Math.exp(-1.3478e-4 * molarMass - 0.61641 * density)
-          * Math.pow(molarMass, 0.2998) * Math.pow(density, 1.0555);
+	  * Math.pow(molarMass, 0.2998) * Math.pow(density, 1.0555);
       return TC_K;
     }
 
@@ -1208,8 +1155,8 @@ public class TBPfractionModel implements java.io.Serializable {
       // Standing-type correlation using Riazi-Daubert form for robustness
       // Pc = a * exp(b*M + c*SG) * M^d * SG^e (result in bar)
       // Note: molarMass is passed in g/mol from SystemThermo
-      double PC_bar = 4.5203e4 * Math.exp(-1.8078e-3 * molarMass - 0.3084 * density)
-          * Math.pow(molarMass, -0.8063) * Math.pow(density, 1.6015);
+      double PC_bar = 4.5203e4 * Math.exp(-1.8078e-3 * molarMass - 0.3084 * density) * Math.pow(molarMass, -0.8063)
+	  * Math.pow(density, 1.6015);
       return PC_bar * 0.068947; // Convert to bar (same as RiaziDaubert)
     }
 
@@ -1232,8 +1179,8 @@ public class TBPfractionModel implements java.io.Serializable {
    * Calculate API gravity from specific gravity.
    *
    * <p>
-   * API gravity is a measure of how heavy or light a petroleum liquid is compared to water. API
-   * gravity greater than 10 means the liquid is lighter than water and will float.
+   * API gravity is a measure of how heavy or light a petroleum liquid is compared to water. API gravity greater than 10
+   * means the liquid is lighter than water and will float.
    * </p>
    *
    * @param specificGravity specific gravity relative to water (g/cm³)
@@ -1267,15 +1214,15 @@ public class TBPfractionModel implements java.io.Serializable {
    * </ul>
    *
    * @param molarMass molar mass in kg/mol
-   * @param density density in g/cm³ (specific gravity)
+   * @param density   density in g/cm³ (specific gravity)
    * @return Watson characterization factor (dimensionless)
    */
   public double calcWatsonKFactor(double molarMass, double density) {
     // Estimate boiling point using Pedersen correlation
     double TB;
     if (molarMass < 0.540) {
-      TB = 2E-06 * Math.pow(molarMass * 1000, 3) - 0.0035 * Math.pow(molarMass * 1000, 2)
-          + 2.4003 * molarMass * 1000 + 171.74;
+      TB = 2E-06 * Math.pow(molarMass * 1000, 3) - 0.0035 * Math.pow(molarMass * 1000, 2) + 2.4003 * molarMass * 1000
+	  + 171.74;
     } else {
       TB = 97.58 * Math.pow(molarMass * 1000, 0.3323) * Math.pow(density, 0.04609);
     }
@@ -1286,8 +1233,8 @@ public class TBPfractionModel implements java.io.Serializable {
    * Recommend the most appropriate TBP model based on fluid properties and EOS type.
    *
    * <p>
-   * This method analyzes the plus fraction properties (molecular weight, density, Watson K-factor)
-   * and recommends the most suitable TBP correlation model. The recommendation considers:
+   * This method analyzes the plus fraction properties (molecular weight, density, Watson K-factor) and recommends the
+   * most suitable TBP correlation model. The recommendation considers:
    * </p>
    * <ul>
    * <li>Fluid type (paraffinic, naphthenic, aromatic)</li>
@@ -1295,9 +1242,9 @@ public class TBPfractionModel implements java.io.Serializable {
    * <li>Equation of state being used (SRK vs PR)</li>
    * </ul>
    *
-   * @param avgMW average molecular weight of plus fraction in kg/mol
+   * @param avgMW      average molecular weight of plus fraction in kg/mol
    * @param avgDensity average density/specific gravity in g/cm³
-   * @param eosType equation of state type: "SRK" or "PR"
+   * @param eosType    equation of state type: "SRK" or "PR"
    * @return recommended model name as a String
    */
   public String recommendTBPModel(double avgMW, double avgDensity, String eosType) {
@@ -1307,11 +1254,11 @@ public class TBPfractionModel implements java.io.Serializable {
     // Heavy oil check (MW > 500 g/mol)
     if (M_gmol > 500) {
       if (eosType.equalsIgnoreCase("PR")) {
-        logger.info("Recommending PedersenPRHeavyOil for heavy fluid (MW=" + M_gmol + " g/mol)");
-        return "PedersenPRHeavyOil";
+	logger.info("Recommending PedersenPRHeavyOil for heavy fluid (MW=" + M_gmol + " g/mol)");
+	return "PedersenPRHeavyOil";
       } else {
-        logger.info("Recommending PedersenSRKHeavyOil for heavy fluid (MW=" + M_gmol + " g/mol)");
-        return "PedersenSRKHeavyOil";
+	logger.info("Recommending PedersenSRKHeavyOil for heavy fluid (MW=" + M_gmol + " g/mol)");
+	return "PedersenSRKHeavyOil";
       }
     }
 
@@ -1319,13 +1266,13 @@ public class TBPfractionModel implements java.io.Serializable {
     if (M_gmol < 300) {
       // Highly paraffinic - Twu model is best
       if (Kw > 12.0) {
-        logger.info("Recommending Twu for paraffinic fluid (Kw=" + Kw + ")");
-        return "Twu";
+	logger.info("Recommending Twu for paraffinic fluid (Kw=" + Kw + ")");
+	return "Twu";
       }
       // Naphthenic/aromatic - Riazi-Daubert
       if (Kw < 11.0) {
-        logger.info("Recommending RiaziDaubert for naphthenic/aromatic fluid (Kw=" + Kw + ")");
-        return "RiaziDaubert";
+	logger.info("Recommending RiaziDaubert for naphthenic/aromatic fluid (Kw=" + Kw + ")");
+	return "RiaziDaubert";
       }
     }
 
@@ -1345,8 +1292,8 @@ public class TBPfractionModel implements java.io.Serializable {
    * @return array of available model names
    */
   public static String[] getAvailableModels() {
-    return new String[] {"PedersenSRK", "PedersenSRKHeavyOil", "PedersenPR", "PedersenPR2",
-        "PedersenPRHeavyOil", "RiaziDaubert", "Lee-Kesler", "Twu", "Cavett", "Standing"};
+    return new String[] { "PedersenSRK", "PedersenSRKHeavyOil", "PedersenPR", "PedersenPR2", "PedersenPRHeavyOil",
+	"RiaziDaubert", "Lee-Kesler", "Twu", "Cavett", "Standing" };
   }
 
   /**

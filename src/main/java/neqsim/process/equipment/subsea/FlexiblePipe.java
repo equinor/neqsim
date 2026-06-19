@@ -10,8 +10,8 @@ import neqsim.thermo.system.SystemInterface;
  * Flexible Pipe equipment class.
  *
  * <p>
- * A flexible pipe is an assembly of concentric layers of polymers and metal wires that provides
- * flexibility while maintaining pressure containment. Used for:
+ * A flexible pipe is an assembly of concentric layers of polymers and metal wires that provides flexibility while
+ * maintaining pressure containment. Used for:
  * </p>
  * <ul>
  * <li>Dynamic risers (floating production systems)</li>
@@ -341,7 +341,7 @@ public class FlexiblePipe extends TwoPortEquipment {
   /**
    * Constructor with name and inlet stream.
    *
-   * @param name equipment name
+   * @param name     equipment name
    * @param inStream inlet stream
    */
   public FlexiblePipe(String name, StreamInterface inStream) {
@@ -351,8 +351,8 @@ public class FlexiblePipe extends TwoPortEquipment {
   /**
    * Create dynamic riser configuration.
    *
-   * @param name riser name
-   * @param inStream inlet stream
+   * @param name          riser name
+   * @param inStream      inlet stream
    * @param configuration riser configuration
    * @return configured flexible pipe
    */
@@ -368,13 +368,12 @@ public class FlexiblePipe extends TwoPortEquipment {
   /**
    * Create static flowline.
    *
-   * @param name flowline name
-   * @param inStream inlet stream
+   * @param name         flowline name
+   * @param inStream     inlet stream
    * @param lengthMeters length in meters
    * @return configured flexible pipe
    */
-  public static FlexiblePipe createStaticFlowline(String name, StreamInterface inStream,
-      double lengthMeters) {
+  public static FlexiblePipe createStaticFlowline(String name, StreamInterface inStream, double lengthMeters) {
     FlexiblePipe flowline = new FlexiblePipe(name, inStream);
     flowline.setApplication(Application.FLOWLINE);
     flowline.setLength(lengthMeters);
@@ -436,25 +435,24 @@ public class FlexiblePipe extends TwoPortEquipment {
       // Friction factor using Colebrook-White (simplified)
       double frictionFactor;
       if (reynolds < 2300) {
-        frictionFactor = 64 / reynolds;
+	frictionFactor = 64 / reynolds;
       } else {
-        // Explicit approximation of Colebrook-White
-        double A = (roughness / innerDiameter) / 3.7 + 5.74 / Math.pow(reynolds, 0.9);
-        frictionFactor = 0.25 / Math.pow(Math.log10(A), 2);
+	// Explicit approximation of Colebrook-White
+	double A = (roughness / innerDiameter) / 3.7 + 5.74 / Math.pow(reynolds, 0.9);
+	frictionFactor = 0.25 / Math.pow(Math.log10(A), 2);
       }
 
       // Darcy-Weisbach pressure drop
-      frictionDrop =
-          frictionFactor * (length / innerDiameter) * (density * velocity * velocity / 2) / 100000; // Convert
-                                                                                                    // Pa
-                                                                                                    // to
-                                                                                                    // bar
+      frictionDrop = frictionFactor * (length / innerDiameter) * (density * velocity * velocity / 2) / 100000; // Convert
+													       // Pa
+													       // to
+													       // bar
 
       // Add elevation change for risers
       if (application == Application.DYNAMIC_RISER || application == Application.STATIC_RISER) {
-        // Approximate hydrostatic component
-        double elevationDrop = density * 9.81 * waterDepth / 100000; // bar
-        frictionDrop += elevationDrop;
+	// Approximate hydrostatic component
+	double elevationDrop = density * 9.81 * waterDepth / 100000; // bar
+	frictionDrop += elevationDrop;
       }
 
       // End fitting losses
@@ -475,11 +473,11 @@ public class FlexiblePipe extends TwoPortEquipment {
     if (sourService || h2sContentPercent > 0.05) {
       // Carcass must be suitable
       if (!"316L".equals(carcassMaterial) && !"Duplex".equals(carcassMaterial)) {
-        return false;
+	return false;
       }
       // Internal sheath must be suitable
       if (!"PVDF".equals(internalSheathMaterial) && !"PA11".equals(internalSheathMaterial)) {
-        return false;
+	return false;
       }
     }
     return true;

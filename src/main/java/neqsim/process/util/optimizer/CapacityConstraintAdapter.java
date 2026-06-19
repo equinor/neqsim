@@ -4,20 +4,17 @@ import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
- * Adapts equipment-level {@link CapacityConstraint} instances to the unified
- * {@link ProcessConstraint} interface.
+ * Adapts equipment-level {@link CapacityConstraint} instances to the unified {@link ProcessConstraint} interface.
  *
  * <p>
- * This adapter bridges the equipment capacity layer with the optimization constraint layer,
- * allowing equipment-level physical limits (compressor surge, separator flooding, pipe velocity,
- * etc.) to be consumed by any optimizer — both internal NeqSim optimizers and external solvers such
- * as SciPy, NLopt, or Pyomo.
+ * This adapter bridges the equipment capacity layer with the optimization constraint layer, allowing equipment-level
+ * physical limits (compressor surge, separator flooding, pipe velocity, etc.) to be consumed by any optimizer — both
+ * internal NeqSim optimizers and external solvers such as SciPy, NLopt, or Pyomo.
  * </p>
  *
  * <p>
- * <strong>Margin convention:</strong> A positive margin means the constraint is satisfied (within
- * capacity). Specifically, margin = 1.0 - utilization, where utilization is currentValue /
- * designValue.
+ * <strong>Margin convention:</strong> A positive margin means the constraint is satisfied (within capacity).
+ * Specifically, margin = 1.0 - utilization, where utilization is currentValue / designValue.
  * </p>
  *
  * <p>
@@ -57,7 +54,7 @@ public class CapacityConstraintAdapter implements ProcessConstraint {
    * Creates an adapter wrapping the given capacity constraint.
    *
    * @param qualifiedName qualified name for this constraint (e.g., "Compressor1/speed")
-   * @param delegate the equipment capacity constraint to wrap
+   * @param delegate      the equipment capacity constraint to wrap
    * @throws IllegalArgumentException if qualifiedName or delegate is null
    */
   public CapacityConstraintAdapter(String qualifiedName, CapacityConstraint delegate) {
@@ -75,12 +72,11 @@ public class CapacityConstraintAdapter implements ProcessConstraint {
    * Creates an adapter with a custom penalty weight.
    *
    * @param qualifiedName qualified name for this constraint
-   * @param delegate the equipment capacity constraint to wrap
+   * @param delegate      the equipment capacity constraint to wrap
    * @param penaltyWeight custom penalty weight (must be non-negative)
    * @throws IllegalArgumentException if arguments are invalid
    */
-  public CapacityConstraintAdapter(String qualifiedName, CapacityConstraint delegate,
-      double penaltyWeight) {
+  public CapacityConstraintAdapter(String qualifiedName, CapacityConstraint delegate, double penaltyWeight) {
     this(qualifiedName, delegate);
     if (penaltyWeight < 0) {
       throw new IllegalArgumentException("penaltyWeight must be non-negative");
@@ -104,13 +100,12 @@ public class CapacityConstraintAdapter implements ProcessConstraint {
    * {@inheritDoc}
    *
    * <p>
-   * Margin is computed as {@code 1.0 - utilization}, where utilization is the equipment's current
-   * operating point relative to its design value. A value of 0.2 means 20% headroom remains.
+   * Margin is computed as {@code 1.0 - utilization}, where utilization is the equipment's current operating point
+   * relative to its design value. A value of 0.2 means 20% headroom remains.
    * </p>
    *
-   * @param process the process system (not used for value lookup, since the underlying
-   *        {@link CapacityConstraint} has its own value supplier; the process must have been run so
-   *        equipment state is current)
+   * @param process the process system (not used for value lookup, since the underlying {@link CapacityConstraint} has
+   *                its own value supplier; the process must have been run so equipment state is current)
    * @return margin (positive = satisfied, negative = violated)
    */
   @Override
@@ -122,8 +117,7 @@ public class CapacityConstraintAdapter implements ProcessConstraint {
    * {@inheritDoc}
    *
    * <p>
-   * Maps from the 4-level {@link CapacityConstraint.ConstraintSeverity} to the unified
-   * {@link ConstraintSeverityLevel}.
+   * Maps from the 4-level {@link CapacityConstraint.ConstraintSeverity} to the unified {@link ConstraintSeverityLevel}.
    * </p>
    */
   @Override

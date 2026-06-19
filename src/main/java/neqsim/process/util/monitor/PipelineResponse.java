@@ -25,30 +25,30 @@ public class PipelineResponse extends BaseResponse {
   public PipelineResponse(Pipeline pipeline) {
     super(pipeline);
     if (pipeline.getInletStream() != null) {
-      data.put("inlet mass flow", new Value(
-          Double.toString(
-              pipeline.getInletStream().getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
-          neqsim.util.unit.Units.getSymbol("mass flow")));
+      data.put("inlet mass flow",
+	  new Value(
+	      Double.toString(pipeline.getInletStream().getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
+	      neqsim.util.unit.Units.getSymbol("mass flow")));
       data.put("inlet temperature",
-          new Value(
-              Double.toString(pipeline.getInletStream()
-                  .getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
-              neqsim.util.unit.Units.getSymbol("temperature")));
-      data.put("inlet pressure", new Value(
-          Double.toString(
-              pipeline.getInletStream().getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
-          neqsim.util.unit.Units.getSymbol("pressure")));
+	  new Value(
+	      Double
+		  .toString(pipeline.getInletStream().getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
+	      neqsim.util.unit.Units.getSymbol("temperature")));
+      data.put("inlet pressure",
+	  new Value(
+	      Double.toString(pipeline.getInletStream().getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
+	      neqsim.util.unit.Units.getSymbol("pressure")));
     }
     if (pipeline.getOutletStream() != null) {
       data.put("outlet temperature",
-          new Value(
-              Double.toString(pipeline.getOutletStream()
-                  .getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
-              neqsim.util.unit.Units.getSymbol("temperature")));
-      data.put("outlet pressure", new Value(
-          Double.toString(
-              pipeline.getOutletStream().getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
-          neqsim.util.unit.Units.getSymbol("pressure")));
+	  new Value(
+	      Double
+		  .toString(pipeline.getOutletStream().getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
+	      neqsim.util.unit.Units.getSymbol("temperature")));
+      data.put("outlet pressure",
+	  new Value(
+	      Double.toString(pipeline.getOutletStream().getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
+	      neqsim.util.unit.Units.getSymbol("pressure")));
     }
   }
 }

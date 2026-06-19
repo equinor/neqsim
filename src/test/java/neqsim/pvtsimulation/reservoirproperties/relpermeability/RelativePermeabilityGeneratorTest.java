@@ -274,10 +274,9 @@ class RelativePermeabilityGeneratorTest {
     double[] krow = table.get("Krow");
 
     for (int i = 0; i < krw.length; i++) {
-      assertTrue(krw[i] >= 0.0 && krw[i] <= 0.3 + 1e-10,
-          "Krw should be in [0, KrwMax] at index " + i + ": " + krw[i]);
+      assertTrue(krw[i] >= 0.0 && krw[i] <= 0.3 + 1e-10, "Krw should be in [0, KrwMax] at index " + i + ": " + krw[i]);
       assertTrue(krow[i] >= 0.0 && krow[i] <= 0.8 + 1e-10,
-          "Krow should be in [0, KroMax] at index " + i + ": " + krow[i]);
+	  "Krow should be in [0, KroMax] at index " + i + ": " + krow[i]);
     }
   }
 
@@ -301,8 +300,7 @@ class RelativePermeabilityGeneratorTest {
     // Krw should be zero (or near zero) until Sw reaches Swcr
     for (int i = 0; i < sw.length; i++) {
       if (sw[i] < 0.19) {
-        assertTrue(krw[i] < 0.02,
-            "Krw should be near zero below Swcr at Sw=" + sw[i] + ": " + krw[i]);
+	assertTrue(krw[i] < 0.02, "Krw should be near zero below Swcr at Sw=" + sw[i] + ": " + krw[i]);
       }
     }
   }

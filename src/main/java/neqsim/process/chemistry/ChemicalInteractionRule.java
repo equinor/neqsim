@@ -16,9 +16,8 @@ import java.util.Map;
  *
  * <p>
  * Rules are loaded from {@code src/main/resources/data/chemical_compatibility_rules.csv} via
- * {@link #loadDefaultRules()}. Each rule has two operands and an interaction context, plus a
- * severity classification and a recommended mitigation. Wildcards ({@code *}) match any value for
- * an operand field.
+ * {@link #loadDefaultRules()}. Each rule has two operands and an interaction context, plus a severity classification
+ * and a recommended mitigation. Wildcards ({@code *}) match any value for an operand field.
  * </p>
  *
  * <p>
@@ -69,19 +68,18 @@ public class ChemicalInteractionRule implements Serializable {
   /**
    * Constructs a rule.
    *
-   * @param chemical1Type type of operand 1 (or wildcard {@code *})
+   * @param chemical1Type       type of operand 1 (or wildcard {@code *})
    * @param chemical1Ingredient ingredient family of operand 1 (or wildcard)
-   * @param chemical2Type type of operand 2 (or wildcard)
+   * @param chemical2Type       type of operand 2 (or wildcard)
    * @param chemical2Ingredient ingredient family of operand 2 (or wildcard)
-   * @param condition free-text condition tag (e.g. {@code co_injection}, {@code produced_water},
-   *        {@code operating})
-   * @param severity severity classification
-   * @param mechanism description of the underlying mechanism
-   * @param mitigation recommended mitigation
+   * @param condition           free-text condition tag (e.g. {@code co_injection}, {@code produced_water},
+   *                            {@code operating})
+   * @param severity            severity classification
+   * @param mechanism           description of the underlying mechanism
+   * @param mitigation          recommended mitigation
    */
-  public ChemicalInteractionRule(String chemical1Type, String chemical1Ingredient,
-      String chemical2Type, String chemical2Ingredient, String condition, Severity severity,
-      String mechanism, String mitigation) {
+  public ChemicalInteractionRule(String chemical1Type, String chemical1Ingredient, String chemical2Type,
+      String chemical2Ingredient, String condition, Severity severity, String mechanism, String mitigation) {
     this.chemical1Type = chemical1Type;
     this.chemical1Ingredient = chemical1Ingredient;
     this.chemical2Type = chemical2Type;
@@ -115,35 +113,34 @@ public class ChemicalInteractionRule implements Serializable {
     if (stream == null) {
       return rules;
     }
-    BufferedReader reader =
-        new BufferedReader(new InputStreamReader(stream, Charset.forName("UTF-8")));
+    BufferedReader reader = new BufferedReader(new InputStreamReader(stream, Charset.forName("UTF-8")));
     try {
       String line = reader.readLine(); // header
       while ((line = reader.readLine()) != null) {
-        line = line.trim();
-        if (line.isEmpty() || line.startsWith("#")) {
-          continue;
-        }
-        String[] parts = line.split(",", -1);
-        if (parts.length < 8) {
-          continue;
-        }
-        Severity severity;
-        try {
-          severity = Severity.valueOf(parts[5].trim().toUpperCase());
-        } catch (IllegalArgumentException ex) {
-          severity = Severity.INFO;
-        }
-        rules.add(new ChemicalInteractionRule(parts[0].trim(), parts[1].trim(), parts[2].trim(),
-            parts[3].trim(), parts[4].trim(), severity, parts[6].trim(), parts[7].trim()));
+	line = line.trim();
+	if (line.isEmpty() || line.startsWith("#")) {
+	  continue;
+	}
+	String[] parts = line.split(",", -1);
+	if (parts.length < 8) {
+	  continue;
+	}
+	Severity severity;
+	try {
+	  severity = Severity.valueOf(parts[5].trim().toUpperCase());
+	} catch (IllegalArgumentException ex) {
+	  severity = Severity.INFO;
+	}
+	rules.add(new ChemicalInteractionRule(parts[0].trim(), parts[1].trim(), parts[2].trim(), parts[3].trim(),
+	    parts[4].trim(), severity, parts[6].trim(), parts[7].trim()));
       }
     } catch (IOException ex) {
       // log and continue with what we have
     } finally {
       try {
-        reader.close();
+	reader.close();
       } catch (IOException ignored) {
-        // ignored
+	// ignored
       }
     }
     return rules;
@@ -152,8 +149,8 @@ public class ChemicalInteractionRule implements Serializable {
   // ─── Matching ───────────────────────────────────────────
 
   /**
-   * Tests whether this rule matches the ordered pair of chemicals (a, b). Matching is symmetric:
-   * the rule matches if (a, b) or (b, a) satisfy the operand constraints.
+   * Tests whether this rule matches the ordered pair of chemicals (a, b). Matching is symmetric: the rule matches if
+   * (a, b) or (b, a) satisfy the operand constraints.
    *
    * @param a first chemical
    * @param b second chemical (may be null for unary rules)
@@ -164,36 +161,34 @@ public class ChemicalInteractionRule implements Serializable {
       return matchOperand(chemical1Type, chemical1Ingredient, a);
     }
     boolean forward = matchOperand(chemical1Type, chemical1Ingredient, a)
-        && matchOperand(chemical2Type, chemical2Ingredient, b);
+	&& matchOperand(chemical2Type, chemical2Ingredient, b);
     boolean reverse = matchOperand(chemical1Type, chemical1Ingredient, b)
-        && matchOperand(chemical2Type, chemical2Ingredient, a);
+	&& matchOperand(chemical2Type, chemical2Ingredient, a);
     return forward || reverse;
   }
 
   /**
-   * Tests whether the rule's second operand encodes a fluid / operating condition (rather than a
-   * chemical type), and the condition is satisfied. Recognised tags include {@code water_high_*}
-   * and {@code material_*}.
+   * Tests whether the rule's second operand encodes a fluid / operating condition (rather than a chemical type), and
+   * the condition is satisfied. Recognised tags include {@code water_high_*} and {@code material_*}.
    *
    * @return true if operand 2 is an environment tag
    */
   public boolean isEnvironmentRule() {
-    return chemical2Type != null
-        && (chemical2Type.startsWith("water_") || chemical2Type.startsWith("material_"));
+    return chemical2Type != null && (chemical2Type.startsWith("water_") || chemical2Type.startsWith("material_"));
   }
 
   /**
    * Returns true if this rule's environment operand matches the supplied environment fields.
    *
-   * @param temperatureC operating temperature in Celsius
-   * @param calciumMgL calcium concentration in mg/L
-   * @param ironMgL iron concentration in mg/L
+   * @param temperatureC   operating temperature in Celsius
+   * @param calciumMgL     calcium concentration in mg/L
+   * @param ironMgL        iron concentration in mg/L
    * @param bicarbonateMgL bicarbonate concentration in mg/L
-   * @param material material identifier (e.g. {@code carbon_steel}, {@code 316L})
+   * @param material       material identifier (e.g. {@code carbon_steel}, {@code 316L})
    * @return true if the environment matches
    */
-  public boolean environmentMatches(double temperatureC, double calciumMgL, double ironMgL,
-      double bicarbonateMgL, String material) {
+  public boolean environmentMatches(double temperatureC, double calciumMgL, double ironMgL, double bicarbonateMgL,
+      String material) {
     if (!isEnvironmentRule()) {
       return false;
     }
@@ -213,11 +208,11 @@ public class ChemicalInteractionRule implements Serializable {
     }
     if ("material_carbon_steel".equals(tag)) {
       if (material == null || !material.toLowerCase().contains("carbon")) {
-        return false;
+	return false;
       }
       // optional temperature gating
       if (thresholdSpec.startsWith("T")) {
-        return checkThreshold(thresholdSpec, "T", temperatureC);
+	return checkThreshold(thresholdSpec, "T", temperatureC);
       }
       return true;
     }
@@ -227,8 +222,8 @@ public class ChemicalInteractionRule implements Serializable {
   /**
    * Parses a threshold spec like {@code "Ca>2000mgL"} or {@code "T>80C"}.
    *
-   * @param spec specification string
-   * @param key expected key prefix
+   * @param spec  specification string
+   * @param key   expected key prefix
    * @param value the actual numeric value to test
    * @return true if the threshold is exceeded
    */
@@ -245,9 +240,9 @@ public class ChemicalInteractionRule implements Serializable {
     for (int i = 0; i < body.length(); i++) {
       char c = body.charAt(i);
       if (Character.isDigit(c) || c == '.' || c == '-') {
-        digits.append(c);
+	digits.append(c);
       } else {
-        break;
+	break;
       }
     }
     double threshold;
@@ -265,13 +260,12 @@ public class ChemicalInteractionRule implements Serializable {
   /**
    * Tests whether a chemical matches an operand (type and ingredient with wildcard support).
    *
-   * @param typeSpec type token from the rule
+   * @param typeSpec       type token from the rule
    * @param ingredientSpec ingredient token from the rule
-   * @param c chemical to test
+   * @param c              chemical to test
    * @return true on match
    */
-  private static boolean matchOperand(String typeSpec, String ingredientSpec,
-      ProductionChemical c) {
+  private static boolean matchOperand(String typeSpec, String ingredientSpec, ProductionChemical c) {
     if (c == null) {
       return false;
     }
@@ -280,16 +274,16 @@ public class ChemicalInteractionRule implements Serializable {
       String enumName = c.getType().name();
       String spec = typeSpec;
       if ("THERMODYNAMIC_HHI".equals(spec)) {
-        spec = "HYDRATE_INHIBITOR_THERMODYNAMIC";
+	spec = "HYDRATE_INHIBITOR_THERMODYNAMIC";
       }
       if (!enumName.equalsIgnoreCase(spec)) {
-        return false;
+	return false;
       }
     }
     if (!"*".equals(ingredientSpec) && ingredientSpec != null && !ingredientSpec.isEmpty()) {
       String ai = c.getActiveIngredient() == null ? "" : c.getActiveIngredient();
       if (!ai.equalsIgnoreCase(ingredientSpec)) {
-        return false;
+	return false;
       }
     }
     return true;

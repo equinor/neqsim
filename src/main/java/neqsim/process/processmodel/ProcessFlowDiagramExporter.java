@@ -12,10 +12,9 @@ import neqsim.process.equipment.stream.StreamInterface;
  *
  * <p>
  * The exporter walks all unit operations, queries their inlet and outlet streams via
- * {@link ProcessEquipmentInterface#getInletStreams()} and
- * {@link ProcessEquipmentInterface#getOutletStreams()}, and infers edges wherever two equipment
- * units share a stream object. Explicit {@link ProcessConnection} metadata is also rendered as
- * edges.
+ * {@link ProcessEquipmentInterface#getInletStreams()} and {@link ProcessEquipmentInterface#getOutletStreams()}, and
+ * infers edges wherever two equipment units share a stream object. Explicit {@link ProcessConnection} metadata is also
+ * rendered as edges.
  * </p>
  *
  * <p>
@@ -66,8 +65,8 @@ public class ProcessFlowDiagramExporter implements Serializable {
    * Generates the Graphviz DOT representation of the process topology.
    *
    * <p>
-   * Equipment becomes graph nodes, streams become edges. The method first discovers topology from
-   * stream sharing, then adds explicit connections from {@link ProcessSystem#getConnections()}.
+   * Equipment becomes graph nodes, streams become edges. The method first discovers topology from stream sharing, then
+   * adds explicit connections from {@link ProcessSystem#getConnections()}.
    * </p>
    *
    * @return DOT-format string
@@ -82,10 +81,10 @@ public class ProcessFlowDiagramExporter implements Serializable {
 
     for (ProcessEquipmentInterface equip : units) {
       for (StreamInterface s : equip.getOutletStreams()) {
-        streamProducers.put(System.identityHashCode(s), equip.getName());
+	streamProducers.put(System.identityHashCode(s), equip.getName());
       }
       for (StreamInterface s : equip.getInletStreams()) {
-        streamConsumers.put(System.identityHashCode(s), equip.getName());
+	streamConsumers.put(System.identityHashCode(s), equip.getName());
       }
     }
 
@@ -100,8 +99,8 @@ public class ProcessFlowDiagramExporter implements Serializable {
     for (ProcessEquipmentInterface equip : units) {
       String nodeName = sanitizeId(equip.getName());
       String nodeShape = getShapeForEquipment(equip);
-      sb.append("  ").append(nodeName).append(" [label=\"").append(escapeQuotes(equip.getName()))
-          .append("\", shape=").append(nodeShape).append("];\n");
+      sb.append("  ").append(nodeName).append(" [label=\"").append(escapeQuotes(equip.getName())).append("\", shape=")
+	  .append(nodeShape).append("];\n");
     }
     sb.append("\n");
 
@@ -112,12 +111,11 @@ public class ProcessFlowDiagramExporter implements Serializable {
       String producer = entry.getValue();
       String consumer = streamConsumers.get(streamId);
       if (consumer != null && !producer.equals(consumer)) {
-        String edgeKey = producer + " -> " + consumer;
-        if (!edgeSet.containsKey(edgeKey)) {
-          edgeSet.put(edgeKey, Boolean.TRUE);
-          sb.append("  ").append(sanitizeId(producer)).append(" -> ").append(sanitizeId(consumer))
-              .append(";\n");
-        }
+	String edgeKey = producer + " -> " + consumer;
+	if (!edgeSet.containsKey(edgeKey)) {
+	  edgeSet.put(edgeKey, Boolean.TRUE);
+	  sb.append("  ").append(sanitizeId(producer)).append(" -> ").append(sanitizeId(consumer)).append(";\n");
+	}
       }
     }
 
@@ -125,15 +123,12 @@ public class ProcessFlowDiagramExporter implements Serializable {
     for (ProcessConnection conn : processSystem.getConnections()) {
       String edgeKey = conn.getSourceEquipment() + " -> " + conn.getTargetEquipment();
       if (!edgeSet.containsKey(edgeKey)) {
-        edgeSet.put(edgeKey, Boolean.TRUE);
-        String style =
-            conn.getType() == ProcessConnection.ConnectionType.SIGNAL ? ", style=dashed, color=blue"
-                : conn.getType() == ProcessConnection.ConnectionType.ENERGY
-                    ? ", style=dotted, color=red"
-                    : "";
-        sb.append("  ").append(sanitizeId(conn.getSourceEquipment())).append(" -> ")
-            .append(sanitizeId(conn.getTargetEquipment())).append(" [label=\"")
-            .append(escapeQuotes(conn.getSourcePort())).append("\"").append(style).append("];\n");
+	edgeSet.put(edgeKey, Boolean.TRUE);
+	String style = conn.getType() == ProcessConnection.ConnectionType.SIGNAL ? ", style=dashed, color=blue"
+	    : conn.getType() == ProcessConnection.ConnectionType.ENERGY ? ", style=dotted, color=red" : "";
+	sb.append("  ").append(sanitizeId(conn.getSourceEquipment())).append(" -> ")
+	    .append(sanitizeId(conn.getTargetEquipment())).append(" [label=\"")
+	    .append(escapeQuotes(conn.getSourcePort())).append("\"").append(style).append("];\n");
       }
     }
 
@@ -151,13 +146,11 @@ public class ProcessFlowDiagramExporter implements Serializable {
     String className = equip.getClass().getSimpleName().toLowerCase();
     if (className.contains("separator") || className.contains("scrubber")) {
       return "ellipse";
-    } else if (className.contains("compressor") || className.contains("pump")
-        || className.contains("expander")) {
+    } else if (className.contains("compressor") || className.contains("pump") || className.contains("expander")) {
       return "trapezium";
     } else if (className.contains("valve") || className.contains("throttle")) {
       return "diamond";
-    } else if (className.contains("heater") || className.contains("cooler")
-        || className.contains("heatexchanger")) {
+    } else if (className.contains("heater") || className.contains("cooler") || className.contains("heatexchanger")) {
       return "parallelogram";
     } else if (className.contains("mixer") || className.contains("splitter")) {
       return "triangle";
@@ -170,8 +163,7 @@ public class ProcessFlowDiagramExporter implements Serializable {
   }
 
   /**
-   * Sanitizes a name for use as a Graphviz node ID by replacing non-alphanumeric characters with
-   * underscores.
+   * Sanitizes a name for use as a Graphviz node ID by replacing non-alphanumeric characters with underscores.
    *
    * @param name the equipment name
    * @return sanitized node ID

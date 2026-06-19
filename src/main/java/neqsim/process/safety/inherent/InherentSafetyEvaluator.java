@@ -5,12 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Inherent Safety Evaluator using the four pillars (Kletz 1978):
- * Substitute, Minimize, Moderate, Simplify.
+ * Inherent Safety Evaluator using the four pillars (Kletz 1978): Substitute, Minimize, Moderate, Simplify.
  *
  * <p>
- * Each pillar accepts a 0–10 score; the overall index is the simple average. Recommendations are
- * collected per pillar and surfaced in {@link #report()}.
+ * Each pillar accepts a 0–10 score; the overall index is the simple average. Recommendations are collected per pillar
+ * and surfaced in {@link #report()}.
  *
  * <p>
  * <b>References:</b>
@@ -60,8 +59,8 @@ public class InherentSafetyEvaluator implements Serializable {
    * Score one pillar 0..10 (10 = best inherent-safety performance).
    *
    * @param pillar pillar to score
-   * @param score score in [0, 10]
-   * @param note rationale text
+   * @param score  score in [0, 10]
+   * @param note   rationale text
    * @return this evaluator for chaining
    */
   public InherentSafetyEvaluator score(Pillar pillar, double score, String note) {
@@ -108,7 +107,7 @@ public class InherentSafetyEvaluator implements Serializable {
     for (Pillar p : Pillar.values()) {
       sb.append(String.format("  %-10s : %4.1f / 10%n", p.name(), getScore(p)));
       for (String n : notes[p.ordinal()]) {
-        sb.append("       - ").append(n).append('\n');
+	sb.append("       - ").append(n).append('\n');
       }
     }
     sb.append(String.format("  OVERALL    : %4.1f / 10%n", overallIndex()));

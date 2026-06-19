@@ -29,8 +29,8 @@ public class ReactiveMultiphaseTPflashTest {
    * Test that FormulaMatrix correctly identifies elements and component relationships.
    *
    * <p>
-   * For a methane (CH4) / water (H2O) / CO2 system, the formula matrix should have elements C, H, O
-   * and correctly map each component's elemental composition.
+   * For a methane (CH4) / water (H2O) / CO2 system, the formula matrix should have elements C, H, O and correctly map
+   * each component's elemental composition.
    * </p>
    */
   @Test
@@ -54,19 +54,17 @@ public class ReactiveMultiphaseTPflashTest {
     // The A matrix should have dimensions NE x NC
     double[][] A = fm.getMatrix();
     assertEquals(fm.getNumberOfElements(), A.length, "Matrix rows should equal number of elements");
-    assertEquals(fm.getNumberOfComponents(), A[0].length,
-        "Matrix columns should equal number of components");
+    assertEquals(fm.getNumberOfComponents(), A[0].length, "Matrix columns should equal number of components");
 
     // The rank should be at most min(NE, NC)
     int rank = fm.getRank();
     assertTrue(rank > 0, "Rank should be positive");
     assertTrue(rank <= Math.min(fm.getNumberOfElements(), fm.getNumberOfComponents()),
-        "Rank should not exceed min(NE, NC)");
+	"Rank should not exceed min(NE, NC)");
 
     // Number of independent reactions = NC - rank(A)
     int nReactions = fm.getNumberOfIndependentReactions();
-    assertEquals(fm.getNumberOfComponents() - rank, nReactions,
-        "Number of reactions should be NC - rank(A)");
+    assertEquals(fm.getNumberOfComponents() - rank, nReactions, "Number of reactions should be NC - rank(A)");
   }
 
   /**
@@ -82,7 +80,7 @@ public class ReactiveMultiphaseTPflashTest {
     system.init(1);
 
     FormulaMatrix fm = new FormulaMatrix(system);
-    double[] z = {0.7, 0.3};
+    double[] z = { 0.7, 0.3 };
     double[] b = fm.computeElementVector(z);
 
     assertNotNull(b, "Element vector should not be null");
@@ -98,9 +96,9 @@ public class ReactiveMultiphaseTPflashTest {
    * Test that the reactive flash produces sensible results for a non-reactive system.
    *
    * <p>
-   * For a methane/ethane/propane system at VLE conditions, the reactive flash should detect no
-   * chemical reactions and produce results consistent with a standard flash. This is a baseline
-   * test to verify that the algorithm correctly handles the non-reactive limit.
+   * For a methane/ethane/propane system at VLE conditions, the reactive flash should detect no chemical reactions and
+   * produce results consistent with a standard flash. This is a baseline test to verify that the algorithm correctly
+   * handles the non-reactive limit.
    * </p>
    */
   @Test
@@ -141,8 +139,8 @@ public class ReactiveMultiphaseTPflashTest {
    * Test the reactive flash on a gas combustion system.
    *
    * <p>
-   * The system methane + oxygen + CO2 + water + nitrogen at high temperature should exhibit
-   * chemical equilibrium. The reactive flash should:
+   * The system methane + oxygen + CO2 + water + nitrogen at high temperature should exhibit chemical equilibrium. The
+   * reactive flash should:
    * <ol>
    * <li>Detect independent reactions (combustion: CH4 + 2O2 = CO2 + 2H2O)</li>
    * <li>Find elevated levels of CO2 and H2O at equilibrium</li>
@@ -197,17 +195,16 @@ public class ReactiveMultiphaseTPflashTest {
 
     // Pure component: NC = 1, NE >= 1 (C, H), rank(A) = 1
     // NR = NC - rank = 1 - 1 = 0
-    assertEquals(0, fm.getNumberOfIndependentReactions(),
-        "Pure component should have 0 independent reactions");
+    assertEquals(0, fm.getNumberOfIndependentReactions(), "Pure component should have 0 independent reactions");
   }
 
   /**
    * Test that the formula matrix handles the methane/ethane system (isomers but no reaction).
    *
    * <p>
-   * Methane (CH4) and ethane (C2H6) share elements C and H. The formula matrix is: A = [1 2; 4 6]
-   * for [C; H]. This has rank 2 (rows are independent), so NR = 2 - 2 = 0 (no reactions), which is
-   * correct since methane and ethane cannot interconvert without a catalyst.
+   * Methane (CH4) and ethane (C2H6) share elements C and H. The formula matrix is: A = [1 2; 4 6] for [C; H]. This has
+   * rank 2 (rows are independent), so NR = 2 - 2 = 0 (no reactions), which is correct since methane and ethane cannot
+   * interconvert without a catalyst.
    * </p>
    */
   @Test
@@ -225,16 +222,15 @@ public class ReactiveMultiphaseTPflashTest {
     // A = [1 2; 4 6]
     // rank(A) = 2 (2x2 matrix with det = 6-8 = -2 != 0)
     // NR = 2 - 2 = 0
-    assertEquals(0, fm.getNumberOfIndependentReactions(),
-        "CH4/C2H6 should have 0 reactions (rank of A should be 2)");
+    assertEquals(0, fm.getNumberOfIndependentReactions(), "CH4/C2H6 should have 0 reactions (rank of A should be 2)");
   }
 
   /**
    * Test that the modified RAND solver initializes correctly even without reactions.
    *
    * <p>
-   * When NR = 0, the RAND solver should still work and produce a valid phase equilibrium result
-   * equivalent to a standard flash.
+   * When NR = 0, the RAND solver should still work and produce a valid phase equilibrium result equivalent to a
+   * standard flash.
    * </p>
    */
   @Test
@@ -305,10 +301,8 @@ public class ReactiveMultiphaseTPflashTest {
     assertTrue(unstable, "CH4/nC10 at 300K/20bar should be phase-unstable (VLE)");
 
     if (unstable) {
-      assertTrue(stability.getNumberOfUnstableTrials() > 0,
-          "Should have at least one unstable trial");
-      assertNotNull(stability.getMostUnstableTrial(),
-          "Should have a most unstable trial composition");
+      assertTrue(stability.getNumberOfUnstableTrials() > 0, "Should have at least one unstable trial");
+      assertNotNull(stability.getMostUnstableTrial(), "Should have a most unstable trial composition");
     }
   }
 
@@ -316,8 +310,8 @@ public class ReactiveMultiphaseTPflashTest {
    * Test the full reactive flash on a 2-phase non-reactive system and compare with standard flash.
    *
    * <p>
-   * For a methane/propane VLE system, the reactive flash (with 0 reactions) should produce phase
-   * fractions and compositions within reasonable tolerance of the standard NeqSim TPflash.
+   * For a methane/propane VLE system, the reactive flash (with 0 reactions) should produce phase fractions and
+   * compositions within reasonable tolerance of the standard NeqSim TPflash.
    * </p>
    */
   @Test
@@ -342,8 +336,7 @@ public class ReactiveMultiphaseTPflashTest {
     reactiveFlash.run();
 
     // For CH4/C3H8 system: NE=2 (C,H), NC=2, rank=2, NR=0
-    assertEquals(0, reactiveFlash.getNumberOfReactions(),
-        "Should detect 0 reactions for CH4/C3 system with NC==NE");
+    assertEquals(0, reactiveFlash.getNumberOfReactions(), "Should detect 0 reactions for CH4/C3 system with NC==NE");
 
     // Should converge
     assertTrue(reactiveFlash.isConverged(), "Reactive flash should converge");
@@ -356,9 +349,9 @@ public class ReactiveMultiphaseTPflashTest {
    * Test the complete algorithm on a system with four components sharing three elements.
    *
    * <p>
-   * System: methane (CH4), CO2, water (H2O), carbon monoxide (CO) at 1000 K, 1 bar. Elements: C, H,
-   * O. NC=4, NE=3. If rank(A) = 3, then NR = 4-3 = 1 independent reaction. This corresponds to: CH4
-   * + H2O = CO + 3H2 (steam reforming) or CO + H2O = CO2 + H2 (water-gas shift), etc.
+   * System: methane (CH4), CO2, water (H2O), carbon monoxide (CO) at 1000 K, 1 bar. Elements: C, H, O. NC=4, NE=3. If
+   * rank(A) = 3, then NR = 4-3 = 1 independent reaction. This corresponds to: CH4 + H2O = CO + 3H2 (steam reforming) or
+   * CO + H2O = CO2 + H2 (water-gas shift), etc.
    * </p>
    */
   @Test
@@ -381,7 +374,7 @@ public class ReactiveMultiphaseTPflashTest {
 
     // Should have elements (at least C, H, O, N)
     assertTrue(fm.getNumberOfElements() >= 3,
-        "Should have at least 3 elements (C, H, O or N). Got: " + fm.getNumberOfElements());
+	"Should have at least 3 elements (C, H, O or N). Got: " + fm.getNumberOfElements());
 
     // The rank should be at least 3
     int rank = fm.getRank();
@@ -403,9 +396,8 @@ public class ReactiveMultiphaseTPflashTest {
    * Test that Gibbs energy decreases or stays equal after the reactive flash.
    *
    * <p>
-   * This is a fundamental thermodynamic consistency check: the equilibrium state should be at a
-   * Gibbs energy minimum. Starting from the initial guess, the flash should find a state with lower
-   * or equal Gibbs energy.
+   * This is a fundamental thermodynamic consistency check: the equilibrium state should be at a Gibbs energy minimum.
+   * Starting from the initial guess, the flash should find a state with lower or equal Gibbs energy.
    * </p>
    */
   @Test
@@ -423,7 +415,7 @@ public class ReactiveMultiphaseTPflashTest {
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       double xi = system.getPhase(0).getComponent(i).getx();
       if (xi > 1e-30) {
-        G0 += xi * (Math.log(xi) + system.getPhase(0).getComponent(i).getLogFugacityCoefficient());
+	G0 += xi * (Math.log(xi) + system.getPhase(0).getComponent(i).getLogFugacityCoefficient());
       }
     }
 
@@ -435,8 +427,7 @@ public class ReactiveMultiphaseTPflashTest {
       double Gfinal = flash.getFinalGibbsEnergy();
       // For a well-converged flash, the final G should be <= initial G
       // (2-phase is more stable than single phase when VLE exists)
-      assertTrue(Gfinal <= G0 + 1e-6,
-          "Gibbs energy should decrease: G_initial=" + G0 + ", G_final=" + Gfinal);
+      assertTrue(Gfinal <= G0 + 1e-6, "Gibbs energy should decrease: G_initial=" + G0 + ", G_final=" + Gfinal);
     }
   }
 }

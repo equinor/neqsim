@@ -18,9 +18,9 @@ import org.apache.logging.log4j.Logger;
  * Generates an optimised restart sequence after a trip or shutdown.
  *
  * <p>
- * Given a process system and a failure propagation trace, this generator determines the safe order
- * in which to restart equipment, what preconditions must be met for each step, and the recommended
- * timing. It answers the question: <em>"How do we restart safely and quickly?"</em>
+ * Given a process system and a failure propagation trace, this generator determines the safe order in which to restart
+ * equipment, what preconditions must be met for each step, and the recommended timing. It answers the question:
+ * <em>"How do we restart safely and quickly?"</em>
  * </p>
  *
  * <p>
@@ -114,7 +114,7 @@ public class RestartSequenceGenerator implements Serializable {
    * Sets a custom precondition for a specific equipment.
    *
    * @param equipmentName equipment name
-   * @param precondition precondition description
+   * @param precondition  precondition description
    */
   public void setCustomPrecondition(String equipmentName, String precondition) {
     customPreconditions.put(equipmentName, precondition);
@@ -124,17 +124,16 @@ public class RestartSequenceGenerator implements Serializable {
    * Generates a restart plan from a failure propagation result.
    *
    * <p>
-   * The restart order is the reverse of the propagation order: the last equipment to be affected
-   * is restarted first (it's furthest downstream), and the initially failed equipment is restarted
-   * last (after verifying root cause is resolved).
+   * The restart order is the reverse of the propagation order: the last equipment to be affected is restarted first
+   * (it's furthest downstream), and the initially failed equipment is restarted last (after verifying root cause is
+   * resolved).
    * </p>
    *
    * @param propagation failure propagation result
    * @return restart plan with ordered steps
    */
   public RestartPlan generate(FailurePropagationTracer.PropagationResult propagation) {
-    logger.info("Generating restart sequence for failure at: {}",
-        propagation.getInitiatingEquipment());
+    logger.info("Generating restart sequence for failure at: {}", propagation.getInitiatingEquipment());
 
     RestartPlan plan = new RestartPlan(propagation.getInitiatingEquipment());
 
@@ -150,26 +149,25 @@ public class RestartSequenceGenerator implements Serializable {
     int stepNum = 1;
 
     // Step 1: Safety verification
-    plan.addStep(new RestartStep(stepNum++, "Safety Systems", "Verify all safety systems active "
-        + "(fire & gas, ESD, HIPPS)", null, 0.0, RestartStep.Priority.CRITICAL,
-        "Do not proceed until all safety interlocks are confirmed ready"));
+    plan.addStep(new RestartStep(stepNum++, "Safety Systems",
+	"Verify all safety systems active " + "(fire & gas, ESD, HIPPS)", null, 0.0, RestartStep.Priority.CRITICAL,
+	"Do not proceed until all safety interlocks are confirmed ready"));
 
     // Step 2: Root cause verification
     String rootCauseNote = "Confirm root cause has been identified and resolved";
     if (propagation.getInitiatingTripEvent() != null) {
       TripEvent trip = propagation.getInitiatingTripEvent();
-      rootCauseNote = String.format(
-          "Confirm root cause resolved: %s %s trip on %s (value=%.2f, threshold=%.2f)",
-          trip.getParameterName(), trip.isHighTrip() ? "HIGH" : "LOW", trip.getEquipmentName(),
-          trip.getActualValue(), trip.getThreshold());
+      rootCauseNote = String.format("Confirm root cause resolved: %s %s trip on %s (value=%.2f, threshold=%.2f)",
+	  trip.getParameterName(), trip.isHighTrip() ? "HIGH" : "LOW", trip.getEquipmentName(), trip.getActualValue(),
+	  trip.getThreshold());
     }
-    plan.addStep(new RestartStep(stepNum++, propagation.getInitiatingEquipment(),
-        "Verify root cause resolved", null, 0.0, RestartStep.Priority.CRITICAL, rootCauseNote));
+    plan.addStep(new RestartStep(stepNum++, propagation.getInitiatingEquipment(), "Verify root cause resolved", null,
+	0.0, RestartStep.Priority.CRITICAL, rootCauseNote));
 
     // Step 3: Utility systems check
     plan.addStep(new RestartStep(stepNum++, "Utility Systems",
-        "Verify utilities available (cooling water, instrument air, lube oil, seal gas)", null, 0.0,
-        RestartStep.Priority.HIGH, "All utility supplies must be confirmed before equipment start"));
+	"Verify utilities available (cooling water, instrument air, lube oil, seal gas)", null, 0.0,
+	RestartStep.Priority.HIGH, "All utility supplies must be confirmed before equipment start"));
 
     // Build restart order: process from upstream to downstream
     // Get the topological order of affected equipment
@@ -183,15 +181,14 @@ public class RestartSequenceGenerator implements Serializable {
       RestartStep.Priority priority = getRestartPriority(equipmentName, propagation);
       String notes = getRestartNotes(equipmentName);
 
-      plan.addStep(
-          new RestartStep(stepNum++, equipmentName, action, precondition, delay, priority, notes));
+      plan.addStep(new RestartStep(stepNum++, equipmentName, action, precondition, delay, priority, notes));
     }
 
     // Final step: system verification
     plan.addStep(new RestartStep(stepNum++, "Process System",
-        "Verify system operating normally — check mass balance, temperatures, pressures", null,
-        DEFAULT_STABILISATION_TIME * 2, RestartStep.Priority.NORMAL,
-        "Monitor for 15 minutes before confirming restart complete"));
+	"Verify system operating normally — check mass balance, temperatures, pressures", null,
+	DEFAULT_STABILISATION_TIME * 2, RestartStep.Priority.NORMAL,
+	"Monitor for 15 minutes before confirming restart complete"));
 
     double totalTime = 0.0;
     for (RestartStep step : plan.getSteps()) {
@@ -200,7 +197,7 @@ public class RestartSequenceGenerator implements Serializable {
     plan.setEstimatedTotalTimeSeconds(totalTime);
 
     logger.info("Generated restart plan: {} steps, estimated {}s", plan.getSteps().size(),
-        String.format("%.0f", totalTime));
+	String.format("%.0f", totalTime));
 
     return plan;
   }
@@ -220,12 +217,12 @@ public class RestartSequenceGenerator implements Serializable {
     int stepNum = 1;
 
     // Safety check
-    plan.addStep(new RestartStep(stepNum++, "Safety Systems",
-        "Verify all safety systems active", null, 0.0, RestartStep.Priority.CRITICAL, null));
+    plan.addStep(new RestartStep(stepNum++, "Safety Systems", "Verify all safety systems active", null, 0.0,
+	RestartStep.Priority.CRITICAL, null));
 
     // Root cause
-    plan.addStep(new RestartStep(stepNum++, trippedEquipment.get(0), "Verify root cause resolved",
-        null, 0.0, RestartStep.Priority.CRITICAL, null));
+    plan.addStep(new RestartStep(stepNum++, trippedEquipment.get(0), "Verify root cause resolved", null, 0.0,
+	RestartStep.Priority.CRITICAL, null));
 
     // Build upstream-first order
     List<String> ordered = orderByTopology(trippedEquipment);
@@ -235,8 +232,8 @@ public class RestartSequenceGenerator implements Serializable {
       String precondition = getPrecondition(equipmentName);
       double delay = getRampUpTime(equipmentName);
 
-      plan.addStep(new RestartStep(stepNum++, equipmentName, action, precondition, delay,
-          RestartStep.Priority.NORMAL, null));
+      plan.addStep(
+	  new RestartStep(stepNum++, equipmentName, action, precondition, delay, RestartStep.Priority.NORMAL, null));
     }
 
     return plan;
@@ -252,8 +249,7 @@ public class RestartSequenceGenerator implements Serializable {
    * @param propagationSteps failure propagation steps
    * @return ordered list of equipment names for restart
    */
-  private List<String> buildTopologicalRestartOrder(
-      List<FailurePropagationTracer.PropagationStep> propagationSteps) {
+  private List<String> buildTopologicalRestartOrder(List<FailurePropagationTracer.PropagationStep> propagationSteps) {
     // Collect all affected equipment names
     List<String> names = new ArrayList<>();
     for (FailurePropagationTracer.PropagationStep step : propagationSteps) {
@@ -279,15 +275,15 @@ public class RestartSequenceGenerator implements Serializable {
     Collections.sort(ordered, new java.util.Comparator<String>() {
       @Override
       public int compare(String a, String b) {
-        Integer posA = positionMap.get(a);
-        Integer posB = positionMap.get(b);
-        if (posA == null) {
-          posA = Integer.MAX_VALUE;
-        }
-        if (posB == null) {
-          posB = Integer.MAX_VALUE;
-        }
-        return posA.compareTo(posB);
+	Integer posA = positionMap.get(a);
+	Integer posB = positionMap.get(b);
+	if (posA == null) {
+	  posA = Integer.MAX_VALUE;
+	}
+	if (posB == null) {
+	  posB = Integer.MAX_VALUE;
+	}
+	return posA.compareTo(posB);
       }
     });
     return ordered;
@@ -382,8 +378,7 @@ public class RestartSequenceGenerator implements Serializable {
       return 60.0; // time to establish levels
     } else if (type.contains("column") || type.contains("distillation")) {
       return 300.0; // 5 minutes for column
-    } else if (type.contains("heatexchanger") || type.contains("cooler")
-        || type.contains("heater")) {
+    } else if (type.contains("heatexchanger") || type.contains("cooler") || type.contains("heater")) {
       return 60.0;
     }
     return DEFAULT_STABILISATION_TIME;
@@ -393,7 +388,7 @@ public class RestartSequenceGenerator implements Serializable {
    * Gets the restart priority for an equipment based on its role in the propagation.
    *
    * @param equipmentName equipment name
-   * @param propagation the failure propagation result
+   * @param propagation   the failure propagation result
    * @return restart priority
    */
   private RestartStep.Priority getRestartPriority(String equipmentName,
@@ -403,16 +398,16 @@ public class RestartSequenceGenerator implements Serializable {
     }
     for (FailurePropagationTracer.PropagationStep step : propagation.getSteps()) {
       if (step.getEquipmentName().equals(equipmentName)) {
-        switch (step.getImpactLevel()) {
-          case CRITICAL:
-            return RestartStep.Priority.CRITICAL;
-          case HIGH:
-            return RestartStep.Priority.HIGH;
-          case MEDIUM:
-            return RestartStep.Priority.NORMAL;
-          default:
-            return RestartStep.Priority.LOW;
-        }
+	switch (step.getImpactLevel()) {
+	case CRITICAL:
+	  return RestartStep.Priority.CRITICAL;
+	case HIGH:
+	  return RestartStep.Priority.HIGH;
+	case MEDIUM:
+	  return RestartStep.Priority.NORMAL;
+	default:
+	  return RestartStep.Priority.LOW;
+	}
       }
     }
     return RestartStep.Priority.NORMAL;
@@ -433,7 +428,7 @@ public class RestartSequenceGenerator implements Serializable {
     String type = equipment.getClass().getSimpleName().toLowerCase();
     if (type.contains("compressor")) {
       return "Monitor vibration and discharge temperature during ramp-up. "
-          + "Keep anti-surge valve open until stable operation confirmed.";
+	  + "Keep anti-surge valve open until stable operation confirmed.";
     } else if (type.contains("pump")) {
       return "Verify no cavitation (check discharge pressure oscillation).";
     } else if (type.contains("separator")) {
@@ -451,7 +446,7 @@ public class RestartSequenceGenerator implements Serializable {
   private ProcessEquipmentInterface findEquipment(String name) {
     for (ProcessEquipmentInterface eq : processSystem.getUnitOperations()) {
       if (eq.getName().equals(name)) {
-        return eq;
+	return eq;
       }
     }
     return null;
@@ -569,30 +564,28 @@ public class RestartSequenceGenerator implements Serializable {
       StringBuilder sb = new StringBuilder();
       sb.append("{");
       sb.append("\"initiatingEquipment\": \"").append(initiatingEquipment).append("\", ");
-      sb.append("\"estimatedTotalTimeMinutes\": ")
-          .append(String.format("%.1f", getEstimatedTotalTimeMinutes())).append(", ");
+      sb.append("\"estimatedTotalTimeMinutes\": ").append(String.format("%.1f", getEstimatedTotalTimeMinutes()))
+	  .append(", ");
       sb.append("\"stepCount\": ").append(steps.size()).append(", ");
       sb.append("\"steps\": [");
       for (int i = 0; i < steps.size(); i++) {
-        RestartStep step = steps.get(i);
-        if (i > 0) {
-          sb.append(", ");
-        }
-        sb.append("{");
-        sb.append("\"sequenceNumber\": ").append(step.getSequenceNumber()).append(", ");
-        sb.append("\"equipmentName\": \"").append(escapeJson(step.getEquipmentName()))
-            .append("\", ");
-        sb.append("\"action\": \"").append(escapeJson(step.getAction())).append("\", ");
-        if (step.getPrecondition() != null) {
-          sb.append("\"precondition\": \"").append(escapeJson(step.getPrecondition()))
-              .append("\", ");
-        }
-        sb.append("\"delaySeconds\": ").append(step.getRecommendedDelaySeconds()).append(", ");
-        sb.append("\"priority\": \"").append(step.getPriority().name()).append("\"");
-        if (step.getNotes() != null) {
-          sb.append(", \"notes\": \"").append(escapeJson(step.getNotes())).append("\"");
-        }
-        sb.append("}");
+	RestartStep step = steps.get(i);
+	if (i > 0) {
+	  sb.append(", ");
+	}
+	sb.append("{");
+	sb.append("\"sequenceNumber\": ").append(step.getSequenceNumber()).append(", ");
+	sb.append("\"equipmentName\": \"").append(escapeJson(step.getEquipmentName())).append("\", ");
+	sb.append("\"action\": \"").append(escapeJson(step.getAction())).append("\", ");
+	if (step.getPrecondition() != null) {
+	  sb.append("\"precondition\": \"").append(escapeJson(step.getPrecondition())).append("\", ");
+	}
+	sb.append("\"delaySeconds\": ").append(step.getRecommendedDelaySeconds()).append(", ");
+	sb.append("\"priority\": \"").append(step.getPriority().name()).append("\"");
+	if (step.getNotes() != null) {
+	  sb.append(", \"notes\": \"").append(escapeJson(step.getNotes())).append("\"");
+	}
+	sb.append("}");
       }
       sb.append("]");
       sb.append("}");
@@ -609,15 +602,14 @@ public class RestartSequenceGenerator implements Serializable {
       sb.append("=== Restart Plan ===\n");
       sb.append("Initiating equipment: ").append(initiatingEquipment).append("\n");
       if (initiatingTrip != null) {
-        sb.append("Trip cause: ").append(initiatingTrip.getParameterName()).append(" ")
-            .append(initiatingTrip.isHighTrip() ? "HIGH" : "LOW").append("\n");
+	sb.append("Trip cause: ").append(initiatingTrip.getParameterName()).append(" ")
+	    .append(initiatingTrip.isHighTrip() ? "HIGH" : "LOW").append("\n");
       }
-      sb.append("Estimated total time: ")
-          .append(String.format("%.1f minutes\n", getEstimatedTotalTimeMinutes()));
+      sb.append("Estimated total time: ").append(String.format("%.1f minutes\n", getEstimatedTotalTimeMinutes()));
       sb.append("Number of steps: ").append(steps.size()).append("\n\n");
 
       for (RestartStep step : steps) {
-        sb.append(step.toString()).append("\n");
+	sb.append(step.toString()).append("\n");
       }
       return sb.toString();
     }
@@ -630,10 +622,10 @@ public class RestartSequenceGenerator implements Serializable {
      */
     private static String escapeJson(String s) {
       if (s == null) {
-        return "";
+	return "";
       }
-      return s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
-          .replace("\r", "\\r").replace("\t", "\\t");
+      return s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r").replace("\t",
+	  "\\t");
     }
   }
 }

@@ -48,8 +48,7 @@ public class PlugFlowReactorTest extends neqsim.NeqSimTest {
 
     // Check positive conversion
     double conversion = pfr.getConversion();
-    assertTrue(conversion >= 0.0 && conversion <= 1.0,
-        "Conversion should be between 0 and 1, got: " + conversion);
+    assertTrue(conversion >= 0.0 && conversion <= 1.0, "Conversion should be between 0 and 1, got: " + conversion);
 
     // Axial profile should have data
     ReactorAxialProfile profile = pfr.getAxialProfile();
@@ -100,8 +99,7 @@ public class PlugFlowReactorTest extends neqsim.NeqSimTest {
     // For exothermic reaction in adiabatic mode, outlet T should be >= inlet T
     // (could be equal if conversion is zero)
     assertTrue(outletT >= inletT - 1.0,
-        "Outlet T should be >= inlet T for exothermic adiabatic, got: " + outletT + " vs inlet: "
-            + inletT);
+	"Outlet T should be >= inlet T for exothermic adiabatic, got: " + outletT + " vs inlet: " + inletT);
   }
 
   /**
@@ -345,8 +343,7 @@ public class PlugFlowReactorTest extends neqsim.NeqSimTest {
 
     // Both should give reasonable results; with sufficient steps they should be close
     assertTrue(Math.abs(convRK4 - convEuler) < 0.10,
-        "RK4 and Euler should give similar conversions with 100 steps: " + convRK4 + " vs "
-            + convEuler);
+	"RK4 and Euler should give similar conversions with 100 steps: " + convRK4 + " vs " + convEuler);
   }
 
   /**
@@ -390,8 +387,7 @@ public class PlugFlowReactorTest extends neqsim.NeqSimTest {
     // Conversion should monotonically increase (for isothermal irreversible)
     double conv0 = profile.getConversionAt(0.0);
     double conv4 = profile.getConversionAt(4.0);
-    assertTrue(conv4 >= conv0,
-        "Conversion at outlet should be >= inlet: " + conv4 + " vs " + conv0);
+    assertTrue(conv4 >= conv0, "Conversion at outlet should be >= inlet: " + conv4 + " vs " + conv0);
   }
 
   /**

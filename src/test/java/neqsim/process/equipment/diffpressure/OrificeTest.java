@@ -27,7 +27,7 @@ public class OrificeTest {
     Orifice orif1 = new Orifice("orifice 1");
     orif1.setInletStream(stream1);
     orif1.setOrificeParameters(0.07366, 0.05, 0.61); // Diameter, outer diameter, and discharge
-                                                     // coefficient
+						     // coefficient
 
     // Step 4: Define the output stream after the orifice
     Stream stream2 = new Stream("stream 2", orif1.getOutletStream());
@@ -50,8 +50,7 @@ public class OrificeTest {
     // Parameters: orifice diameter (m), pipe diameter (m), fluid density (kg/m^3), fluid viscosity
     // (Pa·s),
     // Reynolds number, and orifice type ("flange").
-    double C =
-        Orifice.calculateDischargeCoefficient(0.07391, 0.0222, 1.165, 1.85E-5, 0.12, "flange");
+    double C = Orifice.calculateDischargeCoefficient(0.07391, 0.0222, 1.165, 1.85E-5, 0.12, "flange");
     Assertions.assertEquals(0.5990326277, C, 1e-6);
 
     // Calculate the expansibility factor for an orifice
@@ -66,8 +65,7 @@ public class OrificeTest {
     // pressure (Pa),
     // fluid density (kg/m^3), fluid viscosity (Pa·s), isentropic exponent (dimensionless), and
     // orifice type ("D").
-    double m =
-        Orifice.calculateMassFlowRate(0.07366, 0.05, 200000.0, 183000.0, 999.1, 0.0011, 1.33, "D");
+    double m = Orifice.calculateMassFlowRate(0.07366, 0.05, 200000.0, 183000.0, 999.1, 0.0011, 1.33, "D");
     Assertions.assertEquals(7.702338, m, 1e-6);
   }
 }

@@ -40,8 +40,8 @@ import org.apache.logging.log4j.Logger;
  * </pre>
  *
  * <p>
- * When using Format 1, the data source automatically combines rows with the same PROJECT_ID into a
- * single TechnicalRequirementsDocument.
+ * When using Format 1, the data source automatically combines rows with the same PROJECT_ID into a single
+ * TechnicalRequirementsDocument.
  * </p>
  *
  * @author esol
@@ -92,11 +92,11 @@ public class CsvTorgDataSource implements TorgDataSource {
     return new CsvTorgDataSource(null) {
       @Override
       protected BufferedReader getReader() throws IOException {
-        InputStream is = getClass().getClassLoader().getResourceAsStream(resourcePath);
-        if (is == null) {
-          throw new IOException("Resource not found: " + resourcePath);
-        }
-        return new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
+	InputStream is = getClass().getClassLoader().getResourceAsStream(resourcePath);
+	if (is == null) {
+	  throw new IOException("Resource not found: " + resourcePath);
+	}
+	return new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
       }
     };
   }
@@ -127,24 +127,24 @@ public class CsvTorgDataSource implements TorgDataSource {
     try (BufferedReader reader = getReader()) {
       String headerLine = reader.readLine();
       if (headerLine == null) {
-        logger.warn("Empty CSV file");
-        isLoaded = true;
-        return;
+	logger.warn("Empty CSV file");
+	isLoaded = true;
+	return;
       }
 
       String[] headers = parseCSVLine(headerLine);
       Map<String, Integer> headerIndex = new HashMap<>();
       for (int i = 0; i < headers.length; i++) {
-        headerIndex.put(headers[i].toUpperCase().trim(), i);
+	headerIndex.put(headers[i].toUpperCase().trim(), i);
       }
 
       // Determine format based on headers
       boolean isStandardsFormat = headerIndex.containsKey(COL_DESIGN_CATEGORY);
 
       if (isStandardsFormat) {
-        loadStandardsFormat(reader, headerIndex);
+	loadStandardsFormat(reader, headerIndex);
       } else {
-        loadMasterFormat(reader, headerIndex);
+	loadMasterFormat(reader, headerIndex);
       }
 
       isLoaded = true;
@@ -156,30 +156,29 @@ public class CsvTorgDataSource implements TorgDataSource {
   /**
    * Load standards-focused CSV format where each row is a standard assignment.
    *
-   * @param reader the BufferedReader to read CSV data from
+   * @param reader      the BufferedReader to read CSV data from
    * @param headerIndex map of column names to their indices
    * @throws IOException if an I/O error occurs while reading
    */
-  private void loadStandardsFormat(BufferedReader reader, Map<String, Integer> headerIndex)
-      throws IOException {
+  private void loadStandardsFormat(BufferedReader reader, Map<String, Integer> headerIndex) throws IOException {
     // Group rows by project ID
     Map<String, List<String[]>> projectRows = new HashMap<>();
 
     String line;
     while ((line = reader.readLine()) != null) {
       if (line.trim().isEmpty()) {
-        continue;
+	continue;
       }
 
       String[] values = parseCSVLine(line);
       String projectId = getField(values, headerIndex, COL_PROJECT_ID);
       if (projectId != null && !projectId.isEmpty()) {
-        List<String[]> rows = projectRows.get(projectId);
-        if (rows == null) {
-          rows = new ArrayList<>();
-          projectRows.put(projectId, rows);
-        }
-        rows.add(values);
+	List<String[]> rows = projectRows.get(projectId);
+	if (rows == null) {
+	  rows = new ArrayList<>();
+	  projectRows.put(projectId, rows);
+	}
+	rows.add(values);
       }
     }
 
@@ -189,43 +188,43 @@ public class CsvTorgDataSource implements TorgDataSource {
       List<String[]> rows = entry.getValue();
 
       if (rows.isEmpty()) {
-        continue;
+	continue;
       }
 
       // Use first row for project metadata
       String[] firstRow = rows.get(0);
-      TechnicalRequirementsDocument.Builder builder = TechnicalRequirementsDocument.builder()
-          .projectId(projectId).projectName(getField(firstRow, headerIndex, COL_PROJECT_NAME))
-          .companyIdentifier(getField(firstRow, headerIndex, COL_COMPANY))
-          .revision(getFieldOrDefault(firstRow, headerIndex, COL_REVISION, "1"))
-          .issueDate(getField(firstRow, headerIndex, COL_ISSUE_DATE));
+      TechnicalRequirementsDocument.Builder builder = TechnicalRequirementsDocument.builder().projectId(projectId)
+	  .projectName(getField(firstRow, headerIndex, COL_PROJECT_NAME))
+	  .companyIdentifier(getField(firstRow, headerIndex, COL_COMPANY))
+	  .revision(getFieldOrDefault(firstRow, headerIndex, COL_REVISION, "1"))
+	  .issueDate(getField(firstRow, headerIndex, COL_ISSUE_DATE));
 
       // Add standards from all rows
       for (String[] row : rows) {
-        String category = getField(row, headerIndex, COL_DESIGN_CATEGORY);
-        String standardCode = getField(row, headerIndex, COL_STANDARD_CODE);
+	String category = getField(row, headerIndex, COL_DESIGN_CATEGORY);
+	String standardCode = getField(row, headerIndex, COL_STANDARD_CODE);
 
-        if (category != null && standardCode != null) {
-          StandardType type = StandardType.fromCode(standardCode);
-          if (type != null) {
-            builder.addStandard(category, type);
-          } else {
-            logger.warn("Unknown standard code: " + standardCode);
-          }
-        }
+	if (category != null && standardCode != null) {
+	  StandardType type = StandardType.fromCode(standardCode);
+	  if (type != null) {
+	    builder.addStandard(category, type);
+	  } else {
+	    logger.warn("Unknown standard code: " + standardCode);
+	  }
+	}
       }
 
       // Load environmental conditions if present
       String minAmbient = getField(firstRow, headerIndex, COL_MIN_AMBIENT_TEMP);
       String maxAmbient = getField(firstRow, headerIndex, COL_MAX_AMBIENT_TEMP);
       if (minAmbient != null || maxAmbient != null) {
-        double minTemp = parseDouble(minAmbient, -40.0);
-        double maxTemp = parseDouble(maxAmbient, 45.0);
-        double seawaterTemp = parseDouble(getField(firstRow, headerIndex, COL_SEAWATER_TEMP), 4.0);
-        String seismicZone = getFieldOrDefault(firstRow, headerIndex, COL_SEISMIC_ZONE, "0");
+	double minTemp = parseDouble(minAmbient, -40.0);
+	double maxTemp = parseDouble(maxAmbient, 45.0);
+	double seawaterTemp = parseDouble(getField(firstRow, headerIndex, COL_SEAWATER_TEMP), 4.0);
+	String seismicZone = getFieldOrDefault(firstRow, headerIndex, COL_SEISMIC_ZONE, "0");
 
-        builder.environmentalConditions(new TechnicalRequirementsDocument.EnvironmentalConditions(
-            minTemp, maxTemp, seawaterTemp, seismicZone, 0, 0, ""));
+	builder.environmentalConditions(new TechnicalRequirementsDocument.EnvironmentalConditions(minTemp, maxTemp,
+	    seawaterTemp, seismicZone, 0, 0, ""));
       }
 
       cache.put(projectId, builder.build());
@@ -235,60 +234,59 @@ public class CsvTorgDataSource implements TorgDataSource {
   /**
    * Load master format where each row is a complete TORG (less common).
    *
-   * @param reader the BufferedReader to read CSV data from
+   * @param reader      the BufferedReader to read CSV data from
    * @param headerIndex map of column names to their indices
    * @throws IOException if an I/O error occurs while reading
    */
-  private void loadMasterFormat(BufferedReader reader, Map<String, Integer> headerIndex)
-      throws IOException {
+  private void loadMasterFormat(BufferedReader reader, Map<String, Integer> headerIndex) throws IOException {
     String line;
     while ((line = reader.readLine()) != null) {
       if (line.trim().isEmpty()) {
-        continue;
+	continue;
       }
 
       String[] values = parseCSVLine(line);
       String projectId = getField(values, headerIndex, COL_PROJECT_ID);
 
       if (projectId == null || projectId.isEmpty()) {
-        continue;
+	continue;
       }
 
-      TechnicalRequirementsDocument.Builder builder = TechnicalRequirementsDocument.builder()
-          .projectId(projectId).projectName(getField(values, headerIndex, COL_PROJECT_NAME))
-          .companyIdentifier(getField(values, headerIndex, COL_COMPANY))
-          .revision(getFieldOrDefault(values, headerIndex, COL_REVISION, "1"))
-          .issueDate(getField(values, headerIndex, COL_ISSUE_DATE));
+      TechnicalRequirementsDocument.Builder builder = TechnicalRequirementsDocument.builder().projectId(projectId)
+	  .projectName(getField(values, headerIndex, COL_PROJECT_NAME))
+	  .companyIdentifier(getField(values, headerIndex, COL_COMPANY))
+	  .revision(getFieldOrDefault(values, headerIndex, COL_REVISION, "1"))
+	  .issueDate(getField(values, headerIndex, COL_ISSUE_DATE));
 
       // Environmental conditions
       String minAmbient = getField(values, headerIndex, COL_MIN_AMBIENT_TEMP);
       String maxAmbient = getField(values, headerIndex, COL_MAX_AMBIENT_TEMP);
       if (minAmbient != null || maxAmbient != null) {
-        double minTemp = parseDouble(minAmbient, -40.0);
-        double maxTemp = parseDouble(maxAmbient, 45.0);
-        double seawaterTemp = parseDouble(getField(values, headerIndex, COL_SEAWATER_TEMP), 4.0);
-        String seismicZone = getFieldOrDefault(values, headerIndex, COL_SEISMIC_ZONE, "0");
+	double minTemp = parseDouble(minAmbient, -40.0);
+	double maxTemp = parseDouble(maxAmbient, 45.0);
+	double seawaterTemp = parseDouble(getField(values, headerIndex, COL_SEAWATER_TEMP), 4.0);
+	String seismicZone = getFieldOrDefault(values, headerIndex, COL_SEISMIC_ZONE, "0");
 
-        builder.environmentalConditions(new TechnicalRequirementsDocument.EnvironmentalConditions(
-            minTemp, maxTemp, seawaterTemp, seismicZone, 0, 0, ""));
+	builder.environmentalConditions(new TechnicalRequirementsDocument.EnvironmentalConditions(minTemp, maxTemp,
+	    seawaterTemp, seismicZone, 0, 0, ""));
       }
 
       // Safety factors
       String pressureSF = getField(values, headerIndex, COL_PRESSURE_SF);
       String corrosion = getField(values, headerIndex, COL_CORROSION_ALLOWANCE);
       if (pressureSF != null || corrosion != null) {
-        builder.safetyFactors(new TechnicalRequirementsDocument.SafetyFactors(
-            parseDouble(pressureSF, 1.1), 10.0, parseDouble(corrosion, 3.0), 0.125, 1.0));
+	builder.safetyFactors(new TechnicalRequirementsDocument.SafetyFactors(parseDouble(pressureSF, 1.1), 10.0,
+	    parseDouble(corrosion, 3.0), 0.125, 1.0));
       }
 
       // Material specs
       String plateMat = getField(values, headerIndex, COL_PLATE_MATERIAL);
       String pipeMat = getField(values, headerIndex, COL_PIPE_MATERIAL);
       if (plateMat != null || pipeMat != null) {
-        double minDesignTemp = parseDouble(minAmbient, -46.0);
-        builder.materialSpecifications(new TechnicalRequirementsDocument.MaterialSpecifications(
-            plateMat != null ? plateMat : "A516-70", pipeMat != null ? pipeMat : "A106-B",
-            minDesignTemp, 300.0, minDesignTemp < -29, "ASTM"));
+	double minDesignTemp = parseDouble(minAmbient, -46.0);
+	builder.materialSpecifications(
+	    new TechnicalRequirementsDocument.MaterialSpecifications(plateMat != null ? plateMat : "A516-70",
+		pipeMat != null ? pipeMat : "A106-B", minDesignTemp, 300.0, minDesignTemp < -29, "ASTM"));
       }
 
       cache.put(projectId, builder.build());
@@ -302,13 +300,12 @@ public class CsvTorgDataSource implements TorgDataSource {
   }
 
   @Override
-  public Optional<TechnicalRequirementsDocument> loadByCompanyAndProject(String companyIdentifier,
-      String projectName) {
+  public Optional<TechnicalRequirementsDocument> loadByCompanyAndProject(String companyIdentifier, String projectName) {
     loadData();
     for (TechnicalRequirementsDocument torg : cache.values()) {
       if (companyIdentifier.equalsIgnoreCase(torg.getCompanyIdentifier())
-          && projectName.equalsIgnoreCase(torg.getProjectName())) {
-        return Optional.of(torg);
+	  && projectName.equalsIgnoreCase(torg.getProjectName())) {
+	return Optional.of(torg);
       }
     }
     return Optional.empty();
@@ -327,7 +324,7 @@ public class CsvTorgDataSource implements TorgDataSource {
     for (TechnicalRequirementsDocument torg : cache.values()) {
       String company = torg.getCompanyIdentifier();
       if (company != null && !companies.contains(company)) {
-        companies.add(company);
+	companies.add(company);
       }
     }
     return companies;
@@ -344,12 +341,12 @@ public class CsvTorgDataSource implements TorgDataSource {
       char c = line.charAt(i);
 
       if (c == '"') {
-        inQuotes = !inQuotes;
+	inQuotes = !inQuotes;
       } else if (c == ',' && !inQuotes) {
-        fields.add(current.toString().trim());
-        current = new StringBuilder();
+	fields.add(current.toString().trim());
+	current = new StringBuilder();
       } else {
-        current.append(c);
+	current.append(c);
       }
     }
     fields.add(current.toString().trim());

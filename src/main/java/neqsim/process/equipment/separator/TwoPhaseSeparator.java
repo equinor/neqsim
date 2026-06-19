@@ -28,7 +28,7 @@ public class TwoPhaseSeparator extends Separator {
    * Constructor for TwoPhaseSeparator.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name        a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public TwoPhaseSeparator(String name, StreamInterface inletStream) {

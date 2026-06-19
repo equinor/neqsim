@@ -22,7 +22,7 @@ public class ReadFluidData2 {
   private static final Logger logger = LogManager.getLogger(ReadFluidData2.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.
@@ -53,18 +53,16 @@ public class ReadFluidData2 {
 
     // testSystem.getPhase(1).getN;
     /*
-     * testSystem.init(0); testSystem.setPressure(100.0); testSystem.setTemperature(273.15 + 15.0);
-     * // // ""); // testSystem.addComponent("water", 1.0); testSystem.setMixingRule(2); //
-     * testSystem.setMultiPhaseCheck(true); //testSystem.setMultiPhaseCheck(false);
-     * ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+     * testSystem.init(0); testSystem.setPressure(100.0); testSystem.setTemperature(273.15 + 15.0); // // ""); //
+     * testSystem.addComponent("water", 1.0); testSystem.setMixingRule(2); // testSystem.setMultiPhaseCheck(true);
+     * //testSystem.setMultiPhaseCheck(false); ThermodynamicOperations testOps = new
+     * ThermodynamicOperations(testSystem);
      *
-     * try { testOps.TPflash(); testSystem.display(); testOps.PSflash(-123.108602625942);
-     * testSystem.display(); testSystem.setPressure(100.0); testOps.PSflash(-119.003271056256);
-     * testSystem.display(); logger.info("entropy " + testSystem.getEntropy());
-     * //testSystem.setPressure(100.0); //testOps.PSflash(-1.503016881785468e+02);
-     * //testSystem.display(); //testSystem.setPressure(100.0);
-     * testOps.PSflash(-1.266377583884310e+02); } catch (Exception ex) {
-     * logger.error(ex.getMessage(), ex); }
+     * try { testOps.TPflash(); testSystem.display(); testOps.PSflash(-123.108602625942); testSystem.display();
+     * testSystem.setPressure(100.0); testOps.PSflash(-119.003271056256); testSystem.display(); logger.info("entropy " +
+     * testSystem.getEntropy()); //testSystem.setPressure(100.0); //testOps.PSflash(-1.503016881785468e+02);
+     * //testSystem.display(); //testSystem.setPressure(100.0); testOps.PSflash(-1.266377583884310e+02); } catch
+     * (Exception ex) { logger.error(ex.getMessage(), ex); }
      */
   }
 }

@@ -46,7 +46,8 @@ public class GasTurbineTest extends neqsim.NeqSimTest {
   }
 
   @Test
-  void testGetMechanicalDesign() {}
+  void testGetMechanicalDesign() {
+  }
 
   @Test
   void testRun() {

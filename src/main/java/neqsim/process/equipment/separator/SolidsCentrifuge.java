@@ -6,9 +6,8 @@ import neqsim.process.equipment.stream.StreamInterface;
  * Solids centrifuge for bio-processing solid-liquid separation.
  *
  * <p>
- * Centrifugal separation of solids from liquids. Typically used for cell mass recovery, protein
- * precipitation, and other bio-slurry separations. Higher energy consumption but better separation
- * efficiency than gravity-based methods.
+ * Centrifugal separation of solids from liquids. Typically used for cell mass recovery, protein precipitation, and
+ * other bio-slurry separations. Higher energy consumption but better separation efficiency than gravity-based methods.
  * </p>
  *
  * <p>
@@ -46,7 +45,7 @@ public class SolidsCentrifuge extends SolidsSeparator {
   /**
    * Constructor for SolidsCentrifuge with inlet stream.
    *
-   * @param name name of the centrifuge
+   * @param name        name of the centrifuge
    * @param inletStream the feed stream
    */
   public SolidsCentrifuge(String name, StreamInterface inletStream) {

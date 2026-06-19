@@ -9,9 +9,9 @@ import neqsim.process.mechanicaldesign.compressor.CompressorMechanicalDesign;
  * Cost estimation class for compressors.
  *
  * <p>
- * This class provides compressor-specific cost estimation methods using chemical engineering cost
- * correlations for centrifugal, reciprocating, and screw compressors. Includes driver costs for
- * electric motors, gas turbines, and steam turbines.
+ * This class provides compressor-specific cost estimation methods using chemical engineering cost correlations for
+ * centrifugal, reciprocating, and screw compressors. Includes driver costs for electric motors, gas turbines, and steam
+ * turbines.
  * </p>
  *
  * @author ESOL
@@ -39,8 +39,7 @@ public class CompressorCostEstimate extends UnitCostEstimateBaseClass {
   /**
    * Constructor for CompressorCostEstimate.
    *
-   * @param mechanicalEquipment a
-   *        {@link neqsim.process.mechanicaldesign.compressor.CompressorMechanicalDesign} object
+   * @param mechanicalEquipment a {@link neqsim.process.mechanicaldesign.compressor.CompressorMechanicalDesign} object
    */
   public CompressorCostEstimate(CompressorMechanicalDesign mechanicalEquipment) {
     super(mechanicalEquipment);
@@ -212,7 +211,7 @@ public class CompressorCostEstimate extends UnitCostEstimateBaseClass {
   /**
    * Calculate intercoolers cost.
    *
-   * @param power compressor power in kW
+   * @param power                compressor power in kW
    * @param numberOfIntercoolers number of intercoolers
    * @return total intercoolers cost in USD
    */
@@ -230,13 +229,12 @@ public class CompressorCostEstimate extends UnitCostEstimateBaseClass {
   /**
    * Calculate annual operating cost (electricity or fuel).
    *
-   * @param hoursPerYear operating hours per year
+   * @param hoursPerYear    operating hours per year
    * @param electricityRate electricity rate in $/kWh (for electric motor)
-   * @param fuelRate fuel rate in $/GJ (for gas turbine/engine)
+   * @param fuelRate        fuel rate in $/GJ (for gas turbine/engine)
    * @return annual operating cost in USD
    */
-  public double calcAnnualOperatingCost(double hoursPerYear, double electricityRate,
-      double fuelRate) {
+  public double calcAnnualOperatingCost(double hoursPerYear, double electricityRate, double fuelRate) {
     if (mechanicalEquipment == null) {
       return 0.0;
     }

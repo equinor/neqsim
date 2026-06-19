@@ -17,9 +17,8 @@ public interface FluidBoundarySystemInterface {
    * addBoundary.
    * </p>
    *
-   * @param boundary a
-   *        {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface}
-   *        object
+   * @param boundary a {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface}
+   *                 object
    */
   public void addBoundary(FluidBoundaryInterface boundary);
 
@@ -83,9 +82,7 @@ public interface FluidBoundarySystemInterface {
    * getFluidBoundary.
    * </p>
    *
-   * @return a
-   *         {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface}
-   *         object
+   * @return a {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface} object
    */
   public FluidBoundaryInterface getFluidBoundary();
 

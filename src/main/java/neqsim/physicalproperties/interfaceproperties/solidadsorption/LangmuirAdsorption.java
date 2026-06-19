@@ -79,7 +79,7 @@ public class LangmuirAdsorption extends AbstractAdsorptionModel {
       tempRef = new double[numComp];
       heatOfAdsorption = new double[numComp];
       for (int i = 0; i < numComp; i++) {
-        tempRef[i] = 298.15;
+	tempRef[i] = 298.15;
       }
     }
   }
@@ -98,36 +98,35 @@ public class LangmuirAdsorption extends AbstractAdsorptionModel {
     for (int comp = 0; comp < numComp; comp++) {
       String componentName = system.getPhase(phaseNum).getComponent(comp).getComponentName();
       try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-          java.sql.ResultSet dataSet =
-              database.getResultSet("SELECT * FROM adsorptionparameters WHERE name='"
-                  + componentName + "' AND Solid='" + solidMaterial + "'")) {
+	  java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM adsorptionparameters WHERE name='"
+	      + componentName + "' AND Solid='" + solidMaterial + "'")) {
 
-        if (dataSet.next()) {
-          // Try to read Langmuir-specific parameters if available
-          try {
-            qmax[comp] = Double.parseDouble(dataSet.getString("qmax"));
-            kLangmuir[comp] = Double.parseDouble(dataSet.getString("K_langmuir"));
-            tempRef[comp] = Double.parseDouble(dataSet.getString("TempRef"));
-            heatOfAdsorption[comp] = Double.parseDouble(dataSet.getString("dH_ads"));
-          } catch (Exception ex) {
-            // Fall back to DRA parameters and convert
-            double eps = Double.parseDouble(dataSet.getString("eps"));
-            double z0 = Double.parseDouble(dataSet.getString("z0"));
-            // Estimate Langmuir parameters from DRA
-            qmax[comp] = z0 * 1000.0 / system.getPhase(0).getComponent(comp).getMolarMass();
-            kLangmuir[comp] = Math.exp(eps / (R * 298.15));
-            tempRef[comp] = 298.15;
-            heatOfAdsorption[comp] = -eps * 1000.0;
-          }
-          logger.info("Langmuir parameters loaded for " + componentName + ": qmax=" + qmax[comp]
-              + ", K=" + kLangmuir[comp]);
-        } else {
-          // Use default parameters
-          setDefaultParameters(comp);
-        }
+	if (dataSet.next()) {
+	  // Try to read Langmuir-specific parameters if available
+	  try {
+	    qmax[comp] = Double.parseDouble(dataSet.getString("qmax"));
+	    kLangmuir[comp] = Double.parseDouble(dataSet.getString("K_langmuir"));
+	    tempRef[comp] = Double.parseDouble(dataSet.getString("TempRef"));
+	    heatOfAdsorption[comp] = Double.parseDouble(dataSet.getString("dH_ads"));
+	  } catch (Exception ex) {
+	    // Fall back to DRA parameters and convert
+	    double eps = Double.parseDouble(dataSet.getString("eps"));
+	    double z0 = Double.parseDouble(dataSet.getString("z0"));
+	    // Estimate Langmuir parameters from DRA
+	    qmax[comp] = z0 * 1000.0 / system.getPhase(0).getComponent(comp).getMolarMass();
+	    kLangmuir[comp] = Math.exp(eps / (R * 298.15));
+	    tempRef[comp] = 298.15;
+	    heatOfAdsorption[comp] = -eps * 1000.0;
+	  }
+	  logger.info(
+	      "Langmuir parameters loaded for " + componentName + ": qmax=" + qmax[comp] + ", K=" + kLangmuir[comp]);
+	} else {
+	  // Use default parameters
+	  setDefaultParameters(comp);
+	}
       } catch (Exception ex) {
-        logger.info("Component not found in adsorption DB: " + componentName);
-        setDefaultParameters(comp);
+	logger.info("Component not found in adsorption DB: " + componentName);
+	setDefaultParameters(comp);
       }
     }
   }
@@ -162,7 +161,7 @@ public class LangmuirAdsorption extends AbstractAdsorptionModel {
 
       // Temperature-corrected Langmuir constant using van't Hoff equation
       double kCorr = kLangmuir[comp]
-          * Math.exp(-heatOfAdsorption[comp] / R * (1.0 / temperature - 1.0 / tempRef[comp]));
+	  * Math.exp(-heatOfAdsorption[comp] / R * (1.0 / temperature - 1.0 / tempRef[comp]));
 
       // Langmuir isotherm equation
       double coverage = kCorr * partialPressure / (1.0 + kCorr * partialPressure);
@@ -200,8 +199,7 @@ public class LangmuirAdsorption extends AbstractAdsorptionModel {
 
     for (int comp = 0; comp < numComp; comp++) {
       partialPressures[comp] = getPartialPressure(phaseNum, comp);
-      kCorr[comp] = kLangmuir[comp]
-          * Math.exp(-heatOfAdsorption[comp] / R * (1.0 / temperature - 1.0 / tempRef[comp]));
+      kCorr[comp] = kLangmuir[comp] * Math.exp(-heatOfAdsorption[comp] / R * (1.0 / temperature - 1.0 / tempRef[comp]));
       denomSum += kCorr[comp] * partialPressures[comp];
     }
 
@@ -229,7 +227,7 @@ public class LangmuirAdsorption extends AbstractAdsorptionModel {
    * Set the maximum adsorption capacity for a component.
    *
    * @param component the component index
-   * @param value qmax in mol/kg
+   * @param value     qmax in mol/kg
    */
   public void setQmax(int component, double value) {
     qmax[component] = value;
@@ -251,7 +249,7 @@ public class LangmuirAdsorption extends AbstractAdsorptionModel {
    * Set the Langmuir constant for a component.
    *
    * @param component the component index
-   * @param value K in 1/bar
+   * @param value     K in 1/bar
    */
   public void setKLangmuir(int component, double value) {
     kLangmuir[component] = value;
@@ -273,7 +271,7 @@ public class LangmuirAdsorption extends AbstractAdsorptionModel {
    * Set the heat of adsorption for a component.
    *
    * @param component the component index
-   * @param value heat of adsorption in J/mol
+   * @param value     heat of adsorption in J/mol
    */
   public void setHeatOfAdsorption(int component, double value) {
     heatOfAdsorption[component] = value;

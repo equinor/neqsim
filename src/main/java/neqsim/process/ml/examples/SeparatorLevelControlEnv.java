@@ -15,9 +15,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * Example RL environment for separator level control.
  *
  * <p>
- * This demonstrates how to wrap a NeqSim process in an RL-compatible interface for training control
- * policies. The agent learns to maintain liquid level at setpoint by controlling the liquid outlet
- * valve.
+ * This demonstrates how to wrap a NeqSim process in an RL-compatible interface for training control policies. The agent
+ * learns to maintain liquid level at setpoint by controlling the liquid outlet valve.
  *
  * <h2>State Space:</h2>
  * <ul>
@@ -68,13 +67,12 @@ public class SeparatorLevelControlEnv extends RLEnvironment {
   /**
    * Create a separator level control environment with custom process.
    *
-   * @param process the process system containing a separator
+   * @param process       the process system containing a separator
    * @param separatorName name of the separator in the process
-   * @param valveName name of the liquid outlet valve
-   * @param feedName name of the feed stream
+   * @param valveName     name of the liquid outlet valve
+   * @param feedName      name of the feed stream
    */
-  public SeparatorLevelControlEnv(ProcessSystem process, String separatorName, String valveName,
-      String feedName) {
+  public SeparatorLevelControlEnv(ProcessSystem process, String separatorName, String valveName, String feedName) {
     super(process);
     this.separator = (Separator) process.getUnit(separatorName);
     this.liquidValve = (ThrottlingValve) process.getUnit(valveName);
@@ -100,8 +98,7 @@ public class SeparatorLevelControlEnv extends RLEnvironment {
 
     Separator separator = new Separator("separator", feed);
 
-    ThrottlingValve liquidValve =
-        new ThrottlingValve("liquidValve", separator.getLiquidOutStream());
+    ThrottlingValve liquidValve = new ThrottlingValve("liquidValve", separator.getLiquidOutStream());
     liquidValve.setOutletPressure(10.0);
 
     ProcessSystem process = new ProcessSystem();
@@ -130,18 +127,16 @@ public class SeparatorLevelControlEnv extends RLEnvironment {
 
     // Add constraints
     getConstraintManager().add(new Constraint("max_pressure", "Separator over-pressure protection",
-        Constraint.Type.HARD, Constraint.Category.SAFETY, "pressure", 0.0, 70.0, "bar"));
+	Constraint.Type.HARD, Constraint.Category.SAFETY, "pressure", 0.0, 70.0, "bar"));
 
-    getConstraintManager()
-        .add(new Constraint("min_pressure", "Separator minimum pressure", Constraint.Type.SOFT,
-            Constraint.Category.OPERATIONAL, "pressure", 30.0, Double.POSITIVE_INFINITY, "bar"));
+    getConstraintManager().add(new Constraint("min_pressure", "Separator minimum pressure", Constraint.Type.SOFT,
+	Constraint.Category.OPERATIONAL, "pressure", 30.0, Double.POSITIVE_INFINITY, "bar"));
 
-    getConstraintManager()
-        .add(new Constraint("level_range", "Separator level operating range", Constraint.Type.SOFT,
-            Constraint.Category.OPERATIONAL, "liquid_level", 0.2, 0.8, "fraction"));
+    getConstraintManager().add(new Constraint("level_range", "Separator level operating range", Constraint.Type.SOFT,
+	Constraint.Category.OPERATIONAL, "liquid_level", 0.2, 0.8, "fraction"));
 
-    getConstraintManager().add(new Constraint("level_critical", "Critical level limits",
-        Constraint.Type.HARD, Constraint.Category.SAFETY, "liquid_level", 0.05, 0.95, "fraction"));
+    getConstraintManager().add(new Constraint("level_critical", "Critical level limits", Constraint.Type.HARD,
+	Constraint.Category.SAFETY, "liquid_level", 0.05, 0.95, "fraction"));
 
     // Set reward weights
     setRewardWeights(0.01, 10.0, 100.0, 0.1);
@@ -196,10 +191,10 @@ public class SeparatorLevelControlEnv extends RLEnvironment {
       temperature = separator.getTemperature();
 
       if (separator.getFluid().hasPhaseType("gas")) {
-        gasDensity = separator.getFluid().getPhase("gas").getDensity("kg/m3");
+	gasDensity = separator.getFluid().getPhase("gas").getDensity("kg/m3");
       }
       if (separator.getFluid().hasPhaseType("oil")) {
-        liquidDensity = separator.getFluid().getPhase("oil").getDensity("kg/m3");
+	liquidDensity = separator.getFluid().getPhase("oil").getDensity("kg/m3");
       }
     }
 
@@ -286,8 +281,7 @@ public class SeparatorLevelControlEnv extends RLEnvironment {
     StateVector obs = env.reset();
     System.out.println("Initial observation:");
     for (String name : obs.getFeatureNames()) {
-      System.out.printf("  %s: %.4f (normalized: %.4f)%n", name, obs.getValue(name),
-          obs.getNormalized(name));
+      System.out.printf("  %s: %.4f (normalized: %.4f)%n", name, obs.getValue(name), obs.getNormalized(name));
     }
 
     System.out.println("\nAction space: " + env.getActionSpace());
@@ -306,16 +300,15 @@ public class SeparatorLevelControlEnv extends RLEnvironment {
       // Step environment
       RLEnvironment.StepResult result = env.step(action);
 
-      System.out.printf("%nStep %d: action=%.2f, reward=%.2f, done=%s%n", i + 1, valveAction,
-          result.reward, result.done);
+      System.out.printf("%nStep %d: action=%.2f, reward=%.2f, done=%s%n", i + 1, valveAction, result.reward,
+	  result.done);
       System.out.printf("  Level: %.4f, Error: %.4f%n", result.observation.getValue("liquid_level"),
-          result.observation.getValue("level_error"));
-      System.out.printf("  Constraint violations: %d%n",
-          env.getConstraintManager().getViolations().size());
+	  result.observation.getValue("level_error"));
+      System.out.printf("  Constraint violations: %d%n", env.getConstraintManager().getViolations().size());
 
       if (result.done) {
-        System.out.println("  Episode ended: " + result.info.violationExplanation);
-        break;
+	System.out.println("  Episode ended: " + result.info.violationExplanation);
+	break;
       }
     }
 

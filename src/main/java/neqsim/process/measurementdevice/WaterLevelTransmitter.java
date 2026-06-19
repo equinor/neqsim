@@ -9,9 +9,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * </p>
  *
  * <p>
- * This transmitter measures the water level from the bottom of the separator. In a three-phase
- * separator, water is the heaviest phase and settles at the bottom, with oil floating on top of the
- * water, and gas in the upper portion.
+ * This transmitter measures the water level from the bottom of the separator. In a three-phase separator, water is the
+ * heaviest phase and settles at the bottom, with oil floating on top of the water, and gas in the upper portion.
  * </p>
  *
  * @author ESOL
@@ -39,7 +38,7 @@ public class WaterLevelTransmitter extends MeasurementDeviceBaseClass {
    * Constructor for WaterLevelTransmitter.
    * </p>
    *
-   * @param name Name of WaterLevelTransmitter
+   * @param name      Name of WaterLevelTransmitter
    * @param separator a {@link neqsim.process.equipment.separator.ThreePhaseSeparator} object
    */
   public WaterLevelTransmitter(String name, ThreePhaseSeparator separator) {
@@ -60,8 +59,8 @@ public class WaterLevelTransmitter extends MeasurementDeviceBaseClass {
   @Override
   public double getMeasuredValue(String unit) {
     if (!unit.equalsIgnoreCase("m") && !unit.equalsIgnoreCase("")) {
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
-          "getMeasuredValue", "unit", "currently only supports \"m\" or \"\""));
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getMeasuredValue", "unit",
+	  "currently only supports \"m\" or \"\""));
     }
     return separator.getWaterLevel();
   }

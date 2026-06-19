@@ -7,9 +7,8 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Describes a single variable exposed by a unit operation in a process simulation. Each variable
- * has a stable string address that can be used with
- * {@link ProcessAutomation#getVariableValue(String, String)} and
+ * Describes a single variable exposed by a unit operation in a process simulation. Each variable has a stable string
+ * address that can be used with {@link ProcessAutomation#getVariableValue(String, String)} and
  * {@link ProcessAutomation#setVariableValue(String, double, String)}.
  *
  * @author Even Solbraa
@@ -47,42 +46,39 @@ public class SimulationVariable implements Serializable {
   /**
    * Creates a new simulation variable descriptor.
    *
-   * @param address the stable dot-separated address, e.g. "separator-1.gasOutStream.temperature"
-   * @param name the short property name, e.g. "temperature"
-   * @param type whether the variable is INPUT (read-write) or OUTPUT (read-only)
+   * @param address     the stable dot-separated address, e.g. "separator-1.gasOutStream.temperature"
+   * @param name        the short property name, e.g. "temperature"
+   * @param type        whether the variable is INPUT (read-write) or OUTPUT (read-only)
    * @param defaultUnit the default unit of measure, e.g. "K", "bara", "kg/hr"
    * @param description a human-readable description
    */
-  public SimulationVariable(String address, String name, VariableType type, String defaultUnit,
-      String description) {
-    this(address, name, type, defaultUnit, description, "general", "process-automation",
-        inferUnitFamily(defaultUnit), null, null, new ArrayList<String>(),
-        type == VariableType.INPUT, type == VariableType.INPUT,
-        "Available when the owning unit operation is present");
+  public SimulationVariable(String address, String name, VariableType type, String defaultUnit, String description) {
+    this(address, name, type, defaultUnit, description, "general", "process-automation", inferUnitFamily(defaultUnit),
+	null, null, new ArrayList<String>(), type == VariableType.INPUT, type == VariableType.INPUT,
+	"Available when the owning unit operation is present");
   }
 
   /**
    * Creates a fully specified simulation variable descriptor.
    *
-   * @param address the stable dot-separated address
-   * @param name the short property name
-   * @param type whether the variable is INPUT or OUTPUT
-   * @param defaultUnit the default unit of measure
-   * @param description a human-readable description
-   * @param category variable category such as stream, equipment, or tuning
-   * @param source metadata source identifier
-   * @param unitFamily physical unit family such as temperature or pressure
-   * @param minimumValue optional minimum physically meaningful value
-   * @param maximumValue optional maximum physically meaningful value
-   * @param allowedValues optional allowed symbolic values
-   * @param writable true if the variable can be written through automation
+   * @param address            the stable dot-separated address
+   * @param name               the short property name
+   * @param type               whether the variable is INPUT or OUTPUT
+   * @param defaultUnit        the default unit of measure
+   * @param description        a human-readable description
+   * @param category           variable category such as stream, equipment, or tuning
+   * @param source             metadata source identifier
+   * @param unitFamily         physical unit family such as temperature or pressure
+   * @param minimumValue       optional minimum physically meaningful value
+   * @param maximumValue       optional maximum physically meaningful value
+   * @param allowedValues      optional allowed symbolic values
+   * @param writable           true if the variable can be written through automation
    * @param invalidatesProcess true if writes require the process to be rerun
-   * @param applicability short note describing when the variable applies
+   * @param applicability      short note describing when the variable applies
    */
-  private SimulationVariable(String address, String name, VariableType type, String defaultUnit,
-      String description, String category, String source, String unitFamily, Double minimumValue,
-      Double maximumValue, List<String> allowedValues, boolean writable, boolean invalidatesProcess,
-      String applicability) {
+  private SimulationVariable(String address, String name, VariableType type, String defaultUnit, String description,
+      String category, String source, String unitFamily, Double minimumValue, Double maximumValue,
+      List<String> allowedValues, boolean writable, boolean invalidatesProcess, String applicability) {
     this.address = address;
     this.name = name;
     this.type = type;
@@ -140,8 +136,8 @@ public class SimulationVariable implements Serializable {
    * @return copied variable descriptor
    */
   public SimulationVariable withCategory(String category) {
-    return copy(category, source, unitFamily, minimumValue, maximumValue, allowedValues, writable,
-        invalidatesProcess, applicability);
+    return copy(category, source, unitFamily, minimumValue, maximumValue, allowedValues, writable, invalidatesProcess,
+	applicability);
   }
 
   /**
@@ -152,8 +148,8 @@ public class SimulationVariable implements Serializable {
    * @return copied variable descriptor
    */
   public SimulationVariable withBounds(Double minimumValue, Double maximumValue) {
-    return copy(category, source, unitFamily, minimumValue, maximumValue, allowedValues, writable,
-        invalidatesProcess, applicability);
+    return copy(category, source, unitFamily, minimumValue, maximumValue, allowedValues, writable, invalidatesProcess,
+	applicability);
   }
 
   /**
@@ -163,20 +159,20 @@ public class SimulationVariable implements Serializable {
    * @return copied variable descriptor
    */
   public SimulationVariable withAllowedValues(String... allowedValues) {
-    return copy(category, source, unitFamily, minimumValue, maximumValue,
-        Arrays.asList(allowedValues), writable, invalidatesProcess, applicability);
+    return copy(category, source, unitFamily, minimumValue, maximumValue, Arrays.asList(allowedValues), writable,
+	invalidatesProcess, applicability);
   }
 
   /**
    * Returns a copy with write-safety metadata.
    *
-   * @param writable true if writable
+   * @param writable           true if writable
    * @param invalidatesProcess true if writes require rerunning the process
    * @return copied variable descriptor
    */
   public SimulationVariable withWritableSafety(boolean writable, boolean invalidatesProcess) {
-    return copy(category, source, unitFamily, minimumValue, maximumValue, allowedValues, writable,
-        invalidatesProcess, applicability);
+    return copy(category, source, unitFamily, minimumValue, maximumValue, allowedValues, writable, invalidatesProcess,
+	applicability);
   }
 
   /**
@@ -186,8 +182,8 @@ public class SimulationVariable implements Serializable {
    * @return copied variable descriptor
    */
   public SimulationVariable withApplicability(String applicability) {
-    return copy(category, source, unitFamily, minimumValue, maximumValue, allowedValues, writable,
-        invalidatesProcess, applicability);
+    return copy(category, source, unitFamily, minimumValue, maximumValue, allowedValues, writable, invalidatesProcess,
+	applicability);
   }
 
   /**
@@ -197,8 +193,8 @@ public class SimulationVariable implements Serializable {
    * @return copied variable descriptor
    */
   public SimulationVariable withUnitFamily(String unitFamily) {
-    return copy(category, source, unitFamily, minimumValue, maximumValue, allowedValues, writable,
-        invalidatesProcess, applicability);
+    return copy(category, source, unitFamily, minimumValue, maximumValue, allowedValues, writable, invalidatesProcess,
+	applicability);
   }
 
   /**
@@ -208,30 +204,29 @@ public class SimulationVariable implements Serializable {
    * @return copied variable descriptor
    */
   public SimulationVariable withSource(String source) {
-    return copy(category, source, unitFamily, minimumValue, maximumValue, allowedValues, writable,
-        invalidatesProcess, applicability);
+    return copy(category, source, unitFamily, minimumValue, maximumValue, allowedValues, writable, invalidatesProcess,
+	applicability);
   }
 
   /**
    * Creates a copied descriptor with updated metadata.
    *
-   * @param category variable category
-   * @param source metadata source identifier
-   * @param unitFamily physical unit family
-   * @param minimumValue optional minimum value
-   * @param maximumValue optional maximum value
-   * @param allowedValues allowed symbolic values
-   * @param writable true if writable
+   * @param category           variable category
+   * @param source             metadata source identifier
+   * @param unitFamily         physical unit family
+   * @param minimumValue       optional minimum value
+   * @param maximumValue       optional maximum value
+   * @param allowedValues      allowed symbolic values
+   * @param writable           true if writable
    * @param invalidatesProcess true if writes require process rerun
-   * @param applicability applicability note
+   * @param applicability      applicability note
    * @return copied variable descriptor
    */
-  private SimulationVariable copy(String category, String source, String unitFamily,
-      Double minimumValue, Double maximumValue, List<String> allowedValues, boolean writable,
-      boolean invalidatesProcess, String applicability) {
-    return new SimulationVariable(address, name, type, defaultUnit, description, category, source,
-        unitFamily, minimumValue, maximumValue, allowedValues, writable, invalidatesProcess,
-        applicability);
+  private SimulationVariable copy(String category, String source, String unitFamily, Double minimumValue,
+      Double maximumValue, List<String> allowedValues, boolean writable, boolean invalidatesProcess,
+      String applicability) {
+    return new SimulationVariable(address, name, type, defaultUnit, description, category, source, unitFamily,
+	minimumValue, maximumValue, allowedValues, writable, invalidatesProcess, applicability);
   }
 
   /**

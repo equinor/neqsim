@@ -40,7 +40,8 @@ public class MaterialsReviewInput implements Serializable {
   /**
    * Creates an empty materials review input.
    */
-  public MaterialsReviewInput() {}
+  public MaterialsReviewInput() {
+  }
 
   /**
    * Parses input from JSON.
@@ -63,23 +64,21 @@ public class MaterialsReviewInput implements Serializable {
     MaterialsReviewInput input = new MaterialsReviewInput();
     input.setProjectName(getString(object, "projectName", "materials-review"));
     input.setDesignLifeYears(getDouble(object, "designLifeYears", 25.0));
-    JsonArray itemArray =
-        getFirstArray(object, "items", "materialsRegister", "equipment", "lineList", "lines");
+    JsonArray itemArray = getFirstArray(object, "items", "materialsRegister", "equipment", "lineList", "lines");
     if (itemArray != null) {
       for (int i = 0; i < itemArray.size(); i++) {
-        if (itemArray.get(i).isJsonObject()) {
-          input.addItem(MaterialReviewItem.fromMap(toMap(itemArray.get(i).getAsJsonObject())));
-        }
+	if (itemArray.get(i).isJsonObject()) {
+	  input.addItem(MaterialReviewItem.fromMap(toMap(itemArray.get(i).getAsJsonObject())));
+	}
       }
     }
     for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
       if (!isCoreKey(entry.getKey())) {
-        input.putMetadata(entry.getKey(), toObject(entry.getValue()));
+	input.putMetadata(entry.getKey(), toObject(entry.getValue()));
       }
     }
     if (object.has("stidData") && object.get("stidData").isJsonObject()) {
-      input.mergeFrom(
-          StidMaterialsDataSource.fromJsonObject(object.getAsJsonObject("stidData")).read());
+      input.mergeFrom(StidMaterialsDataSource.fromJsonObject(object.getAsJsonObject("stidData")).read());
     }
     return input;
   }
@@ -88,9 +87,9 @@ public class MaterialsReviewInput implements Serializable {
    * Creates review input from a simulated process system.
    *
    * <p>
-   * The method extracts equipment names, equipment classes, pressure, temperature, and selected
-   * component mole fractions. A materials register can later be merged by tag to add material
-   * grade, wall thickness, coating, insulation, and inspection data.
+   * The method extracts equipment names, equipment classes, pressure, temperature, and selected component mole
+   * fractions. A materials register can later be merged by tag to add material grade, wall thickness, coating,
+   * insulation, and inspection data.
    * </p>
    *
    * @param process process system to inspect
@@ -101,28 +100,25 @@ public class MaterialsReviewInput implements Serializable {
     if (process == null) {
       return input;
     }
-    input
-        .setProjectName(process.getName() == null ? "process-materials-review" : process.getName());
+    input.setProjectName(process.getName() == null ? "process-materials-review" : process.getName());
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       MaterialReviewItem item = new MaterialReviewItem();
       item.setTag(unit.getName());
       item.setEquipmentType(unit.getClass().getSimpleName());
       MaterialServiceEnvelope envelope = new MaterialServiceEnvelope();
       try {
-        SystemInterface fluid = unit.getThermoSystem();
-        if (fluid != null) {
-          envelope.set("temperature_C", fluid.getTemperature("C"));
-          envelope.set("pressure_bara", fluid.getPressure("bara"));
-          envelope.set("co2_mole_fraction", getComponentFraction(fluid, "CO2"));
-          envelope.set("h2s_mole_fraction", getComponentFraction(fluid, "H2S"));
-          envelope.set("h2_mole_fraction", getComponentFraction(fluid, "hydrogen"));
-          envelope.set("water_mole_fraction", getComponentFraction(fluid, "water"));
-          envelope.set("free_water",
-              fluid.hasComponent("water") && getComponentFraction(fluid, "water") > 1.0e-8);
-        }
+	SystemInterface fluid = unit.getThermoSystem();
+	if (fluid != null) {
+	  envelope.set("temperature_C", fluid.getTemperature("C"));
+	  envelope.set("pressure_bara", fluid.getPressure("bara"));
+	  envelope.set("co2_mole_fraction", getComponentFraction(fluid, "CO2"));
+	  envelope.set("h2s_mole_fraction", getComponentFraction(fluid, "H2S"));
+	  envelope.set("h2_mole_fraction", getComponentFraction(fluid, "hydrogen"));
+	  envelope.set("water_mole_fraction", getComponentFraction(fluid, "water"));
+	  envelope.set("free_water", fluid.hasComponent("water") && getComponentFraction(fluid, "water") > 1.0e-8);
+	}
       } catch (Exception ex) {
-        item.putMetadata("processExtractionWarning",
-            "Thermo system extraction failed for this unit.");
+	item.putMetadata("processExtractionWarning", "Thermo system extraction failed for this unit.");
       }
       item.setServiceEnvelope(envelope);
       item.addSourceReference("ProcessSystem:" + unit.getName());
@@ -138,8 +134,7 @@ public class MaterialsReviewInput implements Serializable {
    * @return this input for fluent construction
    */
   public MaterialsReviewInput setProjectName(String projectName) {
-    this.projectName =
-        projectName == null || projectName.trim().isEmpty() ? "materials-review" : projectName;
+    this.projectName = projectName == null || projectName.trim().isEmpty() ? "materials-review" : projectName;
     return this;
   }
 
@@ -197,7 +192,7 @@ public class MaterialsReviewInput implements Serializable {
   /**
    * Adds input metadata.
    *
-   * @param key metadata key
+   * @param key   metadata key
    * @param value metadata value
    * @return this input for fluent construction
    */
@@ -224,9 +219,9 @@ public class MaterialsReviewInput implements Serializable {
     for (MaterialReviewItem otherItem : other.getItems()) {
       MaterialReviewItem existing = findByTag(otherItem.getTag());
       if (existing == null) {
-        addItem(otherItem);
+	addItem(otherItem);
       } else {
-        existing.mergeFrom(otherItem);
+	existing.mergeFrom(otherItem);
       }
     }
   }
@@ -261,7 +256,7 @@ public class MaterialsReviewInput implements Serializable {
     }
     for (MaterialReviewItem item : items) {
       if (tag.equalsIgnoreCase(item.getTag())) {
-        return item;
+	return item;
       }
     }
     return null;
@@ -270,15 +265,15 @@ public class MaterialsReviewInput implements Serializable {
   /**
    * Reads a component overall mole fraction safely.
    *
-   * @param fluid thermo system
+   * @param fluid         thermo system
    * @param componentName component name
    * @return overall mole fraction or zero
    */
   private static double getComponentFraction(SystemInterface fluid, String componentName) {
     try {
       if (fluid.hasComponent(componentName)) {
-        ComponentInterface component = fluid.getComponent(componentName);
-        return component == null ? 0.0 : component.getz();
+	ComponentInterface component = fluid.getComponent(componentName);
+	return component == null ? 0.0 : component.getz();
       }
     } catch (Exception ex) {
       return 0.0;
@@ -289,40 +284,38 @@ public class MaterialsReviewInput implements Serializable {
   /**
    * Gets a string value from JSON.
    *
-   * @param object JSON object
-   * @param key key to read
+   * @param object       JSON object
+   * @param key          key to read
    * @param defaultValue default value
    * @return string value or default
    */
   private static String getString(JsonObject object, String key, String defaultValue) {
-    return object.has(key) && !object.get(key).isJsonNull() ? object.get(key).getAsString()
-        : defaultValue;
+    return object.has(key) && !object.get(key).isJsonNull() ? object.get(key).getAsString() : defaultValue;
   }
 
   /**
    * Gets a double value from JSON.
    *
-   * @param object JSON object
-   * @param key key to read
+   * @param object       JSON object
+   * @param key          key to read
    * @param defaultValue default value
    * @return double value or default
    */
   private static double getDouble(JsonObject object, String key, double defaultValue) {
-    return object.has(key) && !object.get(key).isJsonNull() ? object.get(key).getAsDouble()
-        : defaultValue;
+    return object.has(key) && !object.get(key).isJsonNull() ? object.get(key).getAsDouble() : defaultValue;
   }
 
   /**
    * Gets the first available array from a list of keys.
    *
    * @param object JSON object
-   * @param keys keys to test
+   * @param keys   keys to test
    * @return first array found, or null
    */
   private static JsonArray getFirstArray(JsonObject object, String... keys) {
     for (String key : keys) {
       if (object.has(key) && object.get(key).isJsonArray()) {
-        return object.getAsJsonArray(key);
+	return object.getAsJsonArray(key);
       }
     }
     return null;
@@ -358,7 +351,7 @@ public class MaterialsReviewInput implements Serializable {
     if (element.isJsonArray()) {
       List<Object> list = new ArrayList<Object>();
       for (JsonElement child : element.getAsJsonArray()) {
-        list.add(toObject(child));
+	list.add(toObject(child));
       }
       return list;
     }
@@ -379,7 +372,7 @@ public class MaterialsReviewInput implements Serializable {
    */
   private static boolean isCoreKey(String key) {
     return "projectName".equals(key) || "designLifeYears".equals(key) || "items".equals(key)
-        || "materialsRegister".equals(key) || "equipment".equals(key) || "lineList".equals(key)
-        || "lines".equals(key) || "stidData".equals(key);
+	|| "materialsRegister".equals(key) || "equipment".equals(key) || "lineList".equals(key) || "lines".equals(key)
+	|| "stidData".equals(key);
   }
 }

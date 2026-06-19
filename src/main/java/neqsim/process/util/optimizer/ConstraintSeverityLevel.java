@@ -9,8 +9,7 @@ import neqsim.process.equipment.capacity.CapacityConstraint;
  * This enum provides a common 4-level severity classification that maps between:
  * </p>
  * <ul>
- * <li>{@link CapacityConstraint.ConstraintSeverity} — equipment-level (CRITICAL/HARD/SOFT/ADVISORY)
- * </li>
+ * <li>{@link CapacityConstraint.ConstraintSeverity} — equipment-level (CRITICAL/HARD/SOFT/ADVISORY)</li>
  * <li>{@link ProductionOptimizer.ConstraintSeverity} — optimizer-level (HARD/SOFT)</li>
  * <li>{@link ProcessSimulationEvaluator.ConstraintDefinition#isHard()} — boolean flag</li>
  * </ul>
@@ -54,8 +53,7 @@ import neqsim.process.equipment.capacity.CapacityConstraint;
 public enum ConstraintSeverityLevel {
 
   /**
-   * Critical violation — equipment damage or safety hazard. Optimizer must stop or reject solution
-   * immediately.
+   * Critical violation — equipment damage or safety hazard. Optimizer must stop or reject solution immediately.
    */
   CRITICAL,
 
@@ -80,22 +78,21 @@ public enum ConstraintSeverityLevel {
    * @param severity the equipment-level severity
    * @return the equivalent unified severity level
    */
-  public static ConstraintSeverityLevel fromCapacitySeverity(
-      CapacityConstraint.ConstraintSeverity severity) {
+  public static ConstraintSeverityLevel fromCapacitySeverity(CapacityConstraint.ConstraintSeverity severity) {
     if (severity == null) {
       return HARD;
     }
     switch (severity) {
-      case CRITICAL:
-        return CRITICAL;
-      case HARD:
-        return HARD;
-      case SOFT:
-        return SOFT;
-      case ADVISORY:
-        return ADVISORY;
-      default:
-        return HARD;
+    case CRITICAL:
+      return CRITICAL;
+    case HARD:
+      return HARD;
+    case SOFT:
+      return SOFT;
+    case ADVISORY:
+      return ADVISORY;
+    default:
+      return HARD;
     }
   }
 
@@ -105,24 +102,23 @@ public enum ConstraintSeverityLevel {
    * @param severity the optimizer-level severity (HARD or SOFT)
    * @return the equivalent unified severity level
    */
-  public static ConstraintSeverityLevel fromOptimizerSeverity(
-      ProductionOptimizer.ConstraintSeverity severity) {
+  public static ConstraintSeverityLevel fromOptimizerSeverity(ProductionOptimizer.ConstraintSeverity severity) {
     if (severity == null) {
       return HARD;
     }
     switch (severity) {
-      case HARD:
-        return HARD;
-      case SOFT:
-        return SOFT;
-      default:
-        return HARD;
+    case HARD:
+      return HARD;
+    case SOFT:
+      return SOFT;
+    default:
+      return HARD;
     }
   }
 
   /**
-   * Converts from the boolean {@code isHard} flag used in
-   * {@link ProcessSimulationEvaluator.ConstraintDefinition} to unified severity.
+   * Converts from the boolean {@code isHard} flag used in {@link ProcessSimulationEvaluator.ConstraintDefinition} to
+   * unified severity.
    *
    * @param isHard true for hard constraints, false for soft
    * @return HARD if isHard is true, SOFT otherwise
@@ -142,14 +138,14 @@ public enum ConstraintSeverityLevel {
    */
   public ProductionOptimizer.ConstraintSeverity toOptimizerSeverity() {
     switch (this) {
-      case CRITICAL:
-      case HARD:
-        return ProductionOptimizer.ConstraintSeverity.HARD;
-      case SOFT:
-      case ADVISORY:
-        return ProductionOptimizer.ConstraintSeverity.SOFT;
-      default:
-        return ProductionOptimizer.ConstraintSeverity.HARD;
+    case CRITICAL:
+    case HARD:
+      return ProductionOptimizer.ConstraintSeverity.HARD;
+    case SOFT:
+    case ADVISORY:
+      return ProductionOptimizer.ConstraintSeverity.SOFT;
+    default:
+      return ProductionOptimizer.ConstraintSeverity.HARD;
     }
   }
 
@@ -160,16 +156,16 @@ public enum ConstraintSeverityLevel {
    */
   public CapacityConstraint.ConstraintSeverity toCapacitySeverity() {
     switch (this) {
-      case CRITICAL:
-        return CapacityConstraint.ConstraintSeverity.CRITICAL;
-      case HARD:
-        return CapacityConstraint.ConstraintSeverity.HARD;
-      case SOFT:
-        return CapacityConstraint.ConstraintSeverity.SOFT;
-      case ADVISORY:
-        return CapacityConstraint.ConstraintSeverity.ADVISORY;
-      default:
-        return CapacityConstraint.ConstraintSeverity.HARD;
+    case CRITICAL:
+      return CapacityConstraint.ConstraintSeverity.CRITICAL;
+    case HARD:
+      return CapacityConstraint.ConstraintSeverity.HARD;
+    case SOFT:
+      return CapacityConstraint.ConstraintSeverity.SOFT;
+    case ADVISORY:
+      return CapacityConstraint.ConstraintSeverity.ADVISORY;
+    default:
+      return CapacityConstraint.ConstraintSeverity.HARD;
     }
   }
 

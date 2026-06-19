@@ -21,8 +21,8 @@ public class destillation2 {
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 30.0), 50.00);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 30.0),
+	50.00);
     testSystem.addComponent("methane", 1.00);
     testSystem.addComponent("water", 100e-6);
     testSystem.addComponent("TEG", 0.0);
@@ -37,7 +37,7 @@ public class destillation2 {
     feedGas.setPressure(50.0, "bara");
 
     neqsim.thermo.system.SystemInterface TEGliq2 = testSystem.clone();
-    TEGliq2.setMolarComposition(new double[] {0.0, 0.001, 1.0});
+    TEGliq2.setMolarComposition(new double[] { 0.0, 0.001, 1.0 });
 
     Stream TEGliq = new Stream("TEG liq", TEGliq2);
     TEGliq.setFlowRate(5000.0, "kg/hr");
@@ -48,8 +48,7 @@ public class destillation2 {
     column.addFeedStream(feedGas, 0);
     column.getTray(2).addStream(TEGliq);
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(feedGas);
     operations.add(TEGliq);
     operations.add(column);

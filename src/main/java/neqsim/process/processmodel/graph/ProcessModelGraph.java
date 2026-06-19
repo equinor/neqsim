@@ -19,8 +19,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * Represents a hierarchical process model as a graph of graphs.
  *
  * <p>
- * This class handles the case where multiple {@link ProcessSystem} objects are combined into a
- * {@link ProcessModule}. It maintains both:
+ * This class handles the case where multiple {@link ProcessSystem} objects are combined into a {@link ProcessModule}.
+ * It maintains both:
  * <ul>
  * <li>Individual graphs for each ProcessSystem (sub-graphs)</li>
  * <li>A unified flattened graph for the entire model</li>
@@ -134,7 +134,7 @@ public class ProcessModelGraph implements Serializable {
     private final ProcessEdge edge;
 
     InterSystemConnection(String sourceSystemName, String targetSystemName, ProcessNode sourceNode,
-        ProcessNode targetNode, ProcessEdge edge) {
+	ProcessNode targetNode, ProcessEdge edge) {
       this.sourceSystemName = sourceSystemName;
       this.targetSystemName = targetSystemName;
       this.sourceNode = sourceNode;
@@ -189,26 +189,25 @@ public class ProcessModelGraph implements Serializable {
 
     @Override
     public String toString() {
-      return String.format("%s[%s] -> %s[%s]", sourceSystemName, sourceNode.getName(),
-          targetSystemName, targetNode.getName());
+      return String.format("%s[%s] -> %s[%s]", sourceSystemName, sourceNode.getName(), targetSystemName,
+	  targetNode.getName());
     }
   }
 
   /**
    * Private constructor - use {@link ProcessModelGraphBuilder#buildModelGraph} instead.
    *
-   * @param modelName the name of the process model
-   * @param subSystemGraphs list of sub-system graphs
-   * @param flattenedGraph the flattened graph combining all sub-systems
+   * @param modelName              the name of the process model
+   * @param subSystemGraphs        list of sub-system graphs
+   * @param flattenedGraph         the flattened graph combining all sub-systems
    * @param interSystemConnections list of connections between sub-systems
    */
-  ProcessModelGraph(String modelName, List<SubSystemGraph> subSystemGraphs,
-      ProcessGraph flattenedGraph, List<InterSystemConnection> interSystemConnections) {
+  ProcessModelGraph(String modelName, List<SubSystemGraph> subSystemGraphs, ProcessGraph flattenedGraph,
+      List<InterSystemConnection> interSystemConnections) {
     this.modelName = modelName;
     this.subSystemGraphs = Collections.unmodifiableList(new ArrayList<>(subSystemGraphs));
     this.flattenedGraph = flattenedGraph;
-    this.interSystemConnections =
-        Collections.unmodifiableList(new ArrayList<>(interSystemConnections));
+    this.interSystemConnections = Collections.unmodifiableList(new ArrayList<>(interSystemConnections));
   }
 
   /**
@@ -292,7 +291,7 @@ public class ProcessModelGraph implements Serializable {
   public SubSystemGraph getSubSystem(String systemName) {
     for (SubSystemGraph subSystem : subSystemGraphs) {
       if (subSystem.getSystemName().equals(systemName)) {
-        return subSystem;
+	return subSystem;
       }
     }
     return null;
@@ -307,7 +306,7 @@ public class ProcessModelGraph implements Serializable {
   public SubSystemGraph getSubSystemByIndex(int index) {
     for (SubSystemGraph subSystem : subSystemGraphs) {
       if (subSystem.getExecutionIndex() == index) {
-        return subSystem;
+	return subSystem;
       }
     }
     return null;
@@ -323,7 +322,7 @@ public class ProcessModelGraph implements Serializable {
     List<InterSystemConnection> result = new ArrayList<>();
     for (InterSystemConnection conn : interSystemConnections) {
       if (conn.getSourceSystemName().equals(systemName)) {
-        result.add(conn);
+	result.add(conn);
       }
     }
     return result;
@@ -339,7 +338,7 @@ public class ProcessModelGraph implements Serializable {
     List<InterSystemConnection> result = new ArrayList<>();
     for (InterSystemConnection conn : interSystemConnections) {
       if (conn.getTargetSystemName().equals(systemName)) {
-        result.add(conn);
+	result.add(conn);
       }
     }
     return result;
@@ -418,16 +417,16 @@ public class ProcessModelGraph implements Serializable {
     sb.append("Sub-system Details:\n");
     sb.append(StringUtils.repeat("-", 50)).append("\n");
     for (SubSystemGraph subSystem : subSystemGraphs) {
-      sb.append(String.format("  [%d] %s: %d nodes, %d edges%s\n", subSystem.getExecutionIndex(),
-          subSystem.getSystemName(), subSystem.getNodeCount(), subSystem.getEdgeCount(),
-          subSystem.isModule() ? " (module)" : ""));
+      sb.append(
+	  String.format("  [%d] %s: %d nodes, %d edges%s\n", subSystem.getExecutionIndex(), subSystem.getSystemName(),
+	      subSystem.getNodeCount(), subSystem.getEdgeCount(), subSystem.isModule() ? " (module)" : ""));
     }
 
     if (!interSystemConnections.isEmpty()) {
       sb.append("\nInter-system Connections:\n");
       sb.append(StringUtils.repeat("-", 50)).append("\n");
       for (InterSystemConnection conn : interSystemConnections) {
-        sb.append("  ").append(conn.toString()).append("\n");
+	sb.append("  ").append(conn.toString()).append("\n");
       }
     }
 
@@ -435,8 +434,7 @@ public class ProcessModelGraph implements Serializable {
     sb.append("\nParallel Execution Analysis:\n");
     sb.append(StringUtils.repeat("-", 50)).append("\n");
     ModuleParallelPartition partition = partitionSubSystemsForParallelExecution();
-    sb.append("Parallel beneficial: ").append(isParallelSubSystemExecutionBeneficial())
-        .append("\n");
+    sb.append("Parallel beneficial: ").append(isParallelSubSystemExecutionBeneficial()).append("\n");
     sb.append("Execution levels: ").append(partition.getLevelCount()).append("\n");
     sb.append("Max parallelism: ").append(partition.getMaxParallelism()).append("\n");
 
@@ -444,11 +442,10 @@ public class ProcessModelGraph implements Serializable {
       List<SubSystemGraph> level = partition.getLevels().get(i);
       List<String> names = new ArrayList<>();
       for (SubSystemGraph sub : level) {
-        names.add(sub.getSystemName());
+	names.add(sub.getSystemName());
       }
       String parallel = level.size() > 1 ? " [parallel]" : "";
-      sb.append("  Level ").append(i).append(": ").append(String.join(", ", names)).append(parallel)
-          .append("\n");
+      sb.append("  Level ").append(i).append(": ").append(String.join(", ", names)).append(parallel).append("\n");
     }
 
     return sb.toString();
@@ -463,7 +460,7 @@ public class ProcessModelGraph implements Serializable {
     Map<ProcessNode, String> map = new IdentityHashMap<>();
     for (SubSystemGraph subSystem : subSystemGraphs) {
       for (ProcessNode node : subSystem.getGraph().getNodes()) {
-        map.put(node, subSystem.getSystemName());
+	map.put(node, subSystem.getSystemName());
       }
     }
     return map;
@@ -485,10 +482,8 @@ public class ProcessModelGraph implements Serializable {
 
     // Calculate average sub-system size
     if (!subSystemGraphs.isEmpty()) {
-      double avgNodes =
-          subSystemGraphs.stream().mapToInt(SubSystemGraph::getNodeCount).average().orElse(0);
-      double avgEdges =
-          subSystemGraphs.stream().mapToInt(SubSystemGraph::getEdgeCount).average().orElse(0);
+      double avgNodes = subSystemGraphs.stream().mapToInt(SubSystemGraph::getNodeCount).average().orElse(0);
+      double avgEdges = subSystemGraphs.stream().mapToInt(SubSystemGraph::getEdgeCount).average().orElse(0);
       stats.put("avgNodesPerSubSystem", avgNodes);
       stats.put("avgEdgesPerSubSystem", avgEdges);
     }
@@ -509,8 +504,8 @@ public class ProcessModelGraph implements Serializable {
   }
 
   /**
-   * Represents a partition of sub-systems into levels for parallel execution. Sub-systems at the
-   * same level have no inter-dependencies and can run concurrently.
+   * Represents a partition of sub-systems into levels for parallel execution. Sub-systems at the same level have no
+   * inter-dependencies and can run concurrently.
    */
   public static class ModuleParallelPartition implements Serializable {
     private static final long serialVersionUID = 1000L;
@@ -558,11 +553,11 @@ public class ProcessModelGraph implements Serializable {
     public List<List<String>> getLevelNames() {
       List<List<String>> result = new ArrayList<>();
       for (List<SubSystemGraph> level : levels) {
-        List<String> names = new ArrayList<>();
-        for (SubSystemGraph subSystem : level) {
-          names.add(subSystem.getSystemName());
-        }
-        result.add(names);
+	List<String> names = new ArrayList<>();
+	for (SubSystemGraph subSystem : level) {
+	  names.add(subSystem.getSystemName());
+	}
+	result.add(names);
       }
       return result;
     }
@@ -570,19 +565,19 @@ public class ProcessModelGraph implements Serializable {
     @Override
     public String toString() {
       StringBuilder sb = new StringBuilder();
-      sb.append("ModuleParallelPartition: ").append(levels.size()).append(" levels, max ")
-          .append(maxParallelism).append(" parallel\n");
+      sb.append("ModuleParallelPartition: ").append(levels.size()).append(" levels, max ").append(maxParallelism)
+	  .append(" parallel\n");
       for (int i = 0; i < levels.size(); i++) {
-        sb.append("  Level ").append(i).append(": ");
-        List<String> names = new ArrayList<>();
-        for (SubSystemGraph sub : levels.get(i)) {
-          names.add(sub.getSystemName());
-        }
-        sb.append(String.join(", ", names));
-        if (levels.get(i).size() > 1) {
-          sb.append(" [parallel]");
-        }
-        sb.append("\n");
+	sb.append("  Level ").append(i).append(": ");
+	List<String> names = new ArrayList<>();
+	for (SubSystemGraph sub : levels.get(i)) {
+	  names.add(sub.getSystemName());
+	}
+	sb.append(String.join(", ", names));
+	if (levels.get(i).size() > 1) {
+	  sb.append(" [parallel]");
+	}
+	sb.append("\n");
       }
       return sb.toString();
     }
@@ -613,8 +608,8 @@ public class ProcessModelGraph implements Serializable {
   }
 
   /**
-   * Partition sub-systems into levels for parallel execution. Sub-systems at the same level have no
-   * dependencies between them and can execute concurrently.
+   * Partition sub-systems into levels for parallel execution. Sub-systems at the same level have no dependencies
+   * between them and can execute concurrently.
    *
    * <p>
    * Uses topological sorting on the sub-system dependency graph to determine execution levels.
@@ -649,7 +644,7 @@ public class ProcessModelGraph implements Serializable {
     for (Map.Entry<String, Set<String>> entry : dependencies.entrySet()) {
       String target = entry.getKey();
       for (String source : entry.getValue()) {
-        dependents.get(source).add(target);
+	dependents.get(source).add(target);
       }
     }
 
@@ -661,37 +656,37 @@ public class ProcessModelGraph implements Serializable {
       // Find all sub-systems with in-degree 0 that haven't been processed
       List<SubSystemGraph> currentLevel = new ArrayList<>();
       for (SubSystemGraph subSystem : subSystemGraphs) {
-        String name = subSystem.getSystemName();
-        if (!processed.contains(name) && inDegree.get(name) == 0) {
-          currentLevel.add(subSystem);
-        }
+	String name = subSystem.getSystemName();
+	if (!processed.contains(name) && inDegree.get(name) == 0) {
+	  currentLevel.add(subSystem);
+	}
       }
 
       if (currentLevel.isEmpty()) {
-        // Cycle detected - remaining sub-systems form a cycle
-        logger.warn("Cycle detected in sub-system dependencies");
-        // Add remaining as single level
-        List<SubSystemGraph> remaining = new ArrayList<>();
-        for (SubSystemGraph subSystem : subSystemGraphs) {
-          if (!processed.contains(subSystem.getSystemName())) {
-            remaining.add(subSystem);
-          }
-        }
-        if (!remaining.isEmpty()) {
-          levels.add(remaining);
-        }
-        break;
+	// Cycle detected - remaining sub-systems form a cycle
+	logger.warn("Cycle detected in sub-system dependencies");
+	// Add remaining as single level
+	List<SubSystemGraph> remaining = new ArrayList<>();
+	for (SubSystemGraph subSystem : subSystemGraphs) {
+	  if (!processed.contains(subSystem.getSystemName())) {
+	    remaining.add(subSystem);
+	  }
+	}
+	if (!remaining.isEmpty()) {
+	  levels.add(remaining);
+	}
+	break;
       }
 
       levels.add(currentLevel);
 
       // Update in-degrees for next level
       for (SubSystemGraph subSystem : currentLevel) {
-        String name = subSystem.getSystemName();
-        processed.add(name);
-        for (String dependent : dependents.get(name)) {
-          inDegree.put(dependent, inDegree.get(dependent) - 1);
-        }
+	String name = subSystem.getSystemName();
+	processed.add(name);
+	for (String dependent : dependents.get(name)) {
+	  inDegree.put(dependent, inDegree.get(dependent) - 1);
+	}
       }
     }
 
@@ -699,8 +694,8 @@ public class ProcessModelGraph implements Serializable {
   }
 
   /**
-   * Check if parallel execution of sub-systems would be beneficial. Returns true if there are at
-   * least 2 sub-systems that can run in parallel at some level.
+   * Check if parallel execution of sub-systems would be beneficial. Returns true if there are at least 2 sub-systems
+   * that can run in parallel at some level.
    *
    * @return true if parallel execution would provide speedup
    */
@@ -724,7 +719,7 @@ public class ProcessModelGraph implements Serializable {
 
     for (SubSystemGraph subSystem : subSystemGraphs) {
       if (dependencies.get(subSystem.getSystemName()).isEmpty()) {
-        independent.add(subSystem);
+	independent.add(subSystem);
       }
     }
 
@@ -747,7 +742,7 @@ public class ProcessModelGraph implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("ProcessModelGraph[%s, %d sub-systems, %d nodes, %d edges]", modelName,
-        subSystemGraphs.size(), getTotalNodeCount(), getTotalEdgeCount());
+    return String.format("ProcessModelGraph[%s, %d sub-systems, %d nodes, %d edges]", modelName, subSystemGraphs.size(),
+	getTotalNodeCount(), getTotalEdgeCount());
   }
 }

@@ -7,9 +7,8 @@ import neqsim.process.equipment.stream.StreamInterface;
  * Emergency Shutdown (ESD) Valve / Isolation Valve (XV) for process safety systems.
  *
  * <p>
- * An ESD valve is a normally-open isolation valve that closes automatically during emergency
- * shutdown events. These valves are critical safety elements designed to isolate process equipment
- * or stop flow during hazardous conditions.
+ * An ESD valve is a normally-open isolation valve that closes automatically during emergency shutdown events. These
+ * valves are critical safety elements designed to isolate process equipment or stop flow during hazardous conditions.
  *
  * <p>
  * Key features:
@@ -116,7 +115,7 @@ public class ESDValve extends ThrottlingValve {
   /**
    * Constructor for ESDValve.
    *
-   * @param name name of ESD valve
+   * @param name        name of ESD valve
    * @param inletStream inlet stream to valve
    */
   public ESDValve(String name, StreamInterface inletStream) {
@@ -191,9 +190,8 @@ public class ESDValve extends ThrottlingValve {
    * De-energizes the valve (initiates emergency closure).
    *
    * <p>
-   * This simulates the ESD signal that removes power from the valve actuator, causing the
-   * spring-return mechanism to close the valve. This is the primary safety action during emergency
-   * shutdown.
+   * This simulates the ESD signal that removes power from the valve actuator, causing the spring-return mechanism to
+   * close the valve. This is the primary safety action during emergency shutdown.
    * </p>
    */
   public void deEnergize() {
@@ -222,8 +220,8 @@ public class ESDValve extends ThrottlingValve {
    * Resets the valve after emergency shutdown.
    *
    * <p>
-   * After an ESD event, the valve must be manually reset by operations personnel. This simulates
-   * the reset process after the emergency condition has been resolved.
+   * After an ESD event, the valve must be manually reset by operations personnel. This simulates the reset process
+   * after the emergency condition has been resolved.
    * </p>
    */
   public void reset() {
@@ -268,13 +266,13 @@ public class ESDValve extends ThrottlingValve {
    * Initiates a partial stroke test (PST).
    *
    * <p>
-   * Partial stroke testing is a proof test method that verifies valve functionality without causing
-   * a full process shutdown. The valve closes to a specified position (e.g., 80%) and then reopens.
+   * Partial stroke testing is a proof test method that verifies valve functionality without causing a full process
+   * shutdown. The valve closes to a specified position (e.g., 80%) and then reopens.
    * </p>
    *
    * <p>
-   * This is important for SIL-rated valves to verify functionality between full proof test
-   * intervals, as required by IEC 61511.
+   * This is important for SIL-rated valves to verify functionality between full proof test intervals, as required by
+   * IEC 61511.
    * </p>
    *
    * @param targetPosition target position for test (typically 80-90%)
@@ -308,8 +306,8 @@ public class ESDValve extends ThrottlingValve {
    * Performs dynamic simulation step with automatic closure logic.
    *
    * <p>
-   * If the valve has been de-energized, it will close progressively according to the configured
-   * stroke time until reaching the fail-safe position.
+   * If the valve has been de-energized, it will close progressively according to the configured stroke time until
+   * reaching the fail-safe position.
    * </p>
    *
    * @param dt time step in seconds
@@ -325,25 +323,24 @@ public class ESDValve extends ThrottlingValve {
       double closureFraction = Math.min(1.0, timeElapsedSinceTrip / strokeTime);
 
       // Calculate current position (linear interpolation from opening at trip start to fail-safe)
-      double newOpening =
-          openingAtTripStart - (openingAtTripStart - failSafePosition) * closureFraction;
+      double newOpening = openingAtTripStart - (openingAtTripStart - failSafePosition) * closureFraction;
 
       setPercentValveOpening(newOpening);
 
       // Check if closure is complete
       if (closureFraction >= 1.0) {
-        isClosing = false;
-        hasTripCompleted = true;
-        setPercentValveOpening(failSafePosition);
+	isClosing = false;
+	hasTripCompleted = true;
+	setPercentValveOpening(failSafePosition);
       }
     } else if (partialStrokeTestActive) {
       // Partial stroke test - close to test position then return
       double currentOpening = getPercentValveOpening();
       if (currentOpening > partialStrokeTestPosition) {
-        // Closing to test position
-        double closureRate = 100.0 / strokeTime; // Same rate as full closure
-        double newOpening = Math.max(partialStrokeTestPosition, currentOpening - closureRate * dt);
-        setPercentValveOpening(newOpening);
+	// Closing to test position
+	double closureRate = 100.0 / strokeTime; // Same rate as full closure
+	double newOpening = Math.max(partialStrokeTestPosition, currentOpening - closureRate * dt);
+	setPercentValveOpening(newOpening);
       }
       // Note: Test completion must be triggered externally via completePartialStrokeTest()
     }
@@ -368,8 +365,7 @@ public class ESDValve extends ThrottlingValve {
       status = "ENERGIZED";
     }
 
-    return String.format("%s [ESD Valve] - Status: %s, Opening: %.1f%%, Stroke Time: %.1fs%s",
-        getName(), status, getPercentValveOpening(), strokeTime,
-        isClosing ? String.format(", Elapsed: %.1fs", timeElapsedSinceTrip) : "");
+    return String.format("%s [ESD Valve] - Status: %s, Opening: %.1f%%, Stroke Time: %.1fs%s", getName(), status,
+	getPercentValveOpening(), strokeTime, isClosing ? String.format(", Elapsed: %.1fs", timeElapsedSinceTrip) : "");
   }
 }

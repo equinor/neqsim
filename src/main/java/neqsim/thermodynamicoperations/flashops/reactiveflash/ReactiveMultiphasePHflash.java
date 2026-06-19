@@ -6,22 +6,20 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.BaseOperation;
 
 /**
- * Reactive multiphase PH flash: simultaneous chemical equilibrium, phase equilibrium, and enthalpy
- * balance.
+ * Reactive multiphase PH flash: simultaneous chemical equilibrium, phase equilibrium, and enthalpy balance.
  *
  * <p>
- * Given pressure P and total enthalpy H_spec, finds the equilibrium temperature T, phase split, and
- * composition satisfying both chemical and phase equilibrium. Uses a nested approach: an outer
- * Newton-Raphson loop on temperature (in the 1/T variable for numerical stability, following
- * Michelsen 1987) wraps an inner reactive TP flash using the Modified RAND method.
+ * Given pressure P and total enthalpy H_spec, finds the equilibrium temperature T, phase split, and composition
+ * satisfying both chemical and phase equilibrium. Uses a nested approach: an outer Newton-Raphson loop on temperature
+ * (in the 1/T variable for numerical stability, following Michelsen 1987) wraps an inner reactive TP flash using the
+ * Modified RAND method.
  * </p>
  *
  * <p>
- * The outer loop solves: Q(T) = [H(T,P,n(T)) - H_spec] / |H_spec| = 0, where n(T) is the
- * equilibrium composition from the reactive TP flash at temperature T. The Newton update uses:
- * dQ/d(1/T) = -T^2 * Cp_total / |H_spec|, where Cp_total = (dH/dT)_P includes both sensible heat
- * and reaction heat effects (since the equilibrium composition shifts with temperature, the system
- * Cp implicitly captures reaction enthalpy contributions via Le Chatelier's principle).
+ * The outer loop solves: Q(T) = [H(T,P,n(T)) - H_spec] / |H_spec| = 0, where n(T) is the equilibrium composition from
+ * the reactive TP flash at temperature T. The Newton update uses: dQ/d(1/T) = -T^2 * Cp_total / |H_spec|, where
+ * Cp_total = (dH/dT)_P includes both sensible heat and reaction heat effects (since the equilibrium composition shifts
+ * with temperature, the system Cp implicitly captures reaction enthalpy contributions via Le Chatelier's principle).
  * </p>
  *
  * <p>
@@ -35,28 +33,27 @@ import neqsim.thermodynamicoperations.BaseOperation;
  * </ol>
  *
  * <p>
- * The approach is state-of-the-art for reactive PH flash. While a single-level formulation
- * (simultaneously solving for T, n, and lambda in one Newton system) offers quadratic convergence,
- * the nested approach is preferred for robustness because:
+ * The approach is state-of-the-art for reactive PH flash. While a single-level formulation (simultaneously solving for
+ * T, n, and lambda in one Newton system) offers quadratic convergence, the nested approach is preferred for robustness
+ * because:
  * <ul>
  * <li>It reuses the fully-tested Modified RAND solver unchanged.</li>
  * <li>The 1/T Newton iteration is proven robust in NeqSim's non-reactive PH flash.</li>
- * <li>Convergence is still fast (typically 5-15 outer iterations) because the Newton step on 1/T
- * converges quadratically in the outer variable.</li>
- * <li>Phase topology changes (phase appearance/disappearance near phase boundaries) are handled
- * gracefully by the inner TP flash solver.</li>
+ * <li>Convergence is still fast (typically 5-15 outer iterations) because the Newton step on 1/T converges
+ * quadratically in the outer variable.</li>
+ * <li>Phase topology changes (phase appearance/disappearance near phase boundaries) are handled gracefully by the inner
+ * TP flash solver.</li>
  * </ul>
  *
  * <p>
- * The class also supports PS flash (specifying entropy instead of enthalpy) by setting an entropy
- * specification via {@link #setEntropySpec(double)}.
+ * The class also supports PS flash (specifying entropy instead of enthalpy) by setting an entropy specification via
+ * {@link #setEntropySpec(double)}.
  * </p>
  *
  * <p>
  * References:
  * <ul>
- * <li>Michelsen (1987) "Multiphase isenthalpic and isentropic flash algorithms", Fluid Phase
- * Equilib. 33, 13-27</li>
+ * <li>Michelsen (1987) "Multiphase isenthalpic and isentropic flash algorithms", Fluid Phase Equilib. 33, 13-27</li>
  * <li>White, Johnson, Dantzig (1958) J. Chem. Phys. 28, 751-755</li>
  * <li>Smith, Missen (1982) Chemical Reaction Equilibrium Analysis, Wiley</li>
  * <li>Tsanas, Stenby, Yan (2017) Ind. Eng. Chem. Res. 56, 11983-11995</li>
@@ -126,7 +123,7 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
   /**
    * Constructor for ReactiveMultiphasePHflash.
    *
-   * @param system the thermodynamic system
+   * @param system       the thermodynamic system
    * @param enthalpySpec the specified total enthalpy in J
    */
   public ReactiveMultiphasePHflash(SystemInterface system, double enthalpySpec) {
@@ -138,12 +135,11 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
   }
 
   /**
-   * Constructor for ReactiveMultiphasePHflash with type parameter (for API compatibility with
-   * PHflash).
+   * Constructor for ReactiveMultiphasePHflash with type parameter (for API compatibility with PHflash).
    *
-   * @param system the thermodynamic system
+   * @param system       the thermodynamic system
    * @param enthalpySpec the specified total enthalpy in J
-   * @param type flash type (0 = standard, currently unused)
+   * @param type         flash type (0 = standard, currently unused)
    */
   public ReactiveMultiphasePHflash(SystemInterface system, double enthalpySpec, int type) {
     this(system, enthalpySpec);
@@ -166,29 +162,28 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
       // incompatibility between a trivial 2-phase reactive state and the
       // single-phase standard solver).
       FormulaMatrix quickCheck = new FormulaMatrix(system);
-      if (quickCheck.getNumberOfIndependentReactions() == 0 && !quickCheck.hasIonicSpecies()
-          && couldHaveVLE()) {
-        // NR=0 with possible VLE — delegate to standard flash
-        logger.debug("NR=0 with genuine VLE, delegating to standard flash");
-        if (useEntropySpec) {
-          neqsim.thermodynamicoperations.flashops.PSFlash psFlash =
-              new neqsim.thermodynamicoperations.flashops.PSFlash(system, entropySpec, 0);
-          psFlash.run();
-        } else {
-          neqsim.thermodynamicoperations.flashops.PHflash phFlash =
-              new neqsim.thermodynamicoperations.flashops.PHflash(system, enthalpySpec, 0);
-          phFlash.run();
-        }
-        converged = true;
-        equilibriumTemperature = system.getTemperature();
-        outerIterations = 1;
-        return;
+      if (quickCheck.getNumberOfIndependentReactions() == 0 && !quickCheck.hasIonicSpecies() && couldHaveVLE()) {
+	// NR=0 with possible VLE — delegate to standard flash
+	logger.debug("NR=0 with genuine VLE, delegating to standard flash");
+	if (useEntropySpec) {
+	  neqsim.thermodynamicoperations.flashops.PSFlash psFlash = new neqsim.thermodynamicoperations.flashops.PSFlash(
+	      system, entropySpec, 0);
+	  psFlash.run();
+	} else {
+	  neqsim.thermodynamicoperations.flashops.PHflash phFlash = new neqsim.thermodynamicoperations.flashops.PHflash(
+	      system, enthalpySpec, 0);
+	  phFlash.run();
+	}
+	converged = true;
+	equilibriumTemperature = system.getTemperature();
+	outerIterations = 1;
+	return;
       }
 
       if (useEntropySpec) {
-        solveEntropySpec();
+	solveEntropySpec();
       } else {
-        solveEnthalpySpec();
+	solveEnthalpySpec();
       }
     } catch (Exception ex) {
       logger.error("ReactiveMultiphasePHflash failed: " + ex.getMessage(), ex);
@@ -197,18 +192,16 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
   }
 
   /**
-   * Quick heuristic to check if VLE is thermodynamically possible at the current temperature. If
-   * the current temperature exceeds the critical temperature of every component, the system is
-   * supercritical and VLE cannot occur for simple mixtures. This avoids delegating to the standard
-   * PHflash for systems like N2+H2 at 500K where the standard solver fails due to enthalpy
-   * incompatibility with a trivial 2-phase reactive state.
+   * Quick heuristic to check if VLE is thermodynamically possible at the current temperature. If the current
+   * temperature exceeds the critical temperature of every component, the system is supercritical and VLE cannot occur
+   * for simple mixtures. This avoids delegating to the standard PHflash for systems like N2+H2 at 500K where the
+   * standard solver fails due to enthalpy incompatibility with a trivial 2-phase reactive state.
    *
    * <p>
-   * Note: this is a necessary condition check, not sufficient. Mixtures can be single-phase even
-   * below max(Tc). But for typical distillation column conditions (tray T well below the heaviest
-   * component's Tc), this reliably identifies VLE regions. For rare retrograde cases at T slightly
-   * above max(Tc), the reactive secant+bisection solver handles it correctly (just without the
-   * performance benefit of standard PHflash delegation).
+   * Note: this is a necessary condition check, not sufficient. Mixtures can be single-phase even below max(Tc). But for
+   * typical distillation column conditions (tray T well below the heaviest component's Tc), this reliably identifies
+   * VLE regions. For rare retrograde cases at T slightly above max(Tc), the reactive secant+bisection solver handles it
+   * correctly (just without the performance benefit of standard PHflash delegation).
    * </p>
    *
    * @return true if VLE is possible (at least one component has Tc above current T)
@@ -225,10 +218,10 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
    * Solve the PH flash (enthalpy specification).
    *
    * <p>
-   * Uses a secant + bisection hybrid on T with inner reactive TP flash. The first iteration uses a
-   * Cp-based Newton step; subsequent iterations use the secant method, which naturally captures the
-   * effective dH/dT including reaction enthalpy contributions (Le Chatelier shift). If the secant
-   * step falls outside a tracked bracket, bisection is used as a guaranteed-convergence fallback.
+   * Uses a secant + bisection hybrid on T with inner reactive TP flash. The first iteration uses a Cp-based Newton
+   * step; subsequent iterations use the secant method, which naturally captures the effective dH/dT including reaction
+   * enthalpy contributions (Le Chatelier shift). If the secant step falls outside a tracked bracket, bisection is used
+   * as a guaranteed-convergence fallback.
    * </p>
    */
   private void solveEnthalpySpec() {
@@ -273,36 +266,36 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
       boolean hasBracket = tLow > T_MIN && tHigh < T_MAX;
 
       if (iter == 0 || Double.isNaN(errPrev) || Math.abs(T - Tprev) < 1.0e-12) {
-        // First iteration or degenerate: Cp-based Newton step
-        double Cp = system.getCp();
-        if (Math.abs(Cp) < 1.0e-20) {
-          Cp = 100.0;
-        }
-        Tnew = T - (system.getEnthalpy() - enthalpySpec) / Cp;
+	// First iteration or degenerate: Cp-based Newton step
+	double Cp = system.getCp();
+	if (Math.abs(Cp) < 1.0e-20) {
+	  Cp = 100.0;
+	}
+	Tnew = T - (system.getEnthalpy() - enthalpySpec) / Cp;
       } else {
-        // Secant method: interpolate using two successive (T, error) pairs.
-        // This naturally captures the effective dH/dT including reaction enthalpy
-        // contributions (Le Chatelier shift), unlike the Cp-only Newton derivative.
-        double dErrDT = (error - errPrev) / (T - Tprev);
-        if (Math.abs(dErrDT) > 1.0e-30) {
-          Tnew = T - error / dErrDT;
-        } else {
-          double Cp = system.getCp();
-          if (Math.abs(Cp) < 1.0e-20) {
-            Cp = 100.0;
-          }
-          Tnew = T - (system.getEnthalpy() - enthalpySpec) / Cp;
-        }
+	// Secant method: interpolate using two successive (T, error) pairs.
+	// This naturally captures the effective dH/dT including reaction enthalpy
+	// contributions (Le Chatelier shift), unlike the Cp-only Newton derivative.
+	double dErrDT = (error - errPrev) / (T - Tprev);
+	if (Math.abs(dErrDT) > 1.0e-30) {
+	  Tnew = T - error / dErrDT;
+	} else {
+	  double Cp = system.getCp();
+	  if (Math.abs(Cp) < 1.0e-20) {
+	    Cp = 100.0;
+	  }
+	  Tnew = T - (system.getEnthalpy() - enthalpySpec) / Cp;
+	}
       }
 
       // Clamp step size
       if (Math.abs(Tnew - T) > MAX_T_STEP) {
-        Tnew = T + Math.signum(Tnew - T) * MAX_T_STEP;
+	Tnew = T + Math.signum(Tnew - T) * MAX_T_STEP;
       }
 
       // If step goes outside bracket, use bisection
       if (hasBracket && (Tnew <= tLow || Tnew >= tHigh)) {
-        Tnew = 0.5 * (tLow + tHigh);
+	Tnew = 0.5 * (tLow + tHigh);
       }
 
       // Enforce absolute bounds
@@ -310,11 +303,11 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
 
       // Avoid stagnation at the same temperature
       if (Math.abs(Tnew - T) < 1.0e-12) {
-        if (hasBracket) {
-          Tnew = 0.5 * (tLow + tHigh);
-        } else {
-          Tnew = T + (error < 0 ? 1.0 : -1.0);
-        }
+	if (hasBracket) {
+	  Tnew = 0.5 * (tLow + tHigh);
+	} else {
+	  Tnew = T + (error < 0 ? 1.0 : -1.0);
+	}
       }
 
       // Store history for secant
@@ -330,39 +323,38 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
 
       // Update bracket
       if (error > 0 && T < tHigh) {
-        tHigh = T;
+	tHigh = T;
       } else if (error < 0 && T > tLow) {
-        tLow = T;
+	tLow = T;
       }
 
-      logger.debug("PH iter=" + iter + " T=" + String.format("%.4f", T) + " H="
-          + String.format("%.4e", system.getEnthalpy()) + " Hspec="
-          + String.format("%.4e", enthalpySpec) + " err=" + String.format("%.3e", error)
-          + " bracket=[" + String.format("%.2f", tLow) + "," + String.format("%.2f", tHigh) + "]");
+      logger.debug(
+	  "PH iter=" + iter + " T=" + String.format("%.4f", T) + " H=" + String.format("%.4e", system.getEnthalpy())
+	      + " Hspec=" + String.format("%.4e", enthalpySpec) + " err=" + String.format("%.3e", error) + " bracket=["
+	      + String.format("%.2f", tLow) + "," + String.format("%.2f", tHigh) + "]");
 
       // Check convergence
       if (Math.abs(error) < TOL) {
-        converged = true;
-        break;
+	converged = true;
+	break;
       }
 
       // If bracket is very tight, declare convergence
       hasBracket = tLow > T_MIN && tHigh < T_MAX;
       if (hasBracket && (tHigh - tLow) < 1.0e-6) {
-        converged = true;
-        break;
+	converged = true;
+	break;
       }
     }
 
     equilibriumTemperature = system.getTemperature();
 
     if (!converged) {
-      logger.warn("ReactiveMultiphasePHflash did not converge after " + outerIterations
-          + " iterations. Final T=" + equilibriumTemperature + " error=" + error);
+      logger.warn("ReactiveMultiphasePHflash did not converge after " + outerIterations + " iterations. Final T="
+	  + equilibriumTemperature + " error=" + error);
     } else {
-      logger.debug("ReactiveMultiphasePHflash converged: T="
-          + String.format("%.4f", equilibriumTemperature) + " K, " + outerIterations
-          + " outer iterations, " + totalInnerIterations + " total inner iterations");
+      logger.debug("ReactiveMultiphasePHflash converged: T=" + String.format("%.4f", equilibriumTemperature) + " K, "
+	  + outerIterations + " outer iterations, " + totalInnerIterations + " total inner iterations");
     }
   }
 
@@ -370,9 +362,9 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
    * Solve the PS flash (entropy specification).
    *
    * <p>
-   * Uses a secant + bisection hybrid on T (same approach as the enthalpy case), with entropy
-   * residual Q(T) = [S(T) - S_spec] / |S_spec|. The secant method captures the effective dS/dT
-   * including reaction contributions, with bisection fallback for guaranteed convergence.
+   * Uses a secant + bisection hybrid on T (same approach as the enthalpy case), with entropy residual Q(T) = [S(T) -
+   * S_spec] / |S_spec|. The secant method captures the effective dS/dT including reaction contributions, with bisection
+   * fallback for guaranteed convergence.
    * </p>
    */
   private void solveEntropySpec() {
@@ -413,44 +405,44 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
       boolean hasBracket = tLow > T_MIN && tHigh < T_MAX;
 
       if (iter == 0 || Double.isNaN(errPrev) || Math.abs(T - Tprev) < 1.0e-12) {
-        // Cp-based Newton step: dS/dT = Cp/T
-        double CpOverT = system.getCp() / system.getTemperature();
-        if (Math.abs(CpOverT) < 1.0e-20) {
-          CpOverT = 1.0;
-        }
-        Tnew = T - (system.getEntropy() - entropySpec) / CpOverT;
+	// Cp-based Newton step: dS/dT = Cp/T
+	double CpOverT = system.getCp() / system.getTemperature();
+	if (Math.abs(CpOverT) < 1.0e-20) {
+	  CpOverT = 1.0;
+	}
+	Tnew = T - (system.getEntropy() - entropySpec) / CpOverT;
       } else {
-        // Secant method
-        double dErrDT = (error - errPrev) / (T - Tprev);
-        if (Math.abs(dErrDT) > 1.0e-30) {
-          Tnew = T - error / dErrDT;
-        } else {
-          double CpOverT = system.getCp() / system.getTemperature();
-          if (Math.abs(CpOverT) < 1.0e-20) {
-            CpOverT = 1.0;
-          }
-          Tnew = T - (system.getEntropy() - entropySpec) / CpOverT;
-        }
+	// Secant method
+	double dErrDT = (error - errPrev) / (T - Tprev);
+	if (Math.abs(dErrDT) > 1.0e-30) {
+	  Tnew = T - error / dErrDT;
+	} else {
+	  double CpOverT = system.getCp() / system.getTemperature();
+	  if (Math.abs(CpOverT) < 1.0e-20) {
+	    CpOverT = 1.0;
+	  }
+	  Tnew = T - (system.getEntropy() - entropySpec) / CpOverT;
+	}
       }
 
       // Clamp step size
       if (Math.abs(Tnew - T) > MAX_T_STEP) {
-        Tnew = T + Math.signum(Tnew - T) * MAX_T_STEP;
+	Tnew = T + Math.signum(Tnew - T) * MAX_T_STEP;
       }
 
       // Bisection fallback
       if (hasBracket && (Tnew <= tLow || Tnew >= tHigh)) {
-        Tnew = 0.5 * (tLow + tHigh);
+	Tnew = 0.5 * (tLow + tHigh);
       }
 
       Tnew = Math.max(T_MIN, Math.min(T_MAX, Tnew));
 
       if (Math.abs(Tnew - T) < 1.0e-12) {
-        if (hasBracket) {
-          Tnew = 0.5 * (tLow + tHigh);
-        } else {
-          Tnew = T + (error < 0 ? 1.0 : -1.0);
-        }
+	if (hasBracket) {
+	  Tnew = 0.5 * (tLow + tHigh);
+	} else {
+	  Tnew = T + (error < 0 ? 1.0 : -1.0);
+	}
       }
 
       Tprev = T;
@@ -463,30 +455,28 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
       error = (system.getEntropy() - entropySpec) / absSspec;
 
       if (error > 0 && T < tHigh) {
-        tHigh = T;
+	tHigh = T;
       } else if (error < 0 && T > tLow) {
-        tLow = T;
+	tLow = T;
       }
 
-      logger.debug("PS iter=" + iter + " T=" + String.format("%.4f", T) + " err="
-          + String.format("%.3e", error));
+      logger.debug("PS iter=" + iter + " T=" + String.format("%.4f", T) + " err=" + String.format("%.3e", error));
 
       if (Math.abs(error) < TOL) {
-        converged = true;
-        break;
+	converged = true;
+	break;
       }
 
       hasBracket = tLow > T_MIN && tHigh < T_MAX;
       if (hasBracket && (tHigh - tLow) < 1.0e-6) {
-        converged = true;
-        break;
+	converged = true;
+	break;
       }
     }
 
     equilibriumTemperature = system.getTemperature();
     if (!converged) {
-      logger.warn(
-          "ReactiveMultiphasePSflash did not converge after " + outerIterations + " iterations");
+      logger.warn("ReactiveMultiphasePSflash did not converge after " + outerIterations + " iterations");
     }
   }
 
@@ -494,10 +484,9 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
    * Run the inner reactive TP flash at the current system temperature and pressure.
    *
    * <p>
-   * Creates a new {@link ReactiveMultiphaseTPflash} instance, configures it with the current
-   * settings (DIIS, max phases, chemicalReactionInit), runs it, and then calls
-   * {@code system.init(2)} to compute thermodynamic properties (enthalpy, Cp, entropy) needed for
-   * the outer Newton loop.
+   * Creates a new {@link ReactiveMultiphaseTPflash} instance, configures it with the current settings (DIIS, max
+   * phases, chemicalReactionInit), runs it, and then calls {@code system.init(2)} to compute thermodynamic properties
+   * (enthalpy, Cp, entropy) needed for the outer Newton loop.
    * </p>
    */
   private void runInnerTPflash() {
@@ -531,16 +520,14 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
    * Compute the derivative of the enthalpy residual with respect to 1/T.
    *
    * <p>
-   * Uses the chain rule: dQ/d(1/T) = dQ/dT * dT/d(1/T) = (Cp/|H_spec|) * (-T^2) = -T^2 *
-   * Cp/|H_spec|.
+   * Uses the chain rule: dQ/d(1/T) = dQ/dT * dT/d(1/T) = (Cp/|H_spec|) * (-T^2) = -T^2 * Cp/|H_spec|.
    * </p>
    *
    * <p>
-   * The system Cp includes both sensible heat and implicit reaction heat effects: as T changes, the
-   * reactive TP flash produces a different equilibrium composition, and the resulting Cp from
-   * init(2) reflects the full derivative dH/dT at fixed P and feed composition. For strongly
-   * exothermic/endothermic reactions (e.g., WGS, SMR), this correctly captures the coupling between
-   * equilibrium shift and enthalpy.
+   * The system Cp includes both sensible heat and implicit reaction heat effects: as T changes, the reactive TP flash
+   * produces a different equilibrium composition, and the resulting Cp from init(2) reflects the full derivative dH/dT
+   * at fixed P and feed composition. For strongly exothermic/endothermic reactions (e.g., WGS, SMR), this correctly
+   * captures the coupling between equilibrium shift and enthalpy.
    * </p>
    *
    * @param absHspec absolute value of H_spec for normalization
@@ -634,8 +621,8 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
   }
 
   /**
-   * Set entropy specification instead of enthalpy. When set, the flash finds the temperature at
-   * which the total entropy equals the specified value.
+   * Set entropy specification instead of enthalpy. When set, the flash finds the temperature at which the total entropy
+   * equals the specified value.
    *
    * @param entropySpec the specified total entropy in J/K
    */
@@ -654,16 +641,14 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
     sb.append("ReactiveMultiphasePHflash Summary\n");
     sb.append("  Mode:           ").append(useEntropySpec ? "PS flash" : "PH flash").append("\n");
     sb.append("  Converged:      ").append(converged).append("\n");
-    sb.append("  T_equilibrium:  ").append(
-        String.format("%.4f K (%.2f C)", equilibriumTemperature, equilibriumTemperature - 273.15))
-        .append("\n");
+    sb.append("  T_equilibrium:  ")
+	.append(String.format("%.4f K (%.2f C)", equilibriumTemperature, equilibriumTemperature - 273.15)).append("\n");
     sb.append("  Outer iters:    ").append(outerIterations).append("\n");
     sb.append("  Inner iters:    ").append(totalInnerIterations).append("\n");
     sb.append("  Phases:         ").append(system.getNumberOfPhases()).append("\n");
     if (converged) {
       sb.append("  H_spec:         ").append(String.format("%.4e J", enthalpySpec)).append("\n");
-      sb.append("  H_actual:       ").append(String.format("%.4e J", system.getEnthalpy()))
-          .append("\n");
+      sb.append("  H_actual:       ").append(String.format("%.4e J", system.getEnthalpy())).append("\n");
     }
     return sb.toString();
   }

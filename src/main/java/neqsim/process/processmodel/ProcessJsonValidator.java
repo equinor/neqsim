@@ -12,7 +12,8 @@ import com.google.gson.JsonParser;
 
 /** Validates JSON process definitions before building/running simulations. */
 public final class ProcessJsonValidator {
-  private ProcessJsonValidator() {}
+  private ProcessJsonValidator() {
+  }
 
   public static ValidationReport validate(String json) {
     ValidationReport report = new ValidationReport();
@@ -47,18 +48,18 @@ public final class ProcessJsonValidator {
    * Validates all named areas in a ProcessModel JSON object.
    *
    * @param report validation report to populate
-   * @param areas areas object keyed by area name
+   * @param areas  areas object keyed by area name
    */
   private static void validateAreas(ValidationReport report, JsonObject areas) {
     for (Map.Entry<String, JsonElement> entry : areas.entrySet()) {
       if (!entry.getValue().isJsonObject()) {
-        report.addError("areas." + entry.getKey() + " must be a JSON object");
-        continue;
+	report.addError("areas." + entry.getKey() + " must be a JSON object");
+	continue;
       }
       JsonObject area = entry.getValue().getAsJsonObject();
       if (!area.has("process") || !area.get("process").isJsonArray()) {
-        report.addError("areas." + entry.getKey() + " is missing required 'process' array");
-        continue;
+	report.addError("areas." + entry.getKey() + " is missing required 'process' array");
+	continue;
       }
       validateProcessObject(report, area, "areas." + entry.getKey());
     }
@@ -67,12 +68,11 @@ public final class ProcessJsonValidator {
   /**
    * Validates one ProcessSystem JSON object.
    *
-   * @param report validation report to populate
-   * @param root process-system JSON object containing a process array
+   * @param report  validation report to populate
+   * @param root    process-system JSON object containing a process array
    * @param context context label used in messages
    */
-  private static void validateProcessObject(ValidationReport report, JsonObject root,
-      String context) {
+  private static void validateProcessObject(ValidationReport report, JsonObject root, String context) {
     JsonArray process = root.getAsJsonArray("process");
     Set<String> names = new HashSet<String>();
     Set<String> validRefs = new HashSet<String>();
@@ -83,14 +83,14 @@ public final class ProcessJsonValidator {
       String name = getString(unit, "name");
 
       if (type == null || type.trim().isEmpty()) {
-        report.addError(context + ".process[" + i + "] is missing required field 'type'");
+	report.addError(context + ".process[" + i + "] is missing required field 'type'");
       }
       if (name == null || name.trim().isEmpty()) {
-        report.addError(context + ".process[" + i + "] is missing required field 'name'");
-        name = "unnamed_" + i;
+	report.addError(context + ".process[" + i + "] is missing required field 'name'");
+	name = "unnamed_" + i;
       }
       if (names.contains(name)) {
-        report.addError(context + " has duplicate unit name: '" + name + "'");
+	report.addError(context + " has duplicate unit name: '" + name + "'");
       }
       names.add(name);
       validRefs.add(name);
@@ -121,38 +121,36 @@ public final class ProcessJsonValidator {
       JsonObject unit = process.get(i).getAsJsonObject();
       validateReferenceField(report, validRefs, unit, context, i, "inlet");
       if (unit.has("inlets") && unit.get("inlets").isJsonArray()) {
-        JsonArray inlets = unit.getAsJsonArray("inlets");
-        for (int j = 0; j < inlets.size(); j++) {
-          String ref = inlets.get(j).getAsString();
-          if (!validRefs.contains(ref)) {
-            report.addWarning(context + ".process[" + i + "].inlets[" + j
-                + "] references unknown stream '" + ref + "'");
-          }
-        }
+	JsonArray inlets = unit.getAsJsonArray("inlets");
+	for (int j = 0; j < inlets.size(); j++) {
+	  String ref = inlets.get(j).getAsString();
+	  if (!validRefs.contains(ref)) {
+	    report
+		.addWarning(context + ".process[" + i + "].inlets[" + j + "] references unknown stream '" + ref + "'");
+	  }
+	}
       }
       if (unit.has("streams") && unit.get("streams").isJsonObject()) {
-        JsonObject streams = unit.getAsJsonObject("streams");
-        for (Map.Entry<String, JsonElement> e : streams.entrySet()) {
-          if (e.getValue().isJsonPrimitive() && e.getValue().getAsJsonPrimitive().isString()) {
-            String ref = e.getValue().getAsString();
-            if (isLikelyInputKey(e.getKey()) && !validRefs.contains(ref)) {
-              report.addWarning(context + ".process[" + i + "].streams." + e.getKey()
-                  + " references unknown stream '" + ref + "'");
-            }
-          }
-        }
+	JsonObject streams = unit.getAsJsonObject("streams");
+	for (Map.Entry<String, JsonElement> e : streams.entrySet()) {
+	  if (e.getValue().isJsonPrimitive() && e.getValue().getAsJsonPrimitive().isString()) {
+	    String ref = e.getValue().getAsString();
+	    if (isLikelyInputKey(e.getKey()) && !validRefs.contains(ref)) {
+	      report.addWarning(
+		  context + ".process[" + i + "].streams." + e.getKey() + " references unknown stream '" + ref + "'");
+	    }
+	  }
+	}
       }
     }
   }
 
-  private static void validateReferenceField(ValidationReport report, Set<String> validRefs,
-      JsonObject unit, String context, int idx, String key) {
-    if (unit.has(key) && unit.get(key).isJsonPrimitive()
-        && unit.get(key).getAsJsonPrimitive().isString()) {
+  private static void validateReferenceField(ValidationReport report, Set<String> validRefs, JsonObject unit,
+      String context, int idx, String key) {
+    if (unit.has(key) && unit.get(key).isJsonPrimitive() && unit.get(key).getAsJsonPrimitive().isString()) {
       String ref = unit.get(key).getAsString();
       if (!validRefs.contains(ref)) {
-        report.addWarning(
-            context + ".process[" + idx + "]." + key + " references unknown stream '" + ref + "'");
+	report.addWarning(context + ".process[" + idx + "]." + key + " references unknown stream '" + ref + "'");
       }
     }
   }

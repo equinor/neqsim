@@ -41,10 +41,9 @@ class BiogasUpgraderTest {
     upgrader.run();
 
     assertTrue(upgrader.getBiomethaneMethanePercent() > 90.0,
-        "Biomethane should have >90% CH4, got " + upgrader.getBiomethaneMethanePercent());
+	"Biomethane should have >90% CH4, got " + upgrader.getBiomethaneMethanePercent());
     assertTrue(upgrader.getBiomethaneCO2Percent() < 5.0, "CO2 in biomethane should be <5%");
-    assertTrue(upgrader.getMethaneSlipPercent() < 5.0,
-        "Methane slip should be <5% for water scrubbing");
+    assertTrue(upgrader.getMethaneSlipPercent() < 5.0, "Methane slip should be <5% for water scrubbing");
     assertTrue(upgrader.getEnergyConsumptionKW() > 0.0, "Energy consumption should be positive");
   }
 
@@ -56,9 +55,8 @@ class BiogasUpgraderTest {
     upgrader.run();
 
     assertTrue(upgrader.getBiomethaneMethanePercent() > 95.0,
-        "Amine scrubbing should give >95% CH4, got " + upgrader.getBiomethaneMethanePercent());
-    assertTrue(upgrader.getMethaneSlipPercent() < 1.0,
-        "Amine scrubbing should have <1% methane slip");
+	"Amine scrubbing should give >95% CH4, got " + upgrader.getBiomethaneMethanePercent());
+    assertTrue(upgrader.getMethaneSlipPercent() < 1.0, "Amine scrubbing should have <1% methane slip");
   }
 
   @Test
@@ -96,9 +94,9 @@ class BiogasUpgraderTest {
     water.run();
 
     assertTrue(amine.getBiomethaneMethanePercent() > water.getBiomethaneMethanePercent(),
-        "Amine scrubbing should give higher purity than water scrubbing");
+	"Amine scrubbing should give higher purity than water scrubbing");
     assertTrue(amine.getMethaneSlipPercent() < water.getMethaneSlipPercent(),
-        "Amine scrubbing should have lower methane slip");
+	"Amine scrubbing should have lower methane slip");
   }
 
   @Test
@@ -127,8 +125,7 @@ class BiogasUpgraderTest {
     upgrader.run();
 
     double wobbe = upgrader.getWobbeIndex();
-    assertTrue(wobbe > 30.0 && wobbe < 60.0,
-        "Wobbe index should be in reasonable range (30-60 MJ/Nm3), got " + wobbe);
+    assertTrue(wobbe > 30.0 && wobbe < 60.0, "Wobbe index should be in reasonable range (30-60 MJ/Nm3), got " + wobbe);
   }
 
   @Test
@@ -140,8 +137,7 @@ class BiogasUpgraderTest {
     upgrader.setMethaneRecovery(0.995);
     upgrader.run();
 
-    assertTrue(upgrader.getBiomethaneMethanePercent() > 98.0,
-        "Custom high-efficiency should give >98% CH4");
+    assertTrue(upgrader.getBiomethaneMethanePercent() > 98.0, "Custom high-efficiency should give >98% CH4");
     assertTrue(upgrader.getMethaneSlipPercent() < 1.0, "Custom high-recovery should give <1% slip");
   }
 
@@ -153,13 +149,11 @@ class BiogasUpgraderTest {
     upgrader.run();
 
     double inletFlow = rawBiogas.getThermoSystem().getFlowRate("mole/hr");
-    double biomethaneFlow =
-        upgrader.getBiomethaneOutStream().getThermoSystem().getFlowRate("mole/hr");
+    double biomethaneFlow = upgrader.getBiomethaneOutStream().getThermoSystem().getFlowRate("mole/hr");
     double offgasFlow = upgrader.getOffgasOutStream().getThermoSystem().getFlowRate("mole/hr");
 
     double balance = Math.abs(inletFlow - biomethaneFlow - offgasFlow) / inletFlow;
-    assertTrue(balance < 0.01,
-        "Molar balance should be conserved within 1%, got " + (balance * 100) + "% error");
+    assertTrue(balance < 0.01, "Molar balance should be conserved within 1%, got " + (balance * 100) + "% error");
   }
 
   @Test

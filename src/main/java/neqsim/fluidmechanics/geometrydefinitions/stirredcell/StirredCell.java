@@ -23,7 +23,8 @@ public class StirredCell extends GeometryDefinition {
    * Constructor for StirredCell.
    * </p>
    */
-  public StirredCell() {}
+  public StirredCell() {
+  }
 
   /**
    * <p>
@@ -41,7 +42,7 @@ public class StirredCell extends GeometryDefinition {
    * Constructor for StirredCell.
    * </p>
    *
-   * @param diameter a double
+   * @param diameter  a double
    * @param roughness a double
    */
   public StirredCell(double diameter, double roughness) {

@@ -26,7 +26,7 @@ public class TestISO1982 {
   private static final Logger logger = LogManager.getLogger(TestISO1982.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.

@@ -19,7 +19,7 @@ public class AdjusterRunStepTest {
 
     Splitter splitter = new Splitter("splitter", feed);
     splitter.setSplitNumber(2);
-    splitter.setSplitFactors(new double[] {0.5, 0.5});
+    splitter.setSplitFactors(new double[] { 0.5, 0.5 });
 
     // We want to adjust stream 2 flow rate (via splitter)
     // so that stream 1 flow rate becomes 800 kg/hr.
@@ -41,7 +41,7 @@ public class AdjusterRunStepTest {
     // Setter: Adjusts the flow rate of the second outlet (index 1) of the splitter
     // Note: Splitter.setFlowRates takes an array of flow rates. -1 means calculated.
     adjuster.setAdjustedValueSetter((eq, val) -> {
-      ((Splitter) eq).setFlowRates(new double[] {-1, val}, "kg/hr");
+      ((Splitter) eq).setFlowRates(new double[] { -1, val }, "kg/hr");
     });
 
     // Getter: Gets the current flow rate of the second outlet (index 1)

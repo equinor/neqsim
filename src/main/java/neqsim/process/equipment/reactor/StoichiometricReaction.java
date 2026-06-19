@@ -11,10 +11,9 @@ import neqsim.thermo.system.SystemInterface;
  * Simple stoichiometric reaction model for bio-processing.
  *
  * <p>
- * Defines a reaction by listing reactant and product stoichiometric coefficients, a limiting
- * reactant, and a fractional conversion (X). This provides a straightforward way to model
- * fermentation, enzymatic hydrolysis, and other bio-chemical conversions without requiring full
- * Gibbs minimization.
+ * Defines a reaction by listing reactant and product stoichiometric coefficients, a limiting reactant, and a fractional
+ * conversion (X). This provides a straightforward way to model fermentation, enzymatic hydrolysis, and other
+ * bio-chemical conversions without requiring full Gibbs minimization.
  * </p>
  *
  * <p>
@@ -69,7 +68,7 @@ public class StoichiometricReaction implements Serializable {
    * Add a reactant to this reaction.
    *
    * @param componentName name matching NeqSim component database
-   * @param coefficient positive stoichiometric coefficient (will be stored as negative internally)
+   * @param coefficient   positive stoichiometric coefficient (will be stored as negative internally)
    */
   public void addReactant(String componentName, double coefficient) {
     stoichiometry.put(componentName, -Math.abs(coefficient));
@@ -79,7 +78,7 @@ public class StoichiometricReaction implements Serializable {
    * Add a product to this reaction.
    *
    * @param componentName name matching NeqSim component database
-   * @param coefficient positive stoichiometric coefficient
+   * @param coefficient   positive stoichiometric coefficient
    */
   public void addProduct(String componentName, double coefficient) {
     stoichiometry.put(componentName, Math.abs(coefficient));
@@ -164,8 +163,8 @@ public class StoichiometricReaction implements Serializable {
    * Apply this reaction to the given thermodynamic system.
    *
    * <p>
-   * Computes moles reacted based on limiting reactant amount and conversion, then adjusts all
-   * component mole counts according to stoichiometry.
+   * Computes moles reacted based on limiting reactant amount and conversion, then adjusts all component mole counts
+   * according to stoichiometry.
    * </p>
    *
    * @param system the thermodynamic system to react
@@ -179,7 +178,7 @@ public class StoichiometricReaction implements Serializable {
     Double limitingCoeff = stoichiometry.get(limitingReactant);
     if (limitingCoeff == null) {
       throw new IllegalStateException(
-          "Limiting reactant '" + limitingReactant + "' not found in reaction stoichiometry");
+	  "Limiting reactant '" + limitingReactant + "' not found in reaction stoichiometry");
     }
 
     // Get current moles of limiting reactant
@@ -187,8 +186,7 @@ public class StoichiometricReaction implements Serializable {
     try {
       limitingMoles = system.getComponent(limitingReactant).getNumberOfmoles();
     } catch (Exception ex) {
-      throw new IllegalStateException(
-          "Component '" + limitingReactant + "' not found in thermodynamic system");
+      throw new IllegalStateException("Component '" + limitingReactant + "' not found in thermodynamic system");
     }
 
     // Moles reacted of limiting reactant
@@ -206,10 +204,10 @@ public class StoichiometricReaction implements Serializable {
       double deltaMoles = molesReacted * (stoichCoeff / absLimitingCoeff);
 
       try {
-        system.addComponent(compName, deltaMoles);
+	system.addComponent(compName, deltaMoles);
       } catch (Exception ex) {
-        // Component might not exist in the system - skip silently
-        // This can happen for products not yet in the system
+	// Component might not exist in the system - skip silently
+	// This can happen for products not yet in the system
       }
     }
 
@@ -231,9 +229,9 @@ public class StoichiometricReaction implements Serializable {
       double absCoeff = Math.abs(coeff);
       String coeffStr = (absCoeff == 1.0) ? "" : String.valueOf(absCoeff) + " ";
       if (coeff < 0) {
-        reactantParts.add(coeffStr + compName);
+	reactantParts.add(coeffStr + compName);
       } else {
-        productParts.add(coeffStr + compName);
+	productParts.add(coeffStr + compName);
       }
     }
 
@@ -248,7 +246,7 @@ public class StoichiometricReaction implements Serializable {
   /**
    * Join strings with a delimiter (Java 8 compatible).
    *
-   * @param parts list of strings
+   * @param parts     list of strings
    * @param delimiter the delimiter
    * @return joined string
    */
@@ -256,7 +254,7 @@ public class StoichiometricReaction implements Serializable {
     StringBuilder sb = new StringBuilder();
     for (int i = 0; i < parts.size(); i++) {
       if (i > 0) {
-        sb.append(delimiter);
+	sb.append(delimiter);
       }
       sb.append(parts.get(i));
     }

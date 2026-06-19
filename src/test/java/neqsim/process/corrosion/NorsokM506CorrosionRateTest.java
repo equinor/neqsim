@@ -26,8 +26,7 @@ public class NorsokM506CorrosionRateTest {
     assertTrue(baseline > 0, "Baseline rate should be positive: " + baseline);
 
     double pH = model.getCalculatedPH();
-    assertTrue(pH > 3.0 && pH < 6.0,
-        "pH should be in range 3.0-6.0 for CO2-saturated water: " + pH);
+    assertTrue(pH > 3.0 && pH < 6.0, "pH should be in range 3.0-6.0 for CO2-saturated water: " + pH);
   }
 
   @Test
@@ -50,14 +49,12 @@ public class NorsokM506CorrosionRateTest {
 
     double phi = model.calculateFugacityCoefficient();
     // At moderate pressure, phi should deviate from 1 but not drastically
-    assertTrue(phi > 0.5 && phi < 1.5,
-        "Fugacity coefficient should be near 1 at moderate conditions: " + phi);
+    assertTrue(phi > 0.5 && phi < 1.5, "Fugacity coefficient should be near 1 at moderate conditions: " + phi);
 
     // At low pressure, phi -> 1
     model.setTotalPressureBara(1.0);
     double phiLow = model.calculateFugacityCoefficient();
-    assertEquals(1.0, phiLow, 0.05,
-        "Fugacity coefficient should be ~1.0 at low pressure: " + phiLow);
+    assertEquals(1.0, phiLow, 0.05, "Fugacity coefficient should be ~1.0 at low pressure: " + phiLow);
   }
 
   @Test
@@ -69,8 +66,7 @@ public class NorsokM506CorrosionRateTest {
 
     // pH of CO2-saturated water at 1 bar pCO2, 25°C should be ~3.9-4.2
     double pH = model.calculateEquilibriumPH();
-    assertTrue(pH > 3.5 && pH < 5.0,
-        "pH at 1 bar CO2 PP, 25°C should be ~3.9-4.2: " + pH);
+    assertTrue(pH > 3.5 && pH < 5.0, "pH at 1 bar CO2 PP, 25°C should be ~3.9-4.2: " + pH);
   }
 
   @Test
@@ -87,7 +83,7 @@ public class NorsokM506CorrosionRateTest {
 
     // Bicarbonate should raise pH
     assertTrue(pHWithBicarb > pHNoBicarb,
-        "Bicarbonate should raise pH: with=" + pHWithBicarb + " without=" + pHNoBicarb);
+	"Bicarbonate should raise pH: with=" + pHWithBicarb + " without=" + pHNoBicarb);
   }
 
   @Test
@@ -118,7 +114,7 @@ public class NorsokM506CorrosionRateTest {
 
     // Corrosion rate should increase with temperature (up to scaling temperature)
     assertTrue(rateHighTemp > rateLowTemp,
-        "Rate at 60°C should exceed rate at 10°C: " + rateHighTemp + " vs " + rateLowTemp);
+	"Rate at 60°C should exceed rate at 10°C: " + rateHighTemp + " vs " + rateLowTemp);
   }
 
   @Test
@@ -130,8 +126,7 @@ public class NorsokM506CorrosionRateTest {
 
     double tScale = model.getScalingTemperatureC();
     // Scaling temperature should be a reasonable value (typically 60-120°C)
-    assertTrue(tScale > 30 && tScale < 200,
-        "Scaling temperature should be reasonable: " + tScale + " °C");
+    assertTrue(tScale > 30 && tScale < 200, "Scaling temperature should be reasonable: " + tScale + " °C");
   }
 
   @Test
@@ -149,9 +144,9 @@ public class NorsokM506CorrosionRateTest {
     double rateWithInhibitor = model.getCorrectedCorrosionRate();
 
     assertTrue(rateWithInhibitor < rateNoInhibitor,
-        "Inhibitor should reduce rate: " + rateWithInhibitor + " vs " + rateNoInhibitor);
+	"Inhibitor should reduce rate: " + rateWithInhibitor + " vs " + rateNoInhibitor);
     assertEquals(rateNoInhibitor * 0.2, rateWithInhibitor, rateNoInhibitor * 0.01,
-        "80% inhibitor should give 20% of uninhibited rate");
+	"80% inhibitor should give 20% of uninhibited rate");
   }
 
   @Test
@@ -168,8 +163,7 @@ public class NorsokM506CorrosionRateTest {
     model.calculate();
     double rateWithGlycol = model.getCorrectedCorrosionRate();
 
-    assertTrue(rateWithGlycol < rateNoGlycol,
-        "Glycol should reduce rate: " + rateWithGlycol + " vs " + rateNoGlycol);
+    assertTrue(rateWithGlycol < rateNoGlycol, "Glycol should reduce rate: " + rateWithGlycol + " vs " + rateNoGlycol);
   }
 
   @Test
@@ -179,8 +173,7 @@ public class NorsokM506CorrosionRateTest {
     model.calculate();
 
     double glycolFactor = model.getGlycolCorrectionFactor();
-    assertEquals(0.05, glycolFactor, 0.01,
-        "High glycol (>80%) should give factor ~0.05: " + glycolFactor);
+    assertEquals(0.05, glycolFactor, 0.01, "High glycol (>80%) should give factor ~0.05: " + glycolFactor);
   }
 
   @Test
@@ -205,8 +198,7 @@ public class NorsokM506CorrosionRateTest {
     model.calculate();
 
     double flowFactor = model.getFlowCorrectionFactor();
-    assertTrue(flowFactor <= 5.0,
-        "Flow correction should be capped at 5.0: " + flowFactor);
+    assertTrue(flowFactor <= 5.0, "Flow correction should be capped at 5.0: " + flowFactor);
   }
 
   @Test
@@ -221,8 +213,9 @@ public class NorsokM506CorrosionRateTest {
     // At very low CO2, severity might be Low
     String severity = model.getCorrosionSeverity();
     assertNotNull(severity);
-    assertTrue(severity.equals("Low") || severity.equals("Medium") || severity.equals("High")
-        || severity.equals("Very High"), "Severity should be a valid category: " + severity);
+    assertTrue(
+	severity.equals("Low") || severity.equals("Medium") || severity.equals("High") || severity.equals("Very High"),
+	"Severity should be a valid category: " + severity);
   }
 
   @Test
@@ -306,8 +299,7 @@ public class NorsokM506CorrosionRateTest {
     double rateFirst = (Double) results.get(0).get("correctedRate_mmyr");
     double rateLast = (Double) results.get(5).get("correctedRate_mmyr");
     // Generally true, but scale correction might reduce at high T
-    assertTrue(rateLast >= rateFirst || true,
-        "Higher pressure generally increases corrosion rate");
+    assertTrue(rateLast >= rateFirst || true, "Higher pressure generally increases corrosion rate");
   }
 
   @Test
@@ -362,7 +354,7 @@ public class NorsokM506CorrosionRateTest {
 
     // Ionic strength correction should shift pH
     assertTrue(Math.abs(pHFreshWater - pHSeawater) > 0.01,
-        "Ionic strength should affect pH: fresh=" + pHFreshWater + " seawater=" + pHSeawater);
+	"Ionic strength should affect pH: fresh=" + pHFreshWater + " seawater=" + pHSeawater);
   }
 
   @Test
@@ -396,7 +388,6 @@ public class NorsokM506CorrosionRateTest {
 
     // The scale-corrected rate at 120°C could be lower than uncorrected rate at 70°C
     // due to protective FeCO3 formation
-    assertTrue(rateNoScale70 > 0 && rateWithScale120 >= 0,
-        "Both rates should be non-negative");
+    assertTrue(rateNoScale70 > 0 && rateWithScale120 >= 0, "Both rates should be non-negative");
   }
 }

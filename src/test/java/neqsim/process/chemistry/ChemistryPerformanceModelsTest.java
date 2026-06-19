@@ -30,8 +30,7 @@ class ChemistryPerformanceModelsTest {
     highSr.setSaturationRatio(50.0);
     highSr.evaluate();
 
-    assertTrue(
-        highSr.getMinimumInhibitorConcentrationMgL() > lowSr.getMinimumInhibitorConcentrationMgL());
+    assertTrue(highSr.getMinimumInhibitorConcentrationMgL() > lowSr.getMinimumInhibitorConcentrationMgL());
   }
 
   @Test

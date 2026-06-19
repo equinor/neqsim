@@ -24,12 +24,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 
 /**
- * Integration style test that builds an offshore separation train similar to the Python example
- * shared by the user and exercises the {@link ModelPredictiveController} in multivariable mode.
+ * Integration style test that builds an offshore separation train similar to the Python example shared by the user and
+ * exercises the {@link ModelPredictiveController} in multivariable mode.
  * <p>
- * The MPC optimises three manipulated variables – dew point control temperature, stabiliser heater
- * duty and export compression pressure – to reduce energy usage while keeping gas production and
- * product qualities (Wobbe Index for gas and RVP for oil) within specification.
+ * The MPC optimises three manipulated variables – dew point control temperature, stabiliser heater duty and export
+ * compression pressure – to reduce energy usage while keeping gas production and product qualities (Wobbe Index for gas
+ * and RVP for oil) within specification.
  */
 public class OffshoreProcessMpcIntegrationTest extends neqsim.NeqSimTest {
   private static final double GAS_REFERENCE_T = 15.0; // degC
@@ -54,10 +54,9 @@ public class OffshoreProcessMpcIntegrationTest extends neqsim.NeqSimTest {
     @Override
     public double getMeasuredValue(String unit) {
       if (unit == null || unit.isEmpty() || unit.equals(getUnit())) {
-        return getMeasuredValue();
+	return getMeasuredValue();
       }
-      throw new IllegalArgumentException(
-          "Unsupported unit for gas production measurement: " + unit);
+      throw new IllegalArgumentException("Unsupported unit for gas production measurement: " + unit);
     }
   }
 
@@ -73,8 +72,8 @@ public class OffshoreProcessMpcIntegrationTest extends neqsim.NeqSimTest {
 
     @Override
     public double getMeasuredValue() {
-      Standard_ISO6976 standard = new Standard_ISO6976(stream.getThermoSystem().clone(),
-          GAS_REFERENCE_T, GAS_REFERENCE_COMBUSTION_T, "volume");
+      Standard_ISO6976 standard = new Standard_ISO6976(stream.getThermoSystem().clone(), GAS_REFERENCE_T,
+	  GAS_REFERENCE_COMBUSTION_T, "volume");
       standard.setReferenceState("real");
       standard.calculate();
       double wobbe = standard.getValue("SuperiorWobbeIndex") / 1.0e3;
@@ -84,7 +83,7 @@ public class OffshoreProcessMpcIntegrationTest extends neqsim.NeqSimTest {
     @Override
     public double getMeasuredValue(String unit) {
       if (unit == null || unit.isEmpty() || unit.equals(getUnit())) {
-        return getMeasuredValue();
+	return getMeasuredValue();
       }
       throw new IllegalArgumentException("Unsupported unit for Wobbe measurement: " + unit);
     }
@@ -108,7 +107,7 @@ public class OffshoreProcessMpcIntegrationTest extends neqsim.NeqSimTest {
     @Override
     public double getMeasuredValue(String unit) {
       if (unit == null || unit.isEmpty() || unit.equals(getUnit())) {
-        return getMeasuredValue();
+	return getMeasuredValue();
       }
       throw new IllegalArgumentException("Unsupported unit for RVP measurement: " + unit);
     }
@@ -130,10 +129,9 @@ public class OffshoreProcessMpcIntegrationTest extends neqsim.NeqSimTest {
     final Stream stableOil;
     final Stream lpg;
 
-    OffshoreProcess(ProcessSystem system, Cooler dewPointCooler, Heater oilHeater2,
-        Compressor exportCompressor2, Compressor exportCompressor1, Compressor firstStageCompressor,
-        Compressor secondStageCompressor, Pump recyclePump, Heater oilHeater1, Heater oilHeatEx,
-        Stream salesGas, Stream stableOil, Stream lpg) {
+    OffshoreProcess(ProcessSystem system, Cooler dewPointCooler, Heater oilHeater2, Compressor exportCompressor2,
+	Compressor exportCompressor1, Compressor firstStageCompressor, Compressor secondStageCompressor,
+	Pump recyclePump, Heater oilHeater1, Heater oilHeatEx, Stream salesGas, Stream stableOil, Stream lpg) {
       this.system = system;
       this.dewPointCooler = dewPointCooler;
       this.oilHeater2 = oilHeater2;
@@ -164,47 +162,44 @@ public class OffshoreProcessMpcIntegrationTest extends neqsim.NeqSimTest {
     double baselineWobbe = wobbeIndex(process.salesGas);
     double baselineRvp = process.stableOil.getRVP(OIL_RVP_TEMPERATURE, "C", "bara");
 
-    GasProductionMeasurement gasMeasurement =
-        new GasProductionMeasurement("sales gas production", process.salesGas);
-    WobbeQualityMeasurement wobbeMeasurement =
-        new WobbeQualityMeasurement("sales gas wobbe", process.salesGas);
-    OilRvpMeasurement rvpMeasurement =
-        new OilRvpMeasurement("stabilised oil rvp", process.stableOil);
+    GasProductionMeasurement gasMeasurement = new GasProductionMeasurement("sales gas production", process.salesGas);
+    WobbeQualityMeasurement wobbeMeasurement = new WobbeQualityMeasurement("sales gas wobbe", process.salesGas);
+    OilRvpMeasurement rvpMeasurement = new OilRvpMeasurement("stabilised oil rvp", process.stableOil);
 
     ModelPredictiveController controller = new ModelPredictiveController("fpsoMpc");
     controller.configureControls("dewPointTemperature", "oilHeaterTemperature", "exportPressure");
 
-    double[] initialControls = new double[] {inputs.get("dewPointSuctionCoolerTemperature"),
-        inputs.get("temperatureOilHeater2"), inputs.get("exportCompressorStage2")};
+    double[] initialControls = new double[] { inputs.get("dewPointSuctionCoolerTemperature"),
+	inputs.get("temperatureOilHeater2"), inputs.get("exportCompressorStage2") };
     controller.setInitialControlValues(initialControls);
-    controller.setPreferredControlVector(new double[] {initialControls[0] - 2.0,
-        initialControls[1] - 3.0, initialControls[2] - 10.0});
+    controller.setPreferredControlVector(
+	new double[] { initialControls[0] - 2.0, initialControls[1] - 3.0, initialControls[2] - 10.0 });
     controller.setControlLimits("dewPointTemperature", 0.0, 40.0);
     controller.setControlLimits("oilHeaterTemperature", 40.0, 90.0);
     controller.setControlLimits("exportPressure", 200.0, 260.0);
-    controller.setControlWeights(new double[] {0.05, 0.05, 3.0});
-    controller.setMoveWeights(new double[] {0.01, 0.01, 0.2});
+    controller.setControlWeights(new double[] { 0.05, 0.05, 3.0 });
+    controller.setMoveWeights(new double[] { 0.01, 0.01, 0.2 });
 
     double baseGasMeasurement = gasMeasurement.getMeasuredValue();
     double baseWobbeMeasurement = wobbeMeasurement.getMeasuredValue();
     double baseRvpMeasurement = rvpMeasurement.getMeasuredValue();
 
-    double[][] sensitivities = computeControlSensitivities(process, initialControls, gasMeasurement,
-        wobbeMeasurement, rvpMeasurement);
+    double[][] sensitivities = computeControlSensitivities(process, initialControls, gasMeasurement, wobbeMeasurement,
+	rvpMeasurement);
 
     double gasFlowTarget = -baseGasMeasurement * 0.97; // tonne/hr
     double wobbeSpecification = -baseWobbeMeasurement - 0.05; // MJ/Sm3
     double rvpSpecification = baseRvpMeasurement * 1.02; // bara
 
-    controller.addQualityConstraint(ModelPredictiveController.QualityConstraint.builder("gasRate")
-        .measurement(gasMeasurement).unit("tonne/hr").limit(-gasFlowTarget).margin(1.0)
-        .controlSensitivity(sensitivities[0]).build());
-    controller.addQualityConstraint(ModelPredictiveController.QualityConstraint.builder("wobbe")
-        .measurement(wobbeMeasurement).unit("MJ/Sm3").limit(-wobbeSpecification).margin(0.05)
-        .controlSensitivity(sensitivities[1]).build());
-    controller.addQualityConstraint(ModelPredictiveController.QualityConstraint.builder("rvp")
-        .measurement(rvpMeasurement).unit("bara").limit(rvpSpecification).margin(0.05)
-        .controlSensitivity(sensitivities[2]).build());
+    controller
+	.addQualityConstraint(ModelPredictiveController.QualityConstraint.builder("gasRate").measurement(gasMeasurement)
+	    .unit("tonne/hr").limit(-gasFlowTarget).margin(1.0).controlSensitivity(sensitivities[0]).build());
+    controller
+	.addQualityConstraint(ModelPredictiveController.QualityConstraint.builder("wobbe").measurement(wobbeMeasurement)
+	    .unit("MJ/Sm3").limit(-wobbeSpecification).margin(0.05).controlSensitivity(sensitivities[1]).build());
+    controller
+	.addQualityConstraint(ModelPredictiveController.QualityConstraint.builder("rvp").measurement(rvpMeasurement)
+	    .unit("bara").limit(rvpSpecification).margin(0.05).controlSensitivity(sensitivities[2]).build());
 
     double[] currentControls = Arrays.copyOf(initialControls, initialControls.length);
     for (int iteration = 0; iteration < 2; iteration++) {
@@ -223,24 +218,20 @@ public class OffshoreProcessMpcIntegrationTest extends neqsim.NeqSimTest {
     double optimisedWobbe = wobbeIndex(process.salesGas);
     double optimisedRvp = process.stableOil.getRVP(OIL_RVP_TEMPERATURE, "C", "bara");
 
-    Assertions.assertTrue(optimisedEnergy < baselineEnergy,
-        "MPC should reduce total compression and pumping duty");
-    Assertions.assertTrue(optimisedGas >= gasFlowTarget,
-        "Sales gas rate must stay above contractual target");
-    Assertions.assertTrue(optimisedWobbe >= wobbeSpecification,
-        "Gas Wobbe Index must satisfy specification");
-    Assertions.assertTrue(optimisedRvp <= rvpSpecification,
-        "Stabilised oil RVP must satisfy specification");
+    Assertions.assertTrue(optimisedEnergy < baselineEnergy, "MPC should reduce total compression and pumping duty");
+    Assertions.assertTrue(optimisedGas >= gasFlowTarget, "Sales gas rate must stay above contractual target");
+    Assertions.assertTrue(optimisedWobbe >= wobbeSpecification, "Gas Wobbe Index must satisfy specification");
+    Assertions.assertTrue(optimisedRvp <= rvpSpecification, "Stabilised oil RVP must satisfy specification");
   }
 
   private double[][] computeControlSensitivities(OffshoreProcess process, double[] baseControls,
       GasProductionMeasurement gasMeasurement, WobbeQualityMeasurement wobbeMeasurement,
       OilRvpMeasurement rvpMeasurement) {
-    double[] baseValues = new double[] {gasMeasurement.getMeasuredValue(),
-        wobbeMeasurement.getMeasuredValue(), rvpMeasurement.getMeasuredValue()};
+    double[] baseValues = new double[] { gasMeasurement.getMeasuredValue(), wobbeMeasurement.getMeasuredValue(),
+	rvpMeasurement.getMeasuredValue() };
 
     double[][] sensitivities = new double[3][baseControls.length];
-    double[] stepSizes = new double[] {1.0, 1.0, 5.0};
+    double[] stepSizes = new double[] { 1.0, 1.0, 5.0 };
 
     for (int controlIndex = 0; controlIndex < baseControls.length; controlIndex++) {
       double original = baseControls[controlIndex];
@@ -265,24 +256,23 @@ public class OffshoreProcessMpcIntegrationTest extends neqsim.NeqSimTest {
 
   private void applyControl(OffshoreProcess process, int controlIndex, double value) {
     switch (controlIndex) {
-      case 0:
-        process.dewPointCooler.setOutTemperature(value, "C");
-        break;
-      case 1:
-        process.oilHeater2.setOutTemperature(value, "C");
-        break;
-      case 2:
-        process.exportCompressor2.setOutletPressure(value);
-        break;
-      default:
-        throw new IllegalArgumentException("Unsupported control index " + controlIndex);
+    case 0:
+      process.dewPointCooler.setOutTemperature(value, "C");
+      break;
+    case 1:
+      process.oilHeater2.setOutTemperature(value, "C");
+      break;
+    case 2:
+      process.exportCompressor2.setOutletPressure(value);
+      break;
+    default:
+      throw new IllegalArgumentException("Unsupported control index " + controlIndex);
     }
   }
 
   private double totalCompressionEnergy(OffshoreProcess process) {
-    double compressorPower =
-        process.firstStageCompressor.getPower("MW") + process.secondStageCompressor.getPower("MW")
-            + process.exportCompressor1.getPower("MW") + process.exportCompressor2.getPower("MW");
+    double compressorPower = process.firstStageCompressor.getPower("MW") + process.secondStageCompressor.getPower("MW")
+	+ process.exportCompressor1.getPower("MW") + process.exportCompressor2.getPower("MW");
     double pumpPower = process.recyclePump.getPower("MW");
     return compressorPower + pumpPower;
   }
@@ -292,8 +282,8 @@ public class OffshoreProcessMpcIntegrationTest extends neqsim.NeqSimTest {
   }
 
   private double wobbeIndex(Stream salesGas) {
-    Standard_ISO6976 standard = new Standard_ISO6976(salesGas.getThermoSystem().clone(),
-        GAS_REFERENCE_T, GAS_REFERENCE_COMBUSTION_T, "volume");
+    Standard_ISO6976 standard = new Standard_ISO6976(salesGas.getThermoSystem().clone(), GAS_REFERENCE_T,
+	GAS_REFERENCE_COMBUSTION_T, "volume");
     standard.setReferenceState("real");
     standard.calculate();
     return standard.getValue("SuperiorWobbeIndex") / 1.0e3;
@@ -316,11 +306,10 @@ public class OffshoreProcessMpcIntegrationTest extends neqsim.NeqSimTest {
     ThrottlingValve inletValve = new ThrottlingValve("feed valve", feedToProcess);
     inletValve.setOutletPressure(input.get("firstStagePressure"));
 
-    Separator firstStageSeparator =
-        new Separator("1st stage separator", inletValve.getOutletStream());
+    Separator firstStageSeparator = new Separator("1st stage separator", inletValve.getOutletStream());
 
-    ThrottlingValve oilValve1 =
-        new ThrottlingValve("valve oil from first stage", firstStageSeparator.getLiquidOutStream());
+    ThrottlingValve oilValve1 = new ThrottlingValve("valve oil from first stage",
+	firstStageSeparator.getLiquidOutStream());
     oilValve1.setOutletPressure(input.get("secondStagePressure"));
 
     Mixer recompressionLiqMixer = new Mixer("recompression liquids mixer");
@@ -332,29 +321,25 @@ public class OffshoreProcessMpcIntegrationTest extends neqsim.NeqSimTest {
     Heater oilHeater1 = new Heater("oil heater 1", oilHeatEx.getOutletStream());
     oilHeater1.setOutTemperature(input.get("temperatureOilHeater1"), "C");
 
-    Separator secondStageSeparator =
-        new Separator("2nd stage separator", oilHeater1.getOutletStream());
+    Separator secondStageSeparator = new Separator("2nd stage separator", oilHeater1.getOutletStream());
 
     ThrottlingValve oilValve2 = new ThrottlingValve("valve oil from second stage",
-        secondStageSeparator.getLiquidOutStream());
+	secondStageSeparator.getLiquidOutStream());
     oilValve2.setOutletPressure(input.get("thirdStagePressure"));
 
     Heater oilHeater2 = new Heater("oil heater 2", oilValve2.getOutletStream());
     oilHeater2.setOutTemperature(input.get("temperatureOilHeater2"), "C");
 
-    Separator thirdStageSeparator =
-        new Separator("third stage separator", oilHeater2.getOutletStream());
+    Separator thirdStageSeparator = new Separator("third stage separator", oilHeater2.getOutletStream());
 
     Stream stableOil = new Stream("stable oil", thirdStageSeparator.getLiquidOutStream());
 
     Cooler firstStageCooler = new Cooler("1st stage cooler", thirdStageSeparator.getGasOutStream());
     firstStageCooler.setOutTemperature(input.get("firstStageSuctionCoolerTemperature"), "C");
 
-    Separator firstStageScrubber =
-        new Separator("1st stage scrubber", firstStageCooler.getOutletStream());
+    Separator firstStageScrubber = new Separator("1st stage scrubber", firstStageCooler.getOutletStream());
 
-    Compressor firstStageCompressor =
-        new Compressor("1st stage compressor", firstStageScrubber.getGasOutStream());
+    Compressor firstStageCompressor = new Compressor("1st stage compressor", firstStageScrubber.getGasOutStream());
     firstStageCompressor.setOutletPressure(input.get("secondStagePressure"));
     firstStageCompressor.setIsentropicEfficiency(0.75);
 
@@ -362,15 +347,12 @@ public class OffshoreProcessMpcIntegrationTest extends neqsim.NeqSimTest {
     secondStageGasMixer.addStream(secondStageSeparator.getGasOutStream());
     secondStageGasMixer.addStream(firstStageCompressor.getOutletStream());
 
-    Cooler secondStageCooler =
-        new Cooler("2nd stage cooler", secondStageGasMixer.getOutletStream());
+    Cooler secondStageCooler = new Cooler("2nd stage cooler", secondStageGasMixer.getOutletStream());
     secondStageCooler.setOutTemperature(input.get("secondStageSuctionCoolerTemperature"), "C");
 
-    Separator secondStageScrubber =
-        new Separator("2nd stage scrubber", secondStageCooler.getOutletStream());
+    Separator secondStageScrubber = new Separator("2nd stage scrubber", secondStageCooler.getOutletStream());
 
-    Compressor secondStageCompressor =
-        new Compressor("2nd stage compressor", secondStageScrubber.getGasOutStream());
+    Compressor secondStageCompressor = new Compressor("2nd stage compressor", secondStageScrubber.getGasOutStream());
     secondStageCompressor.setOutletPressure(input.get("firstStagePressure"));
     secondStageCompressor.setIsentropicEfficiency(0.75);
 
@@ -381,8 +363,7 @@ public class OffshoreProcessMpcIntegrationTest extends neqsim.NeqSimTest {
     Cooler dewPointCooler = new Cooler("dew point cooler", richGasMixer.getOutletStream());
     dewPointCooler.setOutTemperature(input.get("dewPointSuctionCoolerTemperature"), "C");
 
-    Separator dewPointScrubber =
-        new Separator("dewpoint scrubber", dewPointCooler.getOutletStream());
+    Separator dewPointScrubber = new Separator("dewpoint scrubber", dewPointCooler.getOutletStream());
 
     Stream oilThirdStageRecycle = wellFluid.clone("oil third stage recycle");
     oilThirdStageRecycle.setFlowRate(1.0, "kg/hr");
@@ -416,22 +397,18 @@ public class OffshoreProcessMpcIntegrationTest extends neqsim.NeqSimTest {
     gasRecycle.setOutletStream(gasRecycleSeed);
     gasRecycle.setTolerance(1e-2);
 
-    Cooler heatExchangerHot1 =
-        new Cooler("cross heat-exchanger1 hot side", dewPointScrubber.getGasOutStream());
+    Cooler heatExchangerHot1 = new Cooler("cross heat-exchanger1 hot side", dewPointScrubber.getGasOutStream());
     heatExchangerHot1.setOutTemperature(input.get("heatEx1HotStreamOutlet"), "C");
 
-    Cooler heatExchangerHot2 =
-        new Cooler("cross heat-exchanger2 hot side", heatExchangerHot1.getOutletStream());
+    Cooler heatExchangerHot2 = new Cooler("cross heat-exchanger2 hot side", heatExchangerHot1.getOutletStream());
     heatExchangerHot2.setOutTemperature(input.get("heatEx2HotStreamOutlet"), "C");
 
-    Separator fourthSeparator =
-        new Separator("fourth separator", heatExchangerHot2.getOutletStream());
+    Separator fourthSeparator = new Separator("fourth separator", heatExchangerHot2.getOutletStream());
 
     ThrottlingValve jtValve = new ThrottlingValve("JT valve", fourthSeparator.getGasOutStream());
     jtValve.setOutletPressure(input.get("jtOutletPressure"));
 
-    ThrottlingValve lpgValve =
-        new ThrottlingValve("LPG valve", fourthSeparator.getLiquidOutStream());
+    ThrottlingValve lpgValve = new ThrottlingValve("LPG valve", fourthSeparator.getLiquidOutStream());
     lpgValve.setOutletPressure(input.get("jtOutletPressure"));
 
     Separator coldSeparator = new Separator("cold separator", jtValve.getOutletStream());
@@ -440,24 +417,20 @@ public class OffshoreProcessMpcIntegrationTest extends neqsim.NeqSimTest {
     lpgMixer.addStream(lpgValve.getOutletStream());
     lpgMixer.addStream(coldSeparator.getLiquidOutStream());
 
-    Heater coldSideHeatEx1 =
-        new Heater("cross heat-exchanger1 cold side", coldSeparator.getGasOutStream());
+    Heater coldSideHeatEx1 = new Heater("cross heat-exchanger1 cold side", coldSeparator.getGasOutStream());
     coldSideHeatEx1.setOutTemperature(input.get("heatEx1ColdStreamOutlet"), "C");
 
-    Heater coldSideHeatEx2 =
-        new Heater("cross heat-exchanger2 cold side", lpgMixer.getOutletStream());
+    Heater coldSideHeatEx2 = new Heater("cross heat-exchanger2 cold side", lpgMixer.getOutletStream());
     coldSideHeatEx2.setOutTemperature(input.get("heatEx2ColdStreamOutlet"), "C");
 
-    Compressor exportCompressor1 =
-        new Compressor("export compressor stage 1", coldSideHeatEx1.getOutletStream());
+    Compressor exportCompressor1 = new Compressor("export compressor stage 1", coldSideHeatEx1.getOutletStream());
     exportCompressor1.setOutletPressure(input.get("exportCompressorStage1"));
     exportCompressor1.setIsentropicEfficiency(0.75);
 
     Cooler exportCooler1 = new Cooler("export cooler 1", exportCompressor1.getOutletStream());
     exportCooler1.setOutTemperature(input.get("firstStageExportCoolerTemperature"), "C");
 
-    Compressor exportCompressor2 =
-        new Compressor("export compressor stage 2", exportCooler1.getOutletStream());
+    Compressor exportCompressor2 = new Compressor("export compressor stage 2", exportCooler1.getOutletStream());
     exportCompressor2.setOutletPressure(input.get("exportCompressorStage2"));
     exportCompressor2.setIsentropicEfficiency(0.75);
 
@@ -510,17 +483,16 @@ public class OffshoreProcessMpcIntegrationTest extends neqsim.NeqSimTest {
     process.add(salesGas);
     process.add(lpgProduct);
 
-    return new OffshoreProcess(process, dewPointCooler, oilHeater2, exportCompressor2,
-        exportCompressor1, firstStageCompressor, secondStageCompressor, recyclePump, oilHeater1,
-        oilHeatEx, salesGas, stableOil, lpgProduct);
+    return new OffshoreProcess(process, dewPointCooler, oilHeater2, exportCompressor2, exportCompressor1,
+	firstStageCompressor, secondStageCompressor, recyclePump, oilHeater1, oilHeatEx, salesGas, stableOil,
+	lpgProduct);
   }
 
   private SystemInterface createWellFluid() {
     SystemInterface fluid = new SystemPrEos(298.15, 100.0);
-    double[] lightFractions =
-        new double[] {0.59, 0.001, 66.02, 8.27, 5.0, 0.94, 1.88, 0.7, 0.812, 0.91};
-    String[] lightComponents = new String[] {"nitrogen", "CO2", "methane", "ethane", "propane",
-        "i-butane", "n-butane", "i-pentane", "n-pentane", "n-hexane"};
+    double[] lightFractions = new double[] { 0.59, 0.001, 66.02, 8.27, 5.0, 0.94, 1.88, 0.7, 0.812, 0.91 };
+    String[] lightComponents = new String[] { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane",
+	"i-pentane", "n-pentane", "n-hexane" };
     for (int i = 0; i < lightComponents.length; i++) {
       fluid.addComponent(lightComponents[i], lightFractions[i]);
     }
@@ -560,8 +532,7 @@ public class OffshoreProcessMpcIntegrationTest extends neqsim.NeqSimTest {
     return fluid;
   }
 
-  private void addHeavyComponent(SystemInterface fluid, String name, double fraction, double mw,
-      double density) {
+  private void addHeavyComponent(SystemInterface fluid, String name, double fraction, double mw, double density) {
     fluid.addTBPfraction(name, fraction, mw, density);
   }
 

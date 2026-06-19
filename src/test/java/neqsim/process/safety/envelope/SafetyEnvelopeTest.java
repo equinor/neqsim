@@ -88,8 +88,7 @@ class SafetyEnvelopeTest {
 
     // Interpolate at 30 bara
     double interpTemp = envelope.getTemperatureAtPressure(30.0);
-    assertTrue(interpTemp > 270 && interpTemp < 285,
-        "Interpolated temp should be between 270 and 285 K");
+    assertTrue(interpTemp > 270 && interpTemp < 285, "Interpolated temp should be between 270 and 285 K");
 
     // Outside range should return NaN
     assertTrue(Double.isNaN(envelope.getTemperatureAtPressure(5.0)));
@@ -151,8 +150,8 @@ class SafetyEnvelopeTest {
 
       // Higher pressure should result in lower MDMT
       if (i > 0) {
-        assertTrue(temps[i] <= temps[i - 1] + 1.0, // Allow small tolerance
-            "MDMT should decrease with increasing pressure");
+	assertTrue(temps[i] <= temps[i - 1] + 1.0, // Allow small tolerance
+	    "MDMT should decrease with increasing pressure");
       }
     }
   }
@@ -165,15 +164,14 @@ class SafetyEnvelopeTest {
     SafetyEnvelope co2Env = calc.calculateCO2FreezingEnvelope(1.0, 100.0, 5);
     SafetyEnvelope mdmtEnv = calc.calculateMDMTEnvelope(1.0, 100.0, 300.0, 5);
 
-    SafetyEnvelope[] envelopes = {co2Env, mdmtEnv};
+    SafetyEnvelope[] envelopes = { co2Env, mdmtEnv };
 
     // Test combined safety check
     boolean safe = SafetyEnvelopeCalculator.isOperatingPointSafe(envelopes, 50.0, 280.0);
     assertTrue(safe, "280 K at 50 bara should be safe for CO2 and MDMT");
 
     // Find most limiting
-    SafetyEnvelope mostLimiting =
-        SafetyEnvelopeCalculator.getMostLimitingEnvelope(envelopes, 50.0, 250.0);
+    SafetyEnvelope mostLimiting = SafetyEnvelopeCalculator.getMostLimitingEnvelope(envelopes, 50.0, 250.0);
     assertNotNull(mostLimiting);
   }
 

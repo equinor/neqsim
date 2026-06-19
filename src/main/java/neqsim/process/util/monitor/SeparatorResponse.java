@@ -66,9 +66,7 @@ public class SeparatorResponse extends BaseResponse {
    * Constructor for SeparatorResponse.
    * </p>
    *
-   * @param inputSeparator a
-   *                       {@link neqsim.process.equipment.separator.ThreePhaseSeparator}
-   *                       object
+   * @param inputSeparator a {@link neqsim.process.equipment.separator.ThreePhaseSeparator} object
    */
   public SeparatorResponse(ThreePhaseSeparator inputSeparator) {
     super(inputSeparator);
@@ -95,16 +93,15 @@ public class SeparatorResponse extends BaseResponse {
    * Constructor for SeparatorResponse.
    * </p>
    *
-   * @param inputSeparator a {@link neqsim.process.equipment.separator.Separator}
-   *                       object
+   * @param inputSeparator a {@link neqsim.process.equipment.separator.Separator} object
    */
   public SeparatorResponse(Separator inputSeparator) {
     name = inputSeparator.getName();
     gasLoadFactor = inputSeparator.getGasLoadFactor();
     feed = new StreamResponse(inputSeparator.getFeedStream());
     if (inputSeparator.getThermoSystem().hasPhaseType("aqueous")
-        || inputSeparator.getThermoSystem().hasPhaseType("liquid")
-        || inputSeparator.getThermoSystem().hasPhaseType("oil")) {
+	|| inputSeparator.getThermoSystem().hasPhaseType("liquid")
+	|| inputSeparator.getThermoSystem().hasPhaseType("oil")) {
       liquid = new StreamResponse(inputSeparator.getLiquidOutStream());
     }
     if (inputSeparator.getThermoSystem().hasPhaseType("gas")) {

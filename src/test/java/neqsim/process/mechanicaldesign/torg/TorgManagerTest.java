@@ -29,12 +29,11 @@ class TorgManagerTest {
 
   @BeforeEach
   void setUp() throws IOException {
-    String csvContent =
-        "PROJECT_ID,PROJECT_NAME,COMPANY,REVISION,DESIGN_CATEGORY,STANDARD_CODE,VERSION,MIN_AMBIENT_TEMP,MAX_AMBIENT_TEMP\n"
-            + "PROJ-001,Test Platform,Equinor,1,pressure vessel design code,ASME-VIII-Div1,2021,-40,45\n"
-            + "PROJ-001,Test Platform,Equinor,1,separator process design,API-12J,8th Ed,-40,45\n"
-            + "PROJ-001,Test Platform,Equinor,1,compressor design codes,API-617,8th Ed,-40,45\n"
-            + "PROJ-002,Another Project,Shell,2,pressure vessel design code,EN-13445,2021,-20,50\n";
+    String csvContent = "PROJECT_ID,PROJECT_NAME,COMPANY,REVISION,DESIGN_CATEGORY,STANDARD_CODE,VERSION,MIN_AMBIENT_TEMP,MAX_AMBIENT_TEMP\n"
+	+ "PROJ-001,Test Platform,Equinor,1,pressure vessel design code,ASME-VIII-Div1,2021,-40,45\n"
+	+ "PROJ-001,Test Platform,Equinor,1,separator process design,API-12J,8th Ed,-40,45\n"
+	+ "PROJ-001,Test Platform,Equinor,1,compressor design codes,API-617,8th Ed,-40,45\n"
+	+ "PROJ-002,Another Project,Shell,2,pressure vessel design code,EN-13445,2021,-20,50\n";
 
     csvFile = tempDir.resolve("test_torg.csv");
     Files.write(csvFile, csvContent.getBytes());
@@ -54,8 +53,7 @@ class TorgManagerTest {
 
   @Test
   void testLoadTorgByCompanyAndProject() {
-    java.util.Optional<TechnicalRequirementsDocument> optTorg =
-        manager.load("Equinor", "Test Platform");
+    java.util.Optional<TechnicalRequirementsDocument> optTorg = manager.load("Equinor", "Test Platform");
 
     assertTrue(optTorg.isPresent());
     assertEquals("PROJ-001", optTorg.get().getProjectId());
@@ -96,9 +94,9 @@ class TorgManagerTest {
 
   @Test
   void testApplyToSingleEquipment() {
-    TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder()
-        .projectId("MANUAL-001").addStandard("separator process design", StandardType.API_12J)
-        .addStandard("pressure vessel design code", StandardType.ASME_VIII_DIV1).build();
+    TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder().projectId("MANUAL-001")
+	.addStandard("separator process design", StandardType.API_12J)
+	.addStandard("pressure vessel design code", StandardType.ASME_VIII_DIV1).build();
 
     Separator separator = new Separator("Manual Separator");
     manager.applyToEquipment(torg, separator);
@@ -162,8 +160,7 @@ class TorgManagerTest {
 
   @Test
   void testSetActiveTorg() {
-    TechnicalRequirementsDocument torg =
-        TechnicalRequirementsDocument.builder().projectId("DIRECT-001").build();
+    TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder().projectId("DIRECT-001").build();
 
     manager.setActiveTorg(torg);
     assertEquals("DIRECT-001", manager.getActiveTorg().getProjectId());
@@ -172,9 +169,8 @@ class TorgManagerTest {
   @Test
   void testChainedDataSources() throws IOException {
     // Create a second CSV with different projects
-    String csvContent2 =
-        "PROJECT_ID,PROJECT_NAME,COMPANY,REVISION,DESIGN_CATEGORY,STANDARD_CODE,VERSION\n"
-            + "PROJ-100,Extra Project,BP,1,pressure vessel design code,ASME-VIII-Div2,2021\n";
+    String csvContent2 = "PROJECT_ID,PROJECT_NAME,COMPANY,REVISION,DESIGN_CATEGORY,STANDARD_CODE,VERSION\n"
+	+ "PROJ-100,Extra Project,BP,1,pressure vessel design code,ASME-VIII-Div2,2021\n";
 
     Path csvFile2 = tempDir.resolve("extra_torg.csv");
     Files.write(csvFile2, csvContent2.getBytes());
@@ -201,9 +197,8 @@ class TorgManagerTest {
 
   @Test
   void testApplyWithEnvironmentalConditions() {
-    TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder()
-        .projectId("ENV-001").environmentalConditions(-46.0, 40.0)
-        .addStandard("separator process design", StandardType.API_12J).build();
+    TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder().projectId("ENV-001")
+	.environmentalConditions(-46.0, 40.0).addStandard("separator process design", StandardType.API_12J).build();
 
     Separator separator = new Separator("Env Test");
     manager.applyToEquipment(torg, separator);

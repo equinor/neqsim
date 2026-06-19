@@ -8,16 +8,15 @@ import neqsim.thermo.system.SystemInterface;
  * Estimated Cold Filter Plugging Point (CFPP) - EN 116 (screening correlation).
  *
  * <p>
- * The CFPP is the highest temperature at which a given volume of fuel fails to pass through a
- * standardised filtration device within a specified time when cooled. It characterises the
- * low-temperature operability of diesel and heating oils and is widely used in European
- * specifications.
+ * The CFPP is the highest temperature at which a given volume of fuel fails to pass through a standardised filtration
+ * device within a specified time when cooled. It characterises the low-temperature operability of diesel and heating
+ * oils and is widely used in European specifications.
  * </p>
  *
  * <p>
- * <b>This class returns an estimate, not a laboratory measurement.</b> For untreated middle
- * distillates the CFPP closely tracks the cloud point (wax appearance temperature), which is
- * obtained internally from {@link Standard_ASTM_D2500}:
+ * <b>This class returns an estimate, not a laboratory measurement.</b> For untreated middle distillates the CFPP
+ * closely tracks the cloud point (wax appearance temperature), which is obtained internally from
+ * {@link Standard_ASTM_D2500}:
  * </p>
  *
  * <pre>
@@ -27,10 +26,10 @@ import neqsim.thermo.system.SystemInterface;
  * </pre>
  *
  * <p>
- * The default offset is {@code 0.0 C} (CFPP equal to cloud point). For untreated fuels the CFPP is
- * commonly within a few degrees of the cloud point; cold-flow additives can depress the CFPP well
- * below the cloud point, in which case the offset should be set from response testing. The offset
- * is configurable. For rigorous work, calibrate against EN 116 laboratory data.
+ * The default offset is {@code 0.0 C} (CFPP equal to cloud point). For untreated fuels the CFPP is commonly within a
+ * few degrees of the cloud point; cold-flow additives can depress the CFPP well below the cloud point, in which case
+ * the offset should be set from response testing. The offset is configurable. For rigorous work, calibrate against EN
+ * 116 laboratory data.
  * </p>
  *
  * <p>
@@ -87,8 +86,8 @@ public class Standard_EN116 extends neqsim.standards.Standard {
       cloudPointC = d2500.getValue("cloudPoint", "C");
 
       if (Double.isNaN(cloudPointC)) {
-        logger.error("CFPP input unavailable (cloud point)");
-        return;
+	logger.error("CFPP input unavailable (cloud point)");
+	return;
       }
 
       cfppC = cloudPointC + offsetC;
@@ -101,7 +100,7 @@ public class Standard_EN116 extends neqsim.standards.Standard {
   @Override
   public double getValue(String returnParameter, String returnUnit) {
     if ("CFPP".equalsIgnoreCase(returnParameter) || "cloudPoint".equalsIgnoreCase(returnParameter)
-        || "CP".equalsIgnoreCase(returnParameter)) {
+	|| "CP".equalsIgnoreCase(returnParameter)) {
       return convertTempFromC(getValue(returnParameter), returnUnit);
     }
     return getValue(returnParameter);
@@ -112,8 +111,7 @@ public class Standard_EN116 extends neqsim.standards.Standard {
   public double getValue(String returnParameter) {
     if ("CFPP".equalsIgnoreCase(returnParameter)) {
       return cfppC;
-    } else if ("cloudPoint".equalsIgnoreCase(returnParameter)
-        || "CP".equalsIgnoreCase(returnParameter)) {
+    } else if ("cloudPoint".equalsIgnoreCase(returnParameter) || "CP".equalsIgnoreCase(returnParameter)) {
       return cloudPointC;
     } else {
       logger.error("returnParameter not supported: {}", returnParameter);
@@ -160,7 +158,7 @@ public class Standard_EN116 extends neqsim.standards.Standard {
   /**
    * Sets an optional maximum CFPP specification limit used by {@link #isOnSpec()}.
    *
-   * @param maxCfpp maximum allowed CFPP
+   * @param maxCfpp     maximum allowed CFPP
    * @param maxCfppUnit temperature unit, one of {@code "C"}, {@code "K"}, {@code "F"}, {@code "R"}
    */
   public void setMaxCfppSpec(double maxCfpp, String maxCfppUnit) {
@@ -178,7 +176,7 @@ public class Standard_EN116 extends neqsim.standards.Standard {
    * Converts a temperature from Celsius to the requested unit.
    *
    * @param valueC temperature value in Celsius (may be NaN)
-   * @param unit target unit, one of {@code "C"}, {@code "K"}, {@code "F"}, {@code "R"}
+   * @param unit   target unit, one of {@code "C"}, {@code "K"}, {@code "F"}, {@code "R"}
    * @return the converted temperature, or the Celsius value if the unit is unrecognised
    */
   private double convertTempFromC(double valueC, String unit) {
@@ -199,7 +197,7 @@ public class Standard_EN116 extends neqsim.standards.Standard {
    * Converts a temperature in the supplied unit to Celsius.
    *
    * @param value temperature value
-   * @param unit source unit, one of {@code "C"}, {@code "K"}, {@code "F"}, {@code "R"}
+   * @param unit  source unit, one of {@code "C"}, {@code "K"}, {@code "F"}, {@code "R"}
    * @return the temperature in Celsius
    */
   private double convertTempToC(double value, String unit) {

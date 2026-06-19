@@ -39,7 +39,7 @@ public class VirtualStream extends ProcessEquipmentBaseClass {
    * Constructor for VirtualStream.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name   a {@link java.lang.String} object
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public VirtualStream(String name, StreamInterface stream) {
@@ -89,7 +89,7 @@ public class VirtualStream extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param comps an array of type double
-   * @param unit a {@link java.lang.String} object
+   * @param unit  a {@link java.lang.String} object
    */
   public void setComposition(double[] comps, String unit) {
     composition = comps;

@@ -18,13 +18,13 @@ import com.google.gson.JsonObject;
  * Queries the NeqSim component database for MCP and API integration.
  *
  * <p>
- * Provides fast, stateless lookup of component names for validation, search, and fuzzy matching.
- * All methods return JSON strings for direct use by MCP tool wrappers.
+ * Provides fast, stateless lookup of component names for validation, search, and fuzzy matching. All methods return
+ * JSON strings for direct use by MCP tool wrappers.
  * </p>
  *
  * <p>
- * Component names are loaded once from the resource file {@code neqsim_component_names.txt} and
- * cached in memory. For richer property queries, the H2 database (COMP table) is used.
+ * Component names are loaded once from the resource file {@code neqsim_component_names.txt} and cached in memory. For
+ * richer property queries, the H2 database (COMP table) is used.
  * </p>
  *
  * @author Even Solbraa
@@ -44,7 +44,8 @@ public final class ComponentQuery {
   /**
    * Private constructor to prevent instantiation.
    */
-  private ComponentQuery() {}
+  private ComponentQuery() {
+  }
 
   /**
    * Returns all known component names.
@@ -85,14 +86,14 @@ public final class ComponentQuery {
     if (query == null || query.trim().isEmpty()) {
       // Return all names
       for (String name : cachedNames) {
-        matches.add(name);
+	matches.add(name);
       }
     } else {
       String queryLower = query.trim().toLowerCase(Locale.ENGLISH);
       for (int i = 0; i < cachedNames.size(); i++) {
-        if (cachedNamesLower.get(i).contains(queryLower)) {
-          matches.add(cachedNames.get(i));
-        }
+	if (cachedNamesLower.get(i).contains(queryLower)) {
+	  matches.add(cachedNames.get(i));
+	}
       }
     }
 
@@ -132,8 +133,8 @@ public final class ComponentQuery {
     for (int i = 0; i < cachedNamesLower.size(); i++) {
       int dist = levenshteinDistance(inputLower, cachedNamesLower.get(i));
       if (dist < bestDist) {
-        bestDist = dist;
-        bestMatch = cachedNames.get(i);
+	bestDist = dist;
+	bestMatch = cachedNames.get(i);
       }
     }
 
@@ -148,8 +149,8 @@ public final class ComponentQuery {
    * Returns detailed information for a specific component as JSON.
    *
    * <p>
-   * Queries the H2 database COMP table for properties like molar mass, critical temperature,
-   * critical pressure, and acentric factor.
+   * Queries the H2 database COMP table for properties like molar mass, critical temperature, critical pressure, and
+   * acentric factor.
    * </p>
    *
    * @param name the exact component name
@@ -157,48 +158,46 @@ public final class ComponentQuery {
    */
   public static String getInfo(String name) {
     if (name == null || name.trim().isEmpty()) {
-      return errorJson("INVALID_INPUT", "Component name is null or empty",
-          "Provide a valid component name");
+      return errorJson("INVALID_INPUT", "Component name is null or empty", "Provide a valid component name");
     }
 
     String trimmed = name.trim();
     if (!isValid(trimmed)) {
       String suggestion = closestMatch(trimmed);
       String fix = suggestion != null ? "Did you mean '" + suggestion + "'?"
-          : "Use search() to find valid component names";
+	  : "Use search() to find valid component names";
       return errorJson("UNKNOWN_COMPONENT", "Component '" + trimmed + "' not found", fix);
     }
 
     // Query the H2 database for component properties
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       java.sql.ResultSet dataSet = database
-          .getResultSet("SELECT NAME, FORMULA, MOLARMASS, TC, PC, ACSFACT, NORMBOIL FROM comp "
-              + "WHERE NAME='" + trimmed.replace("'", "''") + "'");
+	  .getResultSet("SELECT NAME, FORMULA, MOLARMASS, TC, PC, ACSFACT, NORMBOIL FROM comp " + "WHERE NAME='"
+	      + trimmed.replace("'", "''") + "'");
 
       if (dataSet.next()) {
-        JsonObject result = new JsonObject();
-        result.addProperty("status", "success");
+	JsonObject result = new JsonObject();
+	result.addProperty("status", "success");
 
-        JsonObject props = new JsonObject();
-        props.addProperty("name", dataSet.getString("NAME"));
-        props.addProperty("formula", dataSet.getString("FORMULA"));
-        props.addProperty("molarMass_g_mol", safeDouble(dataSet.getString("MOLARMASS")));
-        props.addProperty("criticalTemperature_C", safeDouble(dataSet.getString("TC")));
-        props.addProperty("criticalPressure_bara", safeDouble(dataSet.getString("PC")));
-        props.addProperty("acentricFactor", safeDouble(dataSet.getString("ACSFACT")));
-        props.addProperty("normalBoilingPoint_C", safeDouble(dataSet.getString("NORMBOIL")));
+	JsonObject props = new JsonObject();
+	props.addProperty("name", dataSet.getString("NAME"));
+	props.addProperty("formula", dataSet.getString("FORMULA"));
+	props.addProperty("molarMass_g_mol", safeDouble(dataSet.getString("MOLARMASS")));
+	props.addProperty("criticalTemperature_C", safeDouble(dataSet.getString("TC")));
+	props.addProperty("criticalPressure_bara", safeDouble(dataSet.getString("PC")));
+	props.addProperty("acentricFactor", safeDouble(dataSet.getString("ACSFACT")));
+	props.addProperty("normalBoilingPoint_C", safeDouble(dataSet.getString("NORMBOIL")));
 
-        result.add("component", props);
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        return gson.toJson(result);
+	result.add("component", props);
+	Gson gson = new GsonBuilder().setPrettyPrinting().create();
+	return gson.toJson(result);
       } else {
-        return errorJson("NOT_FOUND", "Component '" + trimmed + "' not in COMP table",
-            "Check component name spelling");
+	return errorJson("NOT_FOUND", "Component '" + trimmed + "' not in COMP table", "Check component name spelling");
       }
     } catch (Exception ex) {
       logger.error("Error querying component info", ex);
       return errorJson("DATABASE_ERROR", "Failed to query component: " + ex.getMessage(),
-          "Ensure the database is initialized");
+	  "Ensure the database is initialized");
     }
   }
 
@@ -211,37 +210,36 @@ public final class ComponentQuery {
     }
     synchronized (ComponentQuery.class) {
       if (cachedNames != null) {
-        return;
+	return;
       }
       List<String> names = new ArrayList<>();
       List<String> namesLower = new ArrayList<>();
 
-      try (InputStream is =
-          ComponentQuery.class.getClassLoader().getResourceAsStream("neqsim_component_names.txt")) {
-        if (is == null) {
-          logger.warn("neqsim_component_names.txt not found, falling back to database");
-          loadFromDatabase(names, namesLower);
-        } else {
-          BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
-          String line;
-          boolean headerSkipped = false;
-          while ((line = reader.readLine()) != null) {
-            String trimmed = line.trim();
-            if (!headerSkipped) {
-              headerSkipped = true;
-              if ("NAME".equalsIgnoreCase(trimmed)) {
-                continue; // Skip header row
-              }
-            }
-            if (!trimmed.isEmpty()) {
-              names.add(trimmed);
-              namesLower.add(trimmed.toLowerCase(Locale.ENGLISH));
-            }
-          }
-        }
+      try (InputStream is = ComponentQuery.class.getClassLoader().getResourceAsStream("neqsim_component_names.txt")) {
+	if (is == null) {
+	  logger.warn("neqsim_component_names.txt not found, falling back to database");
+	  loadFromDatabase(names, namesLower);
+	} else {
+	  BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+	  String line;
+	  boolean headerSkipped = false;
+	  while ((line = reader.readLine()) != null) {
+	    String trimmed = line.trim();
+	    if (!headerSkipped) {
+	      headerSkipped = true;
+	      if ("NAME".equalsIgnoreCase(trimmed)) {
+		continue; // Skip header row
+	      }
+	    }
+	    if (!trimmed.isEmpty()) {
+	      names.add(trimmed);
+	      namesLower.add(trimmed.toLowerCase(Locale.ENGLISH));
+	    }
+	  }
+	}
       } catch (Exception ex) {
-        logger.error("Error loading component names from resource", ex);
-        loadFromDatabase(names, namesLower);
+	logger.error("Error loading component names from resource", ex);
+	loadFromDatabase(names, namesLower);
       }
 
       cachedNames = names;
@@ -252,18 +250,18 @@ public final class ComponentQuery {
   /**
    * Loads component names from the H2 database as a fallback.
    *
-   * @param names list to populate with component names
+   * @param names      list to populate with component names
    * @param namesLower list to populate with lower-case names
    */
   private static void loadFromDatabase(List<String> names, List<String> namesLower) {
     try {
       String[] dbNames = neqsim.util.database.NeqSimDataBase.getComponentNames();
       for (String n : dbNames) {
-        String trimmed = n.trim();
-        if (!trimmed.isEmpty()) {
-          names.add(trimmed);
-          namesLower.add(trimmed.toLowerCase(Locale.ENGLISH));
-        }
+	String trimmed = n.trim();
+	if (!trimmed.isEmpty()) {
+	  names.add(trimmed);
+	  namesLower.add(trimmed.toLowerCase(Locale.ENGLISH));
+	}
       }
     } catch (Exception ex) {
       logger.error("Error loading component names from database", ex);
@@ -290,8 +288,8 @@ public final class ComponentQuery {
     for (int i = 1; i <= lenA; i++) {
       curr[0] = i;
       for (int j = 1; j <= lenB; j++) {
-        int cost = (a.charAt(i - 1) == b.charAt(j - 1)) ? 0 : 1;
-        curr[j] = Math.min(Math.min(curr[j - 1] + 1, prev[j] + 1), prev[j - 1] + cost);
+	int cost = (a.charAt(i - 1) == b.charAt(j - 1)) ? 0 : 1;
+	curr[j] = Math.min(Math.min(curr[j - 1] + 1, prev[j] + 1), prev[j - 1] + cost);
       }
       int[] temp = prev;
       prev = curr;
@@ -320,8 +318,8 @@ public final class ComponentQuery {
   /**
    * Creates a standard error JSON response.
    *
-   * @param code error code
-   * @param message error description
+   * @param code        error code
+   * @param message     error description
    * @param remediation fix suggestion
    * @return JSON string
    */

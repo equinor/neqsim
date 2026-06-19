@@ -20,8 +20,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * </p>
  */
 class TwoPhasePipeFlowSystemSimplifiedAPITest {
-  private static final Logger logger =
-      LogManager.getLogger(TwoPhasePipeFlowSystemSimplifiedAPITest.class);
+  private static final Logger logger = LogManager.getLogger(TwoPhasePipeFlowSystemSimplifiedAPITest.class);
 
   /**
    * Creates a test fluid with proper two-phase conditions.
@@ -52,8 +51,7 @@ class TwoPhasePipeFlowSystemSimplifiedAPITest {
     SystemInterface fluid = createTestFluid();
 
     TwoPhasePipeFlowSystem pipeUp = TwoPhasePipeFlowSystem.verticalPipe(fluid, 0.1, 100, 10, true);
-    TwoPhasePipeFlowSystem pipeDown =
-        TwoPhasePipeFlowSystem.verticalPipe(fluid, 0.1, 100, 10, false);
+    TwoPhasePipeFlowSystem pipeDown = TwoPhasePipeFlowSystem.verticalPipe(fluid, 0.1, 100, 10, false);
 
     assertNotNull(pipeUp, "Upward pipe should be created");
     assertNotNull(pipeDown, "Downward pipe should be created");
@@ -77,7 +75,7 @@ class TwoPhasePipeFlowSystemSimplifiedAPITest {
     assertNotNull(pipe, "Subsea pipe should be created");
     // Subsea should have convective boundary
     assertEquals(neqsim.fluidmechanics.flownode.WallHeatTransferModel.CONVECTIVE_BOUNDARY,
-        pipe.getWallHeatTransferModel());
+	pipe.getWallHeatTransferModel());
   }
 
   @Test
@@ -169,8 +167,7 @@ class TwoPhasePipeFlowSystemSimplifiedAPITest {
     assertEquals(numNodes, result.getLiquidHoldupProfile().length, "Liquid holdup profile size");
     assertEquals(numNodes, result.getVoidFractionProfile().length, "Void fraction profile size");
     assertEquals(numNodes, result.getGasVelocityProfile().length, "Gas velocity profile size");
-    assertEquals(numNodes, result.getLiquidVelocityProfile().length,
-        "Liquid velocity profile size");
+    assertEquals(numNodes, result.getLiquidVelocityProfile().length, "Liquid velocity profile size");
   }
 
   @Test
@@ -182,8 +179,7 @@ class TwoPhasePipeFlowSystemSimplifiedAPITest {
     // Check summary values are consistent
     double[] pressures = result.getPressureProfile();
     assertEquals(pressures[0], result.getInletPressure(), 1e-10, "Inlet pressure consistency");
-    assertEquals(pressures[pressures.length - 1], result.getOutletPressure(), 1e-10,
-        "Outlet pressure consistency");
+    assertEquals(pressures[pressures.length - 1], result.getOutletPressure(), 1e-10, "Outlet pressure consistency");
 
     double expectedDrop = result.getInletPressure() - result.getOutletPressure();
     assertEquals(expectedDrop, result.getTotalPressureDrop(), 1e-10, "Pressure drop consistency");
@@ -282,8 +278,7 @@ class TwoPhasePipeFlowSystemSimplifiedAPITest {
   @Test
   void testBuilderValidatesFluid() {
     assertThrows(IllegalStateException.class, () -> {
-      TwoPhasePipeFlowSystem.builder().withDiameter(0.1, "m").withLength(100, "m").withNodes(10)
-          .build();
+      TwoPhasePipeFlowSystem.builder().withDiameter(0.1, "m").withLength(100, "m").withNodes(10).build();
     });
   }
 
@@ -293,8 +288,8 @@ class TwoPhasePipeFlowSystemSimplifiedAPITest {
     // No components added
 
     assertThrows(IllegalStateException.class, () -> {
-      TwoPhasePipeFlowSystem.builder().withFluid(emptyFluid).withDiameter(0.1, "m")
-          .withLength(100, "m").withNodes(10).build();
+      TwoPhasePipeFlowSystem.builder().withFluid(emptyFluid).withDiameter(0.1, "m").withLength(100, "m").withNodes(10)
+	  .build();
     });
   }
 
@@ -339,15 +334,14 @@ class TwoPhasePipeFlowSystemSimplifiedAPITest {
     PipeFlowResult resultFactory = pipeFactory.solve();
 
     // Using builder with same parameters
-    TwoPhasePipeFlowSystem pipeBuilder = TwoPhasePipeFlowSystem.builder().withFluid(fluid)
-        .withDiameter(0.025, "m").withLength(3, "m").withNodes(10).horizontal()
-        .withFlowPattern(FlowPattern.STRATIFIED).build();
+    TwoPhasePipeFlowSystem pipeBuilder = TwoPhasePipeFlowSystem.builder().withFluid(fluid).withDiameter(0.025, "m")
+	.withLength(3, "m").withNodes(10).horizontal().withFlowPattern(FlowPattern.STRATIFIED).build();
     PipeFlowResult resultBuilder = pipeBuilder.solve();
 
     // Results should be very similar
     assertEquals(resultFactory.getInletPressure(), resultBuilder.getInletPressure(), 0.001,
-        "Inlet pressures should match");
+	"Inlet pressures should match");
     assertEquals(resultFactory.getTotalPressureDrop(), resultBuilder.getTotalPressureDrop(), 0.001,
-        "Pressure drops should match");
+	"Pressure drops should match");
   }
 }

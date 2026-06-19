@@ -10,8 +10,8 @@ import java.lang.annotation.Target;
  * Documents a parameter for AI consumption.
  *
  * <p>
- * Provides structured metadata about method parameters that AI agents can parse to understand valid
- * inputs, units, and constraints.
+ * Provides structured metadata about method parameters that AI agents can parse to understand valid inputs, units, and
+ * constraints.
  * </p>
  *
  * <h2>Usage:</h2>

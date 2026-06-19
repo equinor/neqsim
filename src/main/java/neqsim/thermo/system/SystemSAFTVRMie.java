@@ -10,8 +10,8 @@ import neqsim.thermo.phase.PhaseSAFTVRMie;
  * Thermodynamic system using the SAFT-VR Mie equation of state (Lafitte et al. 2013).
  *
  * <p>
- * The Mie potential generalises the Lennard-Jones 12-6 potential by allowing variable repulsive and
- * attractive exponents, providing improved accuracy for many pure fluids and mixtures.
+ * The Mie potential generalises the Lennard-Jones 12-6 potential by allowing variable repulsive and attractive
+ * exponents, providing improved accuracy for many pure fluids and mixtures.
  * </p>
  *
  * @author Even Solbraa
@@ -43,8 +43,8 @@ public class SystemSAFTVRMie extends SystemSrkEos {
   /**
    * Constructor for SystemSAFTVRMie.
    *
-   * @param T The temperature in unit Kelvin
-   * @param P The pressure in unit bara (absolute pressure)
+   * @param T              The temperature in unit Kelvin
+   * @param P              The pressure in unit bara (absolute pressure)
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemSAFTVRMie(double T, double P, boolean checkForSolids) {

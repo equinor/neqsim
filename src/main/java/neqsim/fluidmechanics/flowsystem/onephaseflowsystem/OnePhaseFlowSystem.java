@@ -24,7 +24,8 @@ public abstract class OnePhaseFlowSystem extends FlowSystem {
    * Constructor for OnePhaseFlowSystem.
    * </p>
    */
-  public OnePhaseFlowSystem() {}
+  public OnePhaseFlowSystem() {
+  }
 
   /**
    * <p>
@@ -33,5 +34,6 @@ public abstract class OnePhaseFlowSystem extends FlowSystem {
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
-  public OnePhaseFlowSystem(SystemInterface system) {}
+  public OnePhaseFlowSystem(SystemInterface system) {
+  }
 }

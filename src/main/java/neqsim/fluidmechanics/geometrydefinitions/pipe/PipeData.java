@@ -13,9 +13,9 @@ import neqsim.fluidmechanics.geometrydefinitions.surrounding.PipeSurroundingEnvi
  * Represents the geometry data for a pipe including diameter, wall structure, and surroundings.
  *
  * <p>
- * This class combines the pipe dimensions with the wall material layers and surrounding environment
- * for comprehensive heat transfer calculations. The wall can include multiple layers (pipe steel,
- * insulation, coatings) with proper cylindrical heat transfer calculations.
+ * This class combines the pipe dimensions with the wall material layers and surrounding environment for comprehensive
+ * heat transfer calculations. The wall can include multiple layers (pipe steel, insulation, coatings) with proper
+ * cylindrical heat transfer calculations.
  * </p>
  *
  * <h2>Example Usage</h2>
@@ -31,8 +31,8 @@ import neqsim.fluidmechanics.geometrydefinitions.surrounding.PipeSurroundingEnvi
  * insulatedPipe.addInsulation(PipeMaterial.MINERAL_WOOL, 0.050);
  *
  * // Or use the builder
- * PipeData subseaPipe = PipeData.createFromBuilder(
- *     PipeWallBuilder.subseaPipe(0.25, 0.020, 0.040, 0.070).subseaEnvironment(277.0, 0.5));
+ * PipeData subseaPipe = PipeData
+ *     .createFromBuilder(PipeWallBuilder.subseaPipe(0.25, 0.020, 0.040, 0.070).subseaEnvironment(277.0, 0.5));
  * </pre>
  *
  * @author asmund
@@ -65,7 +65,7 @@ public class PipeData extends GeometryDefinition {
   /**
    * Constructor with diameter and roughness.
    *
-   * @param diameter Pipe inner diameter in meters
+   * @param diameter  Pipe inner diameter in meters
    * @param roughness Pipe inner surface roughness in meters
    */
   public PipeData(double diameter, double roughness) {
@@ -98,7 +98,7 @@ public class PipeData extends GeometryDefinition {
    * This clears any existing wall layers and sets a single pipe wall layer.
    * </p>
    *
-   * @param material Pipe material
+   * @param material  Pipe material
    * @param thickness Wall thickness in meters
    */
   public void setPipeWallMaterial(PipeMaterial material, double thickness) {
@@ -129,7 +129,7 @@ public class PipeData extends GeometryDefinition {
   /**
    * Adds an insulation layer to the pipe wall.
    *
-   * @param material Insulation material
+   * @param material  Insulation material
    * @param thickness Insulation thickness in meters
    */
   public void addInsulation(PipeMaterial material, double thickness) {
@@ -157,7 +157,7 @@ public class PipeData extends GeometryDefinition {
   /**
    * Adds a coating layer to the pipe wall.
    *
-   * @param material Coating material
+   * @param material  Coating material
    * @param thickness Coating thickness in meters
    */
   public void addCoating(PipeMaterial material, double thickness) {
@@ -179,39 +179,36 @@ public class PipeData extends GeometryDefinition {
    * Configures for air exposure.
    *
    * @param airTemperatureK Air temperature in Kelvin
-   * @param windVelocityMs Wind velocity in m/s
+   * @param windVelocityMs  Wind velocity in m/s
    */
   public void setAirEnvironment(double airTemperatureK, double windVelocityMs) {
-    setSurroundingEnvironment(
-        PipeSurroundingEnvironment.exposedToAir(airTemperatureK, windVelocityMs));
+    setSurroundingEnvironment(PipeSurroundingEnvironment.exposedToAir(airTemperatureK, windVelocityMs));
   }
 
   /**
    * Configures for seawater environment.
    *
    * @param seawaterTemperatureK Seawater temperature in Kelvin
-   * @param currentVelocityMs Current velocity in m/s
+   * @param currentVelocityMs    Current velocity in m/s
    */
   public void setSeawaterEnvironment(double seawaterTemperatureK, double currentVelocityMs) {
-    setSurroundingEnvironment(
-        PipeSurroundingEnvironment.subseaPipe(seawaterTemperatureK, currentVelocityMs));
+    setSurroundingEnvironment(PipeSurroundingEnvironment.subseaPipe(seawaterTemperatureK, currentVelocityMs));
   }
 
   /**
    * Configures for buried pipe.
    *
    * @param groundTemperatureK Ground temperature in Kelvin
-   * @param burialDepthM Burial depth to centerline in meters
-   * @param soilType Soil material type
+   * @param burialDepthM       Burial depth to centerline in meters
+   * @param soilType           Soil material type
    */
-  public void setBuriedEnvironment(double groundTemperatureK, double burialDepthM,
-      PipeMaterial soilType) {
+  public void setBuriedEnvironment(double groundTemperatureK, double burialDepthM, PipeMaterial soilType) {
     double outerRadius = getPipeWall().getOuterRadius();
     if (outerRadius <= 0) {
       outerRadius = radius; // Use inner radius if no wall layers defined
     }
-    setSurroundingEnvironment(PipeSurroundingEnvironment.buriedPipe(groundTemperatureK,
-        burialDepthM, outerRadius, soilType));
+    setSurroundingEnvironment(
+	PipeSurroundingEnvironment.buriedPipe(groundTemperatureK, burialDepthM, outerRadius, soilType));
   }
 
   // ===== Accessor methods =====
@@ -288,7 +285,7 @@ public class PipeData extends GeometryDefinition {
 
     // Outer environment resistance per unit length
     double outerResistance = 1.0
-        / (2.0 * Math.PI * outerRadius * getSurroundingEnvironment().getHeatTransferCoefficient());
+	/ (2.0 * Math.PI * outerRadius * getSurroundingEnvironment().getHeatTransferCoefficient());
 
     // Total resistance per unit length
     double totalResistance = wallResistance + outerResistance;

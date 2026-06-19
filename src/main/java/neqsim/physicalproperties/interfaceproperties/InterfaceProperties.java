@@ -53,7 +53,8 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
    * Constructor for InterfaceProperties.
    * </p>
    */
-  public InterfaceProperties() {}
+  public InterfaceProperties() {
+  }
 
   /**
    * <p>
@@ -96,7 +97,7 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
     numberOfInterfaces = system.getNumberOfPhases() - 1;
     surfaceTension = new double[numberOfInterfaces + 1];
     if (gasLiquidSurfaceTensionCalc == null || gasAqueousSurfaceTensionCalc == null
-        || liquidLiquidSurfaceTensionCalc == null) {
+	|| liquidLiquidSurfaceTensionCalc == null) {
       setInterfacialTensionModel(interfacialTensionModel);
     }
     // surfaceTensionCalc[i] = new LGTSurfaceTension(system);
@@ -132,18 +133,18 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
    */
   private AdsorptionInterface createAdsorptionModel(IsothermType type) {
     switch (type) {
-      case LANGMUIR:
-      case EXTENDED_LANGMUIR:
-        return new LangmuirAdsorption(system);
-      case BET:
-        return new BETAdsorption(system);
-      case FREUNDLICH:
-        return new FreundlichAdsorption(system);
-      case SIPS:
-        return new SipsAdsorption(system);
-      case DRA:
-      default:
-        return new PotentialTheoryAdsorption(system);
+    case LANGMUIR:
+    case EXTENDED_LANGMUIR:
+      return new LangmuirAdsorption(system);
+    case BET:
+      return new BETAdsorption(system);
+    case FREUNDLICH:
+      return new FreundlichAdsorption(system);
+    case SIPS:
+      return new SipsAdsorption(system);
+    case DRA:
+    default:
+      return new PotentialTheoryAdsorption(system);
     }
   }
 
@@ -164,18 +165,17 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
   }
 
   /*
-   * public double getSurfaceTension(int numb) { if (numb >= numberOfInterfaces) { return 0.0; }
-   * else { return surfaceTension[numb]; } }
+   * public double getSurfaceTension(int numb) { if (numb >= numberOfInterfaces) { return 0.0; } else { return
+   * surfaceTension[numb]; } }
    */
 
   /** {@inheritDoc} */
   @Override
   public double getSurfaceTension(int numb1, int numb2) {
-    if (system.getPhase(numb1).getType() == PhaseType.GAS
-        && system.getPhase(numb2).getType() == PhaseType.OIL) {
+    if (system.getPhase(numb1).getType() == PhaseType.GAS && system.getPhase(numb2).getType() == PhaseType.OIL) {
       return gasLiquidSurfaceTensionCalc.calcSurfaceTension(numb1, numb2);
     } else if (system.getPhase(numb1).getType() == PhaseType.GAS
-        && system.getPhase(numb2).getType() == PhaseType.AQUEOUS) {
+	&& system.getPhase(numb2).getType() == PhaseType.AQUEOUS) {
       return gasAqueousSurfaceTensionCalc.calcSurfaceTension(numb1, numb2);
     } else {
       return liquidLiquidSurfaceTensionCalc.calcSurfaceTension(numb1, numb2);

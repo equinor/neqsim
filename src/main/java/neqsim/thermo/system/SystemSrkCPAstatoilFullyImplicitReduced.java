@@ -8,16 +8,15 @@ import neqsim.thermo.phase.PhaseSrkCPAfullyImplicitReduced;
  * Thermodynamic system using the fully implicit CPA-EOS with site type reduction.
  *
  * <p>
- * Combines two acceleration strategies: (1) the fully implicit coupled Newton-Raphson algorithm
- * from Igben et al. (2026) that eliminates inner XA iterations, and (2) association site symmetry
- * reduction that groups equivalent sites into types with multiplicities, reducing the system
- * dimension from (n_s+1) to (p+1).
+ * Combines two acceleration strategies: (1) the fully implicit coupled Newton-Raphson algorithm from Igben et al.
+ * (2026) that eliminates inner XA iterations, and (2) association site symmetry reduction that groups equivalent sites
+ * into types with multiplicities, reducing the system dimension from (n_s+1) to (p+1).
  * </p>
  *
  * <p>
- * The Newton Jacobian is built analytically at every iteration on the reduced system (no Broyden
- * approximation), giving both the per-iteration cost reduction from dimension reduction AND the
- * quadratic convergence rate of full Newton-Raphson.
+ * The Newton Jacobian is built analytically at every iteration on the reduced system (no Broyden approximation), giving
+ * both the per-iteration cost reduction from dimension reduction AND the quadratic convergence rate of full
+ * Newton-Raphson.
  * </p>
  *
  * @author Even Solbraa
@@ -47,8 +46,8 @@ public class SystemSrkCPAstatoilFullyImplicitReduced extends SystemSrkCPAstatoil
   /**
    * Constructor of a fluid object using the fully implicit reduced CPA-EoS.
    *
-   * @param T The temperature in unit Kelvin
-   * @param P The pressure in unit bara (absolute pressure)
+   * @param T              The temperature in unit Kelvin
+   * @param P              The pressure in unit bara (absolute pressure)
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemSrkCPAstatoilFullyImplicitReduced(double T, double P, boolean checkForSolids) {

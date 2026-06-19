@@ -13,13 +13,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Robustness tests for the PTPhaseEnvelopeMichelsen implementation. Covers the full spectrum from
- * pure components through complex multicomponent mixtures, verifying both closed and open
- * envelopes.
+ * Robustness tests for the PTPhaseEnvelopeMichelsen implementation. Covers the full spectrum from pure components
+ * through complex multicomponent mixtures, verifying both closed and open envelopes.
  *
  * <p>
- * Comparisons are made against known critical properties and NIST/textbook reference data for
- * validation against state-of-the-art phase envelope algorithms.
+ * Comparisons are made against known critical properties and NIST/textbook reference data for validation against
+ * state-of-the-art phase envelope algorithms.
  * </p>
  *
  * @author copilot
@@ -28,13 +27,11 @@ import org.apache.logging.log4j.Logger;
 public class PTPhaseEnvelopeRobustnessTest {
   private static final Logger logger = LogManager.getLogger(PTPhaseEnvelopeRobustnessTest.class);
 
-
   // ========================== PURE COMPONENTS ==========================
 
   /**
-   * Pure methane: The phase envelope degenerates to the vapor pressure curve. The cricondenbar and
-   * cricondentherm should both be near the critical point (Tc=190.56 K, Pc=45.99 bar). NIST
-   * reference: Tc=190.564 K, Pc=45.992 bar.
+   * Pure methane: The phase envelope degenerates to the vapor pressure curve. The cricondenbar and cricondentherm
+   * should both be near the critical point (Tc=190.56 K, Pc=45.99 bar). NIST reference: Tc=190.564 K, Pc=45.992 bar.
    */
   @Test
   void testPureMethane() {
@@ -60,15 +57,12 @@ public class PTPhaseEnvelopeRobustnessTest {
     double cctT = cricondentherm[0];
 
     // SRK overpredicts Pc for methane (~58 bar vs NIST 46 bar)
-    assertTrue(ccbP > 40.0 && ccbP < 65.0,
-        "Pure CH4 cricondenbar should be near Pc=46 bar (SRK ~58), got " + ccbP);
-    assertTrue(cctT > 180.0 && cctT < 200.0,
-        "Pure CH4 cricondentherm should be near Tc=190.6 K, got " + cctT);
+    assertTrue(ccbP > 40.0 && ccbP < 65.0, "Pure CH4 cricondenbar should be near Pc=46 bar (SRK ~58), got " + ccbP);
+    assertTrue(cctT > 180.0 && cctT < 200.0, "Pure CH4 cricondentherm should be near Tc=190.6 K, got " + cctT);
   }
 
   /**
-   * Pure ethane: Tc=305.33 K, Pc=48.72 bar (NIST). Validates the algorithm handles a heavier pure
-   * component.
+   * Pure ethane: Tc=305.33 K, Pc=48.72 bar (NIST). Validates the algorithm handles a heavier pure component.
    */
   @Test
   void testPureEthane() {
@@ -87,10 +81,8 @@ public class PTPhaseEnvelopeRobustnessTest {
     double cctT = cricondentherm[0];
 
     // SRK gives near-NIST values for ethane
-    assertTrue(ccbP > 42.0 && ccbP < 56.0,
-        "Pure C2H6 cricondenbar should be near Pc=48.7 bar, got " + ccbP);
-    assertTrue(cctT > 295.0 && cctT < 315.0,
-        "Pure C2H6 cricondentherm should be near Tc=305.3 K, got " + cctT);
+    assertTrue(ccbP > 42.0 && ccbP < 56.0, "Pure C2H6 cricondenbar should be near Pc=48.7 bar, got " + ccbP);
+    assertTrue(cctT > 295.0 && cctT < 315.0, "Pure C2H6 cricondentherm should be near Tc=305.3 K, got " + cctT);
   }
 
   /**
@@ -113,17 +105,15 @@ public class PTPhaseEnvelopeRobustnessTest {
     double cctT = cricondentherm[0];
 
     // SRK slightly overpredicts Pc for CO2
-    assertTrue(ccbP > 65.0 && ccbP < 85.0,
-        "Pure CO2 cricondenbar should be near Pc=73.8 bar, got " + ccbP);
-    assertTrue(cctT > 295.0 && cctT < 315.0,
-        "Pure CO2 cricondentherm should be near Tc=304.1 K, got " + cctT);
+    assertTrue(ccbP > 65.0 && ccbP < 85.0, "Pure CO2 cricondenbar should be near Pc=73.8 bar, got " + ccbP);
+    assertTrue(cctT > 295.0 && cctT < 315.0, "Pure CO2 cricondentherm should be near Tc=304.1 K, got " + cctT);
   }
 
   // ========================== BINARY MIXTURES ==========================
 
   /**
-   * Binary methane-ethane (90/10): Classic binary mixture. Well-characterized system, cricondenbar
-   * &gt; pure component Pc values (mixture effect).
+   * Binary methane-ethane (90/10): Classic binary mixture. Well-characterized system, cricondenbar &gt; pure component
+   * Pc values (mixture effect).
    */
   @Test
   void testBinaryMethaneEthane() {
@@ -147,18 +137,15 @@ public class PTPhaseEnvelopeRobustnessTest {
 
     // Cricondenbar for 90/10 CH4/C2H6 should be ~ 55-65 bar (above either Pc)
     double ccbP = cricondenbar[1];
-    assertTrue(ccbP > 45.0 && ccbP < 75.0,
-        "Binary CH4/C2H6 cricondenbar should be 45-75 bar, got " + ccbP);
+    assertTrue(ccbP > 45.0 && ccbP < 75.0, "Binary CH4/C2H6 cricondenbar should be 45-75 bar, got " + ccbP);
 
     // Cricondentherm should be between Tc_CH4 and Tc_C2H6
     double cctT = cricondentherm[0];
-    assertTrue(cctT > 190.0 && cctT < 310.0,
-        "Binary CH4/C2H6 cricondentherm should be 190-310 K, got " + cctT);
+    assertTrue(cctT > 190.0 && cctT < 310.0, "Binary CH4/C2H6 cricondentherm should be 190-310 K, got " + cctT);
   }
 
   /**
-   * Binary methane-CO2 (80/20): Important for CCS/EOR. CO2 significantly affects the shape of the
-   * phase envelope.
+   * Binary methane-CO2 (80/20): Important for CCS/EOR. CO2 significantly affects the shape of the phase envelope.
    */
   @Test
   void testBinaryMethaneCO2() {
@@ -179,8 +166,7 @@ public class PTPhaseEnvelopeRobustnessTest {
 
     double ccbP = cricondenbar[1];
     // CH4/CO2 80/20: cricondenbar ~ 80-100 bar (CO2 has high Pc)
-    assertTrue(ccbP > 50.0 && ccbP < 120.0,
-        "Binary CH4/CO2 cricondenbar should be 50-120 bar, got " + ccbP);
+    assertTrue(ccbP > 50.0 && ccbP < 120.0, "Binary CH4/CO2 cricondenbar should be 50-120 bar, got " + ccbP);
   }
 
   /**
@@ -227,15 +213,14 @@ public class PTPhaseEnvelopeRobustnessTest {
 
     double ccbP = cricondenbar[1];
     // CO2 Pc=73.8 bar, H2S Pc=89.6 bar: mixture cricondenbar should be in between or higher
-    assertTrue(ccbP > 60.0 && ccbP < 110.0,
-        "CO2/H2S cricondenbar should be 60-110 bar, got " + ccbP);
+    assertTrue(ccbP > 60.0 && ccbP < 110.0, "CO2/H2S cricondenbar should be 60-110 bar, got " + ccbP);
   }
 
   // ========================== ASYMMETRIC BINARIES ==========================
 
   /**
-   * Binary methane-n-decane (95/5): Highly asymmetric system with very wide phase envelope.
-   * Challenges the algorithm near the critical region where step sizes must be small.
+   * Binary methane-n-decane (95/5): Highly asymmetric system with very wide phase envelope. Challenges the algorithm
+   * near the critical region where step sizes must be small.
    */
   @Test
   void testBinaryMethaneDecane() {
@@ -260,13 +245,12 @@ public class PTPhaseEnvelopeRobustnessTest {
 
     // Wide asymmetric envelopes have very high cricondenbar
     double ccbP = cricondenbar[1];
-    assertTrue(ccbP > 50.0,
-        "CH4/nC10 cricondenbar should be high for asymmetric system, got " + ccbP);
+    assertTrue(ccbP > 50.0, "CH4/nC10 cricondenbar should be high for asymmetric system, got " + ccbP);
   }
 
   /**
-   * Binary methane-n-hexane (80/20): Moderately asymmetric. The cricondenbar for 80/20 CH4/nC6
-   * should be significantly above pure-component Pc values (typically 100-200 bar range).
+   * Binary methane-n-hexane (80/20): Moderately asymmetric. The cricondenbar for 80/20 CH4/nC6 should be significantly
+   * above pure-component Pc values (typically 100-200 bar range).
    */
   @Test
   void testBinaryMethaneHexane() {
@@ -292,8 +276,8 @@ public class PTPhaseEnvelopeRobustnessTest {
   // ========================== MULTICOMPONENT CLOSED ENVELOPES ==========================
 
   /**
-   * Lean natural gas (5 components): Should produce a clean closed envelope. Reference against
-   * typical lean gas cricondenbar ~ 55-80 bar and cricondentherm ~ 230-270 K.
+   * Lean natural gas (5 components): Should produce a clean closed envelope. Reference against typical lean gas
+   * cricondenbar ~ 55-80 bar and cricondentherm ~ 230-270 K.
    */
   @Test
   void testLeanNaturalGas() {
@@ -320,13 +304,11 @@ public class PTPhaseEnvelopeRobustnessTest {
 
     // Lean gas cricondenbar typically 50-80 bar
     double ccbP = cricondenbar[1];
-    assertTrue(ccbP > 45.0 && ccbP < 85.0,
-        "Lean gas cricondenbar should be 45-85 bar, got " + ccbP);
+    assertTrue(ccbP > 45.0 && ccbP < 85.0, "Lean gas cricondenbar should be 45-85 bar, got " + ccbP);
 
     // Lean gas cricondentherm typically 220-270 K
     double cctT = cricondentherm[0];
-    assertTrue(cctT > 200.0 && cctT < 280.0,
-        "Lean gas cricondentherm should be 200-280 K, got " + cctT);
+    assertTrue(cctT > 200.0 && cctT < 280.0, "Lean gas cricondentherm should be 200-280 K, got " + cctT);
 
     // Check envelope closure
     PTPhaseEnvelopeMichelsen env = (PTPhaseEnvelopeMichelsen) ops.getOperation();
@@ -334,8 +316,7 @@ public class PTPhaseEnvelopeRobustnessTest {
   }
 
   /**
-   * Rich natural gas (9 components with C5+): Larger phase envelope than lean gas. Cricondentherm
-   * can reach 300+ K.
+   * Rich natural gas (9 components with C5+): Larger phase envelope than lean gas. Cricondentherm can reach 300+ K.
    */
   @Test
   void testRichNaturalGas() {
@@ -364,21 +345,19 @@ public class PTPhaseEnvelopeRobustnessTest {
 
     // Rich gas cricondenbar: 80-150 bar
     double ccbP = cricondenbar[1];
-    assertTrue(ccbP > 70.0 && ccbP < 160.0,
-        "Rich gas cricondenbar should be 70-160 bar, got " + ccbP);
+    assertTrue(ccbP > 70.0 && ccbP < 160.0, "Rich gas cricondenbar should be 70-160 bar, got " + ccbP);
 
     // Rich gas cricondentherm: 270-350 K
     double cctT = cricondentherm[0];
-    assertTrue(cctT > 260.0 && cctT < 360.0,
-        "Rich gas cricondentherm should be 260-360 K, got " + cctT);
+    assertTrue(cctT > 260.0 && cctT < 360.0, "Rich gas cricondentherm should be 260-360 K, got " + cctT);
 
     PTPhaseEnvelopeMichelsen env = (PTPhaseEnvelopeMichelsen) ops.getOperation();
     assertTrue(env.isEnvelopeClosed(), "Rich gas should have a closed envelope");
   }
 
   /**
-   * Sour natural gas with H2S: Validates the algorithm handles H2S correctly. H2S has high Pc (89.6
-   * bar) which increases cricondenbar.
+   * Sour natural gas with H2S: Validates the algorithm handles H2S correctly. H2S has high Pc (89.6 bar) which
+   * increases cricondenbar.
    */
   @Test
   void testSourNaturalGas() {
@@ -407,8 +386,8 @@ public class PTPhaseEnvelopeRobustnessTest {
   }
 
   /**
-   * Very rich gas with C7+: Condensate-like system with very wide phase envelope. Uses a simplified
-   * TBP-equivalent approach with n-heptane + n-octane.
+   * Very rich gas with C7+: Condensate-like system with very wide phase envelope. Uses a simplified TBP-equivalent
+   * approach with n-heptane + n-octane.
    */
   @Test
   void testCondensateGas() {
@@ -447,8 +426,8 @@ public class PTPhaseEnvelopeRobustnessTest {
   // ========================== EQUATION OF STATE COMPARISON ==========================
 
   /**
-   * Peng-Robinson EOS vs SRK for the same lean gas: Both should give similar cricondenbar and
-   * cricondentherm (within ~10%).
+   * Peng-Robinson EOS vs SRK for the same lean gas: Both should give similar cricondenbar and cricondentherm (within
+   * ~10%).
    */
   @Test
   void testPRvsSRKConsistency() {
@@ -479,20 +458,18 @@ public class PTPhaseEnvelopeRobustnessTest {
 
     // SRK and PR should give cricondenbar within ~15% of each other
     double pDiff = Math.abs(ccbSRK[1] - ccbPR[1]) / ccbSRK[1] * 100;
-    assertTrue(pDiff < 15.0,
-        "SRK and PR cricondenbar should agree within 15%, diff=" + pDiff + "%");
+    assertTrue(pDiff < 15.0, "SRK and PR cricondenbar should agree within 15%, diff=" + pDiff + "%");
 
     // Temperature should also be reasonably close
     double tDiff = Math.abs(cctSRK[0] - cctPR[0]) / cctSRK[0] * 100;
-    assertTrue(tDiff < 10.0,
-        "SRK and PR cricondentherm should agree within 10%, diff=" + tDiff + "%");
+    assertTrue(tDiff < 10.0, "SRK and PR cricondentherm should agree within 10%, diff=" + tDiff + "%");
   }
 
   // ========================== BUBBLE-FIRST VS DEW-FIRST ==========================
 
   /**
-   * Verify that bubble-first and dew-first give consistent cricondenbar/cricondentherm. The
-   * starting side should not affect the final result.
+   * Verify that bubble-first and dew-first give consistent cricondenbar/cricondentherm. The starting side should not
+   * affect the final result.
    */
   @Test
   void testBubbleFirstVsDewFirstConsistency() {
@@ -517,20 +494,18 @@ public class PTPhaseEnvelopeRobustnessTest {
 
     // Pressure should be within 5%
     double pDiff = Math.abs(ccb1[1] - ccb2[1]) / Math.max(ccb1[1], 1.0) * 100;
-    assertTrue(pDiff < 5.0, "Dew-first and bubble-first cricondenbar should agree within 5%, diff="
-        + pDiff + "%" + " (dew=" + ccb1[1] + ", bub=" + ccb2[1] + ")");
+    assertTrue(pDiff < 5.0, "Dew-first and bubble-first cricondenbar should agree within 5%, diff=" + pDiff + "%"
+	+ " (dew=" + ccb1[1] + ", bub=" + ccb2[1] + ")");
 
     // Temperature should be within 5%
     double tDiff = Math.abs(cct1[0] - cct2[0]) / cct1[0] * 100;
-    assertTrue(tDiff < 5.0,
-        "Dew-first and bubble-first cricondentherm should agree within 5%, diff=" + tDiff + "%");
+    assertTrue(tDiff < 5.0, "Dew-first and bubble-first cricondentherm should agree within 5%, diff=" + tDiff + "%");
   }
 
   // ========================== PHYSICAL CONSISTENCY CHECKS ==========================
 
   /**
-   * Verify that dewT temperatures monotonically cover a wide range and all values are physically
-   * reasonable.
+   * Verify that dewT temperatures monotonically cover a wide range and all values are physically reasonable.
    */
   @Test
   void testDewCurvePhysicalConsistency() {
@@ -557,14 +532,11 @@ public class PTPhaseEnvelopeRobustnessTest {
     // and restart passes so plotters render disjoint polylines).
     for (int i = 0; i < dewT.length; i++) {
       if (Double.isNaN(dewT[i])) {
-        assertTrue(Double.isNaN(dewP[i]),
-            "dewT[" + i + "] and dewP[" + i + "] must both be NaN at branch breaks");
-        continue;
+	assertTrue(Double.isNaN(dewP[i]), "dewT[" + i + "] and dewP[" + i + "] must both be NaN at branch breaks");
+	continue;
       }
-      assertTrue(dewT[i] > 50.0 && dewT[i] < 600.0,
-          "dewT[" + i + "]=" + dewT[i] + " should be in 50-600 K range");
-      assertTrue(dewP[i] > 0.0 && dewP[i] < 2000.0,
-          "dewP[" + i + "]=" + dewP[i] + " should be in 0-2000 bar range");
+      assertTrue(dewT[i] > 50.0 && dewT[i] < 600.0, "dewT[" + i + "]=" + dewT[i] + " should be in 50-600 K range");
+      assertTrue(dewP[i] > 0.0 && dewP[i] < 2000.0, "dewP[" + i + "]=" + dewP[i] + " should be in 0-2000 bar range");
     }
   }
 
@@ -603,22 +575,20 @@ public class PTPhaseEnvelopeRobustnessTest {
     // Density should be positive (NaN entries are branch-break sentinels).
     for (int i = 0; i < dewDens.length; i++) {
       if (Double.isNaN(dewDens[i])) {
-        continue;
+	continue;
       }
       assertTrue(dewDens[i] > 0.0, "Dew density[" + i + "]=" + dewDens[i] + " should be positive");
     }
     for (int i = 0; i < bubDens.length; i++) {
       if (Double.isNaN(bubDens[i])) {
-        continue;
+	continue;
       }
-      assertTrue(bubDens[i] > 0.0,
-          "Bubble density[" + i + "]=" + bubDens[i] + " should be positive");
+      assertTrue(bubDens[i] > 0.0, "Bubble density[" + i + "]=" + bubDens[i] + " should be positive");
     }
   }
 
   /**
-   * Verify cricondenbar has maximum pressure among all dew points. This is a mathematical
-   * invariant.
+   * Verify cricondenbar has maximum pressure among all dew points. This is a mathematical invariant.
    */
   @Test
   void testCricondenbarIsMaxDewPressure() {
@@ -638,21 +608,19 @@ public class PTPhaseEnvelopeRobustnessTest {
     double maxP = -1;
     for (double p : dewP) {
       if (p > maxP) {
-        maxP = p;
+	maxP = p;
       }
     }
 
     // Cricondenbar should be at or very near the max dew pressure
     double diff = Math.abs(cricondenbar[1] - maxP) / cricondenbar[1] * 100;
-    assertTrue(diff < 5.0,
-        "Cricondenbar pressure should match max dew pressure within 5%, diff=" + diff + "%");
+    assertTrue(diff < 5.0, "Cricondenbar pressure should match max dew pressure within 5%, diff=" + diff + "%");
   }
 
   // ========================== WITH TBP FRACTIONS ==========================
 
   /**
-   * Gas condensate with TBP fractions. Tests the algorithm with pseudo-components that have custom
-   * critical properties.
+   * Gas condensate with TBP fractions. Tests the algorithm with pseudo-components that have custom critical properties.
    */
   @Test
   void testGasCondensateWithTBP() {
@@ -690,15 +658,14 @@ public class PTPhaseEnvelopeRobustnessTest {
 
     // Cricondentherm should be high with C10+ present
     double cctT = cricondentherm[0];
-    assertTrue(cctT > 300.0,
-        "Gas condensate cricondentherm should be >300 K with C10+, got " + cctT);
+    assertTrue(cctT > 300.0, "Gas condensate cricondentherm should be >300 K with C10+, got " + cctT);
   }
 
   // ========================== QUALITY LINES ==========================
 
   /**
-   * Quality lines should lie within the phase envelope. For each quality line point, T should be
-   * less than cricondentherm and P should be less than cricondenbar.
+   * Quality lines should lie within the phase envelope. For each quality line point, T should be less than
+   * cricondentherm and P should be less than cricondenbar.
    */
   @Test
   void testQualityLinesInsideEnvelope() {
@@ -709,7 +676,7 @@ public class PTPhaseEnvelopeRobustnessTest {
     fluid.setMixingRule("classic");
 
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-    double[] betas = {0.1, 0.5, 0.9};
+    double[] betas = { 0.1, 0.5, 0.9 };
     ops.calcPTphaseEnvelopeWithQualityLines(betas);
 
     double[] cricondenbar = ops.get("cricondenbar");
@@ -721,11 +688,10 @@ public class PTPhaseEnvelopeRobustnessTest {
       double[] qualP = ops.get("qualityP_" + key);
 
       if (qualT != null && qualT.length > 0) {
-        for (int i = 0; i < qualT.length; i++) {
-          assertTrue(qualP[i] <= cricondenbar[1] * 1.05,
-              "Quality line P at beta=" + beta + " should be <= cricondenbar +" + " 5% margin, got "
-                  + qualP[i] + " vs ccb=" + cricondenbar[1]);
-        }
+	for (int i = 0; i < qualT.length; i++) {
+	  assertTrue(qualP[i] <= cricondenbar[1] * 1.05, "Quality line P at beta=" + beta
+	      + " should be <= cricondenbar +" + " 5% margin, got " + qualP[i] + " vs ccb=" + cricondenbar[1]);
+	}
       }
     }
   }
@@ -733,12 +699,12 @@ public class PTPhaseEnvelopeRobustnessTest {
   // ========================== REFERENCE DATA COMPARISON ==========================
 
   /**
-   * Methane-ethane 90/10 at SRK: Compare cricondenbar against published data. Knapp et al. (1982)
-   * VLE compilation gives the phase envelope for this system.
+   * Methane-ethane 90/10 at SRK: Compare cricondenbar against published data. Knapp et al. (1982) VLE compilation gives
+   * the phase envelope for this system.
    *
    * <p>
-   * The SRK EOS-predicted critical locus for 90/10 CH4/C2H6 should produce: cricondenbar ~ 55-65
-   * bar, cricondentherm ~ 215-235 K.
+   * The SRK EOS-predicted critical locus for 90/10 CH4/C2H6 should produce: cricondenbar ~ 55-65 bar, cricondentherm ~
+   * 215-235 K.
    * </p>
    */
   @Test
@@ -757,24 +723,21 @@ public class PTPhaseEnvelopeRobustnessTest {
 
     // Literature: CH4/C2H6 90/10 cricondenbar is ~55-62 bar for SRK
     double ccbP = cricondenbar[1];
-    assertTrue(ccbP > 50.0 && ccbP < 70.0,
-        "CH4/C2H6 90/10 SRK cricondenbar expected 50-70 bar, got " + ccbP);
+    assertTrue(ccbP > 50.0 && ccbP < 70.0, "CH4/C2H6 90/10 SRK cricondenbar expected 50-70 bar, got " + ccbP);
 
     // Critical temperature between Tc_CH4 (190.6) and Tc_C2H6 (305.3)
     double critT = critPt[0];
-    assertTrue(critT > 185.0 && critT < 220.0,
-        "CH4/C2H6 90/10 critical T expected 185-220 K, got " + critT);
+    assertTrue(critT > 185.0 && critT < 220.0, "CH4/C2H6 90/10 critical T expected 185-220 K, got " + critT);
 
     // Critical pressure should be above both Pc_CH4 and Pc_C2H6
     double critP = critPt[1];
-    assertTrue(critP > 45.0 && critP < 70.0,
-        "CH4/C2H6 90/10 critical P expected 45-70 bar, got " + critP);
+    assertTrue(critP > 45.0 && critP < 70.0, "CH4/C2H6 90/10 critical P expected 45-70 bar, got " + critP);
   }
 
   /**
-   * Five-component natural gas benchmark from Michelsen &amp; Mollerup (2007) Table 11.1 test case.
-   * N2/CH4/C2H6/C3/nC4 typical lean gas. Cricondenbar should be in the 55-75 bar range, and the
-   * cricondentherm in 230-260 K range with SRK.
+   * Five-component natural gas benchmark from Michelsen &amp; Mollerup (2007) Table 11.1 test case. N2/CH4/C2H6/C3/nC4
+   * typical lean gas. Cricondenbar should be in the 55-75 bar range, and the cricondentherm in 230-260 K range with
+   * SRK.
    */
   @Test
   void testFiveComponentBenchmark() {
@@ -801,13 +764,11 @@ public class PTPhaseEnvelopeRobustnessTest {
     // Cricondenbar in typical range
     double ccbP = cricondenbar[1];
     // SRK can give higher cricondenbar than expected, ~86 bar is within model accuracy
-    assertTrue(ccbP > 50.0 && ccbP < 100.0,
-        "5-component lean gas cricondenbar expected 50-100 bar, got " + ccbP);
+    assertTrue(ccbP > 50.0 && ccbP < 100.0, "5-component lean gas cricondenbar expected 50-100 bar, got " + ccbP);
 
     // Cricondentherm
     double cctT = cricondentherm[0];
-    assertTrue(cctT > 220.0 && cctT < 270.0,
-        "5-component lean gas cricondentherm expected 220-270 K, got " + cctT);
+    assertTrue(cctT > 220.0 && cctT < 270.0, "5-component lean gas cricondentherm expected 220-270 K, got " + cctT);
 
     // Envelope should be closed
     PTPhaseEnvelopeMichelsen env = (PTPhaseEnvelopeMichelsen) ops.getOperation();
@@ -815,8 +776,8 @@ public class PTPhaseEnvelopeRobustnessTest {
   }
 
   /**
-   * High-CO2 gas (30% CO2): CO2-rich gases have distinctive phase envelopes with higher
-   * cricondenbar due to CO2's high Pc (73.8 bar).
+   * High-CO2 gas (30% CO2): CO2-rich gases have distinctive phase envelopes with higher cricondenbar due to CO2's high
+   * Pc (73.8 bar).
    */
   @Test
   void testHighCO2Gas() {
@@ -838,13 +799,12 @@ public class PTPhaseEnvelopeRobustnessTest {
 
     // CO2 pushes cricondenbar higher
     double ccbP = cricondenbar[1];
-    assertTrue(ccbP > 70.0,
-        "High CO2 gas cricondenbar should be >70 bar due to CO2 Pc=73.8, got " + ccbP);
+    assertTrue(ccbP > 70.0, "High CO2 gas cricondenbar should be >70 bar due to CO2 Pc=73.8, got " + ccbP);
   }
 
   /**
-   * Near-equimolar binary (50/50 CH4/C2H6): Tests the algorithm near the critical locus where the
-   * phase envelope has its widest shape and the critical region is most challenging.
+   * Near-equimolar binary (50/50 CH4/C2H6): Tests the algorithm near the critical locus where the phase envelope has
+   * its widest shape and the critical region is most challenging.
    */
   @Test
   void testEquimolarBinary() {
@@ -866,20 +826,18 @@ public class PTPhaseEnvelopeRobustnessTest {
 
     // For 50/50 CH4/C2H6: Tc ~ 245 K, Pc ~ 55 bar (from phase diagram)
     double ccbP = cricondenbar[1];
-    assertTrue(ccbP > 48.0 && ccbP < 70.0,
-        "50/50 CH4/C2 cricondenbar expected 48-70 bar, got " + ccbP);
+    assertTrue(ccbP > 48.0 && ccbP < 70.0, "50/50 CH4/C2 cricondenbar expected 48-70 bar, got " + ccbP);
 
     // Critical point should be between Tc values
     double critT = critPt[0];
-    assertTrue(critT > 200.0 && critT < 300.0,
-        "50/50 CH4/C2 critical T expected 200-300 K, got " + critT);
+    assertTrue(critT > 200.0 && critT < 300.0, "50/50 CH4/C2 critical T expected 200-300 K, got " + critT);
   }
 
   // ========================== ADDITIONAL EDGE CASES ==========================
 
   /**
-   * Very lean gas (99% methane, 1% ethane): Almost pure component. Tests that the algorithm handles
-   * highly methane-dominated systems where the phase envelope is very narrow.
+   * Very lean gas (99% methane, 1% ethane): Almost pure component. Tests that the algorithm handles highly
+   * methane-dominated systems where the phase envelope is very narrow.
    */
   @Test
   void testVeryLeanGas() {
@@ -901,12 +859,12 @@ public class PTPhaseEnvelopeRobustnessTest {
     // Very lean gas cricondentherm should be only slightly above Tc_CH4
     double cctT = cricondentherm[0];
     assertTrue(cctT > 185.0 && cctT < 230.0,
-        "Very lean gas cricondentherm should be 185-230 K (just above Tc_CH4), got " + cctT);
+	"Very lean gas cricondentherm should be 185-230 K (just above Tc_CH4), got " + cctT);
   }
 
   /**
-   * Nitrogen-rich gas: N2 has very low Tc (126.2 K) which shifts the phase envelope to lower
-   * temperatures and pressures.
+   * Nitrogen-rich gas: N2 has very low Tc (126.2 K) which shifts the phase envelope to lower temperatures and
+   * pressures.
    */
   @Test
   void testNitrogenRichGas() {
@@ -927,13 +885,12 @@ public class PTPhaseEnvelopeRobustnessTest {
 
     // N2 pushes cricondenbar lower than pure methane systems
     double ccbP = cricondenbar[1];
-    assertTrue(ccbP > 30.0 && ccbP < 120.0,
-        "N2-rich gas cricondenbar should be 30-120 bar, got " + ccbP);
+    assertTrue(ccbP > 30.0 && ccbP < 120.0, "N2-rich gas cricondenbar should be 30-120 bar, got " + ccbP);
   }
 
   /**
-   * H2-containing system: Hydrogen has extremely low Tc (-239.95 C) making it a supercritical
-   * component at most conditions. This is challenging because H2 barely condenses.
+   * H2-containing system: Hydrogen has extremely low Tc (-239.95 C) making it a supercritical component at most
+   * conditions. This is challenging because H2 barely condenses.
    */
   @Test
   void testHydrogenContainingGas() {
@@ -948,13 +905,12 @@ public class PTPhaseEnvelopeRobustnessTest {
 
     double[] dewT = ops.get("dewT");
     assertNotNull(dewT, "H2-containing gas should have dew curve");
-    assertTrue(dewT.length >= 1,
-        "H2-containing gas should have at least some dew points, got " + dewT.length);
+    assertTrue(dewT.length >= 1, "H2-containing gas should have at least some dew points, got " + dewT.length);
   }
 
   /**
-   * Water-free heavy system (C1/C3/nC5/nC7): Tests a mixture with significant heavy ends but no TBP
-   * fractions, using only standard database components. Wider phase envelope than lean gas.
+   * Water-free heavy system (C1/C3/nC5/nC7): Tests a mixture with significant heavy ends but no TBP fractions, using
+   * only standard database components. Wider phase envelope than lean gas.
    */
   @Test
   void testHeavyHydrocarbonMix() {
@@ -990,9 +946,8 @@ public class PTPhaseEnvelopeRobustnessTest {
   }
 
   /**
-   * Diagnostic test: Print cricondenbar, cricondentherm, and critical point for a standard lean gas
-   * composition. Values can be compared against CMG WinProp, HYSYS, or other commercial phase
-   * envelope software.
+   * Diagnostic test: Print cricondenbar, cricondentherm, and critical point for a standard lean gas composition. Values
+   * can be compared against CMG WinProp, HYSYS, or other commercial phase envelope software.
    *
    * <p>
    * This test always passes — its purpose is to produce reference output.
@@ -1024,14 +979,10 @@ public class PTPhaseEnvelopeRobustnessTest {
     double[] bubP = ops.get("bubP");
 
     logger.info("=== Phase Envelope Reference Values (SRK EOS) ===");
-    logger.info("Composition: N2=0.5%, CO2=2%, CH4=85%, C2=6%, C3=3%, "
-        + "iC4=1%, nC4=1.5%, iC5=0.5%, nC5=0.5%");
-    logger.info(
-        "Cricondenbar:   T=" + ccb[0] + " K (" + (ccb[0] - 273.15) + " °C), P=" + ccb[1] + " bar");
-    logger.info(
-        "Cricondentherm: T=" + cct[0] + " K (" + (cct[0] - 273.15) + " °C), P=" + cct[1] + " bar");
-    logger.info("Critical point: T=" + crit[0] + " K (" + (crit[0] - 273.15) + " °C), P=" + crit[1]
-        + " bar");
+    logger.info("Composition: N2=0.5%, CO2=2%, CH4=85%, C2=6%, C3=3%, " + "iC4=1%, nC4=1.5%, iC5=0.5%, nC5=0.5%");
+    logger.info("Cricondenbar:   T=" + ccb[0] + " K (" + (ccb[0] - 273.15) + " °C), P=" + ccb[1] + " bar");
+    logger.info("Cricondentherm: T=" + cct[0] + " K (" + (cct[0] - 273.15) + " °C), P=" + cct[1] + " bar");
+    logger.info("Critical point: T=" + crit[0] + " K (" + (crit[0] - 273.15) + " °C), P=" + crit[1] + " bar");
     logger.info("Dew curve: " + dewT.length + " points");
     logger.info("Bubble curve: " + bubT.length + " points");
 
@@ -1043,18 +994,15 @@ public class PTPhaseEnvelopeRobustnessTest {
     assertTrue(crit[1] > 0, "Critical P should be positive");
 
     // Cricondenbar should be the max P, cricondentherm should be the max T
-    assertTrue(ccb[1] >= crit[1],
-        "Cricondenbar P=" + ccb[1] + " should be >= critical P=" + crit[1]);
-    assertTrue(cct[0] >= crit[0],
-        "Cricondentherm T=" + cct[0] + " should be >= critical T=" + crit[0]);
+    assertTrue(ccb[1] >= crit[1], "Cricondenbar P=" + ccb[1] + " should be >= critical P=" + crit[1]);
+    assertTrue(cct[0] >= crit[0], "Cricondentherm T=" + cct[0] + " should be >= critical T=" + crit[0]);
   }
 
   // ========================== MULTIPLE CRITICAL POINT SYSTEMS ==========================
 
   /**
-   * Methane + n-heptane (80/20): A moderately asymmetric binary system. With SRK, this typically
-   * has one critical point. Verifies the algorithm correctly reports one CP and doesn't falsely
-   * trigger multiple CP detection.
+   * Methane + n-heptane (80/20): A moderately asymmetric binary system. With SRK, this typically has one critical
+   * point. Verifies the algorithm correctly reports one CP and doesn't falsely trigger multiple CP detection.
    */
   @Test
   void testOneCP_MethaneHeptane() {
@@ -1077,7 +1025,7 @@ public class PTPhaseEnvelopeRobustnessTest {
 
     if (numCPs >= 1) {
       assertTrue(crit1[0] > 0 && crit1[1] > 0,
-          "Critical point 1 should have positive T and P, got T=" + crit1[0] + " P=" + crit1[1]);
+	  "Critical point 1 should have positive T and P, got T=" + crit1[0] + " P=" + crit1[1]);
     }
 
     // For a normal mixture, should typically detect exactly 1 CP
@@ -1095,8 +1043,8 @@ public class PTPhaseEnvelopeRobustnessTest {
   }
 
   /**
-   * Methane + n-hexane (70/30): Wider phase envelope with significant asymmetry. Tests the
-   * getNumberOfCriticalPoints() method. With SRK classic mixing, the VLE envelope has one CP.
+   * Methane + n-hexane (70/30): Wider phase envelope with significant asymmetry. Tests the getNumberOfCriticalPoints()
+   * method. With SRK classic mixing, the VLE envelope has one CP.
    */
   @Test
   void testOneCP_MethaneHexane7030() {
@@ -1114,16 +1062,14 @@ public class PTPhaseEnvelopeRobustnessTest {
     assertTrue(numCPs >= 1, "Should detect at least 1 CP for CH4/nC6 70/30, got " + numCPs);
 
     double[] crit1 = ops.get("criticalPoint1");
-    assertTrue(crit1[0] > 200 && crit1[0] < 450,
-        "CP1 temperature should be 200-450 K, got " + crit1[0]);
-    assertTrue(crit1[1] > 50 && crit1[1] < 200,
-        "CP1 pressure should be 50-200 bar, got " + crit1[1]);
+    assertTrue(crit1[0] > 200 && crit1[0] < 450, "CP1 temperature should be 200-450 K, got " + crit1[0]);
+    assertTrue(crit1[1] > 50 && crit1[1] < 200, "CP1 pressure should be 50-200 bar, got " + crit1[1]);
   }
 
   /**
-   * Ternary N2/CH4/C2H6 (10/75/15): Near the nitrogen-methane critical locus. This system can
-   * produce complex phase behavior but typically has a single critical point on the VLE envelope.
-   * The test verifies the algorithm handles the N2 supercritical component without issues.
+   * Ternary N2/CH4/C2H6 (10/75/15): Near the nitrogen-methane critical locus. This system can produce complex phase
+   * behavior but typically has a single critical point on the VLE envelope. The test verifies the algorithm handles the
+   * N2 supercritical component without issues.
    */
   @Test
   void testN2CH4C2H6NearCritical() {
@@ -1143,8 +1089,7 @@ public class PTPhaseEnvelopeRobustnessTest {
 
     double[] crit1 = ops.get("criticalPoint1");
     // N2/CH4/C2H6 mixture: critical T should be between 126 K (N2) and 305 K (C2H6)
-    assertTrue(crit1[0] > 150.0 && crit1[0] < 250.0,
-        "N2/CH4/C2H6 CP1 T should be 150-250 K, got " + crit1[0]);
+    assertTrue(crit1[0] > 150.0 && crit1[0] < 250.0, "N2/CH4/C2H6 CP1 T should be 150-250 K, got " + crit1[0]);
 
     // Envelope should be well-behaved
     double[] dewT = ops.get("dewT");
@@ -1153,9 +1098,9 @@ public class PTPhaseEnvelopeRobustnessTest {
   }
 
   /**
-   * Highly asymmetric: methane/n-hexane/nC10 (80/10/10). The large size difference between CH4 and
-   * nC10 creates a very wide envelope. Tests that the algorithm traces through the complex region
-   * without falsely detecting multiple CPs for a system that should have one.
+   * Highly asymmetric: methane/n-hexane/nC10 (80/10/10). The large size difference between CH4 and nC10 creates a very
+   * wide envelope. Tests that the algorithm traces through the complex region without falsely detecting multiple CPs
+   * for a system that should have one.
    */
   @Test
   void testAsymmetricTernary_CH4_nC6_nC10() {
@@ -1190,9 +1135,9 @@ public class PTPhaseEnvelopeRobustnessTest {
   }
 
   /**
-   * CO2 + methane (50/50): A system known for complex phase behavior. With SRK classic mixing, the
-   * VLE envelope should have one CP. Tests that the algorithm handles the CO2 + CH4 system
-   * correctly. CO2's high Pc pushes the cricondenbar very high.
+   * CO2 + methane (50/50): A system known for complex phase behavior. With SRK classic mixing, the VLE envelope should
+   * have one CP. Tests that the algorithm handles the CO2 + CH4 system correctly. CO2's high Pc pushes the cricondenbar
+   * very high.
    */
   @Test
   void testCO2Methane5050() {
@@ -1211,19 +1156,17 @@ public class PTPhaseEnvelopeRobustnessTest {
 
     double[] crit1 = ops.get("criticalPoint1");
     // Critical T should be between Tc_CH4 (190.6) and Tc_CO2 (304.1)
-    assertTrue(crit1[0] > 200.0 && crit1[0] < 290.0,
-        "CO2/CH4 50/50 CP1 T should be 200-290 K, got " + crit1[0]);
+    assertTrue(crit1[0] > 200.0 && crit1[0] < 290.0, "CO2/CH4 50/50 CP1 T should be 200-290 K, got " + crit1[0]);
 
     double[] cricondenbar = ops.get("cricondenbar");
     // High CO2 content pushes cricondenbar
-    assertTrue(cricondenbar[1] > 60.0,
-        "CO2/CH4 50/50 cricondenbar should be >60 bar, got " + cricondenbar[1]);
+    assertTrue(cricondenbar[1] > 60.0, "CO2/CH4 50/50 cricondenbar should be >60 bar, got " + cricondenbar[1]);
   }
 
   /**
-   * Test that the algorithm can handle a rich condensate system with TBP fractions and correctly
-   * identifies the critical point. This is a system that may have complex phase behavior with the
-   * heavy C10+ pseudo-component creating asymmetry.
+   * Test that the algorithm can handle a rich condensate system with TBP fractions and correctly identifies the
+   * critical point. This is a system that may have complex phase behavior with the heavy C10+ pseudo-component creating
+   * asymmetry.
    */
   @Test
   void testCriticalPointWithTBPFractions() {
@@ -1256,12 +1199,12 @@ public class PTPhaseEnvelopeRobustnessTest {
     // Gas condensate typically has critical point at relatively high T and P
     double[] cricondenbar = ops.get("cricondenbar");
     assertTrue(cricondenbar[1] >= crit1[1],
-        "Cricondenbar (" + cricondenbar[1] + ") should be >= CP pressure (" + crit1[1] + ")");
+	"Cricondenbar (" + cricondenbar[1] + ") should be >= CP pressure (" + crit1[1] + ")");
   }
 
   /**
-   * Verify that criticalPoint2 returns {0,0} for a standard single-CP system (lean natural gas).
-   * This ensures backward compatibility with consumers that check criticalPoint2.
+   * Verify that criticalPoint2 returns {0,0} for a standard single-CP system (lean natural gas). This ensures backward
+   * compatibility with consumers that check criticalPoint2.
    */
   @Test
   void testCriticalPoint2BackwardCompatibility() {
@@ -1285,8 +1228,8 @@ public class PTPhaseEnvelopeRobustnessTest {
   }
 
   /**
-   * Test criticalPoint3 key — should return {0,0} for all standard mixtures. Only exotic mixtures
-   * with three or more CPs would populate this (extremely rare in practice).
+   * Test criticalPoint3 key — should return {0,0} for all standard mixtures. Only exotic mixtures with three or more
+   * CPs would populate this (extremely rare in practice).
    */
   @Test
   void testCriticalPoint3ReturnsZero() {

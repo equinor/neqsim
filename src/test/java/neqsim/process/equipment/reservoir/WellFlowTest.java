@@ -14,8 +14,7 @@ public class WellFlowTest {
 
   @Test
   void testRun() {
-    neqsim.thermo.system.SystemInterface fluid1 =
-        new neqsim.thermo.system.SystemPrEos(373.15, 100.0);
+    neqsim.thermo.system.SystemInterface fluid1 = new neqsim.thermo.system.SystemPrEos(373.15, 100.0);
     fluid1.addComponent("water", 3.599);
     fluid1.addComponent("nitrogen", 0.599);
     fluid1.addComponent("CO2", 0.51);
@@ -48,8 +47,7 @@ public class WellFlowTest {
 
   @Test
   void testRunTransientRes2() {
-    neqsim.thermo.system.SystemInterface fluid1 =
-        new neqsim.thermo.system.SystemPrEos(298.15, 38.0);
+    neqsim.thermo.system.SystemInterface fluid1 = new neqsim.thermo.system.SystemPrEos(298.15, 38.0);
 
     fluid1.addComponent("water", 3.599);
     fluid1.addComponent("nitrogen", 0.599);
@@ -60,53 +58,50 @@ public class WellFlowTest {
 
     double producxtionIndex = 10.000100751427403E-3;
 
-    neqsim.process.equipment.reservoir.SimpleReservoir reservoirOps =
-        new neqsim.process.equipment.reservoir.SimpleReservoir("Well 1 reservoir");
+    neqsim.process.equipment.reservoir.SimpleReservoir reservoirOps = new neqsim.process.equipment.reservoir.SimpleReservoir(
+	"Well 1 reservoir");
     reservoirOps.setReservoirFluid(fluid1.clone(), 700000000.0, 1.0, 10.0e7);
     reservoirOps.setLowPressureLimit(10.0, "bara");
 
     StreamInterface producedGasStream = reservoirOps.addGasProducer("SLP_A32566GI");
     producedGasStream.setFlowRate(9.0, "MSm3/day");
 
-    neqsim.process.equipment.reservoir.WellFlow wellflow =
-        new neqsim.process.equipment.reservoir.WellFlow("well flow unit");
+    neqsim.process.equipment.reservoir.WellFlow wellflow = new neqsim.process.equipment.reservoir.WellFlow(
+	"well flow unit");
     wellflow.setInletStream(producedGasStream);
     wellflow.setWellProductionIndex(producxtionIndex);
 
-    neqsim.process.equipment.pipeline.PipeBeggsAndBrills pipe =
-        new neqsim.process.equipment.pipeline.PipeBeggsAndBrills("pipe",
-            wellflow.getOutletStream());
+    neqsim.process.equipment.pipeline.PipeBeggsAndBrills pipe = new neqsim.process.equipment.pipeline.PipeBeggsAndBrills(
+	"pipe", wellflow.getOutletStream());
     pipe.setPipeWallRoughness(5e-6);
     pipe.setLength(170.0);
     pipe.setElevation(170);
     pipe.setDiameter(0.625);
 
-    neqsim.process.equipment.compressor.Compressor compressor =
-        new neqsim.process.equipment.compressor.Compressor("subcomp");
+    neqsim.process.equipment.compressor.Compressor compressor = new neqsim.process.equipment.compressor.Compressor(
+	"subcomp");
     compressor.setInletStream(pipe.getOutletStream());
     compressor.setUsePolytropicCalc(true);
     compressor.setPolytropicEfficiency(0.6);
     compressor.setCompressionRatio(2.0);
 
-    neqsim.process.equipment.heatexchanger.Cooler intercooler =
-        new neqsim.process.equipment.heatexchanger.Cooler("cooler", compressor.getOutletStream());
+    neqsim.process.equipment.heatexchanger.Cooler intercooler = new neqsim.process.equipment.heatexchanger.Cooler(
+	"cooler", compressor.getOutletStream());
     intercooler.setOutTemperature(25.0, "C");
 
-    neqsim.process.equipment.compressor.Compressor compressor2 =
-        new neqsim.process.equipment.compressor.Compressor("subcomp2");
+    neqsim.process.equipment.compressor.Compressor compressor2 = new neqsim.process.equipment.compressor.Compressor(
+	"subcomp2");
     compressor2.setInletStream(intercooler.getOutletStream());
     compressor2.setUsePolytropicCalc(true);
     compressor2.setPolytropicEfficiency(0.6);
     compressor2.setCompressionRatio(2.0);
 
-    neqsim.process.equipment.heatexchanger.Heater cooler1 =
-        new neqsim.process.equipment.heatexchanger.Heater("cooler 1",
-            compressor2.getOutletStream());
+    neqsim.process.equipment.heatexchanger.Heater cooler1 = new neqsim.process.equipment.heatexchanger.Heater(
+	"cooler 1", compressor2.getOutletStream());
     cooler1.setOutTemperature(30.0, "C");
 
-    neqsim.process.equipment.pipeline.PipeBeggsAndBrills pipeline =
-        new neqsim.process.equipment.pipeline.PipeBeggsAndBrills("pipeline",
-            cooler1.getOutletStream());
+    neqsim.process.equipment.pipeline.PipeBeggsAndBrills pipeline = new neqsim.process.equipment.pipeline.PipeBeggsAndBrills(
+	"pipeline", cooler1.getOutletStream());
     pipeline.setPipeWallRoughness(50e-6);
     pipeline.setLength(50 * 1e3);
     pipeline.setElevation(0);
@@ -114,16 +109,13 @@ public class WellFlowTest {
     double richgas_inlet_pressure = 150.0;
     double max_gas_production = 9.0;
 
-    neqsim.process.equipment.util.Adjuster adjuster =
-        new neqsim.process.equipment.util.Adjuster("adjuster");
-    adjuster.setTargetVariable(pipeline.getOutletStream(), "pressure", richgas_inlet_pressure,
-        "bara");
+    neqsim.process.equipment.util.Adjuster adjuster = new neqsim.process.equipment.util.Adjuster("adjuster");
+    adjuster.setTargetVariable(pipeline.getOutletStream(), "pressure", richgas_inlet_pressure, "bara");
     adjuster.setAdjustedVariable(producedGasStream, "flow", "MSm3/day");
     adjuster.setMaxAdjustedValue(max_gas_production);
     adjuster.setMinAdjustedValue(1.0);
 
-    neqsim.process.processmodel.ProcessSystem process =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem process = new neqsim.process.processmodel.ProcessSystem();
     process.add(reservoirOps);
     process.add(wellflow);
     process.add(pipe);
@@ -141,8 +133,7 @@ public class WellFlowTest {
 
   @Test
   void testRunTransient() {
-    neqsim.thermo.system.SystemInterface fluid1 =
-        new neqsim.thermo.system.SystemPrEos(298.15, 60.0);
+    neqsim.thermo.system.SystemInterface fluid1 = new neqsim.thermo.system.SystemPrEos(298.15, 60.0);
     fluid1.addComponent("water", 3.599);
     fluid1.addComponent("nitrogen", 0.599);
     fluid1.addComponent("CO2", 0.51);
@@ -178,8 +169,7 @@ public class WellFlowTest {
     chokeValve.setOutletPressure(5.0, "bara");
 
     Adjuster adjuster = new Adjuster("adjuster");
-    adjuster.setTargetVariable(pipeline.getOutletStream(), "pressure",
-        chokeValve.getOutletPressure(), "bara");
+    adjuster.setTargetVariable(pipeline.getOutletStream(), "pressure", chokeValve.getOutletPressure(), "bara");
     adjuster.setAdjustedVariable(producedGasStream, "flow", "MSm3/day");
     adjuster.setMaxAdjustedValue(9.0);
     adjuster.setMinAdjustedValue(1.0);
@@ -192,13 +182,12 @@ public class WellFlowTest {
     process.add(adjuster);
     process.run();
     /*
-     * logger.info("production flow rate " + producedGasStream.getFlowRate("MSm3/day"));
-     * logger.info("production index " + wellflow.getWellProductionIndex() + " MSm3/day/bar^2");
-     * logger.info("reservoir pressure " + producedGasStream.getPressure("bara")); System.out
-     * .println("pres bottomhole " + wellflow.getOutletStream().getPressure("bara") + " bara");
-     * logger.info("xmas pressure " + pipe.getOutletStream().getPressure("bara") + " bara");
-     * System.out .println("top side pressure " + pipeline.getOutletStream().getPressure("bara") +
-     * " bara");
+     * logger.info("production flow rate " + producedGasStream.getFlowRate("MSm3/day")); logger.info("production index "
+     * + wellflow.getWellProductionIndex() + " MSm3/day/bar^2"); logger.info("reservoir pressure " +
+     * producedGasStream.getPressure("bara")); System.out .println("pres bottomhole " +
+     * wellflow.getOutletStream().getPressure("bara") + " bara"); logger.info("xmas pressure " +
+     * pipe.getOutletStream().getPressure("bara") + " bara"); System.out .println("top side pressure " +
+     * pipeline.getOutletStream().getPressure("bara") + " bara");
      */
     // process.setTimeStep(60 * 60 * 24 * 365);
 
@@ -209,23 +198,20 @@ public class WellFlowTest {
       }
       /*
        * logger.info("production flow rate " + producedGasStream.getFlowRate("MSm3/day"));
-       * logger.info("reservoir pressure " + wellflow.getInletStream().getPressure("bara"));
-       * System.out .println("pres bottomhole " + wellflow.getOutletStream().getPressure("bara") +
-       * " bara");
+       * logger.info("reservoir pressure " + wellflow.getInletStream().getPressure("bara")); System.out
+       * .println("pres bottomhole " + wellflow.getOutletStream().getPressure("bara") + " bara");
        *
-       * logger.info("xmas pressure " + pipe.getOutletStream().getPressure("bara") + " bara");
-       * System.out .println("top side pressure " + pipeline.getOutletStream().getPressure("bara") +
-       * " bara"); System.out .println("Total produced gas " +
-       * reservoirOps.getGasProductionTotal("GMSm3") + " GMSm3"); logger.info("gas velocity " +
-       * pipeline.getInletSuperficialVelocity());
+       * logger.info("xmas pressure " + pipe.getOutletStream().getPressure("bara") + " bara"); System.out
+       * .println("top side pressure " + pipeline.getOutletStream().getPressure("bara") + " bara"); System.out
+       * .println("Total produced gas " + reservoirOps.getGasProductionTotal("GMSm3") + " GMSm3");
+       * logger.info("gas velocity " + pipeline.getInletSuperficialVelocity());
        */
     }
   }
 
   @Test
   void testCalcWellFlow() {
-    neqsim.thermo.system.SystemInterface fluid1 =
-        new neqsim.thermo.system.SystemPrEos(373.15, 100.0);
+    neqsim.thermo.system.SystemInterface fluid1 = new neqsim.thermo.system.SystemPrEos(373.15, 100.0);
     fluid1.addComponent("water", 3.599);
     fluid1.addComponent("nitrogen", 0.599);
     fluid1.addComponent("CO2", 0.51);
@@ -250,8 +236,7 @@ public class WellFlowTest {
 
   @Test
   void testVogelCorrelation() {
-    neqsim.thermo.system.SystemInterface fluid =
-        new neqsim.thermo.system.SystemPrEos(298.15, 200.0);
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemPrEos(298.15, 200.0);
     fluid.addComponent("methane", 100.0);
     fluid.setMixingRule(2);
 

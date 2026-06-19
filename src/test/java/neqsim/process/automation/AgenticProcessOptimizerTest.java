@@ -21,8 +21,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Tests for {@link AgenticProcessOptimizer} &mdash; the ML/agentic closed-loop optimizer that
- * drives a process simulation through {@link ProcessAutomation#evaluate}.
+ * Tests for {@link AgenticProcessOptimizer} &mdash; the ML/agentic closed-loop optimizer that drives a process
+ * simulation through {@link ProcessAutomation#evaluate}.
  *
  * @author NeqSim
  * @version 1.0
@@ -33,8 +33,8 @@ class AgenticProcessOptimizerTest {
   private ProcessAutomation automation;
 
   /**
-   * Builds a small gas-compression flowsheet and runs it once so the automation facade has live
-   * variables to optimize over.
+   * Builds a small gas-compression flowsheet and runs it once so the automation facade has live variables to optimize
+   * over.
    */
   @BeforeEach
   void setUp() {
@@ -74,8 +74,8 @@ class AgenticProcessOptimizerTest {
   }
 
   /**
-   * The optimizer should find an interior optimum of a custom quadratic cost function over a single
-   * bounded decision variable.
+   * The optimizer should find an interior optimum of a custom quadratic cost function over a single bounded decision
+   * variable.
    */
   @Test
   void testInteriorOptimumWithObjectiveFunction() {
@@ -84,8 +84,8 @@ class AgenticProcessOptimizerTest {
     opt.setObjectiveFunction(new Function<Map<String, Double>, Double>() {
       @Override
       public Double apply(Map<String, Double> readMap) {
-        double p = readMap.get("Compressor.outletPressure").doubleValue();
-        return Double.valueOf((p - 130.0) * (p - 130.0));
+	double p = readMap.get("Compressor.outletPressure").doubleValue();
+	return Double.valueOf((p - 130.0) * (p - 130.0));
       }
     });
     opt.setSeed(42L).setMaxEvaluations(80).setConvergenceTolerance(1.0e-4);
@@ -100,8 +100,8 @@ class AgenticProcessOptimizerTest {
   }
 
   /**
-   * A greater-or-equal constraint should steer the solution to the constraint boundary when the raw
-   * objective would otherwise push the variable lower.
+   * A greater-or-equal constraint should steer the solution to the constraint boundary when the raw objective would
+   * otherwise push the variable lower.
    */
   @Test
   void testConstraintSteersToBoundary() {
@@ -123,8 +123,8 @@ class AgenticProcessOptimizerTest {
   }
 
   /**
-   * The optimizer must never throw even when the objective address is invalid; it should report
-   * success=true (points were evaluated) but feasible=false.
+   * The optimizer must never throw even when the objective address is invalid; it should report success=true (points
+   * were evaluated) but feasible=false.
    */
   @Test
   void testNeverThrowsWithBadObjectiveAddress() {
@@ -141,37 +141,34 @@ class AgenticProcessOptimizerTest {
   }
 
   /**
-   * Two runs with the same seed and the same problem must produce an identical trajectory length
-   * and identical best setpoints (deterministic seeding).
+   * Two runs with the same seed and the same problem must produce an identical trajectory length and identical best
+   * setpoints (deterministic seeding).
    */
   @Test
   void testDeterministicForFixedSeed() {
     AgenticProcessOptimizer.OptimizationResult r1 = buildQuadraticProblem(99L).optimize();
     AgenticProcessOptimizer.OptimizationResult r2 = buildQuadraticProblem(99L).optimize();
 
-    assertEquals(r1.getEvaluations(), r2.getEvaluations(),
-        "same seed must produce same number of evaluations");
+    assertEquals(r1.getEvaluations(), r2.getEvaluations(), "same seed must produce same number of evaluations");
     double p1 = r1.getBestSetpoints().get("Compressor.outletPressure").doubleValue();
     double p2 = r2.getBestSetpoints().get("Compressor.outletPressure").doubleValue();
     assertEquals(p1, p2, 1.0e-9, "same seed must produce the same best point");
   }
 
   /**
-   * {@link AgenticProcessOptimizer#useAdjustableParameters()} should populate decision variables
-   * from the process adjusters/bounds.
+   * {@link AgenticProcessOptimizer#useAdjustableParameters()} should populate decision variables from the process
+   * adjusters/bounds.
    */
   @Test
   void testUseAdjustableParameters() {
     AgenticProcessOptimizer opt = automation.newOptimizer();
     int count = opt.useAdjustableParameters();
     // Should not throw, and the returned count must match the number of variables added.
-    assertEquals(count, opt.getVariables().size(),
-        "returned count must equal the number of decision variables added");
+    assertEquals(count, opt.getVariables().size(), "returned count must equal the number of decision variables added");
   }
 
   /**
-   * The readiness report must parse as JSON and advertise the never-throw and bounded-action-space
-   * capabilities.
+   * The readiness report must parse as JSON and advertise the never-throw and bounded-action-space capabilities.
    */
   @Test
   void testReadinessJson() {
@@ -190,12 +187,12 @@ class AgenticProcessOptimizerTest {
       JsonObject cap = caps.get(i).getAsJsonObject();
       String name = cap.get("capability").getAsString();
       if ("never_throws".equals(name)) {
-        hasNeverThrows = true;
-        assertEquals("full", cap.get("level").getAsString());
+	hasNeverThrows = true;
+	assertEquals("full", cap.get("level").getAsString());
       }
       if ("bounded_action_space".equals(name)) {
-        hasBoundedAction = true;
-        assertEquals("full", cap.get("level").getAsString());
+	hasBoundedAction = true;
+	assertEquals("full", cap.get("level").getAsString());
       }
     }
     assertTrue(hasNeverThrows, "readiness must report never_throws capability");
@@ -203,8 +200,8 @@ class AgenticProcessOptimizerTest {
   }
 
   /**
-   * {@link AgenticProcessOptimizer#optimizeToJson()} must return a schema-versioned, parseable JSON
-   * document containing the trajectory.
+   * {@link AgenticProcessOptimizer#optimizeToJson()} must return a schema-versioned, parseable JSON document containing
+   * the trajectory.
    */
   @Test
   void testOptimizeToJson() {
@@ -229,8 +226,8 @@ class AgenticProcessOptimizerTest {
     opt.setObjectiveFunction(new Function<Map<String, Double>, Double>() {
       @Override
       public Double apply(Map<String, Double> readMap) {
-        double p = readMap.get("Compressor.outletPressure").doubleValue();
-        return Double.valueOf((p - 130.0) * (p - 130.0));
+	double p = readMap.get("Compressor.outletPressure").doubleValue();
+	return Double.valueOf((p - 130.0) * (p - 130.0));
       }
     });
     opt.setSeed(seed).setMaxEvaluations(80).setConvergenceTolerance(1.0e-4);

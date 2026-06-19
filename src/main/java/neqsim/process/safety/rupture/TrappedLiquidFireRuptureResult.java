@@ -19,8 +19,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Result from a trapped-liquid fire rupture screening study.
  *
  * <p>
- * The result records time histories and key event times so the same calculation can feed safety
- * reports, PFP demand checks, and release/source-term handoffs for detailed consequence analysis.
+ * The result records time histories and key event times so the same calculation can feed safety reports, PFP demand
+ * checks, and release/source-term handoffs for detailed consequence analysis.
  * </p>
  *
  * @author ESOL
@@ -83,11 +83,9 @@ public class TrappedLiquidFireRuptureResult implements Serializable {
     this.vonMisesStressMPa = immutableCopy(builder.vonMisesStressMPa);
     this.allowableStressMPa = immutableCopy(builder.allowableStressMPa);
     this.flangeRatingBara = immutableCopy(builder.flangeRatingBara);
-    this.standardsApplied = Collections.unmodifiableList(new ArrayList<String>(
-        builder.standardsApplied));
+    this.standardsApplied = Collections.unmodifiableList(new ArrayList<String>(builder.standardsApplied));
     this.warnings = Collections.unmodifiableList(new ArrayList<String>(builder.warnings));
-    this.recommendations = Collections.unmodifiableList(new ArrayList<String>(
-        builder.recommendations));
+    this.recommendations = Collections.unmodifiableList(new ArrayList<String>(builder.recommendations));
     this.limitingFailureMode = builder.limitingFailureMode;
     this.timeToReliefSetSeconds = builder.timeToReliefSetSeconds;
     this.timeToVaporPocketSeconds = builder.timeToVaporPocketSeconds;
@@ -132,8 +130,7 @@ public class TrappedLiquidFireRuptureResult implements Serializable {
    * @return true if pipe rupture or flange failure occurred within the simulated time
    */
   public boolean isRupturePredicted() {
-    return limitingFailureMode == FailureMode.PIPE_RUPTURE
-        || limitingFailureMode == FailureMode.FLANGE_FAILURE;
+    return limitingFailureMode == FailureMode.PIPE_RUPTURE || limitingFailureMode == FailureMode.FLANGE_FAILURE;
   }
 
   /**
@@ -247,16 +244,14 @@ public class TrappedLiquidFireRuptureResult implements Serializable {
   /**
    * Creates a passive fire protection demand case from this result.
    *
-   * @param demandId stable demand identifier
+   * @param demandId                 stable demand identifier
    * @param requiredEnduranceSeconds required PFP endurance in seconds
    * @return safety-system demand record
    */
-  public SafetySystemDemand toPassiveFireProtectionDemand(String demandId,
-      double requiredEnduranceSeconds) {
+  public SafetySystemDemand toPassiveFireProtectionDemand(String demandId, double requiredEnduranceSeconds) {
     SafetySystemDemand demand = new SafetySystemDemand(demandId).setEquipmentTag(segmentId)
-        .setScenario("Trapped liquid fire rupture exposure").setCategory(
-            SafetySystemCategory.PASSIVE_FIRE_PROTECTION).setDemandValue(requiredEnduranceSeconds)
-        .setDemandUnit("s").setCapacityValue(getMinimumFailureTimeSeconds());
+	.setScenario("Trapped liquid fire rupture exposure").setCategory(SafetySystemCategory.PASSIVE_FIRE_PROTECTION)
+	.setDemandValue(requiredEnduranceSeconds).setDemandUnit("s").setCapacityValue(getMinimumFailureTimeSeconds());
     if (Double.isFinite(getMinimumFailureTimeSeconds())) {
       demand.setRequiredResponseTimeSeconds(requiredEnduranceSeconds);
       demand.setActualResponseTimeSeconds(getMinimumFailureTimeSeconds());
@@ -267,14 +262,14 @@ public class TrappedLiquidFireRuptureResult implements Serializable {
   /**
    * Creates a full-bore source term using the result state at limiting failure.
    *
-   * @param fluid representative fluid to clone and set to failure state
-   * @param orientation release orientation; defaults to horizontal when null
+   * @param fluid           representative fluid to clone and set to failure state
+   * @param orientation     release orientation; defaults to horizontal when null
    * @param durationSeconds source-term duration in s; must be positive
    * @param timeStepSeconds source-term time step in s; must be positive
    * @return source term result from the existing release model
    */
-  public SourceTermResult createRuptureSourceTerm(SystemInterface fluid,
-      ReleaseOrientation orientation, double durationSeconds, double timeStepSeconds) {
+  public SourceTermResult createRuptureSourceTerm(SystemInterface fluid, ReleaseOrientation orientation,
+      double durationSeconds, double timeStepSeconds) {
     if (fluid == null) {
       throw new IllegalArgumentException("fluid must not be null");
     }
@@ -287,12 +282,11 @@ public class TrappedLiquidFireRuptureResult implements Serializable {
     ThermodynamicOperations operations = new ThermodynamicOperations(sourceFluid);
     operations.TPflash();
     sourceFluid.initProperties();
-    ReleaseOrientation selectedOrientation = orientation == null ? ReleaseOrientation.HORIZONTAL
-        : orientation;
-    return LeakModel.builder().fluid(sourceFluid).holeDiameter(pipeInternalDiameterM)
-        .orientation(selectedOrientation).vesselVolume(inventoryVolumeM3).backPressure(1.01325,
-            "bar").scenarioName("Full-bore rupture from " + segmentId).build()
-        .calculateSourceTerm(durationSeconds, timeStepSeconds);
+    ReleaseOrientation selectedOrientation = orientation == null ? ReleaseOrientation.HORIZONTAL : orientation;
+    return LeakModel.builder().fluid(sourceFluid).holeDiameter(pipeInternalDiameterM).orientation(selectedOrientation)
+	.vesselVolume(inventoryVolumeM3).backPressure(1.01325, "bar")
+	.scenarioName("Full-bore rupture from " + segmentId).build()
+	.calculateSourceTerm(durationSeconds, timeStepSeconds);
   }
 
   /**
@@ -380,7 +374,7 @@ public class TrappedLiquidFireRuptureResult implements Serializable {
   /**
    * Gets the minimum finite value from two candidates.
    *
-   * @param first first value
+   * @param first  first value
    * @param second second value
    * @return minimum finite value, or NaN when neither value is finite
    */
@@ -432,7 +426,7 @@ public class TrappedLiquidFireRuptureResult implements Serializable {
      * Sets geometry needed for source-term handoff.
      *
      * @param pipeInternalDiameterM pipe internal diameter in m
-     * @param inventoryVolumeM3 inventory volume in m3
+     * @param inventoryVolumeM3     inventory volume in m3
      * @return this builder
      */
     Builder geometry(double pipeInternalDiameterM, double inventoryVolumeM3) {
@@ -444,19 +438,18 @@ public class TrappedLiquidFireRuptureResult implements Serializable {
     /**
      * Adds one time-series point.
      *
-     * @param timeS time in s
-     * @param pressureBar pressure in bara
-     * @param liquidTemperature temperature in K
+     * @param timeS                time in s
+     * @param pressureBar          pressure in bara
+     * @param liquidTemperature    temperature in K
      * @param innerWallTemperature inner wall temperature in K
      * @param outerWallTemperature outer wall temperature in K
-     * @param stressMpa von Mises stress in MPa
-     * @param allowableMpa allowable stress in MPa
-     * @param flangeRatingBar flange rating in bara
+     * @param stressMpa            von Mises stress in MPa
+     * @param allowableMpa         allowable stress in MPa
+     * @param flangeRatingBar      flange rating in bara
      * @return this builder
      */
-    Builder addPoint(double timeS, double pressureBar, double liquidTemperature,
-        double innerWallTemperature, double outerWallTemperature, double stressMpa,
-        double allowableMpa, double flangeRatingBar) {
+    Builder addPoint(double timeS, double pressureBar, double liquidTemperature, double innerWallTemperature,
+	double outerWallTemperature, double stressMpa, double allowableMpa, double flangeRatingBar) {
       timeSeconds.add(timeS);
       pressureBara.add(pressureBar);
       liquidTemperatureK.add(liquidTemperature);
@@ -475,7 +468,7 @@ public class TrappedLiquidFireRuptureResult implements Serializable {
      */
     void recordReliefSet(double timeS) {
       if (!Double.isFinite(timeToReliefSetSeconds)) {
-        timeToReliefSetSeconds = timeS;
+	timeToReliefSetSeconds = timeS;
       }
     }
 
@@ -486,7 +479,7 @@ public class TrappedLiquidFireRuptureResult implements Serializable {
      */
     void recordVaporPocket(double timeS) {
       if (!Double.isFinite(timeToVaporPocketSeconds)) {
-        timeToVaporPocketSeconds = timeS;
+	timeToVaporPocketSeconds = timeS;
       }
     }
 
@@ -497,7 +490,7 @@ public class TrappedLiquidFireRuptureResult implements Serializable {
      */
     void recordPipeRupture(double timeS) {
       if (!Double.isFinite(timeToPipeRuptureSeconds)) {
-        timeToPipeRuptureSeconds = timeS;
+	timeToPipeRuptureSeconds = timeS;
       }
     }
 
@@ -508,7 +501,7 @@ public class TrappedLiquidFireRuptureResult implements Serializable {
      */
     void recordFlangeFailure(double timeS) {
       if (!Double.isFinite(timeToFlangeFailureSeconds)) {
-        timeToFlangeFailureSeconds = timeS;
+	timeToFlangeFailureSeconds = timeS;
       }
     }
 
@@ -558,18 +551,18 @@ public class TrappedLiquidFireRuptureResult implements Serializable {
       double bestTime = Double.POSITIVE_INFINITY;
       FailureMode mode = FailureMode.NONE;
       if (Double.isFinite(timeToPipeRuptureSeconds) && timeToPipeRuptureSeconds < bestTime) {
-        bestTime = timeToPipeRuptureSeconds;
-        mode = FailureMode.PIPE_RUPTURE;
+	bestTime = timeToPipeRuptureSeconds;
+	mode = FailureMode.PIPE_RUPTURE;
       }
       if (Double.isFinite(timeToFlangeFailureSeconds) && timeToFlangeFailureSeconds < bestTime) {
-        bestTime = timeToFlangeFailureSeconds;
-        mode = FailureMode.FLANGE_FAILURE;
+	bestTime = timeToFlangeFailureSeconds;
+	mode = FailureMode.FLANGE_FAILURE;
       }
       if (mode == FailureMode.NONE && Double.isFinite(timeToReliefSetSeconds)) {
-        mode = FailureMode.RELIEF_SET_PRESSURE;
+	mode = FailureMode.RELIEF_SET_PRESSURE;
       }
       if (mode == FailureMode.NONE && Double.isFinite(timeToVaporPocketSeconds)) {
-        mode = FailureMode.VAPOR_POCKET;
+	mode = FailureMode.VAPOR_POCKET;
       }
       return mode;
     }

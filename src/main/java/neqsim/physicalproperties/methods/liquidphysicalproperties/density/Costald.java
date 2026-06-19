@@ -18,9 +18,9 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * </p>
  *
  * <p>
- * Implements the Hankinson-Thomson (1979) method for saturated liquid molar volume and the Aalto et
- * al. (1996) Tait-type correction for compressed (sub-cooled) liquids. The pseudocritical vapor
- * pressure uses the Lee-Kesler correlation.
+ * Implements the Hankinson-Thomson (1979) method for saturated liquid molar volume and the Aalto et al. (1996)
+ * Tait-type correction for compressed (sub-cooled) liquids. The pseudocritical vapor pressure uses the Lee-Kesler
+ * correlation.
  * </p>
  *
  * <p>
@@ -46,9 +46,8 @@ public class Costald extends LiquidPhysicalPropertyMethod implements DensityInte
   private static final double R_CM3_BAR = 83.14;
 
   /**
-   * Whether to apply the NBS (NASTALD) polar correction of Thomson, Brobst &amp; Hankinson (1982).
-   * When enabled, uses substance-specific polar parameters to improve accuracy for polar compounds
-   * (water, alcohols, glycols, ammonia).
+   * Whether to apply the NBS (NASTALD) polar correction of Thomson, Brobst &amp; Hankinson (1982). When enabled, uses
+   * substance-specific polar parameters to improve accuracy for polar compounds (water, alcohols, glycols, ammonia).
    */
   private boolean usePolarCorrection = false;
 
@@ -81,8 +80,7 @@ public class Costald extends LiquidPhysicalPropertyMethod implements DensityInte
    * Calculates COSTALD dimensionless saturated volume function V_R^(0).
    *
    * <p>
-   * V_R^(0) = 1 - 1.52816 tau^(1/3) + 1.43907 tau^(2/3) - 0.81446 tau + 0.190454 tau^(4/3) where
-   * tau = 1 - Tr.
+   * V_R^(0) = 1 - 1.52816 tau^(1/3) + 1.43907 tau^(2/3) - 0.81446 tau + 0.190454 tau^(4/3) where tau = 1 - Tr.
    * </p>
    *
    * @param reducedTemperature reduced temperature T/Tc
@@ -115,17 +113,15 @@ public class Costald extends LiquidPhysicalPropertyMethod implements DensityInte
   }
 
   /**
-   * Calculates the NBS (NASTALD) polar correction function V_R^(p) from Thomson, Brobst &amp;
-   * Hankinson (1982).
+   * Calculates the NBS (NASTALD) polar correction function V_R^(p) from Thomson, Brobst &amp; Hankinson (1982).
    *
    * <p>
    * V_R^(p) = (-0.093 - 0.03422 * Tr + 0.8326 * Tr^2 - 0.4572 * Tr^3) / (Tr - 1.00001)
    * </p>
    *
    * <p>
-   * This function is used in the NASTALD modification where the saturated molar volume becomes: V_s
-   * = V* * [V_R^(0) * (1 - omega * V_R^(delta)) + omega_p * V_R^(p)] where omega_p is a
-   * substance-specific polar parameter.
+   * This function is used in the NASTALD modification where the saturated molar volume becomes: V_s = V* * [V_R^(0) *
+   * (1 - omega * V_R^(delta)) + omega_p * V_R^(p)] where omega_p is a substance-specific polar parameter.
    * </p>
    *
    * @param reducedTemperature reduced temperature T/Tc
@@ -142,14 +138,12 @@ public class Costald extends LiquidPhysicalPropertyMethod implements DensityInte
    * Gets the NASTALD polar parameter omega_p for a component.
    *
    * <p>
-   * These polar parameters are from Thomson, Brobst &amp; Hankinson (1982), Table 1. They correct
-   * COSTALD for strongly polar and hydrogen-bonding substances where the acentric factor alone
-   * cannot capture density behavior.
+   * These polar parameters are from Thomson, Brobst &amp; Hankinson (1982), Table 1. They correct COSTALD for strongly
+   * polar and hydrogen-bonding substances where the acentric factor alone cannot capture density behavior.
    * </p>
    *
    * <p>
-   * Returns 0.0 for non-polar compounds (which disables the polar correction term for that
-   * component).
+   * Returns 0.0 for non-polar compounds (which disables the polar correction term for that component).
    * </p>
    *
    * @param compIdx component index in the phase
@@ -195,10 +189,9 @@ public class Costald extends LiquidPhysicalPropertyMethod implements DensityInte
    * Enables or disables the NBS (NASTALD) polar correction.
    *
    * <p>
-   * When enabled, the Thomson-Brobst-Hankinson (1982) polar correction term is added for polar
-   * compounds (water, alcohols, glycols, ammonia). This can improve accuracy from ~3% to ~1% for
-   * strongly polar substances. The correction has no effect on non-polar hydrocarbons (their polar
-   * parameter is zero).
+   * When enabled, the Thomson-Brobst-Hankinson (1982) polar correction term is added for polar compounds (water,
+   * alcohols, glycols, ammonia). This can improve accuracy from ~3% to ~1% for strongly polar substances. The
+   * correction has no effect on non-polar hydrocarbons (their polar parameter is zero).
    * </p>
    *
    * @param usePolar true to enable polar correction, false to disable
@@ -255,7 +248,7 @@ public class Costald extends LiquidPhysicalPropertyMethod implements DensityInte
       sumTcV += xi * Math.sqrt(tci * vstarI);
 
       if (usePolarCorrection) {
-        omegaPolarMix += xi * getPolarParameter(i);
+	omegaPolarMix += xi * getPolarParameter(i);
       }
     }
 
@@ -267,17 +260,14 @@ public class Costald extends LiquidPhysicalPropertyMethod implements DensityInte
     double reducedTemperature = temperature / tcMix;
 
     if (reducedTemperature >= 1.0) {
-      logger.warn("COSTALD: reduced temperature {} >= 1.0, method not valid above Tc",
-          reducedTemperature);
+      logger.warn("COSTALD: reduced temperature {} >= 1.0, method not valid above Tc", reducedTemperature);
       // Fallback to EOS-based density
-      return 1.0 / liquidPhase.getPhase().getMolarVolume() * liquidPhase.getPhase().getMolarMass()
-          * 1.0e5;
+      return 1.0 / liquidPhase.getPhase().getMolarVolume() * liquidPhase.getPhase().getMolarMass() * 1.0e5;
     }
 
     if (reducedTemperature < 0.25) {
-      logger.warn(
-          "COSTALD: reduced temperature {} < 0.25, extrapolating below validated range (0.25-0.95)",
-          reducedTemperature);
+      logger.warn("COSTALD: reduced temperature {} < 0.25, extrapolating below validated range (0.25-0.95)",
+	  reducedTemperature);
     }
 
     // --- Saturated liquid molar volume (Hankinson-Thomson / NASTALD) ---
@@ -295,15 +285,12 @@ public class Costald extends LiquidPhysicalPropertyMethod implements DensityInte
     }
 
     if (vsSat <= 0.0) {
-      logger.warn("COSTALD: saturated volume <= 0 at Tr={}, falling back to EOS density",
-          reducedTemperature);
-      return 1.0 / liquidPhase.getPhase().getMolarVolume() * liquidPhase.getPhase().getMolarMass()
-          * 1.0e5;
+      logger.warn("COSTALD: saturated volume <= 0 at Tr={}, falling back to EOS density", reducedTemperature);
+      return 1.0 / liquidPhase.getPhase().getMolarVolume() * liquidPhase.getPhase().getMolarMass() * 1.0e5;
     }
 
     // --- Compressed liquid correction (Aalto et al. 1996) ---
-    double vLiquid = applyCompressedLiquidCorrection(vsSat, reducedTemperature, omegaMix, vstarMix,
-        tcMix, pressure);
+    double vLiquid = applyCompressedLiquidCorrection(vsSat, reducedTemperature, omegaMix, vstarMix, tcMix, pressure);
 
     // Convert cm3/mol to density kg/m3: rho = M [kg/mol] / (V [cm3/mol] * 1e-6 [m3/cm3])
     double molarMass = liquidPhase.getPhase().getMolarMass();
@@ -313,16 +300,16 @@ public class Costald extends LiquidPhysicalPropertyMethod implements DensityInte
   /**
    * Applies the Aalto et al. (1996) compressed liquid correction.
    *
-   * @param vsSat saturated liquid molar volume in cm3/mol
+   * @param vsSat              saturated liquid molar volume in cm3/mol
    * @param reducedTemperature reduced temperature T/Tc_m
-   * @param omega acentric factor of mixture
-   * @param vstarMix characteristic volume of mixture in cm3/mol
-   * @param tcMix pseudocritical temperature of mixture in K
-   * @param pressure system pressure in bar
+   * @param omega              acentric factor of mixture
+   * @param vstarMix           characteristic volume of mixture in cm3/mol
+   * @param tcMix              pseudocritical temperature of mixture in K
+   * @param pressure           system pressure in bar
    * @return corrected liquid molar volume in cm3/mol
    */
-  private double applyCompressedLiquidCorrection(double vsSat, double reducedTemperature,
-      double omega, double vstarMix, double tcMix, double pressure) {
+  private double applyCompressedLiquidCorrection(double vsSat, double reducedTemperature, double omega, double vstarMix,
+      double tcMix, double pressure) {
     // Pseudocritical pressure: Pc = (0.291 - 0.080*omega) * R * Tc / V*
     double pcPseudo = (0.291 - 0.080 * omega) * R_CM3_BAR * tcMix / vstarMix;
     double prReduced = pressure / pcPseudo;
@@ -379,13 +366,12 @@ public class Costald extends LiquidPhysicalPropertyMethod implements DensityInte
    * </p>
    * <ol>
    * <li>Explicitly set V* via {@code setCostaldCharacteristicVolume()}</li>
-   * <li>Back-calculated from normal liquid density at 60 deg F (288.71 K) using the
-   * Hankinson-Thomson saturated volume equation solved inversely. This is used for TBP/plus
-   * fractions and polar/associating compounds (water, glycols, alcohols) where the critical volume
-   * is not a good estimate of V*. This is the standard approach in commercial simulators
-   * (UniSim/HYSYS, PRO/II).</li>
-   * <li>Fallback: critical volume Vc (for components without known liquid density, or when the
-   * back-calculation gives a supercritical reduced temperature at standard conditions)</li>
+   * <li>Back-calculated from normal liquid density at 60 deg F (288.71 K) using the Hankinson-Thomson saturated volume
+   * equation solved inversely. This is used for TBP/plus fractions and polar/associating compounds (water, glycols,
+   * alcohols) where the critical volume is not a good estimate of V*. This is the standard approach in commercial
+   * simulators (UniSim/HYSYS, PRO/II).</li>
+   * <li>Fallback: critical volume Vc (for components without known liquid density, or when the back-calculation gives a
+   * supercritical reduced temperature at standard conditions)</li>
    * </ol>
    *
    * @param compIdx component index in the phase
@@ -410,31 +396,29 @@ public class Costald extends LiquidPhysicalPropertyMethod implements DensityInte
   }
 
   /**
-   * Estimates the COSTALD characteristic volume V* from the known normal liquid density at standard
-   * conditions (60 deg F = 288.71 K = 15.56 deg C). This is the Hankinson-Thomson (1979) approach
-   * for compounds where V* has not been explicitly set.
+   * Estimates the COSTALD characteristic volume V* from the known normal liquid density at standard conditions (60 deg
+   * F = 288.71 K = 15.56 deg C). This is the Hankinson-Thomson (1979) approach for compounds where V* has not been
+   * explicitly set.
    *
    * <p>
    * This method is essential for three categories of components:
    * </p>
    * <ul>
    * <li>TBP/plus fraction pseudo-components (always have normalLiquidDensity from user input)</li>
-   * <li>Polar/associating compounds (water, methanol, ethanol, MEG, TEG, DEG, etc.) where the
-   * critical volume Vc significantly overestimates V* due to strong hydrogen bonding and
-   * intermolecular association. Using the back-calculated V* from density inherently captures these
-   * polar effects.</li>
-   * <li>Any database component with a known standard liquid density (normalLiquidDensity &gt;
-   * 0)</li>
+   * <li>Polar/associating compounds (water, methanol, ethanol, MEG, TEG, DEG, etc.) where the critical volume Vc
+   * significantly overestimates V* due to strong hydrogen bonding and intermolecular association. Using the
+   * back-calculated V* from density inherently captures these polar effects.</li>
+   * <li>Any database component with a known standard liquid density (normalLiquidDensity &gt; 0)</li>
    * </ul>
    *
    * <p>
-   * The method solves: rho_std = M / (V* * VR0 * (1 - omega * VRdelta)) for V*, where VR0 and
-   * VRdelta are evaluated at Tr = 288.71/Tc.
+   * The method solves: rho_std = M / (V* * VR0 * (1 - omega * VRdelta)) for V*, where VR0 and VRdelta are evaluated at
+   * Tr = 288.71/Tc.
    * </p>
    *
    * @param compIdx component index in the phase
-   * @return estimated V* in cm3/mol, or 0 if estimation fails (e.g., near-critical or supercritical
-   *         at standard conditions with Tr &gt; 0.9, missing data)
+   * @return estimated V* in cm3/mol, or 0 if estimation fails (e.g., near-critical or supercritical at standard
+   *         conditions with Tr &gt; 0.9, missing data)
    */
   private double estimateVstarFromDensity(int compIdx) {
     double normalDensity = liquidPhase.getPhase().getComponent(compIdx).getNormalLiquidDensity();

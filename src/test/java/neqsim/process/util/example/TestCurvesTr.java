@@ -40,8 +40,8 @@ public class TestCurvesTr {
   /**
    * Creates a processing train with pipe, separator, and outlet pipe.
    *
-   * @param trainName unique name for this train
-   * @param inletStream the inlet stream to the train
+   * @param trainName     unique name for this train
+   * @param inletStream   the inlet stream to the train
    * @param processSystem the process system to add equipment to
    * @return the outlet pipe from the train
    */
@@ -55,13 +55,11 @@ public class TestCurvesTr {
     inletPipe.run();
     processSystem.add(inletPipe);
 
-    ThreePhaseSeparator separator =
-        new ThreePhaseSeparator(trainName + " Separator", inletPipe.getOutletStream());
+    ThreePhaseSeparator separator = new ThreePhaseSeparator(trainName + " Separator", inletPipe.getOutletStream());
     separator.run();
     processSystem.add(separator);
 
-    PipeBeggsAndBrills outletPipe =
-        new PipeBeggsAndBrills(trainName + " Outlet Pipe", separator.getGasOutStream());
+    PipeBeggsAndBrills outletPipe = new PipeBeggsAndBrills(trainName + " Outlet Pipe", separator.getGasOutStream());
     outletPipe.setLength(100.0); // meters
     outletPipe.setDiameter(0.7); // meters
     outletPipe.setPipeWallRoughness(15e-6);
@@ -77,12 +75,9 @@ public class TestCurvesTr {
       neqsim.process.equipment.stream.StreamInterface inletStream, ProcessSystem processSystem) {
     // Print inlet conditions to diagnose pressure drop issues
     logger.info("\n=== " + trainName + " INLET CONDITIONS ===");
-    System.out
-        .println("Inlet Pressure: " + String.format("%.2f bara", inletStream.getPressure("bara")));
-    System.out
-        .println("Inlet Flow: " + String.format("%.0f kg/hr", inletStream.getFlowRate("kg/hr")));
-    logger.info(
-        "Gas Density: " + String.format("%.2f kg/m3", inletStream.getFluid().getDensity("kg/m3")));
+    System.out.println("Inlet Pressure: " + String.format("%.2f bara", inletStream.getPressure("bara")));
+    System.out.println("Inlet Flow: " + String.format("%.0f kg/hr", inletStream.getFlowRate("kg/hr")));
+    logger.info("Gas Density: " + String.format("%.2f kg/m3", inletStream.getFluid().getDensity("kg/m3")));
 
     PipeBeggsAndBrills inletPipe = new PipeBeggsAndBrills(trainName + " ups Pipe", inletStream);
     inletPipe.setLength(100); // meters (shorter pipe)
@@ -96,8 +91,7 @@ public class TestCurvesTr {
     separator.run();
     processSystem.add(separator);
 
-    PipeBeggsAndBrills outletPipe =
-        new PipeBeggsAndBrills(trainName + " ups Outlet Pipe", separator.getGasOutStream());
+    PipeBeggsAndBrills outletPipe = new PipeBeggsAndBrills(trainName + " ups Outlet Pipe", separator.getGasOutStream());
     outletPipe.setLength(50.0); // meters (shorter pipe)
     outletPipe.setDiameter(0.75); // meters (larger diameter)
     outletPipe.setPipeWallRoughness(15e-6);
@@ -140,22 +134,18 @@ public class TestCurvesTr {
     processSystem.add(saturatedStream);
 
     Splitter splitter = new Splitter("Test Splitter", saturatedStream);
-    splitter.setSplitFactors(new double[] {0.25, 0.25, 0.25, 0.25});
+    splitter.setSplitFactors(new double[] { 0.25, 0.25, 0.25, 0.25 });
     splitter.run();
     processSystem.add(splitter);
 
     // Create processing trains for each split stream
-    PipeBeggsAndBrills train1Outlet =
-        createProcessingTrain("Train1", splitter.getSplitStream(0), processSystem);
+    PipeBeggsAndBrills train1Outlet = createProcessingTrain("Train1", splitter.getSplitStream(0), processSystem);
     // Create processing trains for each split stream
-    PipeBeggsAndBrills train2Outlet =
-        createProcessingTrain("Train2", splitter.getSplitStream(1), processSystem);
+    PipeBeggsAndBrills train2Outlet = createProcessingTrain("Train2", splitter.getSplitStream(1), processSystem);
     // Create processing trains for each split stream
-    PipeBeggsAndBrills train3Outlet =
-        createProcessingTrain("Train3", splitter.getSplitStream(2), processSystem);
+    PipeBeggsAndBrills train3Outlet = createProcessingTrain("Train3", splitter.getSplitStream(2), processSystem);
     // Create processing trains for each split stream
-    PipeBeggsAndBrills train4Outlet =
-        createProcessingTrain("Train4", splitter.getSplitStream(3), processSystem);
+    PipeBeggsAndBrills train4Outlet = createProcessingTrain("Train4", splitter.getSplitStream(3), processSystem);
 
     ThreePhaseSeparator finalSeparator = new ThreePhaseSeparator("Final Separator");
     finalSeparator.addStream(train1Outlet.getOutletStream());
@@ -167,34 +157,32 @@ public class TestCurvesTr {
     processSystem.add(finalSeparator);
 
     Splitter splitter2 = new Splitter("Test Splitter2", finalSeparator.getGasOutStream());
-    splitter2.setSplitFactors(new double[] {1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0});
+    splitter2.setSplitFactors(new double[] { 1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0 });
     splitter2.run();
     processSystem.add(splitter2);
 
-    StreamInterface upstreamCompressorTrain1 =
-        createUpstreamCompressors("ups1", splitter2.getSplitStream(0), processSystem);
+    StreamInterface upstreamCompressorTrain1 = createUpstreamCompressors("ups1", splitter2.getSplitStream(0),
+	processSystem);
 
     // Run the process system
     processSystem.run();
 
     // Auto-size separators and compressors (not pipes)
-    for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem
-        .getUnitOperations()) {
+    for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
       if (equipment instanceof Separator) {
-        ((Separator) equipment).autoSize();
+	((Separator) equipment).autoSize();
       } else if (equipment instanceof Compressor) {
-        ((Compressor) equipment).autoSize();
+	((Compressor) equipment).autoSize();
       }
     }
     // Note: maxDesignPower is in kW, so 45 MW = 45000 kW
-    ((Compressor) processSystem.getUnit("ups1 Compressor")).getMechanicalDesign()
-        .setMaxDesignPower(50000.0); // 45 MW in kW
+    ((Compressor) processSystem.getUnit("ups1 Compressor")).getMechanicalDesign().setMaxDesignPower(50000.0); // 45 MW
+													      // in kW
     // Run again after sizing to update calculations with new equipment dimensions
     processSystem.run();
 
     // Get initial values
-    double initialFlow = ((Compressor) processSystem.getUnit("ups1 Compressor")).getInletStream()
-        .getFlowRate("kg/hr");
+    double initialFlow = ((Compressor) processSystem.getUnit("ups1 Compressor")).getInletStream().getFlowRate("kg/hr");
 
     // Change flow rate and run once - tests that flow propagates correctly
     // with hasMultiInputEquipment() detecting multi-input Separator
@@ -202,47 +190,43 @@ public class TestCurvesTr {
     processSystem.run();
 
     // Verify flow propagated to compressor
-    double newFlow = ((Compressor) processSystem.getUnit("ups1 Compressor")).getInletStream()
-        .getFlowRate("kg/hr");
+    double newFlow = ((Compressor) processSystem.getUnit("ups1 Compressor")).getInletStream().getFlowRate("kg/hr");
 
     // Print flow change info
     logger.info("\n=== FLOW PROPAGATION TEST ===");
     logger.info("Initial flow: " + String.format("%.2f kg/hr", initialFlow));
     logger.info("New flow: " + String.format("%.2f kg/hr", newFlow));
-    System.out
-        .println("Flow change: " + String.format("%.2f kg/hr", Math.abs(newFlow - initialFlow)));
+    System.out.println("Flow change: " + String.format("%.2f kg/hr", Math.abs(newFlow - initialFlow)));
 
     // Print pressure out of each pipe in the process
     logger.info("\n=== PIPE VELOCITY ANALYSIS ===");
     double maxAllowedVelocity = 30.0; // m/s - max for gas pipes
-    logger.info(String.format("%-25s  %8s  %8s  %10s  %10s  %10s  %8s", "Pipe Name", "Vin", "Vout",
-        "Vmax", "Diameter", "Flow", "Status"));
-    logger.info(String.format("%-25s  %8s  %8s  %10s  %10s  %10s  %8s", "", "(m/s)", "(m/s)",
-        "(m/s)", "(m)", "(kg/hr)", ""));
+    logger.info(String.format("%-25s  %8s  %8s  %10s  %10s  %10s  %8s", "Pipe Name", "Vin", "Vout", "Vmax", "Diameter",
+	"Flow", "Status"));
+    logger.info(
+	String.format("%-25s  %8s  %8s  %10s  %10s  %10s  %8s", "", "(m/s)", "(m/s)", "(m/s)", "(m)", "(kg/hr)", ""));
     for (int i = 0; i < 100; i++) {
       System.out.print("-");
     }
 
-    for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem
-        .getUnitOperations()) {
+    for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
       if (equipment instanceof PipeBeggsAndBrills) {
-        PipeBeggsAndBrills pipe = (PipeBeggsAndBrills) equipment;
-        double vIn = pipe.getInletSuperficialVelocity();
-        double vOut = pipe.getOutletSuperficialVelocity();
-        double vMax = Math.max(vIn, vOut);
-        double diameter = pipe.getDiameter();
-        double flowRate = pipe.getInletStream().getFlowRate("kg/hr");
-        String status = vMax > maxAllowedVelocity ? "HIGH!" : "OK";
-        double utilization = (vMax / maxAllowedVelocity) * 100.0;
-        logger.info(String.format("%-25s  %8.2f  %8.2f  %10.2f  %10.3f  %10.0f  %6.1f%%",
-            pipe.getName(), vIn, vOut, maxAllowedVelocity, diameter, flowRate, utilization));
+	PipeBeggsAndBrills pipe = (PipeBeggsAndBrills) equipment;
+	double vIn = pipe.getInletSuperficialVelocity();
+	double vOut = pipe.getOutletSuperficialVelocity();
+	double vMax = Math.max(vIn, vOut);
+	double diameter = pipe.getDiameter();
+	double flowRate = pipe.getInletStream().getFlowRate("kg/hr");
+	String status = vMax > maxAllowedVelocity ? "HIGH!" : "OK";
+	double utilization = (vMax / maxAllowedVelocity) * 100.0;
+	logger.info(String.format("%-25s  %8.2f  %8.2f  %10.2f  %10.3f  %10.0f  %6.1f%%", pipe.getName(), vIn, vOut,
+	    maxAllowedVelocity, diameter, flowRate, utilization));
       }
     }
 
     // Print capacity utilization for all equipment
     logger.info("\n=== EQUIPMENT CAPACITY UTILIZATION ===");
-    java.util.Map<String, Double> utilizationSummary =
-        processSystem.getCapacityUtilizationSummary();
+    java.util.Map<String, Double> utilizationSummary = processSystem.getCapacityUtilizationSummary();
     for (java.util.Map.Entry<String, Double> entry : utilizationSummary.entrySet()) {
       logger.info(String.format("%-30s: %6.2f%%", entry.getKey(), entry.getValue()));
     }
@@ -256,10 +240,8 @@ public class TestCurvesTr {
       logger.info("Compressor: " + comp.getName());
       logger.info("Power: " + String.format("%.2f kW (%.2f MW)", powerKW, powerKW / 1000.0));
       if (maxPower > 0) {
-        logger.info(
-            "Max Design Power: " + String.format("%.2f kW (%.2f MW)", maxPower, maxPower / 1000.0));
-        System.out
-            .println("Power Utilization: " + String.format("%.2f%%", (powerKW / maxPower) * 100.0));
+	logger.info("Max Design Power: " + String.format("%.2f kW (%.2f MW)", maxPower, maxPower / 1000.0));
+	System.out.println("Power Utilization: " + String.format("%.2f%%", (powerKW / maxPower) * 100.0));
       }
 
       // Print all compressor margins/constraints
@@ -267,36 +249,27 @@ public class TestCurvesTr {
       logger.info("Speed: " + String.format("%.0f RPM", comp.getSpeed()));
       logger.info("Max Speed: " + String.format("%.0f RPM", comp.getMaximumSpeed()));
       logger.info("Min Speed: " + String.format("%.0f RPM", comp.getMinimumSpeed()));
-      logger.info("Chart Max Speed: "
-          + String.format("%.0f RPM", comp.getCompressorChart().getMaxSpeedCurve()));
-      logger.info("Chart Min Speed: "
-          + String.format("%.0f RPM", comp.getCompressorChart().getMinSpeedCurve()));
-      System.out
-          .println("Polytropic Head: " + String.format("%.0f J/kg", comp.getPolytropicFluidHead()));
-      logger.info("Polytropic Efficiency: "
-          + String.format("%.1f%%", comp.getPolytropicEfficiency() * 100.0));
-      logger
-          .info("Distance to Surge: " + String.format("%.2f%%", comp.getDistanceToSurge() * 100.0));
-      logger.info("Distance to Stonewall: "
-          + String.format("%.2f%%", comp.getDistanceToStoneWall() * 100.0));
-      logger.info("Inlet Volume Flow: "
-          + String.format("%.0f m3/hr", comp.getInletStream().getFlowRate("m3/hr")));
-      logger.info("Inlet Pressure: "
-          + String.format("%.2f bara", comp.getInletStream().getPressure("bara")));
-      logger.info("Outlet Pressure: "
-          + String.format("%.2f bara", comp.getOutletStream().getPressure("bara")));
+      logger.info("Chart Max Speed: " + String.format("%.0f RPM", comp.getCompressorChart().getMaxSpeedCurve()));
+      logger.info("Chart Min Speed: " + String.format("%.0f RPM", comp.getCompressorChart().getMinSpeedCurve()));
+      System.out.println("Polytropic Head: " + String.format("%.0f J/kg", comp.getPolytropicFluidHead()));
+      logger.info("Polytropic Efficiency: " + String.format("%.1f%%", comp.getPolytropicEfficiency() * 100.0));
+      logger.info("Distance to Surge: " + String.format("%.2f%%", comp.getDistanceToSurge() * 100.0));
+      logger.info("Distance to Stonewall: " + String.format("%.2f%%", comp.getDistanceToStoneWall() * 100.0));
+      logger.info("Inlet Volume Flow: " + String.format("%.0f m3/hr", comp.getInletStream().getFlowRate("m3/hr")));
+      logger.info("Inlet Pressure: " + String.format("%.2f bara", comp.getInletStream().getPressure("bara")));
+      logger.info("Outlet Pressure: " + String.format("%.2f bara", comp.getOutletStream().getPressure("bara")));
 
       // Print all capacity constraints
       logger.info("\n=== COMPRESSOR CAPACITY CONSTRAINTS ===");
-      java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> constraints =
-          comp.getCapacityConstraints();
+      java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> constraints = comp
+	  .getCapacityConstraints();
       for (java.util.Map.Entry<String, neqsim.process.equipment.capacity.CapacityConstraint> entry : constraints
-          .entrySet()) {
-        neqsim.process.equipment.capacity.CapacityConstraint constraint = entry.getValue();
-        String labelType = constraint.isMinimumConstraint() ? "min" : "design";
-        logger.info(String.format("%-20s: %6.2f%% (value=%.2f, %s=%.2f)", entry.getKey(),
-            constraint.getUtilizationPercent(), constraint.getCurrentValue(), labelType,
-            constraint.getDisplayDesignValue()));
+	  .entrySet()) {
+	neqsim.process.equipment.capacity.CapacityConstraint constraint = entry.getValue();
+	String labelType = constraint.isMinimumConstraint() ? "min" : "design";
+	logger.info(
+	    String.format("%-20s: %6.2f%% (value=%.2f, %s=%.2f)", entry.getKey(), constraint.getUtilizationPercent(),
+		constraint.getCurrentValue(), labelType, constraint.getDisplayDesignValue()));
       }
     }
 
@@ -307,7 +280,7 @@ public class TestCurvesTr {
       logger.info("No equipment near capacity limit");
     } else {
       for (String name : nearLimit) {
-        logger.info("  - " + name);
+	logger.info("  - " + name);
       }
     }
 
@@ -317,8 +290,7 @@ public class TestCurvesTr {
     if (bottleneck != null && bottleneck.hasBottleneck()) {
       logger.info("Bottleneck Equipment: " + bottleneck.getEquipmentName());
       logger.info("Constraint: " + bottleneck.getConstraintName());
-      System.out
-          .println("Utilization: " + String.format("%.2f%%", bottleneck.getUtilizationPercent()));
+      System.out.println("Utilization: " + String.format("%.2f%%", bottleneck.getUtilizationPercent()));
     } else {
       logger.info("No bottleneck detected");
     }
@@ -328,18 +300,18 @@ public class TestCurvesTr {
    * Generates an Eclipse VFP lift curve for the compression system.
    *
    * <p>
-   * This method creates a performance table showing the relationship between inlet flow rate and
-   * required inlet pressure at different operating conditions (outlet pressure, temperature).
+   * This method creates a performance table showing the relationship between inlet flow rate and required inlet
+   * pressure at different operating conditions (outlet pressure, temperature).
    * </p>
    *
-   * @param processSystem the process system containing the compressor
+   * @param processSystem   the process system containing the compressor
    * @param inletStreamName name of the inlet stream to vary flow rate on
    * @param outletPressures array of outlet pressures to evaluate (bara)
-   * @param flowRates array of flow rates to evaluate (kg/hr)
+   * @param flowRates       array of flow rates to evaluate (kg/hr)
    * @return Eclipse VFP formatted string
    */
-  private String generateEclipseLiftCurve(ProcessSystem processSystem, String inletStreamName,
-      double[] outletPressures, double[] flowRates) {
+  private String generateEclipseLiftCurve(ProcessSystem processSystem, String inletStreamName, double[] outletPressures,
+      double[] flowRates) {
     StringBuilder vfp = new StringBuilder();
 
     // Get the inlet stream to modify flow rates
@@ -412,33 +384,32 @@ public class TestCurvesTr {
       compressor.setOutletPressure(outletPressures[iPout], "bara");
 
       for (int iFlow = 0; iFlow < flowRates.length; iFlow++) {
-        inletStream.setFlowRate(flowRates[iFlow], "kg/hr");
+	inletStream.setFlowRate(flowRates[iFlow], "kg/hr");
 
-        try {
-          processSystem.run();
+	try {
+	  processSystem.run();
 
-          // Get required inlet pressure and check constraints
-          double pIn = compressor.getInletStream().getPressure("bara");
-          double pOut = compressor.getOutletStream().getPressure("bara");
-          inletPressures[iPout][iFlow] = pIn;
-          compressorPowers[iPout][iFlow] = compressor.getPower("kW");
-          compressorSpeeds[iPout][iFlow] = compressor.getSpeed();
-          pressureRatios[iPout][iFlow] = pOut / pIn;
-          surgeMargins[iPout][iFlow] = compressor.getDistanceToSurge() * 100.0;
+	  // Get required inlet pressure and check constraints
+	  double pIn = compressor.getInletStream().getPressure("bara");
+	  double pOut = compressor.getOutletStream().getPressure("bara");
+	  inletPressures[iPout][iFlow] = pIn;
+	  compressorPowers[iPout][iFlow] = compressor.getPower("kW");
+	  compressorSpeeds[iPout][iFlow] = compressor.getSpeed();
+	  pressureRatios[iPout][iFlow] = pOut / pIn;
+	  surgeMargins[iPout][iFlow] = compressor.getDistanceToSurge() * 100.0;
 
-          // Check if operating point is feasible (within compressor map)
-          double speedUtil = compressor.getSpeed() / compressor.getMaximumSpeed() * 100.0;
-          double surgeMargin = compressor.getDistanceToSurge() * 100.0;
-          double powerUtil =
-              compressor.getPower("kW") / compressor.getMechanicalDesign().maxDesignPower * 100.0;
+	  // Check if operating point is feasible (within compressor map)
+	  double speedUtil = compressor.getSpeed() / compressor.getMaximumSpeed() * 100.0;
+	  double surgeMargin = compressor.getDistanceToSurge() * 100.0;
+	  double powerUtil = compressor.getPower("kW") / compressor.getMechanicalDesign().maxDesignPower * 100.0;
 
-          utilizationPercent[iPout][iFlow] = Math.max(speedUtil, powerUtil);
-          feasible[iPout][iFlow] = surgeMargin > 10 && speedUtil < 105 && powerUtil < 105;
+	  utilizationPercent[iPout][iFlow] = Math.max(speedUtil, powerUtil);
+	  feasible[iPout][iFlow] = surgeMargin > 10 && speedUtil < 105 && powerUtil < 105;
 
-        } catch (Exception e) {
-          inletPressures[iPout][iFlow] = 9999.0; // Invalid point
-          feasible[iPout][iFlow] = false;
-        }
+	} catch (Exception e) {
+	  inletPressures[iPout][iFlow] = 9999.0; // Invalid point
+	  feasible[iPout][iFlow] = false;
+	}
       }
     }
 
@@ -447,11 +418,11 @@ public class TestCurvesTr {
       vfp.append(String.format("-- THP = %.1f bara\n", outletPressures[iPout]));
       vfp.append(" ");
       for (int iFlow = 0; iFlow < flowRates.length; iFlow++) {
-        if (feasible[iPout][iFlow]) {
-          vfp.append(String.format(" %.2f", inletPressures[iPout][iFlow]));
-        } else {
-          vfp.append(" 1*"); // Eclipse default value
-        }
+	if (feasible[iPout][iFlow]) {
+	  vfp.append(String.format(" %.2f", inletPressures[iPout][iFlow]));
+	} else {
+	  vfp.append(" 1*"); // Eclipse default value
+	}
       }
       vfp.append(" /\n");
     }
@@ -478,11 +449,11 @@ public class TestCurvesTr {
     for (int iPout = 0; iPout < outletPressures.length; iPout++) {
       vfp.append(String.format("-- %-12.1f", outletPressures[iPout]));
       for (int iFlow = 0; iFlow < flowRates.length; iFlow++) {
-        if (feasible[iPout][iFlow]) {
-          vfp.append(String.format(" %12.2f", inletPressures[iPout][iFlow]));
-        } else {
-          vfp.append(String.format(" %12s", "INFEAS"));
-        }
+	if (feasible[iPout][iFlow]) {
+	  vfp.append(String.format(" %12.2f", inletPressures[iPout][iFlow]));
+	} else {
+	  vfp.append(String.format(" %12s", "INFEAS"));
+	}
       }
       vfp.append("\n");
     }
@@ -491,11 +462,11 @@ public class TestCurvesTr {
     for (int iPout = 0; iPout < outletPressures.length; iPout++) {
       vfp.append(String.format("-- %-12.1f", outletPressures[iPout]));
       for (int iFlow = 0; iFlow < flowRates.length; iFlow++) {
-        if (feasible[iPout][iFlow]) {
-          vfp.append(String.format(" %12.0f", compressorPowers[iPout][iFlow]));
-        } else {
-          vfp.append(String.format(" %12s", "-"));
-        }
+	if (feasible[iPout][iFlow]) {
+	  vfp.append(String.format(" %12.0f", compressorPowers[iPout][iFlow]));
+	} else {
+	  vfp.append(String.format(" %12s", "-"));
+	}
       }
       vfp.append("\n");
     }
@@ -504,11 +475,11 @@ public class TestCurvesTr {
     for (int iPout = 0; iPout < outletPressures.length; iPout++) {
       vfp.append(String.format("-- %-12.1f", outletPressures[iPout]));
       for (int iFlow = 0; iFlow < flowRates.length; iFlow++) {
-        if (feasible[iPout][iFlow]) {
-          vfp.append(String.format(" %12.1f", utilizationPercent[iPout][iFlow]));
-        } else {
-          vfp.append(String.format(" %12s", ">100"));
-        }
+	if (feasible[iPout][iFlow]) {
+	  vfp.append(String.format(" %12.1f", utilizationPercent[iPout][iFlow]));
+	} else {
+	  vfp.append(String.format(" %12s", ">100"));
+	}
       }
       vfp.append("\n");
     }
@@ -517,11 +488,11 @@ public class TestCurvesTr {
     for (int iPout = 0; iPout < outletPressures.length; iPout++) {
       vfp.append(String.format("-- %-12.1f", outletPressures[iPout]));
       for (int iFlow = 0; iFlow < flowRates.length; iFlow++) {
-        if (feasible[iPout][iFlow]) {
-          vfp.append(String.format(" %12.0f", compressorSpeeds[iPout][iFlow]));
-        } else {
-          vfp.append(String.format(" %12s", "-"));
-        }
+	if (feasible[iPout][iFlow]) {
+	  vfp.append(String.format(" %12.0f", compressorSpeeds[iPout][iFlow]));
+	} else {
+	  vfp.append(String.format(" %12s", "-"));
+	}
       }
       vfp.append("\n");
     }
@@ -530,11 +501,11 @@ public class TestCurvesTr {
     for (int iPout = 0; iPout < outletPressures.length; iPout++) {
       vfp.append(String.format("-- %-12.1f", outletPressures[iPout]));
       for (int iFlow = 0; iFlow < flowRates.length; iFlow++) {
-        if (feasible[iPout][iFlow]) {
-          vfp.append(String.format(" %12.2f", pressureRatios[iPout][iFlow]));
-        } else {
-          vfp.append(String.format(" %12s", "-"));
-        }
+	if (feasible[iPout][iFlow]) {
+	  vfp.append(String.format(" %12.2f", pressureRatios[iPout][iFlow]));
+	} else {
+	  vfp.append(String.format(" %12s", "-"));
+	}
       }
       vfp.append("\n");
     }
@@ -543,11 +514,11 @@ public class TestCurvesTr {
     for (int iPout = 0; iPout < outletPressures.length; iPout++) {
       vfp.append(String.format("-- %-12.1f", outletPressures[iPout]));
       for (int iFlow = 0; iFlow < flowRates.length; iFlow++) {
-        if (feasible[iPout][iFlow]) {
-          vfp.append(String.format(" %12.1f", surgeMargins[iPout][iFlow]));
-        } else {
-          vfp.append(String.format(" %12s", "-"));
-        }
+	if (feasible[iPout][iFlow]) {
+	  vfp.append(String.format(" %12.1f", surgeMargins[iPout][iFlow]));
+	} else {
+	  vfp.append(String.format(" %12s", "-"));
+	}
       }
       vfp.append("\n");
     }
@@ -579,19 +550,15 @@ public class TestCurvesTr {
     processSystem.add(saturatedStream);
 
     Splitter splitter = new Splitter("Test Splitter", saturatedStream);
-    splitter.setSplitFactors(new double[] {0.25, 0.25, 0.25, 0.25});
+    splitter.setSplitFactors(new double[] { 0.25, 0.25, 0.25, 0.25 });
     splitter.run();
     processSystem.add(splitter);
 
     // Create processing trains for each split stream
-    PipeBeggsAndBrills train1Outlet =
-        createProcessingTrain("Train1", splitter.getSplitStream(0), processSystem);
-    PipeBeggsAndBrills train2Outlet =
-        createProcessingTrain("Train2", splitter.getSplitStream(1), processSystem);
-    PipeBeggsAndBrills train3Outlet =
-        createProcessingTrain("Train3", splitter.getSplitStream(2), processSystem);
-    PipeBeggsAndBrills train4Outlet =
-        createProcessingTrain("Train4", splitter.getSplitStream(3), processSystem);
+    PipeBeggsAndBrills train1Outlet = createProcessingTrain("Train1", splitter.getSplitStream(0), processSystem);
+    PipeBeggsAndBrills train2Outlet = createProcessingTrain("Train2", splitter.getSplitStream(1), processSystem);
+    PipeBeggsAndBrills train3Outlet = createProcessingTrain("Train3", splitter.getSplitStream(2), processSystem);
+    PipeBeggsAndBrills train4Outlet = createProcessingTrain("Train4", splitter.getSplitStream(3), processSystem);
 
     ThreePhaseSeparator finalSeparator = new ThreePhaseSeparator("Final Separator");
     finalSeparator.addStream(train1Outlet.getOutletStream());
@@ -603,39 +570,36 @@ public class TestCurvesTr {
     processSystem.add(finalSeparator);
 
     Splitter splitter2 = new Splitter("Test Splitter2", finalSeparator.getGasOutStream());
-    splitter2.setSplitFactors(new double[] {1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0});
+    splitter2.setSplitFactors(new double[] { 1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0 });
     splitter2.run();
     processSystem.add(splitter2);
 
-    StreamInterface upstreamCompressorTrain1 =
-        createUpstreamCompressors("ups1", splitter2.getSplitStream(0), processSystem);
+    StreamInterface upstreamCompressorTrain1 = createUpstreamCompressors("ups1", splitter2.getSplitStream(0),
+	processSystem);
 
     // Run the process system
     processSystem.run();
 
     // Auto-size compressor
-    for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem
-        .getUnitOperations()) {
+    for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
       if (equipment instanceof Separator) {
-        ((Separator) equipment).autoSize();
+	((Separator) equipment).autoSize();
       } else if (equipment instanceof Compressor) {
-        ((Compressor) equipment).autoSize();
+	((Compressor) equipment).autoSize();
       }
     }
-    ((Compressor) processSystem.getUnit("ups1 Compressor")).getMechanicalDesign()
-        .setMaxDesignPower(50000.0);
+    ((Compressor) processSystem.getUnit("ups1 Compressor")).getMechanicalDesign().setMaxDesignPower(50000.0);
     processSystem.run();
     // inletStream.setTemperature(28.5, "C");
     // processSystem.run();
     // Generate lift curve for different outlet pressures and flow rates
     // Note: Total inlet flow is ~2.1 million kg/hr, split to 1/3 going to compressor train
     // So compressor sees about 700,000 kg/hr at baseline
-    double[] outletPressures = {90.0, 100.0, 110.0, 120.0, 130.0};
-    double[] flowRates = {1500000, 1800000, 2100000, 2400000, 2700000, 3000000}; // Total inlet
-                                                                                 // flows
+    double[] outletPressures = { 90.0, 100.0, 110.0, 120.0, 130.0 };
+    double[] flowRates = { 1500000, 1800000, 2100000, 2400000, 2700000, 3000000 }; // Total inlet
+										   // flows
 
-    String vfpTable =
-        generateEclipseLiftCurve(processSystem, "Inlet Stream", outletPressures, flowRates);
+    String vfpTable = generateEclipseLiftCurve(processSystem, "Inlet Stream", outletPressures, flowRates);
 
     logger.info("\n" + vfpTable);
 
@@ -647,8 +611,8 @@ public class TestCurvesTr {
   /**
    * Test loading compressor curves from a JSON file.
    *
-   * This test demonstrates how to load pre-defined compressor performance curves from a JSON file
-   * and apply them to a compressor.
+   * This test demonstrates how to load pre-defined compressor performance curves from a JSON file and apply them to a
+   * compressor.
    */
   @Test
   public void testLoadCompressorCurveFromJson() throws Exception {
@@ -675,12 +639,9 @@ public class TestCurvesTr {
     // Print results BEFORE loading curve
     logger.info("\n=== BEFORE LOADING CURVE (calculated efficiency) ===");
     logger.info("Compressor Power: " + String.format("%.2f kW", compressor.getPower("kW")));
-    logger.info("Polytropic Efficiency: "
-        + String.format("%.2f%%", compressor.getPolytropicEfficiency() * 100));
-    logger.info(
-        "Polytropic Head: " + String.format("%.2f kJ/kg", compressor.getPolytropicHead("kJ/kg")));
-    logger.info("Inlet Flow: "
-        + String.format("%.2f m3/hr", compressor.getInletStream().getFlowRate("m3/hr")));
+    logger.info("Polytropic Efficiency: " + String.format("%.2f%%", compressor.getPolytropicEfficiency() * 100));
+    logger.info("Polytropic Head: " + String.format("%.2f kJ/kg", compressor.getPolytropicHead("kJ/kg")));
+    logger.info("Inlet Flow: " + String.format("%.2f m3/hr", compressor.getInletStream().getFlowRate("m3/hr")));
 
     compressor.setSpeed(6327.9); // RPM - matches one of the speed curves
     // Generate compressor curves programmatically instead of loading from JSON
@@ -697,12 +658,9 @@ public class TestCurvesTr {
     logger.info("\n=== AFTER LOADING CURVE (from JSON file) ===");
     logger.info("Compressor Speed: " + String.format("%.2f RPM", compressor.getSpeed()));
     logger.info("Compressor Power: " + String.format("%.2f kW", compressor.getPower("kW")));
-    logger.info("Polytropic Efficiency: "
-        + String.format("%.2f%%", compressor.getPolytropicEfficiency() * 100));
-    logger.info(
-        "Polytropic Head: " + String.format("%.2f kJ/kg", compressor.getPolytropicHead("kJ/kg")));
-    logger.info("Inlet Flow: "
-        + String.format("%.2f m3/hr", compressor.getInletStream().getFlowRate("m3/hr")));
+    logger.info("Polytropic Efficiency: " + String.format("%.2f%%", compressor.getPolytropicEfficiency() * 100));
+    logger.info("Polytropic Head: " + String.format("%.2f kJ/kg", compressor.getPolytropicHead("kJ/kg")));
+    logger.info("Inlet Flow: " + String.format("%.2f m3/hr", compressor.getInletStream().getFlowRate("m3/hr")));
 
     // Test at different speeds using the generated chart speeds
     logger.info("\n=== TESTING AT DIFFERENT SPEEDS ===");
@@ -711,16 +669,14 @@ public class TestCurvesTr {
     for (int i = 0; i < Math.min(5, chartSpeeds.length); i++) {
       compressor.setSpeed(chartSpeeds[i]);
       compressor.run();
-      logger.info(String.format(
-          "Speed: %.1f RPM | Power: %.2f kW | Eff: %.2f%% | Head: %.2f kJ/kg | Flow: %.2f m3/hr",
-          compressor.getSpeed(), compressor.getPower("kW"),
-          compressor.getPolytropicEfficiency() * 100, compressor.getPolytropicHead("kJ/kg"),
-          compressor.getInletStream().getFlowRate("m3/hr")));
+      logger.info(String.format("Speed: %.1f RPM | Power: %.2f kW | Eff: %.2f%% | Head: %.2f kJ/kg | Flow: %.2f m3/hr",
+	  compressor.getSpeed(), compressor.getPower("kW"), compressor.getPolytropicEfficiency() * 100,
+	  compressor.getPolytropicHead("kJ/kg"), compressor.getInletStream().getFlowRate("m3/hr")));
     }
 
     // Verify the chart is being used
     Assertions.assertTrue(compressor.getCompressorChart().isUseCompressorChart(),
-        "Compressor chart should be active after loading");
+	"Compressor chart should be active after loading");
 
     // Verify we have the expected number of speed curves
     double[] speeds = compressor.getCompressorChart().getSpeeds();
@@ -736,9 +692,7 @@ public class TestCurvesTr {
 
     // Verify the generated speed range makes sense for the compressor
     double referenceSpeed = compressor.getSpeed();
-    Assertions.assertTrue(speeds[0] < referenceSpeed,
-        "Min chart speed should be below current operating speed");
-    Assertions.assertTrue(speeds[7] > referenceSpeed,
-        "Max chart speed should be above current operating speed");
+    Assertions.assertTrue(speeds[0] < referenceSpeed, "Min chart speed should be below current operating speed");
+    Assertions.assertTrue(speeds[7] > referenceSpeed, "Max chart speed should be above current operating speed");
   }
 }

@@ -65,10 +65,9 @@ public class DependencyAnalyzer implements Serializable {
      *
      * @param sourceEquipment source equipment name
      * @param targetEquipment target equipment name
-     * @param dependencyType type of dependency
+     * @param dependencyType  type of dependency
      */
-    public CrossInstallationDependency(String sourceEquipment, String targetEquipment,
-        String dependencyType) {
+    public CrossInstallationDependency(String sourceEquipment, String targetEquipment, String dependencyType) {
       this.sourceEquipment = sourceEquipment;
       this.targetEquipment = targetEquipment;
       this.dependencyType = dependencyType;
@@ -95,7 +94,7 @@ public class DependencyAnalyzer implements Serializable {
     public void setSourceLocation(FunctionalLocation loc) {
       this.sourceLocation = loc;
       if (loc != null) {
-        this.sourceInstallation = loc.getInstallationName();
+	this.sourceInstallation = loc.getInstallationName();
       }
     }
 
@@ -118,7 +117,7 @@ public class DependencyAnalyzer implements Serializable {
     public void setTargetLocation(FunctionalLocation loc) {
       this.targetLocation = loc;
       if (loc != null) {
-        this.targetInstallation = loc.getInstallationName();
+	this.targetInstallation = loc.getInstallationName();
       }
     }
 
@@ -225,7 +224,7 @@ public class DependencyAnalyzer implements Serializable {
 
     void addEquipmentToWatch(String equipment) {
       if (!equipmentToWatch.contains(equipment)) {
-        equipmentToWatch.add(equipment);
+	equipmentToWatch.add(equipment);
       }
     }
 
@@ -250,8 +249,8 @@ public class DependencyAnalyzer implements Serializable {
       Map<String, Object> result = new LinkedHashMap<>();
       result.put("failedEquipment", failedEquipment);
       if (failedLocation != null) {
-        result.put("stidTag", failedLocation.getFullTag());
-        result.put("installation", failedLocation.getInstallationName());
+	result.put("stidTag", failedLocation.getFullTag());
+	result.put("installation", failedLocation.getInstallationName());
       }
       result.put("directlyAffected", directlyAffected);
       result.put("indirectlyAffected", indirectlyAffected);
@@ -260,16 +259,16 @@ public class DependencyAnalyzer implements Serializable {
       result.put("totalProductionLossPercent", totalProductionLoss);
 
       if (!crossInstallationEffects.isEmpty()) {
-        List<Map<String, Object>> crossEffects = new ArrayList<>();
-        for (CrossInstallationDependency dep : crossInstallationEffects) {
-          Map<String, Object> depMap = new LinkedHashMap<>();
-          depMap.put("targetInstallation", dep.getTargetInstallation());
-          depMap.put("targetEquipment", dep.getTargetEquipment());
-          depMap.put("dependencyType", dep.getDependencyType());
-          depMap.put("impactFactor", dep.getImpactFactor());
-          crossEffects.add(depMap);
-        }
-        result.put("crossInstallationEffects", crossEffects);
+	List<Map<String, Object>> crossEffects = new ArrayList<>();
+	for (CrossInstallationDependency dep : crossInstallationEffects) {
+	  Map<String, Object> depMap = new LinkedHashMap<>();
+	  depMap.put("targetInstallation", dep.getTargetInstallation());
+	  depMap.put("targetEquipment", dep.getTargetEquipment());
+	  depMap.put("dependencyType", dep.getDependencyType());
+	  depMap.put("impactFactor", dep.getImpactFactor());
+	  crossEffects.add(depMap);
+	}
+	result.put("crossInstallationEffects", crossEffects);
       }
 
       return new GsonBuilder().setPrettyPrinting().create().toJson(result);
@@ -291,7 +290,7 @@ public class DependencyAnalyzer implements Serializable {
   /**
    * Creates a dependency analyzer with an existing topology analyzer.
    *
-   * @param processSystem the process system
+   * @param processSystem    the process system
    * @param topologyAnalyzer existing topology analyzer
    */
   public DependencyAnalyzer(ProcessSystem processSystem, ProcessTopologyAnalyzer topologyAnalyzer) {
@@ -337,7 +336,7 @@ public class DependencyAnalyzer implements Serializable {
     List<String> allAffected = topologyAnalyzer.getAffectedByFailure(equipmentName);
     for (String eq : allAffected) {
       if (!downstream.contains(eq)) {
-        result.addIndirectlyAffected(eq);
+	result.addIndirectlyAffected(eq);
       }
     }
 
@@ -365,7 +364,7 @@ public class DependencyAnalyzer implements Serializable {
     // Check cross-installation dependencies
     if (crossDependencies.containsKey(equipmentName)) {
       for (CrossInstallationDependency dep : crossDependencies.get(equipmentName)) {
-        result.addCrossInstallationEffect(dep);
+	result.addCrossInstallationEffect(dep);
       }
     }
 
@@ -410,8 +409,8 @@ public class DependencyAnalyzer implements Serializable {
     // 4. Cross-installation dependencies
     if (crossDependencies.containsKey(equipmentName)) {
       for (CrossInstallationDependency dep : crossDependencies.get(equipmentName)) {
-        String key = dep.getTargetEquipment() + " (" + dep.getTargetInstallation() + ")";
-        toMonitor.put(key, "EKSTERN - " + dep.getDependencyType());
+	String key = dep.getTargetEquipment() + " (" + dep.getTargetInstallation() + ")";
+	toMonitor.put(key, "EKSTERN - " + dep.getDependencyType());
       }
     }
 
@@ -425,15 +424,14 @@ public class DependencyAnalyzer implements Serializable {
    * Example: Gas export from Gullfaks C to Åsgard processing
    * </p>
    *
-   * @param sourceEquipment source equipment on this installation
-   * @param targetEquipment target equipment on other installation
+   * @param sourceEquipment    source equipment on this installation
+   * @param targetEquipment    target equipment on other installation
    * @param targetInstallation name of target installation
-   * @param dependencyType type (gas_export, oil_export, utility, etc.)
+   * @param dependencyType     type (gas_export, oil_export, utility, etc.)
    */
-  public void addCrossInstallationDependency(String sourceEquipment, String targetEquipment,
-      String targetInstallation, String dependencyType) {
-    CrossInstallationDependency dep =
-        new CrossInstallationDependency(sourceEquipment, targetEquipment, dependencyType);
+  public void addCrossInstallationDependency(String sourceEquipment, String targetEquipment, String targetInstallation,
+      String dependencyType) {
+    CrossInstallationDependency dep = new CrossInstallationDependency(sourceEquipment, targetEquipment, dependencyType);
     dep.setTargetInstallation(targetInstallation);
 
     if (!crossDependencies.containsKey(sourceEquipment)) {
@@ -448,12 +446,12 @@ public class DependencyAnalyzer implements Serializable {
    * @param sourceLocation source STID
    * @param targetLocation target STID
    * @param dependencyType type of dependency
-   * @param impactFactor impact factor (0-1)
+   * @param impactFactor   impact factor (0-1)
    */
-  public void addCrossInstallationDependency(FunctionalLocation sourceLocation,
-      FunctionalLocation targetLocation, String dependencyType, double impactFactor) {
+  public void addCrossInstallationDependency(FunctionalLocation sourceLocation, FunctionalLocation targetLocation,
+      String dependencyType, double impactFactor) {
     CrossInstallationDependency dep = new CrossInstallationDependency(sourceLocation.getFullTag(),
-        targetLocation.getFullTag(), dependencyType);
+	targetLocation.getFullTag(), dependencyType);
     dep.setSourceLocation(sourceLocation);
     dep.setTargetLocation(targetLocation);
     dep.setImpactFactor(impactFactor);
@@ -479,7 +477,7 @@ public class DependencyAnalyzer implements Serializable {
     Set<String> startNodes = new HashSet<>();
     for (ProcessTopologyAnalyzer.EquipmentNode node : topologyAnalyzer.getNodes().values()) {
       if (node.getUpstreamEquipment().isEmpty()) {
-        startNodes.add(node.getName());
+	startNodes.add(node.getName());
       }
     }
 
@@ -487,7 +485,7 @@ public class DependencyAnalyzer implements Serializable {
     Set<String> endNodes = new HashSet<>();
     for (ProcessTopologyAnalyzer.EquipmentNode node : topologyAnalyzer.getNodes().values()) {
       if (node.getDownstreamEquipment().isEmpty()) {
-        endNodes.add(node.getName());
+	endNodes.add(node.getName());
       }
     }
 
@@ -507,8 +505,7 @@ public class DependencyAnalyzer implements Serializable {
     return criticalPaths;
   }
 
-  private void findPaths(String current, Set<String> endNodes, List<String> path,
-      List<List<String>> allPaths) {
+  private void findPaths(String current, Set<String> endNodes, List<String> path, List<List<String>> allPaths) {
     path.add(current);
 
     if (endNodes.contains(current)) {
@@ -518,9 +515,9 @@ public class DependencyAnalyzer implements Serializable {
     ProcessTopologyAnalyzer.EquipmentNode node = topologyAnalyzer.getNode(current);
     if (node != null) {
       for (String downstream : node.getDownstreamEquipment()) {
-        if (!path.contains(downstream)) { // Avoid cycles
-          findPaths(downstream, endNodes, path, allPaths);
-        }
+	if (!path.contains(downstream)) { // Avoid cycles
+	  findPaths(downstream, endNodes, path, allPaths);
+	}
       }
     }
 
@@ -532,7 +529,7 @@ public class DependencyAnalyzer implements Serializable {
     for (String equipment : path) {
       ProcessTopologyAnalyzer.EquipmentNode node = topologyAnalyzer.getNode(equipment);
       if (node != null) {
-        totalCriticality += node.getCriticality();
+	totalCriticality += node.getCriticality();
       }
     }
     return totalCriticality;

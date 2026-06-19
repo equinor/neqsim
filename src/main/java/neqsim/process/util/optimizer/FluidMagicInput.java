@@ -14,8 +14,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Reference fluid input from FluidMagic/Eclipse E300 for multi-scenario optimization.
  *
  * <p>
- * Provides the base case gas and oil compositions with molar flow rates. This is the starting point
- * for recombination flash to generate GOR variations.
+ * Provides the base case gas and oil compositions with molar flow rates. This is the starting point for recombination
+ * flash to generate GOR variations.
  * </p>
  *
  * <h2>Data Sources</h2>
@@ -25,8 +25,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </ul>
  *
  * <p>
- * NOTE: The E300 file provides gas and oil composition ONLY. Water cut and GOR ranges come from
- * Eclipse 100 simulation results and must be specified separately.
+ * NOTE: The E300 file provides gas and oil composition ONLY. Water cut and GOR ranges come from Eclipse 100 simulation
+ * results and must be specified separately.
  * </p>
  *
  * <h2>Usage Example</h2>
@@ -108,7 +108,8 @@ public class FluidMagicInput implements Serializable {
   /**
    * Default constructor.
    */
-  public FluidMagicInput() {}
+  public FluidMagicInput() {
+  }
 
   /**
    * Constructor with reference fluid.
@@ -178,8 +179,7 @@ public class FluidMagicInput implements Serializable {
    * </ol>
    *
    * <p>
-   * NOTE: Water phase is NOT extracted from E300 - it will be added based on water cut from Eclipse
-   * 100 simulation.
+   * NOTE: Water phase is NOT extracted from E300 - it will be added based on water cut from Eclipse 100 simulation.
    * </p>
    */
   public void separateToStandardConditions() {
@@ -208,8 +208,8 @@ public class FluidMagicInput implements Serializable {
 
       // Calculate standard gas volume
       gasStdVolume = gasPhase.getVolume("m3");
-      logger.info("Gas phase extracted: {} components, {:.4f} m3 at std conditions",
-          gasPhase.getNumberOfComponents(), gasStdVolume);
+      logger.info("Gas phase extracted: {} components, {:.4f} m3 at std conditions", gasPhase.getNumberOfComponents(),
+	  gasStdVolume);
     } else {
       logger.warn("No gas phase found in reference fluid at standard conditions");
     }
@@ -224,8 +224,8 @@ public class FluidMagicInput implements Serializable {
 
       // Calculate standard oil volume
       oilStdVolume = oilPhase.getVolume("m3");
-      logger.info("Oil phase extracted: {} components, {:.4f} m3 at std conditions",
-          oilPhase.getNumberOfComponents(), oilStdVolume);
+      logger.info("Oil phase extracted: {} components, {:.4f} m3 at std conditions", oilPhase.getNumberOfComponents(),
+	  oilStdVolume);
     } else {
       logger.warn("No oil phase found in reference fluid at standard conditions");
     }
@@ -246,8 +246,7 @@ public class FluidMagicInput implements Serializable {
    * Create water phase for water cut calculations.
    *
    * <p>
-   * If salinity is specified, creates formation water with dissolved salts. Otherwise, creates pure
-   * water.
+   * If salinity is specified, creates formation water with dissolved salts. Otherwise, creates pure water.
    * </p>
    */
   private void createWaterPhase() {
@@ -275,13 +274,13 @@ public class FluidMagicInput implements Serializable {
       double logMin = Math.log10(minGOR);
       double logMax = Math.log10(maxGOR);
       for (int i = 0; i < numberOfGORPoints; i++) {
-        double logVal = logMin + (logMax - logMin) * i / (numberOfGORPoints - 1);
-        values[i] = Math.pow(10, logVal);
+	double logVal = logMin + (logMax - logMin) * i / (numberOfGORPoints - 1);
+	values[i] = Math.pow(10, logVal);
       }
     } else {
       // Linear spacing
       for (int i = 0; i < numberOfGORPoints; i++) {
-        values[i] = minGOR + (maxGOR - minGOR) * i / (numberOfGORPoints - 1);
+	values[i] = minGOR + (maxGOR - minGOR) * i / (numberOfGORPoints - 1);
       }
     }
 
@@ -325,8 +324,8 @@ public class FluidMagicInput implements Serializable {
    * Combines {@link #setGORRange(double, double)} and {@link #setNumberOfGORPoints(int)}.
    * </p>
    *
-   * @param min minimum GOR in Sm3/Sm3
-   * @param max maximum GOR in Sm3/Sm3
+   * @param min   minimum GOR in Sm3/Sm3
+   * @param max   maximum GOR in Sm3/Sm3
    * @param count number of GOR points to generate (minimum 2)
    */
   public void setGORRange(double min, double max, int count) {
@@ -358,8 +357,8 @@ public class FluidMagicInput implements Serializable {
    * Combines {@link #setWaterCutRange(double, double)} and {@link #setNumberOfWaterCutPoints(int)}.
    * </p>
    *
-   * @param min minimum water cut as fraction (0-1)
-   * @param max maximum water cut as fraction (0-1)
+   * @param min   minimum water cut as fraction (0-1)
+   * @param max   maximum water cut as fraction (0-1)
    * @param count number of water cut points to generate (minimum 2)
    */
   public void setWaterCutRange(double min, double max, int count) {
@@ -774,15 +773,13 @@ public class FluidMagicInput implements Serializable {
     StringBuilder sb = new StringBuilder();
     sb.append("FluidMagicInput {\n");
     sb.append("  GOR range: ").append(minGOR).append(" - ").append(maxGOR).append(" Sm3/Sm3\n");
-    sb.append("  WC range: ").append(minWaterCut * 100).append(" - ").append(maxWaterCut * 100)
-        .append(" %\n");
-    sb.append("  GOR points: ").append(numberOfGORPoints).append(" (")
-        .append(gorSpacing.name().toLowerCase()).append(")\n");
+    sb.append("  WC range: ").append(minWaterCut * 100).append(" - ").append(maxWaterCut * 100).append(" %\n");
+    sb.append("  GOR points: ").append(numberOfGORPoints).append(" (").append(gorSpacing.name().toLowerCase())
+	.append(")\n");
     sb.append("  WC points: ").append(numberOfWaterCutPoints).append("\n");
     sb.append("  Total scenarios: ").append(getTotalScenarios()).append("\n");
     if (baseCaseGOR > 0) {
-      sb.append("  Base case GOR: ").append(String.format("%.1f", baseCaseGOR))
-          .append(" Sm3/Sm3\n");
+      sb.append("  Base case GOR: ").append(String.format("%.1f", baseCaseGOR)).append(" Sm3/Sm3\n");
     }
     sb.append("  Ready: ").append(isReady()).append("\n");
     sb.append("}");

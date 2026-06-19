@@ -45,7 +45,7 @@ class EjectorTest {
 
     assertEquals(3.0, outStream.getPressure("bara"), 1.0e-4);
     assertEquals(motiveStream.getFlowRate("kg/sec") + suctionStream.getFlowRate("kg/sec"),
-        outStream.getFlowRate("kg/sec"), 1.0e-6);
+	outStream.getFlowRate("kg/sec"), 1.0e-6);
 
     EjectorMechanicalDesign design = ejector.getMechanicalDesign();
     double suctionPressure = suctionStream.getPressure("bara");
@@ -54,17 +54,16 @@ class EjectorTest {
     assertTrue(design.getMotiveNozzleThroatArea() > 0.0);
     assertTrue(design.getMixingChamberArea() > 0.0);
     assertTrue(design.getDiffuserOutletArea() > 0.0);
-    assertEquals(design.getEntrainmentRatio(),
-        suctionStream.getFlowRate("kg/sec") / motiveStream.getFlowRate("kg/sec"), 1.0e-8);
+    assertEquals(design.getEntrainmentRatio(), suctionStream.getFlowRate("kg/sec") / motiveStream.getFlowRate("kg/sec"),
+	1.0e-8);
     assertTrue(design.getSuctionInletVelocity() > 0.0);
     assertTrue(design.getSuctionInletVelocity() < 500.0,
-        "suction velocity should be below 500 m/s for practical ejector design");
+	"suction velocity should be below 500 m/s for practical ejector design");
     assertTrue(design.getDiffuserOutletVelocity() >= 10.0);
     assertTrue(design.getDiffuserOutletVelocity() <= 60.0);
     assertTrue(design.getBodyVolume() > 0.0);
     assertTrue(design.getConnectedPipingVolume() > 0.0);
-    assertEquals(design.getTotalVolume(),
-        design.getBodyVolume() + design.getConnectedPipingVolume(), 1.0e-12);
+    assertEquals(design.getTotalVolume(), design.getBodyVolume() + design.getConnectedPipingVolume(), 1.0e-12);
     assertTrue(design.getSuctionConnectionLength() > 0.0);
     assertTrue(design.getDischargeConnectionLength() > 0.0);
   }
@@ -109,8 +108,7 @@ class EjectorTest {
     assertEquals(1.0, design.getSuctionConnectionLength(), 1.0e-9);
     assertEquals(2.0, design.getDischargeConnectionLength(), 1.0e-9);
 
-    double expectedConnectedVolume =
-        design.getSuctionInletArea() * 1.0 + design.getDiffuserOutletArea() * 2.0;
+    double expectedConnectedVolume = design.getSuctionInletArea() * 1.0 + design.getDiffuserOutletArea() * 2.0;
     assertEquals(expectedConnectedVolume, design.getConnectedPipingVolume(), 1.0e-9);
   }
 
@@ -146,7 +144,7 @@ class EjectorTest {
 
     EjectorMechanicalDesign design = ejector.getMechanicalDesign();
     assertEquals(suctionPressure, design.getMixingPressure(), 1.0e-8,
-        "mixing pressure should be limited to suction pressure");
+	"mixing pressure should be limited to suction pressure");
   }
 
   @Test
@@ -250,10 +248,8 @@ class EjectorTest {
     ejector.run();
 
     double cbp = ejector.getCriticalBackPressure();
-    assertTrue(cbp > 3.0,
-        "critical back pressure should exceed operating discharge pressure for stable operation");
-    assertFalse(ejector.isInBreakdown(),
-        "ejector should not be in breakdown at normal operating conditions");
+    assertTrue(cbp > 3.0, "critical back pressure should exceed operating discharge pressure for stable operation");
+    assertFalse(ejector.isInBreakdown(), "ejector should not be in breakdown at normal operating conditions");
   }
 
   @Test
@@ -375,7 +371,6 @@ class EjectorTest {
     // Entrainment ratio should decrease as discharge pressure increases
     double firstER = curve.get(0)[1];
     double lastER = curve.get(curve.size() - 1)[1];
-    assertTrue(firstER >= lastER,
-        "entrainment ratio should generally decrease with higher discharge pressure");
+    assertTrue(firstER >= lastER, "entrainment ratio should generally decrease with higher discharge pressure");
   }
 }

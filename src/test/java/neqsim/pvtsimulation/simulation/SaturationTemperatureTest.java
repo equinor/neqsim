@@ -14,8 +14,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  */
 class SaturationTemperatureTest extends neqsim.NeqSimTest {
   /**
-   * Test method for
-   * {@link neqsim.pvtsimulation.simulation.SaturationTemperature#calcSaturationTemperature()}.
+   * Test method for {@link neqsim.pvtsimulation.simulation.SaturationTemperature#calcSaturationTemperature()}.
    */
   @Test
   void testCalcSaturationTemperature() {

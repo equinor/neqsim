@@ -98,13 +98,13 @@ public class FunctionalLocation implements Serializable, Comparable<FunctionalLo
   /**
    * Creates a functional location with individual components.
    *
-   * @param installationCode the installation code (e.g., "1775")
+   * @param installationCode  the installation code (e.g., "1775")
    * @param equipmentTypeCode the equipment type code (e.g., "KA")
-   * @param sequentialNumber the sequential number (e.g., "23011")
-   * @param trainSuffix the train suffix (e.g., "A") or null
+   * @param sequentialNumber  the sequential number (e.g., "23011")
+   * @param trainSuffix       the train suffix (e.g., "A") or null
    */
-  public FunctionalLocation(String installationCode, String equipmentTypeCode,
-      String sequentialNumber, String trainSuffix) {
+  public FunctionalLocation(String installationCode, String equipmentTypeCode, String sequentialNumber,
+      String trainSuffix) {
     this.installationCode = installationCode;
     this.equipmentTypeCode = equipmentTypeCode;
     this.sequentialNumber = sequentialNumber;
@@ -147,24 +147,24 @@ public class FunctionalLocation implements Serializable, Comparable<FunctionalLo
       return "Unknown";
     }
     switch (code) {
-      case "1770":
-        return "Gullfaks A";
-      case "1773":
-        return "Gullfaks B";
-      case "1775":
-        return "Gullfaks C";
-      case "2540":
-        return "Åsgard A";
-      case "2541":
-        return "Åsgard B";
-      case "2542":
-        return "Åsgard C";
-      case "1910":
-        return "Troll A";
-      case "1820":
-        return "Oseberg A";
-      default:
-        return "Installation " + code;
+    case "1770":
+      return "Gullfaks A";
+    case "1773":
+      return "Gullfaks B";
+    case "1775":
+      return "Gullfaks C";
+    case "2540":
+      return "Åsgard A";
+    case "2541":
+      return "Åsgard B";
+    case "2542":
+      return "Åsgard C";
+    case "1910":
+      return "Troll A";
+    case "1820":
+      return "Oseberg A";
+    default:
+      return "Installation " + code;
     }
   }
 
@@ -178,30 +178,30 @@ public class FunctionalLocation implements Serializable, Comparable<FunctionalLo
       return "Unknown";
     }
     switch (equipmentTypeCode) {
-      case "KA":
-        return "Compressor";
-      case "PA":
-        return "Pump";
-      case "VA":
-        return "Valve";
-      case "WA":
-        return "Heat Exchanger";
-      case "VG":
-        return "Separator";
-      case "GA":
-        return "Turbine";
-      case "MA":
-        return "Electric Motor";
-      case "TK":
-        return "Tank";
-      case "PL":
-        return "Pipeline";
-      case "WC":
-        return "Cooler";
-      case "WH":
-        return "Heater";
-      default:
-        return "Type " + equipmentTypeCode;
+    case "KA":
+      return "Compressor";
+    case "PA":
+      return "Pump";
+    case "VA":
+      return "Valve";
+    case "WA":
+      return "Heat Exchanger";
+    case "VG":
+      return "Separator";
+    case "GA":
+      return "Turbine";
+    case "MA":
+      return "Electric Motor";
+    case "TK":
+      return "Tank";
+    case "PL":
+      return "Pipeline";
+    case "WC":
+      return "Cooler";
+    case "WH":
+      return "Heater";
+    default:
+      return "Type " + equipmentTypeCode;
     }
   }
 
@@ -352,8 +352,8 @@ public class FunctionalLocation implements Serializable, Comparable<FunctionalLo
      * @return new FunctionalLocation
      */
     public FunctionalLocation build() {
-      FunctionalLocation loc = new FunctionalLocation(installationCode, equipmentTypeCode,
-          sequentialNumber, trainSuffix);
+      FunctionalLocation loc = new FunctionalLocation(installationCode, equipmentTypeCode, sequentialNumber,
+	  trainSuffix);
       loc.setSystem(system);
       loc.setDescription(description);
       return loc;

@@ -15,20 +15,20 @@ public class ComponentBNS extends ComponentPR {
   /**
    * Constructs a BNS component with explicit pure component parameters.
    *
-   * @param name component name
-   * @param moles total moles of the component
+   * @param name         component name
+   * @param moles        total moles of the component
    * @param molesInPhase moles of component in phase
-   * @param compIndex index of component in phase
-   * @param tc critical temperature [K]
-   * @param pc critical pressure [bar]
-   * @param mw molar mass [kg/mol]
-   * @param acf acentric factor
-   * @param omegaA PR constant OmegaA
-   * @param omegaB PR constant OmegaB
-   * @param vShift volume shift constant
+   * @param compIndex    index of component in phase
+   * @param tc           critical temperature [K]
+   * @param pc           critical pressure [bar]
+   * @param mw           molar mass [kg/mol]
+   * @param acf          acentric factor
+   * @param omegaA       PR constant OmegaA
+   * @param omegaB       PR constant OmegaB
+   * @param vShift       volume shift constant
    */
-  public ComponentBNS(String name, double moles, double molesInPhase, int compIndex, double tc,
-      double pc, double mw, double acf, double omegaA, double omegaB, double vShift) {
+  public ComponentBNS(String name, double moles, double molesInPhase, int compIndex, double tc, double pc, double mw,
+      double acf, double omegaA, double omegaB, double vShift) {
     super(compIndex, tc, pc, mw, acf, moles);
     this.componentName = name;
     this.index = compIndex;

@@ -12,9 +12,8 @@ import org.apache.logging.log4j.Logger;
  * Multi-tank LNG ship model that orchestrates parallel ageing of all cargo tanks.
  *
  * <p>
- * A typical LNG carrier has 4-5 cargo tanks sharing a common BOG header. Each tank may contain
- * different cargo (spot-market LNG from different sources, or loaded at different times). The ship
- * model coordinates:
+ * A typical LNG carrier has 4-5 cargo tanks sharing a common BOG header. Each tank may contain different cargo
+ * (spot-market LNG from different sources, or loaded at different times). The ship model coordinates:
  * </p>
  * <ul>
  * <li>Parallel simulation of all tanks with their own compositions and temperatures</li>
@@ -84,8 +83,7 @@ public class LNGShipModel implements Serializable {
    * Run all tanks in parallel (stepped in lockstep).
    *
    * <p>
-   * Each time step: (1) step all tanks, (2) aggregate BOG, (3) distribute fuel demand, (4) record
-   * ship-level results.
+   * Each time step: (1) step all tanks, (2) aggregate BOG, (3) distribute fuel demand, (4) record ship-level results.
    * </p>
    */
   public void run() {
@@ -99,7 +97,7 @@ public class LNGShipModel implements Serializable {
       scenario.setSimulationTime(simulationTime);
       scenario.setTimeStepHours(timeStepHours);
       if (voyageProfile != null) {
-        scenario.setVoyageProfile(voyageProfile);
+	scenario.setVoyageProfile(voyageProfile);
       }
     }
 
@@ -112,8 +110,8 @@ public class LNGShipModel implements Serializable {
     // Build aggregate ship results from per-tank results
     buildShipResults();
 
-    logger.info(String.format("Ship model '%s' complete: %d tanks, %.0f hours", shipName,
-        tankScenarios.size(), simulationTime));
+    logger.info(String.format("Ship model '%s' complete: %d tanks, %.0f hours", shipName, tankScenarios.size(),
+	simulationTime));
   }
 
   /**
@@ -129,7 +127,7 @@ public class LNGShipModel implements Serializable {
     int maxSteps = 0;
     for (List<LNGAgeingResult> results : tankResults.values()) {
       if (results.size() > maxSteps) {
-        maxSteps = results.size();
+	maxSteps = results.size();
       }
     }
 
@@ -147,26 +145,26 @@ public class LNGShipModel implements Serializable {
       int activeTanks = 0;
 
       for (Map.Entry<String, List<LNGAgeingResult>> entry : tankResults.entrySet()) {
-        List<LNGAgeingResult> results = entry.getValue();
-        if (step < results.size()) {
-          LNGAgeingResult r = results.get(step);
-          totalBOG += r.getBogMassFlowRate();
-          totalLiquidMass += r.getLiquidMass();
-          totalLiquidVolume += r.getLiquidVolume();
-          totalHeatIngress += r.getHeatIngressKW();
+	List<LNGAgeingResult> results = entry.getValue();
+	if (step < results.size()) {
+	  LNGAgeingResult r = results.get(step);
+	  totalBOG += r.getBogMassFlowRate();
+	  totalLiquidMass += r.getLiquidMass();
+	  totalLiquidVolume += r.getLiquidVolume();
+	  totalHeatIngress += r.getHeatIngressKW();
 
-          double mass = r.getLiquidMass();
-          weightedWI += r.getWobbeIndex() * mass;
-          weightedGCV += r.getGcvVolumetric() * mass;
-          weightedMN += r.getMethaneNumber() * mass;
-          weightedDensity += r.getDensity() * mass;
-          weightedTemp += r.getTemperature() * mass;
+	  double mass = r.getLiquidMass();
+	  weightedWI += r.getWobbeIndex() * mass;
+	  weightedGCV += r.getGcvVolumetric() * mass;
+	  weightedMN += r.getMethaneNumber() * mass;
+	  weightedDensity += r.getDensity() * mass;
+	  weightedTemp += r.getTemperature() * mass;
 
-          if (r.getTimeHours() > 0 || step == 0) {
-            shipResult.timeHours = r.getTimeHours();
-          }
-          activeTanks++;
-        }
+	  if (r.getTimeHours() > 0 || step == 0) {
+	    shipResult.timeHours = r.getTimeHours();
+	  }
+	  activeTanks++;
+	}
       }
 
       shipResult.totalBOGRate = totalBOG;
@@ -176,11 +174,11 @@ public class LNGShipModel implements Serializable {
       shipResult.numberOfTanks = activeTanks;
 
       if (totalLiquidMass > 0) {
-        shipResult.averageWobbeIndex = weightedWI / totalLiquidMass;
-        shipResult.averageGCV = weightedGCV / totalLiquidMass;
-        shipResult.averageMN = weightedMN / totalLiquidMass;
-        shipResult.averageDensity = weightedDensity / totalLiquidMass;
-        shipResult.averageTemperature = weightedTemp / totalLiquidMass;
+	shipResult.averageWobbeIndex = weightedWI / totalLiquidMass;
+	shipResult.averageGCV = weightedGCV / totalLiquidMass;
+	shipResult.averageMN = weightedMN / totalLiquidMass;
+	shipResult.averageDensity = weightedDensity / totalLiquidMass;
+	shipResult.averageTemperature = weightedTemp / totalLiquidMass;
       }
 
       // BOG disposition through the common BOG network
@@ -246,15 +244,12 @@ public class LNGShipModel implements Serializable {
     StringBuilder sb = new StringBuilder();
     sb.append("=== LNG Ship Model Summary ===\n");
     sb.append(String.format("Ship: %s, Tanks: %d\n", shipName, tankScenarios.size()));
-    sb.append(
-        String.format("Duration: %.1f hours (%.1f days)\n", simulationTime, simulationTime / 24.0));
+    sb.append(String.format("Duration: %.1f hours (%.1f days)\n", simulationTime, simulationTime / 24.0));
     sb.append(String.format("\n--- Initial vs Final (Ship Totals) ---\n"));
-    sb.append(String.format("Total liquid mass: %.0f -> %.0f tonnes (loss: %.2f%%)\n",
-        first.totalLiquidMass / 1000.0, last.totalLiquidMass / 1000.0, getTotalCargoLossPct()));
-    sb.append(String.format("Avg density: %.1f -> %.1f kg/m3\n", first.averageDensity,
-        last.averageDensity));
-    sb.append(String.format("Avg WI: %.2f -> %.2f MJ/Sm3\n", first.averageWobbeIndex,
-        last.averageWobbeIndex));
+    sb.append(String.format("Total liquid mass: %.0f -> %.0f tonnes (loss: %.2f%%)\n", first.totalLiquidMass / 1000.0,
+	last.totalLiquidMass / 1000.0, getTotalCargoLossPct()));
+    sb.append(String.format("Avg density: %.1f -> %.1f kg/m3\n", first.averageDensity, last.averageDensity));
+    sb.append(String.format("Avg WI: %.2f -> %.2f MJ/Sm3\n", first.averageWobbeIndex, last.averageWobbeIndex));
     sb.append(String.format("Avg MN: %.1f -> %.1f\n", first.averageMN, last.averageMN));
     sb.append(String.format("Total BOG rate (final): %.0f kg/hr\n", last.totalBOGRate));
     return sb.toString();

@@ -54,7 +54,7 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     assertEquals(neqsim.thermo.phase.PhaseType.AQUEOUS, system.getPhase(1).getType());
     PhasePitzer aq = (PhasePitzer) system.getPhase(1);
     double waterMass = system.getPhase(1).getComponent("water").getNumberOfMolesInPhase()
-        * system.getPhase(1).getComponent("water").getMolarMass();
+	* system.getPhase(1).getComponent("water").getMolarMass();
     assertEquals(waterMass, aq.getSolventWeight(), 1e-12);
   }
 
@@ -124,8 +124,7 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     system.setMixingRule("classic");
     system.init(0);
     system.init(1);
-    system.getPhase(1).getComponent("methane")
-        .setHenryCoefParameter(new double[] {11.2605, 0.0, 0.0, 0.0});
+    system.getPhase(1).getComponent("methane").setHenryCoefParameter(new double[] { 11.2605, 0.0, 0.0, 0.0 });
     double henry = system.getPhase(1).getComponent("methane").getHenryCoef(298.15);
     double vap = system.getPhase(1).getComponent("water").getAntoineVaporPressure(298.15);
     assertEquals(1.4e5, henry, 1e3);
@@ -151,7 +150,7 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     double cpIdeal = 0.0;
     for (int i = 0; i < system.getPhase(1).getNumberOfComponents(); i++) {
       cpIdeal += system.getPhase(1).getComponent(i).getx()
-          * system.getPhase(1).getComponent(i).getPureComponentCpLiquid(system.getTemperature());
+	  * system.getPhase(1).getComponent(i).getPureComponentCpLiquid(system.getTemperature());
     }
     double n = system.getPhase(1).getNumberOfMolesInPhase();
 
@@ -212,9 +211,9 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * Verify T-dependent Pitzer parameters give physically reasonable activity coefficients at high
-   * temperature. Before fix: beta0(NaCl) diverged to ~373 at 100°C, causing exp(lngamma) overflow.
-   * After fix using Silvester-Pitzer ln(T/Tr) form: beta0(NaCl, 100°C) ≈ 0.12.
+   * Verify T-dependent Pitzer parameters give physically reasonable activity coefficients at high temperature. Before
+   * fix: beta0(NaCl) diverged to ~373 at 100°C, causing exp(lngamma) overflow. After fix using Silvester-Pitzer
+   * ln(T/Tr) form: beta0(NaCl, 100°C) ≈ 0.12.
    */
   @Test
   public void testHighTemperaturePitzerStability() {
@@ -290,8 +289,8 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * Verify VLLE flash (gas-oil-water) with Pitzer model. When multiPhaseCheck is enabled, the
-   * system should detect 3 phases: gas (SRK), oil (SRK), and aqueous (Pitzer).
+   * Verify VLLE flash (gas-oil-water) with Pitzer model. When multiPhaseCheck is enabled, the system should detect 3
+   * phases: gas (SRK), oil (SRK), and aqueous (Pitzer).
    */
   @Test
   public void testVLLEFlashGasOilWater() {
@@ -308,17 +307,16 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     assertDoesNotThrow(() -> ops.TPflash());
 
     // With VLLE, should get at least 2 phases (gas + aqueous), possibly 3 (gas + oil + aqueous)
-    assertTrue(system.getNumberOfPhases() >= 2,
-        "Should have at least 2 phases: " + system.getNumberOfPhases());
+    assertTrue(system.getNumberOfPhases() >= 2, "Should have at least 2 phases: " + system.getNumberOfPhases());
     // Verify at least one phase has type AQUEOUS
     boolean hasAqueous = false;
     boolean hasGas = false;
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       if (system.getPhase(i).getType() == neqsim.thermo.phase.PhaseType.AQUEOUS) {
-        hasAqueous = true;
+	hasAqueous = true;
       }
       if (system.getPhase(i).getType() == neqsim.thermo.phase.PhaseType.GAS) {
-        hasGas = true;
+	hasGas = true;
       }
     }
     assertTrue(hasGas, "System should have a gas phase");
@@ -347,8 +345,7 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     system.init(0);
     system.init(1);
 
-    double gammaCa = system.getPhase(1).getActivityCoefficient(ca,
-        liq.getComponent("water").getComponentNumber());
+    double gammaCa = system.getPhase(1).getActivityCoefficient(ca, liq.getComponent("water").getComponentNumber());
     assertTrue(Double.isFinite(gammaCa), "Ca++ gamma must be finite: " + gammaCa);
     assertTrue(gammaCa > 0.0, "Ca++ gamma must be positive: " + gammaCa);
     // 2-2 electrolytes have very low activity coefficients at moderate I
@@ -408,7 +405,7 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     assertTrue(Double.isFinite(gammaWithTheta), "Na+ gamma with theta must be finite");
     // Theta should change the activity coefficient slightly
     assertTrue(Math.abs(gammaWithTheta - gammaBaseline) < 5.0,
-        "Theta effect should be moderate, baseline=" + gammaBaseline + " new=" + gammaWithTheta);
+	"Theta effect should be moderate, baseline=" + gammaBaseline + " new=" + gammaWithTheta);
   }
 
   /**
@@ -432,16 +429,14 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     int water = liq.getComponent("water").getComponentNumber();
     for (int i = 0; i < system.getPhase(1).getNumberOfComponents(); i++) {
       double gamma = system.getPhase(1).getActivityCoefficient(i, water);
-      assertTrue(Double.isFinite(gamma), "Activity coefficient for "
-          + system.getPhase(1).getComponent(i).getName() + " must be finite: " + gamma);
+      assertTrue(Double.isFinite(gamma),
+	  "Activity coefficient for " + system.getPhase(1).getComponent(i).getName() + " must be finite: " + gamma);
     }
 
     // Verify parameters were loaded (check that Pitzer params are nonzero for NaCl)
     assertTrue(liq.isParametersLoaded(), "Pitzer parameters should be loaded from database");
     int na = liq.getComponent("Na+").getComponentNumber();
     int cl = liq.getComponent("Cl-").getComponentNumber();
-    assertTrue(Math.abs(liq.getBeta0ij(na, cl)) > 0.01,
-        "NaCl beta0 should be loaded from database");
+    assertTrue(Math.abs(liq.getBeta0ij(na, cl)) > 0.01, "NaCl beta0 should be loaded from database");
   }
 }
-

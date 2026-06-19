@@ -16,7 +16,7 @@ public class SoreideWhitsonSystemThermoTest {
   private static final Logger logger = LogManager.getLogger(SoreideWhitsonSystemThermoTest.class);
 
   /** Logger object for class. */
-  
+
   static neqsim.thermo.system.SystemInterface testSystem = null;
   static neqsim.thermo.ThermodynamicModelTest testModel = null;
   neqsim.thermo.ThermodynamicModelTest fugTest;
@@ -186,8 +186,7 @@ public class SoreideWhitsonSystemThermoTest {
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
     testOps.calcPTphaseEnvelope();
-    logger.info("Cricondenbar " + (testOps.get("cricondenbar")[0] - 273.15) + " "
-        + testOps.get("cricondenbar")[1]);
+    logger.info("Cricondenbar " + (testOps.get("cricondenbar")[0] - 273.15) + " " + testOps.get("cricondenbar")[1]);
     assertEquals(testOps.get("cricondenbar")[1], 130.686140727503, 0.02);
   }
 
@@ -233,8 +232,7 @@ public class SoreideWhitsonSystemThermoTest {
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     try {
       testOps.calcPTphaseEnvelope();
-      logger.info("Cricondenbar " + (testOps.get("cricondenbar")[0] - 273.15) + " "
-          + testOps.get("cricondenbar")[1]);
+      logger.info("Cricondenbar " + (testOps.get("cricondenbar")[0] - 273.15) + " " + testOps.get("cricondenbar")[1]);
     } catch (Exception ex) {
       assertTrue(false);
       throw new Exception(ex);

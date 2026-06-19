@@ -22,8 +22,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </pre>
  *
  * <p>
- * The reactor models the equilibrium and kinetic-limited conversion of the Haber-Bosch process
- * operating at 150-300 bar and 400-500 C over an iron or ruthenium catalyst.
+ * The reactor models the equilibrium and kinetic-limited conversion of the Haber-Bosch process operating at 150-300 bar
+ * and 400-500 C over an iron or ruthenium catalyst.
  * </p>
  *
  * <h2>Features</h2>
@@ -39,13 +39,34 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  * <table>
  * <caption>Typical Haber-Bosch operating conditions</caption>
- * <tr><th>Parameter</th><th>Range</th></tr>
- * <tr><td>Pressure</td><td>150-300 bar</td></tr>
- * <tr><td>Temperature</td><td>400-500 C</td></tr>
- * <tr><td>H2/N2 ratio</td><td>3:1 (stoichiometric)</td></tr>
- * <tr><td>Per-pass conversion</td><td>10-20%</td></tr>
- * <tr><td>Overall conversion (with recycle)</td><td>95-98%</td></tr>
- * <tr><td>Catalyst</td><td>Magnetite (Fe3O4) or Ruthenium</td></tr>
+ * <tr>
+ * <th>Parameter</th>
+ * <th>Range</th>
+ * </tr>
+ * <tr>
+ * <td>Pressure</td>
+ * <td>150-300 bar</td>
+ * </tr>
+ * <tr>
+ * <td>Temperature</td>
+ * <td>400-500 C</td>
+ * </tr>
+ * <tr>
+ * <td>H2/N2 ratio</td>
+ * <td>3:1 (stoichiometric)</td>
+ * </tr>
+ * <tr>
+ * <td>Per-pass conversion</td>
+ * <td>10-20%</td>
+ * </tr>
+ * <tr>
+ * <td>Overall conversion (with recycle)</td>
+ * <td>95-98%</td>
+ * </tr>
+ * <tr>
+ * <td>Catalyst</td>
+ * <td>Magnetite (Fe3O4) or Ruthenium</td>
+ * </tr>
  * </table>
  *
  * <h2>Usage Example</h2>
@@ -123,7 +144,7 @@ public class AmmoniaSynthesisReactor extends TwoPortEquipment {
   /**
    * Constructor for AmmoniaSynthesisReactor with inlet stream.
    *
-   * @param name name of the reactor
+   * @param name        name of the reactor
    * @param inletStream the synthesis gas feed stream
    */
   public AmmoniaSynthesisReactor(String name, StreamInterface inletStream) {
@@ -192,9 +213,9 @@ public class AmmoniaSynthesisReactor extends TwoPortEquipment {
       // Keep temperature, remove heat
       ThermodynamicOperations ops = new ThermodynamicOperations(outSystem);
       try {
-        ops.TPflash();
+	ops.TPflash();
       } catch (Exception ex) {
-        logger.error("Isothermal TP flash failed: {}", ex.getMessage());
+	logger.error("Isothermal TP flash failed: {}", ex.getMessage());
       }
       outSystem.init(3);
     } else {
@@ -203,10 +224,10 @@ public class AmmoniaSynthesisReactor extends TwoPortEquipment {
       double inletEnthalpy = inStream.getThermoSystem().getEnthalpy();
       double newEnthalpy = inletEnthalpy - heatDuty; // Subtract negative = add
       try {
-        ops.PHflash(newEnthalpy);
+	ops.PHflash(newEnthalpy);
       } catch (Exception ex) {
-        logger.error("Adiabatic PH flash failed: {}", ex.getMessage());
-        outSystem.init(3);
+	logger.error("Adiabatic PH flash failed: {}", ex.getMessage());
+	outSystem.init(3);
       }
     }
 
@@ -226,21 +247,20 @@ public class AmmoniaSynthesisReactor extends TwoPortEquipment {
    * Calculate equilibrium conversion using simplified Kp correlation.
    *
    * <p>
-   * Uses the Gillespie-Beattie correlation for the equilibrium constant:
-   * log10(Kp) = -2.691122 * log10(T) - 5.519265e-5 * T + 1.848863e-7 * T^2 + 2001.6 / T + 2.6899
+   * Uses the Gillespie-Beattie correlation for the equilibrium constant: log10(Kp) = -2.691122 * log10(T) - 5.519265e-5
+   * * T + 1.848863e-7 * T^2 + 2001.6 / T + 2.6899
    * </p>
    *
-   * @param tempK temperature [K]
+   * @param tempK       temperature [K]
    * @param pressureBar pressure [bar]
-   * @param n2Moles moles of N2
-   * @param h2Moles moles of H2
+   * @param n2Moles     moles of N2
+   * @param h2Moles     moles of H2
    * @return equilibrium conversion of N2 [0-1]
    */
-  private double calculateEquilibriumConversion(double tempK, double pressureBar,
-      double n2Moles, double h2Moles) {
+  private double calculateEquilibriumConversion(double tempK, double pressureBar, double n2Moles, double h2Moles) {
     // Simplified Kp using Gillespie-Beattie
-    double logKp = -2.691122 * Math.log10(tempK) - 5.519265e-5 * tempK
-        + 1.848863e-7 * tempK * tempK + 2001.6 / tempK + 2.6899;
+    double logKp = -2.691122 * Math.log10(tempK) - 5.519265e-5 * tempK + 1.848863e-7 * tempK * tempK + 2001.6 / tempK
+	+ 2.6899;
     double kp = Math.pow(10.0, logKp);
 
     // Pressure effect (higher pressure favors products)

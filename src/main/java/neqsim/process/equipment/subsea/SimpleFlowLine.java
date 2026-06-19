@@ -26,7 +26,7 @@ public class SimpleFlowLine extends TwoPortEquipment {
   /**
    * Constructor for SimpleFlowLine.
    *
-   * @param name Name of SimpleFlowLine object
+   * @param name     Name of SimpleFlowLine object
    * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public SimpleFlowLine(String name, StreamInterface inStream) {
@@ -65,13 +65,11 @@ public class SimpleFlowLine extends TwoPortEquipment {
      *
      * double density = fluidIn.getDensity("kg/m3");
      *
-     * double deltaP = density*getHeight()*neqsim.thermo.ThermodynamicConstantsInterface.gravity/1.
-     * 0e5;
+     * double deltaP = density*getHeight()*neqsim.thermo.ThermodynamicConstantsInterface.gravity/1. 0e5;
      *
      * System.out.println("density " +density + " delta P " + deltaP);
      *
-     * fluidIn.setPressure(fluidIn.getPressure("bara")-deltaP);
-     * fluidIn.setTemperature(outletTemperature);
+     * fluidIn.setPressure(fluidIn.getPressure("bara")-deltaP); fluidIn.setTemperature(outletTemperature);
      *
      * ThermodynamicOperations ops = new ThermodynamicOperations(fluidIn); ops.TPflash();
      *

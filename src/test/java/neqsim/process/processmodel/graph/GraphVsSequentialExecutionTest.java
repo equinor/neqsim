@@ -17,12 +17,11 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Test class to verify that graph-based execution produces identical results to sequential
- * execution.
+ * Test class to verify that graph-based execution produces identical results to sequential execution.
  *
  * <p>
- * These tests ensure that the graph-based parallel and optimized execution strategies don't
- * introduce numerical differences compared to the traditional sequential execution.
+ * These tests ensure that the graph-based parallel and optimized execution strategies don't introduce numerical
+ * differences compared to the traditional sequential execution.
  * </p>
  */
 public class GraphVsSequentialExecutionTest {
@@ -172,7 +171,7 @@ public class GraphVsSequentialExecutionTest {
     seqSystem.add(seqFeed);
 
     Splitter seqSplitter = new Splitter("splitter", seqFeed);
-    seqSplitter.setSplitFactors(new double[] {0.6, 0.4});
+    seqSplitter.setSplitFactors(new double[] { 0.6, 0.4 });
     seqSystem.add(seqSplitter);
 
     Heater seqHeater1 = new Heater("heater1", seqSplitter.getSplitStream(0));
@@ -200,7 +199,7 @@ public class GraphVsSequentialExecutionTest {
     parSystem.add(parFeed);
 
     Splitter parSplitter = new Splitter("splitter", parFeed);
-    parSplitter.setSplitFactors(new double[] {0.6, 0.4});
+    parSplitter.setSplitFactors(new double[] { 0.6, 0.4 });
     parSystem.add(parSplitter);
 
     Heater parHeater1 = new Heater("heater1", parSplitter.getSplitStream(0));
@@ -391,14 +390,12 @@ public class GraphVsSequentialExecutionTest {
     double[] results = new double[5];
     for (int i = 0; i < 5; i++) {
       system.runParallel();
-      results[i] = heater1.getOutletStream().getFlowRate("kg/hr")
-          + heater2.getOutletStream().getFlowRate("kg/hr");
+      results[i] = heater1.getOutletStream().getFlowRate("kg/hr") + heater2.getOutletStream().getFlowRate("kg/hr");
     }
 
     // All results should be identical
     for (int i = 1; i < 5; i++) {
-      assertEquals(results[0], results[i], 1e-10,
-          "Run " + i + " should produce same result as run 0");
+      assertEquals(results[0], results[i], 1e-10, "Run " + i + " should produce same result as run 0");
     }
   }
 }

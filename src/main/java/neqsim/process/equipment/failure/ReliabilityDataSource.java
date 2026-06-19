@@ -15,39 +15,69 @@ import org.apache.logging.log4j.Logger;
  * Data source for equipment reliability data (MTBF, MTTR, failure modes).
  *
  * <p>
- * Loads reliability data from CSV files bundled in
- * {@code src/main/resources/reliabilitydata/}. The primary files
- * ({@code equipment_reliability.csv}, {@code failure_modes.csv}) provide a concise lookup
- * table. Supplementary files add depth from multiple public data sources:
+ * Loads reliability data from CSV files bundled in {@code src/main/resources/reliabilitydata/}. The primary files
+ * ({@code equipment_reliability.csv}, {@code failure_modes.csv}) provide a concise lookup table. Supplementary files
+ * add depth from multiple public data sources:
  *
  * <h2>Data Sources</h2>
  *
  * <table>
  * <caption>Reliability data sources and access information</caption>
- * <tr><th>Database</th><th>Access</th><th>Coverage</th></tr>
- * <tr><td>OREDA 6th Edition (2015)</td><td>Commercial (consortium license)</td>
- *     <td>Offshore oil &amp; gas equipment failure rates and repair times</td></tr>
- * <tr><td>IOGP Report 434-Series</td><td>Free (iogp.org)</td>
- *     <td>Offshore safety performance indicators and process safety events</td></tr>
- * <tr><td>UK HSE Offshore Hydrocarbon Release Statistics</td><td>Free (hse.gov.uk)</td>
- *     <td>Leak frequencies and hole-size distributions for offshore O&amp;G</td></tr>
- * <tr><td>IEEE 493 Gold Book (2007)</td><td>Standard (purchasable)</td>
- *     <td>Industrial power system equipment reliability</td></tr>
- * <tr><td>CCPS Process Equipment Reliability Data (1989)</td><td>Published handbook</td>
- *     <td>Process vessels, piping, instruments, and valves</td></tr>
- * <tr><td>Lees' Loss Prevention (4th Ed, 2012)</td><td>Published textbook</td>
- *     <td>Generic process industry failure rates</td></tr>
- * <tr><td>ISO 14224</td><td>Standard (~CHF 200)</td>
- *     <td>Taxonomy and data-collection format for reliability data</td></tr>
- * <tr><td>API 689</td><td>Standard (purchasable)</td>
- *     <td>Collection and exchange of reliability data for process equipment</td></tr>
- * <tr><td>SINTEF PDS Data Handbook</td><td>Purchasable (~EUR 500)</td>
- *     <td>Safety-instrumented system failure rates</td></tr>
+ * <tr>
+ * <th>Database</th>
+ * <th>Access</th>
+ * <th>Coverage</th>
+ * </tr>
+ * <tr>
+ * <td>OREDA 6th Edition (2015)</td>
+ * <td>Commercial (consortium license)</td>
+ * <td>Offshore oil &amp; gas equipment failure rates and repair times</td>
+ * </tr>
+ * <tr>
+ * <td>IOGP Report 434-Series</td>
+ * <td>Free (iogp.org)</td>
+ * <td>Offshore safety performance indicators and process safety events</td>
+ * </tr>
+ * <tr>
+ * <td>UK HSE Offshore Hydrocarbon Release Statistics</td>
+ * <td>Free (hse.gov.uk)</td>
+ * <td>Leak frequencies and hole-size distributions for offshore O&amp;G</td>
+ * </tr>
+ * <tr>
+ * <td>IEEE 493 Gold Book (2007)</td>
+ * <td>Standard (purchasable)</td>
+ * <td>Industrial power system equipment reliability</td>
+ * </tr>
+ * <tr>
+ * <td>CCPS Process Equipment Reliability Data (1989)</td>
+ * <td>Published handbook</td>
+ * <td>Process vessels, piping, instruments, and valves</td>
+ * </tr>
+ * <tr>
+ * <td>Lees' Loss Prevention (4th Ed, 2012)</td>
+ * <td>Published textbook</td>
+ * <td>Generic process industry failure rates</td>
+ * </tr>
+ * <tr>
+ * <td>ISO 14224</td>
+ * <td>Standard (~CHF 200)</td>
+ * <td>Taxonomy and data-collection format for reliability data</td>
+ * </tr>
+ * <tr>
+ * <td>API 689</td>
+ * <td>Standard (purchasable)</td>
+ * <td>Collection and exchange of reliability data for process equipment</td>
+ * </tr>
+ * <tr>
+ * <td>SINTEF PDS Data Handbook</td>
+ * <td>Purchasable (~EUR 500)</td>
+ * <td>Safety-instrumented system failure rates</td>
+ * </tr>
  * </table>
  *
  * <p>
- * The hardcoded defaults work out of the box; no external database purchase is needed.
- * Users can override data by placing custom CSVs in the resource path.
+ * The hardcoded defaults work out of the box; no external database purchase is needed. Users can override data by
+ * placing custom CSVs in the resource path.
  *
  * <h2>Example Usage</h2>
  *
@@ -108,15 +138,16 @@ public class ReliabilityDataSource implements Serializable {
     /**
      * Default constructor.
      */
-    public ReliabilityData() {}
+    public ReliabilityData() {
+    }
 
     /**
      * Creates reliability data.
      *
      * @param equipmentType equipment type
-     * @param subType equipment subtype
-     * @param mtbf mean time between failures in hours
-     * @param mttr mean time to repair in hours
+     * @param subType       equipment subtype
+     * @param mtbf          mean time between failures in hours
+     * @param mttr          mean time to repair in hours
      */
     public ReliabilityData(String equipmentType, String subType, double mtbf, double mttr) {
       this.equipmentType = equipmentType;
@@ -180,8 +211,8 @@ public class ReliabilityDataSource implements Serializable {
 
     @Override
     public String toString() {
-      return String.format("%s (%s): MTBF=%.0f hrs, MTTR=%.1f hrs, Availability=%.2f%%",
-          equipmentType, subType, mtbf, mttr, availability * 100);
+      return String.format("%s (%s): MTBF=%.0f hrs, MTTR=%.1f hrs, Availability=%.2f%%", equipmentType, subType, mtbf,
+	  mttr, availability * 100);
     }
   }
 
@@ -203,14 +234,15 @@ public class ReliabilityDataSource implements Serializable {
     /**
      * Default constructor.
      */
-    public FailureModeData() {}
+    public FailureModeData() {
+    }
 
     /**
      * Creates failure mode data.
      *
      * @param equipmentType equipment type
-     * @param failureMode failure mode name
-     * @param probability probability percentage
+     * @param failureMode   failure mode name
+     * @param probability   probability percentage
      */
     public FailureModeData(String equipmentType, String failureMode, double probability) {
       this.equipmentType = equipmentType;
@@ -281,13 +313,12 @@ public class ReliabilityDataSource implements Serializable {
     public EquipmentFailureMode toEquipmentFailureMode(String equipmentName) {
       EquipmentFailureMode.FailureType type = mapToFailureType(failureMode);
 
-      EquipmentFailureMode.Builder builder =
-          EquipmentFailureMode.builder().name(equipmentName + " - " + failureMode)
-              .description(description != null ? description : failureMode).type(type)
-              .capacityFactor(mapCapacityFactor(type));
+      EquipmentFailureMode.Builder builder = EquipmentFailureMode.builder().name(equipmentName + " - " + failureMode)
+	  .description(description != null ? description : failureMode).type(type)
+	  .capacityFactor(mapCapacityFactor(type));
 
       if (typicalMttr > 0) {
-        builder.mttr(typicalMttr);
+	builder.mttr(typicalMttr);
       }
 
       return builder.build();
@@ -295,40 +326,39 @@ public class ReliabilityDataSource implements Serializable {
 
     private EquipmentFailureMode.FailureType mapToFailureType(String mode) {
       if (mode == null) {
-        return EquipmentFailureMode.FailureType.TRIP;
+	return EquipmentFailureMode.FailureType.TRIP;
       }
       String lower = mode.toLowerCase();
       if (lower.contains("degrad") || lower.contains("reduced") || lower.contains("wear")) {
-        return EquipmentFailureMode.FailureType.DEGRADED;
+	return EquipmentFailureMode.FailureType.DEGRADED;
       } else if (lower.contains("partial") || lower.contains("intermittent")) {
-        return EquipmentFailureMode.FailureType.PARTIAL_FAILURE;
+	return EquipmentFailureMode.FailureType.PARTIAL_FAILURE;
       } else if (lower.contains("maintenance") || lower.contains("scheduled")) {
-        return EquipmentFailureMode.FailureType.MAINTENANCE;
+	return EquipmentFailureMode.FailureType.MAINTENANCE;
       } else {
-        return EquipmentFailureMode.FailureType.TRIP;
+	return EquipmentFailureMode.FailureType.TRIP;
       }
     }
 
     private double mapCapacityFactor(EquipmentFailureMode.FailureType type) {
       switch (type) {
-        case TRIP:
-        case FULL_FAILURE:
-        case MAINTENANCE:
-        case BYPASSED:
-          return 0.0;
-        case DEGRADED:
-          return 0.5;
-        case PARTIAL_FAILURE:
-          return 0.7;
-        default:
-          return 0.0;
+      case TRIP:
+      case FULL_FAILURE:
+      case MAINTENANCE:
+      case BYPASSED:
+	return 0.0;
+      case DEGRADED:
+	return 0.5;
+      case PARTIAL_FAILURE:
+	return 0.7;
+      default:
+	return 0.0;
       }
     }
 
     @Override
     public String toString() {
-      return String.format("%s - %s: %.1f%% (Severity: %s)", equipmentType, failureMode,
-          probability, severity);
+      return String.format("%s - %s: %.1f%% (Severity: %s)", equipmentType, failureMode, probability, severity);
     }
   }
 
@@ -358,12 +388,9 @@ public class ReliabilityDataSource implements Serializable {
    * Loads reliability data from resources.
    */
   /** Supplementary CSV resource paths loaded after the primary files. */
-  private static final String[] SUPPLEMENTARY_CSVS = {
-      "/reliabilitydata/iogp_equipment.csv",
-      "/reliabilitydata/ieee493_equipment.csv",
-      "/reliabilitydata/generic_literature.csv",
-      "/reliabilitydata/oreda_equipment.csv"
-  };
+  private static final String[] SUPPLEMENTARY_CSVS = { "/reliabilitydata/iogp_equipment.csv",
+      "/reliabilitydata/ieee493_equipment.csv", "/reliabilitydata/generic_literature.csv",
+      "/reliabilitydata/oreda_equipment.csv" };
 
   private void loadData() {
     if (dataLoaded) {
@@ -395,28 +422,28 @@ public class ReliabilityDataSource implements Serializable {
       String line;
       boolean header = true;
       while ((line = reader.readLine()) != null) {
-        if (header) {
-          header = false;
-          continue;
-        }
-        String[] parts = line.split(",");
-        if (parts.length >= 4) {
-          String equipType = parts[0].trim();
-          String subType = parts[1].trim();
-          double mtbf = Double.parseDouble(parts[2].trim());
-          double mttr = Double.parseDouble(parts[3].trim());
+	if (header) {
+	  header = false;
+	  continue;
+	}
+	String[] parts = line.split(",");
+	if (parts.length >= 4) {
+	  String equipType = parts[0].trim();
+	  String subType = parts[1].trim();
+	  double mtbf = Double.parseDouble(parts[2].trim());
+	  double mttr = Double.parseDouble(parts[3].trim());
 
-          ReliabilityData data = new ReliabilityData(equipType, subType, mtbf, mttr);
-          if (parts.length > 4) {
-            data.setSource(parts[4].trim());
-          }
-          if (parts.length > 5) {
-            data.setNotes(parts[5].trim());
-          }
+	  ReliabilityData data = new ReliabilityData(equipType, subType, mtbf, mttr);
+	  if (parts.length > 4) {
+	    data.setSource(parts[4].trim());
+	  }
+	  if (parts.length > 5) {
+	    data.setNotes(parts[5].trim());
+	  }
 
-          String key = makeKey(equipType, subType);
-          reliabilityData.put(key, data);
-        }
+	  String key = makeKey(equipType, subType);
+	  reliabilityData.put(key, data);
+	}
       }
     } catch (Exception e) {
       logger.warn("Error loading reliability CSV: {}", e.getMessage());
@@ -437,32 +464,32 @@ public class ReliabilityDataSource implements Serializable {
       String line;
       boolean header = true;
       while ((line = reader.readLine()) != null) {
-        if (header) {
-          header = false;
-          continue;
-        }
-        String[] parts = line.split(",");
-        if (parts.length >= 4) {
-          String equipType = parts[0].trim();
-          String subType = parts[1].trim();
-          String failureMode = parts[2].trim();
-          double probability = Double.parseDouble(parts[3].trim());
+	if (header) {
+	  header = false;
+	  continue;
+	}
+	String[] parts = line.split(",");
+	if (parts.length >= 4) {
+	  String equipType = parts[0].trim();
+	  String subType = parts[1].trim();
+	  String failureMode = parts[2].trim();
+	  double probability = Double.parseDouble(parts[3].trim());
 
-          FailureModeData data = new FailureModeData(equipType, failureMode, probability);
-          data.setSubType(subType);
-          if (parts.length > 4) {
-            data.setSeverity(parts[4].trim());
-          }
-          if (parts.length > 5) {
-            data.setTypicalMttr(Double.parseDouble(parts[5].trim()));
-          }
+	  FailureModeData data = new FailureModeData(equipType, failureMode, probability);
+	  data.setSubType(subType);
+	  if (parts.length > 4) {
+	    data.setSeverity(parts[4].trim());
+	  }
+	  if (parts.length > 5) {
+	    data.setTypicalMttr(Double.parseDouble(parts[5].trim()));
+	  }
 
-          String key = makeKey(equipType, subType);
-          if (!failureModes.containsKey(key)) {
-            failureModes.put(key, new ArrayList<FailureModeData>());
-          }
-          failureModes.get(key).add(data);
-        }
+	  String key = makeKey(equipType, subType);
+	  if (!failureModes.containsKey(key)) {
+	    failureModes.put(key, new ArrayList<FailureModeData>());
+	  }
+	  failureModes.get(key).add(data);
+	}
       }
     } catch (Exception e) {
       logger.warn("Error loading failure modes CSV: {}", e.getMessage());
@@ -475,9 +502,8 @@ public class ReliabilityDataSource implements Serializable {
    *
    * <p>
    * Format: {@code EquipmentType,EquipmentClass,FailureMode,FailureRate,MTBF_hours,
-   * MTTR_hours,DataSource,Confidence}. Comment lines starting with {@code #} are skipped.
-   * Data is added to the primary maps only when the key does not already exist, so the
-   * primary {@code equipment_reliability.csv} takes precedence.
+   * MTTR_hours,DataSource,Confidence}. Comment lines starting with {@code #} are skipped. Data is added to the primary
+   * maps only when the key does not already exist, so the primary {@code equipment_reliability.csv} takes precedence.
    */
   private void loadSupplementaryData() {
     for (String csvPath : SUPPLEMENTARY_CSVS) {
@@ -501,38 +527,38 @@ public class ReliabilityDataSource implements Serializable {
       String line;
       int loaded = 0;
       while ((line = reader.readLine()) != null) {
-        line = line.trim();
-        if (line.isEmpty() || line.startsWith("#")) {
-          continue;
-        }
-        String[] parts = line.split(",");
-        if (parts.length < 6) {
-          continue;
-        }
-        String equipType = parts[0].trim();
-        String subType = parts[1].trim();
-        // parts[2] = FailureMode, parts[3] = FailureRate (per hour)
-        double mtbf;
-        double mttr;
-        try {
-          mtbf = Double.parseDouble(parts[4].trim());
-          mttr = Double.parseDouble(parts[5].trim());
-        } catch (NumberFormatException e) {
-          continue;
-        }
+	line = line.trim();
+	if (line.isEmpty() || line.startsWith("#")) {
+	  continue;
+	}
+	String[] parts = line.split(",");
+	if (parts.length < 6) {
+	  continue;
+	}
+	String equipType = parts[0].trim();
+	String subType = parts[1].trim();
+	// parts[2] = FailureMode, parts[3] = FailureRate (per hour)
+	double mtbf;
+	double mttr;
+	try {
+	  mtbf = Double.parseDouble(parts[4].trim());
+	  mttr = Double.parseDouble(parts[5].trim());
+	} catch (NumberFormatException e) {
+	  continue;
+	}
 
-        String source = parts.length > 6 ? parts[6].trim() : "";
+	String source = parts.length > 6 ? parts[6].trim() : "";
 
-        String key = makeKey(equipType, subType);
-        if (!reliabilityData.containsKey(key)) {
-          ReliabilityData data = new ReliabilityData(equipType, subType, mtbf, mttr);
-          data.setSource(source);
-          reliabilityData.put(key, data);
-          loaded++;
-        }
+	String key = makeKey(equipType, subType);
+	if (!reliabilityData.containsKey(key)) {
+	  ReliabilityData data = new ReliabilityData(equipType, subType, mtbf, mttr);
+	  data.setSource(source);
+	  reliabilityData.put(key, data);
+	  loaded++;
+	}
       }
       if (loaded > 0) {
-        logger.debug("Loaded {} entries from {}", loaded, resourcePath);
+	logger.debug("Loaded {} entries from {}", loaded, resourcePath);
       }
     } catch (Exception e) {
       logger.debug("Could not load supplementary CSV {}: {}", resourcePath, e.getMessage());
@@ -609,15 +635,14 @@ public class ReliabilityDataSource implements Serializable {
     addFailureMode("Separator", "Three-Phase", "Corrosion", 15, "High", 240);
   }
 
-  private void addReliabilityData(String type, String subType, double mtbf, double mttr,
-      String source) {
+  private void addReliabilityData(String type, String subType, double mtbf, double mttr, String source) {
     ReliabilityData data = new ReliabilityData(type, subType, mtbf, mttr);
     data.setSource(source);
     reliabilityData.put(makeKey(type, subType), data);
   }
 
-  private void addFailureMode(String type, String subType, String mode, double probability,
-      String severity, double mttr) {
+  private void addFailureMode(String type, String subType, String mode, double probability, String severity,
+      double mttr) {
     FailureModeData data = new FailureModeData(type, mode, probability);
     data.setSubType(subType);
     data.setSeverity(severity);
@@ -640,7 +665,7 @@ public class ReliabilityDataSource implements Serializable {
    * Gets reliability data for equipment type and subtype.
    *
    * @param equipmentType equipment type (e.g., "Compressor")
-   * @param subType equipment subtype (e.g., "Centrifugal")
+   * @param subType       equipment subtype (e.g., "Centrifugal")
    * @return reliability data or null if not found
    */
   public ReliabilityData getReliabilityData(String equipmentType, String subType) {
@@ -669,7 +694,7 @@ public class ReliabilityDataSource implements Serializable {
    * Gets failure modes for equipment type and subtype.
    *
    * @param equipmentType equipment type
-   * @param subType equipment subtype
+   * @param subType       equipment subtype
    * @return list of failure modes (may be empty)
    */
   public List<FailureModeData> getFailureModes(String equipmentType, String subType) {
@@ -703,7 +728,7 @@ public class ReliabilityDataSource implements Serializable {
     for (String key : reliabilityData.keySet()) {
       String type = key.split("\\|")[0];
       if (!types.contains(type)) {
-        types.add(type);
+	types.add(type);
       }
     }
     return types;
@@ -719,10 +744,10 @@ public class ReliabilityDataSource implements Serializable {
     List<String> subTypes = new ArrayList<String>();
     for (String key : reliabilityData.keySet()) {
       if (key.startsWith(equipmentType + "|")) {
-        String subType = key.split("\\|")[1];
-        if (!"General".equals(subType) && !subTypes.contains(subType)) {
-          subTypes.add(subType);
-        }
+	String subType = key.split("\\|")[1];
+	if (!"General".equals(subType) && !subTypes.contains(subType)) {
+	  subTypes.add(subType);
+	}
       }
     }
     return subTypes;
@@ -733,20 +758,18 @@ public class ReliabilityDataSource implements Serializable {
    *
    * @param equipmentName name for the equipment
    * @param equipmentType type to lookup
-   * @param subType subtype to lookup
+   * @param subType       subtype to lookup
    * @return equipment failure mode with MTTR from database
    */
-  public EquipmentFailureMode createFailureMode(String equipmentName, String equipmentType,
-      String subType) {
+  public EquipmentFailureMode createFailureMode(String equipmentName, String equipmentType, String subType) {
     ReliabilityData data = getReliabilityData(equipmentType, subType);
     if (data == null) {
       return EquipmentFailureMode.trip(equipmentName);
     }
 
     return EquipmentFailureMode.builder().name(equipmentName + " Trip")
-        .description("Equipment trip for " + equipmentType)
-        .type(EquipmentFailureMode.FailureType.TRIP).capacityFactor(0.0).mttr(data.getMttr())
-        .build();
+	.description("Equipment trip for " + equipmentType).type(EquipmentFailureMode.FailureType.TRIP)
+	.capacityFactor(0.0).mttr(data.getMttr()).build();
   }
 
   /**
@@ -759,7 +782,7 @@ public class ReliabilityDataSource implements Serializable {
     for (ReliabilityData data : reliabilityData.values()) {
       String src = data.getSource();
       if (src != null && !src.isEmpty() && !sources.contains(src)) {
-        sources.add(src);
+	sources.add(src);
       }
     }
     return sources;

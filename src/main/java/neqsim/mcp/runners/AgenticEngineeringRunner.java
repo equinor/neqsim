@@ -12,36 +12,33 @@ import neqsim.util.agentic.AgenticEngineeringKernel;
  * MCP runner for the agentic engineering kernel.
  *
  * <p>
- * Exposes the Engineering Intent Graph and Workflow Compiler, Evidence Graph and Trust Engine,
- * Autonomous Study Engine, and Task Readiness Gate through one JSON action contract. The runner
- * standardizes the kernel output with MCP envelope fields so clients can consume provenance,
- * validation, and quality-gate metadata consistently.
+ * Exposes the Engineering Intent Graph and Workflow Compiler, Evidence Graph and Trust Engine, Autonomous Study Engine,
+ * and Task Readiness Gate through one JSON action contract. The runner standardizes the kernel output with MCP envelope
+ * fields so clients can consume provenance, validation, and quality-gate metadata consistently.
  * </p>
  *
  * @author Even Solbraa
  * @version 1.0
  */
 public final class AgenticEngineeringRunner {
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   /**
    * Private constructor for utility class.
    */
-  private AgenticEngineeringRunner() {}
+  private AgenticEngineeringRunner() {
+  }
 
   /**
    * Runs the requested agentic engineering action.
    *
-   * @param json input JSON with action {@code plan}, {@code trust}, {@code study}, or
-   *        {@code readiness}
+   * @param json input JSON with action {@code plan}, {@code trust}, {@code study}, or {@code readiness}
    * @return standardized MCP JSON response
    */
   public static String run(String json) {
     String raw = AgenticEngineeringKernel.run(json);
     JsonObject response = JsonParser.parseString(raw).getAsJsonObject();
-    boolean success =
-        response.has("status") && "success".equals(response.get("status").getAsString());
+    boolean success = response.has("status") && "success".equals(response.get("status").getAsString());
     if (!response.has("data")) {
       response.add("data", response.deepCopy());
     }
@@ -52,11 +49,10 @@ public final class AgenticEngineeringRunner {
     provenance.addAssumption("Kernel is deterministic and side-effect free");
     provenance.addValidationPassed("Agentic engineering response contract applied");
     ApiEnvelope.applyStandardFields(response, "runAgenticEngineering", provenance,
-        ApiEnvelope.validationStatus(success, "agentic-kernel",
-            success ? "Agentic engineering action completed" : "Agentic engineering action failed"),
-        ApiEnvelope.qualityGate(success ? "passed" : "failed",
-            success ? "Agentic engineering kernel completed" : "Agentic engineering kernel failed",
-            true));
+	ApiEnvelope.validationStatus(success, "agentic-kernel",
+	    success ? "Agentic engineering action completed" : "Agentic engineering action failed"),
+	ApiEnvelope.qualityGate(success ? "passed" : "failed",
+	    success ? "Agentic engineering kernel completed" : "Agentic engineering kernel failed", true));
     return GSON.toJson(response);
   }
 }

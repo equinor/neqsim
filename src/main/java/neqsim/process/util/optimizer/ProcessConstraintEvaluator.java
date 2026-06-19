@@ -88,8 +88,7 @@ public class ProcessConstraintEvaluator implements Serializable {
     long timestamp;
     int processRunCount;
 
-    CachedConstraintsInternal(Map<String, CapacityConstraint> constraints, double utilization,
-        int processRunCount) {
+    CachedConstraintsInternal(Map<String, CapacityConstraint> constraints, double utilization, int processRunCount) {
       this.constraints = constraints;
       this.utilization = utilization;
       this.timestamp = System.currentTimeMillis();
@@ -97,8 +96,7 @@ public class ProcessConstraintEvaluator implements Serializable {
     }
 
     boolean isValid(long timeoutMs, int currentRunCount) {
-      return (System.currentTimeMillis() - timestamp) < timeoutMs
-          && processRunCount == currentRunCount;
+      return (System.currentTimeMillis() - timestamp) < timeoutMs && processRunCount == currentRunCount;
     }
   }
 
@@ -114,7 +112,8 @@ public class ProcessConstraintEvaluator implements Serializable {
     private Map<String, Double> cachedResults = new HashMap<String, Double>();
 
     /** Default constructor. */
-    public CachedConstraints() {}
+    public CachedConstraints() {
+    }
 
     /**
      * Checks if cache is valid.
@@ -228,12 +227,12 @@ public class ProcessConstraintEvaluator implements Serializable {
     private int totalViolationCount = 0;
     private boolean allHardConstraintsSatisfied = true;
     private boolean allSoftConstraintsSatisfied = true;
-    private Map<String, EquipmentConstraintSummary> equipmentSummaries =
-        new HashMap<String, EquipmentConstraintSummary>();
+    private Map<String, EquipmentConstraintSummary> equipmentSummaries = new HashMap<String, EquipmentConstraintSummary>();
     private Map<String, Double> normalizedUtilizations = new HashMap<String, Double>();
 
     /** Default constructor. */
-    public ConstraintEvaluationResult() {}
+    public ConstraintEvaluationResult() {
+    }
 
     /**
      * Gets the overall utilization.
@@ -409,7 +408,7 @@ public class ProcessConstraintEvaluator implements Serializable {
     /**
      * Adds a normalized utilization.
      *
-     * @param key utilization key
+     * @param key   utilization key
      * @param value utilization value
      */
     public void addNormalizedUtilization(String key, double value) {
@@ -443,7 +442,8 @@ public class ProcessConstraintEvaluator implements Serializable {
     private Map<String, Double> constraintDetails = new HashMap<String, Double>();
 
     /** Default constructor. */
-    public EquipmentConstraintSummary() {}
+    public EquipmentConstraintSummary() {
+    }
 
     /**
      * Gets equipment name.
@@ -601,7 +601,7 @@ public class ProcessConstraintEvaluator implements Serializable {
     /**
      * Adds a constraint detail.
      *
-     * @param name constraint name
+     * @param name  constraint name
      * @param value constraint value
      */
     public void addConstraintDetail(String name, double value) {
@@ -675,12 +675,11 @@ public class ProcessConstraintEvaluator implements Serializable {
 
       EquipmentCapacityStrategy strategy = strategyRegistry.findStrategy(equipment);
       if (strategy == null) {
-        continue;
+	continue;
       }
 
       // Get constraints (possibly from cache)
-      Map<String, CapacityConstraint> constraints =
-          getConstraintsWithCaching(equipment, strategy, processRunCount);
+      Map<String, CapacityConstraint> constraints = getConstraintsWithCaching(equipment, strategy, processRunCount);
 
       // Calculate equipment summary
       EquipmentConstraintSummary summary = new EquipmentConstraintSummary();
@@ -693,32 +692,32 @@ public class ProcessConstraintEvaluator implements Serializable {
       int equipmentViolations = 0;
 
       for (Map.Entry<String, CapacityConstraint> entry : constraints.entrySet()) {
-        CapacityConstraint constraint = entry.getValue();
-        double util = constraint.getUtilization();
+	CapacityConstraint constraint = entry.getValue();
+	double util = constraint.getUtilization();
 
-        if (!Double.isNaN(util) && !Double.isInfinite(util)) {
-          summary.addConstraintDetail(entry.getKey(), util);
+	if (!Double.isNaN(util) && !Double.isInfinite(util)) {
+	  summary.addConstraintDetail(entry.getKey(), util);
 
-          // Normalized utilization key
-          String normalizedKey = equipment.getName() + "/" + entry.getKey();
-          result.addNormalizedUtilization(normalizedKey, util);
+	  // Normalized utilization key
+	  String normalizedKey = equipment.getName() + "/" + entry.getKey();
+	  result.addNormalizedUtilization(normalizedKey, util);
 
-          if (util > equipmentMaxUtil) {
-            equipmentMaxUtil = util;
-            equipmentLimitingConstraint = entry.getKey();
-          }
+	  if (util > equipmentMaxUtil) {
+	    equipmentMaxUtil = util;
+	    equipmentLimitingConstraint = entry.getKey();
+	  }
 
-          if (util > 1.0) {
-            equipmentViolations++;
-          }
+	  if (util > 1.0) {
+	    equipmentViolations++;
+	  }
 
-          // Track overall bottleneck
-          if (util > maxUtilization) {
-            maxUtilization = util;
-            bottleneckEquipment = equipment.getName();
-            bottleneckConstraint = entry.getKey();
-          }
-        }
+	  // Track overall bottleneck
+	  if (util > maxUtilization) {
+	    maxUtilization = util;
+	    bottleneckEquipment = equipment.getName();
+	    bottleneckConstraint = entry.getKey();
+	  }
+	}
       }
 
       summary.setUtilization(equipmentMaxUtil);
@@ -729,10 +728,10 @@ public class ProcessConstraintEvaluator implements Serializable {
       totalViolations += equipmentViolations;
 
       if (!summary.isWithinLimits()) {
-        allHardSatisfied = false;
+	allHardSatisfied = false;
       }
       if (!strategy.isWithinSoftLimits(equipment)) {
-        allSoftSatisfied = false;
+	allSoftSatisfied = false;
       }
 
       result.addEquipmentSummary(summary);
@@ -758,7 +757,7 @@ public class ProcessConstraintEvaluator implements Serializable {
    * Calculates sensitivity of constraints to flow rate changes.
    *
    * @param flowRateKgPerHr current flow rate in kg/hr
-   * @param flowUnit flow unit (for documentation purposes)
+   * @param flowUnit        flow unit (for documentation purposes)
    * @return map of constraint name to sensitivity (d_utilization / d_flow)
    */
   public Map<String, Double> calculateFlowSensitivities(double flowRateKgPerHr, String flowUnit) {
@@ -768,12 +767,11 @@ public class ProcessConstraintEvaluator implements Serializable {
   /**
    * Calculates sensitivity of constraints to flow rate changes.
    *
-   * @param processSystem the process system
+   * @param processSystem   the process system
    * @param flowRateKgPerHr current flow rate in kg/hr
    * @return map of constraint name to sensitivity (d_utilization / d_flow)
    */
-  public Map<String, Double> calculateFlowSensitivities(ProcessSystem processSystem,
-      double flowRateKgPerHr) {
+  public Map<String, Double> calculateFlowSensitivities(ProcessSystem processSystem, double flowRateKgPerHr) {
     Map<String, Double> sensitivities = new HashMap<String, Double>();
 
     if (processSystem == null || processSystem.getUnitOperations().isEmpty()) {
@@ -807,21 +805,21 @@ public class ProcessConstraintEvaluator implements Serializable {
       Map<String, Double> perturbedUtils = perturbedResult.getNormalizedUtilizations();
 
       for (String key : baseUtils.keySet()) {
-        double baseUtil = baseUtils.get(key);
-        Double perturbedUtil = perturbedUtils.get(key);
+	double baseUtil = baseUtils.get(key);
+	Double perturbedUtil = perturbedUtils.get(key);
 
-        if (perturbedUtil != null && !Double.isNaN(baseUtil) && !Double.isNaN(perturbedUtil)) {
-          double sensitivity = (perturbedUtil - baseUtil) / step;
-          sensitivities.put(key, sensitivity);
-        }
+	if (perturbedUtil != null && !Double.isNaN(baseUtil) && !Double.isNaN(perturbedUtil)) {
+	  double sensitivity = (perturbedUtil - baseUtil) / step;
+	  sensitivities.put(key, sensitivity);
+	}
       }
     } finally {
       // Restore original flow rate
       setFeedFlowRate(processSystem, originalFlow);
       try {
-        processSystem.run();
+	processSystem.run();
       } catch (Exception e) {
-        logger.warn("Failed to restore original flow rate", e);
+	logger.warn("Failed to restore original flow rate", e);
       }
     }
 
@@ -832,7 +830,7 @@ public class ProcessConstraintEvaluator implements Serializable {
    * Estimates the maximum flow rate before hitting the bottleneck constraint.
    *
    * @param currentFlowKgPerHr current flow rate
-   * @param flowUnit flow unit (for documentation purposes)
+   * @param flowUnit           flow unit (for documentation purposes)
    * @return estimated maximum flow rate in kg/hr
    */
   public double estimateMaxFlow(double currentFlowKgPerHr, String flowUnit) {
@@ -842,7 +840,7 @@ public class ProcessConstraintEvaluator implements Serializable {
   /**
    * Estimates the maximum flow rate before hitting the bottleneck constraint.
    *
-   * @param processSystem the process system
+   * @param processSystem      the process system
    * @param currentFlowKgPerHr current flow rate
    * @return estimated maximum flow rate in kg/hr
    */
@@ -865,14 +863,13 @@ public class ProcessConstraintEvaluator implements Serializable {
   /**
    * Gets constraints with caching support.
    *
-   * @param equipment the process equipment to get constraints for
-   * @param strategy the capacity strategy to use
+   * @param equipment       the process equipment to get constraints for
+   * @param strategy        the capacity strategy to use
    * @param processRunCount the current process run count for cache validation
    * @return map of constraint name to capacity constraint
    */
-  private Map<String, CapacityConstraint> getConstraintsWithCaching(
-      ProcessEquipmentInterface equipment, EquipmentCapacityStrategy strategy,
-      int processRunCount) {
+  private Map<String, CapacityConstraint> getConstraintsWithCaching(ProcessEquipmentInterface equipment,
+      EquipmentCapacityStrategy strategy, int processRunCount) {
     if (!cachingEnabled) {
       return strategy.getConstraints(equipment);
     }
@@ -889,8 +886,7 @@ public class ProcessConstraintEvaluator implements Serializable {
     double utilization = strategy.evaluateCapacity(equipment);
 
     // Cache it
-    constraintCache.put(cacheKey,
-        new CachedConstraintsInternal(constraints, utilization, processRunCount));
+    constraintCache.put(cacheKey, new CachedConstraintsInternal(constraints, utilization, processRunCount));
 
     return constraints;
   }
@@ -909,7 +905,7 @@ public class ProcessConstraintEvaluator implements Serializable {
    * Sets the feed flow rate on the process system.
    *
    * @param processSystem the process system to modify
-   * @param flowKgPerHr the feed flow rate in kg/hr
+   * @param flowKgPerHr   the feed flow rate in kg/hr
    */
   private void setFeedFlowRate(ProcessSystem processSystem, double flowKgPerHr) {
     if (processSystem == null || processSystem.getUnitOperations().isEmpty()) {

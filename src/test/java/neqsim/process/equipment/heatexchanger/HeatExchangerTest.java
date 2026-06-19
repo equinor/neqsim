@@ -59,8 +59,7 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
     resyc.addStream(valv1.getOutletStream());
     resyc.setOutletStream(stream_Cold);
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_Hot);
     operations.add(stream_Cold);
     operations.add(heatEx);
@@ -78,8 +77,7 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
   void testRun2() {
     Stream stream_Hot = new Stream("Stream1", testSystem);
 
-    neqsim.thermo.system.SystemInterface testSystem2 =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 40.0), 20.00);
+    neqsim.thermo.system.SystemInterface testSystem2 = new neqsim.thermo.system.SystemSrkEos((273.15 + 40.0), 20.00);
     testSystem2.addComponent("methane", 220.00);
     testSystem2.addComponent("ethane", 120.0);
     // testSystem2.createDatabase(true);
@@ -89,11 +87,10 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
 
     Stream stream_Cold = new Stream("Stream2", testSystem2);
 
-    neqsim.process.equipment.heatexchanger.HeatExchanger heatExchanger1 =
-        new neqsim.process.equipment.heatexchanger.HeatExchanger("heatEx", stream_Hot, stream_Cold);
+    neqsim.process.equipment.heatexchanger.HeatExchanger heatExchanger1 = new neqsim.process.equipment.heatexchanger.HeatExchanger(
+	"heatEx", stream_Hot, stream_Cold);
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_Hot);
     operations.add(stream_Cold);
     operations.add(heatExchanger1);
@@ -106,8 +103,7 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
 
     assertEquals(15780.77130, heatExchanger1.getUAvalue(), 1e-3);
 
-    heatExchanger1 =
-        new neqsim.process.equipment.heatexchanger.HeatExchanger("heatEx", stream_Hot, stream_Cold);
+    heatExchanger1 = new neqsim.process.equipment.heatexchanger.HeatExchanger("heatEx", stream_Hot, stream_Cold);
     heatExchanger1.setDeltaT(1.0);
     heatExchanger1.run();
 
@@ -124,8 +120,7 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
     hotStream.setFlowRate(1000.0, "kg/hr");
     hotStream.run();
 
-    neqsim.thermo.system.SystemInterface coldSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 20.0), 20.00);
+    neqsim.thermo.system.SystemInterface coldSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 20.0), 20.00);
     coldSystem.addComponent("methane", 100.0);
     coldSystem.addComponent("ethane", 50.0);
     coldSystem.setMixingRule(2);
@@ -135,8 +130,8 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
     coldStream.setFlowRate(500.0, "kg/hr");
     coldStream.run();
 
-    HeatExchanger hx = HeatExchanger.builder("E-100").hotStream(hotStream).coldStream(coldStream)
-        .UAvalue(2000.0).flowArrangement("counterflow").guessOutTemperature(60.0, "C").build();
+    HeatExchanger hx = HeatExchanger.builder("E-100").hotStream(hotStream).coldStream(coldStream).UAvalue(2000.0)
+	.flowArrangement("counterflow").guessOutTemperature(60.0, "C").build();
 
     hx.run();
 
@@ -157,8 +152,7 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
     hotStream.setFlowRate(800.0, "kg/hr");
     hotStream.run();
 
-    neqsim.thermo.system.SystemInterface coldSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 15.0), 20.00);
+    neqsim.thermo.system.SystemInterface coldSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 15.0), 20.00);
     coldSystem.addComponent("methane", 80.0);
     coldSystem.setMixingRule(2);
 
@@ -167,8 +161,7 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
     coldStream.setFlowRate(600.0, "kg/hr");
     coldStream.run();
 
-    HeatExchanger hx = HeatExchanger.builder("E-101").hotStream(hotStream).coldStream(coldStream)
-        .deltaT(5.0).build();
+    HeatExchanger hx = HeatExchanger.builder("E-101").hotStream(hotStream).coldStream(coldStream).deltaT(5.0).build();
 
     hx.run();
 
@@ -176,4 +169,3 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
     // DeltaT mode sets minimum approach temperature
   }
 }
-

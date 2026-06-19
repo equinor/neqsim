@@ -24,11 +24,11 @@ public class SafeSplineSurgeCurveTest {
 
   @Test
   public void testSurgeCurve10250() {
-    double[] flow10250 = {9758.49, 9578.11, 9397.9, 9248.64, 9006.93, 8749.97, 8508.5, 8179.81,
-        7799.81, 7111.75, 6480.26, 6007.91, 5607.45};
+    double[] flow10250 = { 9758.49, 9578.11, 9397.9, 9248.64, 9006.93, 8749.97, 8508.5, 8179.81, 7799.81, 7111.75,
+	6480.26, 6007.91, 5607.45 };
 
-    double[] head10250 = {112.65, 121.13, 127.56, 132.13, 137.29, 140.73, 142.98, 144.76, 146.14,
-        148.05, 148.83, 149.54, 150.0};
+    double[] head10250 = { 112.65, 121.13, 127.56, 132.13, 137.29, 140.73, 142.98, 144.76, 146.14, 148.05, 148.83,
+	149.54, 150.0 };
 
     // Initialize curve
     SafeSplineSurgeCurve curve = new SafeSplineSurgeCurve(flow10250, head10250);
@@ -108,26 +108,25 @@ public class SafeSplineSurgeCurveTest {
     cooler.setOutTemperature(20.0, "C");
     cooler.run();
 
-    Compressor firstStageCompressor =
-        new Compressor("1st stage compressor", cooler.getOutletStream());
+    Compressor firstStageCompressor = new Compressor("1st stage compressor", cooler.getOutletStream());
     firstStageCompressor.setPolytropicMethod("detailed"); // Use detailed for precise head
-                                                          // calculations
+							  // calculations
     firstStageCompressor.setUsePolytropicCalc(true);
     firstStageCompressor.setPolytropicEfficiency(0.8);
     firstStageCompressor.setOutletPressure(12.0, "bara");
     firstStageCompressor.getCompressorChart().setHeadUnit("kJ/kg");
 
-    double[] flow10250 = {9758.49, 9578.11, 9397.9, 9248.64, 9006.93, 8749.97, 8508.5, 8179.81,
-        7799.81, 7111.75, 6480.26, 6007.91, 5607.45};
+    double[] flow10250 = { 9758.49, 9578.11, 9397.9, 9248.64, 9006.93, 8749.97, 8508.5, 8179.81, 7799.81, 7111.75,
+	6480.26, 6007.91, 5607.45 };
 
-    double[] head10250 = {112.65, 121.13, 127.56, 132.13, 137.29, 140.73, 142.98, 144.76, 146.14,
-        148.05, 148.83, 149.54, 150};
+    double[] head10250 = { 112.65, 121.13, 127.56, 132.13, 137.29, 140.73, 142.98, 144.76, 146.14, 148.05, 148.83,
+	149.54, 150 };
     firstStageCompressor.getCompressorChart().getSurgeCurve().setCurve(null, flow10250, head10250);
     firstStageCompressor.run();
     process1.add(firstStageCompressor);
 
     Splitter splitter1 = process1.addUnit("1st stage anti surge splitter", "splitter");
-    splitter1.setFlowRates(new double[] {-1, 1.0}, "kg/hr");
+    splitter1.setFlowRates(new double[] { -1, 1.0 }, "kg/hr");
     splitter1.run();
 
     Calculator antisurgeCalculator = process1.addUnit("anti surge calculator", "calculator");
@@ -223,8 +222,7 @@ public class SafeSplineSurgeCurveTest {
     stream1.run();
     process1.add(stream1);
 
-    Stream resyclestream =
-        new neqsim.process.equipment.stream.Stream("recycle stream", stream1.clone());
+    Stream resyclestream = new neqsim.process.equipment.stream.Stream("recycle stream", stream1.clone());
     resyclestream.setFlowRate(100.0, "kg/hr");
     resyclestream.run();
     process1.add(resyclestream);
@@ -241,39 +239,36 @@ public class SafeSplineSurgeCurveTest {
     cooler.run();
     process1.add(cooler);
 
-    Compressor firstStageCompressor =
-        new Compressor("1st stage compressor", cooler.getOutletStream());
+    Compressor firstStageCompressor = new Compressor("1st stage compressor", cooler.getOutletStream());
     firstStageCompressor.setPolytropicMethod("detailed"); // Use detailed for precise head
-                                                          // calculations
+							  // calculations
     firstStageCompressor.setUsePolytropicCalc(true);
     firstStageCompressor.setPolytropicEfficiency(0.8);
     firstStageCompressor.setOutletPressure(12.0, "bara");
     firstStageCompressor.getCompressorChart().setHeadUnit("kJ/kg");
 
-    double[] flow10250 = {9758.49, 9578.11, 9397.9, 9248.64, 9006.93, 8749.97, 8508.5, 8179.81,
-        7799.81, 7111.75, 6480.26, 6007.91, 5607.45};
+    double[] flow10250 = { 9758.49, 9578.11, 9397.9, 9248.64, 9006.93, 8749.97, 8508.5, 8179.81, 7799.81, 7111.75,
+	6480.26, 6007.91, 5607.45 };
 
-    double[] head10250 = {112.65, 121.13, 127.56, 132.13, 137.29, 140.73, 142.98, 144.76, 146.14,
-        148.05, 148.83, 149.54, 150};
+    double[] head10250 = { 112.65, 121.13, 127.56, 132.13, 137.29, 140.73, 142.98, 144.76, 146.14, 148.05, 148.83,
+	149.54, 150 };
     firstStageCompressor.getCompressorChart().getSurgeCurve().setCurve(null, flow10250, head10250);
     firstStageCompressor.run();
     process1.add(firstStageCompressor);
 
-    Splitter splitter1 = new neqsim.process.equipment.splitter.Splitter(
-        "1st stage anti surge splitter", firstStageCompressor.getOutletStream());
-    splitter1.setFlowRates(new double[] {-1, 1.0}, "kg/hr");
+    Splitter splitter1 = new neqsim.process.equipment.splitter.Splitter("1st stage anti surge splitter",
+	firstStageCompressor.getOutletStream());
+    splitter1.setFlowRates(new double[] { -1, 1.0 }, "kg/hr");
     splitter1.run();
     process1.add(splitter1);
 
-    Calculator antisurgeCalculator =
-        new neqsim.process.equipment.util.Calculator("anti surge calculator");
+    Calculator antisurgeCalculator = new neqsim.process.equipment.util.Calculator("anti surge calculator");
     antisurgeCalculator.addInputVariable(firstStageCompressor);
     antisurgeCalculator.setOutputVariable(splitter1);
     antisurgeCalculator.run();
     process1.add(antisurgeCalculator);
 
-    ThrottlingValve valve1 =
-        new neqsim.process.equipment.valve.ThrottlingValve("1st stage anti surge valve");
+    ThrottlingValve valve1 = new neqsim.process.equipment.valve.ThrottlingValve("1st stage anti surge valve");
     valve1.setInletStream(splitter1.getSplitStream(1));
     valve1.setOutletPressure(4.0, "bara");
     valve1.run();
@@ -341,14 +336,14 @@ public class SafeSplineSurgeCurveTest {
   }
 
   /**
-   * Test single-point surge curve for single-speed compressors. For a single-speed compressor, the
-   * surge condition is a single point (minimum flow at that speed), not a curve.
+   * Test single-point surge curve for single-speed compressors. For a single-speed compressor, the surge condition is a
+   * single point (minimum flow at that speed), not a curve.
    */
   @Test
   public void testSinglePointSurge() {
     // Single point surge for a single-speed compressor
-    double[] singleFlow = {5607.45}; // Minimum flow point
-    double[] singleHead = {150.0}; // Corresponding head
+    double[] singleFlow = { 5607.45 }; // Minimum flow point
+    double[] singleHead = { 150.0 }; // Corresponding head
 
     // Create single-point surge curve
     SafeSplineSurgeCurve curve = new SafeSplineSurgeCurve(singleFlow, singleHead);
@@ -379,14 +374,14 @@ public class SafeSplineSurgeCurveTest {
   }
 
   /**
-   * Test single-point stone wall (choke) curve for single-speed compressors. For a single-speed
-   * compressor, the choke condition is a single point (maximum flow at that speed), not a curve.
+   * Test single-point stone wall (choke) curve for single-speed compressors. For a single-speed compressor, the choke
+   * condition is a single point (maximum flow at that speed), not a curve.
    */
   @Test
   public void testSinglePointStoneWall() {
     // Single point stone wall for a single-speed compressor
-    double[] singleFlow = {9758.49}; // Maximum flow point (choke)
-    double[] singleHead = {112.65}; // Corresponding head
+    double[] singleFlow = { 9758.49 }; // Maximum flow point (choke)
+    double[] singleHead = { 112.65 }; // Corresponding head
 
     // Create single-point stone wall curve
     SafeSplineStoneWallCurve curve = new SafeSplineStoneWallCurve(singleFlow, singleHead);
@@ -417,8 +412,8 @@ public class SafeSplineSurgeCurveTest {
   }
 
   /**
-   * Test that isSurge, isStoneWall, getDistanceToSurge, and getDistanceToStoneWall work correctly
-   * for single-speed compressors with single-point surge and stone wall curves.
+   * Test that isSurge, isStoneWall, getDistanceToSurge, and getDistanceToStoneWall work correctly for single-speed
+   * compressors with single-point surge and stone wall curves.
    */
   @Test
   public void testSingleSpeedCompressorWithSinglePointCurves() {
@@ -442,43 +437,39 @@ public class SafeSplineSurgeCurveTest {
     comp.setOutletPressure(100.0); // bara
 
     // Set up compressor chart with single speed curve
-    double[] chartConditions = new double[] {25.0, 50.0, 50.0, 20.0};
-    double[] speed = new double[] {10250};
+    double[] chartConditions = new double[] { 25.0, 50.0, 50.0, 20.0 };
+    double[] speed = new double[] { 10250 };
     double[][] flow = new double[][] {
-        {5607.45, 6007.91, 6480.26, 7111.75, 7799.81, 8179.81, 8508.5, 8749.97, 9006.93, 9758.49}};
+	{ 5607.45, 6007.91, 6480.26, 7111.75, 7799.81, 8179.81, 8508.5, 8749.97, 9006.93, 9758.49 } };
     double[][] head = new double[][] {
-        {150.0, 149.54, 148.83, 148.05, 146.14, 144.76, 142.98, 140.73, 137.29, 112.65}};
-    double[][] polyEff =
-        new double[][] {{78.0, 79.0, 80.0, 80.5, 80.0, 79.5, 79.0, 78.0, 77.0, 70.0}};
+	{ 150.0, 149.54, 148.83, 148.05, 146.14, 144.76, 142.98, 140.73, 137.29, 112.65 } };
+    double[][] polyEff = new double[][] { { 78.0, 79.0, 80.0, 80.5, 80.0, 79.5, 79.0, 78.0, 77.0, 70.0 } };
 
     comp.setSpeed(10250);
     comp.getCompressorChart().setCurves(chartConditions, speed, flow, head, flow, polyEff);
     comp.getCompressorChart().setHeadUnit("kJ/kg");
 
     // Set single-point surge curve (minimum flow point)
-    double[] surgeFlow = new double[] {5607.45};
-    double[] surgeHead = new double[] {150.0};
+    double[] surgeFlow = new double[] { 5607.45 };
+    double[] surgeHead = new double[] { 150.0 };
     comp.getCompressorChart().getSurgeCurve().setCurve(chartConditions, surgeFlow, surgeHead);
 
     // Set single-point stone wall curve (maximum flow point)
-    double[] stoneWallFlow = new double[] {9758.49};
-    double[] stoneWallHead = new double[] {112.65};
-    comp.getCompressorChart().getStoneWallCurve().setCurve(chartConditions, stoneWallFlow,
-        stoneWallHead);
+    double[] stoneWallFlow = new double[] { 9758.49 };
+    double[] stoneWallHead = new double[] { 112.65 };
+    comp.getCompressorChart().getStoneWallCurve().setCurve(chartConditions, stoneWallFlow, stoneWallHead);
 
     // Run the compressor
     comp.run();
 
     // Verify surge curve is active and single-point
     assertTrue(comp.getCompressorChart().getSurgeCurve().isActive());
-    SafeSplineSurgeCurve surgeCurve =
-        (SafeSplineSurgeCurve) comp.getCompressorChart().getSurgeCurve();
+    SafeSplineSurgeCurve surgeCurve = (SafeSplineSurgeCurve) comp.getCompressorChart().getSurgeCurve();
     assertTrue(surgeCurve.isSinglePointSurge());
 
     // Verify stone wall curve is active and single-point
     assertTrue(comp.getCompressorChart().getStoneWallCurve().isActive());
-    SafeSplineStoneWallCurve stoneWallCurve =
-        (SafeSplineStoneWallCurve) comp.getCompressorChart().getStoneWallCurve();
+    SafeSplineStoneWallCurve stoneWallCurve = (SafeSplineStoneWallCurve) comp.getCompressorChart().getStoneWallCurve();
     assertTrue(stoneWallCurve.isSinglePointStoneWall());
 
     // Test isSurge with operating point (should NOT be in surge since flow > surge flow)
@@ -487,14 +478,12 @@ public class SafeSplineSurgeCurveTest {
     assertTrue(operatingFlow > 5607.45, "Operating flow should be above surge flow");
     // Note: Compressor.isSurge(flow, head) passes to SurgeCurve.isSurge(head, flow),
     // but SurgeCurve expects (head, flow). So we call directly on the curve to test correctly.
-    boolean inSurge =
-        comp.getCompressorChart().getSurgeCurve().isSurge(operatingHead, operatingFlow);
+    boolean inSurge = comp.getCompressorChart().getSurgeCurve().isSurge(operatingHead, operatingFlow);
     assertTrue(!inSurge, "Should NOT be in surge");
 
     // Test isStoneWall with operating point (should NOT be in stone wall since flow < stone wall)
     assertTrue(operatingFlow < 9758.49, "Operating flow should be below stone wall flow");
-    boolean inStoneWall =
-        comp.getCompressorChart().getStoneWallCurve().isStoneWall(operatingHead, operatingFlow);
+    boolean inStoneWall = comp.getCompressorChart().getStoneWallCurve().isStoneWall(operatingHead, operatingFlow);
     assertTrue(!inStoneWall, "Should NOT be in stone wall");
 
     // Test getDistanceToSurge - should be positive (margin above surge)
@@ -516,18 +505,18 @@ public class SafeSplineSurgeCurveTest {
 
     // Test isSurge with flow below surge point
     assertTrue(comp.getCompressorChart().getSurgeCurve().isSurge(150.0, 5000.0),
-        "Should be in surge when flow < surge flow");
+	"Should be in surge when flow < surge flow");
 
     // Test isStoneWall with flow above stone wall point
     assertTrue(comp.getCompressorChart().getStoneWallCurve().isStoneWall(112.65, 10000.0),
-        "Should be in stone wall when flow > stone wall flow");
+	"Should be in stone wall when flow > stone wall flow");
   }
 
   // @Test
   public void testSurgeCurve3() {
     try {
       ProcessModel processModel = (ProcessModel) NeqSimXtream.openNeqsim(
-          "/workspaces/neqsim/src/test/java/neqsim/process/equipment/compressor/neqsim_model_base_2.neqsim");
+	  "/workspaces/neqsim/src/test/java/neqsim/process/equipment/compressor/neqsim_model_base_2.neqsim");
       processModel.run();
       processModel.run();
       processModel.run();

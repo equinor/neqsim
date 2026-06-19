@@ -12,21 +12,19 @@ import org.apache.logging.log4j.Logger;
  * Economic dispatch optimizer for a fleet of {@link GasTurbineUnit}s.
  *
  * <p>
- * Given a demanded shaft / generator power and a list of candidate turbines, the optimizer selects
- * which units to run and at what load to minimise the sum of fuel cost and CO2 cost, subject to:
+ * Given a demanded shaft / generator power and a list of candidate turbines, the optimizer selects which units to run
+ * and at what load to minimise the sum of fuel cost and CO2 cost, subject to:
  * </p>
  *
  * <ul>
  * <li>Σ available power of running units ≥ demand (with optional N+1 spare reserve margin)</li>
- * <li>Each running unit operates between its minimum stable load fraction and its site-corrected
- * available power</li>
+ * <li>Each running unit operates between its minimum stable load fraction and its site-corrected available power</li>
  * </ul>
  *
  * <p>
- * The current implementation enumerates all on/off combinations for fleets up to
- * {@value #BRUTE_FORCE_LIMIT} units (2^N feasible for small dispatch problems) and within each
- * combination distributes load by greedy heat-rate-curve ordering. For larger fleets, a heuristic
- * merit-order dispatch is used.
+ * The current implementation enumerates all on/off combinations for fleets up to {@value #BRUTE_FORCE_LIMIT} units (2^N
+ * feasible for small dispatch problems) and within each combination distributes load by greedy heat-rate-curve
+ * ordering. For larger fleets, a heuristic merit-order dispatch is used.
  * </p>
  *
  * @author neqsim
@@ -48,7 +46,7 @@ public class TurbineDispatchOptimizer implements Serializable {
   /**
    * Construct an optimizer with fuel and CO2 cost coefficients.
    *
-   * @param fuelPriceNOKPerKg fuel gas price [NOK/kg]
+   * @param fuelPriceNOKPerKg  fuel gas price [NOK/kg]
    * @param co2CostNOKPerTonne effective CO2 cost [NOK/tonne]
    */
   public TurbineDispatchOptimizer(double fuelPriceNOKPerKg, double co2CostNOKPerTonne) {
@@ -84,10 +82,10 @@ public class TurbineDispatchOptimizer implements Serializable {
   }
 
   /**
-   * Dispatch the fleet to meet a given demand. Each turbine in {@code fleet} should already have
-   * its fuel stream, spec, ambient conditions, and degradation configured.
+   * Dispatch the fleet to meet a given demand. Each turbine in {@code fleet} should already have its fuel stream, spec,
+   * ambient conditions, and degradation configured.
    *
-   * @param fleet candidate gas turbines
+   * @param fleet          candidate gas turbines
    * @param demandedPowerW total demanded shaft power [W]
    * @return dispatch result
    */
@@ -111,24 +109,24 @@ public class TurbineDispatchOptimizer implements Serializable {
       List<GasTurbineUnit> running = new ArrayList<GasTurbineUnit>();
       List<GasTurbineUnit> spare = new ArrayList<GasTurbineUnit>();
       for (int i = 0; i < n; i++) {
-        if ((mask & (1 << i)) != 0) {
-          running.add(fleet.get(i));
-        } else {
-          spare.add(fleet.get(i));
-        }
+	if ((mask & (1 << i)) != 0) {
+	  running.add(fleet.get(i));
+	} else {
+	  spare.add(fleet.get(i));
+	}
       }
       if (requireNplusOne && spare.isEmpty()) {
-        continue;
+	continue;
       }
       DispatchResult candidate = evaluateRunningSet(running, demandedPowerW);
       if (!candidate.feasible) {
-        continue;
+	continue;
       }
       if (candidate.totalCostNOKPerHr < bestCost) {
-        bestCost = candidate.totalCostNOKPerHr;
-        candidate.runningUnits = running;
-        candidate.spareUnits = spare;
-        best = candidate;
+	bestCost = candidate.totalCostNOKPerHr;
+	candidate.runningUnits = running;
+	candidate.spareUnits = spare;
+	best = candidate;
       }
     }
     return best;
@@ -140,7 +138,7 @@ public class TurbineDispatchOptimizer implements Serializable {
     Collections.sort(sorted, new java.util.Comparator<GasTurbineUnit>() {
       @Override
       public int compare(GasTurbineUnit a, GasTurbineUnit b) {
-        return Double.compare(a.getSpec().getHeatRateKJPerKWh(), b.getSpec().getHeatRateKJPerKWh());
+	return Double.compare(a.getSpec().getHeatRateKJPerKWh(), b.getSpec().getHeatRateKJPerKWh());
       }
     });
     List<GasTurbineUnit> running = new ArrayList<GasTurbineUnit>();
@@ -152,7 +150,7 @@ public class TurbineDispatchOptimizer implements Serializable {
       u.run();
       cum += u.getAvailablePowerW();
       if (cum >= demandedPowerW) {
-        break;
+	break;
       }
     }
     List<GasTurbineUnit> spare = new ArrayList<GasTurbineUnit>(sorted);
@@ -189,8 +187,8 @@ public class TurbineDispatchOptimizer implements Serializable {
       // Enforce minimum stable load — if violated, this candidate is infeasible
       double minLoad = u.getPerformanceMap().getMinLoadFraction();
       if (loadFraction < minLoad) {
-        return DispatchResult.infeasible("Load fraction " + String.format("%.2f", loadFraction)
-            + " below min " + String.format("%.2f", minLoad));
+	return DispatchResult.infeasible(
+	    "Load fraction " + String.format("%.2f", loadFraction) + " below min " + String.format("%.2f", minLoad));
       }
       u.setDemandedPower(unitPower);
       u.run();
@@ -266,15 +264,15 @@ public class TurbineDispatchOptimizer implements Serializable {
      */
     public String summary() {
       if (!feasible) {
-        return "INFEASIBLE: " + reason;
+	return "INFEASIBLE: " + reason;
       }
       List<String> names = new ArrayList<String>();
       for (GasTurbineUnit u : runningUnits) {
-        names.add(u.getName());
+	names.add(u.getName());
       }
       return String.format("Running %s at %.0f%% load — %.1f kg/s fuel, %.1f kg/s CO2, %.0f NOK/hr",
-          Arrays.toString(names.toArray()), loadFraction * 100.0, totalFuelKgPerHr / 3600.0,
-          totalCO2KgPerHr / 3600.0, totalCostNOKPerHr);
+	  Arrays.toString(names.toArray()), loadFraction * 100.0, totalFuelKgPerHr / 3600.0, totalCO2KgPerHr / 3600.0,
+	  totalCostNOKPerHr);
     }
   }
 }

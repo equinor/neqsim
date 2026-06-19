@@ -55,8 +55,8 @@ import neqsim.thermo.system.FluidBuilder;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * Verifies that every code example shown in the engineering utilities documentation actually
- * compiles and runs without error.
+ * Verifies that every code example shown in the engineering utilities documentation actually compiles and runs without
+ * error.
  *
  * @author copilot
  * @version 1.0
@@ -69,8 +69,7 @@ public class DocExamplesCompilationTest {
   @Test
   public void testFluidBuilderFluentAPI() {
     SystemInterface fluid = FluidBuilder.create(273.15 + 25.0, 60.0).addComponent("methane", 0.85)
-        .addComponent("ethane", 0.10).addComponent("propane", 0.05).withMixingRule("classic")
-        .build();
+	.addComponent("ethane", 0.10).addComponent("propane", 0.05).withMixingRule("classic").build();
     assertNotNull(fluid);
     assertEquals(3, fluid.getNumberOfComponents());
   }
@@ -80,9 +79,9 @@ public class DocExamplesCompilationTest {
    */
   @Test
   public void testFluidBuilderWithEOS() {
-    SystemInterface fluid = FluidBuilder.create(273.15 + 80.0, 200.0)
-        .withEOS(FluidBuilder.EOSType.PR).addComponent("methane", 0.50)
-        .addComponent("n-hexane", 0.50).withMixingRule("classic").withMultiPhaseCheck().build();
+    SystemInterface fluid = FluidBuilder.create(273.15 + 80.0, 200.0).withEOS(FluidBuilder.EOSType.PR)
+	.addComponent("methane", 0.50).addComponent("n-hexane", 0.50).withMixingRule("classic").withMultiPhaseCheck()
+	.build();
     assertNotNull(fluid);
   }
 
@@ -92,10 +91,9 @@ public class DocExamplesCompilationTest {
   @Test
   public void testFluidBuilderOilCharacterization() {
     SystemInterface oil = FluidBuilder.create(273.15 + 80.0, 250.0).withEOS(FluidBuilder.EOSType.PR)
-        .addComponent("methane", 0.30).addComponent("ethane", 0.08)
-        .addTBPFraction("C7", 0.06, 0.092, 0.727).addTBPFraction("C8", 0.05, 0.104, 0.749)
-        .addPlusFraction("C20", 0.23, 0.350, 0.88).withLumpedComponents(6).withMixingRule("classic")
-        .build();
+	.addComponent("methane", 0.30).addComponent("ethane", 0.08).addTBPFraction("C7", 0.06, 0.092, 0.727)
+	.addTBPFraction("C8", 0.05, 0.104, 0.749).addPlusFraction("C20", 0.23, 0.350, 0.88).withLumpedComponents(6)
+	.withMixingRule("classic").build();
     assertNotNull(oil);
   }
 
@@ -148,24 +146,19 @@ public class DocExamplesCompilationTest {
   @Test
   public void testHostTieInCapacityDocExample() {
     final Stream hostFeed = createDocHostFeed();
-    hostFeed
-        .addCapacityConstraint(new CapacityConstraint("hostFeedFlow", "kg/hr", ConstraintType.HARD)
-            .setDesignValue(2500.0).setValueSupplier(() -> hostFeed.getFlowRate("kg/hr")));
+    hostFeed.addCapacityConstraint(new CapacityConstraint("hostFeedFlow", "kg/hr", ConstraintType.HARD)
+	.setDesignValue(2500.0).setValueSupplier(() -> hostFeed.getFlowRate("kg/hr")));
     ProcessSystem hostProcess = new ProcessSystem("host process");
     hostProcess.add(hostFeed);
 
-    HostFacility host =
-        HostFacility.builder("Example Host").gasCapacity(10.0).processSystem(hostProcess).build();
-    ProductionProfileSeries base =
-        new ProductionProfileSeries("base host").addPeriod(2028, 1.0, 0.0, 0.0, 0.0);
-    ProductionProfileSeries satellite =
-        new ProductionProfileSeries("satellite").addPeriod(2028, 4.0, 0.0, 0.0, 0.0);
-    HostTieInPoint tieInPoint =
-        new HostTieInPoint("Host Feed", "kg/hr").setGasToProcessRateFactor(1000.0);
+    HostFacility host = HostFacility.builder("Example Host").gasCapacity(10.0).processSystem(hostProcess).build();
+    ProductionProfileSeries base = new ProductionProfileSeries("base host").addPeriod(2028, 1.0, 0.0, 0.0, 0.0);
+    ProductionProfileSeries satellite = new ProductionProfileSeries("satellite").addPeriod(2028, 4.0, 0.0, 0.0, 0.0);
+    HostTieInPoint tieInPoint = new HostTieInPoint("Host Feed", "kg/hr").setGasToProcessRateFactor(1000.0);
 
     TieInCapacityResult result = new TieInCapacityPlanner(host).setHostProductionProfile(base)
-        .setSatelliteProductionProfile(satellite)
-        .setAllocationPolicy(CapacityAllocationPolicy.BASE_FIRST).setTieInPoint(tieInPoint).run();
+	.setSatelliteProductionProfile(satellite).setAllocationPolicy(CapacityAllocationPolicy.BASE_FIRST)
+	.setTieInPoint(tieInPoint).run();
 
     assertTrue(result.hasHoldback());
     assertNotNull(result.toMarkdownTable());
@@ -193,15 +186,12 @@ public class DocExamplesCompilationTest {
    */
   @Test
   public void testWebApiJsonVisualizationDocExample() throws IOException {
-    String jsonString =
-        "{" + "\"fluid\":{\"model\":\"SRK\",\"temperature\":298.15,\"pressure\":50.0,"
-            + "\"mixingRule\":\"classic\",\"components\":{\"methane\":0.9,\"ethane\":0.1}},"
-            + "\"process\":[" + "{\"type\":\"Stream\",\"name\":\"feed\","
-            + "\"properties\":{\"flowRate\":[1000.0,\"kg/hr\"]}},"
-            + "{\"type\":\"Separator\",\"name\":\"HP Sep\",\"inlet\":\"feed\"},"
-            + "{\"type\":\"Compressor\",\"name\":\"Export Compressor\","
-            + "\"inlet\":\"HP Sep.gasOut\","
-            + "\"properties\":{\"outletPressure\":[80.0,\"bara\"]}}]," + "\"autoRun\":true}";
+    String jsonString = "{" + "\"fluid\":{\"model\":\"SRK\",\"temperature\":298.15,\"pressure\":50.0,"
+	+ "\"mixingRule\":\"classic\",\"components\":{\"methane\":0.9,\"ethane\":0.1}}," + "\"process\":["
+	+ "{\"type\":\"Stream\",\"name\":\"feed\"," + "\"properties\":{\"flowRate\":[1000.0,\"kg/hr\"]}},"
+	+ "{\"type\":\"Separator\",\"name\":\"HP Sep\",\"inlet\":\"feed\"},"
+	+ "{\"type\":\"Compressor\",\"name\":\"Export Compressor\"," + "\"inlet\":\"HP Sep.gasOut\","
+	+ "\"properties\":{\"outletPressure\":[80.0,\"bara\"]}}]," + "\"autoRun\":true}";
 
     SimulationResult result = ProcessSystem.fromJsonAndRun(jsonString);
     assertTrue(result.isSuccess(), result.toJson());
@@ -350,8 +340,8 @@ public class DocExamplesCompilationTest {
     process.add(feed);
     process.run();
 
-    neqsim.process.equipment.util.ConvergenceDiagnostics diag =
-        new neqsim.process.equipment.util.ConvergenceDiagnostics(process);
+    neqsim.process.equipment.util.ConvergenceDiagnostics diag = new neqsim.process.equipment.util.ConvergenceDiagnostics(
+	process);
     neqsim.process.equipment.util.ConvergenceDiagnostics.DiagnosticReport report = diag.analyze();
 
     // Doc API calls
@@ -410,8 +400,7 @@ public class DocExamplesCompilationTest {
     comp.addComponent("ethane", 0.10);
     comp.addComponent("propane", 0.05);
     comp.setConditions(273.15 + 25.0, 60.0);
-    comp.setEOSTypes(EOSComparison.EOSType.SRK, EOSComparison.EOSType.PR,
-        EOSComparison.EOSType.GERG2008);
+    comp.setEOSTypes(EOSComparison.EOSType.SRK, EOSComparison.EOSType.PR, EOSComparison.EOSType.GERG2008);
 
     EOSComparison.ComparisonResult result = comp.compare();
     assertNotNull(result.toJson());
@@ -496,17 +485,15 @@ public class DocExamplesCompilationTest {
     assertTrue(Double.isFinite(column.getLastMeshSpecificationResidualNorm()));
     assertTrue(column.getLastMeshResidualVector().length > 0);
 
-    ColumnSpecification bottomPurity =
-        new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
-            ColumnSpecification.ProductLocation.BOTTOM, 0.50, "propane");
+    ColumnSpecification bottomPurity = new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
+	ColumnSpecification.ProductLocation.BOTTOM, 0.50, "propane");
     Stream builderFeed = new Stream("doc builder distillation feed", fluid.clone());
     builderFeed.setFlowRate(100.0, "kg/hr");
     builderFeed.run();
-    DistillationColumn builderColumn = DistillationColumn.builder("Doc Builder Column")
-        .numberOfTrays(3).withCondenserAndReboiler().topPressure(25.0, "bara")
-        .bottomPressure(26.0, "bara").temperatureTolerance(1.0e-3).massBalanceTolerance(1.0e-2)
-        .maxIterations(20).insideOut().internalDiameter(1.2).addFeedStream(builderFeed, 2)
-        .topProductPurity("ethane", 0.50).bottomSpecification(bottomPurity).build();
+    DistillationColumn builderColumn = DistillationColumn.builder("Doc Builder Column").numberOfTrays(3)
+	.withCondenserAndReboiler().topPressure(25.0, "bara").bottomPressure(26.0, "bara").temperatureTolerance(1.0e-3)
+	.massBalanceTolerance(1.0e-2).maxIterations(20).insideOut().internalDiameter(1.2).addFeedStream(builderFeed, 2)
+	.topProductPurity("ethane", 0.50).bottomSpecification(bottomPurity).build();
     assertEquals(DistillationColumn.SolverType.INSIDE_OUT, builderColumn.getSolverType());
     assertEquals(1.2, builderColumn.getInternalDiameter(), 1.0e-12);
     assertNotNull(builderColumn.getTopSpecification());
@@ -516,8 +503,7 @@ public class DocExamplesCompilationTest {
     apiColumn.setCondenserMode(DistillationColumn.CondenserMode.TOTAL);
     assertEquals(DistillationColumn.CondenserMode.TOTAL, apiColumn.getCondenserMode());
     apiColumn.setCondenserLiquidReflux(500.0, "kg/hr");
-    assertEquals(DistillationColumn.CondenserMode.LIQUID_REFLUX_SPLIT,
-        apiColumn.getCondenserMode());
+    assertEquals(DistillationColumn.CondenserMode.LIQUID_REFLUX_SPLIT, apiColumn.getCondenserMode());
     apiColumn.setReboilerMode(DistillationColumn.ReboilerMode.EQUILIBRIUM);
     apiColumn.setReboilerVaporBoilupRatio(1.8);
     assertEquals(DistillationColumn.ReboilerMode.VAPOR_BOILUP_RATIO, apiColumn.getReboilerMode());
@@ -535,25 +521,22 @@ public class DocExamplesCompilationTest {
     apiColumn.setTrayDryPressureDrop(200.0);
     assertTrue(apiColumn.isDynamicColumnEnabled());
     assertTrue(apiColumn.isDynamicEnergyEnabled());
-    assertEquals(DistillationColumn.DynamicColumnModel.EXPERIMENTAL_EULER,
-        apiColumn.getDynamicColumnModel());
+    assertEquals(DistillationColumn.DynamicColumnModel.EXPERIMENTAL_EULER, apiColumn.getDynamicColumnModel());
     assertTrue(apiColumn.isDynamicColumnModelExperimental());
 
     Stream sideDrawFeed = createDocMethaneFeed("doc side draw feed");
-    DistillationColumn sideDrawColumn =
-        new DistillationColumn("Doc Side Draw Column", 1, false, false);
+    DistillationColumn sideDrawColumn = new DistillationColumn("Doc Side Draw Column", 1, false, false);
     sideDrawColumn.addFeedStream(sideDrawFeed, 0);
     sideDrawColumn.setGasSideDrawFraction(0, 0.10);
     sideDrawColumn.setLiquidSideDrawFraction(0, 0.0);
-    DistillationColumn.ColumnSideDrawSpecification sideDrawSpec = sideDrawColumn
-        .addSideDrawFlowSpecification(0, DistillationColumn.SideDrawPhase.GAS, 25.0, "kg/hr");
+    DistillationColumn.ColumnSideDrawSpecification sideDrawSpec = sideDrawColumn.addSideDrawFlowSpecification(0,
+	DistillationColumn.SideDrawPhase.GAS, 25.0, "kg/hr");
     sideDrawSpec.setTolerance(1.0e-5);
     sideDrawSpec.setMaxIterations(15);
     sideDrawColumn.setMaxColumnTearIterations(20);
     sideDrawColumn.setColumnTearTolerance(1.0e-5);
     sideDrawColumn.run();
-    StreamInterface gasSideDraw =
-        sideDrawColumn.getSideDrawStream(0, DistillationColumn.SideDrawPhase.GAS);
+    StreamInterface gasSideDraw = sideDrawColumn.getSideDrawStream(0, DistillationColumn.SideDrawPhase.GAS);
     List<StreamInterface> allSideDraws = sideDrawColumn.getSideDrawStreams();
     assertTrue(gasSideDraw.getFlowRate("kg/hr") > 0.0);
     assertTrue(allSideDraws.contains(gasSideDraw));
@@ -562,11 +545,9 @@ public class DocExamplesCompilationTest {
     assertTrue(sideDrawColumn.isLastColumnTearConverged());
 
     Stream pumparoundFeed = createDocPentaneFeed("doc pumparound feed");
-    DistillationColumn pumparoundColumn =
-        new DistillationColumn("Doc Pumparound Column", 1, false, false);
+    DistillationColumn pumparoundColumn = new DistillationColumn("Doc Pumparound Column", 1, false, false);
     pumparoundColumn.addFeedStream(pumparoundFeed, 0);
-    DistillationColumn.ColumnPumparound pumparound =
-        pumparoundColumn.addLiquidPumparound("PA-1", 0, 0, 0.15, 10.0);
+    DistillationColumn.ColumnPumparound pumparound = pumparoundColumn.addLiquidPumparound("PA-1", 0, 0, 0.15, 10.0);
     pumparoundColumn.setMaxPumparoundIterations(12);
     pumparoundColumn.setPumparoundTolerance(1.0e-4);
     pumparoundColumn.run();
@@ -580,10 +561,9 @@ public class DocExamplesCompilationTest {
     column.enableHydraulicPressureDropCoupling("sieve");
     assertTrue(column.isHydraulicPressureDropCouplingEnabled());
 
-    DistillationColumn shortcutColumn =
-        new DistillationColumn("Doc Shortcut Init Column", 3, true, true);
-    DistillationColumn.ShortcutInitializationResult init =
-        shortcutColumn.initializeFromShortcut(runFeed, "ethane", "propane", 0.90, 0.90, 1.3);
+    DistillationColumn shortcutColumn = new DistillationColumn("Doc Shortcut Init Column", 3, true, true);
+    DistillationColumn.ShortcutInitializationResult init = shortcutColumn.initializeFromShortcut(runFeed, "ethane",
+	"propane", 0.90, 0.90, 1.3);
     assertNotNull(init);
     assertNotNull(shortcutColumn.getLastShortcutInitializationResult());
     shortcutColumn.setMaxTrayOptimizationCandidates(5);
@@ -593,8 +573,7 @@ public class DocExamplesCompilationTest {
 
     Stream rateGas = createDocRateBasedGas("doc rate gas", 0.10);
     Stream rateLiquid = createDocRateBasedLiquid("doc rate liquid", 0.0);
-    RateBasedPackedColumn absorber =
-        new RateBasedPackedColumn("Doc CO2 absorber", rateGas, rateLiquid);
+    RateBasedPackedColumn absorber = new RateBasedPackedColumn("Doc CO2 absorber", rateGas, rateLiquid);
     absorber.setColumnDiameter(1.2);
     absorber.setPackedHeight(6.0);
     absorber.setNumberOfSegments(3);
@@ -642,7 +621,7 @@ public class DocExamplesCompilationTest {
   /**
    * Create a gas stream for rate-based packed-column documentation examples.
    *
-   * @param name stream name
+   * @param name        stream name
    * @param co2Fraction carbon dioxide mole fraction
    * @return initialized gas stream
    */
@@ -661,7 +640,7 @@ public class DocExamplesCompilationTest {
   /**
    * Create a liquid stream for rate-based packed-column documentation examples.
    *
-   * @param name stream name
+   * @param name        stream name
    * @param co2Fraction carbon dioxide mole fraction
    * @return initialized liquid stream
    */
@@ -1004,19 +983,19 @@ public class DocExamplesCompilationTest {
   @Test
   public void testVibrationScreeningDoc() {
     VibrationAnalysis.VibrationResult result = VibrationAnalysis.performScreening(0.01905, // tube
-                                                                                           // OD (m)
-        0.01483, // tube ID (m)
-        0.4, // unsupported span (m)
-        0.02381, // tube pitch (m)
-        200e9, // Young's modulus (Pa) - carbon steel
-        7800.0, // tube material density (kg/m3)
-        2.0, // shell-side crossflow velocity (m/s)
-        50.0, // shell fluid density (kg/m3)
-        800.0, // tube fluid density (kg/m3)
-        0.5, // shell ID (m)
-        340.0, // sonic velocity in shell fluid (m/s)
-        0.03, // damping ratio
-        true); // triangular pitch
+											   // OD (m)
+	0.01483, // tube ID (m)
+	0.4, // unsupported span (m)
+	0.02381, // tube pitch (m)
+	200e9, // Young's modulus (Pa) - carbon steel
+	7800.0, // tube material density (kg/m3)
+	2.0, // shell-side crossflow velocity (m/s)
+	50.0, // shell fluid density (kg/m3)
+	800.0, // tube fluid density (kg/m3)
+	0.5, // shell ID (m)
+	340.0, // sonic velocity in shell fluid (m/s)
+	0.03, // damping ratio
+	true); // triangular pitch
 
     assertNotNull(result, "Vibration result should not be null");
     assertNotNull(result.getSummary(), "Summary should not be null");
@@ -1029,15 +1008,13 @@ public class DocExamplesCompilationTest {
    */
   @Test
   public void testVibrationIndividualCalcsDoc() {
-    double fn = VibrationAnalysis.calcNaturalFrequency(0.01905, 0.01483, 0.4, 200e9, 7800.0, 800.0,
-        50.0, "pinned");
+    double fn = VibrationAnalysis.calcNaturalFrequency(0.01905, 0.01483, 0.4, 200e9, 7800.0, 800.0, 50.0, "pinned");
     assertTrue(fn > 0, "Natural frequency should be positive");
 
     double fvs = VibrationAnalysis.calcVortexSheddingFrequency(2.0, 0.01905, 0.02381);
     assertTrue(fvs > 0, "Vortex shedding frequency should be positive");
 
-    double vCrit =
-        VibrationAnalysis.calcCriticalVelocityConnors(fn, 0.01905, 0.03, 1.5, 50.0, true);
+    double vCrit = VibrationAnalysis.calcCriticalVelocityConnors(fn, 0.01905, 0.03, 1.5, 50.0, true);
     assertTrue(vCrit > 0, "Critical velocity should be positive");
 
     double fac = VibrationAnalysis.calcAcousticFrequency(0.5, 340.0, 1);
@@ -1077,8 +1054,7 @@ public class DocExamplesCompilationTest {
     zone1.shellCp = 4180.0;
     zone1.shellConductivity = 0.60;
 
-    ThermalDesignCalculator.ZoneDefinition[] zones =
-        new ThermalDesignCalculator.ZoneDefinition[] {zone1};
+    ThermalDesignCalculator.ZoneDefinition[] zones = new ThermalDesignCalculator.ZoneDefinition[] { zone1 };
 
     ThermalDesignCalculator.ZoneResult[] results = calc.calculateZones(zones);
     assertNotNull(results, "Zone results should not be null");
@@ -1140,8 +1116,8 @@ public class DocExamplesCompilationTest {
     inlet.setPressure(70.0, "bara");
     inlet.run();
 
-    neqsim.process.equipment.pipeline.TwoFluidPipe pipe =
-        new neqsim.process.equipment.pipeline.TwoFluidPipe("export line", inlet);
+    neqsim.process.equipment.pipeline.TwoFluidPipe pipe = new neqsim.process.equipment.pipeline.TwoFluidPipe(
+	"export line", inlet);
     pipe.setLength(300.0);
     pipe.setDiameter(0.20);
     pipe.setRoughness(1.0e-5);
@@ -1154,18 +1130,15 @@ public class DocExamplesCompilationTest {
     double outletPressure = pipe.getPressureProfile()[pipe.getPressureProfile().length - 1] / 1.0e5;
     assertEquals(55.0, outletPressure, 0.05);
 
-    pipe.setInletBoundaryCondition(
-        neqsim.process.equipment.pipeline.TwoFluidPipe.BoundaryCondition.CONSTANT_FLOW);
+    pipe.setInletBoundaryCondition(neqsim.process.equipment.pipeline.TwoFluidPipe.BoundaryCondition.CONSTANT_FLOW);
     pipe.setInletMassFlow(4.0, "kg/sec");
-    pipe.setOutletBoundaryCondition(
-        neqsim.process.equipment.pipeline.TwoFluidPipe.BoundaryCondition.CONSTANT_PRESSURE);
+    pipe.setOutletBoundaryCondition(neqsim.process.equipment.pipeline.TwoFluidPipe.BoundaryCondition.CONSTANT_PRESSURE);
     pipe.setOutletPressure(55.0, "bara");
     pipe.run();
 
     pipe.openOutlet(52.0, "bara");
     pipe.runTransient(2.0, java.util.UUID.randomUUID());
-    assertEquals(52.0, pipe.getPressureProfile()[pipe.getPressureProfile().length - 1] / 1.0e5,
-        0.05);
+    assertEquals(52.0, pipe.getPressureProfile()[pipe.getPressureProfile().length - 1] / 1.0e5, 0.05);
   }
 
   /**
@@ -1173,8 +1146,7 @@ public class DocExamplesCompilationTest {
    */
   @Test
   public void testFullMechanicalDesignIntegrationDoc() {
-    neqsim.thermo.system.SystemSrkEos fluid =
-        new neqsim.thermo.system.SystemSrkEos(273.15 + 60.0, 20.0);
+    neqsim.thermo.system.SystemSrkEos fluid = new neqsim.thermo.system.SystemSrkEos(273.15 + 60.0, 20.0);
     fluid.addComponent("methane", 120.0);
     fluid.addComponent("ethane", 120.0);
     fluid.addComponent("n-heptane", 3.0);
@@ -1189,8 +1161,8 @@ public class DocExamplesCompilationTest {
     cold.setTemperature(20.0, "C");
     cold.setFlowRate(310.0, "kg/hr");
 
-    neqsim.process.equipment.heatexchanger.HeatExchanger hx =
-        new neqsim.process.equipment.heatexchanger.HeatExchanger("E-100", hot, cold);
+    neqsim.process.equipment.heatexchanger.HeatExchanger hx = new neqsim.process.equipment.heatexchanger.HeatExchanger(
+	"E-100", hot, cold);
     hx.setUAvalue(1000.0);
 
     ProcessSystem ps = new ProcessSystem();
@@ -1200,14 +1172,12 @@ public class DocExamplesCompilationTest {
     ps.run();
 
     hx.initMechanicalDesign();
-    neqsim.process.mechanicaldesign.heatexchanger.HeatExchangerMechanicalDesign design =
-        hx.getMechanicalDesign();
+    neqsim.process.mechanicaldesign.heatexchanger.HeatExchangerMechanicalDesign design = hx.getMechanicalDesign();
     design.calcDesign();
 
     assertNotNull(design.getSelectedType(), "Selected type should not be null");
     assertNotNull(design.getSelectedSizingResult(), "Sizing result should not be null");
-    assertTrue(design.getSelectedSizingResult().getRequiredArea() > 0,
-        "Required area should be positive");
+    assertTrue(design.getSelectedSizingResult().getRequiredArea() > 0, "Required area should be positive");
     assertTrue(design.getWeightTotal() > 0, "Weight should be positive");
   }
 
@@ -1216,8 +1186,7 @@ public class DocExamplesCompilationTest {
    */
   @Test
   public void testRatingModeDocExample() {
-    neqsim.thermo.system.SystemSrkEos hotFluid =
-        new neqsim.thermo.system.SystemSrkEos(273.15 + 100.0, 20.0);
+    neqsim.thermo.system.SystemSrkEos hotFluid = new neqsim.thermo.system.SystemSrkEos(273.15 + 100.0, 20.0);
     hotFluid.addComponent("methane", 0.85);
     hotFluid.addComponent("ethane", 0.10);
     hotFluid.addComponent("propane", 0.05);
@@ -1231,8 +1200,8 @@ public class DocExamplesCompilationTest {
     coldStream.setTemperature(20.0, "C");
     coldStream.setFlowRate(500.0, "kg/hr");
 
-    neqsim.process.equipment.heatexchanger.HeatExchanger hx =
-        new neqsim.process.equipment.heatexchanger.HeatExchanger("E-100", hotStream, coldStream);
+    neqsim.process.equipment.heatexchanger.HeatExchanger hx = new neqsim.process.equipment.heatexchanger.HeatExchanger(
+	"E-100", hotStream, coldStream);
 
     ThermalDesignCalculator ratingCalc = new ThermalDesignCalculator();
     ratingCalc.setTubeODm(0.01905);
@@ -1260,8 +1229,8 @@ public class DocExamplesCompilationTest {
   }
 
   /**
-   * ThermalDesignCalculator.toJson() as referenced in CHANGELOG, PR_DESCRIPTION, and
-   * neqsim-api-patterns SKILL.md documentation.
+   * ThermalDesignCalculator.toJson() as referenced in CHANGELOG, PR_DESCRIPTION, and neqsim-api-patterns SKILL.md
+   * documentation.
    */
   @Test
   public void testThermalDesignCalculatorToJsonDoc() {
@@ -1286,8 +1255,7 @@ public class DocExamplesCompilationTest {
     assertNotNull(json, "toJson() should not return null");
     assertFalse(json.isEmpty(), "toJson() should not return empty string");
     assertTrue(json.contains("overallU_Wpm2K"), "JSON should contain overallU_Wpm2K");
-    assertTrue(json.contains("bellDelawareCorrections"),
-        "JSON should contain Bell-Delaware corrections");
+    assertTrue(json.contains("bellDelawareCorrections"), "JSON should contain Bell-Delaware corrections");
 
     Map<String, Object> map = calc.toMap();
     assertNotNull(map, "toMap() should not return null");
@@ -1297,55 +1265,53 @@ public class DocExamplesCompilationTest {
   }
 
   /**
-   * InterfacialFriction Hart correlation as corrected in two_fluid_model.md — instance method with
-   * 8 parameters returning InterfacialFrictionResult.
+   * InterfacialFriction Hart correlation as corrected in two_fluid_model.md — instance method with 8 parameters
+   * returning InterfacialFrictionResult.
    */
   @Test
   public void testInterfacialFrictionHartCorrelationDoc() {
     InterfacialFriction ifCalc = new InterfacialFriction();
     InterfacialFrictionResult result = ifCalc.calcHartCorrelation(10.0, // gasVelocity m/s
-        0.5, // liquidVelocity m/s
-        50.0, // gasDensity kg/m3
-        800.0, // liquidDensity kg/m3
-        1.5e-5, // gasViscosity Pa.s
-        0.001, // liquidViscosity Pa.s
-        0.3, // liquidHoldup
-        0.3); // diameter m
+	0.5, // liquidVelocity m/s
+	50.0, // gasDensity kg/m3
+	800.0, // liquidDensity kg/m3
+	1.5e-5, // gasViscosity Pa.s
+	0.001, // liquidViscosity Pa.s
+	0.3, // liquidHoldup
+	0.3); // diameter m
     assertNotNull(result, "Hart correlation result should not be null");
     assertTrue(result.frictionFactor >= 0, "Friction factor should be non-negative");
   }
 
   /**
-   * InterfacialFriction Andreussi-Persen correlation as corrected in two_fluid_model.md — instance
-   * method with 8 parameters returning InterfacialFrictionResult.
+   * InterfacialFriction Andreussi-Persen correlation as corrected in two_fluid_model.md — instance method with 8
+   * parameters returning InterfacialFrictionResult.
    */
   @Test
   public void testInterfacialFrictionAndreussiPersenDoc() {
     InterfacialFriction ifCalc = new InterfacialFriction();
     InterfacialFrictionResult result = ifCalc.calcAndreussiPersenCorrelation(10.0, // gasVelocity
-                                                                                   // m/s
-        0.5, // liquidVelocity m/s
-        50.0, // gasDensity kg/m3
-        800.0, // liquidDensity kg/m3
-        1.5e-5, // gasViscosity Pa.s
-        0.3, // liquidHoldup
-        0.3, // diameter m
-        0.0); // inclination radians (horizontal)
+										   // m/s
+	0.5, // liquidVelocity m/s
+	50.0, // gasDensity kg/m3
+	800.0, // liquidDensity kg/m3
+	1.5e-5, // gasViscosity Pa.s
+	0.3, // liquidHoldup
+	0.3, // diameter m
+	0.0); // inclination radians (horizontal)
     assertNotNull(result, "Andreussi-Persen result should not be null");
     assertTrue(result.frictionFactor >= 0, "Friction factor should be non-negative");
   }
 
   /**
-   * Gas scrubber mechanical design + TR3500 conformity check example from
-   * docs/process/equipment/separators.md. Verifies the full API path used by the Kollsnes scrubber
-   * performance task (GasScrubber → initMechanicalDesign → GasScrubberMechanicalDesign setters →
-   * setConformityRules("TR3500") → checkConformity()).
+   * Gas scrubber mechanical design + TR3500 conformity check example from docs/process/equipment/separators.md.
+   * Verifies the full API path used by the Kollsnes scrubber performance task (GasScrubber → initMechanicalDesign →
+   * GasScrubberMechanicalDesign setters → setConformityRules("TR3500") → checkConformity()).
    */
   @Test
   public void testGasScrubberConformityCheckDoc() {
     // Build a simple natural-gas feed
-    neqsim.thermo.system.SystemSrkEos fluid =
-        new neqsim.thermo.system.SystemSrkEos(273.15 + 40.0, 80.0);
+    neqsim.thermo.system.SystemSrkEos fluid = new neqsim.thermo.system.SystemSrkEos(273.15 + 40.0, 80.0);
     fluid.addComponent("methane", 0.90);
     fluid.addComponent("ethane", 0.05);
     fluid.addComponent("propane", 0.03);
@@ -1357,16 +1323,15 @@ public class DocExamplesCompilationTest {
     feed.setTemperature(40.0, "C");
     feed.setPressure(80.0, "bara");
 
-    neqsim.process.equipment.separator.GasScrubber scrubber =
-        new neqsim.process.equipment.separator.GasScrubber("25-VA301", feed);
+    neqsim.process.equipment.separator.GasScrubber scrubber = new neqsim.process.equipment.separator.GasScrubber(
+	"25-VA301", feed);
     scrubber.setInternalDiameter(2.900);
     scrubber.setSeparatorLength(4.230);
     scrubber.setOrientation("vertical");
     scrubber.initMechanicalDesign();
 
-    neqsim.process.mechanicaldesign.separator.GasScrubberMechanicalDesign d =
-        (neqsim.process.mechanicaldesign.separator.GasScrubberMechanicalDesign) scrubber
-            .getMechanicalDesign();
+    neqsim.process.mechanicaldesign.separator.GasScrubberMechanicalDesign d = (neqsim.process.mechanicaldesign.separator.GasScrubberMechanicalDesign) scrubber
+	.getMechanicalDesign();
     d.setMaxOperationPressure(100.0);
     d.setInletNozzleID((762.0 - 2 * 62.75) / 1000.0);
     d.setInletDevice("schoepentoeter");
@@ -1385,8 +1350,7 @@ public class DocExamplesCompilationTest {
     neqsim.process.mechanicaldesign.separator.conformity.ConformityReport rep = d.checkConformity();
     assertNotNull(rep, "Conformity report must not be null");
     assertFalse(rep.getResults().isEmpty(), "Report must contain at least one check");
-    for (neqsim.process.mechanicaldesign.separator.conformity.ConformityResult r : rep
-        .getResults()) {
+    for (neqsim.process.mechanicaldesign.separator.conformity.ConformityResult r : rep.getResults()) {
       assertNotNull(r.getCheckName());
       assertNotNull(r.getStatus());
     }

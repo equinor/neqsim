@@ -12,8 +12,8 @@ import neqsim.util.annotation.AISchemaDiscovery;
  * AI Integration Helper for NeqSim.
  *
  * <p>
- * This class provides a unified entry point for AI/ML agents to interact with NeqSim, combining
- * validation, schema discovery, and RL environment access.
+ * This class provides a unified entry point for AI/ML agents to interact with NeqSim, combining validation, schema
+ * discovery, and RL environment access.
  * </p>
  *
  * <h2>Features:</h2>
@@ -62,9 +62,7 @@ public class AIIntegrationHelper implements Serializable {
    * @param process process system to wrap
    * @return AI integration helper
    */
-  @AIExposable(description = "Create an AI integration helper for a process system",
-      category = "ai-integration", example = "AIIntegrationHelper.forProcess(process)",
-      priority = 100, safe = true)
+  @AIExposable(description = "Create an AI integration helper for a process system", category = "ai-integration", example = "AIIntegrationHelper.forProcess(process)", priority = 100, safe = true)
   public static AIIntegrationHelper forProcess(ProcessSystem process) {
     return new AIIntegrationHelper(process);
   }
@@ -85,8 +83,7 @@ public class AIIntegrationHelper implements Serializable {
    *
    * @return validation result
    */
-  @AIExposable(description = "Validate the process system before running", category = "validation",
-      example = "helper.validate()", priority = 90, safe = true)
+  @AIExposable(description = "Validate the process system before running", category = "validation", example = "helper.validate()", priority = 90, safe = true)
   public ValidationResult validate() {
     this.lastValidation = SimulationValidator.validate(process);
     return this.lastValidation;
@@ -97,9 +94,7 @@ public class AIIntegrationHelper implements Serializable {
    *
    * @return true if ready (no critical/major issues)
    */
-  @AIExposable(description = "Check if the process is ready to run without errors",
-      category = "validation", example = "if (helper.isReady()) { ... }", priority = 95,
-      safe = true)
+  @AIExposable(description = "Check if the process is ready to run without errors", category = "validation", example = "if (helper.isReady()) { ... }", priority = 95, safe = true)
   public boolean isReady() {
     if (this.lastValidation == null) {
       validate();
@@ -112,8 +107,7 @@ public class AIIntegrationHelper implements Serializable {
    *
    * @return validation report with issues and remediation hints
    */
-  @AIExposable(description = "Get a human-readable validation report", category = "validation",
-      example = "System.out.println(helper.getValidationReport())", priority = 85, safe = true)
+  @AIExposable(description = "Get a human-readable validation report", category = "validation", example = "System.out.println(helper.getValidationReport())", priority = 85, safe = true)
   public String getValidationReport() {
     if (this.lastValidation == null) {
       validate();
@@ -126,15 +120,14 @@ public class AIIntegrationHelper implements Serializable {
    *
    * @return array of issues as structured text
    */
-  @AIExposable(description = "Get structured validation issues for AI parsing",
-      category = "validation", example = "String[] issues = helper.getIssuesAsText()",
-      priority = 80, safe = true)
+  @AIExposable(description = "Get structured validation issues for AI parsing", category = "validation", example = "String[] issues = helper.getIssuesAsText()", priority = 80, safe = true)
   public String[] getIssuesAsText() {
     if (this.lastValidation == null) {
       validate();
     }
-    return this.lastValidation.getIssues().stream().map(issue -> String.format("[%s] %s - %s",
-        issue.getSeverity(), issue.getMessage(), issue.getRemediation())).toArray(String[]::new);
+    return this.lastValidation.getIssues().stream()
+	.map(issue -> String.format("[%s] %s - %s", issue.getSeverity(), issue.getMessage(), issue.getRemediation()))
+	.toArray(String[]::new);
   }
 
   /**
@@ -142,9 +135,7 @@ public class AIIntegrationHelper implements Serializable {
    *
    * @return execution result with success/failure info
    */
-  @AIExposable(description = "Run the process simulation with pre-validation",
-      category = "execution", example = "ExecutionResult result = helper.safeRun()", priority = 75,
-      safe = false)
+  @AIExposable(description = "Run the process simulation with pre-validation", category = "execution", example = "ExecutionResult result = helper.safeRun()", priority = 75, safe = false)
   public ExecutionResult safeRun() {
     ValidationResult preValidation = validate();
     if (!preValidation.isValid()) {
@@ -155,7 +146,7 @@ public class AIIntegrationHelper implements Serializable {
       process.run();
       ValidationResult postValidation = SimulationValidator.validateOutput(process);
       if (!postValidation.isValid()) {
-        return ExecutionResult.warning("Process ran but has output issues", postValidation);
+	return ExecutionResult.warning("Process ran but has output issues", postValidation);
       }
       return ExecutionResult.success(postValidation);
     } catch (Exception e) {
@@ -168,9 +159,7 @@ public class AIIntegrationHelper implements Serializable {
    *
    * @return formatted API documentation
    */
-  @AIExposable(description = "Get API documentation for AI agent consumption",
-      category = "discovery", example = "String docs = helper.getAPIDocumentation()",
-      priority = 100, safe = true)
+  @AIExposable(description = "Get API documentation for AI agent consumption", category = "discovery", example = "String docs = helper.getAPIDocumentation()", priority = 100, safe = true)
   public String getAPIDocumentation() {
     return schemaDiscovery.getQuickStartPrompt();
   }
@@ -184,8 +173,7 @@ public class AIIntegrationHelper implements Serializable {
    *
    * @return configured RL environment
    */
-  @AIExposable(description = "Create an RL training environment for the process", category = "ml",
-      example = "RLEnvironment env = helper.createRLEnvironment()", priority = 70, safe = true)
+  @AIExposable(description = "Create an RL training environment for the process", category = "ml", example = "RLEnvironment env = helper.createRLEnvironment()", priority = 70, safe = true)
   public RLEnvironment createRLEnvironment() {
     return new RLEnvironment(process);
   }
@@ -196,9 +184,7 @@ public class AIIntegrationHelper implements Serializable {
    * @param equipment equipment to validate
    * @return validation result
    */
-  @AIExposable(description = "Validate a specific piece of equipment", category = "validation",
-      example = "ValidationResult result = helper.validateEquipment(separator)", priority = 75,
-      safe = true)
+  @AIExposable(description = "Validate a specific piece of equipment", category = "validation", example = "ValidationResult result = helper.validateEquipment(separator)", priority = 75, safe = true)
   public ValidationResult validateEquipment(ProcessEquipmentInterface equipment) {
     return SimulationValidator.validate(equipment);
   }
@@ -209,9 +195,7 @@ public class AIIntegrationHelper implements Serializable {
    * @param system thermodynamic system to validate
    * @return validation result
    */
-  @AIExposable(description = "Validate a thermodynamic system configuration",
-      category = "validation", example = "ValidationResult result = helper.validateFluid(fluid)",
-      priority = 75, safe = true)
+  @AIExposable(description = "Validate a thermodynamic system configuration", category = "validation", example = "ValidationResult result = helper.validateFluid(fluid)", priority = 75, safe = true)
   public ValidationResult validateFluid(SystemInterface system) {
     return SimulationValidator.validate(system);
   }
@@ -241,8 +225,7 @@ public class AIIntegrationHelper implements Serializable {
     private final transient ValidationResult validation;
     private final Exception exception;
 
-    private ExecutionResult(Status status, String message, ValidationResult validation,
-        Exception exception) {
+    private ExecutionResult(Status status, String message, ValidationResult validation, Exception exception) {
       this.status = status;
       this.message = message;
       this.validation = validation;
@@ -262,7 +245,7 @@ public class AIIntegrationHelper implements Serializable {
     /**
      * Creates a warning result.
      *
-     * @param message the warning message
+     * @param message    the warning message
      * @param validation the validation result
      * @return an ExecutionResult with WARNING status
      */
@@ -273,7 +256,7 @@ public class AIIntegrationHelper implements Serializable {
     /**
      * Creates a failure result.
      *
-     * @param message the failure message
+     * @param message    the failure message
      * @param validation the validation result
      * @return an ExecutionResult with FAILURE status
      */
@@ -285,7 +268,7 @@ public class AIIntegrationHelper implements Serializable {
      * Creates an error result.
      *
      * @param message the error message
-     * @param e the exception that caused the error
+     * @param e       the exception that caused the error
      * @return an ExecutionResult with ERROR status
      */
     public static ExecutionResult error(String message, Exception e) {
@@ -349,14 +332,14 @@ public class AIIntegrationHelper implements Serializable {
       sb.append("**Message:** ").append(message).append("\n\n");
 
       if (validation != null) {
-        sb.append("### Validation Details\n");
-        sb.append(validation.getReport());
+	sb.append("### Validation Details\n");
+	sb.append(validation.getReport());
       }
 
       if (exception != null) {
-        sb.append("### Exception\n");
-        sb.append("**Type:** ").append(exception.getClass().getSimpleName()).append("\n");
-        sb.append("**Message:** ").append(exception.getMessage()).append("\n");
+	sb.append("### Exception\n");
+	sb.append("**Type:** ").append(exception.getClass().getSimpleName()).append("\n");
+	sb.append("**Message:** ").append(exception.getMessage()).append("\n");
       }
 
       return sb.toString();

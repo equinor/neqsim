@@ -10,9 +10,9 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
  * Mechanical design for power generation equipment (gas turbines and waste heat recovery units).
  *
  * <p>
- * Covers gas turbine selection based on power rating and fuel type, waste heat recovery unit (WHRU)
- * sizing, exhaust gas characteristics estimation, and weight/footprint estimation. Applicable to
- * {@link GasTurbine} and similar power generation equipment.
+ * Covers gas turbine selection based on power rating and fuel type, waste heat recovery unit (WHRU) sizing, exhaust gas
+ * characteristics estimation, and weight/footprint estimation. Applicable to {@link GasTurbine} and similar power
+ * generation equipment.
  * </p>
  *
  * @author esol

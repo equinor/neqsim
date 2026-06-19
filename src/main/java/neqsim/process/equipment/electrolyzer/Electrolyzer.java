@@ -132,7 +132,7 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
    * Constructor for Electrolyzer.
    * </p>
    *
-   * @param name name of unit
+   * @param name        name of unit
    * @param inletStream water inlet stream
    */
   public Electrolyzer(String name, StreamInterface inletStream) {
@@ -149,11 +149,9 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
    */
   public void setInletStream(StreamInterface inletStream) {
     this.waterInlet = inletStream;
-    SystemInterface h2System =
-        new Fluid().create2(new String[] {"hydrogen"}, new double[] {1.0}, "mole/sec");
+    SystemInterface h2System = new Fluid().create2(new String[] { "hydrogen" }, new double[] { 1.0 }, "mole/sec");
     hydrogenOutStream = new Stream("hydrogenOutStream", h2System);
-    SystemInterface o2System =
-        new Fluid().create2(new String[] {"oxygen"}, new double[] {1.0}, "mole/sec");
+    SystemInterface o2System = new Fluid().create2(new String[] { "oxygen" }, new double[] { 1.0 }, "mole/sec");
     oxygenOutStream = new Stream("oxygenOutStream", o2System);
 
     double pressure = inletStream.getPressure("bara");
@@ -209,7 +207,7 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   public double getMassBalance(String unit) {
     double inletFlow = waterInlet.getThermoSystem().getFlowRate(unit);
     double outletFlow = hydrogenOutStream.getThermoSystem().getFlowRate(unit)
-        + oxygenOutStream.getThermoSystem().getFlowRate(unit);
+	+ oxygenOutStream.getThermoSystem().getFlowRate(unit);
     return outletFlow - inletFlow;
   }
 
@@ -226,36 +224,34 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
     if (operationMode == OperationMode.POWER) {
       double area = getStackActiveArea();
       if (area <= 0.0) {
-        throw new IllegalStateException("Power-driven mode requires stack geometry: call "
-            + "sizeStack(...), setStackActiveArea(...), or setActiveCellArea(...) + "
-            + "setNumberOfCells(...) before run().");
+	throw new IllegalStateException("Power-driven mode requires stack geometry: call "
+	    + "sizeStack(...), setStackActiveArea(...), or setActiveCellArea(...) + "
+	    + "setNumberOfCells(...) before run().");
       }
       double systemBudget = availablePower;
-      double ratedSystem =
-          ratedPower > 0.0 ? systemPowerFromStack(ratedPower) : Double.POSITIVE_INFINITY;
+      double ratedSystem = ratedPower > 0.0 ? systemPowerFromStack(ratedPower) : Double.POSITIVE_INFINITY;
 
       // NIP-3: standby below minimum turndown.
       if (ratedPower > 0.0 && systemBudget < minimumLoadFraction * ratedSystem) {
-        standby = true;
-        currentDensity = 0.0;
-        stackCurrent = 0.0;
-        cellVoltage =
-            ivCharacteristic != null ? ivCharacteristic.getReversibleVoltage(tempK) : cellVoltage;
-        stackPower = 0.0;
-        hydrogenFlow = 0.0;
-        waterInlet.setFlowRate(0.0, "mole/sec");
-        waterInlet.run(id);
-        setProductStreams(0.0, 0.0, inletPressure, inletPressure, tempK, id);
-        energyStream.setDuty(standbyPowerFraction * ratedPower);
-        setEnergyStream(true);
-        setCalculationIdentifier(id);
-        return;
+	standby = true;
+	currentDensity = 0.0;
+	stackCurrent = 0.0;
+	cellVoltage = ivCharacteristic != null ? ivCharacteristic.getReversibleVoltage(tempK) : cellVoltage;
+	stackPower = 0.0;
+	hydrogenFlow = 0.0;
+	waterInlet.setFlowRate(0.0, "mole/sec");
+	waterInlet.run(id);
+	setProductStreams(0.0, 0.0, inletPressure, inletPressure, tempK, id);
+	energyStream.setDuty(standbyPowerFraction * ratedPower);
+	setEnergyStream(true);
+	setCalculationIdentifier(id);
+	return;
       }
 
       // NIP-3: curtail any power above rated.
       if (ratedPower > 0.0 && systemBudget > ratedSystem) {
-        curtailedPower = systemBudget - ratedSystem;
-        systemBudget = ratedSystem;
+	curtailedPower = systemBudget - ratedSystem;
+	systemBudget = ratedSystem;
       }
 
       // NIP-5: convert system (AC) power budget into stack (DC) power.
@@ -275,15 +271,14 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
       double waterFlow = waterInlet.getFlowRate("mole/sec");
       hydrogenFlow = waterFlow * faradaicEfficiency;
       if (ivCharacteristic != null) {
-        cellVoltage = ivCharacteristic.getCellVoltage(currentDensity, tempK);
+	cellVoltage = ivCharacteristic.getCellVoltage(currentDensity, tempK);
       }
       stackCurrent = hydrogenFlow * 2.0 * FARADAY_CONSTANT;
       stackPower = stackCurrent * cellVoltage;
     }
 
     double oxygenFlow = hydrogenFlow / 2.0;
-    double deliveryPressure =
-        hydrogenDeliveryPressure > 0.0 ? hydrogenDeliveryPressure : inletPressure;
+    double deliveryPressure = hydrogenDeliveryPressure > 0.0 ? hydrogenDeliveryPressure : inletPressure;
     setProductStreams(hydrogenFlow, oxygenFlow, deliveryPressure, inletPressure, tempK, id);
 
     energyStream.setDuty(stackPower);
@@ -294,15 +289,15 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   /**
    * Set the hydrogen and oxygen product stream flow rates, pressures and temperature, and run them.
    *
-   * @param hydrogenFlow hydrogen molar flow (mole/sec)
-   * @param oxygenFlow oxygen molar flow (mole/sec)
+   * @param hydrogenFlow     hydrogen molar flow (mole/sec)
+   * @param oxygenFlow       oxygen molar flow (mole/sec)
    * @param hydrogenPressure hydrogen delivery pressure (bara)
-   * @param oxygenPressure oxygen delivery pressure (bara)
-   * @param temperatureK product temperature (K)
-   * @param id calculation identifier
+   * @param oxygenPressure   oxygen delivery pressure (bara)
+   * @param temperatureK     product temperature (K)
+   * @param id               calculation identifier
    */
-  private void setProductStreams(double hydrogenFlow, double oxygenFlow, double hydrogenPressure,
-      double oxygenPressure, double temperatureK, UUID id) {
+  private void setProductStreams(double hydrogenFlow, double oxygenFlow, double hydrogenPressure, double oxygenPressure,
+      double temperatureK, UUID id) {
     hydrogenOutStream.setFlowRate(hydrogenFlow, "mole/sec");
     hydrogenOutStream.setPressure(hydrogenPressure, "bara");
     hydrogenOutStream.setTemperature(temperatureK, "K");
@@ -325,14 +320,14 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
     if (operationMode == OperationMode.POWER && maxRampRate > 0.0 && ratedPower > 0.0) {
       double target = availablePower;
       if (operatingPower < 0.0) {
-        operatingPower = 0.0; // cold start: ramp up from zero
+	operatingPower = 0.0; // cold start: ramp up from zero
       }
       double maxDelta = maxRampRate * ratedPower * dt;
       double ramped = target;
       if (target > operatingPower) {
-        ramped = Math.min(target, operatingPower + maxDelta);
+	ramped = Math.min(target, operatingPower + maxDelta);
       } else if (target < operatingPower) {
-        ramped = Math.max(target, operatingPower - maxDelta);
+	ramped = Math.max(target, operatingPower - maxDelta);
       }
       double commanded = availablePower;
       availablePower = ramped;
@@ -342,16 +337,15 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
     } else {
       run(id);
       if (operationMode == OperationMode.POWER) {
-        operatingPower = availablePower;
+	operatingPower = availablePower;
       }
     }
     increaseTime(dt);
   }
 
   /**
-   * Set the electrolyzer technology. Applies the technology's default cell voltage, current
-   * density, and faradaic efficiency unless they have already been set explicitly. Does not
-   * override an already-attached I-V characteristic.
+   * Set the electrolyzer technology. Applies the technology's default cell voltage, current density, and faradaic
+   * efficiency unless they have already been set explicitly. Does not override an already-attached I-V characteristic.
    *
    * @param technology technology selector
    */
@@ -376,8 +370,8 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Attach an I-V characteristic. When set, the cell voltage is recomputed during
-   * {@link #run(UUID)} from the current density and feed temperature.
+   * Attach an I-V characteristic. When set, the cell voltage is recomputed during {@link #run(UUID)} from the current
+   * density and feed temperature.
    *
    * @param ivCharacteristic polarisation model, or {@code null} to disable
    */
@@ -395,8 +389,8 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Set the operating current density (A/cm2). Used together with an attached I-V characteristic to
-   * compute the cell voltage during {@link #run(UUID)}.
+   * Set the operating current density (A/cm2). Used together with an attached I-V characteristic to compute the cell
+   * voltage during {@link #run(UUID)}.
    *
    * @param currentDensity current density (A/cm2), must be non-negative
    */
@@ -423,8 +417,7 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
    */
   public void setFaradaicEfficiency(double faradaicEfficiency) {
     if (faradaicEfficiency <= 0.0 || faradaicEfficiency > 1.0) {
-      throw new IllegalArgumentException(
-          "faradaicEfficiency must be in (0,1], got " + faradaicEfficiency);
+      throw new IllegalArgumentException("faradaicEfficiency must be in (0,1], got " + faradaicEfficiency);
     }
     this.faradaicEfficiency = faradaicEfficiency;
   }
@@ -448,8 +441,8 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Get the specific energy consumption in kWh per kg of hydrogen produced, based on the most
-   * recent {@link #run(UUID)}. Returns {@code 0.0} if no hydrogen has been produced.
+   * Get the specific energy consumption in kWh per kg of hydrogen produced, based on the most recent
+   * {@link #run(UUID)}. Returns {@code 0.0} if no hydrogen has been produced.
    *
    * @return specific energy consumption (kWh / kg H2)
    */
@@ -495,11 +488,10 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Set the available electrical (AC, system-level) power and switch the unit into power-driven
-   * mode. During {@link #run(UUID)} the current density and water demand are computed so the stack
-   * consumes this power, subject to balance-of-plant losses, the minimum turndown, and curtailment
-   * above rated power. Requires stack geometry (see {@link #sizeStack(double)} or
-   * {@link #setStackActiveArea(double)}).
+   * Set the available electrical (AC, system-level) power and switch the unit into power-driven mode. During
+   * {@link #run(UUID)} the current density and water demand are computed so the stack consumes this power, subject to
+   * balance-of-plant losses, the minimum turndown, and curtailment above rated power. Requires stack geometry (see
+   * {@link #sizeStack(double)} or {@link #setStackActiveArea(double)}).
    *
    * @param power available electrical power (W), must be non-negative
    */
@@ -521,8 +513,7 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Get the electrical power curtailed in the most recent run because the available power exceeded
-   * the rated power.
+   * Get the electrical power curtailed in the most recent run because the available power exceeded the rated power.
    *
    * @return curtailed power (W)
    */
@@ -540,10 +531,10 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Compute the cell voltage at a given current density and temperature, using the attached I-V
-   * characteristic when present and the fixed cell voltage otherwise.
+   * Compute the cell voltage at a given current density and temperature, using the attached I-V characteristic when
+   * present and the fixed cell voltage otherwise.
    *
-   * @param j current density (A/cm2)
+   * @param j            current density (A/cm2)
    * @param temperatureK temperature (K)
    * @return cell voltage (V)
    */
@@ -555,12 +546,12 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Solve the stack-power balance {@code P = j * A * V_cell(j, T)} for the current density. With no
-   * I-V characteristic the cell voltage is constant and the solution is explicit; otherwise a
-   * bounded bisection is used (the balance is monotonically increasing in current density).
+   * Solve the stack-power balance {@code P = j * A * V_cell(j, T)} for the current density. With no I-V characteristic
+   * the cell voltage is constant and the solution is explicit; otherwise a bounded bisection is used (the balance is
+   * monotonically increasing in current density).
    *
    * @param targetStackPower target stack power (W)
-   * @param temperatureK temperature (K)
+   * @param temperatureK     temperature (K)
    * @return current density (A/cm2)
    */
   private double solveCurrentDensityForStackPower(double targetStackPower, double temperatureK) {
@@ -586,20 +577,20 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
       double mid = 0.5 * (lo + hi);
       double power = mid * area * ivCharacteristic.getCellVoltage(mid, temperatureK);
       if (power < targetStackPower) {
-        lo = mid;
+	lo = mid;
       } else {
-        hi = mid;
+	hi = mid;
       }
       if (hi - lo < 1.0e-7) {
-        break;
+	break;
       }
     }
     return 0.5 * (lo + hi);
   }
 
   /**
-   * Upper bound for current density used in sizing and inversion: the nominal current density when
-   * set, otherwise the technology default, otherwise zero (unbounded).
+   * Upper bound for current density used in sizing and inversion: the nominal current density when set, otherwise the
+   * technology default, otherwise zero (unbounded).
    *
    * @return current-density upper bound (A/cm2), or 0 if unknown
    */
@@ -672,8 +663,7 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Get the total stack active area, preferring an explicit value over
-   * {@code activeCellArea * numberOfCells}.
+   * Get the total stack active area, preferring an explicit value over {@code activeCellArea * numberOfCells}.
    *
    * @return total active area (cm2), or 0 if not configured
    */
@@ -730,8 +720,8 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Size the stack active area for a rated power, using the nominal current density (technology
-   * default if not set explicitly) and the inlet temperature.
+   * Size the stack active area for a rated power, using the nominal current density (technology default if not set
+   * explicitly) and the inlet temperature.
    *
    * @param ratedPowerW rated power (W), must be positive
    */
@@ -739,18 +729,17 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
     double temperatureK = waterInlet != null ? waterInlet.getTemperature("K") : 353.15;
     double nominalJ = currentDensityUpperBound();
     if (nominalJ <= 0.0) {
-      throw new IllegalStateException(
-          "set a technology or nominal current density before calling sizeStack(double)");
+      throw new IllegalStateException("set a technology or nominal current density before calling sizeStack(double)");
     }
     sizeStack(ratedPowerW, nominalJ, temperatureK);
   }
 
   /**
-   * Size the stack active area for a rated power at a nominal current density and temperature so
-   * that {@code ratedPower = nominalJ * area * V_cell(nominalJ, T)}.
+   * Size the stack active area for a rated power at a nominal current density and temperature so that
+   * {@code ratedPower = nominalJ * area * V_cell(nominalJ, T)}.
    *
-   * @param ratedPowerW rated power (W), must be positive
-   * @param nominalJ nominal current density (A/cm2), must be positive
+   * @param ratedPowerW  rated power (W), must be positive
+   * @param nominalJ     nominal current density (A/cm2), must be positive
    * @param temperatureK temperature (K), must be positive
    */
   public void sizeStack(double ratedPowerW, double nominalJ, double temperatureK) {
@@ -774,8 +763,8 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   // ==========================================================================
 
   /**
-   * Set the minimum load as a fraction of rated power. Below this, power-driven runs leave the
-   * stack in standby with no production.
+   * Set the minimum load as a fraction of rated power. Below this, power-driven runs leave the stack in standby with no
+   * production.
    *
    * @param minimumLoadFraction minimum load fraction (0..1)
    */
@@ -907,8 +896,7 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Convert a stack (DC) power into the corresponding system (AC) power, adding rectifier losses
-   * and auxiliary loads.
+   * Convert a stack (DC) power into the corresponding system (AC) power, adding rectifier losses and auxiliary loads.
    *
    * @param stackPowerW stack power (W)
    * @return system power (W)
@@ -928,8 +916,8 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Get the system-level electrical power consumed in the most recent run, including rectifier
-   * losses, auxiliary loads, and (in standby) the standby draw.
+   * Get the system-level electrical power consumed in the most recent run, including rectifier losses, auxiliary loads,
+   * and (in standby) the standby draw.
    *
    * @return system power (W)
    */
@@ -942,9 +930,8 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Get the system-level specific energy consumption in kWh per kg of hydrogen, based on the most
-   * recent run. Includes rectifier and auxiliary losses. Returns {@code 0.0} if no hydrogen was
-   * produced.
+   * Get the system-level specific energy consumption in kWh per kg of hydrogen, based on the most recent run. Includes
+   * rectifier and auxiliary losses. Returns {@code 0.0} if no hydrogen was produced.
    *
    * @return system specific energy consumption (kWh / kg H2)
    */
@@ -968,8 +955,8 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   // ==========================================================================
 
   /**
-   * Get the stack waste heat from the most recent run, computed from the overpotential above the
-   * thermoneutral voltage: {@code Q = max(0, V_cell - V_tn) * I_stack}.
+   * Get the stack waste heat from the most recent run, computed from the overpotential above the thermoneutral voltage:
+   * {@code Q = max(0, V_cell - V_tn) * I_stack}.
    *
    * @return waste heat (W)
    */
@@ -998,8 +985,7 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
     if ("kg/hr".equals(unit)) {
       return massKgPerSec * 3600.0;
     }
-    throw new IllegalArgumentException(
-        "unsupported unit '" + unit + "', use mole/sec, kg/sec or kg/hr");
+    throw new IllegalArgumentException("unsupported unit '" + unit + "', use mole/sec, kg/sec or kg/hr");
   }
 
   // ==========================================================================
@@ -1007,8 +993,8 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   // ==========================================================================
 
   /**
-   * Set the hydrogen delivery pressure. When positive, the hydrogen product leaves at this
-   * pressure; zero keeps the inlet pressure.
+   * Set the hydrogen delivery pressure. When positive, the hydrogen product leaves at this pressure; zero keeps the
+   * inlet pressure.
    *
    * @param hydrogenDeliveryPressure delivery pressure (bara), must be non-negative
    */
@@ -1029,9 +1015,9 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Estimate the ideal isothermal compression power required to raise the hydrogen product from the
-   * stack pressure to the delivery pressure: {@code W = n R T ln(P2 / P1)}. Returns {@code 0.0}
-   * when the delivery pressure does not exceed the stack pressure.
+   * Estimate the ideal isothermal compression power required to raise the hydrogen product from the stack pressure to
+   * the delivery pressure: {@code W = n R T ln(P2 / P1)}. Returns {@code 0.0} when the delivery pressure does not
+   * exceed the stack pressure.
    *
    * @return ideal compression power (W)
    */

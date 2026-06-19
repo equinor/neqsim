@@ -14,9 +14,9 @@ import java.util.Map;
  * Exports {@link CfdSourceTermCase} payloads to neutral JSON and CFD starter files.
  *
  * <p>
- * The exporter deliberately writes a neutral source-term package and an OpenFOAM-oriented skeleton,
- * not a completed CFD model. Detailed meshes, obstacle geometry, turbulence models and solver
- * selections remain study-specific engineering decisions.
+ * The exporter deliberately writes a neutral source-term package and an OpenFOAM-oriented skeleton, not a completed CFD
+ * model. Detailed meshes, obstacle geometry, turbulence models and solver selections remain study-specific engineering
+ * decisions.
  * </p>
  *
  * @author ESOL
@@ -40,7 +40,7 @@ public class CfdSourceTermExporter implements Serializable {
    * Writes a neutral JSON case file.
    *
    * @param sourceTermCase CFD source-term case
-   * @param filename output filename
+   * @param filename       output filename
    */
   public void exportJson(CfdSourceTermCase sourceTermCase, String filename) {
     requireCase(sourceTermCase);
@@ -51,7 +51,7 @@ public class CfdSourceTermExporter implements Serializable {
    * Writes a manifest containing multiple CFD source-term cases.
    *
    * @param sourceTermCases cases to include
-   * @param filename output filename
+   * @param filename        output filename
    */
   public void exportManifest(List<CfdSourceTermCase> sourceTermCases, String filename) {
     if (sourceTermCases == null) {
@@ -66,15 +66,14 @@ public class CfdSourceTermExporter implements Serializable {
       cases.add(sourceTermCase.toMap());
     }
     manifest.put("cases", cases);
-    writeToFile(new File(filename),
-        new GsonBuilder().setPrettyPrinting().serializeNulls().create().toJson(manifest));
+    writeToFile(new File(filename), new GsonBuilder().setPrettyPrinting().serializeNulls().create().toJson(manifest));
   }
 
   /**
    * Writes an OpenFOAM-oriented source-term skeleton directory.
    *
    * @param sourceTermCase CFD source-term case
-   * @param directory output directory
+   * @param directory      output directory
    */
   public void exportOpenFoamSkeleton(CfdSourceTermCase sourceTermCase, String directory) {
     requireCase(sourceTermCase);
@@ -83,14 +82,10 @@ public class CfdSourceTermExporter implements Serializable {
     File timeSeries = new File(constant, "sourceTimeSeries");
     mkdirs(timeSeries);
     writeToFile(new File(root, "case.json"), sourceTermCase.toJson());
-    writeToFile(new File(constant, "releaseSourceProperties"),
-        releaseSourceProperties(sourceTermCase));
-    writeToFile(new File(timeSeries, "massFlowRate"),
-        timeSeriesFile(sourceTermCase, "massFlowRateKgPerS"));
-    writeToFile(new File(timeSeries, "temperature"),
-        timeSeriesFile(sourceTermCase, "temperatureK"));
-    writeToFile(new File(timeSeries, "jetMomentum"),
-        timeSeriesFile(sourceTermCase, "jetMomentumN"));
+    writeToFile(new File(constant, "releaseSourceProperties"), releaseSourceProperties(sourceTermCase));
+    writeToFile(new File(timeSeries, "massFlowRate"), timeSeriesFile(sourceTermCase, "massFlowRateKgPerS"));
+    writeToFile(new File(timeSeries, "temperature"), timeSeriesFile(sourceTermCase, "temperatureK"));
+    writeToFile(new File(timeSeries, "jetMomentum"), timeSeriesFile(sourceTermCase, "jetMomentumN"));
     writeToFile(new File(root, "README.md"), openFoamReadme(sourceTermCase));
   }
 
@@ -118,7 +113,7 @@ public class CfdSourceTermExporter implements Serializable {
    * Creates a tabulated OpenFOAM time-series file from a field.
    *
    * @param sourceTermCase CFD source-term case
-   * @param field field name in sourceTerm.timeSeries rows
+   * @param field          field name in sourceTerm.timeSeries rows
    * @return OpenFOAM tuple list text
    */
   @SuppressWarnings("unchecked")
@@ -128,8 +123,8 @@ public class CfdSourceTermExporter implements Serializable {
     StringBuilder text = new StringBuilder();
     text.append("(\n");
     for (Map<String, Object> row : rows) {
-      text.append("  (").append(valueOrZero(row.get("timeS"))).append(' ')
-          .append(valueOrZero(row.get(field))).append(")\n");
+      text.append("  (").append(valueOrZero(row.get("timeS"))).append(' ').append(valueOrZero(row.get(field)))
+	  .append(")\n");
     }
     text.append(");\n");
     return text.toString();
@@ -147,8 +142,7 @@ public class CfdSourceTermExporter implements Serializable {
     text.append("Case: ").append(sourceTermCase.getScenarioName()).append("\n\n");
     text.append("This directory contains a NeqSim source-term handoff package. ");
     text.append("It is not a complete CFD model: add mesh, solver, turbulence model, ");
-    text.append(
-        "species transport setup, boundaries, obstacles and ignition logic for the study.\n\n");
+    text.append("species transport setup, boundaries, obstacles and ignition logic for the study.\n\n");
     text.append("Files:\n\n");
     text.append("- `case.json`: neutral NeqSim CFD source-term schema.\n");
     text.append("- `constant/releaseSourceProperties`: OpenFOAM-oriented source metadata.\n");
@@ -194,7 +188,7 @@ public class CfdSourceTermExporter implements Serializable {
   /**
    * Writes text to a file.
    *
-   * @param file target file
+   * @param file    target file
    * @param content text content
    */
   private static void writeToFile(File file, String content) {

@@ -54,12 +54,9 @@ public class DexpiInstrumentTest extends NeqSimTest {
 
     // Read back and verify XML contains instrument elements
     String xml = new String(Files.readAllBytes(tempFile.toPath()), StandardCharsets.UTF_8);
-    assertTrue(xml.contains("ProcessInstrumentationFunction"),
-        "XML should contain ProcessInstrumentationFunction");
-    assertTrue(xml.contains("ProcessSignalGeneratingFunction"),
-        "XML should contain ProcessSignalGeneratingFunction");
-    assertTrue(xml.contains("InstrumentationLoopFunction"),
-        "XML should contain InstrumentationLoopFunction");
+    assertTrue(xml.contains("ProcessInstrumentationFunction"), "XML should contain ProcessInstrumentationFunction");
+    assertTrue(xml.contains("ProcessSignalGeneratingFunction"), "XML should contain ProcessSignalGeneratingFunction");
+    assertTrue(xml.contains("InstrumentationLoopFunction"), "XML should contain InstrumentationLoopFunction");
   }
 
   /**
@@ -82,21 +79,18 @@ public class DexpiInstrumentTest extends NeqSimTest {
     DexpiXmlWriter.write(process, tempFile, transmitters, controllers);
 
     String xml = new String(Files.readAllBytes(tempFile.toPath()), StandardCharsets.UTF_8);
-    assertTrue(xml.contains("ActuatingFunction"),
-        "XML should contain ActuatingFunction for controllers");
-    assertTrue(xml.contains("SignalConveyingFunction"),
-        "XML should contain SignalConveyingFunction for signal lines");
+    assertTrue(xml.contains("ActuatingFunction"), "XML should contain ActuatingFunction for controllers");
+    assertTrue(xml.contains("SignalConveyingFunction"), "XML should contain SignalConveyingFunction for signal lines");
   }
 
   /**
    * Tests that the writer without instruments still works (backwards compatibility).
    *
-   * @throws IOException if file operations fail
+   * @throws IOException             if file operations fail
    * @throws DexpiXmlReaderException if parsing fails
    */
   @Test
-  public void testWriterWithoutInstrumentsIsBackwardsCompatible()
-      throws IOException, DexpiXmlReaderException {
+  public void testWriterWithoutInstrumentsIsBackwardsCompatible() throws IOException, DexpiXmlReaderException {
     ProcessSystem process = buildSeparatorProcess();
 
     File tempFile = File.createTempFile("dexpi-noinstru-test", ".xml");
@@ -114,7 +108,7 @@ public class DexpiInstrumentTest extends NeqSimTest {
   /**
    * Tests reading instrument metadata from a DEXPI XML file.
    *
-   * @throws IOException if file operations fail
+   * @throws IOException             if file operations fail
    * @throws DexpiXmlReaderException if parsing fails
    */
   @Test
@@ -140,7 +134,7 @@ public class DexpiInstrumentTest extends NeqSimTest {
   /**
    * Tests reading instruments with loop associations.
    *
-   * @throws IOException if file operations fail
+   * @throws IOException             if file operations fail
    * @throws DexpiXmlReaderException if parsing fails
    */
   @Test
@@ -163,7 +157,7 @@ public class DexpiInstrumentTest extends NeqSimTest {
   /**
    * Tests the round-trip: export instruments then read them back.
    *
-   * @throws IOException if file operations fail
+   * @throws IOException             if file operations fail
    * @throws DexpiXmlReaderException if parsing fails
    */
   @Test
@@ -185,8 +179,7 @@ public class DexpiInstrumentTest extends NeqSimTest {
     // Import
     List<DexpiInstrumentInfo> instruments = helper.readDexpiInstruments(tempFile);
     assertNotNull(instruments);
-    assertEquals(expectedInstrumentCount, instruments.size(),
-        "Round-trip should preserve instrument count");
+    assertEquals(expectedInstrumentCount, instruments.size(), "Round-trip should preserve instrument count");
   }
 
   /**
@@ -194,8 +187,8 @@ public class DexpiInstrumentTest extends NeqSimTest {
    */
   @Test
   public void testDexpiInstrumentInfoDataClass() {
-    DexpiInstrumentInfo info = new DexpiInstrumentInfo("PIF-1", "PICSA 4712.02", "P", "ICSA",
-        "4712.02", "Loop-1", "bara", "PV-4712.02");
+    DexpiInstrumentInfo info = new DexpiInstrumentInfo("PIF-1", "PICSA 4712.02", "P", "ICSA", "4712.02", "Loop-1",
+	"bara", "PV-4712.02");
 
     assertEquals("PIF-1", info.getId());
     assertEquals("PICSA 4712.02", info.getTagName());
@@ -215,8 +208,7 @@ public class DexpiInstrumentTest extends NeqSimTest {
    */
   @Test
   public void testDexpiInstrumentInfoNoControlNoLoop() {
-    DexpiInstrumentInfo info =
-        new DexpiInstrumentInfo("TI-1", "TI 101", "T", "I", "101", null, "C", null);
+    DexpiInstrumentInfo info = new DexpiInstrumentInfo("TI-1", "TI 101", "T", "I", "101", null, "C", null);
 
     assertFalse(info.hasControlFunction(), "T+I should not have control function");
     assertFalse(info.isInLoop(), "Null loop means not in loop");
@@ -277,33 +269,30 @@ public class DexpiInstrumentTest extends NeqSimTest {
 
   private String buildInstrumentXml() {
     return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
-        + "  <ProcessInstrumentationFunction ComponentClass=\"ProcessInstrumentationFunction\""
-        + "    ID=\"PIF-4712\">" + "    <GenericAttributes>"
-        + "      <GenericAttribute Name=\"ProcessInstrumentationFunctionCategoryAssignmentClass\""
-        + "        Value=\"P\" />"
-        + "      <GenericAttribute Name=\"ProcessInstrumentationFunctionsAssignmentClass\""
-        + "        Value=\"ICSA\" />"
-        + "      <GenericAttribute Name=\"ProcessInstrumentationFunctionNumberAssignmentClass\""
-        + "        Value=\"4712.02\" />" + "    </GenericAttributes>"
-        + "  </ProcessInstrumentationFunction>" + "</PlantModel>";
+	+ "  <ProcessInstrumentationFunction ComponentClass=\"ProcessInstrumentationFunction\"" + "    ID=\"PIF-4712\">"
+	+ "    <GenericAttributes>"
+	+ "      <GenericAttribute Name=\"ProcessInstrumentationFunctionCategoryAssignmentClass\""
+	+ "        Value=\"P\" />" + "      <GenericAttribute Name=\"ProcessInstrumentationFunctionsAssignmentClass\""
+	+ "        Value=\"ICSA\" />"
+	+ "      <GenericAttribute Name=\"ProcessInstrumentationFunctionNumberAssignmentClass\""
+	+ "        Value=\"4712.02\" />" + "    </GenericAttributes>" + "  </ProcessInstrumentationFunction>"
+	+ "</PlantModel>";
   }
 
   private String buildInstrumentWithLoopXml() {
     return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>"
-        + "  <ProcessInstrumentationFunction ComponentClass=\"ProcessInstrumentationFunction\""
-        + "    ID=\"PIF-4712\">" + "    <GenericAttributes>"
-        + "      <GenericAttribute Name=\"ProcessInstrumentationFunctionCategoryAssignmentClass\""
-        + "        Value=\"P\" />"
-        + "      <GenericAttribute Name=\"ProcessInstrumentationFunctionsAssignmentClass\""
-        + "        Value=\"IC\" />"
-        + "      <GenericAttribute Name=\"ProcessInstrumentationFunctionNumberAssignmentClass\""
-        + "        Value=\"4712\" />" + "    </GenericAttributes>"
-        + "  </ProcessInstrumentationFunction>"
-        + "  <InstrumentationLoopFunction ComponentClass=\"InstrumentationLoopFunction\""
-        + "    ID=\"Loop-1\">" + "    <GenericAttributes>"
-        + "      <GenericAttribute Name=\"InstrumentationLoopFunctionNumberAssignmentClass\""
-        + "        Value=\"4712\" />" + "    </GenericAttributes>"
-        + "    <Association Type=\"is a collection including\" ItemID=\"PIF-4712\" />"
-        + "  </InstrumentationLoopFunction>" + "</PlantModel>";
+	+ "  <ProcessInstrumentationFunction ComponentClass=\"ProcessInstrumentationFunction\"" + "    ID=\"PIF-4712\">"
+	+ "    <GenericAttributes>"
+	+ "      <GenericAttribute Name=\"ProcessInstrumentationFunctionCategoryAssignmentClass\""
+	+ "        Value=\"P\" />" + "      <GenericAttribute Name=\"ProcessInstrumentationFunctionsAssignmentClass\""
+	+ "        Value=\"IC\" />"
+	+ "      <GenericAttribute Name=\"ProcessInstrumentationFunctionNumberAssignmentClass\""
+	+ "        Value=\"4712\" />" + "    </GenericAttributes>" + "  </ProcessInstrumentationFunction>"
+	+ "  <InstrumentationLoopFunction ComponentClass=\"InstrumentationLoopFunction\"" + "    ID=\"Loop-1\">"
+	+ "    <GenericAttributes>"
+	+ "      <GenericAttribute Name=\"InstrumentationLoopFunctionNumberAssignmentClass\""
+	+ "        Value=\"4712\" />" + "    </GenericAttributes>"
+	+ "    <Association Type=\"is a collection including\" ItemID=\"PIF-4712\" />"
+	+ "  </InstrumentationLoopFunction>" + "</PlantModel>";
   }
 }

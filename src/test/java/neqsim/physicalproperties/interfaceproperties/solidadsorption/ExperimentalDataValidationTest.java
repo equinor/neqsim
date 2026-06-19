@@ -33,8 +33,8 @@ public class ExperimentalDataValidationTest {
    * Validate CH4 adsorption on activated carbon at 298K from database parameters.
    *
    * <p>
-   * Experimental reference: Dreisbach et al. (1999), Adsorption, 5, 215-227. CH4 on AC Calgon F400
-   * at 298 K: approx 4-6 mol/kg at 10 bar.
+   * Experimental reference: Dreisbach et al. (1999), Adsorption, 5, 215-227. CH4 on AC Calgon F400 at 298 K: approx 4-6
+   * mol/kg at 10 bar.
    * </p>
    */
   @Test
@@ -138,7 +138,7 @@ public class ExperimentalDataValidationTest {
   @Test
   public void testFreundlichPhysicalConsistency() {
     // Test at multiple pressures - Freundlich should increase monotonically
-    double[] pressures = {1.0, 5.0, 10.0, 20.0, 50.0};
+    double[] pressures = { 1.0, 5.0, 10.0, 20.0, 50.0 };
     double prevLoading = 0.0;
 
     for (double p : pressures) {
@@ -205,8 +205,8 @@ public class ExperimentalDataValidationTest {
    * Validate pressure-dependent isotherm shape.
    *
    * <p>
-   * At low pressure: q approximately linear with P (Henry's law region). At high pressure: q
-   * approaches saturation capacity.
+   * At low pressure: q approximately linear with P (Henry's law region). At high pressure: q approaches saturation
+   * capacity.
    * </p>
    */
   @Test
@@ -248,8 +248,8 @@ public class ExperimentalDataValidationTest {
    * Validate CO2 on Zeolite 13X with database parameters.
    *
    * <p>
-   * Reference: Cavenati et al. (2004), J. Chem. Eng. Data, 49, 1095-1101. CO2 on Zeolite 13X at
-   * 298K, 1 bar: approx 3-5 mol/kg.
+   * Reference: Cavenati et al. (2004), J. Chem. Eng. Data, 49, 1095-1101. CO2 on Zeolite 13X at 298K, 1 bar: approx 3-5
+   * mol/kg.
    * </p>
    */
   @Test
@@ -368,7 +368,7 @@ public class ExperimentalDataValidationTest {
    */
   @Test
   public void testAdsorbateAffinityOrdering() {
-    String[] models = {"Langmuir", "Freundlich", "Sips"};
+    String[] models = { "Langmuir", "Freundlich", "Sips" };
 
     for (String model : models) {
       // CO2
@@ -394,54 +394,53 @@ public class ExperimentalDataValidationTest {
       double n2Loading;
 
       if ("Langmuir".equals(model)) {
-        LangmuirAdsorption ads = new LangmuirAdsorption(co2Gas);
-        ads.setSolidMaterial("AC");
-        ads.calcAdsorption(0);
-        co2Loading = ads.getSurfaceExcess(0);
+	LangmuirAdsorption ads = new LangmuirAdsorption(co2Gas);
+	ads.setSolidMaterial("AC");
+	ads.calcAdsorption(0);
+	co2Loading = ads.getSurfaceExcess(0);
 
-        ads = new LangmuirAdsorption(ch4Gas);
-        ads.setSolidMaterial("AC");
-        ads.calcAdsorption(0);
-        ch4Loading = ads.getSurfaceExcess(0);
+	ads = new LangmuirAdsorption(ch4Gas);
+	ads.setSolidMaterial("AC");
+	ads.calcAdsorption(0);
+	ch4Loading = ads.getSurfaceExcess(0);
 
-        ads = new LangmuirAdsorption(n2Gas);
-        ads.setSolidMaterial("AC");
-        ads.calcAdsorption(0);
-        n2Loading = ads.getSurfaceExcess(0);
+	ads = new LangmuirAdsorption(n2Gas);
+	ads.setSolidMaterial("AC");
+	ads.calcAdsorption(0);
+	n2Loading = ads.getSurfaceExcess(0);
       } else if ("Freundlich".equals(model)) {
-        FreundlichAdsorption ads = new FreundlichAdsorption(co2Gas);
-        ads.setSolidMaterial("AC");
-        ads.calcAdsorption(0);
-        co2Loading = ads.getSurfaceExcess(0);
+	FreundlichAdsorption ads = new FreundlichAdsorption(co2Gas);
+	ads.setSolidMaterial("AC");
+	ads.calcAdsorption(0);
+	co2Loading = ads.getSurfaceExcess(0);
 
-        ads = new FreundlichAdsorption(ch4Gas);
-        ads.setSolidMaterial("AC");
-        ads.calcAdsorption(0);
-        ch4Loading = ads.getSurfaceExcess(0);
+	ads = new FreundlichAdsorption(ch4Gas);
+	ads.setSolidMaterial("AC");
+	ads.calcAdsorption(0);
+	ch4Loading = ads.getSurfaceExcess(0);
 
-        ads = new FreundlichAdsorption(n2Gas);
-        ads.setSolidMaterial("AC");
-        ads.calcAdsorption(0);
-        n2Loading = ads.getSurfaceExcess(0);
+	ads = new FreundlichAdsorption(n2Gas);
+	ads.setSolidMaterial("AC");
+	ads.calcAdsorption(0);
+	n2Loading = ads.getSurfaceExcess(0);
       } else {
-        SipsAdsorption ads = new SipsAdsorption(co2Gas);
-        ads.setSolidMaterial("AC");
-        ads.calcAdsorption(0);
-        co2Loading = ads.getSurfaceExcess(0);
+	SipsAdsorption ads = new SipsAdsorption(co2Gas);
+	ads.setSolidMaterial("AC");
+	ads.calcAdsorption(0);
+	co2Loading = ads.getSurfaceExcess(0);
 
-        ads = new SipsAdsorption(ch4Gas);
-        ads.setSolidMaterial("AC");
-        ads.calcAdsorption(0);
-        ch4Loading = ads.getSurfaceExcess(0);
+	ads = new SipsAdsorption(ch4Gas);
+	ads.setSolidMaterial("AC");
+	ads.calcAdsorption(0);
+	ch4Loading = ads.getSurfaceExcess(0);
 
-        ads = new SipsAdsorption(n2Gas);
-        ads.setSolidMaterial("AC");
-        ads.calcAdsorption(0);
-        n2Loading = ads.getSurfaceExcess(0);
+	ads = new SipsAdsorption(n2Gas);
+	ads.setSolidMaterial("AC");
+	ads.calcAdsorption(0);
+	n2Loading = ads.getSurfaceExcess(0);
       }
 
-      logger.info(model + " at 5 bar on AC: CO2=" + co2Loading + ", CH4=" + ch4Loading + ", N2="
-          + n2Loading);
+      logger.info(model + " at 5 bar on AC: CO2=" + co2Loading + ", CH4=" + ch4Loading + ", N2=" + n2Loading);
 
       assertTrue(co2Loading > ch4Loading, model + ": CO2 should adsorb more than CH4 on AC");
       assertTrue(ch4Loading > n2Loading, model + ": CH4 should adsorb more than N2 on AC");

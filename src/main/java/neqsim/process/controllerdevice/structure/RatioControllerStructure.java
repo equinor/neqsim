@@ -4,8 +4,8 @@ import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 
 /**
- * Ratio control structure adjusting a controller set-point such that the controlled variable
- * maintains a specified ratio to a reference measurement.
+ * Ratio control structure adjusting a controller set-point such that the controlled variable maintains a specified
+ * ratio to a reference measurement.
  *
  * @author esol
  */
@@ -21,11 +21,10 @@ public class RatioControllerStructure implements ControlStructureInterface {
   /**
    * Create a ratio controller structure.
    *
-   * @param controller feedback controller acting on the manipulated variable
+   * @param controller       feedback controller acting on the manipulated variable
    * @param ratioMeasurement measurement providing the base for the ratio
    */
-  public RatioControllerStructure(ControllerDeviceInterface controller,
-      MeasurementDeviceInterface ratioMeasurement) {
+  public RatioControllerStructure(ControllerDeviceInterface controller, MeasurementDeviceInterface ratioMeasurement) {
     this.controller = controller;
     this.ratioMeasurement = ratioMeasurement;
   }

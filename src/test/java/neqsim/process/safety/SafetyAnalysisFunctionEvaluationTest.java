@@ -20,8 +20,8 @@ public class SafetyAnalysisFunctionEvaluationTest {
   @Test
   public void testSeparatorFullCoverage() {
     SafetyAnalysisFunctionEvaluation evaluator = new SafetyAnalysisFunctionEvaluation();
-    SafetyAnalysisFunctionEvaluation.Result result =
-        evaluator.evaluate("separator", Arrays.asList("PSH", "PSL", "PSV", "LSH", "LSL"));
+    SafetyAnalysisFunctionEvaluation.Result result = evaluator.evaluate("separator",
+	Arrays.asList("PSH", "PSL", "PSV", "LSH", "LSL"));
     assertEquals("separator", result.getComponentType());
     assertTrue(result.getMissingFunctions().isEmpty());
     assertEquals(1.0, result.getCoverageRatio(), 1.0e-9);
@@ -35,8 +35,8 @@ public class SafetyAnalysisFunctionEvaluationTest {
   public void testFiredHeaterMissingFunctionIsGap() {
     SafetyAnalysisFunctionEvaluation evaluator = new SafetyAnalysisFunctionEvaluation();
     // Fired heater requires PSH, PSL, TSH, PSV, BSDV — omit BSDV.
-    SafetyAnalysisFunctionEvaluation.Result result =
-        evaluator.evaluate("fired heater", Arrays.asList("psh", "psl", "tsh", "psv"));
+    SafetyAnalysisFunctionEvaluation.Result result = evaluator.evaluate("fired heater",
+	Arrays.asList("psh", "psl", "tsh", "psv"));
     assertEquals(Arrays.asList("BSDV"), result.getMissingFunctions());
     assertEquals(0.8, result.getCoverageRatio(), 1.0e-9);
     assertEquals("gap", result.getCoverageWarning());
@@ -48,8 +48,8 @@ public class SafetyAnalysisFunctionEvaluationTest {
   @Test
   public void testProvidedFunctionsNormalised() {
     SafetyAnalysisFunctionEvaluation evaluator = new SafetyAnalysisFunctionEvaluation();
-    SafetyAnalysisFunctionEvaluation.Result result =
-        evaluator.evaluate("pump", Arrays.asList("PSH", "psh", "PSL", "PSV"));
+    SafetyAnalysisFunctionEvaluation.Result result = evaluator.evaluate("pump",
+	Arrays.asList("PSH", "psh", "PSL", "PSV"));
     assertEquals(Arrays.asList("PSH", "PSL", "PSV"), result.getProvidedFunctions());
     assertEquals("ok", result.getCoverageWarning());
   }
@@ -63,7 +63,7 @@ public class SafetyAnalysisFunctionEvaluationTest {
     assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {
       @Override
       public void execute() {
-        evaluator.evaluate("reactor", Arrays.asList("PSH"));
+	evaluator.evaluate("reactor", Arrays.asList("PSH"));
       }
     });
   }
@@ -77,7 +77,7 @@ public class SafetyAnalysisFunctionEvaluationTest {
     assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {
       @Override
       public void execute() {
-        evaluator.evaluate("pump", Arrays.asList("PSH", "  "));
+	evaluator.evaluate("pump", Arrays.asList("PSH", "  "));
       }
     });
   }

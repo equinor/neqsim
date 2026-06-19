@@ -40,8 +40,7 @@ class MembraneSeparatorTest extends neqsim.NeqSimTest {
   void massBalance() {
     processOps.run();
     double in = inlet.getMolarRate();
-    double out = membrane.getPermeateStream().getMolarRate()
-        + membrane.getRetentateStream().getMolarRate();
+    double out = membrane.getPermeateStream().getMolarRate() + membrane.getRetentateStream().getMolarRate();
     assertEquals(in, out, 1e-6);
   }
 

@@ -7,13 +7,13 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Lightweight registry of industry standards applied by the chemistry models. Each chemistry model
- * exposes {@code getStandardsApplied()} returning a list of {@link StandardReference} so a
- * downstream audit can verify which codes the calculation relies on.
+ * Lightweight registry of industry standards applied by the chemistry models. Each chemistry model exposes
+ * {@code getStandardsApplied()} returning a list of {@link StandardReference} so a downstream audit can verify which
+ * codes the calculation relies on.
  *
  * <p>
- * The registry is intentionally small and curated: only standards actually used by the chemistry
- * package are listed. The full standards database lives in {@code designdata/standards/}.
+ * The registry is intentionally small and curated: only standards actually used by the chemistry package are listed.
+ * The full standards database lives in {@code designdata/standards/}.
  * </p>
  *
  * @author ESOL
@@ -24,7 +24,8 @@ public final class StandardsRegistry implements Serializable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000L;
 
-  private StandardsRegistry() {}
+  private StandardsRegistry() {
+  }
 
   /**
    * Reference to a single industry standard.
@@ -45,9 +46,9 @@ public final class StandardsRegistry implements Serializable {
     /**
      * Constructs a reference.
      *
-     * @param code standard code
+     * @param code         standard code
      * @param organisation issuing organisation
-     * @param topic short description of scope
+     * @param topic        short description of scope
      */
     public StandardReference(String code, String organisation, String topic) {
       this.code = code;
@@ -99,38 +100,36 @@ public final class StandardsRegistry implements Serializable {
   // ─── Curated standards used by the chemistry package ────
 
   /** NACE scale inhibitor static jar test. */
-  public static final StandardReference NACE_TM0374 = new StandardReference("NACE TM0374",
-      "AMPP/NACE", "Calcium-sulfate and calcium-carbonate scale inhibitor evaluation (jar test)");
+  public static final StandardReference NACE_TM0374 = new StandardReference("NACE TM0374", "AMPP/NACE",
+      "Calcium-sulfate and calcium-carbonate scale inhibitor evaluation (jar test)");
 
   /** NACE wheel test for corrosion inhibitor evaluation. */
-  public static final StandardReference NACE_TM0169 = new StandardReference("NACE TM0169",
-      "AMPP/NACE", "Laboratory immersion corrosion testing of metals");
+  public static final StandardReference NACE_TM0169 = new StandardReference("NACE TM0169", "AMPP/NACE",
+      "Laboratory immersion corrosion testing of metals");
 
   /** NACE selection of materials for use in H2S environments. */
-  public static final StandardReference NACE_MR0175 =
-      new StandardReference("NACE MR0175 / ISO 15156", "AMPP/NACE / ISO",
-          "Materials for use in H2S-containing environments in oil and gas production");
+  public static final StandardReference NACE_MR0175 = new StandardReference("NACE MR0175 / ISO 15156",
+      "AMPP/NACE / ISO", "Materials for use in H2S-containing environments in oil and gas production");
 
   /** NACE inhibitor selection. */
-  public static final StandardReference NACE_SP0775 = new StandardReference("NACE SP0775",
-      "AMPP/NACE", "Preparation, installation, analysis, and interpretation of corrosion coupons");
+  public static final StandardReference NACE_SP0775 = new StandardReference("NACE SP0775", "AMPP/NACE",
+      "Preparation, installation, analysis, and interpretation of corrosion coupons");
 
   /** NORSOK CO2 corrosion rate model. */
-  public static final StandardReference NORSOK_M506 = new StandardReference("NORSOK M-506",
-      "Standards Norway", "CO2 corrosion rate calculation model");
+  public static final StandardReference NORSOK_M506 = new StandardReference("NORSOK M-506", "Standards Norway",
+      "CO2 corrosion rate calculation model");
 
   /** NORSOK material selection. */
-  public static final StandardReference NORSOK_M001 =
-      new StandardReference("NORSOK M-001", "Standards Norway", "Materials selection");
+  public static final StandardReference NORSOK_M001 = new StandardReference("NORSOK M-001", "Standards Norway",
+      "Materials selection");
 
   /** API stimulation acid recommendations. */
   public static final StandardReference API_RP87 = new StandardReference("API RP 87", "API",
       "Recommended practice for analysis of oil-field waters");
 
   /** GPSA engineering data book — gas treating chapter. */
-  public static final StandardReference GPSA_DB =
-      new StandardReference("GPSA Engineering Data Book", "GPSA",
-          "Section 21 — Hydrocarbon treating (H2S scavenger sizing)");
+  public static final StandardReference GPSA_DB = new StandardReference("GPSA Engineering Data Book", "GPSA",
+      "Section 21 — Hydrocarbon treating (H2S scavenger sizing)");
 
   /** ISO standard reference conditions for natural gas. */
   public static final StandardReference ISO_13443 = new StandardReference("ISO 13443", "ISO",
@@ -149,8 +148,8 @@ public final class StandardsRegistry implements Serializable {
       "Standard practice for laboratory immersion corrosion testing of metals");
 
   /** DNV CO2 pipeline materials. */
-  public static final StandardReference DNV_RP_O501 =
-      new StandardReference("DNV-RP-O501", "DNV", "Managing sand production and erosion");
+  public static final StandardReference DNV_RP_O501 = new StandardReference("DNV-RP-O501", "DNV",
+      "Managing sand production and erosion");
 
   /**
    * Returns the registered standards as a list of maps for JSON serialisation.

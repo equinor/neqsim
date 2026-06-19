@@ -56,13 +56,13 @@ public final class TripPrediction implements Serializable, Comparable<TripPredic
   /**
    * Creates a trip prediction.
    *
-   * @param margin margin that is trending toward a limit
+   * @param margin                      margin that is trending toward a limit
    * @param estimatedTimeToLimitSeconds estimated time to zero margin in seconds
-   * @param confidence confidence from 0.0 to 1.0
-   * @param trendDescription short trend description
+   * @param confidence                  confidence from 0.0 to 1.0
+   * @param trendDescription            short trend description
    */
-  public TripPrediction(OperationalMargin margin, double estimatedTimeToLimitSeconds,
-      double confidence, String trendDescription) {
+  public TripPrediction(OperationalMargin margin, double estimatedTimeToLimitSeconds, double confidence,
+      String trendDescription) {
     this.marginKey = margin.getKey();
     this.equipmentName = margin.getEquipmentName();
     this.constraintName = margin.getConstraintName();

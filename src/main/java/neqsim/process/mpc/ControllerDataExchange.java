@@ -11,10 +11,9 @@ import java.util.Map;
  * Provides a real-time data exchange interface between NeqSim MPC and external control systems.
  *
  * <p>
- * This class enables bidirectional communication with industrial control systems by providing a
- * standardized interface for reading process values, writing setpoints and constraints, and
- * exchanging model data. The interface is designed to work with common industrial protocols and
- * data historians.
+ * This class enables bidirectional communication with industrial control systems by providing a standardized interface
+ * for reading process values, writing setpoints and constraints, and exchanging model data. The interface is designed
+ * to work with common industrial protocols and data historians.
  * </p>
  *
  * <p>
@@ -32,8 +31,7 @@ import java.util.Map;
  * The data exchange pattern supports both push and pull models:
  * </p>
  * <ul>
- * <li><b>Push:</b> Call {@link #updateInputs(double[], double[], double[])} to provide new process
- * data</li>
+ * <li><b>Push:</b> Call {@link #updateInputs(double[], double[], double[])} to provide new process data</li>
  * <li><b>Pull:</b> Call {@link #getOutputs()} to retrieve calculated control moves</li>
  * </ul>
  *
@@ -233,9 +231,9 @@ public class ControllerDataExchange implements Serializable {
   /**
    * Update input values with quality flags.
    *
-   * @param mvValues current MV values
-   * @param cvValues current CV values
-   * @param dvValues current DV values
+   * @param mvValues  current MV values
+   * @param cvValues  current CV values
+   * @param dvValues  current DV values
    * @param mvQuality MV quality flags
    * @param cvQuality CV quality flags
    * @param dvQuality DV quality flags
@@ -268,8 +266,8 @@ public class ControllerDataExchange implements Serializable {
     List<ControlledVariable> cvs = controller.getControlledVariables();
     for (int i = 0; i < setpoints.length; i++) {
       if (Double.isFinite(setpoints[i])) {
-        this.setpoints[i] = setpoints[i];
-        cvs.get(i).setSetpoint(setpoints[i]);
+	this.setpoints[i] = setpoints[i];
+	cvs.get(i).setSetpoint(setpoints[i]);
       }
     }
   }
@@ -277,7 +275,7 @@ public class ControllerDataExchange implements Serializable {
   /**
    * Update CV limits from external source.
    *
-   * @param lowLimits new low limits
+   * @param lowLimits  new low limits
    * @param highLimits new high limits
    */
   public void updateLimits(double[] lowLimits, double[] highLimits) {
@@ -285,17 +283,17 @@ public class ControllerDataExchange implements Serializable {
 
     if (lowLimits != null && lowLimits.length == cvLowLimits.length) {
       for (int i = 0; i < lowLimits.length; i++) {
-        if (Double.isFinite(lowLimits[i])) {
-          cvLowLimits[i] = lowLimits[i];
-        }
+	if (Double.isFinite(lowLimits[i])) {
+	  cvLowLimits[i] = lowLimits[i];
+	}
       }
     }
 
     if (highLimits != null && highLimits.length == cvHighLimits.length) {
       for (int i = 0; i < highLimits.length; i++) {
-        if (Double.isFinite(highLimits[i])) {
-          cvHighLimits[i] = highLimits[i];
-        }
+	if (Double.isFinite(highLimits[i])) {
+	  cvHighLimits[i] = highLimits[i];
+	}
       }
     }
 
@@ -315,8 +313,8 @@ public class ControllerDataExchange implements Serializable {
       // Check for bad quality inputs
       boolean hasGoodData = checkDataQuality();
       if (!hasGoodData) {
-        executionStatus = ExecutionStatus.WARNING;
-        executionMessage = "Some inputs have bad quality";
+	executionStatus = ExecutionStatus.WARNING;
+	executionMessage = "Some inputs have bad quality";
       }
 
       // Calculate control moves
@@ -340,12 +338,12 @@ public class ControllerDataExchange implements Serializable {
   private boolean checkDataQuality() {
     for (QualityStatus q : mvQuality) {
       if (q == QualityStatus.BAD) {
-        return false;
+	return false;
       }
     }
     for (QualityStatus q : cvQuality) {
       if (q == QualityStatus.BAD) {
-        return false;
+	return false;
       }
     }
     return true;
@@ -357,8 +355,7 @@ public class ControllerDataExchange implements Serializable {
    * @return a ControllerOutput object with targets and status
    */
   public ControllerOutput getOutputs() {
-    return new ControllerOutput(mvTargets.clone(), cvPredictions, executionStatus, executionMessage,
-        lastExecution);
+    return new ControllerOutput(mvTargets.clone(), cvPredictions, executionStatus, executionMessage, lastExecution);
   }
 
   /**
@@ -491,14 +488,14 @@ public class ControllerDataExchange implements Serializable {
     /**
      * Construct a controller output.
      *
-     * @param mvTargets the MV target values
+     * @param mvTargets     the MV target values
      * @param cvPredictions the CV prediction trajectories
-     * @param status the execution status
-     * @param message the execution message
-     * @param timestamp the execution timestamp
+     * @param status        the execution status
+     * @param message       the execution message
+     * @param timestamp     the execution timestamp
      */
-    public ControllerOutput(double[] mvTargets, double[][] cvPredictions, ExecutionStatus status,
-        String message, Instant timestamp) {
+    public ControllerOutput(double[] mvTargets, double[][] cvPredictions, ExecutionStatus status, String message,
+	Instant timestamp) {
       this.mvTargets = mvTargets;
       this.cvPredictions = cvPredictions;
       this.status = status;
@@ -522,11 +519,11 @@ public class ControllerDataExchange implements Serializable {
      */
     public double[][] getCvPredictions() {
       if (cvPredictions == null) {
-        return null;
+	return null;
       }
       double[][] copy = new double[cvPredictions.length][];
       for (int i = 0; i < cvPredictions.length; i++) {
-        copy[i] = cvPredictions[i].clone();
+	copy[i] = cvPredictions[i].clone();
       }
       return copy;
     }

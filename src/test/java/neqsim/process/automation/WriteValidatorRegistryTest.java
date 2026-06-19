@@ -19,8 +19,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Tests for {@link WriteValidatorRegistry} dispatch behaviour and the bundled
- * {@link DefaultWriteValidators}.
+ * Tests for {@link WriteValidatorRegistry} dispatch behaviour and the bundled {@link DefaultWriteValidators}.
  */
 class WriteValidatorRegistryTest {
 
@@ -129,8 +128,7 @@ class WriteValidatorRegistryTest {
   void heaterValidatorDoesNotFireOnCooler() {
     // Cooler extends Heater; ensure the HeaterWriteValidator delegates correctly.
     Cooler c = new Cooler("C-1", makeFeed(50.0, 30.0));
-    DefaultWriteValidators.HeaterWriteValidator hv =
-        new DefaultWriteValidators.HeaterWriteValidator();
+    DefaultWriteValidators.HeaterWriteValidator hv = new DefaultWriteValidators.HeaterWriteValidator();
     WriteValidationResult r = hv.validate(c, "outletTemperature", 10.0, "C");
     assertTrue(r.isAllowed(), "HeaterWriteValidator must not reject Cooler writes");
   }
@@ -159,25 +157,23 @@ class WriteValidatorRegistryTest {
     reg.register(new WriteValidator() {
       @Override
       public Class<? extends ProcessEquipmentInterface> getEquipmentClass() {
-        return Compressor.class;
+	return Compressor.class;
       }
 
       @Override
-      public WriteValidationResult validate(ProcessEquipmentInterface eq, String pp, double v,
-          String u) {
-        return WriteValidationResult.warn("W1", "warn");
+      public WriteValidationResult validate(ProcessEquipmentInterface eq, String pp, double v, String u) {
+	return WriteValidationResult.warn("W1", "warn");
       }
     });
     reg.register(new WriteValidator() {
       @Override
       public Class<? extends ProcessEquipmentInterface> getEquipmentClass() {
-        return Compressor.class;
+	return Compressor.class;
       }
 
       @Override
-      public WriteValidationResult validate(ProcessEquipmentInterface eq, String pp, double v,
-          String u) {
-        return WriteValidationResult.fail("E1", "err");
+      public WriteValidationResult validate(ProcessEquipmentInterface eq, String pp, double v, String u) {
+	return WriteValidationResult.fail("E1", "err");
       }
     });
     Compressor c = new Compressor("K-1", makeFeed(50.0, 30.0));
@@ -194,14 +190,13 @@ class WriteValidatorRegistryTest {
     reg.register(new WriteValidator() {
       @Override
       public Class<? extends ProcessEquipmentInterface> getEquipmentClass() {
-        return Heater.class;
+	return Heater.class;
       }
 
       @Override
-      public WriteValidationResult validate(ProcessEquipmentInterface eq, String pp, double v,
-          String u) {
-        seen.add(eq.getName());
-        return WriteValidationResult.ok();
+      public WriteValidationResult validate(ProcessEquipmentInterface eq, String pp, double v, String u) {
+	seen.add(eq.getName());
+	return WriteValidationResult.ok();
       }
     });
     Cooler c = new Cooler("C-1", makeFeed(50.0, 30.0));

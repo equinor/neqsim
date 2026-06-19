@@ -33,7 +33,7 @@ public class ValvePositionCondition implements LogicCondition {
   /**
    * Creates a valve position condition with default tolerance (1.0%).
    *
-   * @param valve valve to check
+   * @param valve    valve to check
    * @param operator comparison operator (&gt;, &gt;=, &lt;, &lt;=, ==, !=)
    * @param setpoint position setpoint (0-100%)
    */
@@ -44,13 +44,12 @@ public class ValvePositionCondition implements LogicCondition {
   /**
    * Creates a valve position condition with specified tolerance.
    *
-   * @param valve valve to check
-   * @param operator comparison operator (&gt;, &gt;=, &lt;, &lt;=, ==, !=)
-   * @param setpoint position setpoint (0-100%)
+   * @param valve     valve to check
+   * @param operator  comparison operator (&gt;, &gt;=, &lt;, &lt;=, ==, !=)
+   * @param setpoint  position setpoint (0-100%)
    * @param tolerance tolerance for equality checks (%)
    */
-  public ValvePositionCondition(ValveInterface valve, String operator, double setpoint,
-      double tolerance) {
+  public ValvePositionCondition(ValveInterface valve, String operator, double setpoint, double tolerance) {
     this.valve = valve;
     this.operator = operator;
     this.setpoint = setpoint;
@@ -65,20 +64,20 @@ public class ValvePositionCondition implements LogicCondition {
     }
 
     switch (operator) {
-      case ">":
-        return position > setpoint;
-      case ">=":
-        return position >= setpoint;
-      case "<":
-        return position < setpoint;
-      case "<=":
-        return position <= setpoint;
-      case "==":
-        return Math.abs(position - setpoint) <= tolerance;
-      case "!=":
-        return Math.abs(position - setpoint) > tolerance;
-      default:
-        throw new IllegalArgumentException("Unknown operator: " + operator);
+    case ">":
+      return position > setpoint;
+    case ">=":
+      return position >= setpoint;
+    case "<":
+      return position < setpoint;
+    case "<=":
+      return position <= setpoint;
+    case "==":
+      return Math.abs(position - setpoint) <= tolerance;
+    case "!=":
+      return Math.abs(position - setpoint) > tolerance;
+    default:
+      throw new IllegalArgumentException("Unknown operator: " + operator);
     }
   }
 

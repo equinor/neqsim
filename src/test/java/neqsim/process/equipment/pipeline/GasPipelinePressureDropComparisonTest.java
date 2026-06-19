@@ -13,8 +13,8 @@ import org.apache.logging.log4j.Logger;
  * Comparison test for gas pipeline pressure drop calculations.
  *
  * <p>
- * Compares pressure drop from different pipeline models for single-phase gas flow (pure methane).
- * All models should give similar pressure drops when using the same friction factor correlations.
+ * Compares pressure drop from different pipeline models for single-phase gas flow (pure methane). All models should
+ * give similar pressure drops when using the same friction factor correlations.
  * </p>
  *
  * @author Even Solbraa
@@ -79,7 +79,6 @@ class GasPipelinePressureDropComparisonTest {
     logger.info("  Outlet pressure: " + outletP + " bara");
     logger.info("  Pressure drop:   " + dp + " bar");
 
-
     assertTrue(dp > 0, "Pressure drop should be positive");
     assertTrue(dp < inletP * 0.5, "Pressure drop should be less than 50% of inlet");
   }
@@ -105,7 +104,6 @@ class GasPipelinePressureDropComparisonTest {
     logger.info("  Inlet pressure:  " + inletP + " bara");
     logger.info("  Outlet pressure: " + outletP + " bara");
     logger.info("  Pressure drop:   " + dp + " bar");
-
 
     assertTrue(dp > 0, "Pressure drop should be positive");
     assertTrue(dp < inletP * 0.5, "Pressure drop should be less than 50% of inlet");
@@ -145,8 +143,7 @@ class GasPipelinePressureDropComparisonTest {
     }
     logger.info("    ...");
     logger.info("    [" + (pressureProfile.length - 1) + "]: "
-        + String.format("%.4f", pressureProfile[pressureProfile.length - 1] / 1e5));
-
+	+ String.format("%.4f", pressureProfile[pressureProfile.length - 1] / 1e5));
 
     assertTrue(dp > 0, "Pressure drop should be positive");
     assertTrue(dp < inletP * 0.5, "Pressure drop should be less than 50% of inlet");
@@ -164,8 +161,7 @@ class GasPipelinePressureDropComparisonTest {
     adiabaticPipe.setPipeWallRoughness(ROUGHNESS);
     adiabaticPipe.run();
 
-    double dpAdiabatic =
-        gasInlet.getPressure("bara") - adiabaticPipe.getOutletStream().getPressure("bara");
+    double dpAdiabatic = gasInlet.getPressure("bara") - adiabaticPipe.getOutletStream().getPressure("bara");
 
     // 2. PipeBeggsAndBrills (need new stream to avoid shared state)
     Stream inlet2 = new Stream("inlet2", pureMethane.clone());
@@ -213,7 +209,6 @@ class GasPipelinePressureDropComparisonTest {
     logger.info("PipeBeggsAndBrills: " + String.format("%.4f", dpBeggs) + " bar");
     logger.info("TwoFluidPipe:       " + String.format("%.4f", dpTwoFluid) + " bar");
 
-
     // Calculate relative differences
     double avgDp = (dpAdiabatic + dpBeggs + dpTwoFluid) / 3.0;
     double diffAdiabaticBeggs = Math.abs(dpAdiabatic - dpBeggs) / avgDp * 100;
@@ -221,13 +216,9 @@ class GasPipelinePressureDropComparisonTest {
     double diffBeggsTwoFluid = Math.abs(dpBeggs - dpTwoFluid) / avgDp * 100;
 
     logger.info("Relative Differences:");
-    logger.info("  AdiabaticPipe vs PipeBeggsAndBrills: "
-        + String.format("%.1f", diffAdiabaticBeggs) + "%");
-    logger.info("  AdiabaticPipe vs TwoFluidPipe:       "
-        + String.format("%.1f", diffAdiabaticTwoFluid) + "%");
-    logger.info(
-        "  PipeBeggsAndBrills vs TwoFluidPipe:  " + String.format("%.1f", diffBeggsTwoFluid) + "%");
-
+    logger.info("  AdiabaticPipe vs PipeBeggsAndBrills: " + String.format("%.1f", diffAdiabaticBeggs) + "%");
+    logger.info("  AdiabaticPipe vs TwoFluidPipe:       " + String.format("%.1f", diffAdiabaticTwoFluid) + "%");
+    logger.info("  PipeBeggsAndBrills vs TwoFluidPipe:  " + String.format("%.1f", diffBeggsTwoFluid) + "%");
 
     // All pressure drops should be positive
     assertTrue(dpAdiabatic > 0, "AdiabaticPipe pressure drop should be positive");
@@ -236,8 +227,7 @@ class GasPipelinePressureDropComparisonTest {
 
     // All models should agree within 10% for single-phase gas flow
     // (using same Haaland friction factor correlation)
-    assertTrue(diffAdiabaticBeggs < 10,
-        "AdiabaticPipe and PipeBeggsAndBrills should be within 10%");
+    assertTrue(diffAdiabaticBeggs < 10, "AdiabaticPipe and PipeBeggsAndBrills should be within 10%");
     assertTrue(diffAdiabaticTwoFluid < 10, "AdiabaticPipe and TwoFluidPipe should be within 10%");
     assertTrue(diffBeggsTwoFluid < 10, "PipeBeggsAndBrills and TwoFluidPipe should be within 10%");
   }
@@ -262,8 +252,7 @@ class GasPipelinePressureDropComparisonTest {
     adiabaticPipe.setPipeWallRoughness(ROUGHNESS);
     adiabaticPipe.run();
 
-    double dpAdiabatic =
-        inlet1.getPressure("bara") - adiabaticPipe.getOutletStream().getPressure("bara");
+    double dpAdiabatic = inlet1.getPressure("bara") - adiabaticPipe.getOutletStream().getPressure("bara");
 
     // PipeBeggsAndBrills
     Stream inlet2 = new Stream("inlet2", pureMethane.clone());
@@ -310,7 +299,6 @@ class GasPipelinePressureDropComparisonTest {
     logger.info("AdiabaticPipe:      " + String.format("%.4f", dpAdiabatic) + " bar");
     logger.info("PipeBeggsAndBrills: " + String.format("%.4f", dpBeggs) + " bar");
     logger.info("TwoFluidPipe:       " + String.format("%.4f", dpTwoFluid) + " bar");
-
 
     // All should be positive and larger than low flow
     assertTrue(dpAdiabatic > 0, "Pressure drop should be positive");

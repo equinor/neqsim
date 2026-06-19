@@ -120,16 +120,16 @@ public class HeatMaterialBalance implements Serializable {
 
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       for (StreamInterface s : unit.getInletStreams()) {
-        if (!seenNames.contains(s.getName())) {
-          streams.add(s);
-          seenNames.add(s.getName());
-        }
+	if (!seenNames.contains(s.getName())) {
+	  streams.add(s);
+	  seenNames.add(s.getName());
+	}
       }
       for (StreamInterface s : unit.getOutletStreams()) {
-        if (!seenNames.contains(s.getName())) {
-          streams.add(s);
-          seenNames.add(s.getName());
-        }
+	if (!seenNames.contains(s.getName())) {
+	  streams.add(s);
+	  seenNames.add(s.getName());
+	}
       }
     }
     return streams;
@@ -160,8 +160,7 @@ public class HeatMaterialBalance implements Serializable {
     data.put("totalMolarFlow_mol_per_sec", round(totalMolarFlow, 4));
 
     try {
-      data.put("massFlow_" + flowUnit.replace("/", "_per_"),
-          round(stream.getFlowRate(flowUnit), 2));
+      data.put("massFlow_" + flowUnit.replace("/", "_per_"), round(stream.getFlowRate(flowUnit), 2));
     } catch (Exception e) {
       logger.debug("Could not get flow rate for stream {}: {}", stream.getName(), e.getMessage());
     }
@@ -203,7 +202,7 @@ public class HeatMaterialBalance implements Serializable {
       String compName = fluid.getComponent(i).getComponentName();
       double moleFrac = fluid.getComponent(i).getz();
       if (moleFrac > 1e-15) {
-        composition.put(compName, round(moleFrac, 8));
+	composition.put(compName, round(moleFrac, 8));
       }
     }
     data.put("composition_mole_fraction", composition);
@@ -241,8 +240,8 @@ public class HeatMaterialBalance implements Serializable {
       Heater heater = (Heater) unit;
       data.put("duty_kW", round(heater.getDuty() / 1000.0, 2));
       if (heater.getInletStream() != null && heater.getOutletStream() != null) {
-        data.put("inletTemperature_C", round(heater.getInletStream().getTemperature("C"), 2));
-        data.put("outletTemperature_C", round(heater.getOutletStream().getTemperature("C"), 2));
+	data.put("inletTemperature_C", round(heater.getInletStream().getTemperature("C"), 2));
+	data.put("outletTemperature_C", round(heater.getOutletStream().getTemperature("C"), 2));
       }
       return data;
     }
@@ -283,8 +282,7 @@ public class HeatMaterialBalance implements Serializable {
     JsonArray streamArray = new JsonArray();
     for (StreamInterface stream : getAllStreams()) {
       Map<String, Object> streamData = getStreamData(stream);
-      String streamJson =
-          new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(streamData);
+      String streamJson = new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(streamData);
       streamArray.add(com.google.gson.JsonParser.parseString(streamJson));
     }
     report.add("streamTable", streamArray);
@@ -294,23 +292,21 @@ public class HeatMaterialBalance implements Serializable {
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       Map<String, Object> equipData = getEquipmentData(unit);
       if (equipData != null) {
-        String equipJson =
-            new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(equipData);
-        equipArray.add(com.google.gson.JsonParser.parseString(equipJson));
+	String equipJson = new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(equipData);
+	equipArray.add(com.google.gson.JsonParser.parseString(equipJson));
       }
     }
     report.add("equipmentSummary", equipArray);
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(report);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(report);
   }
 
   /**
    * Generates a CSV-formatted stream table.
    *
    * <p>
-   * Columns: Stream Name, Temperature (C), Pressure (bara), Mass Flow (unit), Molar Mass, Density,
-   * Vapour Fraction, then one column per component.
+   * Columns: Stream Name, Temperature (C), Pressure (bara), Mass Flow (unit), Molar Mass, Density, Vapour Fraction,
+   * then one column per component.
    * </p>
    *
    * @return CSV string of the stream table
@@ -326,12 +322,12 @@ public class HeatMaterialBalance implements Serializable {
     for (StreamInterface stream : streams) {
       SystemInterface fluid = stream.getFluid();
       if (fluid != null) {
-        for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
-          String name = fluid.getComponent(i).getComponentName();
-          if (!allComponents.contains(name)) {
-            allComponents.add(name);
-          }
-        }
+	for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
+	  String name = fluid.getComponent(i).getComponentName();
+	  if (!allComponents.contains(name)) {
+	    allComponents.add(name);
+	  }
+	}
       }
     }
 
@@ -359,12 +355,12 @@ public class HeatMaterialBalance implements Serializable {
       @SuppressWarnings("unchecked")
       Map<String, Double> composition = (Map<String, Double>) data.get("composition_mole_fraction");
       for (String comp : allComponents) {
-        sb.append(",");
-        if (composition != null && composition.containsKey(comp)) {
-          sb.append(composition.get(comp));
-        } else {
-          sb.append("0.0");
-        }
+	sb.append(",");
+	if (composition != null && composition.containsKey(comp)) {
+	  sb.append(composition.get(comp));
+	} else {
+	  sb.append("0.0");
+	}
       }
       sb.append("\n");
     }
@@ -375,7 +371,7 @@ public class HeatMaterialBalance implements Serializable {
   /**
    * Rounds a double to the specified number of decimal places.
    *
-   * @param value the value to round
+   * @param value  the value to round
    * @param places number of decimal places
    * @return rounded value
    */

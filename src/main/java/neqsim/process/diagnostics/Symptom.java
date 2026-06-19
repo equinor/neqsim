@@ -8,9 +8,9 @@ import java.util.List;
  * Observable symptoms that trigger root cause analysis.
  *
  * <p>
- * Each symptom maps to a set of related hypothesis categories that are likely causes. The mapping
- * is used by diagnostic hypothesis-generation logic to produce candidate root causes ranked by
- * prior probability from reliability data (IOGP/SINTEF, CCPS, IEEE 493, Lees, OREDA).
+ * Each symptom maps to a set of related hypothesis categories that are likely causes. The mapping is used by diagnostic
+ * hypothesis-generation logic to produce candidate root causes ranked by prior probability from reliability data
+ * (IOGP/SINTEF, CCPS, IEEE 493, Lees, OREDA).
  * </p>
  *
  * @author NeqSim Development Team
@@ -63,7 +63,7 @@ public enum Symptom {
   /**
    * Constructs a symptom.
    *
-   * @param description human-readable description
+   * @param description       human-readable description
    * @param relatedCategories hypothesis categories related to this symptom
    */
   Symptom(String description, List<String> relatedCategories) {

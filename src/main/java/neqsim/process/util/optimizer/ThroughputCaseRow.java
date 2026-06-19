@@ -68,30 +68,28 @@ public class ThroughputCaseRow implements Serializable {
   /**
    * Creates a throughput case row.
    *
-   * @param caseNumber case sequence number
+   * @param caseNumber           case sequence number
    * @param throughputMultiplier scalar throughput multiplier
-   * @param producerMultipliers producer multipliers used in the case
-   * @param objectiveValue raw objective value
-   * @param feasible true when all hard constraints are satisfied
-   * @param simulationConverged true when the model converged
-   * @param activeArea active bottleneck area name
-   * @param activeEquipment active bottleneck equipment name
-   * @param activeConstraint active bottleneck constraint name
-   * @param utilization active bottleneck utilization
-   * @param currentValue current bottleneck load
-   * @param designValue bottleneck design value
-   * @param capacityMargin remaining capacity in engineering units
-   * @param utilizationMargin remaining utilization margin
-   * @param unit bottleneck unit
-   * @param errorMessage error message if the case failed
-   * @param evaluationTimeMs evaluation wall-clock time in milliseconds
+   * @param producerMultipliers  producer multipliers used in the case
+   * @param objectiveValue       raw objective value
+   * @param feasible             true when all hard constraints are satisfied
+   * @param simulationConverged  true when the model converged
+   * @param activeArea           active bottleneck area name
+   * @param activeEquipment      active bottleneck equipment name
+   * @param activeConstraint     active bottleneck constraint name
+   * @param utilization          active bottleneck utilization
+   * @param currentValue         current bottleneck load
+   * @param designValue          bottleneck design value
+   * @param capacityMargin       remaining capacity in engineering units
+   * @param utilizationMargin    remaining utilization margin
+   * @param unit                 bottleneck unit
+   * @param errorMessage         error message if the case failed
+   * @param evaluationTimeMs     evaluation wall-clock time in milliseconds
    */
-  public ThroughputCaseRow(int caseNumber, double throughputMultiplier,
-      Map<String, Double> producerMultipliers, double objectiveValue, boolean feasible,
-      boolean simulationConverged, String activeArea, String activeEquipment,
-      String activeConstraint, double utilization, double currentValue, double designValue,
-      double capacityMargin, double utilizationMargin, String unit, String errorMessage,
-      long evaluationTimeMs) {
+  public ThroughputCaseRow(int caseNumber, double throughputMultiplier, Map<String, Double> producerMultipliers,
+      double objectiveValue, boolean feasible, boolean simulationConverged, String activeArea, String activeEquipment,
+      String activeConstraint, double utilization, double currentValue, double designValue, double capacityMargin,
+      double utilizationMargin, String unit, String errorMessage, long evaluationTimeMs) {
     this.caseNumber = caseNumber;
     this.throughputMultiplier = throughputMultiplier;
     this.producerMultipliers = new LinkedHashMap<String, Double>(producerMultipliers);
@@ -114,15 +112,14 @@ public class ThroughputCaseRow implements Serializable {
   /**
    * Creates a row from a process-model evaluator result.
    *
-   * @param caseNumber case sequence number
+   * @param caseNumber           case sequence number
    * @param throughputMultiplier scalar throughput multiplier
-   * @param producerMultipliers producer multipliers used in the case
-   * @param evaluation evaluation result
+   * @param producerMultipliers  producer multipliers used in the case
+   * @param evaluation           evaluation result
    * @return populated throughput case row
    */
   public static ThroughputCaseRow fromEvaluation(int caseNumber, double throughputMultiplier,
-      Map<String, Double> producerMultipliers,
-      ProcessModelSimulationEvaluator.EvaluationResult evaluation) {
+      Map<String, Double> producerMultipliers, ProcessModelSimulationEvaluator.EvaluationResult evaluation) {
     ProcessModelSimulationEvaluator.BottleneckStatus bottleneck = evaluation.getActiveBottleneck();
     double objectiveValue = Double.NaN;
     if (evaluation.getObjectivesRaw() != null && evaluation.getObjectivesRaw().length > 0) {
@@ -132,11 +129,11 @@ public class ThroughputCaseRow implements Serializable {
     double designValue = bottleneck.getDesignValue();
     double capacityMargin = designValue - currentValue;
     double utilization = bottleneck.getUtilization();
-    return new ThroughputCaseRow(caseNumber, throughputMultiplier, producerMultipliers,
-        objectiveValue, evaluation.isFeasible(), evaluation.isSimulationConverged(),
-        bottleneck.getAreaName(), bottleneck.getEquipmentName(), bottleneck.getConstraintName(),
-        utilization, currentValue, designValue, capacityMargin, 1.0 - utilization,
-        bottleneck.getUnit(), evaluation.getErrorMessage(), evaluation.getEvaluationTimeMs());
+    return new ThroughputCaseRow(caseNumber, throughputMultiplier, producerMultipliers, objectiveValue,
+	evaluation.isFeasible(), evaluation.isSimulationConverged(), bottleneck.getAreaName(),
+	bottleneck.getEquipmentName(), bottleneck.getConstraintName(), utilization, currentValue, designValue,
+	capacityMargin, 1.0 - utilization, bottleneck.getUnit(), evaluation.getErrorMessage(),
+	evaluation.getEvaluationTimeMs());
   }
 
   /**

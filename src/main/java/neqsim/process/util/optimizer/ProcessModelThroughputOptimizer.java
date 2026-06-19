@@ -16,9 +16,9 @@ import neqsim.process.processmodel.ProcessModel;
  * Convenience optimizer for full {@link ProcessModel} throughput-to-bottleneck studies.
  *
  * <p>
- * This class wraps {@link ProcessModelSimulationEvaluator} for the common engineering workflow: map
- * producer/feed controls, load installed equipment capacities, scale production, and return a case
- * table showing the active bottleneck at each iteration.
+ * This class wraps {@link ProcessModelSimulationEvaluator} for the common engineering workflow: map producer/feed
+ * controls, load installed equipment capacities, scale production, and return a case table showing the active
+ * bottleneck at each iteration.
  * </p>
  *
  * @author NeqSim Development Team
@@ -84,20 +84,21 @@ public class ProcessModelThroughputOptimizer implements Serializable {
     private transient BiConsumer<ProcessModel, Double> multiplierSetter;
 
     /** Default constructor for serialization frameworks. */
-    public ProducerControl() {}
+    public ProducerControl() {
+    }
 
     /**
      * Creates an automation-addressed producer control.
      *
-     * @param name control name
-     * @param address area-qualified automation address
-     * @param baseValue base value before multiplier scaling
+     * @param name            control name
+     * @param address         area-qualified automation address
+     * @param baseValue       base value before multiplier scaling
      * @param lowerMultiplier lower allowed multiplier
      * @param upperMultiplier upper allowed multiplier
-     * @param unit unit used when reading and setting the value
+     * @param unit            unit used when reading and setting the value
      */
     public ProducerControl(String name, String address, double baseValue, double lowerMultiplier,
-        double upperMultiplier, String unit) {
+	double upperMultiplier, String unit) {
       this.name = name;
       this.address = address;
       this.baseValue = baseValue;
@@ -109,13 +110,13 @@ public class ProcessModelThroughputOptimizer implements Serializable {
     /**
      * Creates a custom producer multiplier control.
      *
-     * @param name control name
-     * @param lowerMultiplier lower allowed multiplier
-     * @param upperMultiplier upper allowed multiplier
+     * @param name             control name
+     * @param lowerMultiplier  lower allowed multiplier
+     * @param upperMultiplier  upper allowed multiplier
      * @param multiplierSetter custom multiplier setter
      */
     public ProducerControl(String name, double lowerMultiplier, double upperMultiplier,
-        BiConsumer<ProcessModel, Double> multiplierSetter) {
+	BiConsumer<ProcessModel, Double> multiplierSetter) {
       this.name = name;
       this.address = name;
       this.unit = "-";
@@ -194,21 +195,21 @@ public class ProcessModelThroughputOptimizer implements Serializable {
      */
     private void resolveBaseValue(ProcessModel model) {
       if (!hasCustomSetter() && Double.isNaN(baseValue)) {
-        baseValue = model.getVariableValue(address, unit);
+	baseValue = model.getVariableValue(address, unit);
       }
     }
 
     /**
      * Applies a multiplier to the target control.
      *
-     * @param model process model
+     * @param model      process model
      * @param multiplier multiplier to apply
      */
     private void applyMultiplier(ProcessModel model, double multiplier) {
       if (hasCustomSetter()) {
-        multiplierSetter.accept(model, Double.valueOf(multiplier));
+	multiplierSetter.accept(model, Double.valueOf(multiplier));
       } else {
-        model.setVariableValue(address, baseValue * multiplier, unit);
+	model.setVariableValue(address, baseValue * multiplier, unit);
       }
     }
   }
@@ -228,62 +229,60 @@ public class ProcessModelThroughputOptimizer implements Serializable {
   /**
    * Adds a producer/feed control using its current model value as base value.
    *
-   * @param name control name
-   * @param address area-qualified automation address
+   * @param name            control name
+   * @param address         area-qualified automation address
    * @param lowerMultiplier lower allowed multiplier
    * @param upperMultiplier upper allowed multiplier
-   * @param unit unit used when reading and setting the value
+   * @param unit            unit used when reading and setting the value
    * @return this optimizer for chaining
    */
-  public ProcessModelThroughputOptimizer addProducer(String name, String address,
-      double lowerMultiplier, double upperMultiplier, String unit) {
+  public ProcessModelThroughputOptimizer addProducer(String name, String address, double lowerMultiplier,
+      double upperMultiplier, String unit) {
     return addProducer(name, address, Double.NaN, lowerMultiplier, upperMultiplier, unit);
   }
 
   /**
    * Adds a producer/feed control with an explicit base value.
    *
-   * @param name control name
-   * @param address area-qualified automation address
-   * @param baseValue base value before multiplier scaling
+   * @param name            control name
+   * @param address         area-qualified automation address
+   * @param baseValue       base value before multiplier scaling
    * @param lowerMultiplier lower allowed multiplier
    * @param upperMultiplier upper allowed multiplier
-   * @param unit unit used when setting the value
+   * @param unit            unit used when setting the value
    * @return this optimizer for chaining
    */
   public ProcessModelThroughputOptimizer addProducer(String name, String address, double baseValue,
       double lowerMultiplier, double upperMultiplier, String unit) {
-    producerControls
-        .add(new ProducerControl(name, address, baseValue, lowerMultiplier, upperMultiplier, unit));
+    producerControls.add(new ProducerControl(name, address, baseValue, lowerMultiplier, upperMultiplier, unit));
     return this;
   }
 
   /**
    * Adds a custom producer multiplier setter.
    *
-   * @param name control name
-   * @param lowerMultiplier lower allowed multiplier
-   * @param upperMultiplier upper allowed multiplier
+   * @param name             control name
+   * @param lowerMultiplier  lower allowed multiplier
+   * @param upperMultiplier  upper allowed multiplier
    * @param multiplierSetter custom setter receiving the model and multiplier
    * @return this optimizer for chaining
    */
   public ProcessModelThroughputOptimizer addProducerMultiplier(String name, double lowerMultiplier,
       double upperMultiplier, BiConsumer<ProcessModel, Double> multiplierSetter) {
-    producerControls
-        .add(new ProducerControl(name, lowerMultiplier, upperMultiplier, multiplierSetter));
+    producerControls.add(new ProducerControl(name, lowerMultiplier, upperMultiplier, multiplierSetter));
     return this;
   }
 
   /**
    * Sets the throughput objective.
    *
-   * @param name objective name
+   * @param name      objective name
    * @param evaluator objective evaluator
-   * @param unit objective unit
+   * @param unit      objective unit
    * @return this optimizer for chaining
    */
-  public ProcessModelThroughputOptimizer setObjective(String name,
-      ToDoubleFunction<ProcessModel> evaluator, String unit) {
+  public ProcessModelThroughputOptimizer setObjective(String name, ToDoubleFunction<ProcessModel> evaluator,
+      String unit) {
     this.objectiveName = name;
     this.objectiveEvaluator = evaluator;
     this.objectiveUnit = unit;
@@ -297,8 +296,8 @@ public class ProcessModelThroughputOptimizer implements Serializable {
    * @return loaded capacity records
    * @throws IOException if reading fails
    */
-  public List<InstalledCapacityTableLoader.InstalledCapacityRecord> loadInstalledCapacities(
-      String filePath) throws IOException {
+  public List<InstalledCapacityTableLoader.InstalledCapacityRecord> loadInstalledCapacities(String filePath)
+      throws IOException {
     return loadInstalledCapacities(Paths.get(filePath));
   }
 
@@ -309,8 +308,8 @@ public class ProcessModelThroughputOptimizer implements Serializable {
    * @return loaded capacity records
    * @throws IOException if reading fails
    */
-  public List<InstalledCapacityTableLoader.InstalledCapacityRecord> loadInstalledCapacities(
-      Path filePath) throws IOException {
+  public List<InstalledCapacityTableLoader.InstalledCapacityRecord> loadInstalledCapacities(Path filePath)
+      throws IOException {
     return InstalledCapacityTableLoader.load(processModel, filePath);
   }
 
@@ -319,11 +318,11 @@ public class ProcessModelThroughputOptimizer implements Serializable {
    *
    * @param lowerMultiplier lower search multiplier
    * @param upperMultiplier upper search multiplier
-   * @param tolerance multiplier tolerance for binary search
+   * @param tolerance       multiplier tolerance for binary search
    * @return throughput optimization result with all evaluated cases
    */
-  public ProcessModelThroughputResult findMaximumThroughput(double lowerMultiplier,
-      double upperMultiplier, double tolerance) {
+  public ProcessModelThroughputResult findMaximumThroughput(double lowerMultiplier, double upperMultiplier,
+      double tolerance) {
     validateSetup(tolerance);
     resolveBaseValues();
 
@@ -334,8 +333,8 @@ public class ProcessModelThroughputOptimizer implements Serializable {
     }
 
     ProcessModelSimulationEvaluator evaluator = createScalarEvaluator(lower, upper);
-    ProcessModelThroughputResult result = new ProcessModelThroughputResult(
-        "ProcessModel throughput-to-bottleneck", objectiveName, objectiveUnit);
+    ProcessModelThroughputResult result = new ProcessModelThroughputResult("ProcessModel throughput-to-bottleneck",
+	objectiveName, objectiveUnit);
 
     int caseNumber = 1;
     ThroughputCaseRow lowerCase = evaluateCase(evaluator, caseNumber++, lower);
@@ -355,15 +354,14 @@ public class ProcessModelThroughputOptimizer implements Serializable {
     double feasibleMultiplier = lower;
     double infeasibleMultiplier = upper;
     int iteration = 0;
-    while (Math.abs(infeasibleMultiplier - feasibleMultiplier) > tolerance
-        && iteration < maxIterations) {
+    while (Math.abs(infeasibleMultiplier - feasibleMultiplier) > tolerance && iteration < maxIterations) {
       double trialMultiplier = 0.5 * (feasibleMultiplier + infeasibleMultiplier);
       ThroughputCaseRow trialCase = evaluateCase(evaluator, caseNumber++, trialMultiplier);
       result.addCase(trialCase);
       if (trialCase.isFeasible()) {
-        feasibleMultiplier = trialMultiplier;
+	feasibleMultiplier = trialMultiplier;
       } else {
-        infeasibleMultiplier = trialMultiplier;
+	infeasibleMultiplier = trialMultiplier;
       }
       iteration++;
     }
@@ -433,9 +431,9 @@ public class ProcessModelThroughputOptimizer implements Serializable {
    * Sets whether strategy-generated capacity constraints are included.
    *
    * <p>
-   * The default is false so fixed-equipment throughput studies are controlled by explicit installed
-   * limits loaded from design data or attached directly to equipment. Set this to true for
-   * screening studies where generic equipment strategy constraints should also participate.
+   * The default is false so fixed-equipment throughput studies are controlled by explicit installed limits loaded from
+   * design data or attached directly to equipment. Set this to true for screening studies where generic equipment
+   * strategy constraints should also participate.
    * </p>
    *
    * @param includeStrategyCapacityConstraints true to include strategy-generated constraints
@@ -483,16 +481,15 @@ public class ProcessModelThroughputOptimizer implements Serializable {
   private ProcessModelSimulationEvaluator createScalarEvaluator(double lower, double upper) {
     ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(processModel);
     evaluator.setIncludeStrategyCapacityConstraints(includeStrategyCapacityConstraints);
-    evaluator.addParameterWithSetter("throughputMultiplier",
-        new BiConsumer<ProcessModel, Double>() {
-          /** {@inheritDoc} */
-          @Override
-          public void accept(ProcessModel model, Double multiplier) {
-            applyScalarMultiplier(model, multiplier.doubleValue());
-          }
-        }, lower, upper, "-");
+    evaluator.addParameterWithSetter("throughputMultiplier", new BiConsumer<ProcessModel, Double>() {
+      /** {@inheritDoc} */
+      @Override
+      public void accept(ProcessModel model, Double multiplier) {
+	applyScalarMultiplier(model, multiplier.doubleValue());
+      }
+    }, lower, upper, "-");
     evaluator.addObjective(objectiveName, objectiveEvaluator,
-        ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
+	ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
     if (includeEquipmentCapacityConstraints) {
       evaluator.addEquipmentCapacityConstraints();
     }
@@ -502,23 +499,21 @@ public class ProcessModelThroughputOptimizer implements Serializable {
   /**
    * Evaluates one multiplier case.
    *
-   * @param evaluator configured evaluator
+   * @param evaluator  configured evaluator
    * @param caseNumber case sequence number
    * @param multiplier throughput multiplier
    * @return evaluated case row
    */
-  private ThroughputCaseRow evaluateCase(ProcessModelSimulationEvaluator evaluator, int caseNumber,
-      double multiplier) {
-    ProcessModelSimulationEvaluator.EvaluationResult evaluation =
-        evaluator.evaluate(new double[] {multiplier});
-    return ThroughputCaseRow.fromEvaluation(caseNumber, multiplier,
-        createProducerMultiplierMap(multiplier), evaluation);
+  private ThroughputCaseRow evaluateCase(ProcessModelSimulationEvaluator evaluator, int caseNumber, double multiplier) {
+    ProcessModelSimulationEvaluator.EvaluationResult evaluation = evaluator.evaluate(new double[] { multiplier });
+    return ThroughputCaseRow.fromEvaluation(caseNumber, multiplier, createProducerMultiplierMap(multiplier),
+	evaluation);
   }
 
   /**
    * Applies a scalar multiplier to all producer controls.
    *
-   * @param model process model
+   * @param model      process model
    * @param multiplier scalar multiplier
    */
   private void applyScalarMultiplier(ProcessModel model, double multiplier) {

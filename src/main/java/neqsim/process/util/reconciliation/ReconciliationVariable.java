@@ -4,9 +4,9 @@ package neqsim.process.util.reconciliation;
  * A measured process variable participating in data reconciliation.
  *
  * <p>
- * Each variable represents a single plant measurement (flow rate, temperature, pressure, etc.) with
- * its measured value and uncertainty (standard deviation). After reconciliation, the adjusted value
- * satisfies all balance constraints while minimizing weighted deviations from measurements.
+ * Each variable represents a single plant measurement (flow rate, temperature, pressure, etc.) with its measured value
+ * and uncertainty (standard deviation). After reconciliation, the adjusted value satisfies all balance constraints
+ * while minimizing weighted deviations from measurements.
  * </p>
  *
  * <p>
@@ -66,9 +66,9 @@ public class ReconciliationVariable implements java.io.Serializable {
   /**
    * Creates a reconciliation variable with name, measured value, and uncertainty.
    *
-   * @param name variable identifier, must be unique within the engine
+   * @param name          variable identifier, must be unique within the engine
    * @param measuredValue raw plant measurement
-   * @param uncertainty measurement standard deviation (sigma), must be positive
+   * @param uncertainty   measurement standard deviation (sigma), must be positive
    * @throws IllegalArgumentException if uncertainty is not positive
    */
   public ReconciliationVariable(String name, double measuredValue, double uncertainty) {
@@ -85,15 +85,15 @@ public class ReconciliationVariable implements java.io.Serializable {
   /**
    * Creates a reconciliation variable linked to a specific equipment property.
    *
-   * @param name variable identifier
+   * @param name          variable identifier
    * @param equipmentName name of equipment in the ProcessSystem
-   * @param propertyName property measured (e.g., "massFlowRate")
+   * @param propertyName  property measured (e.g., "massFlowRate")
    * @param measuredValue raw plant measurement
-   * @param uncertainty measurement standard deviation (sigma), must be positive
+   * @param uncertainty   measurement standard deviation (sigma), must be positive
    * @throws IllegalArgumentException if uncertainty is not positive
    */
-  public ReconciliationVariable(String name, String equipmentName, String propertyName,
-      double measuredValue, double uncertainty) {
+  public ReconciliationVariable(String name, String equipmentName, String propertyName, double measuredValue,
+      double uncertainty) {
     this(name, measuredValue, uncertainty);
     this.equipmentName = equipmentName;
     this.propertyName = propertyName;
@@ -276,9 +276,8 @@ public class ReconciliationVariable implements java.io.Serializable {
    * Returns the normalized residual after reconciliation.
    *
    * <p>
-   * Computed as {@code (reconciledValue - measuredValue) / adjustedSigma} where
-   * {@code adjustedSigma} accounts for the constraint correction covariance. Used for gross error
-   * detection.
+   * Computed as {@code (reconciledValue - measuredValue) / adjustedSigma} where {@code adjustedSigma} accounts for the
+   * constraint correction covariance. Used for gross error detection.
    * </p>
    *
    * @return normalized residual (dimensionless)
@@ -323,7 +322,7 @@ public class ReconciliationVariable implements java.io.Serializable {
   public String toString() {
     String unitStr = unit.isEmpty() ? "" : " " + unit;
     String flag = grossError ? " [GROSS ERROR]" : "";
-    return String.format("%s: meas=%.4f%s, rec=%.4f%s, adj=%.4f, |r|=%.3f%s", name, measuredValue,
-        unitStr, reconciledValue, unitStr, getAdjustment(), Math.abs(normalizedResidual), flag);
+    return String.format("%s: meas=%.4f%s, rec=%.4f%s, adj=%.4f, |r|=%.3f%s", name, measuredValue, unitStr,
+	reconciledValue, unitStr, getAdjustment(), Math.abs(normalizedResidual), flag);
   }
 }

@@ -12,17 +12,14 @@ import java.util.List;
  * Two IPR models are supported, mirroring PROSPER/PIPESIM well-test matching:
  * </p>
  * <ul>
- * <li><b>Productivity index (PI)</b> - linear, single-phase liquid inflow q = J&middot;(p_r -
- * p_wf).</li>
- * <li><b>Vogel</b> - two-phase (solution-gas drive) inflow q/q_max = 1 - 0.2(p_wf/p_r) -
- * 0.8(p_wf/p_r)&sup2;.</li>
+ * <li><b>Productivity index (PI)</b> - linear, single-phase liquid inflow q = J&middot;(p_r - p_wf).</li>
+ * <li><b>Vogel</b> - two-phase (solution-gas drive) inflow q/q_max = 1 - 0.2(p_wf/p_r) - 0.8(p_wf/p_r)&sup2;.</li>
  * </ul>
  *
  * <p>
- * The matcher minimises the sum of squared rate residuals over the reservoir pressure and
- * deliverability parameter using a self-contained bounded coordinate search (no external optimiser
- * dependency), so it is safe to call inside agentic loops. The fitted curve can then be dropped
- * straight into an {@link IntegratedProductionModel}.
+ * The matcher minimises the sum of squared rate residuals over the reservoir pressure and deliverability parameter
+ * using a self-contained bounded coordinate search (no external optimiser dependency), so it is safe to call inside
+ * agentic loops. The fitted curve can then be dropped straight into an {@link IntegratedProductionModel}.
  * </p>
  *
  * @author NeqSim
@@ -62,14 +59,14 @@ public class WellTestMatcher implements Serializable {
     /**
      * Creates a match result.
      *
-     * @param curve fitted deliverability curve
-     * @param reservoirPressure fitted reservoir (shut-in) pressure in bara
+     * @param curve                   fitted deliverability curve
+     * @param reservoirPressure       fitted reservoir (shut-in) pressure in bara
      * @param deliverabilityParameter fitted PI (Sm3/day/bar) or AOFP (Sm3/day)
-     * @param rmsError root-mean-square rate residual in Sm3/day
-     * @param model model name ("PI" or "Vogel")
+     * @param rmsError                root-mean-square rate residual in Sm3/day
+     * @param model                   model name ("PI" or "Vogel")
      */
-    public MatchResult(WellDeliverabilityCurve curve, double reservoirPressure,
-        double deliverabilityParameter, double rmsError, String model) {
+    public MatchResult(WellDeliverabilityCurve curve, double reservoirPressure, double deliverabilityParameter,
+	double rmsError, String model) {
       this.curve = curve;
       this.reservoirPressure = reservoirPressure;
       this.deliverabilityParameter = deliverabilityParameter;
@@ -128,7 +125,7 @@ public class WellTestMatcher implements Serializable {
   /**
    * Adds a well-test observation.
    *
-   * @param rateSm3PerDay measured rate in Sm3/day
+   * @param rateSm3PerDay       measured rate in Sm3/day
    * @param flowingPressureBara measured flowing pressure (Pwf or back pressure) in bara
    * @return this matcher for chaining
    */
@@ -158,20 +155,20 @@ public class WellTestMatcher implements Serializable {
       double num = 0.0;
       double den = 0.0;
       for (TestPoint tp : points) {
-        double dp = pr - tp.flowingPressure;
-        num += tp.rate * dp;
-        den += dp * dp;
+	double dp = pr - tp.flowingPressure;
+	num += tp.rate * dp;
+	den += dp * dp;
       }
       double j = den > 0.0 ? num / den : 0.0;
       double err = 0.0;
       for (TestPoint tp : points) {
-        double pred = j * (pr - tp.flowingPressure);
-        err += (pred - tp.rate) * (pred - tp.rate);
+	double pred = j * (pr - tp.flowingPressure);
+	err += (pred - tp.rate) * (pred - tp.rate);
       }
       if (err < bestErr) {
-        bestErr = err;
-        bestPr = pr;
-        bestJ = j;
+	bestErr = err;
+	bestPr = pr;
+	bestJ = j;
       }
     }
     // Build a deliverability curve: rate at back pressure p = J*(pr - p).
@@ -208,22 +205,22 @@ public class WellTestMatcher implements Serializable {
       double num = 0.0;
       double den = 0.0;
       for (TestPoint tp : points) {
-        double r = tp.flowingPressure / pr;
-        double f = 1.0 - 0.2 * r - 0.8 * r * r;
-        num += tp.rate * f;
-        den += f * f;
+	double r = tp.flowingPressure / pr;
+	double f = 1.0 - 0.2 * r - 0.8 * r * r;
+	num += tp.rate * f;
+	den += f * f;
       }
       double qmax = den > 0.0 ? num / den : 0.0;
       double err = 0.0;
       for (TestPoint tp : points) {
-        double r = tp.flowingPressure / pr;
-        double pred = qmax * (1.0 - 0.2 * r - 0.8 * r * r);
-        err += (pred - tp.rate) * (pred - tp.rate);
+	double r = tp.flowingPressure / pr;
+	double pred = qmax * (1.0 - 0.2 * r - 0.8 * r * r);
+	err += (pred - tp.rate) * (pred - tp.rate);
       }
       if (err < bestErr) {
-        bestErr = err;
-        bestPr = pr;
-        bestQmax = qmax;
+	bestErr = err;
+	bestPr = pr;
+	bestQmax = qmax;
       }
     }
     WellDeliverabilityCurve curve = WellDeliverabilityCurve.fromVogel(bestQmax, bestPr);

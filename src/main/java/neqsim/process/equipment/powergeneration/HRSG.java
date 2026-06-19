@@ -17,14 +17,14 @@ import neqsim.thermo.system.SystemInterface;
  * Heat Recovery Steam Generator (HRSG) for combined-cycle power plants.
  *
  * <p>
- * Models a counter-current heat exchanger where hot exhaust gas from a gas turbine heats
- * water/steam to produce superheated steam. The HRSG transfers heat from the gas-side inlet stream
- * to produce a steam outlet at the specified conditions.
+ * Models a counter-current heat exchanger where hot exhaust gas from a gas turbine heats water/steam to produce
+ * superheated steam. The HRSG transfers heat from the gas-side inlet stream to produce a steam outlet at the specified
+ * conditions.
  * </p>
  *
  * <p>
- * The model calculates the heat transfer based on the gas-side cooling and applies an effectiveness
- * factor to determine the actual steam production rate for given steam conditions.
+ * The model calculates the heat transfer based on the gas-side cooling and applies an effectiveness factor to determine
+ * the actual steam production rate for given steam conditions.
  * </p>
  *
  * <pre>
@@ -61,8 +61,7 @@ public class HRSG extends TwoPortEquipment implements CapacityConstrainedEquipme
   private boolean autoSized = false;
 
   /** Storage for capacity constraints. */
-  private final Map<String, CapacityConstraint> capacityConstraints =
-      new LinkedHashMap<String, CapacityConstraint>();
+  private final Map<String, CapacityConstraint> capacityConstraints = new LinkedHashMap<String, CapacityConstraint>();
 
   /**
    * Constructor for HRSG.
@@ -76,7 +75,7 @@ public class HRSG extends TwoPortEquipment implements CapacityConstrainedEquipme
   /**
    * Constructor for HRSG with hot gas inlet stream (from gas turbine exhaust).
    *
-   * @param name equipment name
+   * @param name              equipment name
    * @param hotGasInletStream hot gas stream from gas turbine exhaust
    */
   public HRSG(String name, StreamInterface hotGasInletStream) {
@@ -97,8 +96,8 @@ public class HRSG extends TwoPortEquipment implements CapacityConstrainedEquipme
 
     SystemInterface gasCooled = gasIn.clone();
     gasCooled.setTemperature(minGasOutTemp);
-    neqsim.thermodynamicoperations.ThermodynamicOperations ops =
-        new neqsim.thermodynamicoperations.ThermodynamicOperations(gasCooled);
+    neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+	gasCooled);
     ops.TPflash();
     double gasEnthalypCooled = gasCooled.getEnthalpy();
 
@@ -113,8 +112,8 @@ public class HRSG extends TwoPortEquipment implements CapacityConstrainedEquipme
     // Calculate actual gas outlet conditions
     double actualGasOutEnthalpy = gasInletEnthalpy - heatTransferred;
     SystemInterface gasOut = gasIn.clone();
-    neqsim.thermodynamicoperations.ThermodynamicOperations opsOut =
-        new neqsim.thermodynamicoperations.ThermodynamicOperations(gasOut);
+    neqsim.thermodynamicoperations.ThermodynamicOperations opsOut = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+	gasOut);
     try {
       opsOut.PHflash(actualGasOutEnthalpy);
     } catch (Exception ex) {
@@ -146,7 +145,7 @@ public class HRSG extends TwoPortEquipment implements CapacityConstrainedEquipme
   /**
    * Estimate steam specific enthalpy using simplified correlation.
    *
-   * @param pressure steam pressure in bara
+   * @param pressure    steam pressure in bara
    * @param temperature steam temperature in Kelvin
    * @return specific enthalpy in J/kg
    */
@@ -192,12 +191,12 @@ public class HRSG extends TwoPortEquipment implements CapacityConstrainedEquipme
    */
   public double getHeatTransferred(String unit) {
     switch (unit) {
-      case "kW":
-        return heatTransferred / 1000.0;
-      case "MW":
-        return heatTransferred / 1.0e6;
-      default:
-        return heatTransferred;
+    case "kW":
+      return heatTransferred / 1000.0;
+    case "MW":
+      return heatTransferred / 1.0e6;
+    default:
+      return heatTransferred;
     }
   }
 
@@ -218,12 +217,12 @@ public class HRSG extends TwoPortEquipment implements CapacityConstrainedEquipme
    */
   public double getSteamFlowRate(String unit) {
     switch (unit) {
-      case "kg/hr":
-        return steamFlowRate * 3600.0;
-      case "ton/hr":
-        return steamFlowRate * 3.6;
-      default:
-        return steamFlowRate;
+    case "kg/hr":
+      return steamFlowRate * 3600.0;
+    case "ton/hr":
+      return steamFlowRate * 3.6;
+    default:
+      return steamFlowRate;
     }
   }
 
@@ -258,7 +257,7 @@ public class HRSG extends TwoPortEquipment implements CapacityConstrainedEquipme
    * Set steam temperature with unit.
    *
    * @param temperature steam temperature
-   * @param unit temperature unit ("C", "K", "F")
+   * @param unit        temperature unit ("C", "K", "F")
    */
   public void setSteamTemperature(double temperature, String unit) {
     if ("C".equals(unit)) {
@@ -283,7 +282,7 @@ public class HRSG extends TwoPortEquipment implements CapacityConstrainedEquipme
    * Set feed water temperature with unit.
    *
    * @param temperature feed water temperature
-   * @param unit temperature unit ("C", "K")
+   * @param unit        temperature unit ("C", "K")
    */
   public void setFeedWaterTemperature(double temperature, String unit) {
     if ("C".equals(unit)) {
@@ -328,12 +327,12 @@ public class HRSG extends TwoPortEquipment implements CapacityConstrainedEquipme
    */
   public double getDesignHeatDuty(String unit) {
     switch (unit) {
-      case "kW":
-        return designHeatDutyW / 1000.0;
-      case "MW":
-        return designHeatDutyW / 1.0e6;
-      default:
-        return designHeatDutyW;
+    case "kW":
+      return designHeatDutyW / 1000.0;
+    case "MW":
+      return designHeatDutyW / 1.0e6;
+    default:
+      return designHeatDutyW;
     }
   }
 
@@ -351,18 +350,18 @@ public class HRSG extends TwoPortEquipment implements CapacityConstrainedEquipme
    * Set the design (maximum) heat transfer duty with unit.
    *
    * @param designHeatDuty design heat duty value
-   * @param unit heat unit ("W", "kW", "MW")
+   * @param unit           heat unit ("W", "kW", "MW")
    */
   public void setDesignHeatDuty(double designHeatDuty, String unit) {
     switch (unit) {
-      case "kW":
-        this.designHeatDutyW = designHeatDuty * 1000.0;
-        break;
-      case "MW":
-        this.designHeatDutyW = designHeatDuty * 1.0e6;
-        break;
-      default:
-        this.designHeatDutyW = designHeatDuty;
+    case "kW":
+      this.designHeatDutyW = designHeatDuty * 1000.0;
+      break;
+    case "MW":
+      this.designHeatDutyW = designHeatDuty * 1.0e6;
+      break;
+    default:
+      this.designHeatDutyW = designHeatDuty;
     }
     initializeCapacityConstraints();
   }
@@ -385,11 +384,10 @@ public class HRSG extends TwoPortEquipment implements CapacityConstrainedEquipme
   private void initializeCapacityConstraints() {
     capacityConstraints.clear();
     if (designHeatDutyW > 0) {
-      addCapacityConstraint(
-          new CapacityConstraint("heatDuty", "kW", CapacityConstraint.ConstraintType.HARD)
-              .setDesignValue(designHeatDutyW / 1000.0).setMaxValue(designHeatDutyW / 1000.0 * 1.1)
-              .setWarningThreshold(0.9).setDescription("HRSG heat transfer duty vs design capacity")
-              .setValueSupplier(() -> Math.abs(this.heatTransferred) / 1000.0));
+      addCapacityConstraint(new CapacityConstraint("heatDuty", "kW", CapacityConstraint.ConstraintType.HARD)
+	  .setDesignValue(designHeatDutyW / 1000.0).setMaxValue(designHeatDutyW / 1000.0 * 1.1).setWarningThreshold(0.9)
+	  .setDescription("HRSG heat transfer duty vs design capacity")
+	  .setValueSupplier(() -> Math.abs(this.heatTransferred) / 1000.0));
     }
   }
 
@@ -407,8 +405,8 @@ public class HRSG extends TwoPortEquipment implements CapacityConstrainedEquipme
     for (CapacityConstraint c : capacityConstraints.values()) {
       double util = c.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
-        maxUtil = util;
-        bottleneck = c;
+	maxUtil = util;
+	bottleneck = c;
       }
     }
     return bottleneck;
@@ -419,7 +417,7 @@ public class HRSG extends TwoPortEquipment implements CapacityConstrainedEquipme
   public boolean isCapacityExceeded() {
     for (CapacityConstraint c : capacityConstraints.values()) {
       if (c.isViolated()) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -430,7 +428,7 @@ public class HRSG extends TwoPortEquipment implements CapacityConstrainedEquipme
   public boolean isHardLimitExceeded() {
     for (CapacityConstraint c : capacityConstraints.values()) {
       if (c.isHardLimitExceeded()) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -443,7 +441,7 @@ public class HRSG extends TwoPortEquipment implements CapacityConstrainedEquipme
     for (CapacityConstraint c : capacityConstraints.values()) {
       double util = c.getUtilization();
       if (!Double.isNaN(util)) {
-        maxUtil = Math.max(maxUtil, util);
+	maxUtil = Math.max(maxUtil, util);
       }
     }
     return maxUtil;
@@ -487,14 +485,11 @@ public class HRSG extends TwoPortEquipment implements CapacityConstrainedEquipme
     sb.append("Equipment: ").append(getName()).append("\n");
     sb.append("Auto-sized: ").append(autoSized).append("\n");
     sb.append("\n--- Operating Conditions ---\n");
-    sb.append("Heat Transferred: ")
-        .append(String.format("%.2f kW", Math.abs(heatTransferred) / 1000.0)).append("\n");
+    sb.append("Heat Transferred: ").append(String.format("%.2f kW", Math.abs(heatTransferred) / 1000.0)).append("\n");
     if (designHeatDutyW > 0) {
-      sb.append("Design Heat Duty: ").append(String.format("%.2f kW", designHeatDutyW / 1000.0))
-          .append("\n");
-      sb.append("Utilization: ")
-          .append(String.format("%.1f%%", Math.abs(heatTransferred) / designHeatDutyW * 100))
-          .append("\n");
+      sb.append("Design Heat Duty: ").append(String.format("%.2f kW", designHeatDutyW / 1000.0)).append("\n");
+      sb.append("Utilization: ").append(String.format("%.1f%%", Math.abs(heatTransferred) / designHeatDutyW * 100))
+	  .append("\n");
     }
     return sb.toString();
   }

@@ -6,20 +6,20 @@ import java.io.Serializable;
  * Simple two-component degradation model for an industrial gas turbine.
  *
  * <p>
- * <b>Recoverable losses</b> (compressor fouling) accumulate at roughly 0.04 % heat-rate penalty per
- * 100 fired hours and are reset by an offline water wash. They are capped at a configurable maximum
- * (default 4 %) which normally triggers an unscheduled wash.
+ * <b>Recoverable losses</b> (compressor fouling) accumulate at roughly 0.04 % heat-rate penalty per 100 fired hours and
+ * are reset by an offline water wash. They are capped at a configurable maximum (default 4 %) which normally triggers
+ * an unscheduled wash.
  * </p>
  *
  * <p>
- * <b>Non-recoverable losses</b> (blade erosion, tip-clearance opening, coating wear) accumulate at
- * roughly 1 % per major overhaul interval (~25 000 fired hours for an aero-derivative) and are only
- * reset by a hot section / major overhaul.
+ * <b>Non-recoverable losses</b> (blade erosion, tip-clearance opening, coating wear) accumulate at roughly 1 % per
+ * major overhaul interval (~25 000 fired hours for an aero-derivative) and are only reset by a hot section / major
+ * overhaul.
  * </p>
  *
  * <p>
- * The model is deliberately simple — sufficient for screening NPV studies comparing fleet
- * replacement options. For detailed performance contracts use the OEM degradation model instead.
+ * The model is deliberately simple — sufficient for screening NPV studies comparing fleet replacement options. For
+ * detailed performance contracts use the OEM degradation model instead.
  * </p>
  *
  * @author neqsim
@@ -37,7 +37,8 @@ public class GasTurbineDegradation implements Serializable {
   private double nonRecoverableCapFraction = 0.05;
 
   /** Create a degradation model with default coefficients (aero-derivative). */
-  public GasTurbineDegradation() {}
+  public GasTurbineDegradation() {
+  }
 
   /**
    * Get the current recoverable heat-rate penalty.
@@ -67,8 +68,8 @@ public class GasTurbineDegradation implements Serializable {
   }
 
   /**
-   * Available-power derate factor (combined fouling and wear effect on compressor mass flow and
-   * turbine inlet temperature margin).
+   * Available-power derate factor (combined fouling and wear effect on compressor mass flow and turbine inlet
+   * temperature margin).
    *
    * @return multiplier on rated power (≤ 1)
    */

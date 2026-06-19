@@ -10,16 +10,15 @@ import neqsim.process.equipment.EquipmentEnum;
  * IEC 81346-2 letter codes for classification of objects in industrial plants.
  *
  * <p>
- * IEC 81346-2 defines a set of single-letter codes that classify equipment and objects by their
- * purpose or function. Each letter code represents a broad category such as "converting/separating"
- * (B), "processing/compressing" (K), or "flow controlling" (Q).
+ * IEC 81346-2 defines a set of single-letter codes that classify equipment and objects by their purpose or function.
+ * Each letter code represents a broad category such as "converting/separating" (B), "processing/compressing" (K), or
+ * "flow controlling" (Q).
  * </p>
  *
  * <p>
- * This enum maps each IEC 81346-2 letter code to its standardized description and provides a static
- * mapping from NeqSim {@link EquipmentEnum} values to the corresponding letter code. This mapping
- * is used by the {@link ReferenceDesignationGenerator} to automatically assign reference
- * designations per IEC 81346.
+ * This enum maps each IEC 81346-2 letter code to its standardized description and provides a static mapping from NeqSim
+ * {@link EquipmentEnum} values to the corresponding letter code. This mapping is used by the
+ * {@link ReferenceDesignationGenerator} to automatically assign reference designations per IEC 81346.
  * </p>
  *
  * <p>
@@ -142,15 +141,14 @@ public enum IEC81346LetterCode implements Serializable {
    * Unmodifiable mapping from NeqSim {@link EquipmentEnum} to IEC 81346-2 letter code.
    *
    * <p>
-   * This mapping is used by the reference designation generator to automatically classify process
-   * equipment per IEC 81346-2.
+   * This mapping is used by the reference designation generator to automatically classify process equipment per IEC
+   * 81346-2.
    * </p>
    */
   private static final Map<EquipmentEnum, IEC81346LetterCode> EQUIPMENT_MAP;
 
   static {
-    Map<EquipmentEnum, IEC81346LetterCode> map =
-        new EnumMap<EquipmentEnum, IEC81346LetterCode>(EquipmentEnum.class);
+    Map<EquipmentEnum, IEC81346LetterCode> map = new EnumMap<EquipmentEnum, IEC81346LetterCode>(EquipmentEnum.class);
 
     // B — Converting, separating, changing form
     map.put(EquipmentEnum.Separator, B);
@@ -255,17 +253,15 @@ public enum IEC81346LetterCode implements Serializable {
    * Maps a NeqSim equipment class to its corresponding IEC 81346-2 letter code.
    *
    * <p>
-   * This method first attempts to resolve the letter code through the canonical
-   * {@link #EQUIPMENT_MAP} by trying to match the equipment's simple class name to an
-   * {@link EquipmentEnum} value. If that fails, it falls back to {@code instanceof} checks for
-   * broad base-class detection (e.g. any {@code Separator} subclass maps to {@code B}).
+   * This method first attempts to resolve the letter code through the canonical {@link #EQUIPMENT_MAP} by trying to
+   * match the equipment's simple class name to an {@link EquipmentEnum} value. If that fails, it falls back to
+   * {@code instanceof} checks for broad base-class detection (e.g. any {@code Separator} subclass maps to {@code B}).
    * </p>
    *
    * @param equipment the process equipment instance
    * @return the IEC 81346-2 letter code, or {@link #A} if the type is not recognized
    */
-  public static IEC81346LetterCode fromEquipment(
-      neqsim.process.equipment.ProcessEquipmentInterface equipment) {
+  public static IEC81346LetterCode fromEquipment(neqsim.process.equipment.ProcessEquipmentInterface equipment) {
     if (equipment == null) {
       return A;
     }
@@ -276,7 +272,7 @@ public enum IEC81346LetterCode implements Serializable {
       EquipmentEnum enumVal = EquipmentEnum.valueOf(className);
       IEC81346LetterCode code = EQUIPMENT_MAP.get(enumVal);
       if (code != null) {
-        return code;
+	return code;
       }
     } catch (IllegalArgumentException ignored) {
       // Class name does not match any EquipmentEnum — fall through to instanceof
@@ -287,8 +283,8 @@ public enum IEC81346LetterCode implements Serializable {
       return B;
     }
     if (equipment instanceof neqsim.process.equipment.heatexchanger.HeatExchanger
-        || equipment instanceof neqsim.process.equipment.heatexchanger.Heater
-        || equipment instanceof neqsim.process.equipment.heatexchanger.Cooler) {
+	|| equipment instanceof neqsim.process.equipment.heatexchanger.Heater
+	|| equipment instanceof neqsim.process.equipment.heatexchanger.Cooler) {
       return B;
     }
     if (equipment instanceof neqsim.process.equipment.compressor.Compressor) {

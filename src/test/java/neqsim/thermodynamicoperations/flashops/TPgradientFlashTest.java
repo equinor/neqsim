@@ -13,7 +13,7 @@ public class TPgradientFlashTest {
   private static final Logger logger = LogManager.getLogger(TPgradientFlashTest.class);
 
   /** Logger object for class. */
-  
+
   @Test
   void testRun() {
     SystemInterface testSystem = new SystemSrkEos(345, 80.0);
@@ -59,9 +59,9 @@ public class TPgradientFlashTest {
     double deltaT = 0.5;
     for (int i = 0; i < 10; i++) {
       try {
-        newSystem = testOps.TPgradientFlash(i * deltaHeight, temperature + i * deltaT);
+	newSystem = testOps.TPgradientFlash(i * deltaHeight, temperature + i * deltaT);
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+	logger.error(ex.getMessage(), ex);
       }
       x_h2.add(newSystem.getComponent("hydrogen").getx());
       p_depth.add(newSystem.getPressure());

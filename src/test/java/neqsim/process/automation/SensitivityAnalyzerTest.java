@@ -15,8 +15,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Tests for {@link SensitivityAnalyzer} — finite-difference gradients over
- * {@link ProcessAutomation}.
+ * Tests for {@link SensitivityAnalyzer} — finite-difference gradients over {@link ProcessAutomation}.
  */
 class SensitivityAnalyzerTest {
 
@@ -47,25 +46,23 @@ class SensitivityAnalyzerTest {
     double dPdPout = sens.partial("Compressor.outletPressure", "bara", "Compressor.power", "kW");
     // Raising discharge pressure must require more shaft power.
     assertTrue(dPdPout > 0.0, "∂(power)/∂(outletPressure) must be > 0, got " + dPdPout);
-    assertTrue(Math.abs(dPdPout) < 1.0e5,
-        "magnitude should be plausible (kW per bara), got " + dPdPout);
+    assertTrue(Math.abs(dPdPout) < 1.0e5, "magnitude should be plausible (kW per bara), got " + dPdPout);
   }
 
   @Test
   void gradientReturnsOneEntryPerInput() {
     ProcessSystem ps = buildCompressorProcess();
     SensitivityAnalyzer sens = new SensitivityAnalyzer(ps.getAutomation());
-    List<String> inputs =
-        Arrays.asList("Compressor.outletPressure", "Compressor.polytropicEfficiency");
+    List<String> inputs = Arrays.asList("Compressor.outletPressure", "Compressor.polytropicEfficiency");
     Map<String, Double> g = sens.gradient("Compressor.power", "kW", inputs, null);
     assertEquals(2, g.size());
     assertTrue(g.containsKey("Compressor.outletPressure"));
     assertTrue(g.containsKey("Compressor.polytropicEfficiency"));
     // Both entries must be finite numbers.
-    assertTrue(!Double.isNaN(g.get("Compressor.outletPressure"))
-        && !Double.isInfinite(g.get("Compressor.outletPressure")));
+    assertTrue(
+	!Double.isNaN(g.get("Compressor.outletPressure")) && !Double.isInfinite(g.get("Compressor.outletPressure")));
     assertTrue(!Double.isNaN(g.get("Compressor.polytropicEfficiency"))
-        && !Double.isInfinite(g.get("Compressor.polytropicEfficiency")));
+	&& !Double.isInfinite(g.get("Compressor.polytropicEfficiency")));
   }
 
   @Test
@@ -73,8 +70,7 @@ class SensitivityAnalyzerTest {
     ProcessSystem ps = buildCompressorProcess();
     SensitivityAnalyzer sens = new SensitivityAnalyzer(ps.getAutomation());
     List<String> outputs = Arrays.asList("Compressor.power", "Compressor.outletStream.temperature");
-    List<String> inputs =
-        Arrays.asList("Compressor.outletPressure", "Compressor.polytropicEfficiency");
+    List<String> inputs = Arrays.asList("Compressor.outletPressure", "Compressor.polytropicEfficiency");
     double[][] j = sens.jacobian(outputs, null, inputs, null);
     assertEquals(2, j.length);
     assertEquals(2, j[0].length);
@@ -99,12 +95,9 @@ class SensitivityAnalyzerTest {
   void forwardAndCentralAgreeOnLinearishResponse() {
     ProcessSystem ps = buildCompressorProcess();
     SensitivityAnalyzer central = new SensitivityAnalyzer(ps.getAutomation());
-    SensitivityAnalyzer forward =
-        new SensitivityAnalyzer(ps.getAutomation()).setMode(SensitivityAnalyzer.Mode.FORWARD);
-    double dCentral =
-        central.partial("Compressor.outletPressure", "bara", "Compressor.power", "kW");
-    double dForward =
-        forward.partial("Compressor.outletPressure", "bara", "Compressor.power", "kW");
+    SensitivityAnalyzer forward = new SensitivityAnalyzer(ps.getAutomation()).setMode(SensitivityAnalyzer.Mode.FORWARD);
+    double dCentral = central.partial("Compressor.outletPressure", "bara", "Compressor.power", "kW");
+    double dForward = forward.partial("Compressor.outletPressure", "bara", "Compressor.power", "kW");
     double diff = Math.abs(dCentral - dForward);
     double rel = diff / Math.max(1.0e-9, Math.abs(dCentral));
     assertTrue(rel < 0.05, "central vs forward should agree to ~5%, got rel=" + rel);
@@ -115,7 +108,7 @@ class SensitivityAnalyzerTest {
     assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {
       @Override
       public void execute() {
-        new SensitivityAnalyzer(null);
+	new SensitivityAnalyzer(null);
       }
     });
   }
@@ -127,13 +120,13 @@ class SensitivityAnalyzerTest {
     assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {
       @Override
       public void execute() {
-        sens.setRelativeStep(0.0);
+	sens.setRelativeStep(0.0);
       }
     });
     assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {
       @Override
       public void execute() {
-        sens.setAbsoluteStep(-1.0);
+	sens.setAbsoluteStep(-1.0);
       }
     });
   }

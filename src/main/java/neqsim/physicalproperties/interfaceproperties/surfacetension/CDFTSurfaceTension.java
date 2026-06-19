@@ -11,11 +11,10 @@ import neqsim.thermo.system.SystemInterface;
  * Classical Density Functional Theory (cDFT) for interfacial tension calculation.
  *
  * <p>
- * Computes the interfacial tension of a pure component by minimising the excess grand potential
- * across a planar vapour-liquid interface using a non-local density functional derived directly
- * from the cubic equation of state (PR or SRK). Unlike gradient theory, the surface tension emerges
- * from the non-local treatment of attractive interactions without requiring an empirical influence
- * parameter.
+ * Computes the interfacial tension of a pure component by minimising the excess grand potential across a planar
+ * vapour-liquid interface using a non-local density functional derived directly from the cubic equation of state (PR or
+ * SRK). Unlike gradient theory, the surface tension emerges from the non-local treatment of attractive interactions
+ * without requiring an empirical influence parameter.
  * </p>
  *
  * <p>
@@ -23,23 +22,21 @@ import neqsim.thermo.system.SystemInterface;
  * </p>
  * <ul>
  * <li>A local repulsive part (ideal gas + excluded volume from the EOS)</li>
- * <li>A non-local attractive part: the van der Waals mean-field attraction is replaced by a
- * convolution with a molecular-range step-function kernel, while the EOS-specific correction
- * (beyond simple mean-field) is treated locally.</li>
+ * <li>A non-local attractive part: the van der Waals mean-field attraction is replaced by a convolution with a
+ * molecular-range step-function kernel, while the EOS-specific correction (beyond simple mean-field) is treated
+ * locally.</li>
  * </ul>
  *
  * <p>
- * The density profile is parameterised as a tanh function whose width is optimised variationally to
- * minimise the surface tension. This avoids unstable Picard iteration and guarantees a physically
- * bounded density profile.
+ * The density profile is parameterised as a tanh function whose width is optimised variationally to minimise the
+ * surface tension. This avoids unstable Picard iteration and guarantees a physically bounded density profile.
  * </p>
  *
  * <p>
  * References:
  * </p>
  * <ul>
- * <li>Tarazona, P. (1985). "Free-energy density functional for hard spheres." Phys. Rev. A, 31,
- * 2672.</li>
+ * <li>Tarazona, P. (1985). "Free-energy density functional for hard spheres." Phys. Rev. A, 31, 2672.</li>
  * <li>Kahl, H.; Winkelmann, J. (2008). Fluid Phase Equilibria, 270, 50-61.</li>
  * <li>Gross, J. (2009). J. Chem. Phys., 131, 204705.</li>
  * </ul>
@@ -70,31 +67,29 @@ public class CDFTSurfaceTension extends SurfaceTension {
    * Attractive range factor controlling the kernel half-width relative to the molecular diameter.
    *
    * <p>
-   * The step-function kernel extends from -lambda*dMol to +lambda*dMol. The physical motivation is
-   * that the attractive pair potential (e.g., Lennard-Jones) has a range of approximately 1.5-2.5
-   * molecular diameters beyond the hard core. The default value of 0.5 corresponds to the original
-   * kernel width of one molecular diameter. Increasing this factor broadens the kernel while
-   * preserving the normalisation integral (equal to -2a), which increases the second moment of the
-   * kernel and thereby increases the predicted surface tension.
+   * The step-function kernel extends from -lambda*dMol to +lambda*dMol. The physical motivation is that the attractive
+   * pair potential (e.g., Lennard-Jones) has a range of approximately 1.5-2.5 molecular diameters beyond the hard core.
+   * The default value of 0.5 corresponds to the original kernel width of one molecular diameter. Increasing this factor
+   * broadens the kernel while preserving the normalisation integral (equal to -2a), which increases the second moment
+   * of the kernel and thereby increases the predicted surface tension.
    * </p>
    *
    * <p>
-   * A universal value of approximately 1.5 has been found to reproduce experimental surface
-   * tensions within 5-10% for alkanes C1-C10, nitrogen, and CO2 without any substance-specific
-   * adjustable parameters.
+   * A universal value of approximately 1.5 has been found to reproduce experimental surface tensions within 5-10% for
+   * alkanes C1-C10, nitrogen, and CO2 without any substance-specific adjustable parameters.
    * </p>
    */
   private double attractiveRangeFactor = 0.5;
 
   /**
-   * When true, the kernel range factor is automatically computed from the acentric factor and a
-   * critical-exponent correction is applied, giving improved predictions without user tuning.
+   * When true, the kernel range factor is automatically computed from the acentric factor and a critical-exponent
+   * correction is applied, giving improved predictions without user tuning.
    */
   private boolean usePredictiveMode = false;
 
   /**
-   * Ising exponent correction: delta_mu = mu_Ising - mu_MF = 1.26 - 1.50 = -0.24. Applied as
-   * sigma_corrected = sigma_raw * (1 - T/Tc)^{delta_mu}.
+   * Ising exponent correction: delta_mu = mu_Ising - mu_MF = 1.26 - 1.50 = -0.24. Applied as sigma_corrected =
+   * sigma_raw * (1 - T/Tc)^{delta_mu}.
    */
   private static final double DELTA_MU = -0.24;
 
@@ -107,7 +102,8 @@ public class CDFTSurfaceTension extends SurfaceTension {
   /**
    * Constructor for CDFTSurfaceTension.
    */
-  public CDFTSurfaceTension() {}
+  public CDFTSurfaceTension() {
+  }
 
   /**
    * Constructor for CDFTSurfaceTension.
@@ -126,34 +122,33 @@ public class CDFTSurfaceTension extends SurfaceTension {
 
       // In predictive mode, auto-set lambda from acentric factor
       if (usePredictiveMode && nc == 1) {
-        double omega = system.getPhase(0).getComponent(0).getAcentricFactor();
-        this.attractiveRangeFactor = Math.max(0.40, LAMBDA_A + LAMBDA_B * omega);
+	double omega = system.getPhase(0).getComponent(0).getAcentricFactor();
+	this.attractiveRangeFactor = Math.max(0.40, LAMBDA_A + LAMBDA_B * omega);
       }
 
       double sigmaRaw;
       if (nc == 1) {
-        sigmaRaw = solvePureComponent(interface1, interface2);
+	sigmaRaw = solvePureComponent(interface1, interface2);
       } else {
-        sigmaRaw = solveMixture(interface1, interface2);
+	sigmaRaw = solveMixture(interface1, interface2);
       }
 
       // Apply Ising critical-exponent correction in predictive mode
       if (usePredictiveMode) {
-        double tc;
-        if (nc == 1) {
-          tc = system.getPhase(0).getComponent(0).getTC();
-        } else {
-          // Pseudo-critical temperature from mole-fraction average
-          tc = 0.0;
-          for (int i = 0; i < nc; i++) {
-            tc += system.getPhase(0).getComponent(i).getx()
-                * system.getPhase(0).getComponent(i).getTC();
-          }
-        }
-        double tr = system.getPhase(0).getTemperature() / tc;
-        if (tr < 0.999) {
-          sigmaRaw *= Math.pow(1.0 - tr, DELTA_MU);
-        }
+	double tc;
+	if (nc == 1) {
+	  tc = system.getPhase(0).getComponent(0).getTC();
+	} else {
+	  // Pseudo-critical temperature from mole-fraction average
+	  tc = 0.0;
+	  for (int i = 0; i < nc; i++) {
+	    tc += system.getPhase(0).getComponent(i).getx() * system.getPhase(0).getComponent(i).getTC();
+	  }
+	}
+	double tr = system.getPhase(0).getTemperature() / tc;
+	if (tr < 0.999) {
+	  sigmaRaw *= Math.pow(1.0 - tr, DELTA_MU);
+	}
       }
 
       return Math.max(sigmaRaw, 0.0);
@@ -165,13 +160,13 @@ public class CDFTSurfaceTension extends SurfaceTension {
   }
 
   /**
-   * Solves the cDFT equations for a pure-component planar interface using a variational approach
-   * with a tanh density profile.
+   * Solves the cDFT equations for a pure-component planar interface using a variational approach with a tanh density
+   * profile.
    *
    * <p>
-   * The density profile is parameterised as rho(z) = (rhoL+rhoV)/2 + (rhoL-rhoV)/2 * tanh(-z/d)
-   * where d is an interface half-width parameter. The surface tension is computed as the integral
-   * of the excess grand potential and minimised over d using golden section search.
+   * The density profile is parameterised as rho(z) = (rhoL+rhoV)/2 + (rhoL-rhoV)/2 * tanh(-z/d) where d is an interface
+   * half-width parameter. The surface tension is computed as the integral of the excess grand potential and minimised
+   * over d using golden section search.
    * </p>
    *
    * @param ph1 index of phase 1
@@ -240,11 +235,11 @@ public class CDFTSurfaceTension extends SurfaceTension {
     double bestSigma = Double.MAX_VALUE;
     for (int k = 0; k < nScan; k++) {
       double delta = deltaLo + (deltaHi - deltaLo) * k / (nScan - 1);
-      double sig = computeSigmaForDelta(rhoLiq, rhoVap, temperature, aSI, bSI, delta1, delta2, dMol,
-          delta, muEq, pBulk);
+      double sig = computeSigmaForDelta(rhoLiq, rhoVap, temperature, aSI, bSI, delta1, delta2, dMol, delta, muEq,
+	  pBulk);
       if (sig < bestSigma) {
-        bestSigma = sig;
-        bestDelta = delta;
+	bestSigma = sig;
+	bestDelta = delta;
       }
     }
 
@@ -256,23 +251,21 @@ public class CDFTSurfaceTension extends SurfaceTension {
     for (int gs = 0; gs < 60; gs++) {
       double c = refHi - (refHi - refLo) / gr;
       double d = refLo + (refHi - refLo) / gr;
-      double fc = computeSigmaForDelta(rhoLiq, rhoVap, temperature, aSI, bSI, delta1, delta2, dMol,
-          c, muEq, pBulk);
-      double fd = computeSigmaForDelta(rhoLiq, rhoVap, temperature, aSI, bSI, delta1, delta2, dMol,
-          d, muEq, pBulk);
+      double fc = computeSigmaForDelta(rhoLiq, rhoVap, temperature, aSI, bSI, delta1, delta2, dMol, c, muEq, pBulk);
+      double fd = computeSigmaForDelta(rhoLiq, rhoVap, temperature, aSI, bSI, delta1, delta2, dMol, d, muEq, pBulk);
       if (fc < fd) {
-        refHi = d;
+	refHi = d;
       } else {
-        refLo = c;
+	refLo = c;
       }
     }
 
     double optDelta = 0.5 * (refLo + refHi);
-    double sigma = computeSigmaForDelta(rhoLiq, rhoVap, temperature, aSI, bSI, delta1, delta2, dMol,
-        optDelta, muEq, pBulk);
+    double sigma = computeSigmaForDelta(rhoLiq, rhoVap, temperature, aSI, bSI, delta1, delta2, dMol, optDelta, muEq,
+	pBulk);
 
-    logger.debug("cDFT: T={} K, rhoLiq={}, rhoVap={}, optDelta/dMol={}, sigma={} mN/m", temperature,
-        rhoLiq, rhoVap, optDelta / dMol, sigma * 1000.0);
+    logger.debug("cDFT: T={} K, rhoLiq={}, rhoVap={}, optDelta/dMol={}, sigma={} mN/m", temperature, rhoLiq, rhoVap,
+	optDelta / dMol, sigma * 1000.0);
 
     return Math.max(sigma, 0.0);
   }
@@ -281,25 +274,25 @@ public class CDFTSurfaceTension extends SurfaceTension {
    * Computes the interfacial tension for a given tanh profile width.
    *
    * <p>
-   * Uses rho(z) = (rhoL+rhoV)/2 + (rhoL-rhoV)/2 * tanh(-z/delta) and integrates the excess grand
-   * potential density across the interface.
+   * Uses rho(z) = (rhoL+rhoV)/2 + (rhoL-rhoV)/2 * tanh(-z/delta) and integrates the excess grand potential density
+   * across the interface.
    * </p>
    *
    * @param rhoLiq liquid molar density (mol/m3)
    * @param rhoVap vapor molar density (mol/m3)
-   * @param temp temperature (K)
-   * @param a EOS energy parameter (Pa m6/mol2)
-   * @param b covolume (m3/mol)
-   * @param d1 EOS constant delta1
-   * @param d2 EOS constant delta2
-   * @param dMol molecular diameter (m)
-   * @param delta interface half-width parameter (m)
-   * @param muEq equilibrium chemical potential (J/mol)
-   * @param pBulk equilibrium pressure (Pa)
+   * @param temp   temperature (K)
+   * @param a      EOS energy parameter (Pa m6/mol2)
+   * @param b      covolume (m3/mol)
+   * @param d1     EOS constant delta1
+   * @param d2     EOS constant delta2
+   * @param dMol   molecular diameter (m)
+   * @param delta  interface half-width parameter (m)
+   * @param muEq   equilibrium chemical potential (J/mol)
+   * @param pBulk  equilibrium pressure (Pa)
    * @return interfacial tension (N/m)
    */
-  private double computeSigmaForDelta(double rhoLiq, double rhoVap, double temp, double a, double b,
-      double d1, double d2, double dMol, double delta, double muEq, double pBulk) {
+  private double computeSigmaForDelta(double rhoLiq, double rhoVap, double temp, double a, double b, double d1,
+      double d2, double dMol, double delta, double muEq, double pBulk) {
 
     double halfWidth = domainHalfWidthInD * dMol;
     double dz = 2.0 * halfWidth / (nGrid - 1);
@@ -326,10 +319,10 @@ public class CDFTSurfaceTension extends SurfaceTension {
     for (int i = 0; i < nGrid; i++) {
       double ri = rho[i];
       if (ri < 1.0e-10) {
-        ri = 1.0e-10;
+	ri = 1.0e-10;
       }
       if (b * ri >= 0.999) {
-        ri = 0.999 / b;
+	ri = 0.999 / b;
       }
 
       // f_rep = rho * RT * [ln(rho) - 1 - ln(1 - b*rho)]
@@ -353,10 +346,10 @@ public class CDFTSurfaceTension extends SurfaceTension {
    * Step-function convolution: W(z_i) = sum_{k=-nKernHalf}^{nKernHalf} wVal * rho(i+k) * dz.
    *
    * @param rho density profile
-   * @param n grid size
-   * @param nk half-width of kernel in grid points
-   * @param wv kernel constant value
-   * @param dz grid spacing
+   * @param n   grid size
+   * @param nk  half-width of kernel in grid points
+   * @param wv  kernel constant value
+   * @param dz  grid spacing
    * @return convolution result
    */
   private double[] stepConvolve(double[] rho, int n, int nk, double wv, double dz) {
@@ -364,14 +357,14 @@ public class CDFTSurfaceTension extends SurfaceTension {
     for (int i = 0; i < n; i++) {
       double sum = 0.0;
       for (int k = -nk; k <= nk; k++) {
-        int j = i + k;
-        if (j < 0) {
-          j = 0;
-        }
-        if (j >= n) {
-          j = n - 1;
-        }
-        sum += rho[j];
+	int j = i + k;
+	if (j < 0) {
+	  j = 0;
+	}
+	if (j >= n) {
+	  j = n - 1;
+	}
+	sum += rho[j];
       }
       result[i] = wv * sum * dz;
     }
@@ -379,12 +372,12 @@ public class CDFTSurfaceTension extends SurfaceTension {
   }
 
   /**
-   * Repulsive excess chemical potential per mole (ideal excluded volume). mu_rep_ex = RT * [-ln(1 -
-   * b*rho) + b*rho/(1 - b*rho)]
+   * Repulsive excess chemical potential per mole (ideal excluded volume). mu_rep_ex = RT * [-ln(1 - b*rho) + b*rho/(1 -
+   * b*rho)]
    *
    * @param rhoM molar density (mol/m3)
-   * @param t temperature (K)
-   * @param b covolume (m3/mol)
+   * @param t    temperature (K)
+   * @param b    covolume (m3/mol)
    * @return excess chemical potential (J/mol)
    */
   private double muRepExcess(double rhoM, double t, double b) {
@@ -397,14 +390,13 @@ public class CDFTSurfaceTension extends SurfaceTension {
 
   /**
    * Attractive chemical potential per mole from the EOS. For general cubic EOS with P = RT/(V-b) -
-   * a/((V+d1*b)(V+d2*b)): mu_att = a/((d1-d2)*b) * ln((1+d2*b*rho)/(1+d1*b*rho)) - a*rho /
-   * ((1+d1*b*rho)(1+d2*b*rho))
+   * a/((V+d1*b)(V+d2*b)): mu_att = a/((d1-d2)*b) * ln((1+d2*b*rho)/(1+d1*b*rho)) - a*rho / ((1+d1*b*rho)(1+d2*b*rho))
    *
    * @param rhoM molar density (mol/m3)
-   * @param a EOS energy parameter (Pa m6/mol2)
-   * @param b covolume (m3/mol)
-   * @param d1 EOS constant delta1
-   * @param d2 EOS constant delta2
+   * @param a    EOS energy parameter (Pa m6/mol2)
+   * @param b    covolume (m3/mol)
+   * @param d1   EOS constant delta1
+   * @param d2   EOS constant delta2
    * @return attractive chemical potential (J/mol)
    */
   private double muAtt(double rhoM, double a, double b, double d1, double d2) {
@@ -417,14 +409,14 @@ public class CDFTSurfaceTension extends SurfaceTension {
   }
 
   /**
-   * Attractive Helmholtz free energy density from the EOS. f_att = rho * A_m_att where A_m_att =
-   * a/((d1-d2)*b) * ln((1+d2*b*rho)/(1+d1*b*rho))
+   * Attractive Helmholtz free energy density from the EOS. f_att = rho * A_m_att where A_m_att = a/((d1-d2)*b) *
+   * ln((1+d2*b*rho)/(1+d1*b*rho))
    *
    * @param rhoM molar density (mol/m3)
-   * @param a EOS energy parameter (Pa m6/mol2)
-   * @param b covolume (m3/mol)
-   * @param d1 EOS constant delta1
-   * @param d2 EOS constant delta2
+   * @param a    EOS energy parameter (Pa m6/mol2)
+   * @param b    covolume (m3/mol)
+   * @param d1   EOS constant delta1
+   * @param d2   EOS constant delta2
    * @return attractive free energy density (J/m3)
    */
   private double fAttLocal(double rhoM, double a, double b, double d1, double d2) {
@@ -438,11 +430,11 @@ public class CDFTSurfaceTension extends SurfaceTension {
    * Equation of state pressure.
    *
    * @param rhoM molar density (mol/m3)
-   * @param t temperature (K)
-   * @param a EOS energy parameter (Pa m6/mol2)
-   * @param b covolume (m3/mol)
-   * @param d1 EOS constant delta1
-   * @param d2 EOS constant delta2
+   * @param t    temperature (K)
+   * @param a    EOS energy parameter (Pa m6/mol2)
+   * @param b    covolume (m3/mol)
+   * @param d1   EOS constant delta1
+   * @param d2   EOS constant delta2
    * @return pressure (Pa)
    */
   private double pressure(double rhoM, double t, double a, double b, double d1, double d2) {
@@ -475,10 +467,9 @@ public class CDFTSurfaceTension extends SurfaceTension {
    * Sets the attractive range factor controlling the DFT kernel width.
    *
    * <p>
-   * The kernel half-width is lambda * d_mol where d_mol is the molecular diameter derived from the
-   * EOS covolume. Values of 0.5 (default) give the original kernel spanning one diameter. Values of
-   * 1.0-2.0 broaden the kernel to better capture the range of dispersive attractions, typically
-   * improving agreement with experiment.
+   * The kernel half-width is lambda * d_mol where d_mol is the molecular diameter derived from the EOS covolume. Values
+   * of 0.5 (default) give the original kernel spanning one diameter. Values of 1.0-2.0 broaden the kernel to better
+   * capture the range of dispersive attractions, typically improving agreement with experiment.
    * </p>
    *
    * @param lambda attractive range factor (dimensionless, typically 0.5 to 2.0)
@@ -500,11 +491,10 @@ public class CDFTSurfaceTension extends SurfaceTension {
    * Enables or disables predictive mode.
    *
    * <p>
-   * In predictive mode the kernel range factor is automatically computed from the acentric factor
-   * using a calibrated linear correlation lambda(omega) = 0.7494 - 0.7403 * omega, and a
-   * critical-exponent correction (1 - T/Tc)^{-0.24} is applied to account for the Ising
-   * universality class. This yields approximately 10% AAD for alkanes C1-C6, N2, and CO2 without
-   * any substance-specific tuning.
+   * In predictive mode the kernel range factor is automatically computed from the acentric factor using a calibrated
+   * linear correlation lambda(omega) = 0.7494 - 0.7403 * omega, and a critical-exponent correction (1 - T/Tc)^{-0.24}
+   * is applied to account for the Ising universality class. This yields approximately 10% AAD for alkanes C1-C6, N2,
+   * and CO2 without any substance-specific tuning.
    * </p>
    *
    * @param enabled true to enable predictive mode
@@ -526,10 +516,10 @@ public class CDFTSurfaceTension extends SurfaceTension {
    * Solves the cDFT equations for a multicomponent planar interface.
    *
    * <p>
-   * Each component density is parameterised as a tanh profile with a shared interface width
-   * parameter delta. The cross-interaction kernels use a_ij from the EOS mixing rules, so no
-   * additional parameters beyond the equation of state are needed for mixtures. This is a key
-   * advantage over gradient theory, which requires cross-influence parameters c_ij.
+   * Each component density is parameterised as a tanh profile with a shared interface width parameter delta. The
+   * cross-interaction kernels use a_ij from the EOS mixing rules, so no additional parameters beyond the equation of
+   * state are needed for mixtures. This is a key advantage over gradient theory, which requires cross-influence
+   * parameters c_ij.
    * </p>
    *
    * @param ph1 index of phase 1 (vapour)
@@ -574,7 +564,7 @@ public class CDFTSurfaceTension extends SurfaceTension {
     double[][] aij = new double[nc][nc];
     for (int i = 0; i < nc; i++) {
       for (int j = 0; j < nc; j++) {
-        aij[i][j] = Math.sqrt(aComp[i] * aComp[j]);
+	aij[i][j] = Math.sqrt(aComp[i] * aComp[j]);
       }
     }
 
@@ -584,7 +574,7 @@ public class CDFTSurfaceTension extends SurfaceTension {
     for (int i = 0; i < nc; i++) {
       bMixLiq += (rhoLiq[i] / totalRhoLiq) * bComp[i];
       for (int j = 0; j < nc; j++) {
-        aMixLiq += (rhoLiq[i] / totalRhoLiq) * (rhoLiq[j] / totalRhoLiq) * aij[i][j];
+	aMixLiq += (rhoLiq[i] / totalRhoLiq) * (rhoLiq[j] / totalRhoLiq) * aij[i][j];
       }
     }
 
@@ -618,8 +608,7 @@ public class CDFTSurfaceTension extends SurfaceTension {
       rhoPlus[ic] += eps;
       rhoMinus[ic] -= eps;
       double fPlus = mixtureFreeEnergyDensity(rhoPlus, aij, bComp, temperature, delta1, delta2, nc);
-      double fMinus =
-          mixtureFreeEnergyDensity(rhoMinus, aij, bComp, temperature, delta1, delta2, nc);
+      double fMinus = mixtureFreeEnergyDensity(rhoMinus, aij, bComp, temperature, delta1, delta2, nc);
       muEq[ic] = (fPlus - fMinus) / (2.0 * eps);
     }
 
@@ -634,11 +623,11 @@ public class CDFTSurfaceTension extends SurfaceTension {
     double bestSigma = Double.MAX_VALUE;
     for (int k = 0; k < nScan; k++) {
       double delta = deltaLo + (deltaHi - deltaLo) * k / (nScan - 1);
-      double sig = computeMixtureSigmaForDelta(rhoLiq, rhoVap, temperature, aij, bComp, delta1,
-          delta2, dMol, delta, muEq, pBulk, nc);
+      double sig = computeMixtureSigmaForDelta(rhoLiq, rhoVap, temperature, aij, bComp, delta1, delta2, dMol, delta,
+	  muEq, pBulk, nc);
       if (sig < bestSigma) {
-        bestSigma = sig;
-        bestDelta = delta;
+	bestSigma = sig;
+	bestDelta = delta;
       }
     }
 
@@ -649,23 +638,23 @@ public class CDFTSurfaceTension extends SurfaceTension {
     for (int gs = 0; gs < 50; gs++) {
       double c = refHi - (refHi - refLo) / gr;
       double d = refLo + (refHi - refLo) / gr;
-      double fc = computeMixtureSigmaForDelta(rhoLiq, rhoVap, temperature, aij, bComp, delta1,
-          delta2, dMol, c, muEq, pBulk, nc);
-      double fd = computeMixtureSigmaForDelta(rhoLiq, rhoVap, temperature, aij, bComp, delta1,
-          delta2, dMol, d, muEq, pBulk, nc);
+      double fc = computeMixtureSigmaForDelta(rhoLiq, rhoVap, temperature, aij, bComp, delta1, delta2, dMol, c, muEq,
+	  pBulk, nc);
+      double fd = computeMixtureSigmaForDelta(rhoLiq, rhoVap, temperature, aij, bComp, delta1, delta2, dMol, d, muEq,
+	  pBulk, nc);
       if (fc < fd) {
-        refHi = d;
+	refHi = d;
       } else {
-        refLo = c;
+	refLo = c;
       }
     }
 
     double optDelta = 0.5 * (refLo + refHi);
-    double sigma = computeMixtureSigmaForDelta(rhoLiq, rhoVap, temperature, aij, bComp, delta1,
-        delta2, dMol, optDelta, muEq, pBulk, nc);
+    double sigma = computeMixtureSigmaForDelta(rhoLiq, rhoVap, temperature, aij, bComp, delta1, delta2, dMol, optDelta,
+	muEq, pBulk, nc);
 
-    logger.debug("cDFT mixture: T={} K, nc={}, optDelta/dMol={}, sigma={} mN/m", temperature, nc,
-        optDelta / dMol, sigma * 1000.0);
+    logger.debug("cDFT mixture: T={} K, nc={}, optDelta/dMol={}, sigma={} mN/m", temperature, nc, optDelta / dMol,
+	sigma * 1000.0);
     return Math.max(sigma, 0.0);
   }
 
@@ -674,21 +663,20 @@ public class CDFTSurfaceTension extends SurfaceTension {
    *
    * @param rhoLiq component densities in the liquid phase (mol/m3)
    * @param rhoVap component densities in the vapour phase (mol/m3)
-   * @param temp temperature (K)
-   * @param aij cross EOS energy parameters (Pa m6/mol2)
-   * @param bComp component covolumes (m3/mol)
-   * @param d1 EOS constant delta1
-   * @param d2 EOS constant delta2
-   * @param dMol average molecular diameter (m)
-   * @param delta interface half-width parameter (m)
-   * @param muEq equilibrium chemical potentials (J/mol)
-   * @param pBulk equilibrium pressure (Pa)
-   * @param nc number of components
+   * @param temp   temperature (K)
+   * @param aij    cross EOS energy parameters (Pa m6/mol2)
+   * @param bComp  component covolumes (m3/mol)
+   * @param d1     EOS constant delta1
+   * @param d2     EOS constant delta2
+   * @param dMol   average molecular diameter (m)
+   * @param delta  interface half-width parameter (m)
+   * @param muEq   equilibrium chemical potentials (J/mol)
+   * @param pBulk  equilibrium pressure (Pa)
+   * @param nc     number of components
    * @return interfacial tension (N/m)
    */
-  private double computeMixtureSigmaForDelta(double[] rhoLiq, double[] rhoVap, double temp,
-      double[][] aij, double[] bComp, double d1, double d2, double dMol, double delta,
-      double[] muEq, double pBulk, int nc) {
+  private double computeMixtureSigmaForDelta(double[] rhoLiq, double[] rhoVap, double temp, double[][] aij,
+      double[] bComp, double d1, double d2, double dMol, double delta, double[] muEq, double pBulk, int nc) {
 
     double halfWidth = domainHalfWidthInD * dMol;
     double dz = 2.0 * halfWidth / (nGrid - 1);
@@ -702,12 +690,12 @@ public class CDFTSurfaceTension extends SurfaceTension {
       double avg = 0.5 * (rhoLiq[ic] + rhoVap[ic]);
       double diff = rhoLiq[ic] - rhoVap[ic];
       for (int i = 0; i < nGrid; i++) {
-        double z = -halfWidth + i * dz;
-        rhoProf[ic][i] = avg + 0.5 * diff * Math.tanh(-z / delta);
-        if (rhoProf[ic][i] < 1.0e-30) {
-          rhoProf[ic][i] = 1.0e-30;
-        }
-        rhoTotal[i] += rhoProf[ic][i];
+	double z = -halfWidth + i * dz;
+	rhoProf[ic][i] = avg + 0.5 * diff * Math.tanh(-z / delta);
+	if (rhoProf[ic][i] < 1.0e-30) {
+	  rhoProf[ic][i] = 1.0e-30;
+	}
+	rhoTotal[i] += rhoProf[ic][i];
       }
     }
 
@@ -716,18 +704,18 @@ public class CDFTSurfaceTension extends SurfaceTension {
     double[][] barRho = new double[nc][nGrid];
     for (int jc = 0; jc < nc; jc++) {
       for (int i = 0; i < nGrid; i++) {
-        double sum = 0.0;
-        for (int k = -nKernHalf; k <= nKernHalf; k++) {
-          int idx = i + k;
-          if (idx < 0) {
-            idx = 0;
-          }
-          if (idx >= nGrid) {
-            idx = nGrid - 1;
-          }
-          sum += rhoProf[jc][idx];
-        }
-        barRho[jc][i] = sum / nKernPoints;
+	double sum = 0.0;
+	for (int k = -nKernHalf; k <= nKernHalf; k++) {
+	  int idx = i + k;
+	  if (idx < 0) {
+	    idx = 0;
+	  }
+	  if (idx >= nGrid) {
+	    idx = nGrid - 1;
+	  }
+	  sum += rhoProf[jc][idx];
+	}
+	barRho[jc][i] = sum / nKernPoints;
       }
     }
 
@@ -736,31 +724,31 @@ public class CDFTSurfaceTension extends SurfaceTension {
     for (int i = 0; i < nGrid; i++) {
       double rhoT = rhoTotal[i];
       if (rhoT < 1.0e-10) {
-        rhoT = 1.0e-10;
+	rhoT = 1.0e-10;
       }
 
       // Mixture b and a at this grid point
       double bMix = 0.0;
       double aMix = 0.0;
       for (int ic = 0; ic < nc; ic++) {
-        double xi = rhoProf[ic][i] / rhoT;
-        bMix += xi * bComp[ic];
-        for (int jc = 0; jc < nc; jc++) {
-          double xj = rhoProf[jc][i] / rhoT;
-          aMix += xi * xj * aij[ic][jc];
-        }
+	double xi = rhoProf[ic][i] / rhoT;
+	bMix += xi * bComp[ic];
+	for (int jc = 0; jc < nc; jc++) {
+	  double xj = rhoProf[jc][i] / rhoT;
+	  aMix += xi * xj * aij[ic][jc];
+	}
       }
       if (bMix * rhoT >= 0.999) {
-        rhoT = 0.999 / bMix;
+	rhoT = 0.999 / bMix;
       }
 
       // f_ideal = RT * sum_i rho_i * (ln(rho_i) - 1)
       double fIdeal = 0.0;
       for (int ic = 0; ic < nc; ic++) {
-        double ri = rhoProf[ic][i];
-        if (ri > 1.0e-30) {
-          fIdeal += ri * R * temp * (Math.log(ri) - 1.0);
-        }
+	double ri = rhoProf[ic][i];
+	if (ri > 1.0e-30) {
+	  fIdeal += ri * R * temp * (Math.log(ri) - 1.0);
+	}
       }
 
       // f_rep_ex = -rhoT * RT * ln(1 - bMix*rhoT)
@@ -769,9 +757,9 @@ public class CDFTSurfaceTension extends SurfaceTension {
       // f_att_nonlocal = -sum_i sum_j a_ij * rho_i * barRho_j
       double fAttNL = 0.0;
       for (int ic = 0; ic < nc; ic++) {
-        for (int jc = 0; jc < nc; jc++) {
-          fAttNL -= aij[ic][jc] * rhoProf[ic][i] * barRho[jc][i];
-        }
+	for (int jc = 0; jc < nc; jc++) {
+	  fAttNL -= aij[ic][jc] * rhoProf[ic][i] * barRho[jc][i];
+	}
       }
 
       // f_corr = f_att_EOS_local + aMix * rhoT^2
@@ -783,7 +771,7 @@ public class CDFTSurfaceTension extends SurfaceTension {
       // Grand potential integrand: f - sum_i mu_i*rho_i + P
       double muRhoSum = 0.0;
       for (int ic = 0; ic < nc; ic++) {
-        muRhoSum += muEq[ic] * rhoProf[ic][i];
+	muRhoSum += muEq[ic] * rhoProf[ic][i];
       }
 
       sigma += (fTotal - muRhoSum + pBulk) * dz;
@@ -795,17 +783,17 @@ public class CDFTSurfaceTension extends SurfaceTension {
   /**
    * Computes the total Helmholtz free energy density for a mixture at given component densities.
    *
-   * @param rho component molar densities (mol/m3)
-   * @param aij cross energy parameters (Pa m6/mol2)
+   * @param rho   component molar densities (mol/m3)
+   * @param aij   cross energy parameters (Pa m6/mol2)
    * @param bComp component covolumes (m3/mol)
-   * @param temp temperature (K)
-   * @param d1 EOS constant delta1
-   * @param d2 EOS constant delta2
-   * @param nc number of components
+   * @param temp  temperature (K)
+   * @param d1    EOS constant delta1
+   * @param d2    EOS constant delta2
+   * @param nc    number of components
    * @return free energy density (J/m3)
    */
-  private double mixtureFreeEnergyDensity(double[] rho, double[][] aij, double[] bComp, double temp,
-      double d1, double d2, int nc) {
+  private double mixtureFreeEnergyDensity(double[] rho, double[][] aij, double[] bComp, double temp, double d1,
+      double d2, int nc) {
     double rhoT = 0.0;
     for (int i = 0; i < nc; i++) {
       rhoT += rho[i];
@@ -819,8 +807,8 @@ public class CDFTSurfaceTension extends SurfaceTension {
       double xi = rho[i] / rhoT;
       bMix += xi * bComp[i];
       for (int j = 0; j < nc; j++) {
-        double xj = rho[j] / rhoT;
-        aMix += xi * xj * aij[i][j];
+	double xj = rho[j] / rhoT;
+	aMix += xi * xj * aij[i][j];
       }
     }
     if (bMix * rhoT >= 0.999) {
@@ -831,7 +819,7 @@ public class CDFTSurfaceTension extends SurfaceTension {
     double fId = 0.0;
     for (int i = 0; i < nc; i++) {
       if (rho[i] > 1.0e-30) {
-        fId += rho[i] * R * temp * (Math.log(rho[i]) - 1.0);
+	fId += rho[i] * R * temp * (Math.log(rho[i]) - 1.0);
       }
     }
     // f_rep_ex = -rhoT * RT * ln(1 - bMix*rhoT)
@@ -844,17 +832,17 @@ public class CDFTSurfaceTension extends SurfaceTension {
   /**
    * Computes the EOS pressure for a mixture.
    *
-   * @param rho component molar densities (mol/m3)
-   * @param aij cross energy parameters (Pa m6/mol2)
+   * @param rho   component molar densities (mol/m3)
+   * @param aij   cross energy parameters (Pa m6/mol2)
    * @param bComp component covolumes (m3/mol)
-   * @param temp temperature (K)
-   * @param d1 EOS constant delta1
-   * @param d2 EOS constant delta2
-   * @param nc number of components
+   * @param temp  temperature (K)
+   * @param d1    EOS constant delta1
+   * @param d2    EOS constant delta2
+   * @param nc    number of components
    * @return pressure (Pa)
    */
-  private double mixturePressure(double[] rho, double[][] aij, double[] bComp, double temp,
-      double d1, double d2, int nc) {
+  private double mixturePressure(double[] rho, double[][] aij, double[] bComp, double temp, double d1, double d2,
+      int nc) {
     double rhoT = 0.0;
     for (int i = 0; i < nc; i++) {
       rhoT += rho[i];
@@ -865,8 +853,8 @@ public class CDFTSurfaceTension extends SurfaceTension {
       double xi = rho[i] / rhoT;
       bMix += xi * bComp[i];
       for (int j = 0; j < nc; j++) {
-        double xj = rho[j] / rhoT;
-        aMix += xi * xj * aij[i][j];
+	double xj = rho[j] / rhoT;
+	aMix += xi * xj * aij[i][j];
       }
     }
     return pressure(rhoT, temp, aMix, bMix, d1, d2);

@@ -21,10 +21,9 @@ import neqsim.process.processmodel.ProcessSystem;
  * Integration tests for TurboExpanderCompressorMechanicalDesign.
  *
  * <p>
- * Tests the full workflow: process simulation via TurboExpanderCompressor, mechanical design via
- * calcDesign(), off-design evaluation, and multi-scenario reporting. Validates that the process
- * model and mechanical design work together correctly and that the design can be assessed for
- * fitness for future operations.
+ * Tests the full workflow: process simulation via TurboExpanderCompressor, mechanical design via calcDesign(),
+ * off-design evaluation, and multi-scenario reporting. Validates that the process model and mechanical design work
+ * together correctly and that the design can be assessed for fitness for future operations.
  * </p>
  *
  * @author NeqSim Development Team
@@ -36,13 +35,12 @@ public class TurboExpanderCompressorMechanicalDesignTest {
   private static TurboExpanderCompressorMechanicalDesign mechDesign;
 
   /**
-   * Set up a realistic turbo-expander-compressor process model, run it to convergence, then
-   * initialize and run mechanical design.
+   * Set up a realistic turbo-expander-compressor process model, run it to convergence, then initialize and run
+   * mechanical design.
    */
   @BeforeAll
   static void setUp() {
-    neqsim.thermo.system.SystemInterface feedGas =
-        new neqsim.thermo.system.SystemSrkEos(273.15 + 42.0, 10.00);
+    neqsim.thermo.system.SystemInterface feedGas = new neqsim.thermo.system.SystemSrkEos(273.15 + 42.0, 10.00);
     feedGas.addComponent("nitrogen", 0.006);
     feedGas.addComponent("CO2", 0.014);
     feedGas.addComponent("methane", 0.862);
@@ -63,14 +61,14 @@ public class TurboExpanderCompressorMechanicalDesignTest {
     turboExpander = new TurboExpanderCompressor("TEX-001", feedStream);
 
     turboExpander.setUCcurve(
-        new double[] {0.9964751359624449, 0.7590835113213541, 0.984295619176559, 0.8827799803397821,
-            0.9552460269880922, 1.0},
-        new double[] {0.984090909090909, 0.796590909090909, 0.9931818181818183, 0.9363636363636364,
-            0.9943181818181818, 1.0});
-    turboExpander.setQNEfficiencycurve(new double[] {0.5, 0.7, 0.85, 1.0, 1.2, 1.4, 1.6},
-        new double[] {0.88, 0.91, 0.95, 1.0, 0.97, 0.85, 0.6});
-    turboExpander.setQNHeadcurve(new double[] {0.5, 0.8, 1.0, 1.2, 1.4, 1.6},
-        new double[] {1.1, 1.05, 1.0, 0.9, 0.7, 0.4});
+	new double[] { 0.9964751359624449, 0.7590835113213541, 0.984295619176559, 0.8827799803397821,
+	    0.9552460269880922, 1.0 },
+	new double[] { 0.984090909090909, 0.796590909090909, 0.9931818181818183, 0.9363636363636364, 0.9943181818181818,
+	    1.0 });
+    turboExpander.setQNEfficiencycurve(new double[] { 0.5, 0.7, 0.85, 1.0, 1.2, 1.4, 1.6 },
+	new double[] { 0.88, 0.91, 0.95, 1.0, 0.97, 0.85, 0.6 });
+    turboExpander.setQNHeadcurve(new double[] { 0.5, 0.8, 1.0, 1.2, 1.4, 1.6 },
+	new double[] { 1.1, 1.05, 1.0, 0.9, 0.7, 0.4 });
 
     turboExpander.setImpellerDiameter(0.424);
     turboExpander.setDesignSpeed(6850.0);
@@ -116,17 +114,14 @@ public class TurboExpanderCompressorMechanicalDesignTest {
   @Test
   void testMechanicalDesignNotNull() {
     assertNotNull(mechDesign, "Mechanical design should be initialized");
-    assertNotNull(turboExpander.getTECMechanicalDesign(),
-        "getTECMechanicalDesign should return same instance");
+    assertNotNull(turboExpander.getTECMechanicalDesign(), "getTECMechanicalDesign should return same instance");
   }
 
   @Test
   void testDesignExtractsProcessConditions() {
     // calcDesign should have extracted operating conditions from the converged process model
-    assertTrue(mechDesign.getExpanderDesignInletPressure() > 50.0,
-        "Expander inlet pressure should be > 50 bara");
-    assertTrue(mechDesign.getExpanderPowerKW() > 100.0,
-        "Expander power should be significant (> 100 kW)");
+    assertTrue(mechDesign.getExpanderDesignInletPressure() > 50.0, "Expander inlet pressure should be > 50 bara");
+    assertTrue(mechDesign.getExpanderPowerKW() > 100.0, "Expander power should be significant (> 100 kW)");
     assertTrue(mechDesign.getOperatingSpeed() > 5000.0, "Operating speed should be > 5000 rpm");
   }
 
@@ -134,22 +129,21 @@ public class TurboExpanderCompressorMechanicalDesignTest {
   void testExpanderWheelSized() {
     double wheelDiam = mechDesign.getExpanderWheelDiameter();
     assertTrue(wheelDiam > 100.0 && wheelDiam < 1500.0,
-        "Expander wheel diameter should be 100-1500 mm, got " + wheelDiam);
+	"Expander wheel diameter should be 100-1500 mm, got " + wheelDiam);
 
     double tipSpeed = mechDesign.getExpanderTipSpeed();
     assertTrue(tipSpeed > 0 && tipSpeed <= 450.0,
-        "Expander tip speed should be <= 450 m/s per API 617, got " + tipSpeed);
+	"Expander tip speed should be <= 450 m/s per API 617, got " + tipSpeed);
   }
 
   @Test
   void testCompressorImpellerSized() {
     double impDiam = mechDesign.getCompressorImpellerDiameter();
     assertTrue(impDiam > 100.0 && impDiam < 1500.0,
-        "Compressor impeller diameter should be 100-1500 mm, got " + impDiam);
+	"Compressor impeller diameter should be 100-1500 mm, got " + impDiam);
 
     double tipSpeed = mechDesign.getCompressorTipSpeed();
-    assertTrue(tipSpeed > 0 && tipSpeed <= 350.0,
-        "Compressor tip speed should be <= 350 m/s, got " + tipSpeed);
+    assertTrue(tipSpeed > 0 && tipSpeed <= 350.0, "Compressor tip speed should be <= 350 m/s, got " + tipSpeed);
   }
 
   @Test
@@ -171,8 +165,7 @@ public class TurboExpanderCompressorMechanicalDesignTest {
     assertTrue(bearingSpan > 0, "Bearing span should be positive");
 
     double tripSpeed = mechDesign.getTripSpeed();
-    assertTrue(tripSpeed > mechDesign.getMaxContinuousSpeed(),
-        "Trip speed should exceed max continuous speed");
+    assertTrue(tripSpeed > mechDesign.getMaxContinuousSpeed(), "Trip speed should exceed max continuous speed");
   }
 
   @Test
@@ -209,25 +202,21 @@ public class TurboExpanderCompressorMechanicalDesignTest {
     double compInP = mechDesign.getCompressorDesignSuctionPressure();
     double compOutP = mechDesign.getCompressorDesignDischargePressure();
 
-    DesignEvaluationResult result = mechDesign.evaluateDesignAtConditions(expInP, expOutP, -23.0,
-        compInP, compOutP, 17.0, 456000.0, 400000.0, 17.5, 17.5);
+    DesignEvaluationResult result = mechDesign.evaluateDesignAtConditions(expInP, expOutP, -23.0, compInP, compOutP,
+	17.0, 456000.0, 400000.0, 17.5, 17.5);
 
-    assertTrue(result.isAcceptable(), "Design should be acceptable at design-point conditions. "
-        + "Failures: " + result.getFailures());
-    assertTrue(result.getFailures().isEmpty(),
-        "No failures expected at design point, got: " + result.getFailures());
+    assertTrue(result.isAcceptable(),
+	"Design should be acceptable at design-point conditions. " + "Failures: " + result.getFailures());
+    assertTrue(result.getFailures().isEmpty(), "No failures expected at design point, got: " + result.getFailures());
   }
 
   @Test
   void testEvaluationWithFluidObjects() {
     // Evaluate using full fluid objects for more accurate thermodynamic calculation
-    neqsim.thermo.system.SystemInterface expFluid =
-        turboExpander.getExpanderFeedStream().getThermoSystem().clone();
-    neqsim.thermo.system.SystemInterface compFluid =
-        turboExpander.getCompressorFeedStream().getThermoSystem().clone();
+    neqsim.thermo.system.SystemInterface expFluid = turboExpander.getExpanderFeedStream().getThermoSystem().clone();
+    neqsim.thermo.system.SystemInterface compFluid = turboExpander.getCompressorFeedStream().getThermoSystem().clone();
 
-    DesignEvaluationResult result =
-        mechDesign.evaluateDesignWithFluid(expFluid, 42.0, compFluid, 50.0);
+    DesignEvaluationResult result = mechDesign.evaluateDesignWithFluid(expFluid, 42.0, compFluid, 50.0);
 
     assertNotNull(result, "Result should not be null");
     assertTrue(result.getMargins().size() >= 13, "Should have at least 13 margin checks");
@@ -239,12 +228,11 @@ public class TurboExpanderCompressorMechanicalDesignTest {
     double casingLimit = mechDesign.getExpanderCasingDesignPressure();
     double overPressure = casingLimit * 1.1; // 10% above casing limit
 
-    DesignEvaluationResult result = mechDesign.evaluateDesignAtConditions(overPressure, 42.0, -23.0,
-        42.0, 55.0, 17.0, 456000.0, 400000.0, 17.5, 17.5);
+    DesignEvaluationResult result = mechDesign.evaluateDesignAtConditions(overPressure, 42.0, -23.0, 42.0, 55.0, 17.0,
+	456000.0, 400000.0, 17.5, 17.5);
 
     assertFalse(result.isAcceptable(), "Design should fail at overpressure");
-    assertTrue(result.getExpanderCasingPressureMargin() < 0,
-        "Expander casing pressure margin should be negative");
+    assertTrue(result.getExpanderCasingPressureMargin() < 0, "Expander casing pressure margin should be negative");
   }
 
   // ============================================================================
@@ -267,12 +255,12 @@ public class TurboExpanderCompressorMechanicalDesignTest {
       mechDesign.setShearPinShearStrengthMPa(310.0); // AISI 316
       mechDesign.setShearPinRadialPositionMm(100.0); // 100 mm from shaft centre
 
-      DesignEvaluationResult result = mechDesign.evaluateDesignAtConditions(60.95, 42.0, -23.0,
-          42.0, 50.0, 17.0, 456000.0, 400000.0, 17.5, 17.5);
+      DesignEvaluationResult result = mechDesign.evaluateDesignAtConditions(60.95, 42.0, -23.0, 42.0, 50.0, 17.0,
+	  456000.0, 400000.0, 17.5, 17.5);
 
       // With proper sizing the pins should survive normal torque
       assertTrue(result.getShearPinTorqueMargin() > 0,
-          "Shear pin torque margin should be positive under normal operation");
+	  "Shear pin torque margin should be positive under normal operation");
     } finally {
       // Restore state for other tests
       mechDesign.setNumberOfShearPins(savedPins);
@@ -294,19 +282,17 @@ public class TurboExpanderCompressorMechanicalDesignTest {
       mechDesign.setSealGasSupplyPressureBara(maxProcess + 5.0);
       mechDesign.setSealGasRequiredDpBar(1.5);
 
-      DesignEvaluationResult result = mechDesign.evaluateDesignAtConditions(60.95, 42.0, -23.0,
-          42.0, 50.0, 17.0, 456000.0, 400000.0, 17.5, 17.5);
+      DesignEvaluationResult result = mechDesign.evaluateDesignAtConditions(60.95, 42.0, -23.0, 42.0, 50.0, 17.0,
+	  456000.0, 400000.0, 17.5, 17.5);
 
-      assertTrue(result.getSealGasDpMargin() > 0,
-          "Seal gas DP should be adequate with 5 bar margin");
+      assertTrue(result.getSealGasDpMargin() > 0, "Seal gas DP should be adequate with 5 bar margin");
 
       // Now simulate insufficient seal gas
       mechDesign.setSealGasSupplyPressureBara(maxProcess + 0.5);
-      DesignEvaluationResult result2 = mechDesign.evaluateDesignAtConditions(60.95, 42.0, -23.0,
-          42.0, 50.0, 17.0, 456000.0, 400000.0, 17.5, 17.5);
+      DesignEvaluationResult result2 = mechDesign.evaluateDesignAtConditions(60.95, 42.0, -23.0, 42.0, 50.0, 17.0,
+	  456000.0, 400000.0, 17.5, 17.5);
 
-      assertTrue(result2.getSealGasDpMargin() < 0,
-          "Seal gas DP margin should be negative with insufficient supply");
+      assertTrue(result2.getSealGasDpMargin() < 0, "Seal gas DP margin should be negative with insufficient supply");
     } finally {
       // Restore state for other tests
       mechDesign.setSealGasSupplyPressureBara(savedSupplyP);
@@ -316,16 +302,15 @@ public class TurboExpanderCompressorMechanicalDesignTest {
 
   @Test
   void testThrustBalanceDetails() {
-    DesignEvaluationResult result = mechDesign.evaluateDesignAtConditions(60.95, 42.0, -23.0, 42.0,
-        50.0, 17.0, 456000.0, 400000.0, 17.5, 17.5);
+    DesignEvaluationResult result = mechDesign.evaluateDesignAtConditions(60.95, 42.0, -23.0, 42.0, 50.0, 17.0,
+	456000.0, 400000.0, 17.5, 17.5);
 
     // Thrust components should be calculated
     assertTrue(result.getExpanderAxialThrustN() > 0, "Expander thrust should be positive");
     assertTrue(result.getCompressorAxialThrustN() > 0, "Compressor thrust should be positive");
     // Net thrust is the difference
     double expected = result.getExpanderAxialThrustN() - result.getCompressorAxialThrustN();
-    assertEquals(expected, result.getNetAxialThrustN(), 1.0,
-        "Net thrust should equal expander - compressor");
+    assertEquals(expected, result.getNetAxialThrustN(), 1.0, "Net thrust should equal expander - compressor");
   }
 
   // ============================================================================
@@ -334,8 +319,7 @@ public class TurboExpanderCompressorMechanicalDesignTest {
 
   @Test
   void testMultipleScenarioEvaluation() {
-    List<String> names =
-        Arrays.asList("Design Case", "Low Flow (Turndown)", "High Pressure (Future)");
+    List<String> names = Arrays.asList("Design Case", "Low Flow (Turndown)", "High Pressure (Future)");
 
     List<Map<String, Double>> scenarios = new ArrayList<Map<String, Double>>();
 
@@ -390,7 +374,7 @@ public class TurboExpanderCompressorMechanicalDesignTest {
 
     // Design case should pass
     assertTrue(results.get(0).isAcceptable(),
-        "Design case should be acceptable. Failures: " + results.get(0).getFailures());
+	"Design case should be acceptable. Failures: " + results.get(0).getFailures());
 
     // Each result should have all 13 margins
     for (DesignEvaluationResult r : results) {
@@ -471,42 +455,41 @@ public class TurboExpanderCompressorMechanicalDesignTest {
     try {
       // Load from vendor datasheet
       design.setFromDatasheet(424.0, // expander wheel [mm]
-          350.0, // compressor impeller [mm]
-          6850.0, // rated speed [rpm]
-          7193.0, // MCS [rpm]
-          7553.0, // trip [rpm]
-          9500.0, // 1st critical [rpm]
-          38000.0, // 2nd critical [rpm]
-          120.0, // shaft diameter [mm] — sized for 6000 kW total at 6850 rpm
-          900.0, // bearing span [mm]
-          67.0, // exp casing design P [bara]
-          100.0, // exp casing design T [°C]
-          60.0, // comp casing design P [bara]
-          80.0 // comp casing design T [°C]
+	  350.0, // compressor impeller [mm]
+	  6850.0, // rated speed [rpm]
+	  7193.0, // MCS [rpm]
+	  7553.0, // trip [rpm]
+	  9500.0, // 1st critical [rpm]
+	  38000.0, // 2nd critical [rpm]
+	  120.0, // shaft diameter [mm] — sized for 6000 kW total at 6850 rpm
+	  900.0, // bearing span [mm]
+	  67.0, // exp casing design P [bara]
+	  100.0, // exp casing design T [°C]
+	  60.0, // comp casing design P [bara]
+	  80.0 // comp casing design T [°C]
       );
 
       design.setRatedConditions(60.95, 42.0, -23.0, -41.0, // expander
-          42.0, 50.0, 17.0, 35.0 // compressor
+	  42.0, 50.0, 17.0, 35.0 // compressor
       );
 
       design.setRatedPerformance(3000.0, // expander power [kW]
-          2990.0, // compressor power [kW]
-          25.0, // enthalpy drop [kJ/kg]
-          20.47, // polytropic head [kJ/kg]
-          8000.0, // surge flow [m3/hr]
-          15000.0 // stonewall flow [m3/hr]
+	  2990.0, // compressor power [kW]
+	  25.0, // enthalpy drop [kJ/kg]
+	  20.47, // polytropic head [kJ/kg]
+	  8000.0, // surge flow [m3/hr]
+	  15000.0 // stonewall flow [m3/hr]
       );
 
       // Evaluate at design conditions
-      DesignEvaluationResult result = design.evaluateDesignAtConditions(60.95, 42.0, -23.0, 42.0,
-          50.0, 17.0, 456000.0, 400000.0, 17.5, 17.5);
+      DesignEvaluationResult result = design.evaluateDesignAtConditions(60.95, 42.0, -23.0, 42.0, 50.0, 17.0, 456000.0,
+	  400000.0, 17.5, 17.5);
 
-      assertTrue(result.isAcceptable(),
-          "Should pass at datasheet rated conditions. Failures: " + result.getFailures());
+      assertTrue(result.isAcceptable(), "Should pass at datasheet rated conditions. Failures: " + result.getFailures());
 
       // Evaluate at challenging future conditions
-      DesignEvaluationResult futureResult = design.evaluateDesignAtConditions(65.0, 42.0, -18.0,
-          42.0, 58.0, 20.0, 500000.0, 450000.0, 18.0, 18.0);
+      DesignEvaluationResult futureResult = design.evaluateDesignAtConditions(65.0, 42.0, -18.0, 42.0, 58.0, 20.0,
+	  500000.0, 450000.0, 18.0, 18.0);
 
       // The future scenario with comp discharge at 58 bara (limit 60 bara) should still pass
       // but might show warnings
@@ -526,23 +509,21 @@ public class TurboExpanderCompressorMechanicalDesignTest {
     double processSpeed = turboExpander.getSpeed();
     double designSpeed = mechDesign.getOperatingSpeed();
     assertEquals(processSpeed, designSpeed, 1.0,
-        "Design operating speed should match the process model converged speed");
+	"Design operating speed should match the process model converged speed");
   }
 
   @Test
   void testDesignPowerMatchesProcessModel() {
     double processPowerExp = turboExpander.getPowerExpander("kW");
     double designPowerExp = mechDesign.getExpanderPowerKW();
-    assertEquals(processPowerExp, designPowerExp, 1.0,
-        "Design expander power should match process model power");
+    assertEquals(processPowerExp, designPowerExp, 1.0, "Design expander power should match process model power");
   }
 
   @Test
   void testDesignPressuresMatchProcessModel() {
     double processExpInP = turboExpander.getExpanderFeedStream().getPressure("bara");
     double designExpInP = mechDesign.getExpanderDesignInletPressure();
-    assertEquals(processExpInP, designExpInP, 0.1,
-        "Design inlet pressure should match process model");
+    assertEquals(processExpInP, designExpInP, 0.1, "Design inlet pressure should match process model");
   }
 
   // ============================================================================
@@ -563,7 +544,7 @@ public class TurboExpanderCompressorMechanicalDesignTest {
     double effAtUc08 = turboExpander.getEfficiencyFromUC(0.8);
     double expectedFitted = ucCurveA * (0.8 - 1.0) * (0.8 - 1.0) + 1.0;
     assertEquals(expectedFitted, effAtUc08, 0.001,
-        "Off-design efficiency should use fitted ucCurveA, not hardcoded -3.56");
+	"Off-design efficiency should use fitted ucCurveA, not hardcoded -3.56");
   }
 
   // ============================================================================
@@ -572,19 +553,16 @@ public class TurboExpanderCompressorMechanicalDesignTest {
 
   @Test
   void testEvaluateDesignWithFluid() {
-    neqsim.thermo.system.SystemInterface expFluid =
-        turboExpander.getExpanderFeedStream().getThermoSystem().clone();
-    neqsim.thermo.system.SystemInterface compFluid =
-        turboExpander.getCompressorFeedStream().getThermoSystem().clone();
+    neqsim.thermo.system.SystemInterface expFluid = turboExpander.getExpanderFeedStream().getThermoSystem().clone();
+    neqsim.thermo.system.SystemInterface compFluid = turboExpander.getCompressorFeedStream().getThermoSystem().clone();
 
-    DesignEvaluationResult result =
-        mechDesign.evaluateDesignWithFluid(expFluid, 42.0, compFluid, 50.0);
+    DesignEvaluationResult result = mechDesign.evaluateDesignWithFluid(expFluid, 42.0, compFluid, 50.0);
 
     assertNotNull(result, "Fluid-based evaluation should return a result");
     assertTrue(result.getMargins().size() >= 10, "Should have at least 10 margins computed");
 
     // Shaft stress from EOS flash should be more accurate (positive margin at design)
     assertTrue(result.getShaftStressMargin() > 0,
-        "Shaft stress margin from EOS evaluation should be positive at design conditions");
+	"Shaft stress margin from EOS evaluation should be positive at design conditions");
   }
 }

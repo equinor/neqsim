@@ -98,21 +98,18 @@ class SystemUMRCPAEoStest extends neqsim.NeqSimTest {
     testSystem.init(3);
     testSystem.init(3);
     /*
-     * logger.info("molar volume gas+oil is " + testSystem.getMolarVolume());
-     * logger.info("molar volume gas is " + testSystem.getPhase(0).getMolarVolume());
-     * logger.info("fugacity of gas phase " + testSystem.getPhase(0).getFugacity(0));
-     * logger.info("residual enthalpy of gas phase is " + testSystem.getPhase(0).getHresTP());
-     * logger.info( "isochoric heat capacity of gas phase is " +
-     * testSystem.getPhase(0).getCv("J/mol")); System.out
-     * .println("isobaric heat capacity of gas phase is " + testSystem.getPhase(0).getCp("J/mol"));
-     * System.out .println("internal energy of gas phase is " +
+     * logger.info("molar volume gas+oil is " + testSystem.getMolarVolume()); logger.info("molar volume gas is " +
+     * testSystem.getPhase(0).getMolarVolume()); logger.info("fugacity of gas phase " +
+     * testSystem.getPhase(0).getFugacity(0)); logger.info("residual enthalpy of gas phase is " +
+     * testSystem.getPhase(0).getHresTP()); logger.info( "isochoric heat capacity of gas phase is " +
+     * testSystem.getPhase(0).getCv("J/mol")); System.out .println("isobaric heat capacity of gas phase is " +
+     * testSystem.getPhase(0).getCp("J/mol")); System.out .println("internal energy of gas phase is " +
      * testSystem.getPhase(0).getInternalEnergy()); logger.info("molar volume liquid is " +
      * testSystem.getPhase(1).getMolarVolume()); logger.info("fugacity of gas phase " +
      * testSystem.getPhase(1).getFugacity(0)); logger.info("enthalpy of gas phase is " +
-     * testSystem.getPhase(1).getEnthalpy("J/mol")); logger.info(
-     * "isochoric heat capacity of gas phase is " + testSystem.getPhase(1).getCv("J/mol")); //
-     * ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem); //
-     * testOps.TPflash();
+     * testSystem.getPhase(1).getEnthalpy("J/mol")); logger.info( "isochoric heat capacity of gas phase is " +
+     * testSystem.getPhase(1).getCv("J/mol")); // ThermodynamicOperations testOps = new
+     * ThermodynamicOperations(testSystem); // testOps.TPflash();
      */
     // testSystem.initProperties();
     // assertEquals(0.9711401538454589, testSystem.getPhase(0).getZ(), 0.001);

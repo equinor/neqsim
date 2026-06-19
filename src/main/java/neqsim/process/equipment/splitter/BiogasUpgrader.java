@@ -20,9 +20,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Biogas upgrader for producing biomethane from raw biogas.
  *
  * <p>
- * Removes CO2, H2S, and other impurities from raw biogas to produce pipeline-quality biomethane
- * suitable for grid injection or vehicle fuel. Internally uses component-selective splitting to
- * model the separation, with technology-specific removal efficiencies and energy consumption.
+ * Removes CO2, H2S, and other impurities from raw biogas to produce pipeline-quality biomethane suitable for grid
+ * injection or vehicle fuel. Internally uses component-selective splitting to model the separation, with
+ * technology-specific removal efficiencies and energy consumption.
  * </p>
  *
  * <h2>Upgrading Technologies</h2>
@@ -110,10 +110,10 @@ public class BiogasUpgrader extends ProcessEquipmentBaseClass {
     /**
      * Creates a technology enum constant.
      *
-     * @param co2Removal CO2 removal efficiency (0-1)
+     * @param co2Removal  CO2 removal efficiency (0-1)
      * @param ch4Recovery methane recovery (0-1)
-     * @param h2sRemoval H2S removal efficiency (0-1)
-     * @param energy specific energy in kWh/Nm3 raw biogas
+     * @param h2sRemoval  H2S removal efficiency (0-1)
+     * @param energy      specific energy in kWh/Nm3 raw biogas
      */
     UpgradingTechnology(double co2Removal, double ch4Recovery, double h2sRemoval, double energy) {
       this.co2RemovalEfficiency = co2Removal;
@@ -211,7 +211,7 @@ public class BiogasUpgrader extends ProcessEquipmentBaseClass {
   /**
    * Creates a biogas upgrader with the given name and inlet stream.
    *
-   * @param name equipment name
+   * @param name        equipment name
    * @param inletStream the raw biogas inlet stream
    */
   public BiogasUpgrader(String name, StreamInterface inletStream) {
@@ -407,9 +407,8 @@ public class BiogasUpgrader extends ProcessEquipmentBaseClass {
    * Runs the biogas upgrader simulation.
    *
    * <p>
-   * Applies technology-specific removal efficiencies to selectively split inlet biogas components
-   * into a methane-rich biomethane stream and a CO2-rich off-gas stream. Both outlet streams are
-   * flashed at the outlet conditions.
+   * Applies technology-specific removal efficiencies to selectively split inlet biogas components into a methane-rich
+   * biomethane stream and a CO2-rich off-gas stream. Both outlet streams are flashed at the outlet conditions.
    * </p>
    *
    * @param id UUID for this run
@@ -427,14 +426,12 @@ public class BiogasUpgrader extends ProcessEquipmentBaseClass {
 
     // ── Step 1: Resolve technology parameters ──
     double effCO2Removal = Double.isNaN(co2RemovalEfficiency) ? technology.getCo2RemovalEfficiency()
-        : co2RemovalEfficiency;
-    double effCH4Recovery =
-        Double.isNaN(methaneRecovery) ? technology.getMethaneRecovery() : methaneRecovery;
+	: co2RemovalEfficiency;
+    double effCH4Recovery = Double.isNaN(methaneRecovery) ? technology.getMethaneRecovery() : methaneRecovery;
     double effH2SRemoval = Double.isNaN(h2sRemovalEfficiency) ? technology.getH2sRemovalEfficiency()
-        : h2sRemovalEfficiency;
-    double effEnergy =
-        Double.isNaN(specificEnergyKWhPerNm3) ? technology.getSpecificEnergyKWhPerNm3()
-            : specificEnergyKWhPerNm3;
+	: h2sRemovalEfficiency;
+    double effEnergy = Double.isNaN(specificEnergyKWhPerNm3) ? technology.getSpecificEnergyKWhPerNm3()
+	: specificEnergyKWhPerNm3;
 
     // ── Step 2: Calculate raw biogas flow ──
     double totalMolesPerHr = inletFluid.getFlowRate("mole/hr");
@@ -447,35 +444,34 @@ public class BiogasUpgrader extends ProcessEquipmentBaseClass {
     for (int i = 0; i < numComp; i++) {
       String compName = inletFluid.getComponent(i).getComponentName();
       if ("CO2".equalsIgnoreCase(compName)) {
-        // CO2: most removed to off-gas, small fraction remains in biomethane
-        splitFactors[i] = 1.0 - effCO2Removal;
+	// CO2: most removed to off-gas, small fraction remains in biomethane
+	splitFactors[i] = 1.0 - effCO2Removal;
       } else if ("methane".equalsIgnoreCase(compName)) {
-        // Methane: high recovery to biomethane
-        splitFactors[i] = effCH4Recovery;
+	// Methane: high recovery to biomethane
+	splitFactors[i] = effCH4Recovery;
       } else if ("H2S".equalsIgnoreCase(compName)) {
-        // H2S: removed with CO2
-        splitFactors[i] = 1.0 - effH2SRemoval;
+	// H2S: removed with CO2
+	splitFactors[i] = 1.0 - effH2SRemoval;
       } else if ("water".equalsIgnoreCase(compName)) {
-        // Water: mostly removed during upgrading (dehydration)
-        splitFactors[i] = 0.05;
+	// Water: mostly removed during upgrading (dehydration)
+	splitFactors[i] = 0.05;
       } else if ("nitrogen".equalsIgnoreCase(compName)) {
-        // N2: partially removed depending on technology
-        splitFactors[i] = technology == UpgradingTechnology.PSA ? 0.20 : 0.85;
+	// N2: partially removed depending on technology
+	splitFactors[i] = technology == UpgradingTechnology.PSA ? 0.20 : 0.85;
       } else if ("oxygen".equalsIgnoreCase(compName)) {
-        // O2: partially removed
-        splitFactors[i] = 0.50;
+	// O2: partially removed
+	splitFactors[i] = 0.50;
       } else if ("hydrogen".equalsIgnoreCase(compName)) {
-        // H2: passes through most technologies
-        splitFactors[i] = 0.90;
+	// H2: passes through most technologies
+	splitFactors[i] = 0.90;
       } else {
-        // Other trace components: assume they follow methane
-        splitFactors[i] = effCH4Recovery;
+	// Other trace components: assume they follow methane
+	splitFactors[i] = effCH4Recovery;
       }
     }
 
     // ── Step 4: Create biomethane stream (split stream 0) ──
-    double outPressure =
-        Double.isNaN(outletPressureBara) ? inletFluid.getPressure() : outletPressureBara;
+    double outPressure = Double.isNaN(outletPressureBara) ? inletFluid.getPressure() : outletPressureBara;
     double outTemp = inletFluid.getTemperature();
 
     SystemInterface biomethaneFluid = inletFluid.clone();
@@ -526,11 +522,10 @@ public class BiogasUpgrader extends ProcessEquipmentBaseClass {
    * Calculates biomethane quality metrics after the split.
    *
    * @param biomethaneFluid the biomethane fluid system
-   * @param ch4Recovery the methane recovery used
-   * @param energyPerNm3 specific energy consumption in kWh/Nm3
+   * @param ch4Recovery     the methane recovery used
+   * @param energyPerNm3    specific energy consumption in kWh/Nm3
    */
-  private void calculateQualityMetrics(SystemInterface biomethaneFluid, double ch4Recovery,
-      double energyPerNm3) {
+  private void calculateQualityMetrics(SystemInterface biomethaneFluid, double ch4Recovery, double energyPerNm3) {
     // Methane and CO2 content in biomethane
     biomethaneMethanePercent = getMoleFractionPercent(biomethaneFluid, "methane");
     biomethaneCO2Percent = getMoleFractionPercent(biomethaneFluid, "CO2");
@@ -556,7 +551,7 @@ public class BiogasUpgrader extends ProcessEquipmentBaseClass {
 
     // Specific gravity relative to air (MW_mix / MW_air)
     double mwMix = ch4Frac * 16.04 + co2Frac * 44.01 + n2Frac * 28.01 + h2Frac * 2.016
-        + (1.0 - ch4Frac - co2Frac - n2Frac - h2Frac) * 18.015;
+	+ (1.0 - ch4Frac - co2Frac - n2Frac - h2Frac) * 18.015;
     double sg = mwMix / 28.97;
     wobbeIndex = sg > 0 ? hhv / Math.sqrt(sg) : 0.0;
   }
@@ -564,14 +559,14 @@ public class BiogasUpgrader extends ProcessEquipmentBaseClass {
   /**
    * Returns the mole fraction of a component as a percentage.
    *
-   * @param fluid the fluid system
+   * @param fluid         the fluid system
    * @param componentName component name
    * @return mole fraction in percent (0-100)
    */
   private double getMoleFractionPercent(SystemInterface fluid, String componentName) {
     try {
       if (fluid != null && fluid.hasComponent(componentName)) {
-        return fluid.getPhase(0).getComponent(componentName).getz() * 100.0;
+	return fluid.getPhase(0).getComponent(componentName).getz() * 100.0;
       }
     } catch (Exception e) {
       logger.debug("Could not get mole fraction for {}: {}", componentName, e.getMessage());
@@ -609,8 +604,7 @@ public class BiogasUpgrader extends ProcessEquipmentBaseClass {
    */
   @Override
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(getResults());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(getResults());
   }
 
   /** {@inheritDoc} */
@@ -623,8 +617,8 @@ public class BiogasUpgrader extends ProcessEquipmentBaseClass {
     sb.append("BiogasUpgrader '").append(getName()).append("'\n");
     sb.append(String.format("  Technology: %s%n", technology));
     sb.append(String.format("  Raw biogas: %.1f Nm3/hr%n", rawBiogasFlowNm3PerHr));
-    sb.append(String.format("  Biomethane: %.1f Nm3/hr (%.1f%% CH4)%n", biomethaneFlowNm3PerHr,
-        biomethaneMethanePercent));
+    sb.append(
+	String.format("  Biomethane: %.1f Nm3/hr (%.1f%% CH4)%n", biomethaneFlowNm3PerHr, biomethaneMethanePercent));
     sb.append(String.format("  CO2 in product: %.2f%%%n", biomethaneCO2Percent));
     sb.append(String.format("  Wobbe index: %.1f MJ/Nm3%n", wobbeIndex));
     sb.append(String.format("  Methane slip: %.2f%%%n", methaneSlipPercent));

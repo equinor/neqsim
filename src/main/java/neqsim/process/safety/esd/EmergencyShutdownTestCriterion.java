@@ -9,9 +9,9 @@ import java.util.Map;
  * Acceptance criterion for an emergency shutdown dynamic test.
  *
  * <p>
- * Criteria evaluate monitored logical tags, process logic states, simulation errors, or field-data
- * deviations. Logical tags normally come from {@link neqsim.process.operations.OperationalTagMap}
- * bindings, while direct NeqSim automation addresses can also be used as monitor names.
+ * Criteria evaluate monitored logical tags, process logic states, simulation errors, or field-data deviations. Logical
+ * tags normally come from {@link neqsim.process.operations.OperationalTagMap} bindings, while direct NeqSim automation
+ * addresses can also be used as monitor names.
  * </p>
  *
  * @author NeqSim contributors
@@ -64,20 +64,19 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
   /**
    * Creates an acceptance criterion.
    *
-   * @param id stable criterion identifier
-   * @param type criterion type
-   * @param logicalTag logical tag or automation address used by signal criteria
-   * @param logicName process logic name used by logic criteria
-   * @param targetValue target value used by numeric criteria
-   * @param unit engineering unit for target and monitored values
-   * @param clause standards clause or company requirement reference
-   * @param severity finding severity when the criterion fails
-   * @param description human-readable criterion description
+   * @param id             stable criterion identifier
+   * @param type           criterion type
+   * @param logicalTag     logical tag or automation address used by signal criteria
+   * @param logicName      process logic name used by logic criteria
+   * @param targetValue    target value used by numeric criteria
+   * @param unit           engineering unit for target and monitored values
+   * @param clause         standards clause or company requirement reference
+   * @param severity       finding severity when the criterion fails
+   * @param description    human-readable criterion description
    * @param recommendation recommended action when the criterion fails
    */
-  private EmergencyShutdownTestCriterion(String id, CriterionType type, String logicalTag,
-      String logicName, double targetValue, String unit, String clause, String severity,
-      String description, String recommendation) {
+  private EmergencyShutdownTestCriterion(String id, CriterionType type, String logicalTag, String logicName,
+      double targetValue, String unit, String clause, String severity, String description, String recommendation) {
     this.id = requireText(id, "id");
     if (type == null) {
       throw new IllegalArgumentException("type must not be null");
@@ -96,164 +95,157 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
   /**
    * Creates a criterion requiring the final value to be at most a limit.
    *
-   * @param id criterion identifier
+   * @param id         criterion identifier
    * @param logicalTag monitored logical tag or automation address
-   * @param limit maximum allowed final value
-   * @param unit engineering unit
+   * @param limit      maximum allowed final value
+   * @param unit       engineering unit
    * @return acceptance criterion
    */
-  public static EmergencyShutdownTestCriterion finalAtMost(String id, String logicalTag,
-      double limit, String unit) {
+  public static EmergencyShutdownTestCriterion finalAtMost(String id, String logicalTag, double limit, String unit) {
     return signal(id, CriterionType.FINAL_LESS_OR_EQUAL, logicalTag, limit, unit,
-        "Final value must be at or below the specified limit.");
+	"Final value must be at or below the specified limit.");
   }
 
   /**
    * Creates a criterion requiring the final value to be at least a limit.
    *
-   * @param id criterion identifier
+   * @param id         criterion identifier
    * @param logicalTag monitored logical tag or automation address
-   * @param limit minimum allowed final value
-   * @param unit engineering unit
+   * @param limit      minimum allowed final value
+   * @param unit       engineering unit
    * @return acceptance criterion
    */
-  public static EmergencyShutdownTestCriterion finalAtLeast(String id, String logicalTag,
-      double limit, String unit) {
+  public static EmergencyShutdownTestCriterion finalAtLeast(String id, String logicalTag, double limit, String unit) {
     return signal(id, CriterionType.FINAL_GREATER_OR_EQUAL, logicalTag, limit, unit,
-        "Final value must be at or above the specified limit.");
+	"Final value must be at or above the specified limit.");
   }
 
   /**
    * Creates a criterion requiring the maximum value to stay below a limit.
    *
-   * @param id criterion identifier
+   * @param id         criterion identifier
    * @param logicalTag monitored logical tag or automation address
-   * @param limit maximum allowed value
-   * @param unit engineering unit
+   * @param limit      maximum allowed value
+   * @param unit       engineering unit
    * @return acceptance criterion
    */
-  public static EmergencyShutdownTestCriterion maxAtMost(String id, String logicalTag, double limit,
-      String unit) {
+  public static EmergencyShutdownTestCriterion maxAtMost(String id, String logicalTag, double limit, String unit) {
     return signal(id, CriterionType.MAX_LESS_OR_EQUAL, logicalTag, limit, unit,
-        "Maximum value must be at or below the specified limit.");
+	"Maximum value must be at or below the specified limit.");
   }
 
   /**
    * Creates a criterion requiring the maximum value to exceed a threshold.
    *
-   * @param id criterion identifier
+   * @param id         criterion identifier
    * @param logicalTag monitored logical tag or automation address
-   * @param threshold required maximum value
-   * @param unit engineering unit
+   * @param threshold  required maximum value
+   * @param unit       engineering unit
    * @return acceptance criterion
    */
-  public static EmergencyShutdownTestCriterion maxAtLeast(String id, String logicalTag,
-      double threshold, String unit) {
+  public static EmergencyShutdownTestCriterion maxAtLeast(String id, String logicalTag, double threshold, String unit) {
     return signal(id, CriterionType.MAX_GREATER_OR_EQUAL, logicalTag, threshold, unit,
-        "Maximum value must be at or above the specified threshold.");
+	"Maximum value must be at or above the specified threshold.");
   }
 
   /**
    * Creates a criterion requiring the minimum value to be at most a limit.
    *
-   * @param id criterion identifier
+   * @param id         criterion identifier
    * @param logicalTag monitored logical tag or automation address
-   * @param limit maximum allowed minimum value
-   * @param unit engineering unit
+   * @param limit      maximum allowed minimum value
+   * @param unit       engineering unit
    * @return acceptance criterion
    */
-  public static EmergencyShutdownTestCriterion minAtMost(String id, String logicalTag, double limit,
-      String unit) {
+  public static EmergencyShutdownTestCriterion minAtMost(String id, String logicalTag, double limit, String unit) {
     return signal(id, CriterionType.MIN_LESS_OR_EQUAL, logicalTag, limit, unit,
-        "Minimum value must be at or below the specified limit.");
+	"Minimum value must be at or below the specified limit.");
   }
 
   /**
    * Creates a criterion requiring the minimum value to be at least a limit.
    *
-   * @param id criterion identifier
+   * @param id         criterion identifier
    * @param logicalTag monitored logical tag or automation address
-   * @param limit minimum allowed value
-   * @param unit engineering unit
+   * @param limit      minimum allowed value
+   * @param unit       engineering unit
    * @return acceptance criterion
    */
-  public static EmergencyShutdownTestCriterion minAtLeast(String id, String logicalTag,
-      double limit, String unit) {
+  public static EmergencyShutdownTestCriterion minAtLeast(String id, String logicalTag, double limit, String unit) {
     return signal(id, CriterionType.MIN_GREATER_OR_EQUAL, logicalTag, limit, unit,
-        "Minimum value must be at or above the specified limit.");
+	"Minimum value must be at or above the specified limit.");
   }
 
   /**
    * Creates a criterion requiring a monitored value to decrease by a minimum amount.
    *
-   * @param id criterion identifier
-   * @param logicalTag monitored logical tag or automation address
+   * @param id              criterion identifier
+   * @param logicalTag      monitored logical tag or automation address
    * @param minimumDecrease required decrease from initial to final value
-   * @param unit engineering unit
+   * @param unit            engineering unit
    * @return acceptance criterion
    */
-  public static EmergencyShutdownTestCriterion decreaseAtLeast(String id, String logicalTag,
-      double minimumDecrease, String unit) {
+  public static EmergencyShutdownTestCriterion decreaseAtLeast(String id, String logicalTag, double minimumDecrease,
+      String unit) {
     return signal(id, CriterionType.DECREASE_GREATER_OR_EQUAL, logicalTag, minimumDecrease, unit,
-        "Value must decrease by at least the specified amount.");
+	"Value must decrease by at least the specified amount.");
   }
 
   /**
    * Creates a criterion requiring a monitored value to increase by a minimum amount.
    *
-   * @param id criterion identifier
-   * @param logicalTag monitored logical tag or automation address
+   * @param id              criterion identifier
+   * @param logicalTag      monitored logical tag or automation address
    * @param minimumIncrease required increase from initial to final value
-   * @param unit engineering unit
+   * @param unit            engineering unit
    * @return acceptance criterion
    */
-  public static EmergencyShutdownTestCriterion increaseAtLeast(String id, String logicalTag,
-      double minimumIncrease, String unit) {
+  public static EmergencyShutdownTestCriterion increaseAtLeast(String id, String logicalTag, double minimumIncrease,
+      String unit) {
     return signal(id, CriterionType.INCREASE_GREATER_OR_EQUAL, logicalTag, minimumIncrease, unit,
-        "Value must increase by at least the specified amount.");
+	"Value must increase by at least the specified amount.");
   }
 
   /**
    * Creates a criterion requiring absolute model-to-field deviation below a limit.
    *
-   * @param id criterion identifier
-   * @param logicalTag monitored logical tag with field data
+   * @param id               criterion identifier
+   * @param logicalTag       monitored logical tag with field data
    * @param maximumDeviation maximum absolute deviation
-   * @param unit engineering unit
+   * @param unit             engineering unit
    * @return acceptance criterion
    */
-  public static EmergencyShutdownTestCriterion fieldAbsoluteDeviationAtMost(String id,
-      String logicalTag, double maximumDeviation, String unit) {
-    return signal(id, CriterionType.FIELD_ABSOLUTE_DEVIATION_LESS_OR_EQUAL, logicalTag,
-        maximumDeviation, unit, "Model-to-field absolute deviation must be within tolerance.");
+  public static EmergencyShutdownTestCriterion fieldAbsoluteDeviationAtMost(String id, String logicalTag,
+      double maximumDeviation, String unit) {
+    return signal(id, CriterionType.FIELD_ABSOLUTE_DEVIATION_LESS_OR_EQUAL, logicalTag, maximumDeviation, unit,
+	"Model-to-field absolute deviation must be within tolerance.");
   }
 
   /**
    * Creates a criterion requiring relative model-to-field deviation below a limit.
    *
-   * @param id criterion identifier
-   * @param logicalTag monitored logical tag with field data
+   * @param id                       criterion identifier
+   * @param logicalTag               monitored logical tag with field data
    * @param maximumDeviationFraction maximum relative deviation fraction
    * @return acceptance criterion
    */
-  public static EmergencyShutdownTestCriterion fieldRelativeDeviationAtMost(String id,
-      String logicalTag, double maximumDeviationFraction) {
-    return signal(id, CriterionType.FIELD_RELATIVE_DEVIATION_LESS_OR_EQUAL, logicalTag,
-        maximumDeviationFraction, "",
-        "Model-to-field relative deviation must be within tolerance.");
+  public static EmergencyShutdownTestCriterion fieldRelativeDeviationAtMost(String id, String logicalTag,
+      double maximumDeviationFraction) {
+    return signal(id, CriterionType.FIELD_RELATIVE_DEVIATION_LESS_OR_EQUAL, logicalTag, maximumDeviationFraction, "",
+	"Model-to-field relative deviation must be within tolerance.");
   }
 
   /**
    * Creates a criterion requiring a named logic sequence to complete.
    *
-   * @param id criterion identifier
+   * @param id        criterion identifier
    * @param logicName process logic name
    * @return acceptance criterion
    */
   public static EmergencyShutdownTestCriterion logicCompleted(String id, String logicName) {
-    return new EmergencyShutdownTestCriterion(id, CriterionType.LOGIC_COMPLETED, "", logicName,
-        Double.NaN, "", "", "HIGH", "Logic sequence must complete during the test.",
-        "Check C&E delays, final-element action completion, and permissive status.");
+    return new EmergencyShutdownTestCriterion(id, CriterionType.LOGIC_COMPLETED, "", logicName, Double.NaN, "", "",
+	"HIGH", "Logic sequence must complete during the test.",
+	"Check C&E delays, final-element action completion, and permissive status.");
   }
 
   /**
@@ -263,9 +255,9 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
    * @return acceptance criterion
    */
   public static EmergencyShutdownTestCriterion noSimulationErrors(String id) {
-    return new EmergencyShutdownTestCriterion(id, CriterionType.NO_SIMULATION_ERRORS, "", "",
-        Double.NaN, "", "", "HIGH", "Transient simulation must finish without errors.",
-        "Resolve model convergence, missing equipment, or invalid action sequencing issues.");
+    return new EmergencyShutdownTestCriterion(id, CriterionType.NO_SIMULATION_ERRORS, "", "", Double.NaN, "", "",
+	"HIGH", "Transient simulation must finish without errors.",
+	"Resolve model convergence, missing equipment, or invalid action sequencing issues.");
   }
 
   /**
@@ -275,8 +267,8 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
    * @return copied criterion with clause metadata
    */
   public EmergencyShutdownTestCriterion withClause(String clause) {
-    return new EmergencyShutdownTestCriterion(id, type, logicalTag, logicName, targetValue, unit,
-        clause, severity, description, recommendation);
+    return new EmergencyShutdownTestCriterion(id, type, logicalTag, logicName, targetValue, unit, clause, severity,
+	description, recommendation);
   }
 
   /**
@@ -286,20 +278,20 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
    * @return copied criterion with severity metadata
    */
   public EmergencyShutdownTestCriterion withSeverity(String severity) {
-    return new EmergencyShutdownTestCriterion(id, type, logicalTag, logicName, targetValue, unit,
-        clause, severity, description, recommendation);
+    return new EmergencyShutdownTestCriterion(id, type, logicalTag, logicName, targetValue, unit, clause, severity,
+	description, recommendation);
   }
 
   /**
    * Returns a copy with custom explanatory text.
    *
-   * @param description criterion description
+   * @param description    criterion description
    * @param recommendation recommended action if the criterion fails
    * @return copied criterion with custom text
    */
   public EmergencyShutdownTestCriterion withText(String description, String recommendation) {
-    return new EmergencyShutdownTestCriterion(id, type, logicalTag, logicName, targetValue, unit,
-        clause, severity, description, recommendation);
+    return new EmergencyShutdownTestCriterion(id, type, logicalTag, logicName, targetValue, unit, clause, severity,
+	description, recommendation);
   }
 
   /**
@@ -377,28 +369,26 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
   /**
    * Evaluates this criterion against a completed test result.
    *
-   * @param signalStats monitored signal statistics keyed by logical tag
-   * @param logicStates final logic states keyed by logic name
-   * @param errors simulation errors recorded by the runner
+   * @param signalStats      monitored signal statistics keyed by logical tag
+   * @param logicStates      final logic states keyed by logic name
+   * @param errors           simulation errors recorded by the runner
    * @param fieldComparisons model-to-field comparisons keyed by logical tag
    * @return criterion result
    */
-  Result evaluate(Map<String, EmergencyShutdownTestResult.SignalStats> signalStats,
-      Map<String, String> logicStates, List<String> errors,
-      Map<String, EmergencyShutdownTestResult.FieldComparison> fieldComparisons) {
+  Result evaluate(Map<String, EmergencyShutdownTestResult.SignalStats> signalStats, Map<String, String> logicStates,
+      List<String> errors, Map<String, EmergencyShutdownTestResult.FieldComparison> fieldComparisons) {
     switch (type) {
-      case LOGIC_COMPLETED:
-        return evaluateLogic(logicStates);
-      case NO_SIMULATION_ERRORS:
-        return new Result(this, errors == null || errors.isEmpty(),
-            errors == null ? 0.0 : errors.size(), 0.0,
-            errors == null || errors.isEmpty() ? "No simulation errors were recorded."
-                : "Simulation errors were recorded during the ESD test.");
-      case FIELD_ABSOLUTE_DEVIATION_LESS_OR_EQUAL:
-      case FIELD_RELATIVE_DEVIATION_LESS_OR_EQUAL:
-        return evaluateFieldComparison(fieldComparisons);
-      default:
-        return evaluateSignal(signalStats);
+    case LOGIC_COMPLETED:
+      return evaluateLogic(logicStates);
+    case NO_SIMULATION_ERRORS:
+      return new Result(this, errors == null || errors.isEmpty(), errors == null ? 0.0 : errors.size(), 0.0,
+	  errors == null || errors.isEmpty() ? "No simulation errors were recorded."
+	      : "Simulation errors were recorded during the ESD test.");
+    case FIELD_ABSOLUTE_DEVIATION_LESS_OR_EQUAL:
+    case FIELD_RELATIVE_DEVIATION_LESS_OR_EQUAL:
+      return evaluateFieldComparison(fieldComparisons);
+    default:
+      return evaluateSignal(signalStats);
     }
   }
 
@@ -425,19 +415,18 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
   /**
    * Creates a signal criterion.
    *
-   * @param id criterion identifier
-   * @param type criterion type
-   * @param logicalTag monitored tag
+   * @param id          criterion identifier
+   * @param type        criterion type
+   * @param logicalTag  monitored tag
    * @param targetValue target value
-   * @param unit engineering unit
+   * @param unit        engineering unit
    * @param description criterion description
    * @return acceptance criterion
    */
-  private static EmergencyShutdownTestCriterion signal(String id, CriterionType type,
-      String logicalTag, double targetValue, String unit, String description) {
-    return new EmergencyShutdownTestCriterion(id, type, logicalTag, "", targetValue, unit, "",
-        "HIGH", description,
-        "Review ESD action sequence, final element response, and model input data.");
+  private static EmergencyShutdownTestCriterion signal(String id, CriterionType type, String logicalTag,
+      double targetValue, String unit, String description) {
+    return new EmergencyShutdownTestCriterion(id, type, logicalTag, "", targetValue, unit, "", "HIGH", description,
+	"Review ESD action sequence, final element response, and model input data.");
   }
 
   /**
@@ -450,12 +439,12 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
     EmergencyShutdownTestResult.SignalStats stats = signalStats.get(logicalTag);
     if (stats == null || !stats.hasSamples()) {
       return new Result(this, false, Double.NaN, targetValue,
-          "No monitored samples were found for " + logicalTag + ".");
+	  "No monitored samples were found for " + logicalTag + ".");
     }
     double value = valueFor(stats);
     boolean passed = compare(value);
     return new Result(this, passed, value, targetValue,
-        passed ? "Criterion satisfied." : "Criterion failed for " + logicalTag + ".");
+	passed ? "Criterion satisfied." : "Criterion failed for " + logicalTag + ".");
   }
 
   /**
@@ -468,8 +457,7 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
     String state = logicStates.get(logicName);
     boolean passed = "COMPLETED".equals(state);
     return new Result(this, passed, passed ? 1.0 : 0.0, 1.0,
-        state == null ? "Logic sequence was not present in the test."
-            : "Final logic state: " + state);
+	state == null ? "Logic sequence was not present in the test." : "Final logic state: " + state);
   }
 
   /**
@@ -478,20 +466,17 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
    * @param fieldComparisons field comparisons keyed by logical tag
    * @return criterion result
    */
-  private Result evaluateFieldComparison(
-      Map<String, EmergencyShutdownTestResult.FieldComparison> fieldComparisons) {
+  private Result evaluateFieldComparison(Map<String, EmergencyShutdownTestResult.FieldComparison> fieldComparisons) {
     EmergencyShutdownTestResult.FieldComparison comparison = fieldComparisons.get(logicalTag);
     if (comparison == null || !comparison.hasBothValues()) {
       return new Result(this, false, Double.NaN, targetValue,
-          "No complete model-to-field comparison was available for " + logicalTag + ".");
+	  "No complete model-to-field comparison was available for " + logicalTag + ".");
     }
-    double value = type == CriterionType.FIELD_ABSOLUTE_DEVIATION_LESS_OR_EQUAL
-        ? comparison.getAbsoluteDeviation()
-        : comparison.getRelativeDeviationFraction();
+    double value = type == CriterionType.FIELD_ABSOLUTE_DEVIATION_LESS_OR_EQUAL ? comparison.getAbsoluteDeviation()
+	: comparison.getRelativeDeviationFraction();
     boolean passed = value <= targetValue;
     return new Result(this, passed, value, targetValue,
-        passed ? "Model-to-field deviation is within tolerance."
-            : "Model-to-field deviation exceeds tolerance.");
+	passed ? "Model-to-field deviation is within tolerance." : "Model-to-field deviation exceeds tolerance.");
   }
 
   /**
@@ -502,21 +487,21 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
    */
   private double valueFor(EmergencyShutdownTestResult.SignalStats stats) {
     switch (type) {
-      case FINAL_LESS_OR_EQUAL:
-      case FINAL_GREATER_OR_EQUAL:
-        return stats.getFinalValue();
-      case MAX_LESS_OR_EQUAL:
-      case MAX_GREATER_OR_EQUAL:
-        return stats.getMaxValue();
-      case MIN_LESS_OR_EQUAL:
-      case MIN_GREATER_OR_EQUAL:
-        return stats.getMinValue();
-      case DECREASE_GREATER_OR_EQUAL:
-        return stats.getInitialValue() - stats.getFinalValue();
-      case INCREASE_GREATER_OR_EQUAL:
-        return stats.getFinalValue() - stats.getInitialValue();
-      default:
-        return Double.NaN;
+    case FINAL_LESS_OR_EQUAL:
+    case FINAL_GREATER_OR_EQUAL:
+      return stats.getFinalValue();
+    case MAX_LESS_OR_EQUAL:
+    case MAX_GREATER_OR_EQUAL:
+      return stats.getMaxValue();
+    case MIN_LESS_OR_EQUAL:
+    case MIN_GREATER_OR_EQUAL:
+      return stats.getMinValue();
+    case DECREASE_GREATER_OR_EQUAL:
+      return stats.getInitialValue() - stats.getFinalValue();
+    case INCREASE_GREATER_OR_EQUAL:
+      return stats.getFinalValue() - stats.getInitialValue();
+    default:
+      return Double.NaN;
     }
   }
 
@@ -531,18 +516,18 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
       return false;
     }
     switch (type) {
-      case FINAL_LESS_OR_EQUAL:
-      case MAX_LESS_OR_EQUAL:
-      case MIN_LESS_OR_EQUAL:
-        return value <= targetValue;
-      case FINAL_GREATER_OR_EQUAL:
-      case MAX_GREATER_OR_EQUAL:
-      case MIN_GREATER_OR_EQUAL:
-      case DECREASE_GREATER_OR_EQUAL:
-      case INCREASE_GREATER_OR_EQUAL:
-        return value >= targetValue;
-      default:
-        return false;
+    case FINAL_LESS_OR_EQUAL:
+    case MAX_LESS_OR_EQUAL:
+    case MIN_LESS_OR_EQUAL:
+      return value <= targetValue;
+    case FINAL_GREATER_OR_EQUAL:
+    case MAX_GREATER_OR_EQUAL:
+    case MIN_GREATER_OR_EQUAL:
+    case DECREASE_GREATER_OR_EQUAL:
+    case INCREASE_GREATER_OR_EQUAL:
+      return value >= targetValue;
+    default:
+      return false;
     }
   }
 
@@ -559,7 +544,7 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
   /**
    * Requires a non-empty text value.
    *
-   * @param text text value
+   * @param text      text value
    * @param fieldName field name for error messages
    * @return trimmed text
    */
@@ -589,14 +574,14 @@ public final class EmergencyShutdownTestCriterion implements Serializable {
     /**
      * Creates a criterion result.
      *
-     * @param criterion source criterion
-     * @param passed true if the criterion passed
+     * @param criterion     source criterion
+     * @param passed        true if the criterion passed
      * @param observedValue observed value used by the criterion
-     * @param targetValue target value used by the criterion
-     * @param message result message
+     * @param targetValue   target value used by the criterion
+     * @param message       result message
      */
-    private Result(EmergencyShutdownTestCriterion criterion, boolean passed, double observedValue,
-        double targetValue, String message) {
+    private Result(EmergencyShutdownTestCriterion criterion, boolean passed, double observedValue, double targetValue,
+	String message) {
       this.criterionId = criterion.id;
       this.type = criterion.type;
       this.passed = passed;

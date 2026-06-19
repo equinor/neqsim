@@ -1,8 +1,7 @@
 package neqsim.thermo.system;
 
 /**
- * This class defines a thermodynamic system using the SRK Two Coon model of Statoil equation of
- * state.
+ * This class defines a thermodynamic system using the SRK Two Coon model of Statoil equation of state.
  *
  * @author asmund
  * @version $Id: $Id
@@ -37,8 +36,8 @@ public class SystemSrkTwuCoonStatoilEos extends SystemSrkEos {
    * Constructor for SystemSrkTwuCoonStatoilEos.
    * </p>
    *
-   * @param T The temperature in unit Kelvin
-   * @param P The pressure in unit bara (absolute pressure)
+   * @param T              The temperature in unit Kelvin
+   * @param P              The pressure in unit bara (absolute pressure)
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemSrkTwuCoonStatoilEos(double T, double P, boolean checkForSolids) {

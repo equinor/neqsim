@@ -11,15 +11,15 @@ import com.google.gson.JsonObject;
  * Structured outcome of the most recent run of a {@link ProcessSystem} or {@link ProcessModel}.
  *
  * <p>
- * A {@code RunStatus} answers the question "did the last run succeed, and if not, which unit failed
- * and why?" without forcing the caller to catch and parse a {@link RuntimeException}. It records a
- * per-unit outcome list and, on failure, the first failed unit's name and error message.
+ * A {@code RunStatus} answers the question "did the last run succeed, and if not, which unit failed and why?" without
+ * forcing the caller to catch and parse a {@link RuntimeException}. It records a per-unit outcome list and, on failure,
+ * the first failed unit's name and error message.
  * </p>
  *
  * <p>
  * The recorder methods ({@link #reset()}, {@link #recordSuccess}, {@link #recordFailure},
- * {@link #markComplete(boolean)}) are intended to be driven by the owning process during a run; the
- * accessor methods and {@link #toJson()} are intended for agents and reporting.
+ * {@link #markComplete(boolean)}) are intended to be driven by the owning process during a run; the accessor methods
+ * and {@link #toJson()} are intended for agents and reporting.
  * </p>
  *
  * @author NeqSim
@@ -39,8 +39,7 @@ public class RunStatus implements Serializable {
   private final List<UnitRunStatus> units = new ArrayList<UnitRunStatus>();
 
   /**
-   * Resets this status to begin recording a new run. Clears all per-unit entries and failure
-   * information.
+   * Resets this status to begin recording a new run. Clears all per-unit entries and failure information.
    */
   public void reset() {
     completed = false;
@@ -72,11 +71,10 @@ public class RunStatus implements Serializable {
   }
 
   /**
-   * Records that a unit failed to run. The first recorded failure is reported as the run's failed
-   * unit.
+   * Records that a unit failed to run. The first recorded failure is reported as the run's failed unit.
    *
-   * @param unitName the unit operation name
-   * @param unitType the unit operation type (simple class name), or null if unknown
+   * @param unitName     the unit operation name
+   * @param unitType     the unit operation type (simple class name), or null if unknown
    * @param errorMessage the error message describing the failure
    */
   public void recordFailure(String unitName, String unitType, String errorMessage) {
@@ -84,16 +82,15 @@ public class RunStatus implements Serializable {
   }
 
   /**
-   * Records that a unit failed to run within a named area. The first recorded failure is reported
-   * as the run's failed unit.
+   * Records that a unit failed to run within a named area. The first recorded failure is reported as the run's failed
+   * unit.
    *
-   * @param unitName the unit operation name
-   * @param unitType the unit operation type (simple class name), or null if unknown
+   * @param unitName     the unit operation name
+   * @param unitType     the unit operation type (simple class name), or null if unknown
    * @param errorMessage the error message describing the failure
-   * @param areaName the owning process area name, or null for a single-area process
+   * @param areaName     the owning process area name, or null for a single-area process
    */
-  public void recordFailure(String unitName, String unitType, String errorMessage,
-      String areaName) {
+  public void recordFailure(String unitName, String unitType, String errorMessage, String areaName) {
     units.add(new UnitRunStatus(unitName, unitType, false, errorMessage, areaName));
     if (failedUnitName == null) {
       failedUnitName = unitName;
@@ -102,8 +99,8 @@ public class RunStatus implements Serializable {
   }
 
   /**
-   * Marks the run as complete with the given overall outcome. A run is considered successful only
-   * if the supplied flag is true and no unit failure was recorded.
+   * Marks the run as complete with the given overall outcome. A run is considered successful only if the supplied flag
+   * is true and no unit failure was recorded.
    *
    * @param overallSuccess the caller-determined overall success flag
    */

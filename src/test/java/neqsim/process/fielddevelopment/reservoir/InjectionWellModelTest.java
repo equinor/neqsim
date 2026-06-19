@@ -131,16 +131,14 @@ class InjectionWellModelTest {
     model.setMaxBHP(300.0, "bara");
 
     // Calculate with nearby producers
-    double[] producerDistances = {300.0, 400.0}; // m
-    double[] producerRates = {5000.0, 6000.0}; // Sm3/day
+    double[] producerDistances = { 300.0, 400.0 }; // m
+    double[] producerRates = { 5000.0, 6000.0 }; // Sm3/day
 
-    InjectionWellResult result =
-        model.calculateWithInterference(10000.0, producerDistances, producerRates);
+    InjectionWellResult result = model.calculateWithInterference(10000.0, producerDistances, producerRates);
 
     // Interference should reduce effective reservoir pressure
     assertTrue(result.interferencePressure >= 0, "Should have interference pressure");
-    assertTrue(result.effectiveReservoirPressure <= 250.0,
-        "Effective pressure should be lower or equal");
+    assertTrue(result.effectiveReservoirPressure <= 250.0, "Effective pressure should be lower or equal");
   }
 
   @Test
@@ -176,7 +174,7 @@ class InjectionWellModelTest {
 
     // Higher skin should give lower II
     assertTrue(noSkinResult.injectivityIndex > highSkinResult.injectivityIndex,
-        "Higher skin should reduce injectivity");
+	"Higher skin should reduce injectivity");
   }
 
   @Test
@@ -216,7 +214,7 @@ class InjectionWellModelTest {
   @DisplayName("Test injection pattern sweep efficiency")
   void testInjectionPatternSweep() {
     InjectionWellModel.InjectionPattern fiveSpot = new InjectionWellModel.InjectionPattern(
-        InjectionWellModel.InjectionPattern.PatternType.FIVE_SPOT);
+	InjectionWellModel.InjectionPattern.PatternType.FIVE_SPOT);
 
     // Favorable mobility ratio
     double sweepFavorable = fiveSpot.getArealSweepEfficiency(0.5);
@@ -233,7 +231,7 @@ class InjectionWellModelTest {
   @DisplayName("Test injection pattern configuration")
   void testInjectionPatternConfiguration() {
     InjectionWellModel.InjectionPattern pattern = new InjectionWellModel.InjectionPattern(
-        InjectionWellModel.InjectionPattern.PatternType.LINE_DRIVE);
+	InjectionWellModel.InjectionPattern.PatternType.LINE_DRIVE);
 
     pattern.setWellSpacing(400.0);
 

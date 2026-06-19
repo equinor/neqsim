@@ -2,8 +2,8 @@
  * AI-friendly validation framework for NeqSim.
  *
  * <p>
- * This package provides structured validation with actionable error messages designed for both
- * human users and AI agents (like GitHub Copilot). Key features:
+ * This package provides structured validation with actionable error messages designed for both human users and AI
+ * agents (like GitHub Copilot). Key features:
  * </p>
  *
  * <ul>

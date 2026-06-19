@@ -20,7 +20,7 @@ public class TestGERGwater {
   private static final Logger logger = LogManager.getLogger(TestGERGwater.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.

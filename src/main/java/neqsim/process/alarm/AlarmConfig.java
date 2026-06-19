@@ -65,16 +65,16 @@ public final class AlarmConfig implements Serializable {
 
   public Double getLimit(AlarmLevel level) {
     switch (Objects.requireNonNull(level, "level")) {
-      case LOLO:
-        return lowLowLimit;
-      case LO:
-        return lowLimit;
-      case HI:
-        return highLimit;
-      case HIHI:
-        return highHighLimit;
-      default:
-        return null;
+    case LOLO:
+      return lowLowLimit;
+    case LO:
+      return lowLimit;
+    case HI:
+      return highLimit;
+    case HIHI:
+      return highHighLimit;
+    default:
+      return null;
     }
   }
 
@@ -90,7 +90,8 @@ public final class AlarmConfig implements Serializable {
     private double delay;
     private String unit = "";
 
-    private Builder() {}
+    private Builder() {
+    }
 
     public Builder lowLowLimit(Double value) {
       this.lowLowLimit = value;

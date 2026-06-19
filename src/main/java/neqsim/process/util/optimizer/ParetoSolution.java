@@ -12,8 +12,8 @@ import java.util.Objects;
  * Represents a single solution on the Pareto front.
  *
  * <p>
- * A Pareto solution contains the objective values at a specific decision point (e.g., flow rate)
- * and can be compared to other solutions for dominance.
+ * A Pareto solution contains the objective values at a specific decision point (e.g., flow rate) and can be compared to
+ * other solutions for dominance.
  * </p>
  *
  * @author ASMF
@@ -47,16 +47,15 @@ public class ParetoSolution implements Serializable, Comparable<ParetoSolution> 
   /**
    * Constructor for ParetoSolution.
    *
-   * @param objectiveValues normalized objective values (higher is better)
+   * @param objectiveValues    normalized objective values (higher is better)
    * @param rawObjectiveValues original objective values before normalization
-   * @param objectiveNames names of objectives
-   * @param objectiveUnits units for each objective
-   * @param decisionVariables decision variable values
-   * @param feasible whether solution is feasible
+   * @param objectiveNames     names of objectives
+   * @param objectiveUnits     units for each objective
+   * @param decisionVariables  decision variable values
+   * @param feasible           whether solution is feasible
    */
-  public ParetoSolution(double[] objectiveValues, double[] rawObjectiveValues,
-      String[] objectiveNames, String[] objectiveUnits, Map<String, Double> decisionVariables,
-      boolean feasible) {
+  public ParetoSolution(double[] objectiveValues, double[] rawObjectiveValues, String[] objectiveNames,
+      String[] objectiveUnits, Map<String, Double> decisionVariables, boolean feasible) {
     this.objectiveValues = Arrays.copyOf(objectiveValues, objectiveValues.length);
     this.rawObjectiveValues = Arrays.copyOf(rawObjectiveValues, rawObjectiveValues.length);
     this.objectiveNames = Arrays.copyOf(objectiveNames, objectiveNames.length);
@@ -154,7 +153,7 @@ public class ParetoSolution implements Serializable, Comparable<ParetoSolution> 
   /**
    * Add metadata to this solution.
    *
-   * @param key metadata key
+   * @param key   metadata key
    * @param value metadata value
    */
   public void addMetadata(String key, Object value) {
@@ -175,8 +174,7 @@ public class ParetoSolution implements Serializable, Comparable<ParetoSolution> 
    * Check if this solution dominates another solution.
    *
    * <p>
-   * Solution A dominates B if A is at least as good as B on all objectives and strictly better on
-   * at least one.
+   * Solution A dominates B if A is at least as good as B on all objectives and strictly better on at least one.
    * </p>
    *
    * @param other the other solution to compare
@@ -190,10 +188,10 @@ public class ParetoSolution implements Serializable, Comparable<ParetoSolution> 
     boolean dominated = false;
     for (int i = 0; i < objectiveValues.length; i++) {
       if (this.objectiveValues[i] < other.objectiveValues[i]) {
-        return false; // Worse on at least one objective
+	return false; // Worse on at least one objective
       }
       if (this.objectiveValues[i] > other.objectiveValues[i]) {
-        dominated = true; // Better on at least one objective
+	dominated = true; // Better on at least one objective
       }
     }
     return dominated;
@@ -221,22 +219,21 @@ public class ParetoSolution implements Serializable, Comparable<ParetoSolution> 
   /**
    * Calculate crowding distance contribution from neighbors.
    *
-   * @param leftNeighbor left neighbor in sorted order (can be null)
-   * @param rightNeighbor right neighbor in sorted order (can be null)
+   * @param leftNeighbor   left neighbor in sorted order (can be null)
+   * @param rightNeighbor  right neighbor in sorted order (can be null)
    * @param objectiveIndex objective to calculate distance for
    * @param objectiveRange total range of objective values
    * @return crowding distance contribution
    */
-  public double crowdingDistance(ParetoSolution leftNeighbor, ParetoSolution rightNeighbor,
-      int objectiveIndex, double objectiveRange) {
+  public double crowdingDistance(ParetoSolution leftNeighbor, ParetoSolution rightNeighbor, int objectiveIndex,
+      double objectiveRange) {
     if (objectiveRange <= 0) {
       return 0.0;
     }
     if (leftNeighbor == null || rightNeighbor == null) {
       return Double.POSITIVE_INFINITY; // Boundary solutions
     }
-    double distance = rightNeighbor.objectiveValues[objectiveIndex]
-        - leftNeighbor.objectiveValues[objectiveIndex];
+    double distance = rightNeighbor.objectiveValues[objectiveIndex] - leftNeighbor.objectiveValues[objectiveIndex];
     return distance / objectiveRange;
   }
 
@@ -246,7 +243,7 @@ public class ParetoSolution implements Serializable, Comparable<ParetoSolution> 
     for (int i = 0; i < objectiveValues.length; i++) {
       int cmp = Double.compare(this.objectiveValues[i], other.objectiveValues[i]);
       if (cmp != 0) {
-        return -cmp; // Higher is better, so reverse
+	return -cmp; // Higher is better, so reverse
       }
     }
     return 0;
@@ -261,8 +258,7 @@ public class ParetoSolution implements Serializable, Comparable<ParetoSolution> 
       return false;
     }
     ParetoSolution other = (ParetoSolution) obj;
-    return Arrays.equals(objectiveValues, other.objectiveValues)
-        && decisionVariables.equals(other.decisionVariables);
+    return Arrays.equals(objectiveValues, other.objectiveValues) && decisionVariables.equals(other.decisionVariables);
   }
 
   @Override
@@ -275,10 +271,10 @@ public class ParetoSolution implements Serializable, Comparable<ParetoSolution> 
     StringBuilder sb = new StringBuilder("ParetoSolution{");
     for (int i = 0; i < objectiveNames.length; i++) {
       if (i > 0) {
-        sb.append(", ");
+	sb.append(", ");
       }
-      sb.append(objectiveNames[i]).append("=").append(String.format("%.2f", rawObjectiveValues[i]))
-          .append(" ").append(objectiveUnits[i]);
+      sb.append(objectiveNames[i]).append("=").append(String.format("%.2f", rawObjectiveValues[i])).append(" ")
+	  .append(objectiveUnits[i]);
     }
     sb.append(", feasible=").append(feasible);
     if (!decisionVariables.isEmpty()) {
@@ -301,7 +297,7 @@ public class ParetoSolution implements Serializable, Comparable<ParetoSolution> 
      * Set objectives and their evaluated values.
      *
      * @param objectives list of objective functions
-     * @param rawValues evaluated raw values
+     * @param rawValues  evaluated raw values
      * @return this builder
      */
     public Builder objectives(List<ObjectiveFunction> objectives, double[] rawValues) {
@@ -324,7 +320,7 @@ public class ParetoSolution implements Serializable, Comparable<ParetoSolution> 
     /**
      * Add a decision variable.
      *
-     * @param name variable name
+     * @param name  variable name
      * @param value variable value
      * @return this builder
      */
@@ -356,17 +352,14 @@ public class ParetoSolution implements Serializable, Comparable<ParetoSolution> 
       String[] units = new String[n];
 
       for (int i = 0; i < n; i++) {
-        ObjectiveFunction obj = objectives.get(i);
-        names[i] = obj.getName();
-        units[i] = obj.getUnit();
-        // Normalize: higher is always better
-        normalizedValues[i] =
-            obj.getDirection() == ObjectiveFunction.Direction.MAXIMIZE ? rawValues[i]
-                : -rawValues[i];
+	ObjectiveFunction obj = objectives.get(i);
+	names[i] = obj.getName();
+	units[i] = obj.getUnit();
+	// Normalize: higher is always better
+	normalizedValues[i] = obj.getDirection() == ObjectiveFunction.Direction.MAXIMIZE ? rawValues[i] : -rawValues[i];
       }
 
-      return new ParetoSolution(normalizedValues, rawValues, names, units, decisionVariables,
-          feasible);
+      return new ParetoSolution(normalizedValues, rawValues, names, units, decisionVariables, feasible);
     }
   }
 }

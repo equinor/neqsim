@@ -51,7 +51,7 @@ public class HeatExchangerMechanicalDesignTest {
     assertTrue(selected.getTubeCount() > 0);
 
     Optional<HeatExchangerSizingResult> shellResult = design.getSizingResults().stream()
-        .filter(result -> result.getType() == HeatExchangerType.SHELL_AND_TUBE).findFirst();
+	.filter(result -> result.getType() == HeatExchangerType.SHELL_AND_TUBE).findFirst();
     assertTrue(shellResult.isPresent());
     assertTrue(shellResult.get().getTubeCount() > 0);
   }
@@ -62,16 +62,15 @@ public class HeatExchangerMechanicalDesignTest {
     hx.initMechanicalDesign();
     HeatExchangerMechanicalDesign design = hx.getMechanicalDesign();
     design.setCandidateTypes(HeatExchangerType.SHELL_AND_TUBE, HeatExchangerType.PLATE_AND_FRAME,
-        HeatExchangerType.AIR_COOLER);
+	HeatExchangerType.AIR_COOLER);
 
     design.setSelectionCriterion(SelectionCriterion.MIN_AREA);
     design.calcDesign();
 
     HeatExchangerSizingResult selected = design.getSelectedSizingResult();
     assertNotNull(selected);
-    double minArea =
-        design.getSizingResults().stream().mapToDouble(HeatExchangerSizingResult::getRequiredArea)
-            .min().orElseThrow(() -> new IllegalStateException("No sizing results available"));
+    double minArea = design.getSizingResults().stream().mapToDouble(HeatExchangerSizingResult::getRequiredArea).min()
+	.orElseThrow(() -> new IllegalStateException("No sizing results available"));
     assertEquals(minArea, selected.getRequiredArea(), 1e-6);
 
     // Switch criterion to evaluate another automatic decision
@@ -79,13 +78,13 @@ public class HeatExchangerMechanicalDesignTest {
     design.setManualSelection(null);
     design.calcDesign();
     HeatExchangerType minPressureType = design.getSizingResults().stream()
-        .min(Comparator.comparingDouble(HeatExchangerSizingResult::getEstimatedPressureDrop))
-        .map(HeatExchangerSizingResult::getType)
-        .orElseThrow(() -> new IllegalStateException("No sizing result available"));
+	.min(Comparator.comparingDouble(HeatExchangerSizingResult::getEstimatedPressureDrop))
+	.map(HeatExchangerSizingResult::getType)
+	.orElseThrow(() -> new IllegalStateException("No sizing result available"));
     assertEquals(minPressureType, design.getSelectedType());
 
     Optional<HeatExchangerSizingResult> airCooler = design.getSizingResults().stream()
-        .filter(result -> result.getType() == HeatExchangerType.AIR_COOLER).findFirst();
+	.filter(result -> result.getType() == HeatExchangerType.AIR_COOLER).findFirst();
     assertTrue(airCooler.isPresent());
     assertTrue(airCooler.get().getFinSurfaceArea() > 0.0);
   }
@@ -151,7 +150,7 @@ public class HeatExchangerMechanicalDesignTest {
     String temaClass = design.getTemaClass();
     assertNotNull(temaClass, "TEMA class should not be null");
     assertTrue(temaClass.equals("R") || temaClass.equals("C") || temaClass.equals("B"),
-        "TEMA class should be R, C, or B");
+	"TEMA class should be R, C, or B");
     logger.info("TEMA class: " + temaClass);
   }
 
@@ -230,12 +229,10 @@ public class HeatExchangerMechanicalDesignTest {
     double minApproach = design.getMinApproachTemperatureC();
 
     // Test with adequate approach
-    assertTrue(design.validateApproachTemperature(minApproach * 2),
-        "Approach 2x minimum should pass");
+    assertTrue(design.validateApproachTemperature(minApproach * 2), "Approach 2x minimum should pass");
 
     // Test with inadequate approach
-    assertFalse(design.validateApproachTemperature(minApproach * 0.5),
-        "Approach 0.5x minimum should fail");
+    assertFalse(design.validateApproachTemperature(minApproach * 0.5), "Approach 0.5x minimum should fail");
   }
 
   @Test
@@ -253,7 +250,7 @@ public class HeatExchangerMechanicalDesignTest {
     logger.info("Heat exchanger validation valid: " + result.isValid());
     if (!result.isValid()) {
       for (String issue : result.getIssues()) {
-        logger.info("  Issue: " + issue);
+	logger.info("  Issue: " + issue);
       }
     }
   }
@@ -282,9 +279,8 @@ public class HeatExchangerMechanicalDesignTest {
 
     // Hydro test pressure should exceed MAWP
     assertTrue(calc.getHydroTestPressureShell() > calc.getMawpShellSide(),
-        "Hydro test pressure shell should exceed MAWP");
-    assertTrue(calc.getHydroTestPressureTube() > calc.getMawpTubeSide(),
-        "Hydro test pressure tube should exceed MAWP");
+	"Hydro test pressure shell should exceed MAWP");
+    assertTrue(calc.getHydroTestPressureTube() > calc.getMawpTubeSide(), "Hydro test pressure tube should exceed MAWP");
     logger.info("Hydro test pressure shell: " + calc.getHydroTestPressureShell() + " bara");
 
     // Tubesheet thickness from UHX should be positive
@@ -292,8 +288,7 @@ public class HeatExchangerMechanicalDesignTest {
     logger.info("Tubesheet thickness UHX: " + calc.getTubesheetThicknessUHX() + " mm");
 
     // Nozzle reinforcement check should have been performed
-    assertTrue(calc.getNozzleReinforcementArea() >= 0,
-        "Nozzle reinforcement area should be non-negative");
+    assertTrue(calc.getNozzleReinforcementArea() >= 0, "Nozzle reinforcement area should be non-negative");
     logger.info("Nozzle reinforcement adequate: " + calc.isNozzleReinforcementAdequate());
 
     // Applied standards should contain ASME entries
@@ -354,8 +349,7 @@ public class HeatExchangerMechanicalDesignTest {
     design.calcDesign();
 
     ShellAndTubeDesignCalculator calc = design.getShellAndTubeCalculator();
-    assertFalse(calc.isSourServiceRequired(),
-        "Sour service should not be required below threshold");
+    assertFalse(calc.isSourServiceRequired(), "Sour service should not be required below threshold");
     assertTrue(calc.getNaceIssues().isEmpty(), "No NACE issues expected below threshold");
   }
 
@@ -401,8 +395,7 @@ public class HeatExchangerMechanicalDesignTest {
     design.setTubeMaterialGrade("SA-179");
     design.calcDesign();
 
-    HeatExchangerMechanicalDesignResponse response =
-        new HeatExchangerMechanicalDesignResponse(design);
+    HeatExchangerMechanicalDesignResponse response = new HeatExchangerMechanicalDesignResponse(design);
     assertEquals("SA-516-70", response.getShellMaterialGrade());
     assertEquals("SA-179", response.getTubeMaterialGrade());
     assertTrue(response.getMawpShellSide() > 0);

@@ -12,20 +12,18 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Models the vapor space above the LNG liquid in a cargo tank.
  *
  * <p>
- * The vapor space determines the tank pressure and vapor composition. In real LNG tanks, the vapor
- * space is not in thermodynamic equilibrium with the liquid surface during rapid transients (e.g.,
- * pressure build-up after valve closure, rapid loading/unloading). This model provides both
- * equilibrium and non-equilibrium modes.
+ * The vapor space determines the tank pressure and vapor composition. In real LNG tanks, the vapor space is not in
+ * thermodynamic equilibrium with the liquid surface during rapid transients (e.g., pressure build-up after valve
+ * closure, rapid loading/unloading). This model provides both equilibrium and non-equilibrium modes.
  * </p>
  *
  * <p>
  * Key features:
  * </p>
  * <ul>
- * <li><b>Pressure tracking:</b> Tank pressure evolves based on BOG generation rate vs relief/
- * handling rate</li>
- * <li><b>Vapor composition:</b> Determined by VLE flash in equilibrium mode, or by mass balance
- * accumulation in non-equilibrium mode</li>
+ * <li><b>Pressure tracking:</b> Tank pressure evolves based on BOG generation rate vs relief/ handling rate</li>
+ * <li><b>Vapor composition:</b> Determined by VLE flash in equilibrium mode, or by mass balance accumulation in
+ * non-equilibrium mode</li>
  * <li><b>Ullage volume:</b> Total tank volume minus liquid volume, varies with boil-off</li>
  * </ul>
  *
@@ -118,16 +116,16 @@ public class LNGVaporSpaceModel implements Serializable {
    * Update the vapor space state after a time step.
    *
    * <p>
-   * In equilibrium mode, the pressure and vapor composition are determined by the VLE flash of the
-   * top liquid layer. In accumulation mode, the pressure is updated based on the net BOG
-   * accumulation in the ullage space: P += (nBOG_gen - nBOG_removed) * R * T / V_ullage.
+   * In equilibrium mode, the pressure and vapor composition are determined by the VLE flash of the top liquid layer. In
+   * accumulation mode, the pressure is updated based on the net BOG accumulation in the ullage space: P += (nBOG_gen -
+   * nBOG_removed) * R * T / V_ullage.
    * </p>
    *
-   * @param bogMolesGenerated moles of BOG generated from liquid evaporation this step
-   * @param bogMolesRemoved moles of BOG removed by handling (compressor, reliquefaction, GCU)
-   * @param liquidVolume current liquid volume (m3)
+   * @param bogMolesGenerated    moles of BOG generated from liquid evaporation this step
+   * @param bogMolesRemoved      moles of BOG removed by handling (compressor, reliquefaction, GCU)
+   * @param liquidVolume         current liquid volume (m3)
    * @param equilibriumVaporComp vapor composition from VLE flash
-   * @param liquidTemperature liquid temperature (K)
+   * @param liquidTemperature    liquid temperature (K)
    */
   public void update(double bogMolesGenerated, double bogMolesRemoved, double liquidVolume,
       Map<String, Double> equilibriumVaporComp, double liquidTemperature) {
@@ -147,33 +145,32 @@ public class LNGVaporSpaceModel implements Serializable {
 
       // Ideal gas pressure update: PV = nRT
       if (ullageVol > 0 && vaporMoles > 0) {
-        // Convert to Pa, then to bara
-        double pressurePa = vaporMoles * R_GAS * vaporTemperature / ullageVol;
-        this.tankPressure = pressurePa / 1.0e5;
+	// Convert to Pa, then to bara
+	double pressurePa = vaporMoles * R_GAS * vaporTemperature / ullageVol;
+	this.tankPressure = pressurePa / 1.0e5;
       }
 
       // Update vapor composition by accumulation
       if (bogMolesGenerated > 0) {
-        double totalVapMoles = vaporMoles;
-        if (totalVapMoles > 0) {
-          for (Map.Entry<String, Double> entry : equilibriumVaporComp.entrySet()) {
-            String comp = entry.getKey();
-            double yNew = entry.getValue();
-            double yOld = vaporComposition.containsKey(comp) ? vaporComposition.get(comp) : 0.0;
-            double blended = (yOld * (totalVapMoles - bogMolesGenerated) + yNew * bogMolesGenerated)
-                / totalVapMoles;
-            vaporComposition.put(comp, Math.max(0, blended));
-          }
-        }
+	double totalVapMoles = vaporMoles;
+	if (totalVapMoles > 0) {
+	  for (Map.Entry<String, Double> entry : equilibriumVaporComp.entrySet()) {
+	    String comp = entry.getKey();
+	    double yNew = entry.getValue();
+	    double yOld = vaporComposition.containsKey(comp) ? vaporComposition.get(comp) : 0.0;
+	    double blended = (yOld * (totalVapMoles - bogMolesGenerated) + yNew * bogMolesGenerated) / totalVapMoles;
+	    vaporComposition.put(comp, Math.max(0, blended));
+	  }
+	}
       }
 
       // Clamp pressure to safety limits
       if (tankPressure > maxPressure) {
-        logger.warn(String.format("Tank pressure %.3f bara exceeds max %.3f bara — relief needed",
-            tankPressure, maxPressure));
+	logger.warn(
+	    String.format("Tank pressure %.3f bara exceeds max %.3f bara — relief needed", tankPressure, maxPressure));
       }
       if (tankPressure < minPressure) {
-        tankPressure = minPressure;
+	tankPressure = minPressure;
       }
     }
   }
@@ -397,9 +394,9 @@ public class LNGVaporSpaceModel implements Serializable {
    * Enable or disable flash-based vapor space model.
    *
    * <p>
-   * When enabled, the vapor space composition and pressure are determined by a TP flash on the
-   * combined liquid surface + accumulated vapor inventory, rather than the simple PV=nRT model.
-   * This captures condensation of heavier components from the vapor and re-evaporation phenomena.
+   * When enabled, the vapor space composition and pressure are determined by a TP flash on the combined liquid surface
+   * + accumulated vapor inventory, rather than the simple PV=nRT model. This captures condensation of heavier
+   * components from the vapor and re-evaporation phenomena.
    * </p>
    *
    * @param useFlash true to use flash model
@@ -421,23 +418,21 @@ public class LNGVaporSpaceModel implements Serializable {
    * Perform a flash-based update of the vapor space.
    *
    * <p>
-   * Creates a thermo system with the current ullage gas composition, runs a TP flash to determine
-   * how much condenses back into liquid versus stays in the vapor. This provides more accurate
-   * vapor composition and pressure than the simple ideal gas model, especially when heavier
-   * components accumulate in the vapor space.
+   * Creates a thermo system with the current ullage gas composition, runs a TP flash to determine how much condenses
+   * back into liquid versus stays in the vapor. This provides more accurate vapor composition and pressure than the
+   * simple ideal gas model, especially when heavier components accumulate in the vapor space.
    * </p>
    *
-   * @param bogMolesGenerated moles of BOG generated
-   * @param bogMolesRemoved moles removed by BOG handling
-   * @param liquidVolume current liquid volume (m3)
+   * @param bogMolesGenerated    moles of BOG generated
+   * @param bogMolesRemoved      moles removed by BOG handling
+   * @param liquidVolume         current liquid volume (m3)
    * @param equilibriumVaporComp vapor composition from liquid VLE flash
-   * @param liquidTemperature liquid surface temperature (K)
+   * @param liquidTemperature    liquid surface temperature (K)
    */
   public void updateWithFlash(double bogMolesGenerated, double bogMolesRemoved, double liquidVolume,
       Map<String, Double> equilibriumVaporComp, double liquidTemperature) {
     if (referenceSystem == null || !useFlashModel) {
-      update(bogMolesGenerated, bogMolesRemoved, liquidVolume, equilibriumVaporComp,
-          liquidTemperature);
+      update(bogMolesGenerated, bogMolesRemoved, liquidVolume, equilibriumVaporComp, liquidTemperature);
       return;
     }
 
@@ -455,27 +450,26 @@ public class LNGVaporSpaceModel implements Serializable {
 
       // Set composition from blended vapor (existing + new BOG)
       double newBOGFraction = (vaporMoles + bogMolesGenerated > 0)
-          ? bogMolesGenerated / (vaporMoles + bogMolesGenerated)
-          : 1.0;
+	  ? bogMolesGenerated / (vaporMoles + bogMolesGenerated)
+	  : 1.0;
       double oldFraction = 1.0 - newBOGFraction;
 
       vaporSystem.init(0);
       double currentMoles = vaporSystem.getTotalNumberOfMoles();
       double targetMoles = vaporMoles + bogMolesGenerated - bogMolesRemoved;
       if (targetMoles < 0) {
-        targetMoles = 0;
+	targetMoles = 0;
       }
 
       for (int i = 0; i < vaporSystem.getPhase(0).getNumberOfComponents(); i++) {
-        String name = vaporSystem.getPhase(0).getComponent(i).getComponentName();
-        double yOld = vaporComposition.containsKey(name) ? vaporComposition.get(name) : 0;
-        double yNew = equilibriumVaporComp.containsKey(name) ? equilibriumVaporComp.get(name) : 0;
-        double yBlend = oldFraction * yOld + newBOGFraction * yNew;
-        double molesNeeded =
-            yBlend * targetMoles - vaporSystem.getPhase(0).getComponent(i).getz() * currentMoles;
-        if (Math.abs(molesNeeded) > 1e-20) {
-          vaporSystem.addComponent(name, molesNeeded);
-        }
+	String name = vaporSystem.getPhase(0).getComponent(i).getComponentName();
+	double yOld = vaporComposition.containsKey(name) ? vaporComposition.get(name) : 0;
+	double yNew = equilibriumVaporComp.containsKey(name) ? equilibriumVaporComp.get(name) : 0;
+	double yBlend = oldFraction * yOld + newBOGFraction * yNew;
+	double molesNeeded = yBlend * targetMoles - vaporSystem.getPhase(0).getComponent(i).getz() * currentMoles;
+	if (Math.abs(molesNeeded) > 1e-20) {
+	  vaporSystem.addComponent(name, molesNeeded);
+	}
       }
 
       // Run TP flash on the vapor system
@@ -486,33 +480,31 @@ public class LNGVaporSpaceModel implements Serializable {
 
       // Update vapor composition from flash result
       if (vaporSystem.hasPhaseType("gas")) {
-        vaporComposition.clear();
-        for (int i = 0; i < vaporSystem.getPhase("gas").getNumberOfComponents(); i++) {
-          String name = vaporSystem.getPhase("gas").getComponent(i).getComponentName();
-          double y = vaporSystem.getPhase("gas").getComponent(i).getx();
-          vaporComposition.put(name, y);
-        }
-        this.vaporMoles = vaporSystem.getPhase("gas").getNumberOfMolesInPhase();
+	vaporComposition.clear();
+	for (int i = 0; i < vaporSystem.getPhase("gas").getNumberOfComponents(); i++) {
+	  String name = vaporSystem.getPhase("gas").getComponent(i).getComponentName();
+	  double y = vaporSystem.getPhase("gas").getComponent(i).getx();
+	  vaporComposition.put(name, y);
+	}
+	this.vaporMoles = vaporSystem.getPhase("gas").getNumberOfMolesInPhase();
       }
 
       // Update pressure from real gas behavior
       if (ullageVol > 0 && vaporMoles > 0) {
-        double pressurePa = vaporMoles * R_GAS * vaporTemperature / ullageVol;
-        this.tankPressure = pressurePa / 1.0e5;
+	double pressurePa = vaporMoles * R_GAS * vaporTemperature / ullageVol;
+	this.tankPressure = pressurePa / 1.0e5;
       }
 
       // Clamp pressure
       if (tankPressure > maxPressure) {
-        logger.warn(
-            String.format("Tank pressure %.3f bara exceeds max %.3f", tankPressure, maxPressure));
+	logger.warn(String.format("Tank pressure %.3f bara exceeds max %.3f", tankPressure, maxPressure));
       }
       if (tankPressure < minPressure) {
-        tankPressure = minPressure;
+	tankPressure = minPressure;
       }
     } catch (Exception ex) {
       logger.warn("Vapor space flash failed, falling back to simple model", ex);
-      update(bogMolesGenerated, bogMolesRemoved, liquidVolume, equilibriumVaporComp,
-          liquidTemperature);
+      update(bogMolesGenerated, bogMolesRemoved, liquidVolume, equilibriumVaporComp, liquidTemperature);
     }
   }
 }

@@ -17,10 +17,9 @@ import neqsim.process.processmodel.ProcessSystem;
  * Generates a recommended spare parts inventory from a {@link ProcessSystem}.
  *
  * <p>
- * Walks all unit operations and maps each equipment type to a list of recommended spare parts with
- * quantities, estimated lead times, and criticality. The inventory follows typical offshore oil
- * &amp; gas practice where critical rotating equipment spares are kept on-platform or at a
- * logistics base.
+ * Walks all unit operations and maps each equipment type to a list of recommended spare parts with quantities,
+ * estimated lead times, and criticality. The inventory follows typical offshore oil &amp; gas practice where critical
+ * rotating equipment spares are kept on-platform or at a logistics base.
  * </p>
  *
  * <p>
@@ -53,46 +52,43 @@ public class SparePartsInventory implements Serializable {
     Map<String, List<SparePartTemplate>> m = new LinkedHashMap<String, List<SparePartTemplate>>();
 
     m.put("compressor",
-        Arrays.asList(new SparePartTemplate("Mechanical seal set", 2, "Critical", 12),
-            new SparePartTemplate("Bearing set (radial + thrust)", 1, "Critical", 16),
-            new SparePartTemplate("Coupling element", 1, "Major", 12),
-            new SparePartTemplate("Vibration probe set", 2, "Minor", 4),
-            new SparePartTemplate("Lube oil filter element", 6, "Minor", 2)));
+	Arrays.asList(new SparePartTemplate("Mechanical seal set", 2, "Critical", 12),
+	    new SparePartTemplate("Bearing set (radial + thrust)", 1, "Critical", 16),
+	    new SparePartTemplate("Coupling element", 1, "Major", 12),
+	    new SparePartTemplate("Vibration probe set", 2, "Minor", 4),
+	    new SparePartTemplate("Lube oil filter element", 6, "Minor", 2)));
 
     m.put("pump",
-        Arrays.asList(new SparePartTemplate("Mechanical seal set", 2, "Critical", 10),
-            new SparePartTemplate("Impeller", 1, "Major", 20),
-            new SparePartTemplate("Bearing set", 2, "Major", 8),
-            new SparePartTemplate("Wear ring set", 2, "Minor", 8)));
+	Arrays.asList(new SparePartTemplate("Mechanical seal set", 2, "Critical", 10),
+	    new SparePartTemplate("Impeller", 1, "Major", 20), new SparePartTemplate("Bearing set", 2, "Major", 8),
+	    new SparePartTemplate("Wear ring set", 2, "Minor", 8)));
 
-    m.put("valve",
-        Arrays.asList(new SparePartTemplate("Actuator diaphragm", 1, "Critical", 8),
-            new SparePartTemplate("Seat ring set", 1, "Major", 6),
-            new SparePartTemplate("Stem packing set", 2, "Minor", 4),
-            new SparePartTemplate("Positioner module", 1, "Minor", 6)));
+    m.put("valve", Arrays.asList(new SparePartTemplate("Actuator diaphragm", 1, "Critical", 8),
+	new SparePartTemplate("Seat ring set", 1, "Major", 6), new SparePartTemplate("Stem packing set", 2, "Minor", 4),
+	new SparePartTemplate("Positioner module", 1, "Minor", 6)));
 
     m.put("heatexchanger",
-        Arrays.asList(new SparePartTemplate("Gasket set (plate HX)", 2, "Critical", 6),
-            new SparePartTemplate("Tube bundle", 1, "Major", 26),
-            new SparePartTemplate("Expansion joint (shell)", 1, "Minor", 16)));
+	Arrays.asList(new SparePartTemplate("Gasket set (plate HX)", 2, "Critical", 6),
+	    new SparePartTemplate("Tube bundle", 1, "Major", 26),
+	    new SparePartTemplate("Expansion joint (shell)", 1, "Minor", 16)));
 
     m.put("heater", Arrays.asList(new SparePartTemplate("Gasket set", 2, "Minor", 4),
-        new SparePartTemplate("Temperature sensor", 2, "Minor", 2)));
+	new SparePartTemplate("Temperature sensor", 2, "Minor", 2)));
 
     m.put("cooler", Arrays.asList(new SparePartTemplate("Gasket set", 2, "Minor", 4),
-        new SparePartTemplate("Temperature sensor", 2, "Minor", 2)));
+	new SparePartTemplate("Temperature sensor", 2, "Minor", 2)));
 
     m.put("separator",
-        Arrays.asList(new SparePartTemplate("Level transmitter", 1, "Critical", 4),
-            new SparePartTemplate("PSV set (spare)", 1, "Critical", 10),
-            new SparePartTemplate("Demister pad / vane pack", 1, "Major", 12),
-            new SparePartTemplate("Gasket set (manway)", 2, "Minor", 4)));
+	Arrays.asList(new SparePartTemplate("Level transmitter", 1, "Critical", 4),
+	    new SparePartTemplate("PSV set (spare)", 1, "Critical", 10),
+	    new SparePartTemplate("Demister pad / vane pack", 1, "Major", 12),
+	    new SparePartTemplate("Gasket set (manway)", 2, "Minor", 4)));
 
     m.put("column",
-        Arrays.asList(new SparePartTemplate("Tray section (spare)", 2, "Major", 20),
-            new SparePartTemplate("Packing element batch", 1, "Major", 16),
-            new SparePartTemplate("Level transmitter", 2, "Critical", 4),
-            new SparePartTemplate("PSV set (spare)", 1, "Critical", 10)));
+	Arrays.asList(new SparePartTemplate("Tray section (spare)", 2, "Major", 20),
+	    new SparePartTemplate("Packing element batch", 1, "Major", 16),
+	    new SparePartTemplate("Level transmitter", 2, "Critical", 4),
+	    new SparePartTemplate("PSV set (spare)", 1, "Critical", 10)));
 
     m.put("stream", Collections.<SparePartTemplate>emptyList());
 
@@ -118,13 +114,13 @@ public class SparePartsInventory implements Serializable {
       String className = equip.getClass().getSimpleName().toLowerCase();
 
       for (Map.Entry<String, List<SparePartTemplate>> tmplEntry : SPARE_TEMPLATES.entrySet()) {
-        if (className.contains(tmplEntry.getKey())) {
-          for (SparePartTemplate tmpl : tmplEntry.getValue()) {
-            entries.add(new SparePartEntry(equip.getName(), className, tmpl.partName, tmpl.quantity,
-                tmpl.criticality, tmpl.leadTimeWeeks));
-          }
-          break; // first match only
-        }
+	if (className.contains(tmplEntry.getKey())) {
+	  for (SparePartTemplate tmpl : tmplEntry.getValue()) {
+	    entries.add(new SparePartEntry(equip.getName(), className, tmpl.partName, tmpl.quantity, tmpl.criticality,
+		tmpl.leadTimeWeeks));
+	  }
+	  break; // first match only
+	}
       }
     }
   }
@@ -148,7 +144,7 @@ public class SparePartsInventory implements Serializable {
     List<SparePartEntry> filtered = new ArrayList<SparePartEntry>();
     for (SparePartEntry e : entries) {
       if (e.getCriticality().equalsIgnoreCase(criticality)) {
-        filtered.add(e);
+	filtered.add(e);
       }
     }
     return filtered;
@@ -168,11 +164,11 @@ public class SparePartsInventory implements Serializable {
     int minor = 0;
     for (SparePartEntry e : entries) {
       if ("Critical".equalsIgnoreCase(e.getCriticality())) {
-        critical++;
+	critical++;
       } else if ("Major".equalsIgnoreCase(e.getCriticality())) {
-        major++;
+	major++;
       } else {
-        minor++;
+	minor++;
       }
     }
     JsonObject summary = new JsonObject();
@@ -194,8 +190,7 @@ public class SparePartsInventory implements Serializable {
     }
     root.add("spareParts", arr);
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(root);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(root);
   }
 
   /**
@@ -218,13 +213,13 @@ public class SparePartsInventory implements Serializable {
      *
      * @param equipmentName the equipment this spare is for
      * @param equipmentType type keyword
-     * @param partName description of the spare part
-     * @param quantity recommended stock quantity
-     * @param criticality criticality level (Critical, Major, Minor)
+     * @param partName      description of the spare part
+     * @param quantity      recommended stock quantity
+     * @param criticality   criticality level (Critical, Major, Minor)
      * @param leadTimeWeeks procurement lead time in weeks
      */
-    public SparePartEntry(String equipmentName, String equipmentType, String partName, int quantity,
-        String criticality, int leadTimeWeeks) {
+    public SparePartEntry(String equipmentName, String equipmentType, String partName, int quantity, String criticality,
+	int leadTimeWeeks) {
       this.equipmentName = equipmentName;
       this.equipmentType = equipmentType;
       this.partName = partName;

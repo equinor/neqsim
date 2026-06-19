@@ -20,8 +20,7 @@ import org.apache.logging.log4j.Logger;
  * Unit tests for PressureBoundaryOptimizer.
  *
  * <p>
- * Tests the simplified pressure boundary optimization that uses ProductionOptimizer as its
- * foundation.
+ * Tests the simplified pressure boundary optimization that uses ProductionOptimizer as its foundation.
  * </p>
  *
  * @author ESOL
@@ -104,8 +103,7 @@ public class PressureBoundaryOptimizerTest {
     logger.info("Baseline inlet pressure: " + baselineInletP + " bara");
 
     // Create optimizer
-    PressureBoundaryOptimizer optimizer =
-        new PressureBoundaryOptimizer(simpleProcess, "Feed", "Outlet");
+    PressureBoundaryOptimizer optimizer = new PressureBoundaryOptimizer(simpleProcess, "Feed", "Outlet");
     optimizer.setMinFlowRate(1000.0);
     optimizer.setMaxFlowRate(500000.0);
     optimizer.setMaxIterations(30);
@@ -116,8 +114,7 @@ public class PressureBoundaryOptimizerTest {
 
     logger.info("Max flow result: " + result.getOptimalRate() + " " + result.getRateUnit());
     logger.info("Feasible: " + result.isFeasible());
-    logger.info("Bottleneck: "
-        + (result.getBottleneck() != null ? result.getBottleneck().getName() : "none"));
+    logger.info("Bottleneck: " + (result.getBottleneck() != null ? result.getBottleneck().getName() : "none"));
 
     assertNotNull(result, "Should return a result");
     assertTrue(result.getOptimalRate() > 0, "Should find positive flow rate");
@@ -132,8 +129,7 @@ public class PressureBoundaryOptimizerTest {
     Stream feed = (Stream) processWithCompressor.getUnit("Feed");
     Stream export = (Stream) processWithCompressor.getUnit("Export");
 
-    PressureBoundaryOptimizer optimizer =
-        new PressureBoundaryOptimizer(processWithCompressor, feed, export);
+    PressureBoundaryOptimizer optimizer = new PressureBoundaryOptimizer(processWithCompressor, feed, export);
     optimizer.setMinFlowRate(1000.0);
     optimizer.setMaxFlowRate(200000.0);
     optimizer.setAutoConfigureCompressors(true);
@@ -148,10 +144,8 @@ public class PressureBoundaryOptimizerTest {
     logger.info("\nCompressor process result:");
     logger.info("  Optimal rate: " + result.getOptimalRate() + " " + result.getRateUnit());
     logger.info("  Feasible: " + result.isFeasible());
-    System.out
-        .println("  Total power: " + result.getDecisionVariables().get("totalPower_kW") + " kW");
-    logger.info("  Bottleneck: "
-        + (result.getBottleneck() != null ? result.getBottleneck().getName() : "none"));
+    System.out.println("  Total power: " + result.getDecisionVariables().get("totalPower_kW") + " kW");
+    logger.info("  Bottleneck: " + (result.getBottleneck() != null ? result.getBottleneck().getName() : "none"));
 
     assertNotNull(result, "Should return a result");
   }
@@ -162,19 +156,18 @@ public class PressureBoundaryOptimizerTest {
     simpleProcess.run();
 
     // Create optimizer
-    PressureBoundaryOptimizer optimizer =
-        new PressureBoundaryOptimizer(simpleProcess, "Feed", "Outlet");
+    PressureBoundaryOptimizer optimizer = new PressureBoundaryOptimizer(simpleProcess, "Feed", "Outlet");
     optimizer.setMinFlowRate(1000.0);
     optimizer.setMaxFlowRate(300000.0);
     optimizer.setMaxIterations(20);
 
     // Generate lift curve table with feasible pressure combinations
     // For a valve, outlet must be less than inlet
-    double[] inletPressures = {80.0, 90.0, 100.0};
-    double[] outletPressures = {60.0, 70.0, 75.0}; // Must be less than inlet
+    double[] inletPressures = { 80.0, 90.0, 100.0 };
+    double[] outletPressures = { 60.0, 70.0, 75.0 }; // Must be less than inlet
 
-    PressureBoundaryOptimizer.LiftCurveTable table =
-        optimizer.generateLiftCurveTable(inletPressures, outletPressures, "bara");
+    PressureBoundaryOptimizer.LiftCurveTable table = optimizer.generateLiftCurveTable(inletPressures, outletPressures,
+	"bara");
 
     logger.info("\nLift Curve Table:");
     logger.info(table.toEclipseFormat());
@@ -193,21 +186,19 @@ public class PressureBoundaryOptimizerTest {
     simpleProcess.run();
 
     // Create optimizer
-    PressureBoundaryOptimizer optimizer =
-        new PressureBoundaryOptimizer(simpleProcess, "Feed", "Outlet");
+    PressureBoundaryOptimizer optimizer = new PressureBoundaryOptimizer(simpleProcess, "Feed", "Outlet");
     optimizer.setMinFlowRate(1000.0);
     optimizer.setMaxFlowRate(300000.0);
 
     // Generate capacity curve at fixed inlet pressure
     double inletPressure = 80.0;
-    double[] outletPressures = {60.0, 65.0, 70.0, 75.0};
+    double[] outletPressures = { 60.0, 65.0, 70.0, 75.0 };
 
     double[] flowRates = optimizer.generateCapacityCurve(inletPressure, outletPressures, "bara");
 
     logger.info("\nCapacity Curve at Pin=" + inletPressure + " bara:");
     for (int i = 0; i < outletPressures.length; i++) {
-      System.out
-          .println("  Pout=" + outletPressures[i] + " bara -> Flow=" + flowRates[i] + " kg/hr");
+      System.out.println("  Pout=" + outletPressures[i] + " bara -> Flow=" + flowRates[i] + " kg/hr");
     }
 
     assertNotNull(flowRates, "Should return flow rates");
@@ -217,14 +208,14 @@ public class PressureBoundaryOptimizerTest {
   @Test
   public void testLiftCurveTableJsonFormat() {
     // Create a simple table
-    double[] inletP = {70.0, 80.0};
-    double[] outletP = {60.0, 65.0};
-    double[][] flows = {{50000, 40000}, {70000, 60000}};
-    double[][] powers = {{100, 90}, {150, 130}};
-    String[][] bottlenecks = {{"Valve", "Valve"}, {"Valve", "Valve"}};
+    double[] inletP = { 70.0, 80.0 };
+    double[] outletP = { 60.0, 65.0 };
+    double[][] flows = { { 50000, 40000 }, { 70000, 60000 } };
+    double[][] powers = { { 100, 90 }, { 150, 130 } };
+    String[][] bottlenecks = { { "Valve", "Valve" }, { "Valve", "Valve" } };
 
-    PressureBoundaryOptimizer.LiftCurveTable table = new PressureBoundaryOptimizer.LiftCurveTable(
-        "TestTable", inletP, outletP, flows, powers, bottlenecks, "bara", "kg/hr");
+    PressureBoundaryOptimizer.LiftCurveTable table = new PressureBoundaryOptimizer.LiftCurveTable("TestTable", inletP,
+	outletP, flows, powers, bottlenecks, "bara", "kg/hr");
 
     String json = table.toJson();
     logger.info("\nJSON format:");
@@ -241,8 +232,7 @@ public class PressureBoundaryOptimizerTest {
     simpleProcess.run();
 
     // Create optimizer
-    PressureBoundaryOptimizer optimizer =
-        new PressureBoundaryOptimizer(simpleProcess, "Feed", "Outlet");
+    PressureBoundaryOptimizer optimizer = new PressureBoundaryOptimizer(simpleProcess, "Feed", "Outlet");
     optimizer.setMinFlowRate(100.0);
     optimizer.setMaxFlowRate(100000.0);
 
@@ -264,8 +254,7 @@ public class PressureBoundaryOptimizerTest {
     processWithCompressor.run();
 
     PressureBoundaryOptimizer optimizer = new PressureBoundaryOptimizer(processWithCompressor,
-        (Stream) processWithCompressor.getUnit("Feed"),
-        (Stream) processWithCompressor.getUnit("Export"));
+	(Stream) processWithCompressor.getUnit("Feed"), (Stream) processWithCompressor.getUnit("Export"));
 
     double power = optimizer.calculateTotalPower();
     logger.info("Total compressor power: " + power + " kW");
@@ -279,8 +268,7 @@ public class PressureBoundaryOptimizerTest {
     simpleProcess.run();
 
     // Create optimizer with utilization limit
-    PressureBoundaryOptimizer optimizer =
-        new PressureBoundaryOptimizer(simpleProcess, "Feed", "Outlet");
+    PressureBoundaryOptimizer optimizer = new PressureBoundaryOptimizer(simpleProcess, "Feed", "Outlet");
     optimizer.setMaxUtilization(0.90); // 90% utilization limit
     optimizer.setMinFlowRate(1000.0);
     optimizer.setMaxFlowRate(200000.0);
@@ -290,9 +278,8 @@ public class PressureBoundaryOptimizerTest {
     logger.info("\nUtilization tracking:");
     logger.info("  Feasible: " + result.isFeasible());
     for (ProductionOptimizer.UtilizationRecord record : result.getUtilizationRecords()) {
-      logger.info("  " + record.getEquipmentName() + ": "
-          + String.format("%.1f%%", record.getUtilization() * 100) + " (limit: "
-          + String.format("%.1f%%", record.getUtilizationLimit() * 100) + ")");
+      logger.info("  " + record.getEquipmentName() + ": " + String.format("%.1f%%", record.getUtilization() * 100)
+	  + " (limit: " + String.format("%.1f%%", record.getUtilizationLimit() * 100) + ")");
     }
 
     assertNotNull(result.getUtilizationRecords(), "Should have utilization records");
@@ -307,15 +294,13 @@ public class PressureBoundaryOptimizerTest {
     ProductionOptimizer prodOpt = new ProductionOptimizer();
 
     // Create PressureBoundaryOptimizer using the external ProductionOptimizer
-    PressureBoundaryOptimizer optimizer =
-        new PressureBoundaryOptimizer(simpleProcess, prodOpt, "Feed", "Outlet");
+    PressureBoundaryOptimizer optimizer = new PressureBoundaryOptimizer(simpleProcess, prodOpt, "Feed", "Outlet");
     optimizer.setMinFlowRate(1000.0);
     optimizer.setMaxFlowRate(500000.0);
     optimizer.setMaxUtilization(0.95); // 95% utilization limit
 
     // Verify the ProductionOptimizer is the same instance
-    assertEquals(prodOpt, optimizer.getProductionOptimizer(),
-        "Should use the passed ProductionOptimizer");
+    assertEquals(prodOpt, optimizer.getProductionOptimizer(), "Should use the passed ProductionOptimizer");
 
     // Find max flow rate
     OptimizationResult result = optimizer.findMaxFlowRate(80.0, 70.0, "bara");
@@ -332,8 +317,7 @@ public class PressureBoundaryOptimizerTest {
   public void testSetProductionOptimizer() {
     // Create optimizer with default ProductionOptimizer
     simpleProcess.run();
-    PressureBoundaryOptimizer optimizer =
-        new PressureBoundaryOptimizer(simpleProcess, "Feed", "Outlet");
+    PressureBoundaryOptimizer optimizer = new PressureBoundaryOptimizer(simpleProcess, "Feed", "Outlet");
 
     // Get original optimizer
     ProductionOptimizer original = optimizer.getProductionOptimizer();
@@ -344,8 +328,7 @@ public class PressureBoundaryOptimizerTest {
     optimizer.setProductionOptimizer(newOpt);
 
     // Verify it was replaced
-    assertEquals(newOpt, optimizer.getProductionOptimizer(),
-        "Should use the new ProductionOptimizer");
+    assertEquals(newOpt, optimizer.getProductionOptimizer(), "Should use the new ProductionOptimizer");
 
     // Run optimization with new optimizer
     optimizer.setMinFlowRate(1000.0);
@@ -359,4 +342,3 @@ public class PressureBoundaryOptimizerTest {
     assertNotNull(result, "Should return a result");
   }
 }
-

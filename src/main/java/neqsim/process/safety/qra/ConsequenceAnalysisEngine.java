@@ -14,9 +14,8 @@ import neqsim.process.safety.risk.eta.EventTreeAnalyzer;
  * High-level orchestrator for Quantitative Risk Analysis (QRA) of a single release scenario.
  *
  * <p>
- * Composes existing pieces — release source term, ignition event tree, fire / explosion models,
- * dispersion model and probit fatality calculation — and produces individual / societal risk
- * metrics for one scenario.
+ * Composes existing pieces — release source term, ignition event tree, fire / explosion models, dispersion model and
+ * probit fatality calculation — and produces individual / societal risk metrics for one scenario.
  *
  * <p>
  * Workflow:
@@ -24,8 +23,8 @@ import neqsim.process.safety.risk.eta.EventTreeAnalyzer;
  * <li>Define initiating release (rate, duration, frequency)</li>
  * <li>Add an ignition event tree (immediate / delayed / no ignition)</li>
  * <li>Attach consequence models (jet, pool, VCE, dispersion+probit)</li>
- * <li>Call {@link #evaluate(double)} to get outcome frequencies and individual fatality risk per
- * outcome at a target receiver distance</li>
+ * <li>Call {@link #evaluate(double)} to get outcome frequencies and individual fatality risk per outcome at a target
+ * receiver distance</li>
  * </ol>
  *
  * <p>
@@ -49,7 +48,7 @@ public class ConsequenceAnalysisEngine implements Serializable {
   /**
    * Construct a consequence-analysis scenario.
    *
-   * @param scenarioName scenario identifier (e.g. "10 mm gas leak from V-100")
+   * @param scenarioName            scenario identifier (e.g. "10 mm gas leak from V-100")
    * @param releaseFrequencyPerYear initiating release frequency in 1/year
    */
   public ConsequenceAnalysisEngine(String scenarioName, double releaseFrequencyPerYear) {
@@ -60,10 +59,9 @@ public class ConsequenceAnalysisEngine implements Serializable {
   /**
    * Add an outcome branch with its conditional probability and a consequence calculator.
    *
-   * @param outcomeName e.g. "Jet fire", "VCE", "Toxic dispersion"
-   * @param conditionalProbability probability conditional on the release (e.g. immediate ignition
-   *        probability)
-   * @param consequence consequence model implementing {@link Consequence}
+   * @param outcomeName            e.g. "Jet fire", "VCE", "Toxic dispersion"
+   * @param conditionalProbability probability conditional on the release (e.g. immediate ignition probability)
+   * @param consequence            consequence model implementing {@link Consequence}
    * @return this engine for chaining
    */
   public ConsequenceAnalysisEngine addOutcome(String outcomeName, double conditionalProbability,
@@ -78,20 +76,20 @@ public class ConsequenceAnalysisEngine implements Serializable {
   /**
    * Convenience: add a jet-fire outcome.
    *
-   * @param probability conditional probability (e.g. immediate ignition)
-   * @param model jet fire model already configured with mass flow and ΔHc
-   * @param probit thermal probit (use {@link ProbitModel#thermalFatality()})
+   * @param probability     conditional probability (e.g. immediate ignition)
+   * @param model           jet fire model already configured with mass flow and ΔHc
+   * @param probit          thermal probit (use {@link ProbitModel#thermalFatality()})
    * @param exposureSeconds receiver exposure time in s
    * @return this engine
    */
-  public ConsequenceAnalysisEngine addJetFire(double probability, final JetFireModel model,
-      final ProbitModel probit, final double exposureSeconds) {
+  public ConsequenceAnalysisEngine addJetFire(double probability, final JetFireModel model, final ProbitModel probit,
+      final double exposureSeconds) {
     return addOutcome("Jet fire", probability, new Consequence() {
       @Override
       public double fatalityProbabilityAt(double distanceM) {
-        double I = model.incidentHeatFlux(distanceM);
-        double dose = exposureSeconds * Math.pow(I, 4.0 / 3.0) / 1.0e4;
-        return probit.probabilityFromDose(dose);
+	double I = model.incidentHeatFlux(distanceM);
+	double dose = exposureSeconds * Math.pow(I, 4.0 / 3.0) / 1.0e4;
+	return probit.probabilityFromDose(dose);
       }
     });
   }
@@ -99,20 +97,20 @@ public class ConsequenceAnalysisEngine implements Serializable {
   /**
    * Convenience: add a pool-fire outcome.
    *
-   * @param probability conditional probability
-   * @param model pool fire model
-   * @param probit thermal probit
+   * @param probability     conditional probability
+   * @param model           pool fire model
+   * @param probit          thermal probit
    * @param exposureSeconds receiver exposure time in s
    * @return this engine
    */
-  public ConsequenceAnalysisEngine addPoolFire(double probability, final PoolFireModel model,
-      final ProbitModel probit, final double exposureSeconds) {
+  public ConsequenceAnalysisEngine addPoolFire(double probability, final PoolFireModel model, final ProbitModel probit,
+      final double exposureSeconds) {
     return addOutcome("Pool fire", probability, new Consequence() {
       @Override
       public double fatalityProbabilityAt(double distanceM) {
-        double I = model.incidentHeatFlux(distanceM);
-        double dose = exposureSeconds * Math.pow(I, 4.0 / 3.0) / 1.0e4;
-        return probit.probabilityFromDose(dose);
+	double I = model.incidentHeatFlux(distanceM);
+	double dose = exposureSeconds * Math.pow(I, 4.0 / 3.0) / 1.0e4;
+	return probit.probabilityFromDose(dose);
       }
     });
   }
@@ -121,16 +119,15 @@ public class ConsequenceAnalysisEngine implements Serializable {
    * Convenience: add a VCE outcome with blast-lung probit.
    *
    * @param probability conditional probability (delayed ignition)
-   * @param model VCE model
-   * @param probit blast probit (use {@link ProbitModel#blastLungFatality()})
+   * @param model       VCE model
+   * @param probit      blast probit (use {@link ProbitModel#blastLungFatality()})
    * @return this engine
    */
-  public ConsequenceAnalysisEngine addVCE(double probability, final VCEModel model,
-      final ProbitModel probit) {
+  public ConsequenceAnalysisEngine addVCE(double probability, final VCEModel model, final ProbitModel probit) {
     return addOutcome("VCE", probability, new Consequence() {
       @Override
       public double fatalityProbabilityAt(double distanceM) {
-        return probit.probabilityFromDose(model.overpressurePa(distanceM));
+	return probit.probabilityFromDose(model.overpressurePa(distanceM));
       }
     });
   }
@@ -138,36 +135,36 @@ public class ConsequenceAnalysisEngine implements Serializable {
   /**
    * Convenience: add a toxic dispersion outcome (Gaussian plume + probit).
    *
-   * @param probability conditional probability (no ignition)
-   * @param plume Gaussian plume model
-   * @param probit toxic probit (e.g. {@link ProbitModel#h2sFatality()})
+   * @param probability       conditional probability (no ignition)
+   * @param plume             Gaussian plume model
+   * @param probit            toxic probit (e.g. {@link ProbitModel#h2sFatality()})
    * @param molarMassKgPerMol toxic component MW
-   * @param tempK plume temperature in K
-   * @param pressureBara plume pressure in bara
-   * @param exposureMinutes exposure duration in min
+   * @param tempK             plume temperature in K
+   * @param pressureBara      plume pressure in bara
+   * @param exposureMinutes   exposure duration in min
    * @return this engine
    */
-  public ConsequenceAnalysisEngine addToxicDispersion(double probability,
-      final GaussianPlume plume, final ProbitModel probit, final double molarMassKgPerMol,
-      final double tempK, final double pressureBara, final double exposureMinutes) {
+  public ConsequenceAnalysisEngine addToxicDispersion(double probability, final GaussianPlume plume,
+      final ProbitModel probit, final double molarMassKgPerMol, final double tempK, final double pressureBara,
+      final double exposureMinutes) {
     return addOutcome("Toxic dispersion", probability, new Consequence() {
       @Override
       public double fatalityProbabilityAt(double distanceM) {
-        double cKgPerM3 = plume.centerlineGroundConcentration(distanceM);
-        // Convert kg/m³ → ppm (mole basis) using ideal gas
-        double R = 8.314;
-        double pPa = pressureBara * 1.0e5;
-        double cMolPerM3 = cKgPerM3 / molarMassKgPerMol;
-        double cPpm = cMolPerM3 * R * tempK / pPa * 1.0e6;
-        double dose = Math.pow(cPpm, 1.0) * exposureMinutes; // probit absorbs the n
-        return probit.probabilityFromDose(dose);
+	double cKgPerM3 = plume.centerlineGroundConcentration(distanceM);
+	// Convert kg/m³ → ppm (mole basis) using ideal gas
+	double R = 8.314;
+	double pPa = pressureBara * 1.0e5;
+	double cMolPerM3 = cKgPerM3 / molarMassKgPerMol;
+	double cPpm = cMolPerM3 * R * tempK / pPa * 1.0e6;
+	double dose = Math.pow(cPpm, 1.0) * exposureMinutes; // probit absorbs the n
+	return probit.probabilityFromDose(dose);
       }
     });
   }
 
   /**
-   * Evaluate all outcomes at one receiver distance and return one record per outcome with
-   * frequency × fatality probability (= individual fatality frequency contribution at that point).
+   * Evaluate all outcomes at one receiver distance and return one record per outcome with frequency × fatality
+   * probability (= individual fatality frequency contribution at that point).
    *
    * @param receiverDistanceM distance from release to receiver in m
    * @return list of outcome records
@@ -223,9 +220,8 @@ public class ConsequenceAnalysisEngine implements Serializable {
     sb.append("---------------------------------------------------\n");
     double tot = 0.0;
     for (OutcomeResult r : evaluate(receiverDistanceM)) {
-      sb.append(String.format("%-22s F=%.4e /yr  P_fatality=%.4f  IFR=%.4e /yr%n",
-          r.outcomeName, r.outcomeFrequencyPerYear, r.fatalityProbability,
-          r.fatalityFrequencyPerYear));
+      sb.append(String.format("%-22s F=%.4e /yr  P_fatality=%.4f  IFR=%.4e /yr%n", r.outcomeName,
+	  r.outcomeFrequencyPerYear, r.fatalityProbability, r.fatalityFrequencyPerYear));
       tot += r.fatalityFrequencyPerYear;
     }
     sb.append(String.format("Total individual fatality risk: %.4e /yr%n", tot));
@@ -269,8 +265,8 @@ public class ConsequenceAnalysisEngine implements Serializable {
     /** Individual fatality frequency contribution from this outcome in 1/year. */
     public final double fatalityFrequencyPerYear;
 
-    OutcomeResult(String outcomeName, double outcomeFrequencyPerYear,
-        double fatalityProbability, double fatalityFrequencyPerYear) {
+    OutcomeResult(String outcomeName, double outcomeFrequencyPerYear, double fatalityProbability,
+	double fatalityFrequencyPerYear) {
       this.outcomeName = outcomeName;
       this.outcomeFrequencyPerYear = outcomeFrequencyPerYear;
       this.fatalityProbability = fatalityProbability;

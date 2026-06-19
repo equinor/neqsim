@@ -132,7 +132,7 @@ public class SubseaManifoldMechanicalDesign extends MechanicalDesign {
 
     // Test header (if present)
     if (manifold.getManifoldType() == SubseaManifold.ManifoldType.PRODUCTION_TEST
-        || manifold.getManifoldType() == SubseaManifold.ManifoldType.FULL_SERVICE) {
+	|| manifold.getManifoldType() == SubseaManifold.ManifoldType.FULL_SERVICE) {
       double testHeaderSize = manifold.getTestHeaderSizeInches() * 25.4;
       double testOD = testHeaderSize * 1.25;
       testHeaderWallThickness = (pressureMPa * testOD) / (2 * smys * designFactor);
@@ -179,8 +179,7 @@ public class SubseaManifoldMechanicalDesign extends MechanicalDesign {
     double dragCoeff = 1.2;
     double projectedArea = manifold.getStructureLength() * manifold.getStructureWidth() * 0.6;
 
-    return 0.5 * seawaterDensity * currentVelocity * currentVelocity * dragCoeff * projectedArea
-        / 1000;
+    return 0.5 * seawaterDensity * currentVelocity * currentVelocity * dragCoeff * projectedArea / 1000;
   }
 
   /**
@@ -231,12 +230,11 @@ public class SubseaManifoldMechanicalDesign extends MechanicalDesign {
       costEstimator = new SubseaCostEstimator();
     }
 
-    boolean hasTestHeader =
-        manifold.getManifoldType() == SubseaManifold.ManifoldType.PRODUCTION_TEST
-            || manifold.getManifoldType() == SubseaManifold.ManifoldType.FULL_SERVICE;
+    boolean hasTestHeader = manifold.getManifoldType() == SubseaManifold.ManifoldType.PRODUCTION_TEST
+	|| manifold.getManifoldType() == SubseaManifold.ManifoldType.FULL_SERVICE;
 
-    costEstimator.calculateManifoldCost(manifold.getNumberOfSlots(), manifold.getDryWeight(),
-        manifold.getWaterDepth(), hasTestHeader);
+    costEstimator.calculateManifoldCost(manifold.getNumberOfSlots(), manifold.getDryWeight(), manifold.getWaterDepth(),
+	hasTestHeader);
 
     totalCostUSD = costEstimator.getTotalCost();
     equipmentCostUSD = costEstimator.getEquipmentCost();
@@ -273,8 +271,7 @@ public class SubseaManifoldMechanicalDesign extends MechanicalDesign {
     if (costEstimator == null) {
       costEstimator = new SubseaCostEstimator();
     }
-    return costEstimator.generateBOM("SubseaManifold", manifold.getDryWeight(),
-        manifold.getWaterDepth());
+    return costEstimator.generateBOM("SubseaManifold", manifold.getDryWeight(), manifold.getWaterDepth());
   }
 
   /**
@@ -377,8 +374,7 @@ public class SubseaManifoldMechanicalDesign extends MechanicalDesign {
     }
     jsonObj.add("costEstimation", cost);
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(jsonObj);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(jsonObj);
   }
 
   /**

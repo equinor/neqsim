@@ -36,8 +36,8 @@ public class FunctionalLocationTest {
 
   @Test
   void testBuilder() {
-    FunctionalLocation loc = FunctionalLocation.builder().installation("2540").type("VG")
-        .number("30001").train(null).description("HP Separator").build();
+    FunctionalLocation loc = FunctionalLocation.builder().installation("2540").type("VG").number("30001").train(null)
+	.description("HP Separator").build();
 
     assertEquals("2540-VG-30001", loc.getFullTag());
     assertEquals("Separator", loc.getEquipmentTypeDescription());
@@ -85,14 +85,11 @@ public class FunctionalLocationTest {
 
   @Test
   void testEquipmentTypeCodes() {
-    assertEquals("Compressor",
-        new FunctionalLocation("1775-KA-00001").getEquipmentTypeDescription());
+    assertEquals("Compressor", new FunctionalLocation("1775-KA-00001").getEquipmentTypeDescription());
     assertEquals("Pump", new FunctionalLocation("1775-PA-00001").getEquipmentTypeDescription());
     assertEquals("Valve", new FunctionalLocation("1775-VA-00001").getEquipmentTypeDescription());
-    assertEquals("Heat Exchanger",
-        new FunctionalLocation("1775-WA-00001").getEquipmentTypeDescription());
-    assertEquals("Separator",
-        new FunctionalLocation("1775-VG-00001").getEquipmentTypeDescription());
+    assertEquals("Heat Exchanger", new FunctionalLocation("1775-WA-00001").getEquipmentTypeDescription());
+    assertEquals("Separator", new FunctionalLocation("1775-VG-00001").getEquipmentTypeDescription());
     assertEquals("Turbine", new FunctionalLocation("1775-GA-00001").getEquipmentTypeDescription());
     assertEquals("Cooler", new FunctionalLocation("1775-WC-00001").getEquipmentTypeDescription());
     assertEquals("Heater", new FunctionalLocation("1775-WH-00001").getEquipmentTypeDescription());

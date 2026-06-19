@@ -10,10 +10,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Transient depressurization (blowdown) simulator for pressurized vessels.
  *
  * <p>
- * Solves the coupled mass and energy balance for a vessel discharging through an orifice or
- * blowdown valve. Tracks fluid temperature, pressure, inventory, and (optionally) a lumped wall
- * metal temperature. Reports compliance against API 521 §5.20 / BS EN ISO 23251 acceptance
- * criteria:
+ * Solves the coupled mass and energy balance for a vessel discharging through an orifice or blowdown valve. Tracks
+ * fluid temperature, pressure, inventory, and (optionally) a lumped wall metal temperature. Reports compliance against
+ * API 521 §5.20 / BS EN ISO 23251 acceptance criteria:
  * <ul>
  * <li>50% of initial absolute pressure within 15 minutes (depressurization rate criterion)</li>
  * <li>Reach 7 barg within 15 minutes (fire-case criterion)</li>
@@ -21,8 +20,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </ul>
  *
  * <p>
- * Mass flow uses isenthalpic compressible orifice relations (choked / subsonic). The internal
- * energy balance uses Q_fire (optional, from API 521) minus enthalpy of discharged fluid.
+ * Mass flow uses isenthalpic compressible orifice relations (choked / subsonic). The internal energy balance uses
+ * Q_fire (optional, from API 521) minus enthalpy of discharged fluid.
  *
  * <p>
  * <b>References:</b> API STD 521 (7th Ed), BS EN ISO 23251, NORSOK P-001.
@@ -50,14 +49,14 @@ public class DepressurizationSimulator implements Serializable {
   /**
    * Construct a depressurization simulator.
    *
-   * @param fluid initial fluid in the vessel; must already have mixing rule set
-   * @param vesselVolume internal vessel volume in m³
-   * @param orificeDiameter blowdown orifice diameter in m
+   * @param fluid                initial fluid in the vessel; must already have mixing rule set
+   * @param vesselVolume         internal vessel volume in m³
+   * @param orificeDiameter      blowdown orifice diameter in m
    * @param dischargeCoefficient orifice Cd (typical 0.61–0.85)
-   * @param backPressure downstream absolute pressure in Pa (typically flare header)
+   * @param backPressure         downstream absolute pressure in Pa (typically flare header)
    */
-  public DepressurizationSimulator(SystemInterface fluid, double vesselVolume,
-      double orificeDiameter, double dischargeCoefficient, double backPressure) {
+  public DepressurizationSimulator(SystemInterface fluid, double vesselVolume, double orificeDiameter,
+      double dischargeCoefficient, double backPressure) {
     if (fluid == null) {
       throw new IllegalArgumentException("fluid must not be null");
     }
@@ -85,14 +84,14 @@ public class DepressurizationSimulator implements Serializable {
   /**
    * Enable lumped-wall thermal modelling for metal temperature tracking (cold blowdown / MDMT).
    *
-   * @param wallMass total wall metal mass in kg
-   * @param wallArea internal heat transfer area in m²
+   * @param wallMass         total wall metal mass in kg
+   * @param wallArea         internal heat transfer area in m²
    * @param wallSpecificHeat metal specific heat in J/(kg·K) (470 for carbon steel)
-   * @param insideHTC inside film heat transfer coefficient in W/(m²·K)
+   * @param insideHTC        inside film heat transfer coefficient in W/(m²·K)
    * @return this simulator for chaining
    */
-  public DepressurizationSimulator setWall(double wallMass, double wallArea,
-      double wallSpecificHeat, double insideHTC) {
+  public DepressurizationSimulator setWall(double wallMass, double wallArea, double wallSpecificHeat,
+      double insideHTC) {
     this.wallMass = wallMass;
     this.wallArea = wallArea;
     this.wallCp = wallSpecificHeat;
@@ -166,7 +165,7 @@ public class DepressurizationSimulator implements Serializable {
       double R = 8.314;
       double z = pPa * mw / (density * R * tempK);
       if (z <= 0.0 || Double.isNaN(z)) {
-        z = 1.0;
+	z = 1.0;
       }
 
       // Critical pressure ratio
@@ -174,28 +173,26 @@ public class DepressurizationSimulator implements Serializable {
       double pRatio = backPressure / pPa;
       double mDot;
       if (pRatio <= critRatio) {
-        // Choked
-        mDot = dischargeCoefficient * area * pPa
-            * Math.sqrt(gamma * mw / (z * R * tempK))
-            * Math.pow(2.0 / (gamma + 1.0), (gamma + 1.0) / (2.0 * (gamma - 1.0)));
+	// Choked
+	mDot = dischargeCoefficient * area * pPa * Math.sqrt(gamma * mw / (z * R * tempK))
+	    * Math.pow(2.0 / (gamma + 1.0), (gamma + 1.0) / (2.0 * (gamma - 1.0)));
       } else {
-        // Subsonic
-        double term = (2.0 * gamma / (gamma - 1.0))
-            * (Math.pow(pRatio, 2.0 / gamma) - Math.pow(pRatio, (gamma + 1.0) / gamma));
-        if (term < 0.0) {
-          term = 0.0;
-        }
-        mDot = dischargeCoefficient * area * pPa
-            * Math.sqrt(mw / (z * R * tempK)) * Math.sqrt(term);
+	// Subsonic
+	double term = (2.0 * gamma / (gamma - 1.0))
+	    * (Math.pow(pRatio, 2.0 / gamma) - Math.pow(pRatio, (gamma + 1.0) / gamma));
+	if (term < 0.0) {
+	  term = 0.0;
+	}
+	mDot = dischargeCoefficient * area * pPa * Math.sqrt(mw / (z * R * tempK)) * Math.sqrt(term);
       }
       if (mDot < 0.0 || Double.isNaN(mDot)) {
-        mDot = 0.0;
+	mDot = 0.0;
       }
 
       // Mass balance
       double dm = mDot * timeStep;
       if (dm > mass) {
-        dm = mass;
+	dm = mass;
       }
       double newMass = mass - dm;
 
@@ -203,15 +200,14 @@ public class DepressurizationSimulator implements Serializable {
       double hSpec = fluid.getEnthalpy() / mass;
 
       // Energy balance: dU = -h*dm + Q_fire*dt + Q_wall*dt
-      double qWall = wallMass > 0.0
-          ? wallHeatTransferCoeff * wallArea * (wallTemp - tempK) : 0.0;
+      double qWall = wallMass > 0.0 ? wallHeatTransferCoeff * wallArea * (wallTemp - tempK) : 0.0;
       double dU = (-hSpec * dm) + (fireHeatInput * timeStep) + (qWall * timeStep);
 
       // Update wall temperature (if modelled)
       if (wallMass > 0.0) {
-        // Simple lumped-wall: heat lost from wall to fluid
-        double dWallTemp = -qWall * timeStep / (wallMass * wallCp);
-        wallTemp += dWallTemp;
+	// Simple lumped-wall: heat lost from wall to fluid
+	double dWallTemp = -qWall * timeStep / (wallMass * wallCp);
+	wallTemp += dWallTemp;
       }
 
       // New internal energy
@@ -220,17 +216,17 @@ public class DepressurizationSimulator implements Serializable {
       // Update fluid state by VU flash (constant volume, new internal energy)
       fluid.setTotalNumberOfMoles(newMass / mw);
       try {
-        ops.VUflash(vesselVolume, newU, "m3", "J");
-        fluid.initProperties();
+	ops.VUflash(vesselVolume, newU, "m3", "J");
+	fluid.initProperties();
       } catch (Exception ex) {
-        // Fallback: do an isothermal expansion approximation
-        pPa = newMass * R * tempK / (mw * vesselVolume) * z;
-        if (pPa < backPressure) {
-          pPa = backPressure;
-        }
-        fluid.setPressure(pPa / 1.0e5);
-        ops.TPflash();
-        fluid.initProperties();
+	// Fallback: do an isothermal expansion approximation
+	pPa = newMass * R * tempK / (mw * vesselVolume) * z;
+	if (pPa < backPressure) {
+	  pPa = backPressure;
+	}
+	fluid.setPressure(pPa / 1.0e5);
+	ops.TPflash();
+	fluid.initProperties();
       }
       tempK = fluid.getTemperature();
       pPa = fluid.getPressure() * 1.0e5;
@@ -285,8 +281,7 @@ public class DepressurizationSimulator implements Serializable {
     /** True if reached 7 barg within 15 minutes (fire case). */
     public boolean sevenBargCriterionMet;
 
-    void append(double t, double pBara, double tempK, double mass, double wallTempK,
-        double mDot) {
+    void append(double t, double pBara, double tempK, double mass, double wallTempK, double mDot) {
       time.add(t);
       pressureBara.add(pBara);
       temperatureK.add(tempK);
@@ -294,10 +289,10 @@ public class DepressurizationSimulator implements Serializable {
       this.wallTempK.add(wallTempK);
       massFlowKgPerS.add(mDot);
       if (tempK < minFluidTemperatureK) {
-        minFluidTemperatureK = tempK;
+	minFluidTemperatureK = tempK;
       }
       if (wallTempK < minWallTemperatureK) {
-        minWallTemperatureK = wallTempK;
+	minWallTemperatureK = wallTempK;
       }
     }
 
@@ -305,16 +300,15 @@ public class DepressurizationSimulator implements Serializable {
       double halfP = 0.5 * p0Pa;
       double sevenBargPa = 8.0e5;
       for (int i = 0; i < time.size(); i++) {
-        double pPa = pressureBara.get(i) * 1.0e5;
-        if (Double.isNaN(timeToHalfPressure) && pPa <= halfP) {
-          timeToHalfPressure = time.get(i);
-        }
-        if (Double.isNaN(timeTo7BargS) && pPa <= sevenBargPa) {
-          timeTo7BargS = time.get(i);
-        }
+	double pPa = pressureBara.get(i) * 1.0e5;
+	if (Double.isNaN(timeToHalfPressure) && pPa <= halfP) {
+	  timeToHalfPressure = time.get(i);
+	}
+	if (Double.isNaN(timeTo7BargS) && pPa <= sevenBargPa) {
+	  timeTo7BargS = time.get(i);
+	}
       }
-      halfPressureCriterionMet =
-          !Double.isNaN(timeToHalfPressure) && timeToHalfPressure <= 900.0;
+      halfPressureCriterionMet = !Double.isNaN(timeToHalfPressure) && timeToHalfPressure <= 900.0;
       sevenBargCriterionMet = !Double.isNaN(timeTo7BargS) && timeTo7BargS <= 900.0;
     }
 
@@ -337,7 +331,7 @@ public class DepressurizationSimulator implements Serializable {
      */
     public STS0131AcceptanceResult evaluateSTS0131(STS0131AcceptanceCriteria criteria) {
       if (criteria == null) {
-        throw new IllegalArgumentException("criteria must not be null");
+	throw new IllegalArgumentException("criteria must not be null");
       }
       return criteria.evaluate(this);
     }

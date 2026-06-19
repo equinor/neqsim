@@ -66,7 +66,7 @@ class ESDBlowdownVerificationTest {
 
     // Gas splitter (process/flare/blowdown)
     Splitter gasSplitter = new Splitter("Gas Splitter", separator.getGasOutStream(), 3);
-    gasSplitter.setSplitFactors(new double[] {1.0, 0.0, 0.0}); // Normal: all to process
+    gasSplitter.setSplitFactors(new double[] { 1.0, 0.0, 0.0 }); // Normal: all to process
 
     Stream processStream = new Stream("Process Stream", gasSplitter.getSplitStream(0));
 
@@ -100,7 +100,7 @@ class ESDBlowdownVerificationTest {
     esdLogic = new ESDLogic("ESD Level 1");
     esdLogic.addAction(new CloseValveAction(inletValve), 0.0);
     esdLogic.addAction(new CloseValveAction(esdInletValve), 0.0);
-    esdLogic.addAction(new SetSplitterAction(gasSplitter, new double[] {0.0, 0.0, 1.0}), 0.5);
+    esdLogic.addAction(new SetSplitterAction(gasSplitter, new double[] { 0.0, 0.0, 1.0 }), 0.5);
     esdLogic.addAction(new EnergizeESDValveAction(bdValve, 100.0), 0.5);
     esdLogic.addAction(new SetSeparatorModeAction(separator, false), 1.0);
 
@@ -142,28 +142,26 @@ class ESDBlowdownVerificationTest {
     logger.info("\n=== FINAL CONDITIONS ===");
     logger.info("Separator pressure: " + String.format("%.1f", finalPressure) + " bara");
     logger.info("Flare flow: " + String.format("%.1f", finalFlareFlow) + " kg/hr");
-    logger.info(
-        "Pressure reduction: " + String.format("%.1f", initialPressure - finalPressure) + " bar");
+    logger.info("Pressure reduction: " + String.format("%.1f", initialPressure - finalPressure) + " bar");
 
     // Verify ESD effectiveness
     assertTrue(finalPressure < initialPressure,
-        "ESD should reduce separator pressure from " + initialPressure + " to " + finalPressure);
+	"ESD should reduce separator pressure from " + initialPressure + " to " + finalPressure);
 
     double pressureDrop = initialPressure - finalPressure;
-    assertTrue(pressureDrop > 5.0,
-        "Pressure should drop significantly (got " + pressureDrop + " bar drop)");
+    assertTrue(pressureDrop > 5.0, "Pressure should drop significantly (got " + pressureDrop + " bar drop)");
 
     // Verify gas is routed to flare
-    assertTrue(finalFlareFlow > initialFlareFlow, "ESD should route gas to flare (initial: "
-        + initialFlareFlow + ", final: " + finalFlareFlow + ")");
+    assertTrue(finalFlareFlow > initialFlareFlow,
+	"ESD should route gas to flare (initial: " + initialFlareFlow + ", final: " + finalFlareFlow + ")");
 
     // Print summary
     logger.info("\n=== TEST RESULTS ===");
     logger.info("✓ Separator pressure reduced: " + String.format("%.1f", initialPressure) + " → "
-        + String.format("%.1f", finalPressure) + " bara");
+	+ String.format("%.1f", finalPressure) + " bara");
     logger.info("✓ Pressure drop: " + String.format("%.1f", pressureDrop) + " bar");
     logger.info("✓ Gas flow to flare increased: " + String.format("%.1f", initialFlareFlow) + " → "
-        + String.format("%.1f", finalFlareFlow) + " kg/hr");
+	+ String.format("%.1f", finalFlareFlow) + " kg/hr");
     logger.info("✓ ESD system is working correctly!");
 
     // Verify no critical errors during depressurization
@@ -187,28 +185,27 @@ class ESDBlowdownVerificationTest {
     logger.info("Initial pressure: " + String.format("%.1f", initialPressure) + " bara\n");
 
     // Monitor pressure over time
-    double[] timePoints = {0.0, 2.0, 5.0, 10.0, 15.0};
+    double[] timePoints = { 0.0, 2.0, 5.0, 10.0, 15.0 };
     double previousPressure = initialPressure;
 
     for (double duration : timePoints) {
       if (duration > 0) {
-        runner.reset(); // Reset and re-initialize
-        runner.initializeSteadyState();
-        runner.activateLogic("ESD Level 1");
-        runner.runScenario("ESD @ t=" + duration, esdScenario, duration, 0.5);
+	runner.reset(); // Reset and re-initialize
+	runner.initializeSteadyState();
+	runner.activateLogic("ESD Level 1");
+	runner.runScenario("ESD @ t=" + duration, esdScenario, duration, 0.5);
       }
 
       double currentPressure = separator.getGasOutStream().getPressure("bara");
       double flareFlow = flare.getInletStream().getFlowRate("kg/hr");
 
-      logger.info(String.format("t=%.0fs: P=%.1f bara, Flare=%.1f kg/hr", duration, currentPressure,
-          flareFlow));
+      logger.info(String.format("t=%.0fs: P=%.1f bara, Flare=%.1f kg/hr", duration, currentPressure, flareFlow));
 
       if (duration > 0) {
-        // Pressure should decrease over time during blowdown
-        assertTrue(currentPressure <= previousPressure + 5.0, // Allow small increase due to
-                                                              // dynamics
-            "Pressure should not significantly increase during blowdown");
+	// Pressure should decrease over time during blowdown
+	assertTrue(currentPressure <= previousPressure + 5.0, // Allow small increase due to
+							      // dynamics
+	    "Pressure should not significantly increase during blowdown");
       }
 
       previousPressure = currentPressure;
@@ -226,8 +223,7 @@ class ESDBlowdownVerificationTest {
     double initialFlareFlow = flare.getInletStream().getFlowRate("kg/hr");
 
     // Run scenario WITHOUT activating ESD
-    ProcessSafetyScenario normalScenario =
-        ProcessSafetyScenario.builder("Normal Operation").build();
+    ProcessSafetyScenario normalScenario = ProcessSafetyScenario.builder("Normal Operation").build();
     runner.runScenario("No ESD Test", normalScenario, 10.0, 1.0);
 
     double finalPressure = separator.getGasOutStream().getPressure("bara");
@@ -241,7 +237,7 @@ class ESDBlowdownVerificationTest {
     // Without ESD, pressure should remain relatively stable
     double pressureChange = Math.abs(finalPressure - initialPressure);
     assertTrue(pressureChange < 10.0,
-        "Without ESD, pressure should remain stable (changed by " + pressureChange + " bar)");
+	"Without ESD, pressure should remain stable (changed by " + pressureChange + " bar)");
 
     // Flare flow should remain minimal
     assertTrue(finalFlareFlow < 100.0, "Without ESD, flare flow should remain low");

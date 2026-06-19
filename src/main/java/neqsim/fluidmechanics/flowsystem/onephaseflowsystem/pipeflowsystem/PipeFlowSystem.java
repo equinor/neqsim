@@ -12,8 +12,7 @@ import neqsim.thermo.system.SystemInterface;
  * @author asmund
  * @version $Id: $Id
  */
-public class PipeFlowSystem
-    extends neqsim.fluidmechanics.flowsystem.onephaseflowsystem.OnePhaseFlowSystem {
+public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflowsystem.OnePhaseFlowSystem {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
@@ -22,7 +21,8 @@ public class PipeFlowSystem
    * Constructor for PipeFlowSystem.
    * </p>
    */
-  public PipeFlowSystem() {}
+  public PipeFlowSystem() {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -35,12 +35,10 @@ public class PipeFlowSystem
       flowLeg[i] = new neqsim.fluidmechanics.flowleg.pipeleg.PipeLeg();
     }
 
-    flowNode =
-        new neqsim.fluidmechanics.flownode.onephasenode.onephasepipeflownode.onePhasePipeFlowNode[totalNumberOfNodes];
+    flowNode = new neqsim.fluidmechanics.flownode.onephasenode.onephasepipeflownode.onePhasePipeFlowNode[totalNumberOfNodes];
     // System.out.println("nodes: " + totalNumberOfNodes);
-    flowNode[0] =
-        new neqsim.fluidmechanics.flownode.onephasenode.onephasepipeflownode.onePhasePipeFlowNode(
-            thermoSystem, this.equipmentGeometry[0]);
+    flowNode[0] = new neqsim.fluidmechanics.flownode.onephasenode.onephasepipeflownode.onePhasePipeFlowNode(
+	thermoSystem, this.equipmentGeometry[0]);
     flowNode[0].initFlowCalc();
     super.createSystem();
     this.setNodes();
@@ -62,20 +60,19 @@ public class PipeFlowSystem
   /** {@inheritDoc} */
   @Override
   public void solveSteadyState(int type, UUID id) {
-    double[] times = {0.0};
+    double[] times = { 0.0 };
     display = new PipeFlowVisualization(this.getTotalNumberOfNodes(), 1);
     getTimeSeries().setTimes(times);
-    SystemInterface[] systems = {flowNode[0].getBulkSystem()};
+    SystemInterface[] systems = { flowNode[0].getBulkSystem() };
     getTimeSeries().setInletThermoSystems(systems);
     getTimeSeries().setNumberOfTimeStepsInInterval(1);
-    double[] outletFlowRates = {0.0, 0.0}; // this is not yet implemented
+    double[] outletFlowRates = { 0.0, 0.0 }; // this is not yet implemented
     getTimeSeries().setOutletMolarFlowRate(outletFlowRates);
     // SteadystateOnePhasePipeFlowSolver pipeSolve = new
     // SteadystateOnePhasePipeFlowSolver(this, getSystemLength(),
     // getTotalNumberOfNodes());
-    flowSolver =
-        new neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFixedStaggeredGrid(
-            this, getSystemLength(), getTotalNumberOfNodes(), false);
+    flowSolver = new neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFixedStaggeredGrid(
+	this, getSystemLength(), getTotalNumberOfNodes(), false);
     flowSolver.setSolverType(type);
     flowSolver.solveTDMA();
     getTimeSeries().init(this);
@@ -87,8 +84,7 @@ public class PipeFlowSystem
   @Override
   public void solveTransient(int type, UUID id) {
     getTimeSeries().init(this);
-    display =
-        new PipeFlowVisualization(this.getTotalNumberOfNodes(), getTimeSeries().getTime().length);
+    display = new PipeFlowVisualization(this.getTotalNumberOfNodes(), getTimeSeries().getTime().length);
     flowSolver.setDynamic(true);
     flowSolver.setSolverType(type);
 
@@ -114,7 +110,7 @@ public class PipeFlowSystem
   /**
    * Applies outlet boundary conditions for the current time step.
    *
-   * @param timeStepIndex the current time step index
+   * @param timeStepIndex   the current time step index
    * @param outletNodeIndex the index of the outlet node
    */
   private void applyOutletBoundaryCondition(int timeStepIndex, int outletNodeIndex) {
@@ -125,24 +121,24 @@ public class PipeFlowSystem
       flowNode[outletNodeIndex].setVelocity(0.0);
       flowNode[outletNodeIndex].setVelocityIn(0, 0.0);
       if (outletNodeIndex > 0) {
-        flowNode[outletNodeIndex - 1].setVelocityOut(0, 0.0);
+	flowNode[outletNodeIndex - 1].setVelocityOut(0, 0.0);
       }
     } else if (ts.isOutletFlowControlled()) {
       // Flow-controlled outlet: set specified velocity
       double outletVelocity = ts.getOutletVelocity(timeStepIndex);
       if (!Double.isNaN(outletVelocity)) {
-        flowNode[outletNodeIndex].setVelocity(outletVelocity);
-        flowNode[outletNodeIndex].setVelocityIn(0, outletVelocity);
-        if (outletNodeIndex > 0) {
-          flowNode[outletNodeIndex - 1].setVelocityOut(0, outletVelocity);
-        }
+	flowNode[outletNodeIndex].setVelocity(outletVelocity);
+	flowNode[outletNodeIndex].setVelocityIn(0, outletVelocity);
+	if (outletNodeIndex > 0) {
+	  flowNode[outletNodeIndex - 1].setVelocityOut(0, outletVelocity);
+	}
       }
     } else if (ts.isOutletPressureControlled()) {
       // Pressure-controlled outlet: set specified pressure
       double outletPressure = ts.getOutletPressure(timeStepIndex);
       if (!Double.isNaN(outletPressure) && outletPressure > 0) {
-        flowNode[outletNodeIndex].getBulkSystem().setPressure(outletPressure);
-        flowNode[outletNodeIndex].init();
+	flowNode[outletNodeIndex].getBulkSystem().setPressure(outletPressure);
+	flowNode[outletNodeIndex].init();
       }
     }
   }
@@ -159,7 +155,7 @@ public class PipeFlowSystem
    * </pre>
    *
    * @param totalTime total simulation time in seconds
-   * @param timeStep time step size in seconds
+   * @param timeStep  time step size in seconds
    */
   public void runTransient(double totalTime, double timeStep) {
     runTransient(totalTime, timeStep, 10);
@@ -168,8 +164,8 @@ public class PipeFlowSystem
   /**
    * Runs a transient simulation with constant inlet conditions for a specified duration.
    *
-   * @param totalTime total simulation time in seconds
-   * @param timeStep time step size in seconds
+   * @param totalTime  total simulation time in seconds
+   * @param timeStep   time step size in seconds
    * @param solverType solver type (0=momentum, 1=mass, 10=energy, 20=composition)
    */
   public void runTransient(double totalTime, double timeStep, int solverType) {
@@ -205,7 +201,7 @@ public class PipeFlowSystem
    * </pre>
    *
    * @param totalTime total simulation time in seconds
-   * @param timeStep time step size in seconds
+   * @param timeStep  time step size in seconds
    */
   public void runTransientClosedOutlet(double totalTime, double timeStep) {
     runTransientClosedOutlet(totalTime, timeStep, 10);
@@ -214,8 +210,8 @@ public class PipeFlowSystem
   /**
    * Runs a transient simulation with a closed outlet (blocked pipe).
    *
-   * @param totalTime total simulation time in seconds
-   * @param timeStep time step size in seconds
+   * @param totalTime  total simulation time in seconds
+   * @param timeStep   time step size in seconds
    * @param solverType solver type (0=momentum, 1=mass, 10=energy, 20=composition)
    */
   public void runTransientClosedOutlet(double totalTime, double timeStep, int solverType) {
@@ -250,25 +246,24 @@ public class PipeFlowSystem
    * pipe.runTransientControlledOutletVelocity(600.0, 30.0, 2.5); // Outlet at 2.5 m/s
    * </pre>
    *
-   * @param totalTime total simulation time in seconds
-   * @param timeStep time step size in seconds
+   * @param totalTime      total simulation time in seconds
+   * @param timeStep       time step size in seconds
    * @param outletVelocity controlled outlet velocity in m/s
    */
-  public void runTransientControlledOutletVelocity(double totalTime, double timeStep,
-      double outletVelocity) {
+  public void runTransientControlledOutletVelocity(double totalTime, double timeStep, double outletVelocity) {
     runTransientControlledOutletVelocity(totalTime, timeStep, outletVelocity, 10);
   }
 
   /**
    * Runs a transient simulation with controlled outlet velocity.
    *
-   * @param totalTime total simulation time in seconds
-   * @param timeStep time step size in seconds
+   * @param totalTime      total simulation time in seconds
+   * @param timeStep       time step size in seconds
    * @param outletVelocity controlled outlet velocity in m/s
-   * @param solverType solver type (0=momentum, 1=mass, 10=energy, 20=composition)
+   * @param solverType     solver type (0=momentum, 1=mass, 10=energy, 20=composition)
    */
-  public void runTransientControlledOutletVelocity(double totalTime, double timeStep,
-      double outletVelocity, int solverType) {
+  public void runTransientControlledOutletVelocity(double totalTime, double timeStep, double outletVelocity,
+      int solverType) {
     int numIntervals = Math.max(1, (int) Math.ceil(totalTime / timeStep));
     double[] times = new double[numIntervals + 1];
     double[] velocities = new double[numIntervals];
@@ -304,25 +299,24 @@ public class PipeFlowSystem
    * pipe.runTransientControlledOutletPressure(600.0, 30.0, 50.0); // Outlet at 50 bar
    * </pre>
    *
-   * @param totalTime total simulation time in seconds
-   * @param timeStep time step size in seconds
+   * @param totalTime      total simulation time in seconds
+   * @param timeStep       time step size in seconds
    * @param outletPressure controlled outlet pressure in bar
    */
-  public void runTransientControlledOutletPressure(double totalTime, double timeStep,
-      double outletPressure) {
+  public void runTransientControlledOutletPressure(double totalTime, double timeStep, double outletPressure) {
     runTransientControlledOutletPressure(totalTime, timeStep, outletPressure, 10);
   }
 
   /**
    * Runs a transient simulation with controlled outlet pressure.
    *
-   * @param totalTime total simulation time in seconds
-   * @param timeStep time step size in seconds
+   * @param totalTime      total simulation time in seconds
+   * @param timeStep       time step size in seconds
    * @param outletPressure controlled outlet pressure in bar
-   * @param solverType solver type (0=momentum, 1=mass, 10=energy, 20=composition)
+   * @param solverType     solver type (0=momentum, 1=mass, 10=energy, 20=composition)
    */
-  public void runTransientControlledOutletPressure(double totalTime, double timeStep,
-      double outletPressure, int solverType) {
+  public void runTransientControlledOutletPressure(double totalTime, double timeStep, double outletPressure,
+      int solverType) {
     int numIntervals = Math.max(1, (int) Math.ceil(totalTime / timeStep));
     double[] times = new double[numIntervals + 1];
     double[] pressures = new double[numIntervals];
@@ -360,7 +354,7 @@ public class PipeFlowSystem
    * @param velocity outlet velocity in m/s
    */
   public void setOutletVelocity(double velocity) {
-    getTimeSeries().setOutletVelocity(new double[] {velocity});
+    getTimeSeries().setOutletVelocity(new double[] { velocity });
   }
 
   /**
@@ -369,6 +363,6 @@ public class PipeFlowSystem
    * @param pressure outlet pressure in bar
    */
   public void setOutletPressure(double pressure) {
-    getTimeSeries().setOutletPressure(new double[] {pressure});
+    getTimeSeries().setOutletPressure(new double[] { pressure });
   }
 }

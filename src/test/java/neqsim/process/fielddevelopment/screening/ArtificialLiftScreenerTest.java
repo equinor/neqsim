@@ -69,8 +69,8 @@ class ArtificialLiftScreenerTest {
     int prevRank = 0;
     for (MethodResult method : feasible) {
       if (method.rank > 0) {
-        assertTrue(method.rank > prevRank || prevRank == 0, "Ranks should be sequential");
-        prevRank = method.rank;
+	assertTrue(method.rank > prevRank || prevRank == 0, "Ranks should be sequential");
+	prevRank = method.rank;
       }
     }
   }
@@ -94,12 +94,12 @@ class ArtificialLiftScreenerTest {
     String reason = "";
     for (MethodResult method : result.getAllMethods()) {
       if (method.method == LiftMethod.ESP) {
-        if (method.feasible) {
-          espFeasible = true;
-        } else {
-          reason = method.infeasibilityReason;
-        }
-        break;
+	if (method.feasible) {
+	  espFeasible = true;
+	} else {
+	  reason = method.infeasibilityReason;
+	}
+	break;
       }
     }
     assertTrue(espFeasible, "ESP should be feasible within operating envelope. Reason: " + reason);
@@ -116,9 +116,8 @@ class ArtificialLiftScreenerTest {
     // Find ESP result
     for (MethodResult method : result.getAllMethods()) {
       if (method.method == LiftMethod.ESP) {
-        assertFalse(method.feasible, "ESP should be infeasible above 180°C");
-        assertTrue(method.infeasibilityReason.contains("Temperature"),
-            "Should cite temperature as reason");
+	assertFalse(method.feasible, "ESP should be infeasible above 180°C");
+	assertTrue(method.infeasibilityReason.contains("Temperature"), "Should cite temperature as reason");
       }
     }
   }
@@ -134,7 +133,7 @@ class ArtificialLiftScreenerTest {
     // Find rod pump result
     for (MethodResult method : result.getAllMethods()) {
       if (method.method == LiftMethod.ROD_PUMP) {
-        assertFalse(method.feasible, "Rod pump should be infeasible beyond 3000m");
+	assertFalse(method.feasible, "Rod pump should be infeasible beyond 3000m");
       }
     }
   }
@@ -154,8 +153,8 @@ class ArtificialLiftScreenerTest {
     boolean pcpFeasible = false;
     for (MethodResult method : result.getAllMethods()) {
       if (method.method == LiftMethod.PCP && method.feasible) {
-        pcpFeasible = true;
-        break;
+	pcpFeasible = true;
+	break;
       }
     }
     assertTrue(pcpFeasible, "PCP should be feasible for high viscosity oil");
@@ -172,8 +171,8 @@ class ArtificialLiftScreenerTest {
     // Gas lift should not be in results
     for (MethodResult method : result.getAllMethods()) {
       if (method.method == LiftMethod.GAS_LIFT) {
-        // If present, should be infeasible
-        assertFalse(method.feasible, "Gas lift should not be available");
+	// If present, should be infeasible
+	assertFalse(method.feasible, "Gas lift should not be available");
       }
     }
   }
@@ -205,8 +204,7 @@ class ArtificialLiftScreenerTest {
     // Feasible methods should have NPV calculated
     for (MethodResult method : result.getFeasibleMethods()) {
       if (method.productionRate > 0) {
-        assertTrue(method.npv > Double.NEGATIVE_INFINITY,
-            "Should calculate NPV for feasible methods");
+	assertTrue(method.npv > Double.NEGATIVE_INFINITY, "Should calculate NPV for feasible methods");
       }
     }
   }

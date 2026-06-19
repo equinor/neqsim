@@ -23,7 +23,8 @@ public class PhasePureComponentSolid extends PhaseSolid {
    * Constructor for PhasePureComponentSolid.
    * </p>
    */
-  public PhasePureComponentSolid() {}
+  public PhasePureComponentSolid() {
+  }
 
   /** {@inheritDoc} */
   @Override

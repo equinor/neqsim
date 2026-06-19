@@ -20,7 +20,7 @@ public class PlusFractionModelTest {
     thermoSystem.addComponent("propane", 1.0);
 
     thermoSystem.getCharacterization().setTBPModel("PedersenSRK"); // this need to be set before
-                                                                   // adding oil components
+								   // adding oil components
 
     thermoSystem.addTBPfraction("C6", 1.0, 90.0 / 1000.0, 0.7);
     thermoSystem.addTBPfraction("C7", 1.0, 110.0 / 1000.0, 0.73);
@@ -29,23 +29,22 @@ public class PlusFractionModelTest {
     thermoSystem.addPlusFraction("C10", 11.0, 290.0 / 1000.0, 0.82);
 
     /*
-     * Specify that the Pedersen plus fraction model will be used for characterizing the plus
-     * component
+     * Specify that the Pedersen plus fraction model will be used for characterizing the plus component
      */
     thermoSystem.getCharacterization().setPlusFractionModel("Pedersen");
     thermoSystem.getCharacterization().setLumpingModel("PVTlumpingModel"); // this is default
-                                                                           // lumping model in
-                                                                           // neqsim. Needs to be
-                                                                           // set before calling
-                                                                           // characterisePlusFraction()
+									   // lumping model in
+									   // neqsim. Needs to be
+									   // set before calling
+									   // characterisePlusFraction()
 
     thermoSystem.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(9); // specif
-                                                                                         // numer
-                                                                                         // of
-                                                                                         // lumped
-                                                                                         // components
-                                                                                         // (C6-C80
-                                                                                         // components)
+											 // numer
+											 // of
+											 // lumped
+											 // components
+											 // (C6-C80
+											 // components)
     thermoSystem.getCharacterization().characterisePlusFraction();
     assertEquals(17, thermoSystem.getNumberOfComponents());
 
@@ -66,7 +65,7 @@ public class PlusFractionModelTest {
     thermoSystem.addComponent("propane", 1.0);
 
     thermoSystem.getCharacterization().setTBPModel("PedersenSRK"); // this need to be set before
-                                                                   // adding oil components
+								   // adding oil components
 
     thermoSystem.addTBPfraction("C6", 1.0, 90.0 / 1000.0, 0.7);
     thermoSystem.addTBPfraction("C7", 1.0, 110.0 / 1000.0, 0.73);
@@ -75,16 +74,15 @@ public class PlusFractionModelTest {
     thermoSystem.addPlusFraction("C10", 11.0, 590.0 / 1000.0, 0.90);
 
     /*
-     * Specify that the Pedersen heavy oil plus fraction model will be used for characterizing the
-     * plus component
+     * Specify that the Pedersen heavy oil plus fraction model will be used for characterizing the plus component
      */
     thermoSystem.getCharacterization().setPlusFractionModel("Pedersen Heavy Oil");
 
     thermoSystem.getCharacterization().setLumpingModel("PVTlumpingModel"); // this is default
-                                                                           // lumping model in
-                                                                           // neqsim. Needs to be
-                                                                           // set before calling
-                                                                           // characterisePlusFraction()
+									   // lumping model in
+									   // neqsim. Needs to be
+									   // set before calling
+									   // characterisePlusFraction()
     thermoSystem.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(3);
     thermoSystem.getCharacterization().getLumpingModel().setNumberOfPseudoComponents(8);
     // specify
@@ -137,12 +135,11 @@ public class PlusFractionModelTest {
     assertEquals(0.767, thermoSystem.getBeta(), 1e-2);
 
     // illustration of how to set parameters for the gamma model
-    ((WhitsonGammaModel) thermoSystem.getCharacterization().getPlusFractionModel())
-        .setGammaParameters(1.0, 90);
+    ((WhitsonGammaModel) thermoSystem.getCharacterization().getPlusFractionModel()).setGammaParameters(1.0, 90);
     double shape = ((WhitsonGammaModel) thermoSystem.getCharacterization().getPlusFractionModel())
-        .getGammaParameters()[0];
+	.getGammaParameters()[0];
     double minMW = ((WhitsonGammaModel) thermoSystem.getCharacterization().getPlusFractionModel())
-        .getGammaParameters()[1];
+	.getGammaParameters()[1];
     assertEquals(90.0, minMW, 1e-4);
   }
 
@@ -162,16 +159,14 @@ public class PlusFractionModelTest {
 
     // Test fluent API for gamma model configuration
     thermoSystem.getCharacterization().setPlusFractionModel("Whitson Gamma Model");
-    thermoSystem.getCharacterization().setGammaShapeParameter(1.5).setGammaMinMW(84.0)
-        .setGammaDensityModel("Soreide");
+    thermoSystem.getCharacterization().setGammaShapeParameter(1.5).setGammaMinMW(84.0).setGammaDensityModel("Soreide");
 
     thermoSystem.getCharacterization().getLumpingModel().setNumberOfPseudoComponents(8);
     thermoSystem.getCharacterization().characterisePlusFraction();
     thermoSystem.setMixingRule("classic");
 
     // Verify parameters were set
-    WhitsonGammaModel gammaModel =
-        (WhitsonGammaModel) thermoSystem.getCharacterization().getPlusFractionModel();
+    WhitsonGammaModel gammaModel = (WhitsonGammaModel) thermoSystem.getCharacterization().getPlusFractionModel();
     assertEquals(1.5, gammaModel.getAlpha(), 1e-4);
     assertEquals(84.0, gammaModel.getEta(), 1e-4);
     assertEquals("Soreide", gammaModel.getDensityModel());
@@ -197,8 +192,7 @@ public class PlusFractionModelTest {
     thermoSystem.getCharacterization().characterisePlusFraction();
 
     // Verify alpha was auto-estimated (should be a reasonable value)
-    WhitsonGammaModel gammaModel =
-        (WhitsonGammaModel) thermoSystem.getCharacterization().getPlusFractionModel();
+    WhitsonGammaModel gammaModel = (WhitsonGammaModel) thermoSystem.getCharacterization().getPlusFractionModel();
     double alpha = gammaModel.getAlpha();
     assertTrue(alpha > 0.3 && alpha < 5.0, "Alpha should be in reasonable range: " + alpha);
 
@@ -220,8 +214,7 @@ public class PlusFractionModelTest {
     thermoSystem.getCharacterization().setPlusFractionModel("Whitson Gamma Model");
     thermoSystem.getCharacterization().characterisePlusFraction();
 
-    WhitsonGammaModel gammaModel =
-        (WhitsonGammaModel) thermoSystem.getCharacterization().getPlusFractionModel();
+    WhitsonGammaModel gammaModel = (WhitsonGammaModel) thermoSystem.getCharacterization().getPlusFractionModel();
     double Kw = gammaModel.getWatsonKFactor();
 
     // Watson K should be in typical range 10-13 for petroleum fluids
@@ -242,8 +235,7 @@ public class PlusFractionModelTest {
     thermoSystem.getCharacterization().getLumpingModel().setNumberOfPseudoComponents(6);
     thermoSystem.getCharacterization().characterisePlusFraction();
 
-    WhitsonGammaModel gammaModel =
-        (WhitsonGammaModel) thermoSystem.getCharacterization().getPlusFractionModel();
+    WhitsonGammaModel gammaModel = (WhitsonGammaModel) thermoSystem.getCharacterization().getPlusFractionModel();
     double[] densities = gammaModel.getDens();
 
     // Check that densities are calculated and in reasonable range
@@ -251,8 +243,8 @@ public class PlusFractionModelTest {
     boolean hasValidDensities = false;
     for (double dens : densities) {
       if (dens > 0.6 && dens < 1.2) {
-        hasValidDensities = true;
-        break;
+	hasValidDensities = true;
+	break;
       }
     }
     assertTrue(hasValidDensities, "Should have densities in valid range (0.6-1.2 g/cm³)");
@@ -269,12 +261,12 @@ public class PlusFractionModelTest {
     thermoSystem.addComponent("propane", 1.0);
 
     thermoSystem.getCharacterization().setTBPModel("PedersenSRK"); // this need to be set before
-                                                                   // adding oil components
+								   // adding oil components
 
-    String[] componentNames = {"C7"};
-    double[] molarComposition = {0.15};
-    double[] molarMasses = {0.092};
-    double[] reldens = {0.82};
+    String[] componentNames = { "C7" };
+    double[] molarComposition = { 0.15 };
+    double[] molarMasses = { 0.092 };
+    double[] reldens = { 0.82 };
 
     thermoSystem.getCharacterization().setTBPModel("PedersenSRK"); // this need to be set before
 
@@ -292,9 +284,9 @@ public class PlusFractionModelTest {
     thermoSystem.addComponent("propane", 1.0);
 
     thermoSystem.getCharacterization().setTBPModel("PedersenSRK"); // this need to be set before
-                                                                   // adding oil components
+								   // adding oil components
 
-    molarMasses = new double[] {0.120};
+    molarMasses = new double[] { 0.120 };
 
     thermoSystem.getCharacterization().setTBPModel("PedersenSRK"); // this need to be set before
 

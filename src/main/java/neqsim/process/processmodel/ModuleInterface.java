@@ -33,7 +33,7 @@ public interface ModuleInterface extends ProcessEquipmentInterface {
    * </p>
    *
    * @param streamName a {@link java.lang.String} object
-   * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param stream     a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public void addInputStream(String streamName, StreamInterface stream);
 
@@ -113,7 +113,7 @@ public interface ModuleInterface extends ProcessEquipmentInterface {
    * </p>
    *
    * @param propertyName a {@link java.lang.String} object
-   * @param value a double
+   * @param value        a double
    */
   public void setProperty(String propertyName, double value);
 }

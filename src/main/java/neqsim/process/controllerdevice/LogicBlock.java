@@ -9,15 +9,14 @@ import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.util.NamedBaseClass;
 
 /**
- * Logic operator block for control system simulation in dynamic mode. Supports AND, OR, NOT, NAND,
- * NOR, and XOR operations on boolean input signals. Each input signal is derived from a
- * {@link MeasurementDeviceInterface} by comparing the measured value against a configurable
- * threshold.
+ * Logic operator block for control system simulation in dynamic mode. Supports AND, OR, NOT, NAND, NOR, and XOR
+ * operations on boolean input signals. Each input signal is derived from a {@link MeasurementDeviceInterface} by
+ * comparing the measured value against a configurable threshold.
  *
  * <p>
- * The block evaluates its logic expression each transient step and produces a boolean output
- * accessible via {@link #getOutput()} (returns 1.0 for true, 0.0 for false). This output can drive
- * downstream equipment such as on/off valves, emergency shutdown sequences, or alarm interlocks.
+ * The block evaluates its logic expression each transient step and produces a boolean output accessible via
+ * {@link #getOutput()} (returns 1.0 for true, 0.0 for false). This output can drive downstream equipment such as on/off
+ * valves, emergency shutdown sequences, or alarm interlocks.
  * </p>
  *
  * <p>
@@ -97,7 +96,7 @@ public class LogicBlock extends NamedBaseClass implements ControllerDeviceInterf
   /**
    * Constructor for LogicBlock.
    *
-   * @param name identifier for this logic block
+   * @param name     identifier for this logic block
    * @param operator the logical operation to perform
    */
   public LogicBlock(String name, Operator operator) {
@@ -108,12 +107,11 @@ public class LogicBlock extends NamedBaseClass implements ControllerDeviceInterf
   /**
    * Add an input signal from a measurement device with a comparison threshold.
    *
-   * @param device the measurement device providing the signal
-   * @param threshold the threshold value for comparison
+   * @param device     the measurement device providing the signal
+   * @param threshold  the threshold value for comparison
    * @param comparator how to compare the measurement against the threshold
    */
-  public void addInput(MeasurementDeviceInterface device, double threshold,
-      Comparator comparator) {
+  public void addInput(MeasurementDeviceInterface device, double threshold, Comparator comparator) {
     inputs.add(new LogicInput(device, threshold, comparator));
   }
 
@@ -234,26 +232,26 @@ public class LogicBlock extends NamedBaseClass implements ControllerDeviceInterf
 
     boolean result;
     switch (operator) {
-      case AND:
-        result = evaluateAnd(boolInputs);
-        break;
-      case OR:
-        result = evaluateOr(boolInputs);
-        break;
-      case NOT:
-        result = evaluateNot(boolInputs);
-        break;
-      case NAND:
-        result = !evaluateAnd(boolInputs);
-        break;
-      case NOR:
-        result = !evaluateOr(boolInputs);
-        break;
-      case XOR:
-        result = evaluateXor(boolInputs);
-        break;
-      default:
-        result = false;
+    case AND:
+      result = evaluateAnd(boolInputs);
+      break;
+    case OR:
+      result = evaluateOr(boolInputs);
+      break;
+    case NOT:
+      result = evaluateNot(boolInputs);
+      break;
+    case NAND:
+      result = !evaluateAnd(boolInputs);
+      break;
+    case NOR:
+      result = !evaluateOr(boolInputs);
+      break;
+    case XOR:
+      result = evaluateXor(boolInputs);
+      break;
+    default:
+      result = false;
     }
 
     output = result ? 1.0 : 0.0;
@@ -302,7 +300,7 @@ public class LogicBlock extends NamedBaseClass implements ControllerDeviceInterf
     }
     for (Boolean b : values) {
       if (!b) {
-        return false;
+	return false;
       }
     }
     return true;
@@ -311,7 +309,7 @@ public class LogicBlock extends NamedBaseClass implements ControllerDeviceInterf
   private boolean evaluateOr(List<Boolean> values) {
     for (Boolean b : values) {
       if (b) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -328,7 +326,7 @@ public class LogicBlock extends NamedBaseClass implements ControllerDeviceInterf
     int trueCount = 0;
     for (Boolean b : values) {
       if (b) {
-        trueCount++;
+	trueCount++;
       }
     }
     return (trueCount % 2) == 1;
@@ -351,12 +349,11 @@ public class LogicBlock extends NamedBaseClass implements ControllerDeviceInterf
     /**
      * Create a logic input.
      *
-     * @param device the measurement device
-     * @param threshold the threshold value
+     * @param device     the measurement device
+     * @param threshold  the threshold value
      * @param comparator how to compare
      */
-    public LogicInput(MeasurementDeviceInterface device, double threshold,
-        Comparator comparator) {
+    public LogicInput(MeasurementDeviceInterface device, double threshold, Comparator comparator) {
       this.device = device;
       this.threshold = threshold;
       this.comparator = comparator;
@@ -371,18 +368,18 @@ public class LogicBlock extends NamedBaseClass implements ControllerDeviceInterf
     public boolean evaluate(double equalityTolerance) {
       double value = device.getMeasuredValue();
       switch (comparator) {
-        case GREATER_THAN:
-          return value > threshold;
-        case GREATER_EQUAL:
-          return value >= threshold;
-        case LESS_THAN:
-          return value < threshold;
-        case LESS_EQUAL:
-          return value <= threshold;
-        case EQUAL:
-          return Math.abs(value - threshold) <= equalityTolerance;
-        default:
-          return false;
+      case GREATER_THAN:
+	return value > threshold;
+      case GREATER_EQUAL:
+	return value >= threshold;
+      case LESS_THAN:
+	return value < threshold;
+      case LESS_EQUAL:
+	return value <= threshold;
+      case EQUAL:
+	return Math.abs(value - threshold) <= equalityTolerance;
+      default:
+	return false;
       }
     }
 

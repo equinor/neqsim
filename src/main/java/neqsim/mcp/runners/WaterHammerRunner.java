@@ -6,8 +6,8 @@ import neqsim.process.operations.WaterHammerStudy;
  * MCP runner for water-hammer and liquid-hammer screening studies.
  *
  * <p>
- * The runner delegates to {@link WaterHammerStudy} so command-line, Java, notebook, and MCP clients
- * use the same route/tag/event normalization and transient calculation logic.
+ * The runner delegates to {@link WaterHammerStudy} so command-line, Java, notebook, and MCP clients use the same
+ * route/tag/event normalization and transient calculation logic.
  * </p>
  *
  * @author Even Solbraa
@@ -18,7 +18,8 @@ public final class WaterHammerRunner {
   /**
    * Private constructor for utility class.
    */
-  private WaterHammerRunner() {}
+  private WaterHammerRunner() {
+  }
 
   /**
    * Runs a water-hammer study from JSON.

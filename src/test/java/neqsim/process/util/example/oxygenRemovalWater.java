@@ -58,8 +58,7 @@ public class oxygenRemovalWater {
     ThrottlingValve LP_valve = new ThrottlingValve("LPventil", heater1.getOutletStream());
     LP_valve.setOutletPressure(30.0e-3);
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_air);
     operations.add(stream_water);
     operations.add(mix);

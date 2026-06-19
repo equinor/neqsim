@@ -9,8 +9,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * Utility class for evaluating alarms across multiple measurement devices.
  *
  * <p>
- * Simplifies the alarm evaluation loop by automatically running the process system and evaluating
- * all registered measurement devices.
+ * Simplifies the alarm evaluation loop by automatically running the process system and evaluating all registered
+ * measurement devices.
  *
  * @author ESOL
  * @version 1.0
@@ -33,13 +33,13 @@ public final class AlarmEvaluator {
    * </ol>
    *
    * @param alarmManager the alarm manager
-   * @param system the process system to run
-   * @param dt time step
-   * @param time current simulation time
+   * @param system       the process system to run
+   * @param dt           time step
+   * @param time         current simulation time
    * @return all alarm events generated
    */
-  public static List<AlarmEvent> evaluateAll(ProcessAlarmManager alarmManager, ProcessSystem system,
-      double dt, double time) {
+  public static List<AlarmEvent> evaluateAll(ProcessAlarmManager alarmManager, ProcessSystem system, double dt,
+      double time) {
     List<AlarmEvent> allEvents = new ArrayList<>();
 
     // Run the process to get current values
@@ -56,9 +56,9 @@ public final class AlarmEvaluator {
    * Evaluates a list of measurement devices.
    *
    * @param alarmManager the alarm manager
-   * @param devices the devices to evaluate
-   * @param dt time step
-   * @param time current simulation time
+   * @param devices      the devices to evaluate
+   * @param dt           time step
+   * @param time         current simulation time
    * @return all alarm events generated
    */
   public static List<AlarmEvent> evaluateDevices(ProcessAlarmManager alarmManager,
@@ -78,9 +78,9 @@ public final class AlarmEvaluator {
    * Evaluates alarms and displays them if any are generated.
    *
    * @param alarmManager the alarm manager
-   * @param devices the devices to evaluate
-   * @param dt time step
-   * @param time current simulation time
+   * @param devices      the devices to evaluate
+   * @param dt           time step
+   * @param time         current simulation time
    * @return all alarm events generated
    */
   public static List<AlarmEvent> evaluateAndDisplay(ProcessAlarmManager alarmManager,

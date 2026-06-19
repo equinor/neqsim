@@ -31,7 +31,7 @@ public class AttractiveTermMollerup extends AttractiveTermBaseClass {
    * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
-   * @param params an array of type double
+   * @param params    an array of type double
    */
   public AttractiveTermMollerup(ComponentEosInterface component, double[] params) {
     this(component);
@@ -40,7 +40,8 @@ public class AttractiveTermMollerup extends AttractiveTermBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public void init() {}
+  public void init() {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -59,9 +60,8 @@ public class AttractiveTermMollerup extends AttractiveTermBaseClass {
   @Override
   public double alpha(double temperature) {
     return 1.0 + parameters[0] * (1 / temperature * getComponent().getTC() - 1.0)
-        + parameters[1] * temperature / getComponent().getTC()
-            * Math.log(temperature / getComponent().getTC())
-        + parameters[2] * (temperature / getComponent().getTC() - 1.0);
+	+ parameters[1] * temperature / getComponent().getTC() * Math.log(temperature / getComponent().getTC())
+	+ parameters[2] * (temperature / getComponent().getTC() - 1.0);
   }
 
   /** {@inheritDoc} */
@@ -74,15 +74,15 @@ public class AttractiveTermMollerup extends AttractiveTermBaseClass {
   @Override
   public double diffalphaT(double temperature) {
     return -parameters[0] / (temperature * temperature) * getComponent().getTC()
-        + parameters[1] / getComponent().getTC() * Math.log(temperature / getComponent().getTC())
-        + parameters[1] / getComponent().getTC() + parameters[2] / getComponent().getTC();
+	+ parameters[1] / getComponent().getTC() * Math.log(temperature / getComponent().getTC())
+	+ parameters[1] / getComponent().getTC() + parameters[2] / getComponent().getTC();
   }
 
   /** {@inheritDoc} */
   @Override
   public double diffdiffalphaT(double temperature) {
     return 2.0 * parameters[0] / (temperature * temperature * temperature) * getComponent().getTC()
-        + parameters[1] / getComponent().getTC() / temperature;
+	+ parameters[1] / getComponent().getTC() / temperature;
   }
 
   /** {@inheritDoc} */

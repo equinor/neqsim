@@ -9,13 +9,12 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 /**
- * Screens two water sources for compatibility by evaluating mineral scale risk at different mixing
- * ratios.
+ * Screens two water sources for compatibility by evaluating mineral scale risk at different mixing ratios.
  *
  * <p>
- * Water compatibility is critical in oilfield operations when formation water meets injection water
- * (e.g., seawater). This class mixes the two waters at varying ratios and evaluates the scale risk
- * at each ratio using the {@link ScalePredictionCalculator}.
+ * Water compatibility is critical in oilfield operations when formation water meets injection water (e.g., seawater).
+ * This class mixes the two waters at varying ratios and evaluates the scale risk at each ratio using the
+ * {@link ScalePredictionCalculator}.
  * </p>
  *
  * <p>
@@ -27,7 +26,7 @@ import com.google.gson.GsonBuilder;
  * WaterCompatibilityScreener screener = new WaterCompatibilityScreener();
  * screener.setFormationWater(400, 10, 5, 0, 150, 10, 35000, 80, 100, 2.0, 6.5);
  * screener.setInjectionWater(20, 0, 0, 0, 100, 2700, 35000, 80, 100, 0.5, 7.0);
- * screener.setMixingRatios(new double[] {0, 10, 20, 30, 50, 70, 90, 100});
+ * screener.setMixingRatios(new double[] { 0, 10, 20, 30, 50, 70, 90, 100 });
  * screener.calculate();
  * System.out.println(screener.toJson());
  * }
@@ -72,7 +71,7 @@ public class WaterCompatibilityScreener implements Serializable {
   private double iwPH = 7.0;
 
   /** Mixing ratios as percentage of injection water (0-100). */
-  private double[] mixingRatios = {0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
+  private double[] mixingRatios = { 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100 };
 
   /** Results at each mixing ratio. */
   private List<MixingResult> results = new ArrayList<MixingResult>();
@@ -89,26 +88,26 @@ public class WaterCompatibilityScreener implements Serializable {
   /**
    * Creates a new WaterCompatibilityScreener with default parameters.
    */
-  public WaterCompatibilityScreener() {}
+  public WaterCompatibilityScreener() {
+  }
 
   /**
    * Sets the formation water composition.
    *
-   * @param caMgL calcium mg/L
-   * @param baMgL barium mg/L
-   * @param srMgL strontium mg/L
-   * @param feMgL iron mg/L
-   * @param hco3MgL bicarbonate mg/L
-   * @param so4MgL sulphate mg/L
-   * @param tdsMgL TDS mg/L
-   * @param tempC temperature Celsius
+   * @param caMgL    calcium mg/L
+   * @param baMgL    barium mg/L
+   * @param srMgL    strontium mg/L
+   * @param feMgL    iron mg/L
+   * @param hco3MgL  bicarbonate mg/L
+   * @param so4MgL   sulphate mg/L
+   * @param tdsMgL   TDS mg/L
+   * @param tempC    temperature Celsius
    * @param pressBar pressure bara
-   * @param co2pp CO2 partial pressure bar
-   * @param pH pH
+   * @param co2pp    CO2 partial pressure bar
+   * @param pH       pH
    */
-  public void setFormationWater(double caMgL, double baMgL, double srMgL, double feMgL,
-      double hco3MgL, double so4MgL, double tdsMgL, double tempC, double pressBar, double co2pp,
-      double pH) {
+  public void setFormationWater(double caMgL, double baMgL, double srMgL, double feMgL, double hco3MgL, double so4MgL,
+      double tdsMgL, double tempC, double pressBar, double co2pp, double pH) {
     this.fwCalcium = caMgL;
     this.fwBarium = baMgL;
     this.fwStrontium = srMgL;
@@ -125,21 +124,20 @@ public class WaterCompatibilityScreener implements Serializable {
   /**
    * Sets the injection water composition.
    *
-   * @param caMgL calcium mg/L
-   * @param baMgL barium mg/L
-   * @param srMgL strontium mg/L
-   * @param feMgL iron mg/L
-   * @param hco3MgL bicarbonate mg/L
-   * @param so4MgL sulphate mg/L
-   * @param tdsMgL TDS mg/L
-   * @param tempC temperature Celsius
+   * @param caMgL    calcium mg/L
+   * @param baMgL    barium mg/L
+   * @param srMgL    strontium mg/L
+   * @param feMgL    iron mg/L
+   * @param hco3MgL  bicarbonate mg/L
+   * @param so4MgL   sulphate mg/L
+   * @param tdsMgL   TDS mg/L
+   * @param tempC    temperature Celsius
    * @param pressBar pressure bara
-   * @param co2pp CO2 partial pressure bar
-   * @param pH pH
+   * @param co2pp    CO2 partial pressure bar
+   * @param pH       pH
    */
-  public void setInjectionWater(double caMgL, double baMgL, double srMgL, double feMgL,
-      double hco3MgL, double so4MgL, double tdsMgL, double tempC, double pressBar, double co2pp,
-      double pH) {
+  public void setInjectionWater(double caMgL, double baMgL, double srMgL, double feMgL, double hco3MgL, double so4MgL,
+      double tdsMgL, double tempC, double pressBar, double co2pp, double pH) {
     this.iwCalcium = caMgL;
     this.iwBarium = baMgL;
     this.iwStrontium = srMgL;
@@ -247,8 +245,8 @@ public class WaterCompatibilityScreener implements Serializable {
   /**
    * Checks if a given SI is the worst case seen so far.
    *
-   * @param si saturation index
-   * @param ratio mixing ratio
+   * @param si        saturation index
+   * @param ratio     mixing ratio
    * @param scaleName scale type name
    */
   private void checkWorstCase(double si, double ratio, String scaleName) {
@@ -322,8 +320,7 @@ public class WaterCompatibilityScreener implements Serializable {
     }
     report.put("mixingResults", mixResults);
 
-    Gson gson =
-        new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
+    Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
     return gson.toJson(report);
   }
 

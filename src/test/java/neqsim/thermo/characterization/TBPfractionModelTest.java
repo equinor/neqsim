@@ -14,8 +14,8 @@ import org.apache.logging.log4j.Logger;
  * Unit tests for TBP fraction models.
  *
  * <p>
- * Tests verify that each TBP model correctly calculates critical properties (Tc, Pc, ω, Vc) for
- * petroleum pseudo-components.
+ * Tests verify that each TBP model correctly calculates critical properties (Tc, Pc, ω, Vc) for petroleum
+ * pseudo-components.
  * </p>
  */
 public class TBPfractionModelTest {
@@ -70,9 +70,8 @@ public class TBPfractionModelTest {
   }
 
   /**
-   * Test Cavett (1962) model for critical property estimation. Note: The Cavett model is highly
-   * sensitive to the boiling point correlation used and may give less accurate results for certain
-   * fraction types.
+   * Test Cavett (1962) model for critical property estimation. Note: The Cavett model is highly sensitive to the
+   * boiling point correlation used and may give less accurate results for certain fraction types.
    */
   @Test
   void testCavettModel() {
@@ -228,8 +227,8 @@ public class TBPfractionModelTest {
   }
 
   /**
-   * Compare core models for the same C10 fraction to understand differences. Note: Excludes Cavett
-   * model from strict validation as it has known sensitivity issues.
+   * Compare core models for the same C10 fraction to understand differences. Note: Excludes Cavett model from strict
+   * validation as it has known sensitivity issues.
    */
   @Test
   void testModelComparison() {
@@ -237,9 +236,9 @@ public class TBPfractionModelTest {
     double density = 0.78; // g/cm³
 
     // Core models with good accuracy
-    String[] coreModels = {"PedersenSRK", "Lee-Kesler", "Twu", "Standing"};
+    String[] coreModels = { "PedersenSRK", "Lee-Kesler", "Twu", "Standing" };
     // Models with known limitations
-    String[] allModels = {"PedersenSRK", "Lee-Kesler", "RiaziDaubert", "Twu", "Cavett", "Standing"};
+    String[] allModels = { "PedersenSRK", "Lee-Kesler", "RiaziDaubert", "Twu", "Cavett", "Standing" };
 
     logger.info("\n=== TBP Model Comparison for C10 (MW=142 g/mol, SG=0.78) ===");
     logger.info(String.format("%-15s %10s %10s %10s", "Model", "Tc (K)", "Pc (bar)", "ω"));

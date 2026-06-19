@@ -15,8 +15,8 @@ public class DexpiProcessUnit extends ProcessEquipmentBaseClass {
   private final String lineNumber;
   private final String fluidCode;
 
-  public DexpiProcessUnit(String name, String dexpiClass, EquipmentEnum mappedEquipment,
-      String lineNumber, String fluidCode) {
+  public DexpiProcessUnit(String name, String dexpiClass, EquipmentEnum mappedEquipment, String lineNumber,
+      String fluidCode) {
     super(name);
     this.dexpiClass = dexpiClass;
     this.mappedEquipment = mappedEquipment;

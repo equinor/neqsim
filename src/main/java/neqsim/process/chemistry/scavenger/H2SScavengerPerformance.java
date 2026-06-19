@@ -13,8 +13,8 @@ import java.util.Map;
  * <ul>
  * <li>Stoichiometric scavenger demand for the supplied H2S load.</li>
  * <li>Theoretical breakthrough time given a scavenger inventory.</li>
- * <li>Spent product chemistry warnings (dithiazine deposition for triazine, iron sulphide for
- * iron-based scavengers).</li>
+ * <li>Spent product chemistry warnings (dithiazine deposition for triazine, iron sulphide for iron-based
+ * scavengers).</li>
  * <li>Temperature stability flags.</li>
  * </ul>
  *
@@ -28,8 +28,8 @@ import java.util.Map;
  * </ul>
  *
  * <p>
- * Mass-based scavenger capacity is reported in kg H2S removed per kg active scavenger. Vendor data
- * overrides theoretical values; the model is for screening / sizing.
+ * Mass-based scavenger capacity is reported in kg H2S removed per kg active scavenger. Vendor data overrides
+ * theoretical values; the model is for screening / sizing.
  * </p>
  *
  * @author ESOL
@@ -187,28 +187,27 @@ public class H2SScavengerPerformance implements Serializable {
     }
 
     // Warnings
-    if ((chemistry == ScavengerChemistry.MEA_TRIAZINE
-        || chemistry == ScavengerChemistry.MMA_TRIAZINE) && temperatureC > 80.0) {
+    if ((chemistry == ScavengerChemistry.MEA_TRIAZINE || chemistry == ScavengerChemistry.MMA_TRIAZINE)
+	&& temperatureC > 80.0) {
       warnings.put("triazine_decomposition",
-          "Triazines decompose above 80 C; reduces capacity and releases amine — relocate downstream of cooling");
+	  "Triazines decompose above 80 C; reduces capacity and releases amine — relocate downstream of cooling");
     }
     if (chemistry == ScavengerChemistry.MEA_TRIAZINE && h2sInletPpm > 1000.0) {
       warnings.put("dithiazine_deposition",
-          "Above 1000 ppm H2S, spent triazine forms dithiazine (solid) — risk of fouling");
+	  "Above 1000 ppm H2S, spent triazine forms dithiazine (solid) — risk of fouling");
     }
-    if (chemistry == ScavengerChemistry.IRON_CHELATE
-        || chemistry == ScavengerChemistry.IRON_SPONGE) {
+    if (chemistry == ScavengerChemistry.IRON_CHELATE || chemistry == ScavengerChemistry.IRON_SPONGE) {
       warnings.put("iron_sulphide",
-          "Spent iron scavenger contains FeS (pyrophoric on exposure to air); special handling required");
+	  "Spent iron scavenger contains FeS (pyrophoric on exposure to air); special handling required");
     }
     if (chemistry == ScavengerChemistry.IRON_SPONGE && h2sInletPpm < 50.0) {
       warnings.put("oversized_solid_bed",
-          "Iron sponge is only economic above ~50 ppm H2S; consider liquid scavenger for trace loads");
+	  "Iron sponge is only economic above ~50 ppm H2S; consider liquid scavenger for trace loads");
     }
-    if (h2sToRemoveKgPerDay > 100.0 && (chemistry == ScavengerChemistry.MEA_TRIAZINE
-        || chemistry == ScavengerChemistry.MMA_TRIAZINE)) {
+    if (h2sToRemoveKgPerDay > 100.0
+	&& (chemistry == ScavengerChemistry.MEA_TRIAZINE || chemistry == ScavengerChemistry.MMA_TRIAZINE)) {
       warnings.put("high_load_economics",
-          "Above ~100 kg H2S/day, liquid scavenger OPEX is high — evaluate amine treating or Sulfinol");
+	  "Above ~100 kg H2S/day, liquid scavenger OPEX is high — evaluate amine treating or Sulfinol");
     }
     evaluated = true;
   }
@@ -221,18 +220,18 @@ public class H2SScavengerPerformance implements Serializable {
    */
   private static double stoichiometryMolActivePerMolH2S(ScavengerChemistry chem) {
     switch (chem) {
-      case MEA_TRIAZINE:
-        return 1.0; // theoretical 2/3, practical 1.0
-      case MMA_TRIAZINE:
-        return 1.0;
-      case IRON_CHELATE:
-        return 1.0;
-      case IRON_SPONGE:
-        return 1.1; // bed efficiency penalty
-      case ALDEHYDE:
-        return 1.5;
-      default:
-        return 1.0;
+    case MEA_TRIAZINE:
+      return 1.0; // theoretical 2/3, practical 1.0
+    case MMA_TRIAZINE:
+      return 1.0;
+    case IRON_CHELATE:
+      return 1.0;
+    case IRON_SPONGE:
+      return 1.1; // bed efficiency penalty
+    case ALDEHYDE:
+      return 1.5;
+    default:
+      return 1.0;
     }
   }
 
@@ -244,17 +243,17 @@ public class H2SScavengerPerformance implements Serializable {
    */
   private static double activeMolarMass(ScavengerChemistry chem) {
     switch (chem) {
-      case MEA_TRIAZINE:
-        return M_TRIAZINE_MEA;
-      case MMA_TRIAZINE:
-        return M_TRIAZINE_MMA;
-      case IRON_CHELATE:
-      case IRON_SPONGE:
-        return M_FE;
-      case ALDEHYDE:
-        return M_GLYOXAL;
-      default:
-        return M_TRIAZINE_MEA;
+    case MEA_TRIAZINE:
+      return M_TRIAZINE_MEA;
+    case MMA_TRIAZINE:
+      return M_TRIAZINE_MMA;
+    case IRON_CHELATE:
+    case IRON_SPONGE:
+      return M_FE;
+    case ALDEHYDE:
+      return M_GLYOXAL;
+    default:
+      return M_TRIAZINE_MEA;
     }
   }
 
@@ -349,8 +348,8 @@ public class H2SScavengerPerformance implements Serializable {
    */
   public java.util.List<java.util.Map<String, Object>> getStandardsApplied() {
     return neqsim.process.chemistry.util.StandardsRegistry.toMapList(
-        neqsim.process.chemistry.util.StandardsRegistry.GPSA_DB,
-        neqsim.process.chemistry.util.StandardsRegistry.ISO_13443,
-        neqsim.process.chemistry.util.StandardsRegistry.NACE_MR0175);
+	neqsim.process.chemistry.util.StandardsRegistry.GPSA_DB,
+	neqsim.process.chemistry.util.StandardsRegistry.ISO_13443,
+	neqsim.process.chemistry.util.StandardsRegistry.NACE_MR0175);
   }
 }

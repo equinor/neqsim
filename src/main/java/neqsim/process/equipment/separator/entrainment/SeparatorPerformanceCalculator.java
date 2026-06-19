@@ -13,29 +13,25 @@ import java.util.Map;
 import com.google.gson.GsonBuilder;
 
 /**
- * Calculates detailed separation performance for a separator or scrubber using droplet size
- * distributions and grade efficiency curves.
+ * Calculates detailed separation performance for a separator or scrubber using droplet size distributions and grade
+ * efficiency curves.
  *
  * <p>
- * This calculator provides an optional, physics-based alternative to the simple entrainment
- * fractions in the base {@code Separator} class. When enabled, it computes entrainment from
- * first-principles using:
+ * This calculator provides an optional, physics-based alternative to the simple entrainment fractions in the base
+ * {@code Separator} class. When enabled, it computes entrainment from first-principles using:
  * </p>
  *
  * <ol>
- * <li><b>Inlet droplet size distribution</b> (Rosin-Rammler, log-normal, or from Hinze
- * correlation)</li>
- * <li><b>Gravity separation section</b> — cut diameter from vessel geometry and gas/liquid
- * residence time</li>
+ * <li><b>Inlet droplet size distribution</b> (Rosin-Rammler, log-normal, or from Hinze correlation)</li>
+ * <li><b>Gravity separation section</b> — cut diameter from vessel geometry and gas/liquid residence time</li>
  * <li><b>Mist eliminator grade efficiency</b> — wire mesh, vane pack, cyclone, or custom</li>
- * <li><b>Liquid-liquid separation</b> (three-phase) — oil/water droplet settling with plate pack
- * option</li>
+ * <li><b>Liquid-liquid separation</b> (three-phase) — oil/water droplet settling with plate pack option</li>
  * </ol>
  *
  * <p>
- * The overall entrainment is the fraction of the inlet DSD that passes through all separation
- * stages without being captured. For three-phase separators, separate calculations are performed
- * for gas-oil, gas-water, oil-in-water, and water-in-oil entrainment.
+ * The overall entrainment is the fraction of the inlet DSD that passes through all separation stages without being
+ * captured. For three-phase separators, separate calculations are performed for gas-oil, gas-water, oil-in-water, and
+ * water-in-oil entrainment.
  * </p>
  *
  * <p>
@@ -52,8 +48,8 @@ import com.google.gson.GsonBuilder;
  * calc.setMistEliminatorCurve(GradeEfficiencyCurve.wireMeshDefault());
  *
  * // Run calculation
- * calc.calculate(gasDensity, oilDensity, waterDensity, gasViscosity, oilViscosity, waterViscosity,
- *     gasVelocity, separatorDiameter, separatorLength, orientation, liquidLevelFraction);
+ * calc.calculate(gasDensity, oilDensity, waterDensity, gasViscosity, oilViscosity, waterViscosity, gasVelocity,
+ *     separatorDiameter, separatorLength, orientation, liquidLevelFraction);
  *
  * // Get results
  * double oilInGas = calc.getOilInGasFraction();
@@ -120,9 +116,9 @@ public class SeparatorPerformanceCalculator implements Serializable {
   private double liquidLiquidResidenceTimeOverride = 0.0;
 
   /**
-   * Oil volume fraction in the liquid phase [0-1] for three-phase calculations.
-   * Defaults to 0.5 (equal oil/water split). Set via {@link #setOilVolumeFraction(double)}
-   * when the actual oil/water split is known from the thermodynamic system.
+   * Oil volume fraction in the liquid phase [0-1] for three-phase calculations. Defaults to 0.5 (equal oil/water
+   * split). Set via {@link #setOilVolumeFraction(double)} when the actual oil/water split is known from the
+   * thermodynamic system.
    */
   private double oilVolumeFraction = 0.5;
 
@@ -205,43 +201,41 @@ public class SeparatorPerformanceCalculator implements Serializable {
    * Performs the full separation performance calculation.
    *
    * <p>
-   * This method calculates entrainment fractions for all relevant phase pairs based on the
-   * configured droplet size distributions, grade efficiency curves, and separator geometry.
+   * This method calculates entrainment fractions for all relevant phase pairs based on the configured droplet size
+   * distributions, grade efficiency curves, and separator geometry.
    * </p>
    *
-   * @param gasDensity gas phase density [kg/m3]
-   * @param oilDensity oil phase density [kg/m3], 0 if no oil
-   * @param waterDensity water phase density [kg/m3], 0 if no water
-   * @param gasViscosity gas phase dynamic viscosity [Pa.s]
-   * @param oilViscosity oil phase dynamic viscosity [Pa.s]
-   * @param waterViscosity water phase dynamic viscosity [Pa.s]
-   * @param gasVelocity superficial gas velocity in gas section [m/s]
-   * @param vesselDiameter internal diameter of separator [m]
-   * @param vesselLength length of separator [m]
-   * @param orientation "horizontal" or "vertical"
-   * @param liquidLevelFraction fraction of vessel cross-section occupied by liquid (horizontal) or
-   *        fraction of height (vertical) [0-1]
+   * @param gasDensity          gas phase density [kg/m3]
+   * @param oilDensity          oil phase density [kg/m3], 0 if no oil
+   * @param waterDensity        water phase density [kg/m3], 0 if no water
+   * @param gasViscosity        gas phase dynamic viscosity [Pa.s]
+   * @param oilViscosity        oil phase dynamic viscosity [Pa.s]
+   * @param waterViscosity      water phase dynamic viscosity [Pa.s]
+   * @param gasVelocity         superficial gas velocity in gas section [m/s]
+   * @param vesselDiameter      internal diameter of separator [m]
+   * @param vesselLength        length of separator [m]
+   * @param orientation         "horizontal" or "vertical"
+   * @param liquidLevelFraction fraction of vessel cross-section occupied by liquid (horizontal) or fraction of height
+   *                            (vertical) [0-1]
    */
-  public void calculate(double gasDensity, double oilDensity, double waterDensity,
-      double gasViscosity, double oilViscosity, double waterViscosity, double gasVelocity,
-      double vesselDiameter, double vesselLength, String orientation, double liquidLevelFraction) {
+  public void calculate(double gasDensity, double oilDensity, double waterDensity, double gasViscosity,
+      double oilViscosity, double waterViscosity, double gasVelocity, double vesselDiameter, double vesselLength,
+      String orientation, double liquidLevelFraction) {
 
     // Reset results
     resetResults();
 
     // --- Enhanced calculation chain (if enabled) ---
     if (useEnhancedCalculation) {
-        calculateEnhanced(gasDensity, oilDensity, waterDensity, gasViscosity, oilViscosity,
-          waterViscosity, gasVelocity, vesselDiameter, vesselLength, orientation,
-          liquidLevelFraction);
-        applyCalibrationFactors();
+      calculateEnhanced(gasDensity, oilDensity, waterDensity, gasViscosity, oilViscosity, waterViscosity, gasVelocity,
+	  vesselDiameter, vesselLength, orientation, liquidLevelFraction);
+      applyCalibrationFactors();
       return;
     }
 
     // --- Standard calculation (original path) ---
-    calculateStandard(gasDensity, oilDensity, waterDensity, gasViscosity, oilViscosity,
-        waterViscosity, gasVelocity, vesselDiameter, vesselLength, orientation,
-        liquidLevelFraction);
+    calculateStandard(gasDensity, oilDensity, waterDensity, gasViscosity, oilViscosity, waterViscosity, gasVelocity,
+	vesselDiameter, vesselLength, orientation, liquidLevelFraction);
     applyCalibrationFactors();
   }
 
@@ -249,8 +243,8 @@ public class SeparatorPerformanceCalculator implements Serializable {
    * Applies user-defined calibration multipliers to calculated entrainment fractions.
    *
    * <p>
-   * This preserves the mechanistic model structure while allowing reconciliation to plant/vendor
-   * test data. All calibrated values are clamped to [0, 1].
+   * This preserves the mechanistic model structure while allowing reconciliation to plant/vendor test data. All
+   * calibrated values are clamped to [0, 1].
    * </p>
    */
   private void applyCalibrationFactors() {
@@ -275,41 +269,41 @@ public class SeparatorPerformanceCalculator implements Serializable {
   /**
    * Standard calculation path (original implementation).
    *
-   * @param gasDensity gas density [kg/m3]
-   * @param oilDensity oil density [kg/m3]
-   * @param waterDensity water density [kg/m3]
-   * @param gasViscosity gas viscosity [Pa.s]
-   * @param oilViscosity oil viscosity [Pa.s]
-   * @param waterViscosity water viscosity [Pa.s]
-   * @param gasVelocity gas velocity [m/s]
-   * @param vesselDiameter vessel diameter [m]
-   * @param vesselLength vessel length [m]
-   * @param orientation vessel orientation
+   * @param gasDensity          gas density [kg/m3]
+   * @param oilDensity          oil density [kg/m3]
+   * @param waterDensity        water density [kg/m3]
+   * @param gasViscosity        gas viscosity [Pa.s]
+   * @param oilViscosity        oil viscosity [Pa.s]
+   * @param waterViscosity      water viscosity [Pa.s]
+   * @param gasVelocity         gas velocity [m/s]
+   * @param vesselDiameter      vessel diameter [m]
+   * @param vesselLength        vessel length [m]
+   * @param orientation         vessel orientation
    * @param liquidLevelFraction liquid level fraction
    */
-  private void calculateStandard(double gasDensity, double oilDensity, double waterDensity,
-      double gasViscosity, double oilViscosity, double waterViscosity, double gasVelocity,
-      double vesselDiameter, double vesselLength, String orientation, double liquidLevelFraction) {
+  private void calculateStandard(double gasDensity, double oilDensity, double waterDensity, double gasViscosity,
+      double oilViscosity, double waterViscosity, double gasVelocity, double vesselDiameter, double vesselLength,
+      String orientation, double liquidLevelFraction) {
 
     // --- Gas-liquid separation ---
     if (gasLiquidDSD != null && (oilDensity > 0 || waterDensity > 0)) {
       double liquidDensity = (oilDensity > 0) ? oilDensity : waterDensity;
       double liquidViscosity = (oilDensity > 0) ? oilViscosity : waterViscosity;
 
-      calcGasLiquidSeparation(gasDensity, liquidDensity, gasViscosity, gasVelocity, vesselDiameter,
-          vesselLength, orientation, liquidLevelFraction);
+      calcGasLiquidSeparation(gasDensity, liquidDensity, gasViscosity, gasVelocity, vesselDiameter, vesselLength,
+	  orientation, liquidLevelFraction);
 
       double totalEntrainmentFraction = 1.0 - overallGasLiquidEfficiency;
 
       // Split entrainment between oil and water based on relative liquid volumes
       if (oilDensity > 0 && waterDensity > 0) {
-        // Three-phase: split proportionally (simplified — in reality, feed composition matters)
-        oilInGasFraction = totalEntrainmentFraction;
-        waterInGasFraction = totalEntrainmentFraction;
+	// Three-phase: split proportionally (simplified — in reality, feed composition matters)
+	oilInGasFraction = totalEntrainmentFraction;
+	waterInGasFraction = totalEntrainmentFraction;
       } else if (oilDensity > 0) {
-        oilInGasFraction = totalEntrainmentFraction;
+	oilInGasFraction = totalEntrainmentFraction;
       } else {
-        waterInGasFraction = totalEntrainmentFraction;
+	waterInGasFraction = totalEntrainmentFraction;
       }
     }
 
@@ -317,30 +311,30 @@ public class SeparatorPerformanceCalculator implements Serializable {
     if (gasBubbleDSD != null && (oilDensity > 0 || waterDensity > 0)) {
       double liquidDensity = (oilDensity > 0) ? oilDensity : waterDensity;
       double liquidViscosity = (oilDensity > 0) ? oilViscosity : waterViscosity;
-      calcGasBubbleCarryUnder(gasDensity, liquidDensity, liquidViscosity, gasVelocity,
-          vesselDiameter, vesselLength, orientation, liquidLevelFraction);
+      calcGasBubbleCarryUnder(gasDensity, liquidDensity, liquidViscosity, gasVelocity, vesselDiameter, vesselLength,
+	  orientation, liquidLevelFraction);
     }
 
     // --- Liquid-liquid separation (three-phase) ---
     if (oilDensity > 0 && waterDensity > 0) {
-      calcLiquidLiquidSeparation(oilDensity, waterDensity, oilViscosity, waterViscosity,
-          vesselDiameter, vesselLength, orientation, liquidLevelFraction);
+      calcLiquidLiquidSeparation(oilDensity, waterDensity, oilViscosity, waterViscosity, vesselDiameter, vesselLength,
+	  orientation, liquidLevelFraction);
     }
 
     // --- Build API 12J compliance if enough info is available ---
     if (gravityCutDiameter > 0) {
-      double liqResTime = estimateLiquidResidenceTime(vesselDiameter, vesselLength, orientation,
-          liquidLevelFraction, gasVelocity);
+      double liqResTime = estimateLiquidResidenceTime(vesselDiameter, vesselLength, orientation, liquidLevelFraction,
+	  gasVelocity);
       boolean hasMe = (mistEliminatorCurve != null);
       boolean isThreePhase = (oilDensity > 0 && waterDensity > 0);
-      apiComplianceResult = DropletSettlingCalculator.checkApi12JCompliance(gravityCutDiameter,
-          kFactor, hasMe, liqResTime, orientation, isThreePhase);
+      apiComplianceResult = DropletSettlingCalculator.checkApi12JCompliance(gravityCutDiameter, kFactor, hasMe,
+	  liqResTime, orientation, isThreePhase);
     }
   }
 
   /**
-   * Enhanced calculation chain integrating flow regime prediction, inlet device modeling, detailed
-   * vessel geometry, and database-driven internals performance.
+   * Enhanced calculation chain integrating flow regime prediction, inlet device modeling, detailed vessel geometry, and
+   * database-driven internals performance.
    *
    * <p>
    * Calculation sequence:
@@ -354,21 +348,21 @@ public class SeparatorPerformanceCalculator implements Serializable {
    * <li>Liquid-liquid separation with geometry-based residence time (three-phase)</li>
    * </ol>
    *
-   * @param gasDensity gas phase density [kg/m3]
-   * @param oilDensity oil phase density [kg/m3], 0 if no oil
-   * @param waterDensity water phase density [kg/m3], 0 if no water
-   * @param gasViscosity gas phase dynamic viscosity [Pa.s]
-   * @param oilViscosity oil phase dynamic viscosity [Pa.s]
-   * @param waterViscosity water phase dynamic viscosity [Pa.s]
-   * @param gasVelocity superficial gas velocity in gas section [m/s]
-   * @param vesselDiameter internal diameter of separator [m]
-   * @param vesselLength length of separator [m]
-   * @param orientation "horizontal" or "vertical"
+   * @param gasDensity          gas phase density [kg/m3]
+   * @param oilDensity          oil phase density [kg/m3], 0 if no oil
+   * @param waterDensity        water phase density [kg/m3], 0 if no water
+   * @param gasViscosity        gas phase dynamic viscosity [Pa.s]
+   * @param oilViscosity        oil phase dynamic viscosity [Pa.s]
+   * @param waterViscosity      water phase dynamic viscosity [Pa.s]
+   * @param gasVelocity         superficial gas velocity in gas section [m/s]
+   * @param vesselDiameter      internal diameter of separator [m]
+   * @param vesselLength        length of separator [m]
+   * @param orientation         "horizontal" or "vertical"
    * @param liquidLevelFraction fraction of vessel cross-section occupied by liquid [0-1]
    */
-  private void calculateEnhanced(double gasDensity, double oilDensity, double waterDensity,
-      double gasViscosity, double oilViscosity, double waterViscosity, double gasVelocity,
-      double vesselDiameter, double vesselLength, String orientation, double liquidLevelFraction) {
+  private void calculateEnhanced(double gasDensity, double oilDensity, double waterDensity, double gasViscosity,
+      double oilViscosity, double waterViscosity, double gasVelocity, double vesselDiameter, double vesselLength,
+      String orientation, double liquidLevelFraction) {
 
     double liquidDensity = (oilDensity > 0) ? oilDensity : waterDensity;
     double liquidViscosity = (oilDensity > 0) ? oilViscosity : waterViscosity;
@@ -382,8 +376,7 @@ public class SeparatorPerformanceCalculator implements Serializable {
     }
 
     // Estimate superficial liquid velocity from gas velocity and liquid fraction
-    double superficialLiquidVelocity =
-        gasVelocity * liquidLevelFraction / (1.0 - liquidLevelFraction + 1e-10);
+    double superficialLiquidVelocity = gasVelocity * liquidLevelFraction / (1.0 - liquidLevelFraction + 1e-10);
     if (superficialLiquidVelocity < 0.001) {
       superficialLiquidVelocity = 0.01; // minimum to avoid degenerate regime
     }
@@ -421,16 +414,15 @@ public class SeparatorPerformanceCalculator implements Serializable {
 
     inletDeviceModel.setInletNozzleDiameter(inletPipeDiameter);
     if (workingDSD != null) {
-      inletDeviceModel.calculate(workingDSD, gasDensity, liquidDensity, gasVolumeFlow,
-          liquidVolumeFlow, surfaceTension);
+      inletDeviceModel.calculate(workingDSD, gasDensity, liquidDensity, gasVolumeFlow, liquidVolumeFlow,
+	  surfaceTension);
     }
 
     inletDeviceBulkEfficiency = inletDeviceModel.getBulkSeparationEfficiency();
     postInletDeviceDSD = inletDeviceModel.getDownstreamDSD();
 
     // Use post-inlet-device DSD for downstream stages
-    DropletSizeDistribution gravityInletDSD =
-        (postInletDeviceDSD != null) ? postInletDeviceDSD : workingDSD;
+    DropletSizeDistribution gravityInletDSD = (postInletDeviceDSD != null) ? postInletDeviceDSD : workingDSD;
 
     // ============================================================
     // STAGE 3: Vessel geometry calculation
@@ -452,8 +444,8 @@ public class SeparatorPerformanceCalculator implements Serializable {
     if (oilDensity > 0 && waterDensity > 0) {
       // Three-phase: use configured oil volume fraction (default 0.5; set via setOilVolumeFraction)
       double oilFrac = Math.max(0.01, Math.min(0.99, oilVolumeFraction));
-      geometryCalc.calculateThreePhase(vesselGasFlow, vesselLiquidFlow * oilFrac,
-          vesselLiquidFlow * (1.0 - oilFrac), oilFrac);
+      geometryCalc.calculateThreePhase(vesselGasFlow, vesselLiquidFlow * oilFrac, vesselLiquidFlow * (1.0 - oilFrac),
+	  oilFrac);
     } else {
       geometryCalc.calculate(vesselGasFlow, vesselLiquidFlow);
     }
@@ -467,9 +459,9 @@ public class SeparatorPerformanceCalculator implements Serializable {
       String meType = mistEliminatorCurve.getType().name();
       List<SeparatorInternalsDatabase.InternalsRecord> records = db.findByType(meType);
       if (!records.isEmpty()) {
-        designKFactor = records.get(0).maxKFactor;
+	designKFactor = records.get(0).maxKFactor;
       } else {
-        designKFactor = 0.107; // GPSA default for wire mesh
+	designKFactor = 0.107; // GPSA default for wire mesh
       }
     }
     kFactorUtilization = (designKFactor > 0) ? kFactor / designKFactor : 0.0;
@@ -482,15 +474,14 @@ public class SeparatorPerformanceCalculator implements Serializable {
     double gasResidenceTime = geometryCalc.getGasResidenceTime();
 
     if (includeGravitySection && gravityInletDSD != null) {
-      gravityCutDiameter = DropletSettlingCalculator.calcCriticalDiameter(effectiveSettlingHeight,
-          gasResidenceTime, gasDensity, liquidDensity, gasViscosity);
+      gravityCutDiameter = DropletSettlingCalculator.calcCriticalDiameter(effectiveSettlingHeight, gasResidenceTime,
+	  gasDensity, liquidDensity, gasViscosity);
 
       // Apply turbulence correction to cut diameter (Csanady 1963 / Koenders 2015)
       double effectiveCutDiam = gravityCutDiameter;
       if (applyTurbulenceCorrection) {
-        effectiveCutDiam = DropletSettlingCalculator.calcTurbulenceCorrectedCutDiameter(
-            gravityCutDiameter, gasVelocity, effectiveSettlingHeight, kFactor, designKFactor,
-            gasDensity, liquidDensity, gasViscosity);
+	effectiveCutDiam = DropletSettlingCalculator.calcTurbulenceCorrectedCutDiameter(gravityCutDiameter, gasVelocity,
+	    effectiveSettlingHeight, kFactor, designKFactor, gasDensity, liquidDensity, gasViscosity);
       }
 
       GradeEfficiencyCurve gravityCurve = GradeEfficiencyCurve.gravity(effectiveCutDiam);
@@ -500,21 +491,20 @@ public class SeparatorPerformanceCalculator implements Serializable {
       // STAGE 5: Mist eliminator (with flooding check)
       // ============================================================
       if (mistEliminatorCurve != null && !mistEliminatorFlooded) {
-        mistEliminatorEfficiency = mistEliminatorCurve.calcOverallEfficiency(gravityInletDSD);
-        overallGasLiquidEfficiency =
-            calcCombinedEfficiency(gravityInletDSD, gravityCurve, mistEliminatorCurve);
+	mistEliminatorEfficiency = mistEliminatorCurve.calcOverallEfficiency(gravityInletDSD);
+	overallGasLiquidEfficiency = calcCombinedEfficiency(gravityInletDSD, gravityCurve, mistEliminatorCurve);
       } else if (mistEliminatorCurve != null && mistEliminatorFlooded) {
-        // Partially flooded: efficiency degrades linearly with excess K-factor.
-        // At K_util = 1.0 (onset of flooding): efficiency = 50% of normal.
-        // At K_util >= 2.0: efficiency = 0 (complete flooding / re-entrainment).
-        // Based on: Fabian, P., et al. (1993). GPSA Engineering Data Book, Sec 7.
-        double floodPenalty = Math.max(0.0, 1.0 - (kFactorUtilization - 1.0));
-        double normalMeEff = mistEliminatorCurve.calcOverallEfficiency(gravityInletDSD);
-        mistEliminatorEfficiency = normalMeEff * floodPenalty * 0.5;
-        overallGasLiquidEfficiency = gravitySectionEfficiency
-            + (1.0 - gravitySectionEfficiency) * mistEliminatorEfficiency;
+	// Partially flooded: efficiency degrades linearly with excess K-factor.
+	// At K_util = 1.0 (onset of flooding): efficiency = 50% of normal.
+	// At K_util >= 2.0: efficiency = 0 (complete flooding / re-entrainment).
+	// Based on: Fabian, P., et al. (1993). GPSA Engineering Data Book, Sec 7.
+	double floodPenalty = Math.max(0.0, 1.0 - (kFactorUtilization - 1.0));
+	double normalMeEff = mistEliminatorCurve.calcOverallEfficiency(gravityInletDSD);
+	mistEliminatorEfficiency = normalMeEff * floodPenalty * 0.5;
+	overallGasLiquidEfficiency = gravitySectionEfficiency
+	    + (1.0 - gravitySectionEfficiency) * mistEliminatorEfficiency;
       } else {
-        overallGasLiquidEfficiency = gravitySectionEfficiency;
+	overallGasLiquidEfficiency = gravitySectionEfficiency;
       }
     } else if (mistEliminatorCurve != null && gravityInletDSD != null && !mistEliminatorFlooded) {
       mistEliminatorEfficiency = mistEliminatorCurve.calcOverallEfficiency(gravityInletDSD);
@@ -525,19 +515,19 @@ public class SeparatorPerformanceCalculator implements Serializable {
     if (gravityCutDiameter > 0) {
       double liqResTime = geometryCalc.getLiquidResidenceTime();
       if (liqResTime <= 0) {
-        liqResTime = estimateLiquidResidenceTime(vesselDiameter, vesselLength, orientation,
-            liquidLevelFraction, gasVelocity);
+	liqResTime = estimateLiquidResidenceTime(vesselDiameter, vesselLength, orientation, liquidLevelFraction,
+	    gasVelocity);
       }
       boolean hasMe = (mistEliminatorCurve != null);
       boolean isThreePhase = (oilDensity > 0 && waterDensity > 0);
-      apiComplianceResult = DropletSettlingCalculator.checkApi12JCompliance(gravityCutDiameter,
-          kFactor, hasMe, liqResTime, orientation, isThreePhase);
+      apiComplianceResult = DropletSettlingCalculator.checkApi12JCompliance(gravityCutDiameter, kFactor, hasMe,
+	  liqResTime, orientation, isThreePhase);
     }
 
     // Apply inlet device bulk efficiency (pre-gravity removal)
     // Total liquid removed = bulk + (1-bulk) * downstream_efficiency
-    double combinedEfficiency =
-        inletDeviceBulkEfficiency + (1.0 - inletDeviceBulkEfficiency) * overallGasLiquidEfficiency;
+    double combinedEfficiency = inletDeviceBulkEfficiency
+	+ (1.0 - inletDeviceBulkEfficiency) * overallGasLiquidEfficiency;
     overallGasLiquidEfficiency = Math.min(1.0, combinedEfficiency);
 
     // Set entrainment fractions
@@ -558,11 +548,11 @@ public class SeparatorPerformanceCalculator implements Serializable {
       double liquidHeight = geometryCalc.getEffectiveLiquidSettlingHeight();
       double liquidResidenceTime = geometryCalc.getLiquidResidenceTime();
       if (liquidResidenceTime <= 0) {
-        liquidResidenceTime = 120.0;
+	liquidResidenceTime = 120.0;
       }
 
-      double bubbleCutDiameter = DropletSettlingCalculator.calcCriticalDiameter(liquidHeight,
-          liquidResidenceTime, liquidDensity, gasDensity, liquidViscosity);
+      double bubbleCutDiameter = DropletSettlingCalculator.calcCriticalDiameter(liquidHeight, liquidResidenceTime,
+	  liquidDensity, gasDensity, liquidViscosity);
       GradeEfficiencyCurve bubbleGravity = GradeEfficiencyCurve.gravity(bubbleCutDiameter);
       double bubbleEff = bubbleGravity.calcOverallEfficiency(gasBubbleDSD);
       gasInOilFraction = 1.0 - bubbleEff;
@@ -573,48 +563,47 @@ public class SeparatorPerformanceCalculator implements Serializable {
     // STAGE 7: Liquid-liquid separation (three-phase)
     // ============================================================
     if (oilDensity > 0 && waterDensity > 0) {
-      double llResidenceTime =
-          (liquidLiquidResidenceTimeOverride > 0) ? liquidLiquidResidenceTimeOverride
-              : geometryCalc.getLiquidResidenceTime();
+      double llResidenceTime = (liquidLiquidResidenceTimeOverride > 0) ? liquidLiquidResidenceTimeOverride
+	  : geometryCalc.getLiquidResidenceTime();
       if (llResidenceTime <= 0) {
-        llResidenceTime = 300.0;
+	llResidenceTime = 300.0;
       }
       double oilPadHeight = geometryCalc.getOilPadThickness();
       if (oilPadHeight <= 0) {
-        oilPadHeight = vesselDiameter * liquidLevelFraction / 2.0;
+	oilPadHeight = vesselDiameter * liquidLevelFraction / 2.0;
       }
 
       // Water droplets settling in oil
       if (waterInOilDSD != null) {
-        double dCut = DropletSettlingCalculator.calcCriticalDiameter(oilPadHeight, llResidenceTime,
-            oilDensity, waterDensity, oilViscosity);
-        GradeEfficiencyCurve waterInOilGravity = GradeEfficiencyCurve.gravity(dCut);
-        double gravEff = waterInOilGravity.calcOverallEfficiency(waterInOilDSD);
-        if (oilWaterCoalescerCurve != null) {
-          double coalEff = oilWaterCoalescerCurve.calcOverallEfficiency(waterInOilDSD);
-          waterInOilFraction = (1.0 - gravEff) * (1.0 - coalEff);
-        } else {
-          waterInOilFraction = 1.0 - gravEff;
-        }
+	double dCut = DropletSettlingCalculator.calcCriticalDiameter(oilPadHeight, llResidenceTime, oilDensity,
+	    waterDensity, oilViscosity);
+	GradeEfficiencyCurve waterInOilGravity = GradeEfficiencyCurve.gravity(dCut);
+	double gravEff = waterInOilGravity.calcOverallEfficiency(waterInOilDSD);
+	if (oilWaterCoalescerCurve != null) {
+	  double coalEff = oilWaterCoalescerCurve.calcOverallEfficiency(waterInOilDSD);
+	  waterInOilFraction = (1.0 - gravEff) * (1.0 - coalEff);
+	} else {
+	  waterInOilFraction = 1.0 - gravEff;
+	}
       }
 
       // Oil droplets rising in water
       if (oilInWaterDSD != null) {
-        double waterLayerHeight = geometryCalc.getWaterLayerHeight();
-        if (waterLayerHeight <= 0) {
-          waterLayerHeight = oilPadHeight;
-        }
-        double dCut = DropletSettlingCalculator.calcCriticalDiameter(waterLayerHeight,
-            llResidenceTime, waterDensity, oilDensity, waterViscosity);
-        GradeEfficiencyCurve oilInWaterGravity = GradeEfficiencyCurve.gravity(dCut);
-        double gravEff = oilInWaterGravity.calcOverallEfficiency(oilInWaterDSD);
-        if (oilWaterCoalescerCurve != null) {
-          double coalEff = oilWaterCoalescerCurve.calcOverallEfficiency(oilInWaterDSD);
-          oilInWaterFraction = (1.0 - gravEff) * (1.0 - coalEff);
-        } else {
-          oilInWaterFraction = 1.0 - gravEff;
-        }
-        liquidLiquidGravityEfficiency = gravEff;
+	double waterLayerHeight = geometryCalc.getWaterLayerHeight();
+	if (waterLayerHeight <= 0) {
+	  waterLayerHeight = oilPadHeight;
+	}
+	double dCut = DropletSettlingCalculator.calcCriticalDiameter(waterLayerHeight, llResidenceTime, waterDensity,
+	    oilDensity, waterViscosity);
+	GradeEfficiencyCurve oilInWaterGravity = GradeEfficiencyCurve.gravity(dCut);
+	double gravEff = oilInWaterGravity.calcOverallEfficiency(oilInWaterDSD);
+	if (oilWaterCoalescerCurve != null) {
+	  double coalEff = oilWaterCoalescerCurve.calcOverallEfficiency(oilInWaterDSD);
+	  oilInWaterFraction = (1.0 - gravEff) * (1.0 - coalEff);
+	} else {
+	  oilInWaterFraction = 1.0 - gravEff;
+	}
+	liquidLiquidGravityEfficiency = gravEff;
       }
     }
   }
@@ -622,18 +611,17 @@ public class SeparatorPerformanceCalculator implements Serializable {
   /**
    * Calculates gas-liquid separation efficiency combining gravity section and mist eliminator.
    *
-   * @param gasDensity gas density [kg/m3]
-   * @param liquidDensity liquid density [kg/m3]
-   * @param gasViscosity gas viscosity [Pa.s]
-   * @param gasVelocity superficial gas velocity [m/s]
-   * @param diameter vessel diameter [m]
-   * @param length vessel length [m]
-   * @param orientation vessel orientation
+   * @param gasDensity      gas density [kg/m3]
+   * @param liquidDensity   liquid density [kg/m3]
+   * @param gasViscosity    gas viscosity [Pa.s]
+   * @param gasVelocity     superficial gas velocity [m/s]
+   * @param diameter        vessel diameter [m]
+   * @param length          vessel length [m]
+   * @param orientation     vessel orientation
    * @param liquidLevelFrac liquid level fraction
    */
-  private void calcGasLiquidSeparation(double gasDensity, double liquidDensity, double gasViscosity,
-      double gasVelocity, double diameter, double length, String orientation,
-      double liquidLevelFrac) {
+  private void calcGasLiquidSeparation(double gasDensity, double liquidDensity, double gasViscosity, double gasVelocity,
+      double diameter, double length, String orientation, double liquidLevelFrac) {
 
     // Calculate gravity section
     double gasAreaFraction = 1.0 - liquidLevelFrac;
@@ -652,8 +640,8 @@ public class SeparatorPerformanceCalculator implements Serializable {
     }
 
     // Calculate gravity cut diameter
-    gravityCutDiameter = DropletSettlingCalculator.calcCriticalDiameter(availableHeight,
-        gasResidenceTime, gasDensity, liquidDensity, gasViscosity);
+    gravityCutDiameter = DropletSettlingCalculator.calcCriticalDiameter(availableHeight, gasResidenceTime, gasDensity,
+	liquidDensity, gasViscosity);
 
     // Create gravity grade efficiency
     GradeEfficiencyCurve gravityCurve = GradeEfficiencyCurve.gravity(gravityCutDiameter);
@@ -670,8 +658,7 @@ public class SeparatorPerformanceCalculator implements Serializable {
     // Combined efficiency: gravity removes some droplets, mist eliminator catches the rest
     // The DSD reaching the mist eliminator is the "penetration" through gravity
     if (includeGravitySection && mistEliminatorCurve != null) {
-      overallGasLiquidEfficiency =
-          calcCombinedEfficiency(gasLiquidDSD, gravityCurve, mistEliminatorCurve);
+      overallGasLiquidEfficiency = calcCombinedEfficiency(gasLiquidDSD, gravityCurve, mistEliminatorCurve);
     } else if (includeGravitySection) {
       overallGasLiquidEfficiency = gravitySectionEfficiency;
     } else if (mistEliminatorCurve != null) {
@@ -688,7 +675,7 @@ public class SeparatorPerformanceCalculator implements Serializable {
    *
    * $$ \eta_{combined}(d) = 1 - (1 - \eta_1(d)) \cdot (1 - \eta_2(d)) $$
    *
-   * @param dsd droplet size distribution
+   * @param dsd    droplet size distribution
    * @param stage1 first stage (gravity)
    * @param stage2 second stage (mist eliminator)
    * @return combined overall efficiency
@@ -711,31 +698,31 @@ public class SeparatorPerformanceCalculator implements Serializable {
   /**
    * Calculates gas bubble carry-under in the liquid phase.
    *
-   * @param gasDensity gas density [kg/m3]
-   * @param liquidDensity liquid density [kg/m3]
+   * @param gasDensity      gas density [kg/m3]
+   * @param liquidDensity   liquid density [kg/m3]
    * @param liquidViscosity liquid viscosity [Pa.s]
-   * @param diameter vessel diameter [m]
-   * @param length vessel length [m]
-   * @param orientation vessel orientation
+   * @param diameter        vessel diameter [m]
+   * @param length          vessel length [m]
+   * @param orientation     vessel orientation
    * @param liquidLevelFrac liquid level fraction
    */
   /**
    * Estimates the liquid residence time from vessel geometry and gas velocity.
    *
    * <p>
-   * Uses mass continuity to derive the superficial liquid velocity from the superficial gas
-   * velocity and the phase fraction, then divides vessel length by that velocity.
+   * Uses mass continuity to derive the superficial liquid velocity from the superficial gas velocity and the phase
+   * fraction, then divides vessel length by that velocity.
    * </p>
    *
-   * @param diameter vessel internal diameter [m]
-   * @param length vessel tangent-to-tangent length [m]
-   * @param orientation "horizontal" or "vertical"
+   * @param diameter        vessel internal diameter [m]
+   * @param length          vessel tangent-to-tangent length [m]
+   * @param orientation     "horizontal" or "vertical"
    * @param liquidLevelFrac fraction of cross-section occupied by liquid [0-1]
-   * @param gasVelocity superficial gas velocity [m/s]
+   * @param gasVelocity     superficial gas velocity [m/s]
    * @return estimated liquid residence time [s]
    */
-  private static double estimateLiquidResidenceTime(double diameter, double length,
-      String orientation, double liquidLevelFrac, double gasVelocity) {
+  private static double estimateLiquidResidenceTime(double diameter, double length, String orientation,
+      double liquidLevelFrac, double gasVelocity) {
     // Superficial liquid velocity via continuity (same volumetric flow density approach)
     double gasFrac = Math.max(0.01, 1.0 - liquidLevelFrac);
     double liqFrac = Math.max(0.01, liquidLevelFrac);
@@ -744,9 +731,8 @@ public class SeparatorPerformanceCalculator implements Serializable {
     return length / Math.max(superficialLiquidVelocity, 0.0001);
   }
 
-  private void calcGasBubbleCarryUnder(double gasDensity, double liquidDensity,
-      double liquidViscosity, double gasVelocity, double diameter, double length,
-      String orientation, double liquidLevelFrac) {
+  private void calcGasBubbleCarryUnder(double gasDensity, double liquidDensity, double liquidViscosity,
+      double gasVelocity, double diameter, double length, String orientation, double liquidLevelFrac) {
 
     double liquidHeight;
     if ("vertical".equalsIgnoreCase(orientation)) {
@@ -756,14 +742,14 @@ public class SeparatorPerformanceCalculator implements Serializable {
     }
 
     // Compute liquid residence time from vessel geometry and continuity (not hardcoded)
-    double liquidResidenceTime = estimateLiquidResidenceTime(diameter, length, orientation,
-        liquidLevelFrac, gasVelocity);
+    double liquidResidenceTime = estimateLiquidResidenceTime(diameter, length, orientation, liquidLevelFrac,
+	gasVelocity);
     if (liquidHeight <= 0) {
       liquidResidenceTime = 0.0;
     }
 
-    double bubbleCutDiameter = DropletSettlingCalculator.calcCriticalDiameter(liquidHeight,
-        liquidResidenceTime, liquidDensity, gasDensity, liquidViscosity);
+    double bubbleCutDiameter = DropletSettlingCalculator.calcCriticalDiameter(liquidHeight, liquidResidenceTime,
+	liquidDensity, gasDensity, liquidViscosity);
 
     GradeEfficiencyCurve bubbleGravity = GradeEfficiencyCurve.gravity(bubbleCutDiameter);
     double bubbleEfficiency = bubbleGravity.calcOverallEfficiency(gasBubbleDSD);
@@ -775,18 +761,17 @@ public class SeparatorPerformanceCalculator implements Serializable {
   /**
    * Calculates liquid-liquid separation (oil-water and water-oil).
    *
-   * @param oilDensity oil density [kg/m3]
-   * @param waterDensity water density [kg/m3]
-   * @param oilViscosity oil viscosity [Pa.s]
-   * @param waterViscosity water viscosity [Pa.s]
-   * @param diameter vessel diameter [m]
-   * @param length vessel length [m]
-   * @param orientation vessel orientation
+   * @param oilDensity      oil density [kg/m3]
+   * @param waterDensity    water density [kg/m3]
+   * @param oilViscosity    oil viscosity [Pa.s]
+   * @param waterViscosity  water viscosity [Pa.s]
+   * @param diameter        vessel diameter [m]
+   * @param length          vessel length [m]
+   * @param orientation     vessel orientation
    * @param liquidLevelFrac total liquid level fraction
    */
-  private void calcLiquidLiquidSeparation(double oilDensity, double waterDensity,
-      double oilViscosity, double waterViscosity, double diameter, double length,
-      String orientation, double liquidLevelFrac) {
+  private void calcLiquidLiquidSeparation(double oilDensity, double waterDensity, double oilViscosity,
+      double waterViscosity, double diameter, double length, String orientation, double liquidLevelFrac) {
 
     double liquidHeight;
     if ("vertical".equalsIgnoreCase(orientation)) {
@@ -802,33 +787,33 @@ public class SeparatorPerformanceCalculator implements Serializable {
 
     // Water droplets settling in oil (water-in-oil)
     if (waterInOilDSD != null) {
-      double dCut = DropletSettlingCalculator.calcCriticalDiameter(settlingHeight,
-          liquidResidenceTime, oilDensity, waterDensity, oilViscosity);
+      double dCut = DropletSettlingCalculator.calcCriticalDiameter(settlingHeight, liquidResidenceTime, oilDensity,
+	  waterDensity, oilViscosity);
 
       GradeEfficiencyCurve gravityCurve = GradeEfficiencyCurve.gravity(dCut);
       double gravityEff = gravityCurve.calcOverallEfficiency(waterInOilDSD);
 
       if (oilWaterCoalescerCurve != null) {
-        double coalescerEff = oilWaterCoalescerCurve.calcOverallEfficiency(waterInOilDSD);
-        waterInOilFraction = (1.0 - gravityEff) * (1.0 - coalescerEff);
+	double coalescerEff = oilWaterCoalescerCurve.calcOverallEfficiency(waterInOilDSD);
+	waterInOilFraction = (1.0 - gravityEff) * (1.0 - coalescerEff);
       } else {
-        waterInOilFraction = 1.0 - gravityEff;
+	waterInOilFraction = 1.0 - gravityEff;
       }
     }
 
     // Oil droplets rising in water (oil-in-water)
     if (oilInWaterDSD != null) {
-      double dCut = DropletSettlingCalculator.calcCriticalDiameter(settlingHeight,
-          liquidResidenceTime, waterDensity, oilDensity, waterViscosity);
+      double dCut = DropletSettlingCalculator.calcCriticalDiameter(settlingHeight, liquidResidenceTime, waterDensity,
+	  oilDensity, waterViscosity);
 
       GradeEfficiencyCurve gravityCurve = GradeEfficiencyCurve.gravity(dCut);
       double gravityEff = gravityCurve.calcOverallEfficiency(oilInWaterDSD);
 
       if (oilWaterCoalescerCurve != null) {
-        double coalescerEff = oilWaterCoalescerCurve.calcOverallEfficiency(oilInWaterDSD);
-        oilInWaterFraction = (1.0 - gravityEff) * (1.0 - coalescerEff);
+	double coalescerEff = oilWaterCoalescerCurve.calcOverallEfficiency(oilInWaterDSD);
+	oilInWaterFraction = (1.0 - gravityEff) * (1.0 - coalescerEff);
       } else {
-        oilInWaterFraction = 1.0 - gravityEff;
+	oilInWaterFraction = 1.0 - gravityEff;
       }
       liquidLiquidGravityEfficiency = gravityEff;
     }
@@ -902,36 +887,35 @@ public class SeparatorPerformanceCalculator implements Serializable {
       result.put("mistEliminatorFlooded", mistEliminatorFlooded);
       result.put("inletDeviceBulkEfficiency", inletDeviceBulkEfficiency);
       if (inletFlowRegime != null) {
-        result.put("inletFlowRegime", inletFlowRegime.name());
+	result.put("inletFlowRegime", inletFlowRegime.name());
       }
       if (postInletDeviceDSD != null) {
-        Map<String, Object> pidDsd = new LinkedHashMap<String, Object>();
-        pidDsd.put("type", postInletDeviceDSD.getType().name());
-        pidDsd.put("d50_um", postInletDeviceDSD.getD50() * 1e6);
-        pidDsd.put("d32_um", postInletDeviceDSD.getSauterMeanDiameter() * 1e6);
-        result.put("postInletDeviceDSD", pidDsd);
+	Map<String, Object> pidDsd = new LinkedHashMap<String, Object>();
+	pidDsd.put("type", postInletDeviceDSD.getType().name());
+	pidDsd.put("d50_um", postInletDeviceDSD.getD50() * 1e6);
+	pidDsd.put("d32_um", postInletDeviceDSD.getSauterMeanDiameter() * 1e6);
+	result.put("postInletDeviceDSD", pidDsd);
       }
       if (inletDeviceModel != null) {
-        Map<String, Object> idInfo = new LinkedHashMap<String, Object>();
-        idInfo.put("type", inletDeviceModel.getDeviceType().name());
-        idInfo.put("nozzleVelocity_m_s", inletDeviceModel.getNozzleVelocity());
-        idInfo.put("momentumFlux_Pa", inletDeviceModel.getMomentumFlux());
-        idInfo.put("pressureDrop_Pa", inletDeviceModel.getPressureDrop());
-        result.put("inletDevice", idInfo);
+	Map<String, Object> idInfo = new LinkedHashMap<String, Object>();
+	idInfo.put("type", inletDeviceModel.getDeviceType().name());
+	idInfo.put("nozzleVelocity_m_s", inletDeviceModel.getNozzleVelocity());
+	idInfo.put("momentumFlux_Pa", inletDeviceModel.getMomentumFlux());
+	idInfo.put("pressureDrop_Pa", inletDeviceModel.getPressureDrop());
+	result.put("inletDevice", idInfo);
       }
       if (geometryCalc != null) {
-        Map<String, Object> geomInfo = new LinkedHashMap<String, Object>();
-        geomInfo.put("gasResidenceTime_s", geometryCalc.getGasResidenceTime());
-        geomInfo.put("liquidResidenceTime_s", geometryCalc.getLiquidResidenceTime());
-        geomInfo.put("effectiveSettlingHeight_m", geometryCalc.getEffectiveGasSettlingHeight());
-        geomInfo.put("gasArea_m2", geometryCalc.getGasArea());
-        geomInfo.put("liquidArea_m2", geometryCalc.getLiquidArea());
-        result.put("vesselGeometry", geomInfo);
+	Map<String, Object> geomInfo = new LinkedHashMap<String, Object>();
+	geomInfo.put("gasResidenceTime_s", geometryCalc.getGasResidenceTime());
+	geomInfo.put("liquidResidenceTime_s", geometryCalc.getLiquidResidenceTime());
+	geomInfo.put("effectiveSettlingHeight_m", geometryCalc.getEffectiveGasSettlingHeight());
+	geomInfo.put("gasArea_m2", geometryCalc.getGasArea());
+	geomInfo.put("liquidArea_m2", geometryCalc.getLiquidArea());
+	result.put("vesselGeometry", geomInfo);
       }
     }
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(result);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(result);
   }
 
   // ----- Getters for results -----
@@ -1137,8 +1121,7 @@ public class SeparatorPerformanceCalculator implements Serializable {
   }
 
   /**
-   * Sets calibration multiplier for liquid-in-gas carryover
-   * (oil-in-gas and water-in-gas fractions).
+   * Sets calibration multiplier for liquid-in-gas carryover (oil-in-gas and water-in-gas fractions).
    *
    * @param factor calibration factor (&gt;= 0), where 1.0 means no calibration
    */
@@ -1174,8 +1157,7 @@ public class SeparatorPerformanceCalculator implements Serializable {
   }
 
   /**
-   * Sets calibration multiplier for liquid-liquid cross-contamination
-   * (oil-in-water and water-in-oil fractions).
+   * Sets calibration multiplier for liquid-liquid cross-contamination (oil-in-water and water-in-oil fractions).
    *
    * @param factor calibration factor (&gt;= 0), where 1.0 means no calibration
    */
@@ -1223,18 +1205,18 @@ public class SeparatorPerformanceCalculator implements Serializable {
     /**
      * Constructs a calibration summary.
      *
-     * @param prevLig previous liquid-in-gas factor
-     * @param prevGcu previous gas carry-under factor
-     * @param prevLiqLiq previous liquid-liquid factor
-     * @param newLig new liquid-in-gas factor
-     * @param newGcu new gas carry-under factor
-     * @param newLiqLiq new liquid-liquid factor
-     * @param ligPoints number of liquid-in-gas points used
-     * @param gcuPoints number of gas carry-under points used
+     * @param prevLig      previous liquid-in-gas factor
+     * @param prevGcu      previous gas carry-under factor
+     * @param prevLiqLiq   previous liquid-liquid factor
+     * @param newLig       new liquid-in-gas factor
+     * @param newGcu       new gas carry-under factor
+     * @param newLiqLiq    new liquid-liquid factor
+     * @param ligPoints    number of liquid-in-gas points used
+     * @param gcuPoints    number of gas carry-under points used
      * @param liqLiqPoints number of liquid-liquid points used
      */
-    public CalibrationSummary(double prevLig, double prevGcu, double prevLiqLiq, double newLig,
-        double newGcu, double newLiqLiq, int ligPoints, int gcuPoints, int liqLiqPoints) {
+    public CalibrationSummary(double prevLig, double prevGcu, double prevLiqLiq, double newLig, double newGcu,
+	double newLiqLiq, int ligPoints, int gcuPoints, int liqLiqPoints) {
       this.previousLiquidInGasFactor = prevLig;
       this.previousGasCarryUnderFactor = prevGcu;
       this.previousLiquidLiquidFactor = prevLiqLiq;
@@ -1277,22 +1259,21 @@ public class SeparatorPerformanceCalculator implements Serializable {
      * Constructs a calibration case.
      *
      * @param caseIdArg case identifier
-     * @param moig modeled oil-in-gas
-     * @param mwig modeled water-in-gas
-     * @param mgio modeled gas-in-oil
-     * @param mgiw modeled gas-in-water
-     * @param moiw modeled oil-in-water
-     * @param mwio modeled water-in-oil
-     * @param eoig measured oil-in-gas
-     * @param ewig measured water-in-gas
-     * @param egio measured gas-in-oil
-     * @param egiw measured gas-in-water
-     * @param eoiw measured oil-in-water
-     * @param ewio measured water-in-oil
+     * @param moig      modeled oil-in-gas
+     * @param mwig      modeled water-in-gas
+     * @param mgio      modeled gas-in-oil
+     * @param mgiw      modeled gas-in-water
+     * @param moiw      modeled oil-in-water
+     * @param mwio      modeled water-in-oil
+     * @param eoig      measured oil-in-gas
+     * @param ewig      measured water-in-gas
+     * @param egio      measured gas-in-oil
+     * @param egiw      measured gas-in-water
+     * @param eoiw      measured oil-in-water
+     * @param ewio      measured water-in-oil
      */
-    public CalibrationCase(String caseIdArg, double moig, double mwig, double mgio, double mgiw,
-        double moiw, double mwio, double eoig, double ewig, double egio, double egiw,
-        double eoiw, double ewio) {
+    public CalibrationCase(String caseIdArg, double moig, double mwig, double mgio, double mgiw, double moiw,
+	double mwio, double eoig, double ewig, double egio, double egiw, double eoiw, double ewio) {
       this.caseId = caseIdArg;
       this.modeledOilInGas = moig;
       this.modeledWaterInGas = mwig;
@@ -1328,17 +1309,15 @@ public class SeparatorPerformanceCalculator implements Serializable {
     /**
      * Constructs a batch calibration summary.
      *
-     * @param base base summary fields
-     * @param cases number of cases processed
+     * @param base   base summary fields
+     * @param cases  number of cases processed
      * @param before mean absolute percentage error before calibration
-     * @param after mean absolute percentage error after calibration
+     * @param after  mean absolute percentage error after calibration
      */
-    public BatchCalibrationSummary(CalibrationSummary base, int cases, double before,
-        double after) {
-      super(base.previousLiquidInGasFactor, base.previousGasCarryUnderFactor,
-          base.previousLiquidLiquidFactor, base.newLiquidInGasFactor,
-          base.newGasCarryUnderFactor, base.newLiquidLiquidFactor, base.liquidInGasPointsUsed,
-          base.gasCarryUnderPointsUsed, base.liquidLiquidPointsUsed);
+    public BatchCalibrationSummary(CalibrationSummary base, int cases, double before, double after) {
+      super(base.previousLiquidInGasFactor, base.previousGasCarryUnderFactor, base.previousLiquidLiquidFactor,
+	  base.newLiquidInGasFactor, base.newGasCarryUnderFactor, base.newLiquidLiquidFactor,
+	  base.liquidInGasPointsUsed, base.gasCarryUnderPointsUsed, base.liquidLiquidPointsUsed);
       this.casesProcessed = cases;
       this.mapeBefore = before;
       this.mapeAfter = after;
@@ -1352,10 +1331,10 @@ public class SeparatorPerformanceCalculator implements Serializable {
    * Required headers (case-insensitive):
    * </p>
    * <ul>
-   * <li>modeled_oil_in_gas, modeled_water_in_gas, modeled_gas_in_oil,
-   * modeled_gas_in_water, modeled_oil_in_water, modeled_water_in_oil</li>
-   * <li>measured_oil_in_gas, measured_water_in_gas, measured_gas_in_oil,
-   * measured_gas_in_water, measured_oil_in_water, measured_water_in_oil</li>
+   * <li>modeled_oil_in_gas, modeled_water_in_gas, modeled_gas_in_oil, modeled_gas_in_water, modeled_oil_in_water,
+   * modeled_water_in_oil</li>
+   * <li>measured_oil_in_gas, measured_water_in_gas, measured_gas_in_oil, measured_gas_in_water, measured_oil_in_water,
+   * measured_water_in_oil</li>
    * </ul>
    *
    * <p>
@@ -1366,58 +1345,50 @@ public class SeparatorPerformanceCalculator implements Serializable {
    * @return list of calibration cases
    * @throws IOException if reading fails or required columns are missing
    */
-  public static List<CalibrationCase> loadCalibrationCasesFromCsv(String filePath)
-      throws IOException {
+  public static List<CalibrationCase> loadCalibrationCasesFromCsv(String filePath) throws IOException {
     List<CalibrationCase> cases = new ArrayList<CalibrationCase>();
 
     BufferedReader reader = new BufferedReader(new FileReader(filePath));
     try {
       String headerLine = reader.readLine();
       if (headerLine == null) {
-        throw new IOException("Calibration CSV is empty: " + filePath);
+	throw new IOException("Calibration CSV is empty: " + filePath);
       }
 
       String[] headers = headerLine.split(",");
       Map<String, Integer> idx = new HashMap<String, Integer>();
       for (int i = 0; i < headers.length; i++) {
-        idx.put(headers[i].trim().toLowerCase(), Integer.valueOf(i));
+	idx.put(headers[i].trim().toLowerCase(), Integer.valueOf(i));
       }
 
-      String[] required = new String[] {"modeled_oil_in_gas", "modeled_water_in_gas",
-          "modeled_gas_in_oil", "modeled_gas_in_water", "modeled_oil_in_water",
-          "modeled_water_in_oil", "measured_oil_in_gas", "measured_water_in_gas",
-          "measured_gas_in_oil", "measured_gas_in_water", "measured_oil_in_water",
-          "measured_water_in_oil"};
+      String[] required = new String[] { "modeled_oil_in_gas", "modeled_water_in_gas", "modeled_gas_in_oil",
+	  "modeled_gas_in_water", "modeled_oil_in_water", "modeled_water_in_oil", "measured_oil_in_gas",
+	  "measured_water_in_gas", "measured_gas_in_oil", "measured_gas_in_water", "measured_oil_in_water",
+	  "measured_water_in_oil" };
       for (int i = 0; i < required.length; i++) {
-        if (!idx.containsKey(required[i])) {
-          throw new IOException("Missing required CSV column: " + required[i]);
-        }
+	if (!idx.containsKey(required[i])) {
+	  throw new IOException("Missing required CSV column: " + required[i]);
+	}
       }
 
       String line;
       int row = 1;
       while ((line = reader.readLine()) != null) {
-        row++;
-        if (line.trim().isEmpty() || line.trim().startsWith("#")) {
-          continue;
-        }
-        String[] cols = line.split(",", -1);
+	row++;
+	if (line.trim().isEmpty() || line.trim().startsWith("#")) {
+	  continue;
+	}
+	String[] cols = line.split(",", -1);
 
-        String caseId = getString(cols, idx, "case_id", "row-" + row);
-        CalibrationCase c = new CalibrationCase(caseId,
-            getDouble(cols, idx, "modeled_oil_in_gas", row),
-            getDouble(cols, idx, "modeled_water_in_gas", row),
-            getDouble(cols, idx, "modeled_gas_in_oil", row),
-            getDouble(cols, idx, "modeled_gas_in_water", row),
-            getDouble(cols, idx, "modeled_oil_in_water", row),
-            getDouble(cols, idx, "modeled_water_in_oil", row),
-            getDouble(cols, idx, "measured_oil_in_gas", row),
-            getDouble(cols, idx, "measured_water_in_gas", row),
-            getDouble(cols, idx, "measured_gas_in_oil", row),
-            getDouble(cols, idx, "measured_gas_in_water", row),
-            getDouble(cols, idx, "measured_oil_in_water", row),
-            getDouble(cols, idx, "measured_water_in_oil", row));
-        cases.add(c);
+	String caseId = getString(cols, idx, "case_id", "row-" + row);
+	CalibrationCase c = new CalibrationCase(caseId, getDouble(cols, idx, "modeled_oil_in_gas", row),
+	    getDouble(cols, idx, "modeled_water_in_gas", row), getDouble(cols, idx, "modeled_gas_in_oil", row),
+	    getDouble(cols, idx, "modeled_gas_in_water", row), getDouble(cols, idx, "modeled_oil_in_water", row),
+	    getDouble(cols, idx, "modeled_water_in_oil", row), getDouble(cols, idx, "measured_oil_in_gas", row),
+	    getDouble(cols, idx, "measured_water_in_gas", row), getDouble(cols, idx, "measured_gas_in_oil", row),
+	    getDouble(cols, idx, "measured_gas_in_water", row), getDouble(cols, idx, "measured_oil_in_water", row),
+	    getDouble(cols, idx, "measured_water_in_oil", row));
+	cases.add(c);
       }
     } finally {
       reader.close();
@@ -1437,14 +1408,14 @@ public class SeparatorPerformanceCalculator implements Serializable {
    * <li>liquid-liquid: average of oil-in-water and water-in-oil model values</li>
    * </ul>
    *
-   * @param measuredLiquidInGas measured grouped liquid-in-gas
+   * @param measuredLiquidInGas   measured grouped liquid-in-gas
    * @param measuredGasCarryUnder measured grouped gas carry-under
-   * @param measuredLiquidLiquid measured grouped liquid-liquid cross-contamination
-   * @param modelFloor minimum model value for ratio fitting
+   * @param measuredLiquidLiquid  measured grouped liquid-liquid cross-contamination
+   * @param modelFloor            minimum model value for ratio fitting
    * @return calibration summary
    */
-  public CalibrationSummary calibrateFromGroupedMeasurements(double measuredLiquidInGas,
-      double measuredGasCarryUnder, double measuredLiquidLiquid, double modelFloor) {
+  public CalibrationSummary calibrateFromGroupedMeasurements(double measuredLiquidInGas, double measuredGasCarryUnder,
+      double measuredLiquidLiquid, double modelFloor) {
     double prevLig = liquidInGasCalibrationFactor;
     double prevGcu = gasCarryUnderCalibrationFactor;
     double prevLiqLiq = liquidLiquidCalibrationFactor;
@@ -1458,37 +1429,31 @@ public class SeparatorPerformanceCalculator implements Serializable {
     int liqLiqPoints = (liqLiqModel > 0.0) ? 1 : 0;
 
     if (ligPoints > 0) {
-      setLiquidInGasCalibrationFactor(
-          safeRatio(measuredLiquidInGas, ligModel, Math.max(0.0, modelFloor)));
+      setLiquidInGasCalibrationFactor(safeRatio(measuredLiquidInGas, ligModel, Math.max(0.0, modelFloor)));
     }
     if (gcuPoints > 0) {
-      setGasCarryUnderCalibrationFactor(
-          safeRatio(measuredGasCarryUnder, gcuModel, Math.max(0.0, modelFloor)));
+      setGasCarryUnderCalibrationFactor(safeRatio(measuredGasCarryUnder, gcuModel, Math.max(0.0, modelFloor)));
     }
     if (liqLiqPoints > 0) {
-      setLiquidLiquidCalibrationFactor(
-          safeRatio(measuredLiquidLiquid, liqLiqModel, Math.max(0.0, modelFloor)));
+      setLiquidLiquidCalibrationFactor(safeRatio(measuredLiquidLiquid, liqLiqModel, Math.max(0.0, modelFloor)));
     }
 
     return new CalibrationSummary(prevLig, prevGcu, prevLiqLiq, liquidInGasCalibrationFactor,
-        gasCarryUnderCalibrationFactor, liquidLiquidCalibrationFactor, ligPoints, gcuPoints,
-        liqLiqPoints);
+	gasCarryUnderCalibrationFactor, liquidLiquidCalibrationFactor, ligPoints, gcuPoints, liqLiqPoints);
   }
 
   /**
    * Calibrates factors from a list of modeled/measured cases.
    *
-   * @param cases calibration cases
+   * @param cases      calibration cases
    * @param modelFloor minimum model value for ratio fitting
    * @return batch calibration summary with pre/post error metrics
    */
-  public BatchCalibrationSummary calibrateFromCaseLibrary(List<CalibrationCase> cases,
-      double modelFloor) {
+  public BatchCalibrationSummary calibrateFromCaseLibrary(List<CalibrationCase> cases, double modelFloor) {
     if (cases == null || cases.isEmpty()) {
-      CalibrationSummary base = new CalibrationSummary(liquidInGasCalibrationFactor,
-          gasCarryUnderCalibrationFactor, liquidLiquidCalibrationFactor,
-          liquidInGasCalibrationFactor, gasCarryUnderCalibrationFactor,
-          liquidLiquidCalibrationFactor, 0, 0, 0);
+      CalibrationSummary base = new CalibrationSummary(liquidInGasCalibrationFactor, gasCarryUnderCalibrationFactor,
+	  liquidLiquidCalibrationFactor, liquidInGasCalibrationFactor, gasCarryUnderCalibrationFactor,
+	  liquidLiquidCalibrationFactor, 0, 0, 0);
       return new BatchCalibrationSummary(base, 0, 0.0, 0.0);
     }
 
@@ -1536,24 +1501,24 @@ public class SeparatorPerformanceCalculator implements Serializable {
     int afterErrCount = 0;
     for (int i = 0; i < cases.size(); i++) {
       CalibrationCase c = cases.get(i);
-      afterErrSum += pairMape(clamp01(c.modeledOilInGas * liquidInGasCalibrationFactor),
-          c.measuredOilInGas, modelFloor);
-      afterErrSum += pairMape(clamp01(c.modeledWaterInGas * liquidInGasCalibrationFactor),
-          c.measuredWaterInGas, modelFloor);
-      afterErrSum += pairMape(clamp01(c.modeledGasInOil * gasCarryUnderCalibrationFactor),
-          c.measuredGasInOil, modelFloor);
-      afterErrSum += pairMape(clamp01(c.modeledGasInWater * gasCarryUnderCalibrationFactor),
-          c.measuredGasInWater, modelFloor);
-      afterErrSum += pairMape(clamp01(c.modeledOilInWater * liquidLiquidCalibrationFactor),
-          c.measuredOilInWater, modelFloor);
-      afterErrSum += pairMape(clamp01(c.modeledWaterInOil * liquidLiquidCalibrationFactor),
-          c.measuredWaterInOil, modelFloor);
+      afterErrSum += pairMape(clamp01(c.modeledOilInGas * liquidInGasCalibrationFactor), c.measuredOilInGas,
+	  modelFloor);
+      afterErrSum += pairMape(clamp01(c.modeledWaterInGas * liquidInGasCalibrationFactor), c.measuredWaterInGas,
+	  modelFloor);
+      afterErrSum += pairMape(clamp01(c.modeledGasInOil * gasCarryUnderCalibrationFactor), c.measuredGasInOil,
+	  modelFloor);
+      afterErrSum += pairMape(clamp01(c.modeledGasInWater * gasCarryUnderCalibrationFactor), c.measuredGasInWater,
+	  modelFloor);
+      afterErrSum += pairMape(clamp01(c.modeledOilInWater * liquidLiquidCalibrationFactor), c.measuredOilInWater,
+	  modelFloor);
+      afterErrSum += pairMape(clamp01(c.modeledWaterInOil * liquidLiquidCalibrationFactor), c.measuredWaterInOil,
+	  modelFloor);
       afterErrCount += 6;
     }
 
-    CalibrationSummary base = new CalibrationSummary(prevLig, prevGcu, prevLiqLiq,
-        liquidInGasCalibrationFactor, gasCarryUnderCalibrationFactor,
-        liquidLiquidCalibrationFactor, ligRatios.size(), gcuRatios.size(), liqLiqRatios.size());
+    CalibrationSummary base = new CalibrationSummary(prevLig, prevGcu, prevLiqLiq, liquidInGasCalibrationFactor,
+	gasCarryUnderCalibrationFactor, liquidLiquidCalibrationFactor, ligRatios.size(), gcuRatios.size(),
+	liqLiqRatios.size());
 
     double mapeBefore = beforeErrCount > 0 ? beforeErrSum / beforeErrCount : 0.0;
     double mapeAfter = afterErrCount > 0 ? afterErrSum / afterErrCount : 0.0;
@@ -1563,24 +1528,24 @@ public class SeparatorPerformanceCalculator implements Serializable {
   /**
    * Builds a JSON calibration report with factors, aggregate error metrics, and per-case residuals.
    *
-   * @param cases calibration cases used in fitting
-   * @param summary batch calibration summary returned by {@link #calibrateFromCaseLibrary}
+   * @param cases      calibration cases used in fitting
+   * @param summary    batch calibration summary returned by {@link #calibrateFromCaseLibrary}
    * @param modelFloor minimum floor used for percentage error calculations
    * @return pretty-printed JSON calibration report
    */
-  public String buildBatchCalibrationReportJson(List<CalibrationCase> cases,
-      BatchCalibrationSummary summary, double modelFloor) {
+  public String buildBatchCalibrationReportJson(List<CalibrationCase> cases, BatchCalibrationSummary summary,
+      double modelFloor) {
     Map<String, Object> report = new LinkedHashMap<String, Object>();
     report.put("casesProcessed", summary != null ? summary.casesProcessed : 0);
     report.put("mapeBefore", summary != null ? summary.mapeBefore : 0.0);
     report.put("mapeAfter", summary != null ? summary.mapeAfter : 0.0);
 
     report.put("previousLiquidInGasFactor",
-        summary != null ? summary.previousLiquidInGasFactor : liquidInGasCalibrationFactor);
+	summary != null ? summary.previousLiquidInGasFactor : liquidInGasCalibrationFactor);
     report.put("previousGasCarryUnderFactor",
-        summary != null ? summary.previousGasCarryUnderFactor : gasCarryUnderCalibrationFactor);
+	summary != null ? summary.previousGasCarryUnderFactor : gasCarryUnderCalibrationFactor);
     report.put("previousLiquidLiquidFactor",
-        summary != null ? summary.previousLiquidLiquidFactor : liquidLiquidCalibrationFactor);
+	summary != null ? summary.previousLiquidLiquidFactor : liquidLiquidCalibrationFactor);
 
     report.put("newLiquidInGasFactor", liquidInGasCalibrationFactor);
     report.put("newGasCarryUnderFactor", gasCarryUnderCalibrationFactor);
@@ -1589,69 +1554,67 @@ public class SeparatorPerformanceCalculator implements Serializable {
     List<Map<String, Object>> residuals = new ArrayList<Map<String, Object>>();
     if (cases != null) {
       for (int i = 0; i < cases.size(); i++) {
-        CalibrationCase c = cases.get(i);
-        Map<String, Object> r = new LinkedHashMap<String, Object>();
-        r.put("caseId", c.caseId);
+	CalibrationCase c = cases.get(i);
+	Map<String, Object> r = new LinkedHashMap<String, Object>();
+	r.put("caseId", c.caseId);
 
-        r.put("modeledOilInGas", c.modeledOilInGas);
-        r.put("modeledWaterInGas", c.modeledWaterInGas);
-        r.put("modeledGasInOil", c.modeledGasInOil);
-        r.put("modeledGasInWater", c.modeledGasInWater);
-        r.put("modeledOilInWater", c.modeledOilInWater);
-        r.put("modeledWaterInOil", c.modeledWaterInOil);
+	r.put("modeledOilInGas", c.modeledOilInGas);
+	r.put("modeledWaterInGas", c.modeledWaterInGas);
+	r.put("modeledGasInOil", c.modeledGasInOil);
+	r.put("modeledGasInWater", c.modeledGasInWater);
+	r.put("modeledOilInWater", c.modeledOilInWater);
+	r.put("modeledWaterInOil", c.modeledWaterInOil);
 
-        r.put("measuredOilInGas", c.measuredOilInGas);
-        r.put("measuredWaterInGas", c.measuredWaterInGas);
-        r.put("measuredGasInOil", c.measuredGasInOil);
-        r.put("measuredGasInWater", c.measuredGasInWater);
-        r.put("measuredOilInWater", c.measuredOilInWater);
-        r.put("measuredWaterInOil", c.measuredWaterInOil);
+	r.put("measuredOilInGas", c.measuredOilInGas);
+	r.put("measuredWaterInGas", c.measuredWaterInGas);
+	r.put("measuredGasInOil", c.measuredGasInOil);
+	r.put("measuredGasInWater", c.measuredGasInWater);
+	r.put("measuredOilInWater", c.measuredOilInWater);
+	r.put("measuredWaterInOil", c.measuredWaterInOil);
 
-        double calOilInGas = clamp01(c.modeledOilInGas * liquidInGasCalibrationFactor);
-        double calWaterInGas = clamp01(c.modeledWaterInGas * liquidInGasCalibrationFactor);
-        double calGasInOil = clamp01(c.modeledGasInOil * gasCarryUnderCalibrationFactor);
-        double calGasInWater = clamp01(c.modeledGasInWater * gasCarryUnderCalibrationFactor);
-        double calOilInWater = clamp01(c.modeledOilInWater * liquidLiquidCalibrationFactor);
-        double calWaterInOil = clamp01(c.modeledWaterInOil * liquidLiquidCalibrationFactor);
+	double calOilInGas = clamp01(c.modeledOilInGas * liquidInGasCalibrationFactor);
+	double calWaterInGas = clamp01(c.modeledWaterInGas * liquidInGasCalibrationFactor);
+	double calGasInOil = clamp01(c.modeledGasInOil * gasCarryUnderCalibrationFactor);
+	double calGasInWater = clamp01(c.modeledGasInWater * gasCarryUnderCalibrationFactor);
+	double calOilInWater = clamp01(c.modeledOilInWater * liquidLiquidCalibrationFactor);
+	double calWaterInOil = clamp01(c.modeledWaterInOil * liquidLiquidCalibrationFactor);
 
-        r.put("calibratedOilInGas", calOilInGas);
-        r.put("calibratedWaterInGas", calWaterInGas);
-        r.put("calibratedGasInOil", calGasInOil);
-        r.put("calibratedGasInWater", calGasInWater);
-        r.put("calibratedOilInWater", calOilInWater);
-        r.put("calibratedWaterInOil", calWaterInOil);
+	r.put("calibratedOilInGas", calOilInGas);
+	r.put("calibratedWaterInGas", calWaterInGas);
+	r.put("calibratedGasInOil", calGasInOil);
+	r.put("calibratedGasInWater", calGasInWater);
+	r.put("calibratedOilInWater", calOilInWater);
+	r.put("calibratedWaterInOil", calWaterInOil);
 
-        double mapeBefore = (pairMape(c.modeledOilInGas, c.measuredOilInGas, modelFloor)
-            + pairMape(c.modeledWaterInGas, c.measuredWaterInGas, modelFloor)
-            + pairMape(c.modeledGasInOil, c.measuredGasInOil, modelFloor)
-            + pairMape(c.modeledGasInWater, c.measuredGasInWater, modelFloor)
-            + pairMape(c.modeledOilInWater, c.measuredOilInWater, modelFloor)
-            + pairMape(c.modeledWaterInOil, c.measuredWaterInOil, modelFloor)) / 6.0;
-        double mapeAfter =
-            (pairMape(calOilInGas, c.measuredOilInGas, modelFloor)
-                + pairMape(calWaterInGas, c.measuredWaterInGas, modelFloor)
-                + pairMape(calGasInOil, c.measuredGasInOil, modelFloor)
-                + pairMape(calGasInWater, c.measuredGasInWater, modelFloor)
-                + pairMape(calOilInWater, c.measuredOilInWater, modelFloor)
-                + pairMape(calWaterInOil, c.measuredWaterInOil, modelFloor)) / 6.0;
+	double mapeBefore = (pairMape(c.modeledOilInGas, c.measuredOilInGas, modelFloor)
+	    + pairMape(c.modeledWaterInGas, c.measuredWaterInGas, modelFloor)
+	    + pairMape(c.modeledGasInOil, c.measuredGasInOil, modelFloor)
+	    + pairMape(c.modeledGasInWater, c.measuredGasInWater, modelFloor)
+	    + pairMape(c.modeledOilInWater, c.measuredOilInWater, modelFloor)
+	    + pairMape(c.modeledWaterInOil, c.measuredWaterInOil, modelFloor)) / 6.0;
+	double mapeAfter = (pairMape(calOilInGas, c.measuredOilInGas, modelFloor)
+	    + pairMape(calWaterInGas, c.measuredWaterInGas, modelFloor)
+	    + pairMape(calGasInOil, c.measuredGasInOil, modelFloor)
+	    + pairMape(calGasInWater, c.measuredGasInWater, modelFloor)
+	    + pairMape(calOilInWater, c.measuredOilInWater, modelFloor)
+	    + pairMape(calWaterInOil, c.measuredWaterInOil, modelFloor)) / 6.0;
 
-        r.put("mapeBefore", mapeBefore);
-        r.put("mapeAfter", mapeAfter);
-        residuals.add(r);
+	r.put("mapeBefore", mapeBefore);
+	r.put("mapeAfter", mapeAfter);
+	residuals.add(r);
       }
     }
     report.put("caseResiduals", residuals);
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(report);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(report);
   }
 
   /**
    * Saves batch calibration report JSON to disk.
    *
-   * @param filePath output file path
-   * @param cases calibration cases used in fitting
-   * @param summary batch calibration summary
+   * @param filePath   output file path
+   * @param cases      calibration cases used in fitting
+   * @param summary    batch calibration summary
    * @param modelFloor minimum floor used for percentage error calculations
    * @throws IOException if file writing fails
    */
@@ -1670,14 +1633,13 @@ public class SeparatorPerformanceCalculator implements Serializable {
    * Parses a numeric CSV column value.
    *
    * @param cols CSV columns
-   * @param idx header index map
-   * @param key column key
-   * @param row row number (for diagnostics)
+   * @param idx  header index map
+   * @param key  column key
+   * @param row  row number (for diagnostics)
    * @return parsed double value
    * @throws IOException if parsing fails
    */
-  private static double getDouble(String[] cols, Map<String, Integer> idx, String key, int row)
-      throws IOException {
+  private static double getDouble(String[] cols, Map<String, Integer> idx, String key, int row) throws IOException {
     Integer iObj = idx.get(key);
     if (iObj == null) {
       throw new IOException("Missing column " + key + " at row " + row);
@@ -1689,22 +1651,20 @@ public class SeparatorPerformanceCalculator implements Serializable {
     try {
       return Double.parseDouble(cols[i].trim());
     } catch (NumberFormatException e) {
-      throw new IOException("Invalid number in column " + key + " at row " + row + ": "
-          + cols[i], e);
+      throw new IOException("Invalid number in column " + key + " at row " + row + ": " + cols[i], e);
     }
   }
 
   /**
    * Parses an optional string CSV column value.
    *
-   * @param cols CSV columns
-   * @param idx header index map
-   * @param key column key
+   * @param cols         CSV columns
+   * @param idx          header index map
+   * @param key          column key
    * @param defaultValue default value if column missing/blank
    * @return parsed string
    */
-  private static String getString(String[] cols, Map<String, Integer> idx, String key,
-      String defaultValue) {
+  private static String getString(String[] cols, Map<String, Integer> idx, String key, String defaultValue) {
     Integer iObj = idx.get(key);
     if (iObj == null) {
       return defaultValue;
@@ -1720,7 +1680,7 @@ public class SeparatorPerformanceCalculator implements Serializable {
   /**
    * Adds finite ratio values to a list.
    *
-   * @param list target list
+   * @param list  target list
    * @param ratio ratio value
    */
   private static void addRatio(List<Double> list, double ratio) {
@@ -1749,9 +1709,9 @@ public class SeparatorPerformanceCalculator implements Serializable {
   /**
    * Computes absolute percentage error for one modeled/measured pair.
    *
-   * @param modeled modeled value
+   * @param modeled  modeled value
    * @param measured measured value
-   * @param floor small floor to avoid division by zero
+   * @param floor    small floor to avoid division by zero
    * @return absolute percentage error
    */
   private static double pairMape(double modeled, double measured, double floor) {
@@ -1762,8 +1722,8 @@ public class SeparatorPerformanceCalculator implements Serializable {
   /**
    * Returns average of positive values above a floor, or 0 if no values qualify.
    *
-   * @param a value a
-   * @param b value b
+   * @param a     value a
+   * @param b     value b
    * @param floor minimum value threshold
    * @return average or 0
    */
@@ -1787,8 +1747,8 @@ public class SeparatorPerformanceCalculator implements Serializable {
    * Auto-calibrates entrainment multipliers from one measured benchmark point.
    *
    * <p>
-   * This method uses the current calculated fractions as model values and computes group-wise
-   * multipliers from measured/model ratios:
+   * This method uses the current calculated fractions as model values and computes group-wise multipliers from
+   * measured/model ratios:
    * </p>
    * <ul>
    * <li>Liquid-in-gas: oil-in-gas and water-in-gas</li>
@@ -1797,36 +1757,33 @@ public class SeparatorPerformanceCalculator implements Serializable {
    * </ul>
    *
    * <p>
-   * Ratios are only formed for model values above {@code modelFloor}. The group multiplier is the
-   * arithmetic mean of valid ratios. If no valid ratios exist in a group, the existing factor is
-   * retained.
+   * Ratios are only formed for model values above {@code modelFloor}. The group multiplier is the arithmetic mean of
+   * valid ratios. If no valid ratios exist in a group, the existing factor is retained.
    * </p>
    *
-   * @param measuredOilInGas measured oil-in-gas fraction [0-1]
+   * @param measuredOilInGas   measured oil-in-gas fraction [0-1]
    * @param measuredWaterInGas measured water-in-gas fraction [0-1]
-   * @param measuredGasInOil measured gas-in-oil fraction [0-1]
+   * @param measuredGasInOil   measured gas-in-oil fraction [0-1]
    * @param measuredGasInWater measured gas-in-water fraction [0-1]
    * @param measuredOilInWater measured oil-in-water fraction [0-1]
    * @param measuredWaterInOil measured water-in-oil fraction [0-1]
-   * @param modelFloor minimum modeled fraction to use in ratio fitting (e.g. 1e-9)
+   * @param modelFloor         minimum modeled fraction to use in ratio fitting (e.g. 1e-9)
    * @return calibration summary containing old/new factors and data-point usage
    */
-  public CalibrationSummary calibrateFromMeasuredFractions(double measuredOilInGas,
-      double measuredWaterInGas, double measuredGasInOil, double measuredGasInWater,
-      double measuredOilInWater, double measuredWaterInOil, double modelFloor) {
+  public CalibrationSummary calibrateFromMeasuredFractions(double measuredOilInGas, double measuredWaterInGas,
+      double measuredGasInOil, double measuredGasInWater, double measuredOilInWater, double measuredWaterInOil,
+      double modelFloor) {
 
     double prevLig = liquidInGasCalibrationFactor;
     double prevGcu = gasCarryUnderCalibrationFactor;
     double prevLiqLiq = liquidLiquidCalibrationFactor;
 
-    double[] ligRatios = new double[] {safeRatio(measuredOilInGas, oilInGasFraction, modelFloor),
-        safeRatio(measuredWaterInGas, waterInGasFraction, modelFloor)};
-    double[] gcuRatios =
-        new double[] {safeRatio(measuredGasInOil, gasInOilFraction, modelFloor),
-            safeRatio(measuredGasInWater, gasInWaterFraction, modelFloor)};
-    double[] liqLiqRatios =
-        new double[] {safeRatio(measuredOilInWater, oilInWaterFraction, modelFloor),
-            safeRatio(measuredWaterInOil, waterInOilFraction, modelFloor)};
+    double[] ligRatios = new double[] { safeRatio(measuredOilInGas, oilInGasFraction, modelFloor),
+	safeRatio(measuredWaterInGas, waterInGasFraction, modelFloor) };
+    double[] gcuRatios = new double[] { safeRatio(measuredGasInOil, gasInOilFraction, modelFloor),
+	safeRatio(measuredGasInWater, gasInWaterFraction, modelFloor) };
+    double[] liqLiqRatios = new double[] { safeRatio(measuredOilInWater, oilInWaterFraction, modelFloor),
+	safeRatio(measuredWaterInOil, waterInOilFraction, modelFloor) };
 
     int ligPoints = countFinite(ligRatios);
     int gcuPoints = countFinite(gcuRatios);
@@ -1843,16 +1800,15 @@ public class SeparatorPerformanceCalculator implements Serializable {
     }
 
     return new CalibrationSummary(prevLig, prevGcu, prevLiqLiq, liquidInGasCalibrationFactor,
-        gasCarryUnderCalibrationFactor, liquidLiquidCalibrationFactor, ligPoints, gcuPoints,
-        liqLiqPoints);
+	gasCarryUnderCalibrationFactor, liquidLiquidCalibrationFactor, ligPoints, gcuPoints, liqLiqPoints);
   }
 
   /**
    * Computes measured/model ratio for calibration if modeled value exceeds floor.
    *
    * @param measured measured fraction
-   * @param modeled modeled fraction
-   * @param floor minimum modeled value for ratio use
+   * @param modeled  modeled fraction
+   * @param floor    minimum modeled value for ratio use
    * @return ratio, or NaN if modeled value is below floor
    */
   private static double safeRatio(double measured, double modeled, double floor) {
@@ -1873,7 +1829,7 @@ public class SeparatorPerformanceCalculator implements Serializable {
     int count = 0;
     for (int i = 0; i < values.length; i++) {
       if (!Double.isNaN(values[i]) && !Double.isInfinite(values[i])) {
-        count++;
+	count++;
       }
     }
     return count;
@@ -1882,7 +1838,7 @@ public class SeparatorPerformanceCalculator implements Serializable {
   /**
    * Calculates the arithmetic mean of finite values, or returns a default value.
    *
-   * @param values input values
+   * @param values       input values
    * @param defaultValue fallback if no finite values are present
    * @return arithmetic mean of finite values or defaultValue
    */
@@ -1891,8 +1847,8 @@ public class SeparatorPerformanceCalculator implements Serializable {
     int count = 0;
     for (int i = 0; i < values.length; i++) {
       if (!Double.isNaN(values[i]) && !Double.isInfinite(values[i])) {
-        sum += values[i];
-        count++;
+	sum += values[i];
+	count++;
       }
     }
     if (count == 0) {
@@ -2087,10 +2043,9 @@ public class SeparatorPerformanceCalculator implements Serializable {
    * Sets the oil volume fraction in the liquid phase for three-phase calculations.
    *
    * <p>
-   * This fraction is used when splitting the liquid flow between the oil and water phases
-   * in the vessel geometry calculation. The default of 0.5 (50/50 split) should be
-   * overridden by the {@code Separator.run()} method using the actual phase volumes
-   * from the thermodynamic system.
+   * This fraction is used when splitting the liquid flow between the oil and water phases in the vessel geometry
+   * calculation. The default of 0.5 (50/50 split) should be overridden by the {@code Separator.run()} method using the
+   * actual phase volumes from the thermodynamic system.
    * </p>
    *
    * @param fraction oil volume fraction [0-1]
@@ -2112,10 +2067,9 @@ public class SeparatorPerformanceCalculator implements Serializable {
    * Enables or disables the turbulent diffusion correction on the gravity cut diameter.
    *
    * <p>
-   * When enabled (default), the Csanady (1963) turbulent dispersion correction increases
-   * the effective cut diameter to account for turbulence in the separator vessel, giving
-   * a more accurate (less optimistic) prediction at higher gas loads. Disable only for
-   * quiescent-flow validation cases.
+   * When enabled (default), the Csanady (1963) turbulent dispersion correction increases the effective cut diameter to
+   * account for turbulence in the separator vessel, giving a more accurate (less optimistic) prediction at higher gas
+   * loads. Disable only for quiescent-flow validation cases.
    * </p>
    *
    * @param apply true to apply correction (default), false to use pure gravity settling
@@ -2137,9 +2091,8 @@ public class SeparatorPerformanceCalculator implements Serializable {
    * Returns the API 12J compliance check result.
    *
    * <p>
-   * Populated automatically after {@link #calculate} when a gravity cut diameter is
-   * available. Returns {@code null} before the first calculation or when insufficient
-   * geometry data is available.
+   * Populated automatically after {@link #calculate} when a gravity cut diameter is available. Returns {@code null}
+   * before the first calculation or when insufficient geometry data is available.
    * </p>
    *
    * @return API 12J compliance result, or {@code null} if not yet computed
@@ -2149,40 +2102,38 @@ public class SeparatorPerformanceCalculator implements Serializable {
   }
 
   /**
-   * Generates a default Rosin-Rammler DSD for liquid-liquid droplets using the Hinze (1955)
-   * maximum stable droplet breakup criterion, adapted for oil-water interfacial tension and
-   * turbulent energy input at the separator inlet.
+   * Generates a default Rosin-Rammler DSD for liquid-liquid droplets using the Hinze (1955) maximum stable droplet
+   * breakup criterion, adapted for oil-water interfacial tension and turbulent energy input at the separator inlet.
    *
    * <p>
-   * The maximum stable droplet diameter in turbulent flow (Hinze, 1955):
-   * $d_{max} = C \cdot (\sigma / \rho_c)^{3/5} \cdot \epsilon^{-2/5}$
-   * where $\epsilon$ is the turbulent energy dissipation rate estimated from inlet
-   * momentum: $\epsilon \approx u_n^3 / D_{nozzle}$.
+   * The maximum stable droplet diameter in turbulent flow (Hinze, 1955): $d_{max} = C \cdot (\sigma / \rho_c)^{3/5}
+   * \cdot \epsilon^{-2/5}$ where $\epsilon$ is the turbulent energy dissipation rate estimated from inlet momentum:
+   * $\epsilon \approx u_n^3 / D_{nozzle}$.
    * </p>
    *
    * <p>
-   * The median diameter is set to $d_{max} / 4$ and a Rosin-Rammler spread of 1.8
-   * is used, consistent with oil-water emulsion data (Luo and Svendsen, 1996).
+   * The median diameter is set to $d_{max} / 4$ and a Rosin-Rammler spread of 1.8 is used, consistent with oil-water
+   * emulsion data (Luo and Svendsen, 1996).
    * </p>
    *
    * <p>
    * References:
    * </p>
    * <ul>
-   * <li>Hinze, J.O. (1955). Fundamentals of the hydrodynamic mechanism of splitting in
-   * dispersion processes. <i>AIChE J.</i>, 1(3), 289-295.</li>
-   * <li>Luo, H., Svendsen, H.F. (1996). Theoretical model for drop and bubble breakup in
-   * turbulent dispersions. <i>AIChE J.</i>, 42(5), 1225-1233.</li>
+   * <li>Hinze, J.O. (1955). Fundamentals of the hydrodynamic mechanism of splitting in dispersion processes. <i>AIChE
+   * J.</i>, 1(3), 289-295.</li>
+   * <li>Luo, H., Svendsen, H.F. (1996). Theoretical model for drop and bubble breakup in turbulent dispersions.
+   * <i>AIChE J.</i>, 42(5), 1225-1233.</li>
    * </ul>
    *
    * @param interfacialTension oil-water interfacial tension [N/m]
-   * @param continuousDensity continuous phase density [kg/m3]
-   * @param nozzleVelocity inlet nozzle velocity [m/s]
-   * @param nozzleDiameter inlet nozzle diameter [m]
+   * @param continuousDensity  continuous phase density [kg/m3]
+   * @param nozzleVelocity     inlet nozzle velocity [m/s]
+   * @param nozzleDiameter     inlet nozzle diameter [m]
    * @return Rosin-Rammler DSD representing the initial liquid-liquid droplet population
    */
-  public static DropletSizeDistribution generateLiquidLiquidDSD(double interfacialTension,
-      double continuousDensity, double nozzleVelocity, double nozzleDiameter) {
+  public static DropletSizeDistribution generateLiquidLiquidDSD(double interfacialTension, double continuousDensity,
+      double nozzleVelocity, double nozzleDiameter) {
 
     if (nozzleVelocity <= 0 || nozzleDiameter <= 0 || continuousDensity <= 0) {
       // Fallback: typical oil-water DSD in a gravity separator, d50 ~ 100 um

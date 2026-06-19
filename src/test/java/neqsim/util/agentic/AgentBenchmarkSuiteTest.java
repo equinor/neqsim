@@ -26,8 +26,7 @@ class AgentBenchmarkSuiteTest {
   void testCreateStandardSuiteHasProblems() {
     AgentBenchmarkSuite standard = AgentBenchmarkSuite.createStandardSuite();
     assertFalse(standard.getProblems().isEmpty());
-    assertTrue(standard.getProblems().size() >= 10,
-        "Standard suite should have at least 10 problems");
+    assertTrue(standard.getProblems().size() >= 10, "Standard suite should have at least 10 problems");
   }
 
   @Test
@@ -41,24 +40,24 @@ class AgentBenchmarkSuiteTest {
     boolean hasSafety = false;
     for (BenchmarkProblem p : standard.getProblems()) {
       switch (p.getCategory()) {
-        case THERMO:
-          hasThermo = true;
-          break;
-        case FLASH:
-          hasFlash = true;
-          break;
-        case PROCESS:
-          hasProcess = true;
-          break;
-        case PIPELINE:
-          hasPipeline = true;
-          break;
-        case ECONOMICS:
-          hasEconomics = true;
-          break;
-        case SAFETY:
-          hasSafety = true;
-          break;
+      case THERMO:
+	hasThermo = true;
+	break;
+      case FLASH:
+	hasFlash = true;
+	break;
+      case PROCESS:
+	hasProcess = true;
+	break;
+      case PIPELINE:
+	hasPipeline = true;
+	break;
+      case ECONOMICS:
+	hasEconomics = true;
+	break;
+      case SAFETY:
+	hasSafety = true;
+	break;
       }
     }
     assertTrue(hasThermo, "Suite should have THERMO problems");
@@ -71,8 +70,8 @@ class AgentBenchmarkSuiteTest {
 
   @Test
   void testProblemPassesWithinTolerance() {
-    suite.addProblem(new BenchmarkProblem("test1", ProblemCategory.THERMO, Difficulty.BASIC,
-        "Test density", "kg/m3", 100.0, 5.0, "NIST"));
+    suite.addProblem(new BenchmarkProblem("test1", ProblemCategory.THERMO, Difficulty.BASIC, "Test density", "kg/m3",
+	100.0, 5.0, "NIST"));
     suite.addResult("test1", 103.0); // 3% deviation, within 5%
     BenchmarkReport report = suite.evaluate();
     assertEquals(1, report.getPassed());
@@ -82,8 +81,8 @@ class AgentBenchmarkSuiteTest {
 
   @Test
   void testProblemFailsOutsideTolerance() {
-    suite.addProblem(new BenchmarkProblem("test1", ProblemCategory.THERMO, Difficulty.BASIC,
-        "Test density", "kg/m3", 100.0, 5.0, "NIST"));
+    suite.addProblem(new BenchmarkProblem("test1", ProblemCategory.THERMO, Difficulty.BASIC, "Test density", "kg/m3",
+	100.0, 5.0, "NIST"));
     suite.addResult("test1", 110.0); // 10% deviation, outside 5%
     BenchmarkReport report = suite.evaluate();
     assertEquals(0, report.getPassed());
@@ -93,8 +92,8 @@ class AgentBenchmarkSuiteTest {
 
   @Test
   void testNotAttemptedProblems() {
-    suite.addProblem(new BenchmarkProblem("test1", ProblemCategory.THERMO, Difficulty.BASIC,
-        "Test density", "kg/m3", 100.0, 5.0, "NIST"));
+    suite.addProblem(new BenchmarkProblem("test1", ProblemCategory.THERMO, Difficulty.BASIC, "Test density", "kg/m3",
+	100.0, 5.0, "NIST"));
     // No result submitted
     BenchmarkReport report = suite.evaluate();
     assertEquals(0, report.getPassed());
@@ -104,8 +103,8 @@ class AgentBenchmarkSuiteTest {
 
   @Test
   void testConvergenceFailure() {
-    suite.addProblem(new BenchmarkProblem("test1", ProblemCategory.FLASH, Difficulty.INTERMEDIATE,
-        "Flash calc", "phases", 2.0, 0.1, "ref"));
+    suite.addProblem(new BenchmarkProblem("test1", ProblemCategory.FLASH, Difficulty.INTERMEDIATE, "Flash calc",
+	"phases", 2.0, 0.1, "ref"));
     suite.addConvergenceResult("test1", false);
     BenchmarkReport report = suite.evaluate();
     assertEquals(0, report.getPassed());
@@ -117,8 +116,8 @@ class AgentBenchmarkSuiteTest {
 
   @Test
   void testConvergenceOnlyPass() {
-    suite.addProblem(new BenchmarkProblem("test1", ProblemCategory.PROCESS, Difficulty.BASIC,
-        "Sep mass balance", "%", 0.0, 0.1, "conservation"));
+    suite.addProblem(new BenchmarkProblem("test1", ProblemCategory.PROCESS, Difficulty.BASIC, "Sep mass balance", "%",
+	0.0, 0.1, "conservation"));
     suite.addConvergenceResult("test1", true);
     // No numerical result submitted, but converged
     BenchmarkReport report = suite.evaluate();
@@ -128,12 +127,12 @@ class AgentBenchmarkSuiteTest {
 
   @Test
   void testMixedResults() {
-    suite.addProblem(new BenchmarkProblem("p1", ProblemCategory.THERMO, Difficulty.BASIC, "Prob 1",
-        "K", 373.15, 0.5, "NIST"));
-    suite.addProblem(new BenchmarkProblem("p2", ProblemCategory.FLASH, Difficulty.INTERMEDIATE,
-        "Prob 2", "phases", 2.0, 0.1, "ref"));
-    suite.addProblem(new BenchmarkProblem("p3", ProblemCategory.PROCESS, Difficulty.ADVANCED,
-        "Prob 3", "kW", 22.0, 10.0, "textbook"));
+    suite.addProblem(
+	new BenchmarkProblem("p1", ProblemCategory.THERMO, Difficulty.BASIC, "Prob 1", "K", 373.15, 0.5, "NIST"));
+    suite.addProblem(new BenchmarkProblem("p2", ProblemCategory.FLASH, Difficulty.INTERMEDIATE, "Prob 2", "phases", 2.0,
+	0.1, "ref"));
+    suite.addProblem(new BenchmarkProblem("p3", ProblemCategory.PROCESS, Difficulty.ADVANCED, "Prob 3", "kW", 22.0,
+	10.0, "textbook"));
 
     suite.addResult("p1", 374.0); // ~0.23% deviation, passes at 0.5%
     suite.addResult("p2", 3.0); // 50% deviation, fails at 0.1%
@@ -148,10 +147,10 @@ class AgentBenchmarkSuiteTest {
 
   @Test
   void testGetResultsByCategory() {
-    suite.addProblem(new BenchmarkProblem("t1", ProblemCategory.THERMO, Difficulty.BASIC,
-        "Thermo 1", "K", 300.0, 1.0, "ref"));
-    suite.addProblem(new BenchmarkProblem("f1", ProblemCategory.FLASH, Difficulty.BASIC, "Flash 1",
-        "phases", 1.0, 0.1, "ref"));
+    suite.addProblem(
+	new BenchmarkProblem("t1", ProblemCategory.THERMO, Difficulty.BASIC, "Thermo 1", "K", 300.0, 1.0, "ref"));
+    suite.addProblem(
+	new BenchmarkProblem("f1", ProblemCategory.FLASH, Difficulty.BASIC, "Flash 1", "phases", 1.0, 0.1, "ref"));
     suite.addResult("t1", 300.5);
     suite.addResult("f1", 1.0);
     BenchmarkReport report = suite.evaluate();
@@ -163,8 +162,8 @@ class AgentBenchmarkSuiteTest {
 
   @Test
   void testSuiteJsonSerialization() {
-    suite.addProblem(new BenchmarkProblem("test1", ProblemCategory.THERMO, Difficulty.BASIC,
-        "Test density", "kg/m3", 100.0, 5.0, "NIST"));
+    suite.addProblem(new BenchmarkProblem("test1", ProblemCategory.THERMO, Difficulty.BASIC, "Test density", "kg/m3",
+	100.0, 5.0, "NIST"));
     String json = suite.toJson();
     assertNotNull(json);
     assertTrue(json.contains("Test Suite"));
@@ -174,8 +173,8 @@ class AgentBenchmarkSuiteTest {
 
   @Test
   void testReportJsonSerialization() {
-    suite.addProblem(new BenchmarkProblem("test1", ProblemCategory.THERMO, Difficulty.BASIC,
-        "Test density", "kg/m3", 100.0, 5.0, "NIST"));
+    suite.addProblem(new BenchmarkProblem("test1", ProblemCategory.THERMO, Difficulty.BASIC, "Test density", "kg/m3",
+	100.0, 5.0, "NIST"));
     suite.addResult("test1", 101.0);
     BenchmarkReport report = suite.evaluate();
     String json = report.toJson();
@@ -187,8 +186,8 @@ class AgentBenchmarkSuiteTest {
 
   @Test
   void testProblemToMap() {
-    BenchmarkProblem p = new BenchmarkProblem("id1", ProblemCategory.PIPELINE,
-        Difficulty.INTERMEDIATE, "Pipe flow", "bar", 8.0, 15.0, "Beggs-Brill");
+    BenchmarkProblem p = new BenchmarkProblem("id1", ProblemCategory.PIPELINE, Difficulty.INTERMEDIATE, "Pipe flow",
+	"bar", 8.0, 15.0, "Beggs-Brill");
     java.util.Map<String, Object> map = p.toMap();
     assertEquals("id1", map.get("id"));
     assertEquals("PIPELINE", map.get("category"));
@@ -203,8 +202,8 @@ class AgentBenchmarkSuiteTest {
 
   @Test
   void testBenchmarkProblemGetters() {
-    BenchmarkProblem p = new BenchmarkProblem("x", ProblemCategory.ECONOMICS, Difficulty.ADVANCED,
-        "NPV test", "MNOK", 614.5, 1.0, "DCF textbook");
+    BenchmarkProblem p = new BenchmarkProblem("x", ProblemCategory.ECONOMICS, Difficulty.ADVANCED, "NPV test", "MNOK",
+	614.5, 1.0, "DCF textbook");
     assertEquals("x", p.getId());
     assertEquals(ProblemCategory.ECONOMICS, p.getCategory());
     assertEquals(Difficulty.ADVANCED, p.getDifficulty());
@@ -217,10 +216,10 @@ class AgentBenchmarkSuiteTest {
 
   @Test
   void testConvergenceRate() {
-    suite.addProblem(new BenchmarkProblem("p1", ProblemCategory.THERMO, Difficulty.BASIC, "Prob 1",
-        "K", 300.0, 1.0, "ref"));
-    suite.addProblem(new BenchmarkProblem("p2", ProblemCategory.FLASH, Difficulty.BASIC, "Prob 2",
-        "phases", 1.0, 0.1, "ref"));
+    suite.addProblem(
+	new BenchmarkProblem("p1", ProblemCategory.THERMO, Difficulty.BASIC, "Prob 1", "K", 300.0, 1.0, "ref"));
+    suite.addProblem(
+	new BenchmarkProblem("p2", ProblemCategory.FLASH, Difficulty.BASIC, "Prob 2", "phases", 1.0, 0.1, "ref"));
     suite.addResult("p1", 300.0);
     // p2 not attempted
     BenchmarkReport report = suite.evaluate();

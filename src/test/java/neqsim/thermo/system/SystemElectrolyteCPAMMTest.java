@@ -213,9 +213,8 @@ public class SystemElectrolyteCPAMMTest {
     double FWithoutBorn = system.getPhase(0).getHelmholtzEnergy();
 
     // All Helmholtz energies should be different
-    assertTrue(
-        Math.abs(FWithBoth - FWithoutDH) > 1e-10 || Math.abs(FWithBoth - FWithoutBorn) > 1e-10,
-        "Disabling terms should change Helmholtz energy");
+    assertTrue(Math.abs(FWithBoth - FWithoutDH) > 1e-10 || Math.abs(FWithBoth - FWithoutBorn) > 1e-10,
+	"Disabling terms should change Helmholtz energy");
   }
 
   @Test
@@ -302,9 +301,8 @@ public class SystemElectrolyteCPAMMTest {
     double eps = mmPhase.getSolventPermittivity();
 
     // Check if HV parameters were set
-    neqsim.thermo.mixingrule.HVMixingRulesInterface hvRule =
-        (neqsim.thermo.mixingrule.HVMixingRulesInterface) ((neqsim.thermo.phase.PhaseEos) system
-            .getPhase(0)).getEosMixingRule();
+    neqsim.thermo.mixingrule.HVMixingRulesInterface hvRule = (neqsim.thermo.mixingrule.HVMixingRulesInterface) ((neqsim.thermo.phase.PhaseEos) system
+	.getPhase(0)).getEosMixingRule();
     double Dij_NaWater = hvRule.getHVDijParameter(naIndex, 0); // Na+ - water
     double Dij_ClWater = hvRule.getHVDijParameter(clIndex, 0); // Cl- - water
     double alpha_NaWater = hvRule.getHValphaParameter(naIndex, 0);
@@ -360,8 +358,7 @@ public class SystemElectrolyteCPAMMTest {
 
     // Debye length should be infinite (no ions)
     double debyeLength = system.getDebyeLength(0);
-    assertTrue(Double.isInfinite(debyeLength) || debyeLength > 1e10,
-        "Debye length should be infinite without ions");
+    assertTrue(Double.isInfinite(debyeLength) || debyeLength > 1e10, "Debye length should be infinite without ions");
   }
 
   @Test
@@ -510,9 +507,9 @@ public class SystemElectrolyteCPAMMTest {
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       String name = system.getPhase(0).getComponent(i).getComponentName();
       if (name.equals("Na+")) {
-        naIndex = i;
+	naIndex = i;
       } else if (name.equals("Cl-")) {
-        clIndex = i;
+	clIndex = i;
       }
     }
 
@@ -526,8 +523,7 @@ public class SystemElectrolyteCPAMMTest {
     // At 1 molal NaCl and 298.15 K, experimental γ± ≈ 0.657 (Robinson & Stokes)
     // The model should give a reasonable value in the range 0.5-0.9
     assertTrue(gammaMean > 0, "Mean ionic activity coefficient should be positive");
-    assertTrue(gammaMean < 2.0,
-        "Mean ionic activity coefficient should be less than 2 for 1 molal NaCl");
+    assertTrue(gammaMean < 2.0, "Mean ionic activity coefficient should be less than 2 for 1 molal NaCl");
 
     // Calculate osmotic coefficient
     double osmoticCoeff = system.getPhase(0).getOsmoticCoefficientOfWater();
@@ -542,15 +538,13 @@ public class SystemElectrolyteCPAMMTest {
     // because ions with a≈0 dilute the attractive parameter, making water slightly
     // too volatile. This could be improved with Huron-Vidal mixing rule (future work).
     // The primary target (γ± ≈ 0.657) is achieved accurately.
-    assertTrue(Math.abs(osmoticCoeff) < 5.0,
-        "Osmotic coefficient magnitude should be reasonable, got " + osmoticCoeff);
+    assertTrue(Math.abs(osmoticCoeff) < 5.0, "Osmotic coefficient magnitude should be reasonable, got " + osmoticCoeff);
     assertTrue(osmoticCoeff < 2.0, "Osmotic coefficient should be less than 2 for 1 molal NaCl");
 
     // Also test the molality-based osmotic coefficient
     double osmoticCoeffMolality = system.getPhase(0).getOsmoticCoefficientOfWaterMolality();
     // Same ClassicSRK limitation applies to molality-based osmotic coefficient
-    assertTrue(Double.isFinite(osmoticCoeffMolality),
-        "Molality-based osmotic coefficient should be finite");
+    assertTrue(Double.isFinite(osmoticCoeffMolality), "Molality-based osmotic coefficient should be finite");
 
     // Test molal mean ionic activity
     double gammaMeanMolal = system.getPhase(0).getMolalMeanIonicActivity(naIndex, clIndex);
@@ -568,7 +562,7 @@ public class SystemElectrolyteCPAMMTest {
   @DisplayName("Test NaCl activity coefficients at different concentrations")
   void testNaClActivityCoefficientConcentrationDependence() {
     // Test at multiple concentrations to verify concentration dependence
-    double[] molalities = {0.1, 0.5, 1.0, 2.0};
+    double[] molalities = { 0.1, 0.5, 1.0, 2.0 };
     double[] gammaMeanValues = new double[molalities.length];
 
     for (int i = 0; i < molalities.length; i++) {
@@ -590,17 +584,16 @@ public class SystemElectrolyteCPAMMTest {
       int naIdx = -1;
       int clIdx = -1;
       for (int j = 0; j < testSystem.getPhase(0).getNumberOfComponents(); j++) {
-        String name = testSystem.getPhase(0).getComponent(j).getComponentName();
-        if (name.equals("Na+")) {
-          naIdx = j;
-        } else if (name.equals("Cl-")) {
-          clIdx = j;
-        }
+	String name = testSystem.getPhase(0).getComponent(j).getComponentName();
+	if (name.equals("Na+")) {
+	  naIdx = j;
+	} else if (name.equals("Cl-")) {
+	  clIdx = j;
+	}
       }
 
       gammaMeanValues[i] = testSystem.getPhase(0).getMeanIonicActivity(naIdx, clIdx);
-      assertTrue(gammaMeanValues[i] > 0,
-          "Mean ionic activity should be positive at " + molalities[i] + " molal");
+      assertTrue(gammaMeanValues[i] > 0, "Mean ionic activity should be positive at " + molalities[i] + " molal");
 
       logger.info("NaCl at " + molalities[i] + " molal: γ± = " + gammaMeanValues[i]);
     }
@@ -608,7 +601,7 @@ public class SystemElectrolyteCPAMMTest {
     // For NaCl, γ± typically decreases from dilute solution, reaches a minimum around 1-2 molal,
     // then increases. At low concentrations, γ± should decrease with increasing concentration.
     assertTrue(gammaMeanValues[0] > gammaMeanValues[1],
-        "γ± should decrease from 0.1 to 0.5 molal (Debye-Hückel behavior)");
+	"γ± should decrease from 0.1 to 0.5 molal (Debye-Hückel behavior)");
   }
 
   @Test
@@ -645,11 +638,11 @@ public class SystemElectrolyteCPAMMTest {
     for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
       // Find the phase with water (aqueous phase)
       for (int i = 0; i < system.getPhase(phase).getNumberOfComponents(); i++) {
-        if (system.getPhase(phase).getComponent(i).getComponentName().equals("water")
-            && system.getPhase(phase).getComponent(i).getx() > 0.5) {
-          aqueousPhase = phase;
-          break;
-        }
+	if (system.getPhase(phase).getComponent(i).getComponentName().equals("water")
+	    && system.getPhase(phase).getComponent(i).getx() > 0.5) {
+	  aqueousPhase = phase;
+	  break;
+	}
       }
     }
 
@@ -658,27 +651,27 @@ public class SystemElectrolyteCPAMMTest {
       int naIndex = -1;
       int clIndex = -1;
       for (int i = 0; i < system.getPhase(aqueousPhase).getNumberOfComponents(); i++) {
-        String name = system.getPhase(aqueousPhase).getComponent(i).getComponentName();
-        if (name.equals("Na+")) {
-          naIndex = i;
-        } else if (name.equals("Cl-")) {
-          clIndex = i;
-        }
+	String name = system.getPhase(aqueousPhase).getComponent(i).getComponentName();
+	if (name.equals("Na+")) {
+	  naIndex = i;
+	} else if (name.equals("Cl-")) {
+	  clIndex = i;
+	}
       }
 
       if (naIndex >= 0 && clIndex >= 0) {
-        double gammaMean = system.getPhase(aqueousPhase).getMeanIonicActivity(naIndex, clIndex);
-        assertTrue(gammaMean > 0, "Mean ionic activity should be positive in aqueous phase");
+	double gammaMean = system.getPhase(aqueousPhase).getMeanIonicActivity(naIndex, clIndex);
+	assertTrue(gammaMean > 0, "Mean ionic activity should be positive in aqueous phase");
 
-        double osmoticCoeff = system.getPhase(aqueousPhase).getOsmoticCoefficientOfWater();
-        // Known limitation: osmotic coefficient can be negative with ClassicSRK mixing rule
-        // (ions dilute the SRK attraction parameter). See testNaClMeanIonicActivity test.
-        assertTrue(Double.isFinite(osmoticCoeff), "Osmotic coefficient should be finite");
+	double osmoticCoeff = system.getPhase(aqueousPhase).getOsmoticCoefficientOfWater();
+	// Known limitation: osmotic coefficient can be negative with ClassicSRK mixing rule
+	// (ions dilute the SRK attraction parameter). See testNaClMeanIonicActivity test.
+	assertTrue(Double.isFinite(osmoticCoeff), "Osmotic coefficient should be finite");
 
-        logger.info("Methane + NaCl (1 molal) system after TPflash:");
-        logger.info("  Number of phases: " + system.getNumberOfPhases());
-        logger.info("  Mean ionic activity coefficient: " + gammaMean);
-        logger.info("  Osmotic coefficient: " + osmoticCoeff);
+	logger.info("Methane + NaCl (1 molal) system after TPflash:");
+	logger.info("  Number of phases: " + system.getNumberOfPhases());
+	logger.info("  Mean ionic activity coefficient: " + gammaMean);
+	logger.info("  Osmotic coefficient: " + osmoticCoeff);
       }
     }
 
@@ -720,16 +713,15 @@ public class SystemElectrolyteCPAMMTest {
     for (int i = 0; i < phase.getNumberOfComponents(); i++) {
       String name = phase.getComponent(i).getComponentName();
       if (name.equals("water")) {
-        watIndex = i;
+	watIndex = i;
       } else if (name.equals("Na+")) {
-        naIndex = i;
+	naIndex = i;
       } else if (name.equals("Cl-")) {
-        clIndex = i;
+	clIndex = i;
       }
     }
 
     logger.info("=== DIAGNOSTIC: Activity Coefficient Analysis for NaCl at 1 molal ===");
-
 
     // Mole fractions
     double xWater = phase.getComponent(watIndex).getx();
@@ -740,7 +732,6 @@ public class SystemElectrolyteCPAMMTest {
     logger.info("  x_Na+ = " + xNa);
     logger.info("  x_Cl- = " + xCl);
 
-
     // Fugacity coefficients
     double phiWater = phase.getComponent(watIndex).getFugacityCoefficient();
     double phiNa = phase.getComponent(naIndex).getFugacityCoefficient();
@@ -749,7 +740,6 @@ public class SystemElectrolyteCPAMMTest {
     logger.info("  φ_water = " + phiWater);
     logger.info("  φ_Na+ = " + phiNa);
     logger.info("  φ_Cl- = " + phiCl);
-
 
     // Log fugacity coefficients
     double lnPhiWater = phase.getComponent(watIndex).getLogFugacityCoefficient();
@@ -760,13 +750,11 @@ public class SystemElectrolyteCPAMMTest {
     logger.info("  ln(φ_Na+) = " + lnPhiNa);
     logger.info("  ln(φ_Cl-) = " + lnPhiCl);
 
-
     // Reference state type
     logger.info("Reference state types:");
     logger.info("  water: " + phase.getComponent(watIndex).getReferenceStateType());
     logger.info("  Na+: " + phase.getComponent(naIndex).getReferenceStateType());
     logger.info("  Cl-: " + phase.getComponent(clIndex).getReferenceStateType());
-
 
     // Pure component fugacity (for water)
     double pureFugWater = phase.getPureComponentFugacity(watIndex);
@@ -775,14 +763,12 @@ public class SystemElectrolyteCPAMMTest {
     logger.info("  f°_water = " + pureFugWater);
     logger.info("  ln(φ°_water) = " + logPureFugWater);
 
-
     // Infinite dilution fugacity (for ions)
     double infDilFugNa = phase.getLogInfiniteDiluteFugacity(naIndex, watIndex);
     double infDilFugCl = phase.getLogInfiniteDiluteFugacity(clIndex, watIndex);
     logger.info("Infinite dilution log fugacity coefficients:");
     logger.info("  ln(φ∞_Na+) = " + infDilFugNa);
     logger.info("  ln(φ∞_Cl-) = " + infDilFugCl);
-
 
     // Activity coefficients
     double gammaNa = phase.getActivityCoefficient(naIndex, watIndex);
@@ -793,7 +779,6 @@ public class SystemElectrolyteCPAMMTest {
     logger.info("  γ_Na+ = " + gammaNa);
     logger.info("  γ_Cl- = " + gammaCl);
 
-
     // Mean ionic activity coefficient
     double gammaMean = phase.getMeanIonicActivity(naIndex, clIndex);
     double gammaMeanMolal = phase.getMolalMeanIonicActivity(naIndex, clIndex);
@@ -801,7 +786,6 @@ public class SystemElectrolyteCPAMMTest {
     logger.info("  γ± (mole fraction) = " + gammaMean);
     logger.info("  γ± (molal) = " + gammaMeanMolal);
     logger.info("  Literature γ± = 0.657 (Robinson & Stokes)");
-
 
     // Water activity and osmotic coefficient
     double waterActivity = phiWater * xWater / pureFugWater;
@@ -813,16 +797,14 @@ public class SystemElectrolyteCPAMMTest {
     logger.info("  φ (molality basis) = " + osmoticCoeffMolal);
     logger.info("  Literature φ = 0.936 (Robinson & Stokes)");
 
-
     // Check: is the problem in the infinite dilution calculation?
     // At infinite dilution in pure water, γ∞ should be the Henry's law constant ratio
     logger.info("Analysis:");
-    logger.info("  ln(γ_Na+) = ln(φ_Na+) - ln(φ∞_Na+) = " + lnPhiNa + " - " + infDilFugNa + " = "
-        + (lnPhiNa - infDilFugNa));
-    logger.info("  ln(γ_Cl-) = ln(φ_Cl-) - ln(φ∞_Cl-) = " + lnPhiCl + " - " + infDilFugCl + " = "
-        + (lnPhiCl - infDilFugCl));
+    logger.info(
+	"  ln(γ_Na+) = ln(φ_Na+) - ln(φ∞_Na+) = " + lnPhiNa + " - " + infDilFugNa + " = " + (lnPhiNa - infDilFugNa));
+    logger.info(
+	"  ln(γ_Cl-) = ln(φ_Cl-) - ln(φ∞_Cl-) = " + lnPhiCl + " - " + infDilFugCl + " = " + (lnPhiCl - infDilFugCl));
     logger.info("  Expected ln(γ_Na+) ≈ ln(γ_Cl-) ≈ ln(0.657) = " + Math.log(0.657));
-
 
     // Get detailed contributions from the electrolyte phase
     if (phase instanceof PhaseElectrolyteCPAMM) {
@@ -833,7 +815,6 @@ public class SystemElectrolyteCPAMMTest {
       logger.info("  ε_solvent = " + mmPhase.getSolventPermittivity());
       logger.info("  ε_mixture = " + mmPhase.getMixturePermittivity());
       logger.info("  Born X = " + mmPhase.getBornX() + " mol/m");
-
 
       // Get electrolyte F contributions
       double FDH = mmPhase.FDebyeHuckel();
@@ -868,17 +849,17 @@ public class SystemElectrolyteCPAMMTest {
     // 5.0 | 0.874 | 1.271
     // 6.0 | 0.986 | 1.368
 
-    double[] molalities = {0.001, 0.01, 0.1, 0.5, 1.0, 2.0, 3.0};
-    double[] gammaLit = {0.965, 0.902, 0.778, 0.681, 0.657, 0.668, 0.714};
-    double[] phiLit = {0.988, 0.968, 0.932, 0.921, 0.936, 1.002, 1.085};
+    double[] molalities = { 0.001, 0.01, 0.1, 0.5, 1.0, 2.0, 3.0 };
+    double[] gammaLit = { 0.965, 0.902, 0.778, 0.681, 0.657, 0.668, 0.714 };
+    double[] phiLit = { 0.988, 0.968, 0.932, 0.921, 0.936, 1.002, 1.085 };
 
     logger.info("=================================================================");
     logger.info("NaCl in water at 25°C - Comparison to Literature");
     logger.info("=================================================================");
     logger.info("Source: Robinson & Stokes (1959), Pitzer (1991)");
 
-    logger.info(String.format("%-10s | %-10s | %-10s | %-10s | %-10s | %-10s | %-10s", "m (mol/kg)",
-        "γ±(calc)", "γ±(lit)", "Δγ±(%)", "φ(calc)", "φ(lit)", "Δφ(%)"));
+    logger.info(String.format("%-10s | %-10s | %-10s | %-10s | %-10s | %-10s | %-10s", "m (mol/kg)", "γ±(calc)",
+	"γ±(lit)", "Δγ±(%)", "φ(calc)", "φ(lit)", "Δφ(%)"));
     logger.info("-----------------------------------------------------------------");
 
     for (int i = 0; i < molalities.length; i++) {
@@ -912,19 +893,15 @@ public class SystemElectrolyteCPAMMTest {
       double deltaGamma = (gammaCalc - gammaLit[i]) / gammaLit[i] * 100;
       double deltaPhi = (phiCalc - phiLit[i]) / phiLit[i] * 100;
 
-      logger.info(
-          String.format("%-10.3f | %-10.4f | %-10.3f | %-+10.1f | %-10.4f | %-10.3f | %-+10.1f", m,
-              gammaCalc, gammaLit[i], deltaGamma, phiCalc, phiLit[i], deltaPhi));
+      logger.info(String.format("%-10.3f | %-10.4f | %-10.3f | %-+10.1f | %-10.4f | %-10.3f | %-+10.1f", m, gammaCalc,
+	  gammaLit[i], deltaGamma, phiCalc, phiLit[i], deltaPhi));
     }
 
     logger.info("-----------------------------------------------------------------");
 
     logger.info("Note: Current model uses DH + Born only.");
-    System.out
-        .println("      Full MM model requires Huron-Vidal with ion-solvent NRTL parameters.");
-    System.out
-        .println("      Large deviations are expected without the short-range ion-solvent term.");
-
+    System.out.println("      Full MM model requires Huron-Vidal with ion-solvent NRTL parameters.");
+    System.out.println("      Large deviations are expected without the short-range ion-solvent term.");
 
     // Just verify the test runs without errors
     assertTrue(true, "Literature comparison completed");
@@ -935,17 +912,16 @@ public class SystemElectrolyteCPAMMTest {
   void testCompareToFurstModel() {
     // Compare our MM model with the existing Furst electrolyte model
     // Literature values from Robinson & Stokes (1959) for NaCl at 25C
-    double[] molalities = {0.1, 0.5, 1.0, 2.0};
-    double[] gammaLit = {0.778, 0.681, 0.657, 0.668}; // from R&S
+    double[] molalities = { 0.1, 0.5, 1.0, 2.0 };
+    double[] gammaLit = { 0.778, 0.681, 0.657, 0.668 }; // from R&S
 
     logger.info("=================================================================");
     logger.info("Comparison: MM e-CPA vs Furst Electrolyte Model vs Literature");
     logger.info("=================================================================");
 
-    logger.info(String.format("%-10s | %-10s | %-10s | %-10s | %-10s | %-10s", "m (mol/kg)",
-        "g±(MM)", "g±(Furst)", "g±(Lit)", "Err(MM)", "Err(Furst)"));
-    System.out
-        .println("-----------------------------------------------------------------------------");
+    logger.info(String.format("%-10s | %-10s | %-10s | %-10s | %-10s | %-10s", "m (mol/kg)", "g±(MM)", "g±(Furst)",
+	"g±(Lit)", "Err(MM)", "Err(Furst)"));
+    System.out.println("-----------------------------------------------------------------------------");
 
     for (int i = 0; i < molalities.length; i++) {
       double m = molalities[i];
@@ -982,13 +958,11 @@ public class SystemElectrolyteCPAMMTest {
       double errMM = (gammaMM - gammaLit[i]) / gammaLit[i] * 100;
       double errFurst = (gammaFurst - gammaLit[i]) / gammaLit[i] * 100;
 
-      System.out
-          .println(String.format("%-10.3f | %-10.4f | %-10.4f | %-10.4f | %+8.1f%% | %+8.1f%%", m,
-              gammaMM, gammaFurst, gammaLit[i], errMM, errFurst));
+      System.out.println(String.format("%-10.3f | %-10.4f | %-10.4f | %-10.4f | %+8.1f%% | %+8.1f%%", m, gammaMM,
+	  gammaFurst, gammaLit[i], errMM, errFurst));
     }
 
-    System.out
-        .println("-----------------------------------------------------------------------------");
+    System.out.println("-----------------------------------------------------------------------------");
 
     logger.info("ANALYSIS:");
     logger.info("---------");
@@ -999,7 +973,6 @@ public class SystemElectrolyteCPAMMTest {
     logger.info("    The DH+Born electrostatic terms over-depress gamma± at high m");
     logger.info("    without the counterbalancing short-range ion-solvent interaction.");
 
-
     // Debug: Show Furst model contributions at 1 molal
     SystemElectrolyteCPA furstSystem = new SystemElectrolyteCPA(298.15, 1.0);
     furstSystem.addComponent("water", 55.508);
@@ -1009,14 +982,13 @@ public class SystemElectrolyteCPAMMTest {
     furstSystem.init(0);
     furstSystem.init(1);
 
-    neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos furstPhase =
-        (neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos) furstSystem.getPhase(0);
+    neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos furstPhase = (neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos) furstSystem
+	.getPhase(0);
     logger.info("Furst model at 1 molal - Helmholtz contributions (F = A/RT):");
     logger.info("  F^SR2 = " + String.format("%.6f", furstPhase.FSR2()));
     logger.info("  F^LR (MSA) = " + String.format("%.6f", furstPhase.FLR()));
     logger.info("  F^Born = " + String.format("%.2f", furstPhase.FBorn()));
     logger.info("  W = " + String.format("%.6f", furstPhase.getW()));
-
 
     // Show individual ion fugacity coefficients
     logger.info("Fugacity coefficients in Furst model at 1 molal:");
@@ -1027,26 +999,21 @@ public class SystemElectrolyteCPAMMTest {
     logger.info("  ln(phi_Cl-) = " + String.format("%.4f", lnPhiCl));
     logger.info("  ln(phi_water) = " + String.format("%.6f", lnPhiWater));
 
-
     // Show activity coefficients
-    double gammaNa =
-        furstPhase.getActivityCoefficient(furstPhase.getComponent("Na+").getComponentNumber());
-    double gammaCl =
-        furstPhase.getActivityCoefficient(furstPhase.getComponent("Cl-").getComponentNumber());
-    double gammaWater =
-        furstPhase.getActivityCoefficient(furstPhase.getComponent("water").getComponentNumber());
+    double gammaNa = furstPhase.getActivityCoefficient(furstPhase.getComponent("Na+").getComponentNumber());
+    double gammaCl = furstPhase.getActivityCoefficient(furstPhase.getComponent("Cl-").getComponentNumber());
+    double gammaWater = furstPhase.getActivityCoefficient(furstPhase.getComponent("water").getComponentNumber());
     logger.info("Activity coefficients (using Henry reference state):");
     logger.info("  gamma_Na+ = " + String.format("%.6f", gammaNa));
     logger.info("  gamma_Cl- = " + String.format("%.6f", gammaCl));
     logger.info("  gamma_water = " + String.format("%.6f", gammaWater));
 
     logger.info("Mean ionic activity coeff: gamma± = sqrt(gamma+ * gamma-) = "
-        + String.format("%.6f", Math.sqrt(gammaNa * gammaCl)));
+	+ String.format("%.6f", Math.sqrt(gammaNa * gammaCl)));
 
     logger.info("Literature references:");
     logger.info("  Robinson & Stokes (1959) - Electrolyte Solutions, 2nd Ed.");
     logger.info("  Maribo-Mogensen (2014) - PhD Thesis, DTU");
-
 
     assertTrue(true, "Model comparison completed");
   }
@@ -1054,16 +1021,15 @@ public class SystemElectrolyteCPAMMTest {
   @Test
   @DisplayName("Test MM model with short-range term enabled")
   void testMMWithShortRangeEnabled() {
-    double[] molalities = {0.001, 0.01, 0.1, 0.5, 1.0, 2.0, 3.0};
-    double[] gammaLit = {0.965, 0.902, 0.778, 0.681, 0.657, 0.668, 0.714};
+    double[] molalities = { 0.001, 0.01, 0.1, 0.5, 1.0, 2.0, 3.0 };
+    double[] gammaLit = { 0.965, 0.902, 0.778, 0.681, 0.657, 0.668, 0.714 };
 
     logger.info("=================================================================");
     logger.info("NaCl: MM model DH+Born ONLY vs DH+Born+SR (short-range enabled)");
     logger.info("=================================================================");
-    logger.info(String.format("%-10s | %-12s | %-12s | %-10s | %-10s | %-10s", "m (mol/kg)",
-        "g±(DH+Born)", "g±(DH+Born+SR)", "g±(Lit)", "Err(no SR)", "Err(+SR)"));
-    System.out
-        .println("-----------------------------------------------------------------------------");
+    logger.info(String.format("%-10s | %-12s | %-12s | %-10s | %-10s | %-10s", "m (mol/kg)", "g±(DH+Born)",
+	"g±(DH+Born+SR)", "g±(Lit)", "Err(no SR)", "Err(+SR)"));
+    System.out.println("-----------------------------------------------------------------------------");
 
     for (int i = 0; i < molalities.length; i++) {
       double m = molalities[i];
@@ -1093,12 +1059,11 @@ public class SystemElectrolyteCPAMMTest {
       withSR.init(1);
       ThermodynamicOperations opsSR = new ThermodynamicOperations(withSR);
       try {
-        opsSR.TPflash();
+	opsSR.TPflash();
       } catch (Exception ex) {
-        logger
-            .info(String.format("%-10.3f | %-12.4f | %-12s | %-10.3f | %+8.1f%% | %s", m, gammaNoSR,
-                "FLASH FAIL", gammaLit[i], (gammaNoSR - gammaLit[i]) / gammaLit[i] * 100, "N/A"));
-        continue;
+	logger.info(String.format("%-10.3f | %-12.4f | %-12s | %-10.3f | %+8.1f%% | %s", m, gammaNoSR, "FLASH FAIL",
+	    gammaLit[i], (gammaNoSR - gammaLit[i]) / gammaLit[i] * 100, "N/A"));
+	continue;
       }
       int naIdx2 = withSR.getPhase(0).getComponent("Na+").getComponentNumber();
       int clIdx2 = withSR.getPhase(0).getComponent("Cl-").getComponentNumber();
@@ -1107,9 +1072,8 @@ public class SystemElectrolyteCPAMMTest {
       double errNoSR = (gammaNoSR - gammaLit[i]) / gammaLit[i] * 100;
       double errSR = (gammaSR - gammaLit[i]) / gammaLit[i] * 100;
 
-      System.out
-          .println(String.format("%-10.3f | %-12.4f | %-12.4f | %-10.3f | %+8.1f%% | %+8.1f%%", m,
-              gammaNoSR, gammaSR, gammaLit[i], errNoSR, errSR));
+      System.out.println(String.format("%-10.3f | %-12.4f | %-12.4f | %-10.3f | %+8.1f%% | %+8.1f%%", m, gammaNoSR,
+	  gammaSR, gammaLit[i], errNoSR, errSR));
     }
 
     // Also show the wij values being used
@@ -1126,15 +1090,13 @@ public class SystemElectrolyteCPAMMTest {
     logger.info("wij values at 298.15 K:");
     for (int ii = 0; ii < phase.getNumberOfComponents(); ii++) {
       for (int jj = 0; jj < phase.getNumberOfComponents(); jj++) {
-        double w = phase.getWij(ii, jj);
-        if (w != 0.0) {
-          logger.info(String.format("  wij[%d][%d] (%s-%s) = %.2f K", ii, jj,
-              phase.getComponent(ii).getComponentName(), phase.getComponent(jj).getComponentName(),
-              w));
-        }
+	double w = phase.getWij(ii, jj);
+	if (w != 0.0) {
+	  logger.info(String.format("  wij[%d][%d] (%s-%s) = %.2f K", ii, jj, phase.getComponent(ii).getComponentName(),
+	      phase.getComponent(jj).getComponentName(), w));
+	}
       }
     }
-
 
     logger.info("FShortRange at 1 molal = " + phase.FShortRange());
     logger.info("FDebyeHuckel at 1 molal = " + phase.FDebyeHuckel());
@@ -1150,26 +1112,25 @@ public class SystemElectrolyteCPAMMTest {
     double m = 1.0;
     double molesWater = 55.508;
 
-    String[] labels = {"DH+Born+SR (full)", "Born+SR (no DH)", "DH+SR (no Born)",
-        "SR only (no DH, no Born)", "DH only (no Born, no SR)", "None (pure SRK+CPA)"};
+    String[] labels = { "DH+Born+SR (full)", "Born+SR (no DH)", "DH+SR (no Born)", "SR only (no DH, no Born)",
+	"DH only (no Born, no SR)", "None (pure SRK+CPA)" };
 
     boolean[][] configs = {
-        // DH, Born, SR
-        {true, true, true}, // full
-        {false, true, true}, // no DH
-        {true, false, true}, // no Born
-        {false, false, true}, // no DH, no Born
-        {true, false, false}, // DH only
-        {false, false, false} // none
+	// DH, Born, SR
+	{ true, true, true }, // full
+	{ false, true, true }, // no DH
+	{ true, false, true }, // no Born
+	{ false, false, true }, // no DH, no Born
+	{ true, false, false }, // DH only
+	{ false, false, false } // none
     };
 
     logger.info("=================================================================");
     logger.info("DIAGNOSTIC: Individual term contributions at 1 molal NaCl, 298.15 K");
     logger.info("=================================================================");
-    logger.info(String.format("%-30s | %-12s | %-12s | %-12s | %-12s", "Configuration", "gamma_pm",
-        "ln(gamma)", "Vm(cm3/mol)", "kappa(1/m)"));
-    System.out
-        .println("---------------------------------------------------------------------------");
+    logger.info(String.format("%-30s | %-12s | %-12s | %-12s | %-12s", "Configuration", "gamma_pm", "ln(gamma)",
+	"Vm(cm3/mol)", "kappa(1/m)"));
+    System.out.println("---------------------------------------------------------------------------");
 
     for (int i = 0; i < configs.length; i++) {
       SystemElectrolyteCPAMM s = new SystemElectrolyteCPAMM(298.15, 1.0);
@@ -1191,58 +1152,49 @@ public class SystemElectrolyteCPAMMTest {
       double gamma = s.getPhase(0).getMeanIonicActivity(naIdx, clIdx);
       double lnGamma = Math.log(gamma);
       double vm = s.getPhase(0).getMolarVolume();
-      double kap = (s.getPhase(0) instanceof PhaseElectrolyteCPAMM)
-          ? ((PhaseElectrolyteCPAMM) s.getPhase(0)).getKappa()
-          : 0.0;
+      double kap = (s.getPhase(0) instanceof PhaseElectrolyteCPAMM) ? ((PhaseElectrolyteCPAMM) s.getPhase(0)).getKappa()
+	  : 0.0;
 
-      logger.info(String.format("%-30s | %-12.6f | %-12.4f | %-12.4f | %-12.4e", labels[i], gamma,
-          lnGamma, vm, kap));
+      logger.info(String.format("%-30s | %-12.6f | %-12.4f | %-12.4f | %-12.4e", labels[i], gamma, lnGamma, vm, kap));
 
       // For key configurations, print detailed fugacity coefficients
       if (i == 0 || i == 5) { // full DH+Born+SR and None
-        // Print extended DH debug info
-        PhaseElectrolyteCPAMM mmP = (PhaseElectrolyteCPAMM) s.getPhase(0);
-        System.out
-            .println("  Extended DH: meanIonDiam=" + String.format("%.4e", mmP.getMeanIonDiameter())
-                + " tauDH=" + String.format("%.6f", mmP.getTauDH()) + " tauDH'="
-                + String.format("%.6f", mmP.getTauDHprime()) + " chi="
-                + String.format("%.4f", mmP.getKappa() * mmP.getMeanIonDiameter()));
-        // Print ion LJ diameters
-        for (int ci = 0; ci < s.getPhase(0).getNumberOfComponents(); ci++) {
-          double ljd = s.getPhase(0).getComponent(ci).getLennardJonesMolecularDiameter();
-          double zc = s.getPhase(0).getComponent(ci).getIonicCharge();
-          if (zc != 0) {
-            logger.info("    Ion " + s.getPhase(0).getComponent(ci).getComponentName()
-                + ": LJ_diam=" + String.format("%.4f", ljd) + " Å, z=" + (int) zc);
-          }
-        }
+	// Print extended DH debug info
+	PhaseElectrolyteCPAMM mmP = (PhaseElectrolyteCPAMM) s.getPhase(0);
+	System.out.println("  Extended DH: meanIonDiam=" + String.format("%.4e", mmP.getMeanIonDiameter()) + " tauDH="
+	    + String.format("%.6f", mmP.getTauDH()) + " tauDH'=" + String.format("%.6f", mmP.getTauDHprime()) + " chi="
+	    + String.format("%.4f", mmP.getKappa() * mmP.getMeanIonDiameter()));
+	// Print ion LJ diameters
+	for (int ci = 0; ci < s.getPhase(0).getNumberOfComponents(); ci++) {
+	  double ljd = s.getPhase(0).getComponent(ci).getLennardJonesMolecularDiameter();
+	  double zc = s.getPhase(0).getComponent(ci).getIonicCharge();
+	  if (zc != 0) {
+	    logger.info("    Ion " + s.getPhase(0).getComponent(ci).getComponentName() + ": LJ_diam="
+		+ String.format("%.4f", ljd) + " Å, z=" + (int) zc);
+	  }
+	}
 
-        double lnPhiNa = s.getPhase(0).getComponent(naIdx).getLogFugacityCoefficient();
-        double lnPhiCl = s.getPhase(0).getComponent(clIdx).getLogFugacityCoefficient();
-        int wIdx = s.getPhase(0).getComponent("water").getComponentNumber();
-        double lnPhiW = s.getPhase(0).getComponent(wIdx).getLogFugacityCoefficient();
-        double gamNa = s.getPhase(0).getActivityCoefficient(naIdx, wIdx);
-        double gamCl = s.getPhase(0).getActivityCoefficient(clIdx, wIdx);
-        logger.info("  Detail: lnPhi(Na+)=" + String.format("%.4f", lnPhiNa) + " lnPhi(Cl-)="
-            + String.format("%.4f", lnPhiCl) + " lnPhi(water)=" + String.format("%.4f", lnPhiW));
-        logger.info("  Detail: gamma(Na+)=" + String.format("%.6f", gamNa) + " gamma(Cl-)="
-            + String.format("%.6f", gamCl));
+	double lnPhiNa = s.getPhase(0).getComponent(naIdx).getLogFugacityCoefficient();
+	double lnPhiCl = s.getPhase(0).getComponent(clIdx).getLogFugacityCoefficient();
+	int wIdx = s.getPhase(0).getComponent("water").getComponentNumber();
+	double lnPhiW = s.getPhase(0).getComponent(wIdx).getLogFugacityCoefficient();
+	double gamNa = s.getPhase(0).getActivityCoefficient(naIdx, wIdx);
+	double gamCl = s.getPhase(0).getActivityCoefficient(clIdx, wIdx);
+	logger.info("  Detail: lnPhi(Na+)=" + String.format("%.4f", lnPhiNa) + " lnPhi(Cl-)="
+	    + String.format("%.4f", lnPhiCl) + " lnPhi(water)=" + String.format("%.4f", lnPhiW));
+	logger.info(
+	    "  Detail: gamma(Na+)=" + String.format("%.6f", gamNa) + " gamma(Cl-)=" + String.format("%.6f", gamCl));
 
-        // Print individual DH/Born/SR contributions to dF/dN
-        neqsim.thermo.component.ComponentSrkCPAMM naComp =
-            (neqsim.thermo.component.ComponentSrkCPAMM) s.getPhase(0).getComponent(naIdx);
-        double dFdN_total =
-            naComp.dFdN(s.getPhase(0), s.getPhase(0).getNumberOfComponents(), 298.15, 1.0);
-        double dFDHval = naComp.dFDebyeHuckeldN(s.getPhase(0),
-            s.getPhase(0).getNumberOfComponents(), 298.15, 1.0);
-        double dFBval =
-            naComp.dFBorndN(s.getPhase(0), s.getPhase(0).getNumberOfComponents(), 298.15, 1.0);
-        double dFSRval = naComp.dFShortRangedN(s.getPhase(0), s.getPhase(0).getNumberOfComponents(),
-            298.15, 1.0);
-        logger.info("  dFdN(Na+): total=" + String.format("%.4f", dFdN_total) + " DH="
-            + String.format("%.6f", dFDHval) + " Born=" + String.format("%.4f", dFBval) + " SR="
-            + String.format("%.6f", dFSRval) + " SRK+CPA="
-            + String.format("%.4f", dFdN_total - dFDHval - dFBval - dFSRval));
+	// Print individual DH/Born/SR contributions to dF/dN
+	neqsim.thermo.component.ComponentSrkCPAMM naComp = (neqsim.thermo.component.ComponentSrkCPAMM) s.getPhase(0)
+	    .getComponent(naIdx);
+	double dFdN_total = naComp.dFdN(s.getPhase(0), s.getPhase(0).getNumberOfComponents(), 298.15, 1.0);
+	double dFDHval = naComp.dFDebyeHuckeldN(s.getPhase(0), s.getPhase(0).getNumberOfComponents(), 298.15, 1.0);
+	double dFBval = naComp.dFBorndN(s.getPhase(0), s.getPhase(0).getNumberOfComponents(), 298.15, 1.0);
+	double dFSRval = naComp.dFShortRangedN(s.getPhase(0), s.getPhase(0).getNumberOfComponents(), 298.15, 1.0);
+	logger.info("  dFdN(Na+): total=" + String.format("%.4f", dFdN_total) + " DH=" + String.format("%.6f", dFDHval)
+	    + " Born=" + String.format("%.4f", dFBval) + " SR=" + String.format("%.6f", dFSRval) + " SRK+CPA="
+	    + String.format("%.4f", dFdN_total - dFDHval - dFBval - dFSRval));
       }
     }
 
@@ -1259,8 +1211,7 @@ public class SystemElectrolyteCPAMMTest {
     int naFurst = furstSystem.getPhase(0).getComponent("Na+").getComponentNumber();
     int clFurst = furstSystem.getPhase(0).getComponent("Cl-").getComponentNumber();
     double gammaFurst = furstSystem.getPhase(0).getMeanIonicActivity(naFurst, clFurst);
-    logger.info(String.format("%-30s | %-12.6f | %-12.4f", "Furst (MSA+Born+SR2)", gammaFurst,
-        Math.log(gammaFurst)));
+    logger.info(String.format("%-30s | %-12.6f | %-12.4f", "Furst (MSA+Born+SR2)", gammaFurst, Math.log(gammaFurst)));
 
     logger.info("-----------------------------------------------------------------");
     logger.info("Literature gamma_pm at 1 molal NaCl: 0.657");
@@ -1280,17 +1231,16 @@ public class SystemElectrolyteCPAMMTest {
     int naIdxSrk = srkOnly.getPhase(0).getComponent("Na+").getComponentNumber();
     int clIdxSrk = srkOnly.getPhase(0).getComponent("Cl-").getComponentNumber();
     double gammaSrk = srkOnly.getPhase(0).getMeanIonicActivity(naIdxSrk, clIdxSrk);
-    logger.info(String.format("%-30s | %-12.6f | %-12.4f", "SRK only (no CPA, no DH/Born)",
-        gammaSrk, Math.log(gammaSrk)));
+    logger.info(
+	String.format("%-30s | %-12.6f | %-12.4f", "SRK only (no CPA, no DH/Born)", gammaSrk, Math.log(gammaSrk)));
 
     // Print ion b values for debugging
 
     logger.info("Ion b values (Furst model):");
     for (int ci = 0; ci < furstSystem.getPhase(0).getNumberOfComponents(); ci++) {
-      logger
-          .info("  " + furstSystem.getPhase(0).getComponent(ci).getComponentName() + ": LJ_sigma = "
-              + furstSystem.getPhase(0).getComponent(ci).getLennardJonesMolecularDiameter()
-              + " A, charge = " + furstSystem.getPhase(0).getComponent(ci).getIonicCharge());
+      logger.info("  " + furstSystem.getPhase(0).getComponent(ci).getComponentName() + ": LJ_sigma = "
+	  + furstSystem.getPhase(0).getComponent(ci).getLennardJonesMolecularDiameter() + " A, charge = "
+	  + furstSystem.getPhase(0).getComponent(ci).getIonicCharge());
     }
 
     // Test with b=near-zero for ions (to eliminate CPA penalty)
@@ -1308,12 +1258,10 @@ public class SystemElectrolyteCPAMMTest {
     // Set b = near-zero for ions after init
     for (int ph = 0; ph < zeroBsys.getNumberOfPhases(); ph++) {
       for (int ci = 0; ci < zeroBsys.getPhase(ph).getNumberOfComponents(); ci++) {
-        if (zeroBsys.getPhase(ph).getComponent(ci).getIonicCharge() != 0) {
-          ((neqsim.thermo.component.ComponentSrkCPA) zeroBsys.getPhase(ph).getComponent(ci))
-              .setb(1e-20);
-          ((neqsim.thermo.component.ComponentSrkCPA) zeroBsys.getPhase(ph).getComponent(ci))
-              .seta(1e-35);
-        }
+	if (zeroBsys.getPhase(ph).getComponent(ci).getIonicCharge() != 0) {
+	  ((neqsim.thermo.component.ComponentSrkCPA) zeroBsys.getPhase(ph).getComponent(ci)).setb(1e-20);
+	  ((neqsim.thermo.component.ComponentSrkCPA) zeroBsys.getPhase(ph).getComponent(ci)).seta(1e-35);
+	}
       }
     }
     zeroBsys.init(1);
@@ -1322,8 +1270,7 @@ public class SystemElectrolyteCPAMMTest {
     int naZB = zeroBsys.getPhase(0).getComponent("Na+").getComponentNumber();
     int clZB = zeroBsys.getPhase(0).getComponent("Cl-").getComponentNumber();
     double gammaZB = zeroBsys.getPhase(0).getMeanIonicActivity(naZB, clZB);
-    logger.info(String.format("%-30s | %-12.6f | %-12.4f", "b~0 ions, DH+Born+SR", gammaZB,
-        Math.log(gammaZB)));
+    logger.info(String.format("%-30s | %-12.6f | %-12.4f", "b~0 ions, DH+Born+SR", gammaZB, Math.log(gammaZB)));
 
     // Diagnostic should produce DH+Born+SR γ± close to literature (0.657)
     // The first config (full model) should give γ± within 2% of 0.657
@@ -1341,10 +1288,10 @@ public class SystemElectrolyteCPAMMTest {
     double gammaFull = fullSys.getPhase(0).getMeanIonicActivity(naFull, clFull);
     double literatureGamma = 0.657;
     double relError = Math.abs(gammaFull - literatureGamma) / literatureGamma;
-    logger.info(String.format("\nFull MM model γ± = %.6f (literature: %.3f, error: %.1f%%)",
-        gammaFull, literatureGamma, relError * 100));
+    logger.info(String.format("\nFull MM model γ± = %.6f (literature: %.3f, error: %.1f%%)", gammaFull, literatureGamma,
+	relError * 100));
     assertEquals(literatureGamma, gammaFull, 0.02,
-        "MM e-CPA γ± for NaCl 1 molal should be within 0.02 of Robinson & Stokes");
+	"MM e-CPA γ± for NaCl 1 molal should be within 0.02 of Robinson & Stokes");
   }
 
   @Test
@@ -1363,19 +1310,16 @@ public class SystemElectrolyteCPAMMTest {
     double molesWater = 55.508;
 
     // Salt specifications: {cation, anion, nu_cation, nu_anion, molality, gamma_lit}
-    String[][] salts = {{"Na+", "Cl-", "1", "1", "1.0", "0.657"},
-        {"Ca++", "Cl-", "1", "2", "1.0", "0.518"}, {"Ba++", "Cl-", "1", "2", "1.0", "0.500"},
-        {"Na+", "SO4--", "2", "1", "1.0", "0.445"}, {"Mg++", "Cl-", "1", "2", "1.0", "0.529"},};
+    String[][] salts = { { "Na+", "Cl-", "1", "1", "1.0", "0.657" }, { "Ca++", "Cl-", "1", "2", "1.0", "0.518" },
+	{ "Ba++", "Cl-", "1", "2", "1.0", "0.500" }, { "Na+", "SO4--", "2", "1", "1.0", "0.445" },
+	{ "Mg++", "Cl-", "1", "2", "1.0", "0.529" }, };
 
-    System.out
-        .println("==========================================================================");
+    System.out.println("==========================================================================");
     logger.info("SCALE POTENTIAL COMPARISON: MM e-CPA vs Pitzer at 1 molal, 298.15 K");
-    System.out
-        .println("==========================================================================");
-    logger.info(String.format("%-12s | %-10s | %-10s | %-10s | %-10s | %-10s", "Salt", "g±(MM)",
-        "g±(Pitzer)", "g±(Lit)", "Err(MM)%", "Err(Pitz)%"));
-    System.out
-        .println("--------------------------------------------------------------------------");
+    System.out.println("==========================================================================");
+    logger.info(String.format("%-12s | %-10s | %-10s | %-10s | %-10s | %-10s", "Salt", "g±(MM)", "g±(Pitzer)",
+	"g±(Lit)", "Err(MM)%", "Err(Pitz)%"));
+    System.out.println("--------------------------------------------------------------------------");
 
     for (String[] salt : salts) {
       String cation = salt[0];
@@ -1389,22 +1333,22 @@ public class SystemElectrolyteCPAMMTest {
       // ----- MM e-CPA model -----
       double gammaMM = Double.NaN;
       try {
-        SystemElectrolyteCPAMM mmSys = new SystemElectrolyteCPAMM(298.15, 1.0);
-        mmSys.addComponent("water", molesWater);
-        mmSys.addComponent(cation, nuCat * m);
-        mmSys.addComponent(anion, nuAn * m);
-        mmSys.setMixingRule(10);
-        mmSys.init(0);
-        mmSys.init(1);
-        ThermodynamicOperations mmOps = new ThermodynamicOperations(mmSys);
-        mmOps.TPflash();
+	SystemElectrolyteCPAMM mmSys = new SystemElectrolyteCPAMM(298.15, 1.0);
+	mmSys.addComponent("water", molesWater);
+	mmSys.addComponent(cation, nuCat * m);
+	mmSys.addComponent(anion, nuAn * m);
+	mmSys.setMixingRule(10);
+	mmSys.init(0);
+	mmSys.init(1);
+	ThermodynamicOperations mmOps = new ThermodynamicOperations(mmSys);
+	mmOps.TPflash();
 
-        int catIdx = mmSys.getPhase(0).getComponent(cation).getComponentNumber();
-        int anIdx = mmSys.getPhase(0).getComponent(anion).getComponentNumber();
+	int catIdx = mmSys.getPhase(0).getComponent(cation).getComponentNumber();
+	int anIdx = mmSys.getPhase(0).getComponent(anion).getComponentNumber();
 
-        gammaMM = mmSys.getPhase(0).getMeanIonicActivity(catIdx, anIdx);
+	gammaMM = mmSys.getPhase(0).getMeanIonicActivity(catIdx, anIdx);
       } catch (Exception ex) {
-        logger.info("  MM e-CPA failed for " + saltName + ": " + ex.getMessage());
+	logger.info("  MM e-CPA failed for " + saltName + ": " + ex.getMessage());
       }
 
       // ----- Pitzer model -----
@@ -1412,45 +1356,40 @@ public class SystemElectrolyteCPAMMTest {
       // Add methane to ensure two-phase system (gas + aqueous) so phase[1] is Pitzer.
       double gammaPitzer = Double.NaN;
       try {
-        SystemPitzer pitzerSys = new SystemPitzer(298.15, 10.0);
-        pitzerSys.addComponent("methane", 0.01);
-        pitzerSys.addComponent("water", molesWater);
-        pitzerSys.addComponent(cation, nuCat * m);
-        pitzerSys.addComponent(anion, nuAn * m);
-        pitzerSys.setMixingRule("classic");
-        pitzerSys.init(0);
-        pitzerSys.init(1);
-        ThermodynamicOperations pitzerOps = new ThermodynamicOperations(pitzerSys);
-        pitzerOps.TPflash();
+	SystemPitzer pitzerSys = new SystemPitzer(298.15, 10.0);
+	pitzerSys.addComponent("methane", 0.01);
+	pitzerSys.addComponent("water", molesWater);
+	pitzerSys.addComponent(cation, nuCat * m);
+	pitzerSys.addComponent(anion, nuAn * m);
+	pitzerSys.setMixingRule("classic");
+	pitzerSys.init(0);
+	pitzerSys.init(1);
+	ThermodynamicOperations pitzerOps = new ThermodynamicOperations(pitzerSys);
+	pitzerOps.TPflash();
 
-        // Aqueous phase is at index 1 for SystemPitzer
-        int catIdx = pitzerSys.getPhase(1).getComponent(cation).getComponentNumber();
-        int anIdx = pitzerSys.getPhase(1).getComponent(anion).getComponentNumber();
-        gammaPitzer = pitzerSys.getPhase(1).getMeanIonicActivity(catIdx, anIdx);
+	// Aqueous phase is at index 1 for SystemPitzer
+	int catIdx = pitzerSys.getPhase(1).getComponent(cation).getComponentNumber();
+	int anIdx = pitzerSys.getPhase(1).getComponent(anion).getComponentNumber();
+	gammaPitzer = pitzerSys.getPhase(1).getMeanIonicActivity(catIdx, anIdx);
       } catch (Exception ex) {
-        logger.info("  Pitzer failed for " + saltName + ": " + ex.getMessage());
+	logger.info("  Pitzer failed for " + saltName + ": " + ex.getMessage());
       }
 
-      double errMM =
-          Double.isNaN(gammaMM) ? Double.NaN : (gammaMM - gammaLitVal) / gammaLitVal * 100;
-      double errPitz =
-          Double.isNaN(gammaPitzer) ? Double.NaN : (gammaPitzer - gammaLitVal) / gammaLitVal * 100;
+      double errMM = Double.isNaN(gammaMM) ? Double.NaN : (gammaMM - gammaLitVal) / gammaLitVal * 100;
+      double errPitz = Double.isNaN(gammaPitzer) ? Double.NaN : (gammaPitzer - gammaLitVal) / gammaLitVal * 100;
 
-      logger.info(String.format("%-12s | %-10.4f | %-10.4f | %-10.3f | %+9.1f%% | %+9.1f%%",
-          saltName, Double.isNaN(gammaMM) ? 0.0 : gammaMM,
-          Double.isNaN(gammaPitzer) ? 0.0 : gammaPitzer, gammaLitVal,
-          Double.isNaN(errMM) ? 0.0 : errMM, Double.isNaN(errPitz) ? 0.0 : errPitz));
+      logger.info(String.format("%-12s | %-10.4f | %-10.4f | %-10.3f | %+9.1f%% | %+9.1f%%", saltName,
+	  Double.isNaN(gammaMM) ? 0.0 : gammaMM, Double.isNaN(gammaPitzer) ? 0.0 : gammaPitzer, gammaLitVal,
+	  Double.isNaN(errMM) ? 0.0 : errMM, Double.isNaN(errPitz) ? 0.0 : errPitz));
 
       // All models must give finite positive results
       assertTrue(Double.isFinite(gammaMM) && gammaMM > 0,
-          "MM e-CPA gamma± must be finite and positive for " + saltName + " (got " + gammaMM + ")");
+	  "MM e-CPA gamma± must be finite and positive for " + saltName + " (got " + gammaMM + ")");
       assertTrue(Double.isFinite(gammaPitzer) && gammaPitzer > 0,
-          "Pitzer gamma± must be finite and positive for " + saltName + " (got " + gammaPitzer
-              + ")");
+	  "Pitzer gamma± must be finite and positive for " + saltName + " (got " + gammaPitzer + ")");
     }
 
-    System.out
-        .println("--------------------------------------------------------------------------");
+    System.out.println("--------------------------------------------------------------------------");
 
     logger.info("Literature: Robinson & Stokes (1959), Pitzer (1991)");
     logger.info("Note: MM e-CPA divalent ion parameters are estimated, not fitted to data.");
@@ -1506,28 +1445,24 @@ public class SystemElectrolyteCPAMMTest {
     // Saturation Index: SI = log10(IAP/Ksp) = logIAP - logKsp
     double sI = logIAP - logKspBaSO4;
 
-    System.out
-        .println("==========================================================================");
+    System.out.println("==========================================================================");
     logger.info("BaSO4 SCALE SATURATION INDEX CALCULATION (MM e-CPA)");
-    System.out
-        .println("==========================================================================");
+    System.out.println("==========================================================================");
     logger.info("Mixed water (50:50 formation:injection):");
-    logger.info(String.format("  m(Ba++) = %.4f mol/kg, gamma(Ba++) = %.4f, a(Ba++) = %.4e", mBa,
-        gammaBaMix, aBa));
-    logger.info(String.format("  m(SO4--) = %.4f mol/kg, gamma(SO4--) = %.4f, a(SO4--) = %.4e",
-        mSO4, gammaSO4Mix, aSO4));
+    logger.info(String.format("  m(Ba++) = %.4f mol/kg, gamma(Ba++) = %.4f, a(Ba++) = %.4e", mBa, gammaBaMix, aBa));
+    logger
+	.info(String.format("  m(SO4--) = %.4f mol/kg, gamma(SO4--) = %.4f, a(SO4--) = %.4e", mSO4, gammaSO4Mix, aSO4));
     logger.info(String.format("  log10(IAP) = %.2f", logIAP));
     logger.info(String.format("  log10(Ksp) = %.2f", logKspBaSO4));
     logger.info(String.format("  SI = %.2f", sI));
-    logger.info(
-        sI > 0 ? "  ==> SUPERSATURATED (BaSO4 scale risk)" : "  ==> UNDERSATURATED (no scale)");
+    logger.info(sI > 0 ? "  ==> SUPERSATURATED (BaSO4 scale risk)" : "  ==> UNDERSATURATED (no scale)");
 
     // Verify the model produces valid results
     assertTrue(Double.isFinite(sI), "Saturation index should be finite");
     assertTrue(Double.isFinite(gammaBaMix) && gammaBaMix > 0,
-        "Ba++ activity coefficient should be finite and positive");
+	"Ba++ activity coefficient should be finite and positive");
     assertTrue(Double.isFinite(gammaSO4Mix) && gammaSO4Mix > 0,
-        "SO4-- activity coefficient should be finite and positive");
+	"SO4-- activity coefficient should be finite and positive");
 
     // Now compare with Pitzer for the same mixed water
     SystemPitzer pitzerMix = new SystemPitzer(298.15, 10.0);
@@ -1559,7 +1494,6 @@ public class SystemElectrolyteCPAMMTest {
     double logIAPp = Math.log10(Math.abs(aBaP * aSO4P) + 1e-30);
     double siPitzer = logIAPp - logKspBaSO4;
 
-
     logger.info("Pitzer model comparison:");
     logger.info(String.format("  gamma(Ba++) = %.4f (MM: %.4f)", gammaBaP, gammaBaMix));
     logger.info(String.format("  gamma(SO4--) = %.4f (MM: %.4f)", gammaSO4P, gammaSO4Mix));
@@ -1571,9 +1505,9 @@ public class SystemElectrolyteCPAMMTest {
    * Helper to construct salt name from ion names.
    *
    * @param cation cation name
-   * @param anion anion name
-   * @param nuCat stoichiometric coefficient of cation
-   * @param nuAn stoichiometric coefficient of anion
+   * @param anion  anion name
+   * @param nuCat  stoichiometric coefficient of cation
+   * @param nuAn   stoichiometric coefficient of anion
    * @return salt name string
    */
   private String getSaltName(String cation, String anion, int nuCat, int nuAn) {
@@ -1602,14 +1536,13 @@ public class SystemElectrolyteCPAMMTest {
 
     assertTrue(mmSys.getNumberOfPhases() >= 1, "MM should have at least 1 phase");
     double mmVm = mmSys.getPhase(0).getMolarVolume();
-    assertTrue(mmVm > 0 && mmVm < 10.0,
-        "Liquid molar volume should be in liquid range (got " + mmVm + ")");
+    assertTrue(mmVm > 0 && mmVm < 10.0, "Liquid molar volume should be in liquid range (got " + mmVm + ")");
 
     int naIdxMM = mmSys.getPhase(0).getComponent("Na+").getComponentNumber();
     int clIdxMM = mmSys.getPhase(0).getComponent("Cl-").getComponentNumber();
     double gammaMM = mmSys.getPhase(0).getMeanIonicActivity(naIdxMM, clIdxMM);
     assertTrue(Double.isFinite(gammaMM) && gammaMM > 0,
-        "MM gamma± must be finite and positive in pure liquid (got " + gammaMM + ")");
+	"MM gamma± must be finite and positive in pure liquid (got " + gammaMM + ")");
 
     // ----- Pitzer: pure liquid -----
     // Architectural note: SystemPitzer uses phase[0]=SRK(gas) and phase[1]=Pitzer(aqueous).
@@ -1627,26 +1560,25 @@ public class SystemElectrolyteCPAMMTest {
     pitzerOps.TPflash();
 
     assertTrue(pitzerSys.getNumberOfPhases() >= 2,
-        "Pitzer should have at least 2 phases (got " + pitzerSys.getNumberOfPhases() + ")");
+	"Pitzer should have at least 2 phases (got " + pitzerSys.getNumberOfPhases() + ")");
 
     // Pitzer aqueous phase is at index 1
     int pitzerAqPhase = 1;
 
     double pitzerVm = pitzerSys.getPhase(pitzerAqPhase).getMolarVolume();
-    assertTrue(pitzerVm > 0,
-        "Pitzer liquid molar volume should be positive (got " + pitzerVm + ")");
+    assertTrue(pitzerVm > 0, "Pitzer liquid molar volume should be positive (got " + pitzerVm + ")");
 
     int naIdxP = pitzerSys.getPhase(pitzerAqPhase).getComponent("Na+").getComponentNumber();
     int clIdxP = pitzerSys.getPhase(pitzerAqPhase).getComponent("Cl-").getComponentNumber();
     double gammaPitzer = pitzerSys.getPhase(pitzerAqPhase).getMeanIonicActivity(naIdxP, clIdxP);
     assertTrue(Double.isFinite(gammaPitzer) && gammaPitzer > 0,
-        "Pitzer gamma± must be finite and positive in pure liquid (got " + gammaPitzer + ")");
+	"Pitzer gamma± must be finite and positive in pure liquid (got " + gammaPitzer + ")");
 
     logger.info("=== Pure Liquid (no gas) ===");
-    logger.info(String.format("  MM e-CPA:  γ± = %.4f, Vm = %.6e m3/mol, phases = %d", gammaMM,
-        mmVm, mmSys.getNumberOfPhases()));
-    logger.info(String.format("  Pitzer:    γ± = %.4f, Vm = %.6e m3/mol, phases = %d", gammaPitzer,
-        pitzerVm, pitzerSys.getNumberOfPhases()));
+    logger.info(String.format("  MM e-CPA:  γ± = %.4f, Vm = %.6e m3/mol, phases = %d", gammaMM, mmVm,
+	mmSys.getNumberOfPhases()));
+    logger.info(String.format("  Pitzer:    γ± = %.4f, Vm = %.6e m3/mol, phases = %d", gammaPitzer, pitzerVm,
+	pitzerSys.getNumberOfPhases()));
     logger.info("  Literature γ± = 0.657");
   }
 
@@ -1671,26 +1603,24 @@ public class SystemElectrolyteCPAMMTest {
     mmOps.TPflash();
 
     assertTrue(mmSys.getNumberOfPhases() >= 2,
-        "MM VLE should have at least 2 phases (got " + mmSys.getNumberOfPhases() + ")");
+	"MM VLE should have at least 2 phases (got " + mmSys.getNumberOfPhases() + ")");
 
     // Find aqueous phase (phase with most water)
     int mmAqPhase = 0;
     for (int p = 1; p < mmSys.getNumberOfPhases(); p++) {
-      if (mmSys.getPhase(p).getComponent("water").getx() > mmSys.getPhase(mmAqPhase)
-          .getComponent("water").getx()) {
-        mmAqPhase = p;
+      if (mmSys.getPhase(p).getComponent("water").getx() > mmSys.getPhase(mmAqPhase).getComponent("water").getx()) {
+	mmAqPhase = p;
       }
     }
     int naIdxMM = mmSys.getPhase(mmAqPhase).getComponent("Na+").getComponentNumber();
     int clIdxMM = mmSys.getPhase(mmAqPhase).getComponent("Cl-").getComponentNumber();
     double gammaMM = mmSys.getPhase(mmAqPhase).getMeanIonicActivity(naIdxMM, clIdxMM);
     assertTrue(Double.isFinite(gammaMM) && gammaMM > 0,
-        "MM gamma± must be finite and positive in VLE aqueous phase (got " + gammaMM + ")");
+	"MM gamma± must be finite and positive in VLE aqueous phase (got " + gammaMM + ")");
 
     // All phases should have valid molar volumes
     for (int p = 0; p < mmSys.getNumberOfPhases(); p++) {
-      assertTrue(mmSys.getPhase(p).getMolarVolume() > 0,
-          "MM phase " + p + " molar volume should be positive");
+      assertTrue(mmSys.getPhase(p).getMolarVolume() > 0, "MM phase " + p + " molar volume should be positive");
     }
 
     // ----- Pitzer: VLE -----
@@ -1706,7 +1636,7 @@ public class SystemElectrolyteCPAMMTest {
     pitzerOps.TPflash();
 
     assertTrue(pitzerSys.getNumberOfPhases() >= 2,
-        "Pitzer VLE should have at least 2 phases (got " + pitzerSys.getNumberOfPhases() + ")");
+	"Pitzer VLE should have at least 2 phases (got " + pitzerSys.getNumberOfPhases() + ")");
 
     // Pitzer aqueous phase is at index 1 (phase[0] = SRK gas, phase[1] = Pitzer)
     int pitzerAqPhase = 1;
@@ -1714,27 +1644,23 @@ public class SystemElectrolyteCPAMMTest {
     int clIdxP = pitzerSys.getPhase(pitzerAqPhase).getComponent("Cl-").getComponentNumber();
     double gammaPitzer = pitzerSys.getPhase(pitzerAqPhase).getMeanIonicActivity(naIdxP, clIdxP);
     assertTrue(Double.isFinite(gammaPitzer) && gammaPitzer > 0,
-        "Pitzer gamma± must be finite and positive in VLE (got " + gammaPitzer + ")");
+	"Pitzer gamma± must be finite and positive in VLE (got " + gammaPitzer + ")");
 
     logger.info("=== VLE: Gas + Aqueous (methane + NaCl, 50 bar, 40°C) ===");
-    logger.info(String.format("  MM e-CPA:  γ± = %.4f, phases = %d, aq phase = %d", gammaMM,
-        mmSys.getNumberOfPhases(), mmAqPhase));
+    logger.info(String.format("  MM e-CPA:  γ± = %.4f, phases = %d, aq phase = %d", gammaMM, mmSys.getNumberOfPhases(),
+	mmAqPhase));
     logger.info(String.format("  Pitzer:    γ± = %.4f, phases = %d, aq phase = %d", gammaPitzer,
-        pitzerSys.getNumberOfPhases(), pitzerAqPhase));
+	pitzerSys.getNumberOfPhases(), pitzerAqPhase));
     // Print phase types
     for (int p = 0; p < mmSys.getNumberOfPhases(); p++) {
-      System.out
-          .println(String.format("  MM phase %d: type=%s, Vm=%.4e, x(water)=%.4f, x(CH4)=%.4f", p,
-              mmSys.getPhase(p).getType(), mmSys.getPhase(p).getMolarVolume(),
-              mmSys.getPhase(p).getComponent("water").getx(),
-              mmSys.getPhase(p).getComponent("methane").getx()));
+      System.out.println(String.format("  MM phase %d: type=%s, Vm=%.4e, x(water)=%.4f, x(CH4)=%.4f", p,
+	  mmSys.getPhase(p).getType(), mmSys.getPhase(p).getMolarVolume(),
+	  mmSys.getPhase(p).getComponent("water").getx(), mmSys.getPhase(p).getComponent("methane").getx()));
     }
     for (int p = 0; p < pitzerSys.getNumberOfPhases(); p++) {
-      System.out
-          .println(String.format("  Pitzer phase %d: type=%s, Vm=%.4e, x(water)=%.4f, x(CH4)=%.4f",
-              p, pitzerSys.getPhase(p).getType(), pitzerSys.getPhase(p).getMolarVolume(),
-              pitzerSys.getPhase(p).getComponent("water").getx(),
-              pitzerSys.getPhase(p).getComponent("methane").getx()));
+      System.out.println(String.format("  Pitzer phase %d: type=%s, Vm=%.4e, x(water)=%.4f, x(CH4)=%.4f", p,
+	  pitzerSys.getPhase(p).getType(), pitzerSys.getPhase(p).getMolarVolume(),
+	  pitzerSys.getPhase(p).getComponent("water").getx(), pitzerSys.getPhase(p).getComponent("methane").getx()));
     }
   }
 
@@ -1760,26 +1686,24 @@ public class SystemElectrolyteCPAMMTest {
     mmOps.TPflash();
 
     assertTrue(mmSys.getNumberOfPhases() >= 2,
-        "MM VLLE should have at least 2 phases (got " + mmSys.getNumberOfPhases() + ")");
+	"MM VLLE should have at least 2 phases (got " + mmSys.getNumberOfPhases() + ")");
 
     // Find aqueous phase (highest water mole fraction)
     int mmAqPhase = 0;
     for (int p = 1; p < mmSys.getNumberOfPhases(); p++) {
-      if (mmSys.getPhase(p).getComponent("water").getx() > mmSys.getPhase(mmAqPhase)
-          .getComponent("water").getx()) {
-        mmAqPhase = p;
+      if (mmSys.getPhase(p).getComponent("water").getx() > mmSys.getPhase(mmAqPhase).getComponent("water").getx()) {
+	mmAqPhase = p;
       }
     }
     int naIdxMM = mmSys.getPhase(mmAqPhase).getComponent("Na+").getComponentNumber();
     int clIdxMM = mmSys.getPhase(mmAqPhase).getComponent("Cl-").getComponentNumber();
     double gammaMM = mmSys.getPhase(mmAqPhase).getMeanIonicActivity(naIdxMM, clIdxMM);
     assertTrue(Double.isFinite(gammaMM) && gammaMM > 0,
-        "MM gamma± must be finite and positive in VLLE aqueous phase (got " + gammaMM + ")");
+	"MM gamma± must be finite and positive in VLLE aqueous phase (got " + gammaMM + ")");
 
     // All phases should have valid properties
     for (int p = 0; p < mmSys.getNumberOfPhases(); p++) {
-      assertTrue(mmSys.getPhase(p).getMolarVolume() > 0,
-          "MM VLLE phase " + p + " molar volume should be positive");
+      assertTrue(mmSys.getPhase(p).getMolarVolume() > 0, "MM VLLE phase " + p + " molar volume should be positive");
     }
 
     // ----- Pitzer: VLLE -----
@@ -1797,53 +1721,48 @@ public class SystemElectrolyteCPAMMTest {
     pitzerOps.TPflash();
 
     assertTrue(pitzerSys.getNumberOfPhases() >= 2,
-        "Pitzer VLLE should have at least 2 phases (got " + pitzerSys.getNumberOfPhases() + ")");
+	"Pitzer VLLE should have at least 2 phases (got " + pitzerSys.getNumberOfPhases() + ")");
 
     // Find aqueous phase (Pitzer phase, or highest water fraction)
     int pitzerAqPhase = -1;
     for (int p = 0; p < pitzerSys.getNumberOfPhases(); p++) {
       if (pitzerSys.getPhase(p) instanceof neqsim.thermo.phase.PhasePitzer) {
-        pitzerAqPhase = p;
-        break;
+	pitzerAqPhase = p;
+	break;
       }
     }
     if (pitzerAqPhase < 0) {
       pitzerAqPhase = 0;
       for (int p = 1; p < pitzerSys.getNumberOfPhases(); p++) {
-        if (pitzerSys.getPhase(p).getComponent("water").getx() > pitzerSys.getPhase(pitzerAqPhase)
-            .getComponent("water").getx()) {
-          pitzerAqPhase = p;
-        }
+	if (pitzerSys.getPhase(p).getComponent("water").getx() > pitzerSys.getPhase(pitzerAqPhase).getComponent("water")
+	    .getx()) {
+	  pitzerAqPhase = p;
+	}
       }
     }
     int naIdxP = pitzerSys.getPhase(pitzerAqPhase).getComponent("Na+").getComponentNumber();
     int clIdxP = pitzerSys.getPhase(pitzerAqPhase).getComponent("Cl-").getComponentNumber();
     double gammaPitzer = pitzerSys.getPhase(pitzerAqPhase).getMeanIonicActivity(naIdxP, clIdxP);
     assertTrue(Double.isFinite(gammaPitzer) && gammaPitzer > 0,
-        "Pitzer gamma± must be finite and positive in VLLE (got " + gammaPitzer + ")");
+	"Pitzer gamma± must be finite and positive in VLLE (got " + gammaPitzer + ")");
 
-    System.out
-        .println("=== VLLE: Gas + Oil + Aqueous (methane + n-heptane + NaCl, 50 bar, 40°C) ===");
-    logger.info(String.format("  MM e-CPA:  γ± = %.4f, phases = %d, aq phase = %d", gammaMM,
-        mmSys.getNumberOfPhases(), mmAqPhase));
+    System.out.println("=== VLLE: Gas + Oil + Aqueous (methane + n-heptane + NaCl, 50 bar, 40°C) ===");
+    logger.info(String.format("  MM e-CPA:  γ± = %.4f, phases = %d, aq phase = %d", gammaMM, mmSys.getNumberOfPhases(),
+	mmAqPhase));
     logger.info(String.format("  Pitzer:    γ± = %.4f, phases = %d, aq phase = %d", gammaPitzer,
-        pitzerSys.getNumberOfPhases(), pitzerAqPhase));
+	pitzerSys.getNumberOfPhases(), pitzerAqPhase));
     // Print phase details
     for (int p = 0; p < mmSys.getNumberOfPhases(); p++) {
-      logger.info(
-          String.format("  MM phase %d: type=%s, Vm=%.4e, x(water)=%.4f, x(CH4)=%.4f, x(C7)=%.4f",
-              p, mmSys.getPhase(p).getType(), mmSys.getPhase(p).getMolarVolume(),
-              mmSys.getPhase(p).getComponent("water").getx(),
-              mmSys.getPhase(p).getComponent("methane").getx(),
-              mmSys.getPhase(p).getComponent("n-heptane").getx()));
+      logger.info(String.format("  MM phase %d: type=%s, Vm=%.4e, x(water)=%.4f, x(CH4)=%.4f, x(C7)=%.4f", p,
+	  mmSys.getPhase(p).getType(), mmSys.getPhase(p).getMolarVolume(),
+	  mmSys.getPhase(p).getComponent("water").getx(), mmSys.getPhase(p).getComponent("methane").getx(),
+	  mmSys.getPhase(p).getComponent("n-heptane").getx()));
     }
     for (int p = 0; p < pitzerSys.getNumberOfPhases(); p++) {
-      logger.info(String.format(
-          "  Pitzer phase %d: type=%s, Vm=%.4e, x(water)=%.4f, x(CH4)=%.4f, x(C7)=%.4f", p,
-          pitzerSys.getPhase(p).getType(), pitzerSys.getPhase(p).getMolarVolume(),
-          pitzerSys.getPhase(p).getComponent("water").getx(),
-          pitzerSys.getPhase(p).getComponent("methane").getx(),
-          pitzerSys.getPhase(p).getComponent("n-heptane").getx()));
+      logger.info(String.format("  Pitzer phase %d: type=%s, Vm=%.4e, x(water)=%.4f, x(CH4)=%.4f, x(C7)=%.4f", p,
+	  pitzerSys.getPhase(p).getType(), pitzerSys.getPhase(p).getMolarVolume(),
+	  pitzerSys.getPhase(p).getComponent("water").getx(), pitzerSys.getPhase(p).getComponent("methane").getx(),
+	  pitzerSys.getPhase(p).getComponent("n-heptane").getx()));
     }
   }
 
@@ -1873,12 +1792,10 @@ public class SystemElectrolyteCPAMMTest {
     ThermodynamicOperations mmOps = new ThermodynamicOperations(mmSys);
     mmOps.TPflash();
 
-
     logger.info("MM e-CPA model — " + mmSys.getNumberOfPhases() + " phases:");
-    logger.info(String.format("  %-8s %-10s %-12s %-12s %-12s %-12s %-12s", "Phase", "Type",
-        "gamma±", "x(Na+)", "x(Cl-)", "x(water)", "Vm"));
-    System.out
-        .println("  ---------------------------------------------------------------------------");
+    logger.info(String.format("  %-8s %-10s %-12s %-12s %-12s %-12s %-12s", "Phase", "Type", "gamma±", "x(Na+)",
+	"x(Cl-)", "x(water)", "Vm"));
+    System.out.println("  ---------------------------------------------------------------------------");
 
     for (int p = 0; p < mmSys.getNumberOfPhases(); p++) {
       int naIdx = mmSys.getPhase(p).getComponent("Na+").getComponentNumber();
@@ -1890,17 +1807,17 @@ public class SystemElectrolyteCPAMMTest {
 
       double gamma = Double.NaN;
       try {
-        gamma = mmSys.getPhase(p).getMeanIonicActivity(naIdx, clIdx);
+	gamma = mmSys.getPhase(p).getMeanIonicActivity(naIdx, clIdx);
       } catch (Exception ex) {
-        // May fail in non-aqueous phases with near-zero ion concentrations
+	// May fail in non-aqueous phases with near-zero ion concentrations
       }
 
-      logger.info(String.format("  %-8d %-10s %-12.6f %-12.4e %-12.4e %-12.4f %-12.4e", p,
-          mmSys.getPhase(p).getType(), Double.isNaN(gamma) ? 0.0 : gamma, xNa, xCl, xW, vm));
+      logger.info(String.format("  %-8d %-10s %-12.6f %-12.4e %-12.4e %-12.4f %-12.4e", p, mmSys.getPhase(p).getType(),
+	  Double.isNaN(gamma) ? 0.0 : gamma, xNa, xCl, xW, vm));
 
       // Every phase must return a finite result (even if ions are trace)
       assertTrue(Double.isFinite(gamma),
-          "MM gamma± must be finite in phase " + p + " (" + mmSys.getPhase(p).getType() + ")");
+	  "MM gamma± must be finite in phase " + p + " (" + mmSys.getPhase(p).getType() + ")");
       assertTrue(gamma > 0, "MM gamma± must be positive in phase " + p + " (got " + gamma + ")");
     }
 
@@ -1918,12 +1835,10 @@ public class SystemElectrolyteCPAMMTest {
     ThermodynamicOperations pitzerOps = new ThermodynamicOperations(pitzerSys);
     pitzerOps.TPflash();
 
-
     logger.info("Pitzer model — " + pitzerSys.getNumberOfPhases() + " phases:");
-    logger.info(String.format("  %-8s %-10s %-12s %-12s %-12s %-12s %-12s", "Phase", "Type",
-        "gamma±", "x(Na+)", "x(Cl-)", "x(water)", "Vm"));
-    System.out
-        .println("  ---------------------------------------------------------------------------");
+    logger.info(String.format("  %-8s %-10s %-12s %-12s %-12s %-12s %-12s", "Phase", "Type", "gamma±", "x(Na+)",
+	"x(Cl-)", "x(water)", "Vm"));
+    System.out.println("  ---------------------------------------------------------------------------");
 
     for (int p = 0; p < pitzerSys.getNumberOfPhases(); p++) {
       int naIdx = pitzerSys.getPhase(p).getComponent("Na+").getComponentNumber();
@@ -1935,29 +1850,27 @@ public class SystemElectrolyteCPAMMTest {
 
       double gamma = Double.NaN;
       try {
-        gamma = pitzerSys.getPhase(p).getMeanIonicActivity(naIdx, clIdx);
+	gamma = pitzerSys.getPhase(p).getMeanIonicActivity(naIdx, clIdx);
       } catch (Exception ex) {
-        // May fail in non-aqueous phases
+	// May fail in non-aqueous phases
       }
 
       logger.info(String.format("  %-8d %-10s %-12.6f %-12.4e %-12.4e %-12.4f %-12.4e", p,
-          pitzerSys.getPhase(p).getType(), Double.isNaN(gamma) ? 0.0 : gamma, xNa, xCl, xW, vm));
+	  pitzerSys.getPhase(p).getType(), Double.isNaN(gamma) ? 0.0 : gamma, xNa, xCl, xW, vm));
 
       // Pitzer: the aqueous (Pitzer) phase must give valid gamma±
       if (pitzerSys.getPhase(p) instanceof neqsim.thermo.phase.PhasePitzer) {
-        assertTrue(Double.isFinite(gamma) && gamma > 0,
-            "Pitzer gamma± must be finite and positive in aqueous phase (got " + gamma + ")");
+	assertTrue(Double.isFinite(gamma) && gamma > 0,
+	    "Pitzer gamma± must be finite and positive in aqueous phase (got " + gamma + ")");
       }
       // SRK gas/oil phases: gamma± may not be meaningful but should still be finite
       if (Double.isFinite(gamma)) {
-        assertTrue(gamma > 0, "gamma± should be positive if finite in phase " + p);
+	assertTrue(gamma > 0, "gamma± should be positive if finite in phase " + p);
       }
     }
 
-
     logger.info("Interpretation:");
-    System.out
-        .println("  - Aqueous phase gamma± drives mineral scale potential (SI = log(IAP/Ksp))");
+    System.out.println("  - Aqueous phase gamma± drives mineral scale potential (SI = log(IAP/Ksp))");
     logger.info("  - Gas/oil phases have trace ions; gamma± there is for mass balance only");
     logger.info("  - Literature NaCl gamma± at 1 molal, 25°C: 0.657");
   }
@@ -1975,14 +1888,12 @@ public class SystemElectrolyteCPAMMTest {
     double molesWater = 55.508;
     double m = 1.0;
 
-    System.out
-        .println("==========================================================================");
+    System.out.println("==========================================================================");
     logger.info("NaCl gamma± — ALL ELECTROLYTE MODELS — VLLE at 50 bar, 40°C");
-    System.out
-        .println("==========================================================================");
+    System.out.println("==========================================================================");
 
     // Helper: print phase table for a given system
-    String[] modelNames = {"MM e-CPA", "Pitzer", "CPA-Statoil", "CPA-Advanced"};
+    String[] modelNames = { "MM e-CPA", "Pitzer", "CPA-Statoil", "CPA-Advanced" };
     double[] aqGammas = new double[4];
 
     // ===================== 1. MM e-CPA =====================
@@ -2002,7 +1913,7 @@ public class SystemElectrolyteCPAMMTest {
 
       aqGammas[0] = printPhaseTable(sys, modelNames[0]);
       assertTrue(Double.isFinite(aqGammas[0]) && aqGammas[0] > 0,
-          modelNames[0] + " aqueous gamma± must be finite and positive");
+	  modelNames[0] + " aqueous gamma± must be finite and positive");
     }
 
     // ===================== 2. Pitzer =====================
@@ -2022,7 +1933,7 @@ public class SystemElectrolyteCPAMMTest {
 
       aqGammas[1] = printPhaseTable(sys, modelNames[1]);
       assertTrue(Double.isFinite(aqGammas[1]) && aqGammas[1] > 0,
-          modelNames[1] + " aqueous gamma± must be finite and positive");
+	  modelNames[1] + " aqueous gamma± must be finite and positive");
     }
 
     // ===================== 3. Electrolyte CPA Statoil =====================
@@ -2043,10 +1954,9 @@ public class SystemElectrolyteCPAMMTest {
       aqGammas[2] = printPhaseTable(sys, modelNames[2]);
       // Statoil CPA may not resolve a proper aqueous phase in this system
       if (Double.isFinite(aqGammas[2]) && aqGammas[2] < 10.0) {
-        assertTrue(aqGammas[2] > 0, modelNames[2] + " aqueous gamma± must be positive");
+	assertTrue(aqGammas[2] > 0, modelNames[2] + " aqueous gamma± must be positive");
       } else {
-        logger.info("  ** " + modelNames[2]
-            + " did not form a distinct aqueous phase — gamma± not meaningful **");
+	logger.info("  ** " + modelNames[2] + " did not form a distinct aqueous phase — gamma± not meaningful **");
       }
     }
 
@@ -2067,7 +1977,7 @@ public class SystemElectrolyteCPAMMTest {
 
       aqGammas[3] = printPhaseTable(sys, modelNames[3]);
       assertTrue(Double.isFinite(aqGammas[3]) && aqGammas[3] > 0,
-          modelNames[3] + " aqueous gamma± must be finite and positive");
+	  modelNames[3] + " aqueous gamma± must be finite and positive");
     }
 
     // ===================== Summary =====================
@@ -2079,11 +1989,10 @@ public class SystemElectrolyteCPAMMTest {
     for (int i = 0; i < 4; i++) {
       boolean hasAq = Double.isFinite(aqGammas[i]) && aqGammas[i] < 10.0;
       if (hasAq) {
-        double err = (aqGammas[i] - litGamma) / litGamma * 100;
-        logger.info(
-            String.format("  %-15s %-12.4f %+10.1f%%       YES", modelNames[i], aqGammas[i], err));
+	double err = (aqGammas[i] - litGamma) / litGamma * 100;
+	logger.info(String.format("  %-15s %-12.4f %+10.1f%%       YES", modelNames[i], aqGammas[i], err));
       } else {
-        logger.info(String.format("  %-15s %-12s %-15s NO", modelNames[i], "N/A", "—"));
+	logger.info(String.format("  %-15s %-12s %-15s NO", modelNames[i], "N/A", "—"));
       }
     }
     logger.info("  Literature (R&S): 0.657 at 1 molal, 25°C");
@@ -2093,15 +2002,15 @@ public class SystemElectrolyteCPAMMTest {
   /**
    * Print phase table for any SystemInterface and return aqueous phase gamma±.
    *
-   * @param sys the thermodynamic system after flash
+   * @param sys       the thermodynamic system after flash
    * @param modelName display name
    * @return gamma± in aqueous phase (x_water &gt; 0.5), or NaN if no aqueous phase found
    */
   private double printPhaseTable(SystemInterface sys, String modelName) {
 
     logger.info(modelName + " — " + sys.getNumberOfPhases() + " phases:");
-    logger.info(String.format("  %-6s %-10s %-12s %-12s %-12s %-12s %-12s", "Phase", "Type",
-        "gamma±", "x(Na+)", "x(Cl-)", "x(water)", "Vm"));
+    logger.info(String.format("  %-6s %-10s %-12s %-12s %-12s %-12s %-12s", "Phase", "Type", "gamma±", "x(Na+)",
+	"x(Cl-)", "x(water)", "Vm"));
     logger.info("  -----------------------------------------------------------------------");
 
     // Find the aqueous phase: must have x(water) > 0.5
@@ -2109,7 +2018,7 @@ public class SystemElectrolyteCPAMMTest {
     for (int p = 0; p < sys.getNumberOfPhases(); p++) {
       double xW = sys.getPhase(p).getComponent("water").getx();
       if (xW > 0.5 && (aqPhase < 0 || xW > sys.getPhase(aqPhase).getComponent("water").getx())) {
-        aqPhase = p;
+	aqPhase = p;
       }
     }
 
@@ -2124,17 +2033,16 @@ public class SystemElectrolyteCPAMMTest {
 
       double gamma = Double.NaN;
       try {
-        gamma = sys.getPhase(p).getMeanIonicActivity(naIdx, clIdx);
+	gamma = sys.getPhase(p).getMeanIonicActivity(naIdx, clIdx);
       } catch (Exception ex) {
-        // ignore
+	// ignore
       }
       if (p == aqPhase) {
-        aqGamma = gamma;
+	aqGamma = gamma;
       }
       String phaseLabel = (p == aqPhase) ? " <-- aq" : "";
-      logger.info(String.format("  %-6d %-10s %-12.4f %-12.4e %-12.4e %-12.4f %-12.4e%s", p,
-          sys.getPhase(p).getType(), Double.isFinite(gamma) ? gamma : 0.0, xNa, xCl, xW, vm,
-          phaseLabel));
+      logger.info(String.format("  %-6d %-10s %-12.4f %-12.4e %-12.4e %-12.4f %-12.4e%s", p, sys.getPhase(p).getType(),
+	  Double.isFinite(gamma) ? gamma : 0.0, xNa, xCl, xW, vm, phaseLabel));
     }
     if (aqPhase < 0) {
       logger.info("  ** No aqueous phase found (no phase with x_water > 0.5) **");
@@ -2145,11 +2053,9 @@ public class SystemElectrolyteCPAMMTest {
   @Test
   @DisplayName("Diagnose CPA-Statoil aqueous phase failure")
   void testDiagnoseCPAStatoilAqueousPhase() {
-    System.out
-        .println("==========================================================================");
+    System.out.println("==========================================================================");
     logger.info("DIAGNOSTIC: CPA-Statoil aqueous phase formation");
-    System.out
-        .println("==========================================================================");
+    System.out.println("==========================================================================");
 
     // --- Case 1: Pure water + NaCl (simplest case) ---
     {
@@ -2203,8 +2109,7 @@ public class SystemElectrolyteCPAMMTest {
 
     // --- Case 4: Replicate the working Statoil 3-phase test conditions ---
     {
-      logger.info(
-          "\n--- Case 4: Working 3-phase conditions (298.15 K, 20 bar, from existing test) ---");
+      logger.info("\n--- Case 4: Working 3-phase conditions (298.15 K, 20 bar, from existing test) ---");
       SystemElectrolyteCPAstatoil sys = new SystemElectrolyteCPAstatoil(298.15, 20.0);
       sys.addComponent("methane", 0.5);
       sys.addComponent("n-heptane", 0.3);
@@ -2282,10 +2187,10 @@ public class SystemElectrolyteCPAMMTest {
       sb.append(String.format("  Phase %d [%-8s]: ", p, sys.getPhase(p).getType()));
       sb.append(String.format("Vm=%.4e  ", sys.getPhase(p).getMolarVolume()));
       for (int c = 0; c < sys.getPhase(p).getNumberOfComponents(); c++) {
-        String name = sys.getPhase(p).getComponent(c).getComponentName();
-        double x = sys.getPhase(p).getComponent(c).getx();
-        double n = sys.getPhase(p).getComponent(c).getNumberOfMolesInPhase();
-        sb.append(String.format("%s:x=%.4e/n=%.3f  ", name, x, n));
+	String name = sys.getPhase(p).getComponent(c).getComponentName();
+	double x = sys.getPhase(p).getComponent(c).getx();
+	double n = sys.getPhase(p).getComponent(c).getNumberOfMolesInPhase();
+	sb.append(String.format("%s:x=%.4e/n=%.3f  ", name, x, n));
       }
       logger.info(sb.toString());
     }

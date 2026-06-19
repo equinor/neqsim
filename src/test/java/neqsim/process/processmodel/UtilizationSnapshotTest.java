@@ -18,10 +18,8 @@ import neqsim.thermo.system.SystemInterface;
 
 /**
  * Tests for the side-effect-free capacity utilization snapshot observation API
- * ({@link ProcessSystem#getUtilizationSnapshotJson()},
- * {@link ProcessModel#getUtilizationSnapshotJson()} and
- * {@link ProcessAutomation#getUtilizationSnapshot()}) and for the compressor no-chart constraint
- * gating fix.
+ * ({@link ProcessSystem#getUtilizationSnapshotJson()}, {@link ProcessModel#getUtilizationSnapshotJson()} and
+ * {@link ProcessAutomation#getUtilizationSnapshot()}) and for the compressor no-chart constraint gating fix.
  *
  * @author NeqSim
  * @version 1.0
@@ -47,8 +45,8 @@ public class UtilizationSnapshotTest {
   }
 
   /**
-   * The snapshot JSON must be well-formed, schema-versioned, and report every unit with its
-   * utilization and per-constraint breakdown.
+   * The snapshot JSON must be well-formed, schema-versioned, and report every unit with its utilization and
+   * per-constraint breakdown.
    */
   @Test
   void testSnapshotJsonStructure() {
@@ -85,9 +83,8 @@ public class UtilizationSnapshotTest {
   }
 
   /**
-   * A compressor without an active performance chart must report smooth, power-driven utilization
-   * (not pinned at a degenerate 100%) and its chart-dependent surge/speed constraints must be
-   * present but disabled.
+   * A compressor without an active performance chart must report smooth, power-driven utilization (not pinned at a
+   * degenerate 100%) and its chart-dependent surge/speed constraints must be present but disabled.
    */
   @Test
   void testCompressorWithoutChartHasChartConstraintsDisabled() {
@@ -102,15 +99,13 @@ public class UtilizationSnapshotTest {
 
     // Not pinned to degenerate 100 % utilization
     assertTrue(comp.getMaxUtilization() < 0.999,
-        "Chartless compressor must not be pinned at 100% utilization, was "
-            + comp.getMaxUtilization());
+	"Chartless compressor must not be pinned at 100% utilization, was " + comp.getMaxUtilization());
 
     java.util.Map<String, CapacityConstraint> constraints = comp.getCapacityConstraints();
     for (CapacityConstraint c : constraints.values()) {
       String name = c.getName().toLowerCase();
       if (name.contains("surge") || name.contains("speed") || name.contains("stonewall")) {
-        assertFalse(c.isEnabled(),
-            "Chart-dependent constraint '" + c.getName() + "' must be disabled without a chart");
+	assertFalse(c.isEnabled(), "Chart-dependent constraint '" + c.getName() + "' must be disabled without a chart");
       }
     }
 
@@ -121,14 +116,13 @@ public class UtilizationSnapshotTest {
       String bn = bottleneck.getName().toLowerCase();
       assertTrue(bottleneck.isEnabled(), "Bottleneck constraint must be enabled");
       assertFalse(bn.contains("surge") || bn.contains("stonewall"),
-          "Chartless compressor bottleneck must not be a disabled chart metric, was "
-              + bottleneck.getName());
+	  "Chartless compressor bottleneck must not be a disabled chart metric, was " + bottleneck.getName());
     }
   }
 
   /**
-   * Without a chart, the compressor utilization must increase monotonically with flow because the
-   * power constraint (not a flat surge constraint) drives utilization.
+   * Without a chart, the compressor utilization must increase monotonically with flow because the power constraint (not
+   * a flat surge constraint) drives utilization.
    */
   @Test
   void testCompressorPowerUtilizationIncreasesWithFlow() {
@@ -149,8 +143,7 @@ public class UtilizationSnapshotTest {
     process.run();
     double utilHigh = comp.getMaxUtilization();
 
-    assertTrue(utilHigh > utilLow,
-        "Power-driven utilization should rise with flow: " + utilLow + " -> " + utilHigh);
+    assertTrue(utilHigh > utilLow, "Power-driven utilization should rise with flow: " + utilLow + " -> " + utilHigh);
   }
 
   /**
@@ -187,8 +180,8 @@ public class UtilizationSnapshotTest {
   }
 
   /**
-   * {@link ProcessAutomation#getUtilizationSnapshot()} must delegate to the underlying process and
-   * return the same schema-versioned JSON.
+   * {@link ProcessAutomation#getUtilizationSnapshot()} must delegate to the underlying process and return the same
+   * schema-versioned JSON.
    */
   @Test
   void testProcessAutomationDelegation() {

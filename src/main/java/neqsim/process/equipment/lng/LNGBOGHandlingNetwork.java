@@ -8,21 +8,20 @@ import org.apache.logging.log4j.Logger;
  * Models the BOG handling network on an LNG carrier or terminal.
  *
  * <p>
- * The BOG handling network determines the fate of boil-off gas generated in the cargo tanks. On a
- * modern LNG carrier, BOG can be:
+ * The BOG handling network determines the fate of boil-off gas generated in the cargo tanks. On a modern LNG carrier,
+ * BOG can be:
  * </p>
  * <ul>
- * <li><b>Fuel for propulsion:</b> Used as fuel in DFDE (dual fuel diesel electric) engines or steam
- * boilers</li>
+ * <li><b>Fuel for propulsion:</b> Used as fuel in DFDE (dual fuel diesel electric) engines or steam boilers</li>
  * <li><b>Reliquefied:</b> Compressed and cooled to return to the cargo tanks as liquid</li>
  * <li><b>Burned in GCU:</b> Gas Combustion Unit for excess BOG disposal</li>
  * <li><b>Vented:</b> Emergency only — environmental regulations prohibit routine venting</li>
  * </ul>
  *
  * <p>
- * The network acts as a sink for BOG and determines the net cargo loss rate. The reliquefaction
- * return reduces the effective boil-off, while fuel consumption increases it. The split between
- * handling modes affects both the economic outcome and the compositional ageing rate.
+ * The network acts as a sink for BOG and determines the net cargo loss rate. The reliquefaction return reduces the
+ * effective boil-off, while fuel consumption increases it. The split between handling modes affects both the economic
+ * outcome and the compositional ageing rate.
  * </p>
  *
  * @author NeqSim
@@ -87,7 +86,8 @@ public class LNGBOGHandlingNetwork implements Serializable {
   /**
    * Default constructor.
    */
-  public LNGBOGHandlingNetwork() {}
+  public LNGBOGHandlingNetwork() {
+  }
 
   /**
    * Constructor with handling mode.
@@ -102,8 +102,7 @@ public class LNGBOGHandlingNetwork implements Serializable {
    * Calculate the disposition of BOG across all handling modes.
    *
    * <p>
-   * Priority order: fuel consumption first, then reliquefaction (if available), then GCU for
-   * excess.
+   * Priority order: fuel consumption first, then reliquefaction (if available), then GCU for excess.
    * </p>
    *
    * @param bogGeneratedKgHr total BOG generated (kg/hr)
@@ -126,8 +125,7 @@ public class LNGBOGHandlingNetwork implements Serializable {
     }
 
     // 2. Reliquefaction
-    if (handlingMode == HandlingMode.RELIQUEFACTION
-        || handlingMode == HandlingMode.FUEL_PLUS_RELIQUEFACTION) {
+    if (handlingMode == HandlingMode.RELIQUEFACTION || handlingMode == HandlingMode.FUEL_PLUS_RELIQUEFACTION) {
       double reliqCapacityAvail = reliquefactionCapacity;
       double reliquefied = Math.min(remainingBOG, reliqCapacityAvail) * reliquefactionEfficiency;
       disp.bogReliquefied = reliquefied;
@@ -145,8 +143,7 @@ public class LNGBOGHandlingNetwork implements Serializable {
     // 4. Any remaining = forced boil-off / vented (should not happen)
     if (remainingBOG > 0) {
       disp.bogVented = remainingBOG;
-      logger
-          .warn(String.format("%.1f kg/hr BOG exceeds handling capacity — venting!", remainingBOG));
+      logger.warn(String.format("%.1f kg/hr BOG exceeds handling capacity — venting!", remainingBOG));
     }
 
     // Net cargo loss = generated - reliquefied return
@@ -159,8 +156,8 @@ public class LNGBOGHandlingNetwork implements Serializable {
    * Calculate current fuel gas demand based on vessel speed.
    *
    * <p>
-   * Fuel consumption scales approximately with the cube of speed (due to cubic relationship between
-   * hull resistance and speed): Q_fuel = Q_base * (V / V_design)^n
+   * Fuel consumption scales approximately with the cube of speed (due to cubic relationship between hull resistance and
+   * speed): Q_fuel = Q_base * (V / V_design)^n
    * </p>
    *
    * @return fuel demand (kg/hr)
@@ -231,9 +228,8 @@ public class LNGBOGHandlingNetwork implements Serializable {
     /** {@inheritDoc} */
     @Override
     public String toString() {
-      return String.format(
-          "BOG=%.0f kg/hr [Fuel=%.0f, Reliq=%.0f, GCU=%.0f, Vent=%.0f], NetLoss=%.0f kg/hr",
-          bogGenerated, bogToFuel, bogReliquefied, bogToGCU, bogVented, netCargoLoss);
+      return String.format("BOG=%.0f kg/hr [Fuel=%.0f, Reliq=%.0f, GCU=%.0f, Vent=%.0f], NetLoss=%.0f kg/hr",
+	  bogGenerated, bogToFuel, bogReliquefied, bogToGCU, bogVented, netCargoLoss);
     }
   }
 

@@ -36,12 +36,13 @@ public class WellFlowCapacityStrategy implements EquipmentCapacityStrategy {
   /**
    * Default constructor.
    */
-  public WellFlowCapacityStrategy() {}
+  public WellFlowCapacityStrategy() {
+  }
 
   /**
    * Constructor with custom constraints.
    *
-   * @param maxPI maximum well production index
+   * @param maxPI          maximum well production index
    * @param maxDrawdownBar maximum drawdown pressure in bar
    */
   public WellFlowCapacityStrategy(double maxPI, double maxDrawdownBar) {
@@ -80,10 +81,10 @@ public class WellFlowCapacityStrategy implements EquipmentCapacityStrategy {
     double maxUtil = 0.0;
     for (CapacityConstraint c : constraints.values()) {
       if (c.isEnabled()) {
-        double util = c.getUtilization();
-        if (!Double.isNaN(util) && util > maxUtil) {
-          maxUtil = util;
-        }
+	double util = c.getUtilization();
+	if (!Double.isNaN(util) && util > maxUtil) {
+	  maxUtil = util;
+	}
       }
     }
     return maxUtil;
@@ -114,17 +115,16 @@ public class WellFlowCapacityStrategy implements EquipmentCapacityStrategy {
    * Adds constraints for well flow.
    *
    * @param constraints map to add constraints to
-   * @param well the well flow equipment
+   * @param well        the well flow equipment
    */
   private void addWellFlowConstraints(Map<String, CapacityConstraint> constraints, WellFlow well) {
     // Well production index constraint
     double pi = well.getWellProductionIndex();
     if (pi > 0) {
-      CapacityConstraint piConstraint =
-          new CapacityConstraint("productionIndex").setDesignValue(maxPI).setMaxValue(maxPI * 1.2)
-              .setUnit("Sm3/d/bar").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
-              .setWarningThreshold(0.9).setDescription("Well production index vs expected")
-              .setValueSupplier(() -> well.getWellProductionIndex());
+      CapacityConstraint piConstraint = new CapacityConstraint("productionIndex").setDesignValue(maxPI)
+	  .setMaxValue(maxPI * 1.2).setUnit("Sm3/d/bar").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
+	  .setWarningThreshold(0.9).setDescription("Well production index vs expected")
+	  .setValueSupplier(() -> well.getWellProductionIndex());
       constraints.put("productionIndex", piConstraint);
     }
   }
@@ -135,7 +135,7 @@ public class WellFlowCapacityStrategy implements EquipmentCapacityStrategy {
     List<CapacityConstraint> violations = new ArrayList<CapacityConstraint>();
     for (CapacityConstraint c : getConstraints(equipment).values()) {
       if (c.isViolated()) {
-        violations.add(c);
+	violations.add(c);
       }
     }
     return violations;
@@ -149,8 +149,8 @@ public class WellFlowCapacityStrategy implements EquipmentCapacityStrategy {
     for (CapacityConstraint c : getConstraints(equipment).values()) {
       double util = c.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
-        maxUtil = util;
-        bottleneck = c;
+	maxUtil = util;
+	bottleneck = c;
       }
     }
     return bottleneck;
@@ -161,10 +161,10 @@ public class WellFlowCapacityStrategy implements EquipmentCapacityStrategy {
   public boolean isWithinHardLimits(ProcessEquipmentInterface equipment) {
     for (CapacityConstraint c : getConstraints(equipment).values()) {
       if (c.getSeverity() == CapacityConstraint.ConstraintSeverity.HARD
-          || c.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL) {
-        if (c.isHardLimitExceeded()) {
-          return false;
-        }
+	  || c.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL) {
+	if (c.isHardLimitExceeded()) {
+	  return false;
+	}
       }
     }
     return true;
@@ -175,7 +175,7 @@ public class WellFlowCapacityStrategy implements EquipmentCapacityStrategy {
   public boolean isWithinSoftLimits(ProcessEquipmentInterface equipment) {
     for (CapacityConstraint c : getConstraints(equipment).values()) {
       if (c.isViolated()) {
-        return false;
+	return false;
       }
     }
     return true;

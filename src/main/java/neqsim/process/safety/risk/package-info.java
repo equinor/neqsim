@@ -4,13 +4,10 @@
  * <p>
  * This package provides tools for quantitative risk assessment (QRA) including:
  * <ul>
- * <li>{@link neqsim.process.safety.risk.RiskEvent} - Individual risk events with frequency and
- * consequence</li>
- * <li>{@link neqsim.process.safety.risk.RiskModel} - Monte Carlo and deterministic risk
- * analysis</li>
+ * <li>{@link neqsim.process.safety.risk.RiskEvent} - Individual risk events with frequency and consequence</li>
+ * <li>{@link neqsim.process.safety.risk.RiskModel} - Monte Carlo and deterministic risk analysis</li>
  * <li>{@link neqsim.process.safety.risk.RiskResult} - Analysis results with F-N curve data</li>
- * <li>{@link neqsim.process.safety.risk.SensitivityResult} - Tornado diagram data for sensitivity
- * analysis</li>
+ * <li>{@link neqsim.process.safety.risk.SensitivityResult} - Tornado diagram data for sensitivity analysis</li>
  * </ul>
  *
  * <p>

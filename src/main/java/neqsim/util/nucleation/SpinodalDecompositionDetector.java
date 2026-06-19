@@ -11,11 +11,10 @@ import neqsim.thermo.system.SystemInterface;
  * Detects spinodal decomposition conditions in thermodynamic systems.
  *
  * <p>
- * Spinodal decomposition occurs when the system is inside the spinodal curve (thermodynamically
- * unstable region), where the second derivative of the Gibbs free energy with respect to
- * composition becomes negative. In this regime, phase separation is <b>barrierless</b> — any
- * infinitesimal fluctuation grows spontaneously, unlike classical nucleation which requires
- * overcoming a free energy barrier.
+ * Spinodal decomposition occurs when the system is inside the spinodal curve (thermodynamically unstable region), where
+ * the second derivative of the Gibbs free energy with respect to composition becomes negative. In this regime, phase
+ * separation is <b>barrierless</b> — any infinitesimal fluctuation grows spontaneously, unlike classical nucleation
+ * which requires overcoming a free energy barrier.
  * </p>
  *
  * <p>
@@ -23,15 +22,15 @@ import neqsim.thermo.system.SystemInterface;
  * </p>
  * <ul>
  * <li><b>Stable</b> (outside binodal): Single-phase, no phase transition possible</li>
- * <li><b>Metastable</b> (between binodal and spinodal): Classical nucleation applies — phase
- * transition requires a nucleation barrier. Use {@link ClassicalNucleationTheory}.</li>
- * <li><b>Unstable</b> (inside spinodal): Spinodal decomposition — barrierless, spontaneous phase
- * separation with characteristic wavelength selection.</li>
+ * <li><b>Metastable</b> (between binodal and spinodal): Classical nucleation applies — phase transition requires a
+ * nucleation barrier. Use {@link ClassicalNucleationTheory}.</li>
+ * <li><b>Unstable</b> (inside spinodal): Spinodal decomposition — barrierless, spontaneous phase separation with
+ * characteristic wavelength selection.</li>
  * </ul>
  *
  * <p>
- * This class uses the EOS-computed Helmholtz free energy derivatives to determine the stability of
- * the mixture. For a binary mixture, spinodal decomposition occurs when:
+ * This class uses the EOS-computed Helmholtz free energy derivatives to determine the stability of the mixture. For a
+ * binary mixture, spinodal decomposition occurs when:
  * </p>
  *
  * <p>
@@ -39,8 +38,8 @@ import neqsim.thermo.system.SystemInterface;
  * </p>
  *
  * <p>
- * For multicomponent systems, the full Hessian matrix of the Helmholtz free energy with respect to
- * composition is computed, and the minimum eigenvalue is checked.
+ * For multicomponent systems, the full Hessian matrix of the Helmholtz free energy with respect to composition is
+ * computed, and the minimum eigenvalue is checked.
  * </p>
  *
  * <p>
@@ -73,12 +72,10 @@ import neqsim.thermo.system.SystemInterface;
  * References:
  * </p>
  * <ul>
- * <li>Cahn, J.W. and Hilliard, J.E. (1958). Free Energy of a Nonuniform System. I. Interfacial Free
- * Energy. J. Chem. Phys. 28, 258-267.</li>
- * <li>Binder, K. (1987). Theory of first-order phase transitions. Rep. Prog. Phys. 50,
- * 783-859.</li>
- * <li>Michelsen, M.L. (1982). The isothermal flash problem. Part I. Stability. Fluid Phase Equilib.
- * 9, 1-19.</li>
+ * <li>Cahn, J.W. and Hilliard, J.E. (1958). Free Energy of a Nonuniform System. I. Interfacial Free Energy. J. Chem.
+ * Phys. 28, 258-267.</li>
+ * <li>Binder, K. (1987). Theory of first-order phase transitions. Rep. Prog. Phys. 50, 783-859.</li>
+ * <li>Michelsen, M.L. (1982). The isothermal flash problem. Part I. Stability. Fluid Phase Equilib. 9, 1-19.</li>
  * </ul>
  *
  * @author esol
@@ -113,8 +110,7 @@ public class SpinodalDecompositionDetector {
   private double minEigenvalue = 0.0;
 
   /**
-   * The Hessian matrix d2A/(dNi*dNj) — second derivatives of Helmholtz free energy with respect to
-   * mole numbers.
+   * The Hessian matrix d2A/(dNi*dNj) — second derivatives of Helmholtz free energy with respect to mole numbers.
    */
   private double[][] hessianMatrix;
 
@@ -128,14 +124,12 @@ public class SpinodalDecompositionDetector {
   private String unstableComponentPair = "";
 
   /**
-   * Estimated dominant wavelength of spinodal decomposition in m. Only valid when inside the
-   * spinodal.
+   * Estimated dominant wavelength of spinodal decomposition in m. Only valid when inside the spinodal.
    */
   private double dominantWavelength = 0.0;
 
   /**
-   * Stability margin: positive means stable, negative means unstable. Equal to the minimum
-   * eigenvalue of the Hessian.
+   * Stability margin: positive means stable, negative means unstable. Equal to the minimum eigenvalue of the Hessian.
    */
   private double stabilityMargin = 0.0;
 
@@ -169,8 +163,8 @@ public class SpinodalDecompositionDetector {
    * Performs the spinodal stability analysis.
    *
    * <p>
-   * Computes the Hessian matrix of the Helmholtz free energy with respect to mole numbers using the
-   * EOS component derivatives (dFdNdN). Then checks the eigenvalues to determine stability.
+   * Computes the Hessian matrix of the Helmholtz free energy with respect to mole numbers using the EOS component
+   * derivatives (dFdNdN). Then checks the eigenvalues to determine stability.
    * </p>
    */
   public void analyze() {
@@ -190,22 +184,21 @@ public class SpinodalDecompositionDetector {
 
     for (int i = 0; i < numComp; i++) {
       if (!(phase.getComponent(i) instanceof ComponentEosInterface)) {
-        eosAvailable = false;
-        break;
+	eosAvailable = false;
+	break;
       }
       ComponentEosInterface compI = (ComponentEosInterface) phase.getComponent(i);
 
       for (int j = 0; j < numComp; j++) {
-        try {
-          hessianMatrix[i][j] =
-              compI.dFdNdN(j, phase, numComp, system.getTemperature(), system.getPressure());
-        } catch (Exception e) {
-          eosAvailable = false;
-          break;
-        }
+	try {
+	  hessianMatrix[i][j] = compI.dFdNdN(j, phase, numComp, system.getTemperature(), system.getPressure());
+	} catch (Exception e) {
+	  eosAvailable = false;
+	  break;
+	}
       }
       if (!eosAvailable) {
-        break;
+	break;
       }
     }
 
@@ -224,26 +217,26 @@ public class SpinodalDecompositionDetector {
     double minElement = Double.MAX_VALUE;
     for (int i = 0; i < numComp; i++) {
       for (int j = i; j < numComp; j++) {
-        if (hessianMatrix[i][j] < minElement) {
-          minElement = hessianMatrix[i][j];
-          unstableComponentI = i;
-          unstableComponentJ = j;
-        }
+	if (hessianMatrix[i][j] < minElement) {
+	  minElement = hessianMatrix[i][j];
+	  unstableComponentI = i;
+	  unstableComponentJ = j;
+	}
       }
     }
 
     if (unstableComponentI >= 0 && unstableComponentJ >= 0) {
       unstableComponentPair = phase.getComponent(unstableComponentI).getComponentName() + " / "
-          + phase.getComponent(unstableComponentJ).getComponentName();
+	  + phase.getComponent(unstableComponentJ).getComponentName();
     }
 
     // Determine stability state
     if (minEigenvalue > 0.0) {
       // Check if two phases exist (above binodal = metastable or stable)
       if (system.getNumberOfPhases() >= 2) {
-        stabilityState = StabilityState.METASTABLE;
+	stabilityState = StabilityState.METASTABLE;
       } else {
-        stabilityState = StabilityState.STABLE;
+	stabilityState = StabilityState.STABLE;
       }
     } else {
       stabilityState = StabilityState.UNSTABLE;
@@ -257,8 +250,8 @@ public class SpinodalDecompositionDetector {
    * Analyzes mechanical stability for a pure component.
    *
    * <p>
-   * For a pure substance, the spinodal is defined by (dP/dV)_T = 0. If the system is at a density
-   * where (dP/dV)_T is positive, the phase is mechanically unstable.
+   * For a pure substance, the spinodal is defined by (dP/dV)_T = 0. If the system is at a density where (dP/dV)_T is
+   * positive, the phase is mechanically unstable.
    * </p>
    *
    * @param phase the phase to analyze
@@ -272,19 +265,18 @@ public class SpinodalDecompositionDetector {
       stabilityState = StabilityState.STABLE;
     }
     stabilityMargin = 1.0; // Cannot compute Hessian for pure component
-    hessianMatrix = new double[][] {{0.0}};
+    hessianMatrix = new double[][] { { 0.0 } };
   }
 
   /**
    * Performs a fugacity-based stability check as fallback when EOS derivatives are not available.
    *
    * <p>
-   * This is a simplified check: if the system has two phases and the fugacity coefficients indicate
-   * the gas phase is significantly supersaturated relative to the liquid, the system may be inside
-   * or near the spinodal.
+   * This is a simplified check: if the system has two phases and the fugacity coefficients indicate the gas phase is
+   * significantly supersaturated relative to the liquid, the system may be inside or near the spinodal.
    * </p>
    *
-   * @param phase the phase to analyze
+   * @param phase   the phase to analyze
    * @param numComp number of components
    */
   private void analyzeFugacityBased(PhaseInterface phase, int numComp) {
@@ -294,38 +286,38 @@ public class SpinodalDecompositionDetector {
     // Large deviations suggest proximity to or inside the spinodal
     if (system.getNumberOfPhases() >= 2) {
       try {
-        int gasIdx = system.getPhaseNumberOfPhase("gas");
-        int liqIdx = system.getPhaseNumberOfPhase("oil");
-        if (liqIdx < 0) {
-          liqIdx = system.getPhaseNumberOfPhase("aqueous");
-        }
+	int gasIdx = system.getPhaseNumberOfPhase("gas");
+	int liqIdx = system.getPhaseNumberOfPhase("oil");
+	if (liqIdx < 0) {
+	  liqIdx = system.getPhaseNumberOfPhase("aqueous");
+	}
 
-        if (gasIdx >= 0 && liqIdx >= 0) {
-          double maxRatio = 0.0;
-          for (int i = 0; i < numComp; i++) {
-            double phiGas = system.getPhase(gasIdx).getComponent(i).getFugacityCoefficient();
-            double phiLiq = system.getPhase(liqIdx).getComponent(i).getFugacityCoefficient();
-            if (phiLiq > 0.0) {
-              double ratio = phiGas / phiLiq;
-              if (ratio > maxRatio) {
-                maxRatio = ratio;
-              }
-            }
-          }
+	if (gasIdx >= 0 && liqIdx >= 0) {
+	  double maxRatio = 0.0;
+	  for (int i = 0; i < numComp; i++) {
+	    double phiGas = system.getPhase(gasIdx).getComponent(i).getFugacityCoefficient();
+	    double phiLiq = system.getPhase(liqIdx).getComponent(i).getFugacityCoefficient();
+	    if (phiLiq > 0.0) {
+	      double ratio = phiGas / phiLiq;
+	      if (ratio > maxRatio) {
+		maxRatio = ratio;
+	      }
+	    }
+	  }
 
-          // Very large fugacity coefficient ratio suggests deep supersaturation
-          if (maxRatio > 10.0) {
-            stabilityState = StabilityState.UNSTABLE;
-            stabilityMargin = -1.0;
-          } else {
-            stabilityState = StabilityState.METASTABLE;
-            stabilityMargin = 1.0;
-          }
-        } else {
-          stabilityState = StabilityState.UNKNOWN;
-        }
+	  // Very large fugacity coefficient ratio suggests deep supersaturation
+	  if (maxRatio > 10.0) {
+	    stabilityState = StabilityState.UNSTABLE;
+	    stabilityMargin = -1.0;
+	  } else {
+	    stabilityState = StabilityState.METASTABLE;
+	    stabilityMargin = 1.0;
+	  }
+	} else {
+	  stabilityState = StabilityState.UNKNOWN;
+	}
       } catch (Exception e) {
-        stabilityState = StabilityState.UNKNOWN;
+	stabilityState = StabilityState.UNKNOWN;
       }
     } else {
       stabilityState = StabilityState.STABLE;
@@ -337,12 +329,11 @@ public class SpinodalDecompositionDetector {
    * Finds the minimum eigenvalue of a symmetric matrix using the Jacobi eigenvalue algorithm.
    *
    * <p>
-   * For small matrices (typical for thermodynamic systems with 2-20 components), this is efficient
-   * and robust.
+   * For small matrices (typical for thermodynamic systems with 2-20 components), this is efficient and robust.
    * </p>
    *
    * @param matrix the symmetric matrix
-   * @param n matrix dimension
+   * @param n      matrix dimension
    * @return the minimum eigenvalue
    */
   private double findMinEigenvalue(double[][] matrix, int n) {
@@ -359,7 +350,7 @@ public class SpinodalDecompositionDetector {
       double det = a * d - b * b;
       double discriminant = trace * trace - 4.0 * det;
       if (discriminant < 0.0) {
-        discriminant = 0.0;
+	discriminant = 0.0;
       }
       double lambda1 = (trace - Math.sqrt(discriminant)) / 2.0;
       double lambda2 = (trace + Math.sqrt(discriminant)) / 2.0;
@@ -372,13 +363,13 @@ public class SpinodalDecompositionDetector {
     for (int i = 0; i < n; i++) {
       double radius = 0.0;
       for (int j = 0; j < n; j++) {
-        if (j != i) {
-          radius += Math.abs(matrix[i][j]);
-        }
+	if (j != i) {
+	  radius += Math.abs(matrix[i][j]);
+	}
       }
       double lowerBound = matrix[i][i] - radius;
       if (lowerBound < minGershgorin) {
-        minGershgorin = lowerBound;
+	minGershgorin = lowerBound;
       }
     }
 
@@ -399,9 +390,8 @@ public class SpinodalDecompositionDetector {
    * </p>
    *
    * <p>
-   * where kappa is the gradient energy coefficient (related to surface tension and interfacial
-   * thickness) and d2f/dx2 is the second derivative of the free energy density with respect to
-   * composition.
+   * where kappa is the gradient energy coefficient (related to surface tension and interfacial thickness) and d2f/dx2
+   * is the second derivative of the free energy density with respect to composition.
    * </p>
    *
    * @param phase the phase to analyze
@@ -418,7 +408,7 @@ public class SpinodalDecompositionDetector {
     double sigma = 0.02; // Typical N/m
     try {
       if (system.getNumberOfPhases() >= 2) {
-        sigma = system.getInterphaseProperties().getSurfaceTension(0, 1);
+	sigma = system.getInterphaseProperties().getSurfaceTension(0, 1);
       }
     } catch (Exception e) {
       // Use default
@@ -488,8 +478,7 @@ public class SpinodalDecompositionDetector {
    * Returns the minimum eigenvalue of the Hessian matrix.
    *
    * <p>
-   * Positive = stable, negative = inside spinodal. The magnitude indicates the distance from the
-   * spinodal boundary.
+   * Positive = stable, negative = inside spinodal. The magnitude indicates the distance from the spinodal boundary.
    * </p>
    *
    * @return minimum eigenvalue
@@ -533,8 +522,8 @@ public class SpinodalDecompositionDetector {
    * Returns the estimated dominant wavelength of spinodal decomposition.
    *
    * <p>
-   * This is the characteristic length scale of the concentration fluctuations that grow fastest
-   * during spinodal decomposition. Only valid when the system is inside the spinodal.
+   * This is the characteristic length scale of the concentration fluctuations that grow fastest during spinodal
+   * decomposition. Only valid when the system is inside the spinodal.
    * </p>
    *
    * @return dominant wavelength in m
@@ -559,16 +548,16 @@ public class SpinodalDecompositionDetector {
    */
   public String getRecommendation() {
     switch (stabilityState) {
-      case STABLE:
-        return "System is stable (single phase). No nucleation expected.";
-      case METASTABLE:
-        return "System is metastable. Use ClassicalNucleationTheory for nucleation rate prediction.";
-      case UNSTABLE:
-        return "System is inside the spinodal. Barrierless spinodal decomposition will dominate. "
-            + "CNT underestimates the phase separation rate. Dominant wavelength: "
-            + String.format("%.1f nm", dominantWavelength * 1e9);
-      default:
-        return "Stability could not be determined. Try CNT as a conservative estimate.";
+    case STABLE:
+      return "System is stable (single phase). No nucleation expected.";
+    case METASTABLE:
+      return "System is metastable. Use ClassicalNucleationTheory for nucleation rate prediction.";
+    case UNSTABLE:
+      return "System is inside the spinodal. Barrierless spinodal decomposition will dominate. "
+	  + "CNT underestimates the phase separation rate. Dominant wavelength: "
+	  + String.format("%.1f nm", dominantWavelength * 1e9);
+    default:
+      return "Stability could not be determined. Try CNT as a conservative estimate.";
     }
   }
 
@@ -614,8 +603,7 @@ public class SpinodalDecompositionDetector {
    * @return JSON string
    */
   public String toJson() {
-    return new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create()
-        .toJson(toMap());
+    return new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create().toJson(toMap());
   }
 
   /** {@inheritDoc} */
@@ -624,7 +612,7 @@ public class SpinodalDecompositionDetector {
     if (!analyzed) {
       return "SpinodalDecompositionDetector [not analyzed]";
     }
-    return String.format("SpinodalDetector: state=%s, margin=%.4e, T=%.1f K, P=%.1f bar",
-        stabilityState.name(), stabilityMargin, system.getTemperature(), system.getPressure());
+    return String.format("SpinodalDetector: state=%s, margin=%.4e, T=%.1f K, P=%.1f bar", stabilityState.name(),
+	stabilityMargin, system.getTemperature(), system.getPressure());
   }
 }

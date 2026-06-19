@@ -7,7 +7,7 @@ repos:
         language: system
         files: \.(java)$
         pass_filenames: false
-        stages: [commit]
+        stages: [pre-commit]
         verbose: false
 
   - repo: local
@@ -18,5 +18,5 @@ repos:
         language: system
         files: \.(java)$
         pass_filenames: false
-        stages: [push]
+        stages: [pre-push]
         verbose: false

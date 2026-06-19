@@ -11,24 +11,21 @@ import neqsim.thermo.system.SystemInterface;
  * Process equipment representing a production-chemical injection point.
  *
  * <p>
- * The injection point takes one inlet stream (the produced fluid) and a {@link ProductionChemical}
- * description plus a target dose (kg/h or ppm). On {@code run()} it:
+ * The injection point takes one inlet stream (the produced fluid) and a {@link ProductionChemical} description plus a
+ * target dose (kg/h or ppm). On {@code run()} it:
  * </p>
  * <ol>
  * <li>clones the inlet thermo system into the outlet</li>
- * <li>computes the injected mass flow of the chemical (and its solvent fraction if water-based)
- * </li>
- * <li>updates the outlet by adding the inhibitor mass to the appropriate aqueous component (water
- * for water-based products) when the chemistry permits — otherwise records the dose as metadata on
- * the outlet stream</li>
+ * <li>computes the injected mass flow of the chemical (and its solvent fraction if water-based)</li>
+ * <li>updates the outlet by adding the inhibitor mass to the appropriate aqueous component (water for water-based
+ * products) when the chemistry permits — otherwise records the dose as metadata on the outlet stream</li>
  * <li>exposes {@link #getActiveIngredientPpmInWater()} for downstream chemistry models</li>
  * </ol>
  *
  * <p>
- * The class deliberately avoids running an electrolyte flash on every call (heavy and brittle in a
- * flowsheet); it instead tracks the dose at the outlet and lets dedicated chemistry models do the
- * rigorous chemistry. Use it as a flow-sheet-visible, snapshot-able placeholder for chemical
- * injection.
+ * The class deliberately avoids running an electrolyte flash on every call (heavy and brittle in a flowsheet); it
+ * instead tracks the dose at the outlet and lets dedicated chemistry models do the rigorous chemistry. Use it as a
+ * flow-sheet-visible, snapshot-able placeholder for chemical injection.
  * </p>
  *
  * @author ESOL
@@ -78,7 +75,7 @@ public class InhibitorInjectionPoint extends TwoPortEquipment {
   /**
    * Constructs an injection point with an inlet stream.
    *
-   * @param name equipment name
+   * @param name        equipment name
    * @param inletStream inlet stream
    */
   public InhibitorInjectionPoint(String name, StreamInterface inletStream) {
@@ -184,27 +181,24 @@ public class InhibitorInjectionPoint extends TwoPortEquipment {
     double activeWtFrac = chemical == null ? 0.0 : chemical.getActiveWtPct() / 100.0;
 
     switch (doseMode) {
-      case PPM:
-        // ppm on water mass: active mass = waterMassFlowKgHr * doseValue * 1e-6
-        injectionRateKgPerHour =
-            activeWtFrac > 0 ? waterMassFlowKgHr * doseValue * 1.0e-6 / activeWtFrac : 0.0;
-        break;
-      case PPM_TOTAL:
-        injectionRateKgPerHour =
-            activeWtFrac > 0 ? totalMassFlowKgHr * doseValue * 1.0e-6 / activeWtFrac : 0.0;
-        break;
-      case KG_PER_HOUR:
-        injectionRateKgPerHour = doseValue;
-        break;
-      default:
-        injectionRateKgPerHour = 0.0;
-        break;
+    case PPM:
+      // ppm on water mass: active mass = waterMassFlowKgHr * doseValue * 1e-6
+      injectionRateKgPerHour = activeWtFrac > 0 ? waterMassFlowKgHr * doseValue * 1.0e-6 / activeWtFrac : 0.0;
+      break;
+    case PPM_TOTAL:
+      injectionRateKgPerHour = activeWtFrac > 0 ? totalMassFlowKgHr * doseValue * 1.0e-6 / activeWtFrac : 0.0;
+      break;
+    case KG_PER_HOUR:
+      injectionRateKgPerHour = doseValue;
+      break;
+    default:
+      injectionRateKgPerHour = 0.0;
+      break;
     }
 
     // Compute resulting active ingredient concentration on water basis
     double activeMassKgHr = injectionRateKgPerHour * activeWtFrac;
-    activeIngredientPpmInWater =
-        waterMassFlowKgHr > 0 ? activeMassKgHr * 1.0e6 / waterMassFlowKgHr : 0.0;
+    activeIngredientPpmInWater = waterMassFlowKgHr > 0 ? activeMassKgHr * 1.0e6 / waterMassFlowKgHr : 0.0;
 
     setCalculationIdentifier(id);
   }

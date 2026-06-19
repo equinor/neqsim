@@ -57,9 +57,9 @@ public interface FluidBoundaryInterface extends Cloneable {
    * write.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name     a {@link java.lang.String} object
    * @param filename a {@link java.lang.String} object
-   * @param newfile a boolean
+   * @param newfile  a boolean
    */
   public void write(String name, String filename, boolean newfile);
 
@@ -142,8 +142,8 @@ public interface FluidBoundaryInterface extends Cloneable {
    * </p>
    *
    * @param phase a int
-   * @param i a int
-   * @param j a int
+   * @param i     a int
+   * @param j     a int
    * @return a double
    */
   public double getBinaryMassTransferCoefficient(int phase, int i, int j);
@@ -200,7 +200,7 @@ public interface FluidBoundaryInterface extends Cloneable {
    * </p>
    *
    * @param phase a int
-   * @param i a int
+   * @param i     a int
    * @return a double
    */
   public double getEffectiveMassTransferCoefficient(int phase, int i);
@@ -210,9 +210,7 @@ public interface FluidBoundaryInterface extends Cloneable {
    * clone.
    * </p>
    *
-   * @return a
-   *         {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface}
-   *         object
+   * @return a {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface} object
    */
   public FluidBoundaryInterface clone();
 
@@ -241,7 +239,7 @@ public interface FluidBoundaryInterface extends Cloneable {
    * </p>
    *
    * @param thermodynamicCorrections a boolean
-   * @param phase a int
+   * @param phase                    a int
    */
   public void useThermodynamicCorrections(boolean thermodynamicCorrections, int phase);
 
@@ -270,7 +268,7 @@ public interface FluidBoundaryInterface extends Cloneable {
    * </p>
    *
    * @param finiteFluxCorrection a boolean
-   * @param phase a int
+   * @param phase                a int
    */
   public void useFiniteFluxCorrection(boolean finiteFluxCorrection, int phase);
 }

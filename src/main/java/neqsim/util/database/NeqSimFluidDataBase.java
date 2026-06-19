@@ -14,11 +14,10 @@ import org.apache.logging.log4j.Logger;
  * </p>
  *
  * @author esol
- * @version The database is used for storing fluid info and recreating a fluid it uses the database
- *          neqsimfluiddatabase for storing fluid information
+ * @version The database is used for storing fluid info and recreating a fluid it uses the database neqsimfluiddatabase
+ *          for storing fluid information
  */
-public class NeqSimFluidDataBase
-    implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
+public class NeqSimFluidDataBase implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -39,12 +38,12 @@ public class NeqSimFluidDataBase
   public NeqSimFluidDataBase() {
     try {
       if (useOnlineBase) {
-        // Class.forName("org.gjt.mm.mysql.Driver");
+	// Class.forName("org.gjt.mm.mysql.Driver");
       } else {
-        numb++;
-        if (numb == 1) {
-          Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
-        }
+	numb++;
+	if (numb == 1) {
+	  Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
+	}
       }
       databaseConnection = this.openConnection("FluidDatabase");
       statement = databaseConnection.createStatement();
@@ -61,7 +60,7 @@ public class NeqSimFluidDataBase
    *
    * @param database a {@link java.lang.String} object
    * @return a Connection object
-   * @throws java.sql.SQLException if any.
+   * @throws java.sql.SQLException            if any.
    * @throws java.lang.ClassNotFoundException if any.
    */
   public Connection openConnection(String database) throws SQLException, ClassNotFoundException {
@@ -71,12 +70,12 @@ public class NeqSimFluidDataBase
     } else {
       String dir = "";
       if (System.getProperty("NeqSim.home") == null) {
-        dir = neqsim.util.util.FileSystemSettings.root + "\\java\\neqsim";
+	dir = neqsim.util.util.FileSystemSettings.root + "\\java\\neqsim";
       } else {
-        dir = System.getProperty("NeqSim.home");
+	dir = System.getProperty("NeqSim.home");
       }
-      return DriverManager.getConnection(
-          "jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ=" + dir + "\\data\\" + database);
+      return DriverManager
+	  .getConnection("jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ=" + dir + "\\data\\" + database);
       // return DriverManager.getConnection("jdbc:odbc:FluidDatabase");
     }
   }
@@ -97,7 +96,7 @@ public class NeqSimFluidDataBase
    * getResultSet.
    * </p>
    *
-   * @param database a {@link java.lang.String} object
+   * @param database  a {@link java.lang.String} object
    * @param sqlString a {@link java.lang.String} object
    * @return a ResultSet object
    */
@@ -134,8 +133,8 @@ public class NeqSimFluidDataBase
   public void execute(String sqlString) {
     try {
       if (databaseConnection == null) {
-        databaseConnection = this.openConnection("FluidDatabase");
-        statement = databaseConnection.createStatement();
+	databaseConnection = this.openConnection("FluidDatabase");
+	statement = databaseConnection.createStatement();
       }
       statement.execute(sqlString);
     } catch (Exception ex) {

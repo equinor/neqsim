@@ -18,23 +18,21 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Multi-layer LNG tank model with stratification support.
  *
  * <p>
- * This model extends the single-layer approach of {@code LNGship.solveTransient()} to support
- * multiple horizontal liquid layers. Each layer has its own composition, temperature, and density.
- * The model tracks how preferential boil-off of lighter components (N2, methane) enriches the
- * residual liquid in heavier components over time.
+ * This model extends the single-layer approach of {@code LNGship.solveTransient()} to support multiple horizontal
+ * liquid layers. Each layer has its own composition, temperature, and density. The model tracks how preferential
+ * boil-off of lighter components (N2, methane) enriches the residual liquid in heavier components over time.
  * </p>
  *
  * <p>
  * Physics modeled:
  * </p>
  * <ul>
- * <li><b>Heat ingress:</b> Q = U * A * (T_ambient - T_LNG) distributed to layers by wall contact
- * area fraction</li>
- * <li><b>Boil-off:</b> Bubble-point flash at tank pressure determines vapor composition; moles
- * removed proportional to gas-phase mole fractions (following LNGship pattern)</li>
+ * <li><b>Heat ingress:</b> Q = U * A * (T_ambient - T_LNG) distributed to layers by wall contact area fraction</li>
+ * <li><b>Boil-off:</b> Bubble-point flash at tank pressure determines vapor composition; moles removed proportional to
+ * gas-phase mole fractions (following LNGship pattern)</li>
  * <li><b>Quality tracking:</b> ISO 6578 density, ISO 6976 WI/GCV at each time step</li>
- * <li><b>Stratification:</b> Multiple layers with independent compositions and temperatures; layers
- * can be merged when density difference drops below threshold</li>
+ * <li><b>Stratification:</b> Multiple layers with independent compositions and temperatures; layers can be merged when
+ * density difference drops below threshold</li>
  * </ul>
  *
  * @author NeqSim
@@ -122,9 +120,9 @@ public class LNGTankLayeredModel implements Serializable {
    * Initialise the tank with a single well-mixed liquid layer.
    *
    * <p>
-   * Performs a bubble-point temperature flash at tank pressure to determine equilibrium conditions,
-   * then creates a single layer with the full liquid inventory. This follows the same
-   * initialisation pattern as {@code LNGship.createSystem()}.
+   * Performs a bubble-point temperature flash at tank pressure to determine equilibrium conditions, then creates a
+   * single layer with the full liquid inventory. This follows the same initialisation pattern as
+   * {@code LNGship.createSystem()}.
    * </p>
    *
    * @param totalLiquidVolume initial liquid volume in tank (m3)
@@ -171,8 +169,7 @@ public class LNGTankLayeredModel implements Serializable {
     initSystem.init(0);
 
     // Create single layer
-    LNGTankLayer layer =
-        new LNGTankLayer(0, initialMoles, initSystem.getTemperature(), tankPressure);
+    LNGTankLayer layer = new LNGTankLayer(0, initialMoles, initSystem.getTemperature(), tankPressure);
     layer.setThermoSystem(initSystem);
 
     // Extract liquid composition
@@ -197,8 +194,8 @@ public class LNGTankLayeredModel implements Serializable {
     // Initialise ISO 6976 standard
     standardISO6976 = new Standard_ISO6976_2016(initSystem, 0, 25, "volume");
 
-    logger.info(String.format("Tank initialised: V=%.0f m3, T=%.2f K, rho=%.1f kg/m3, n=%.2e mol",
-        totalLiquidVolume, bulkTemperature, initialDensity, initialMoles));
+    logger.info(String.format("Tank initialised: V=%.0f m3, T=%.2f K, rho=%.1f kg/m3, n=%.2e mol", totalLiquidVolume,
+	bulkTemperature, initialDensity, initialMoles));
   }
 
   /**
@@ -226,7 +223,7 @@ public class LNGTankLayeredModel implements Serializable {
    * <li>Checks for layer merging</li>
    * </ol>
    *
-   * @param timeStepHours time step size (hours)
+   * @param timeStepHours      time step size (hours)
    * @param currentAmbientTemp current ambient temperature (K)
    * @return ageing result snapshot for this time step
    */
@@ -244,8 +241,7 @@ public class LNGTankLayeredModel implements Serializable {
       heatTransferModel.updateBoundaryConditions(currentAmbientTemp, 0, currentAmbientTemp - 5.0);
       heatIngress = heatTransferModel.calculateTotalHeatIngress(bulkTemperature);
     } else {
-      heatIngress =
-          overallHeatTransferCoeff * tankSurfaceArea * (ambientTemperature - bulkTemperature);
+      heatIngress = overallHeatTransferCoeff * tankSurfaceArea * (ambientTemperature - bulkTemperature);
     }
     if (heatIngress < 0) {
       heatIngress = 0.0;
@@ -288,8 +284,8 @@ public class LNGTankLayeredModel implements Serializable {
       // Apply sloshing model if available, otherwise use constant factor
       double effectiveSloshing = sloshingMixingFactor;
       if (sloshingModel != null) {
-        double fillFraction = getCurrentFillFraction();
-        effectiveSloshing = sloshingModel.calculateBOGEnhancement(1.0, fillFraction);
+	double fillFraction = getCurrentFillFraction();
+	effectiveSloshing = sloshingModel.calculateBOGEnhancement(1.0, fillFraction);
       }
       bogMolesThisStep *= effectiveSloshing;
     }
@@ -303,7 +299,7 @@ public class LNGTankLayeredModel implements Serializable {
     if (layers.size() == 1) {
       double cpEstimate = estimateCp(flashSystem);
       if (cpEstimate > 0) {
-        topLayer.addHeat(heatIngressJoules, cpEstimate);
+	topLayer.addHeat(heatIngressJoules, cpEstimate);
       }
     } else {
       distributeHeatToLayers(heatIngressJoules, flashSystem);
@@ -347,7 +343,7 @@ public class LNGTankLayeredModel implements Serializable {
       double currentFrac = system.getPhase(0).getComponent(i).getz();
       double molesNeeded = (targetFrac - currentFrac) * layer.getTotalMoles();
       if (Math.abs(molesNeeded) > 1e-20) {
-        system.addComponent(name, molesNeeded);
+	system.addComponent(name, molesNeeded);
       }
     }
     return system;
@@ -362,18 +358,15 @@ public class LNGTankLayeredModel implements Serializable {
   private double estimateLatentHeat(SystemInterface flashSystem) {
     try {
       flashSystem.initProperties();
-      if (flashSystem.getNumberOfPhases() > 1 && flashSystem.hasPhaseType("gas")
-          && flashSystem.hasPhaseType("oil")) {
-        double hGas = flashSystem.getPhase("gas").getEnthalpy()
-            / flashSystem.getPhase("gas").getNumberOfMolesInPhase()
-            / flashSystem.getPhase("gas").getMolarMass("kg/mol");
-        double hLiq = flashSystem.getPhase("oil").getEnthalpy()
-            / flashSystem.getPhase("oil").getNumberOfMolesInPhase()
-            / flashSystem.getPhase("oil").getMolarMass("kg/mol");
-        double calc = Math.abs(hGas - hLiq);
-        if (calc > 100.0) {
-          return calc;
-        }
+      if (flashSystem.getNumberOfPhases() > 1 && flashSystem.hasPhaseType("gas") && flashSystem.hasPhaseType("oil")) {
+	double hGas = flashSystem.getPhase("gas").getEnthalpy() / flashSystem.getPhase("gas").getNumberOfMolesInPhase()
+	    / flashSystem.getPhase("gas").getMolarMass("kg/mol");
+	double hLiq = flashSystem.getPhase("oil").getEnthalpy() / flashSystem.getPhase("oil").getNumberOfMolesInPhase()
+	    / flashSystem.getPhase("oil").getMolarMass("kg/mol");
+	double calc = Math.abs(hGas - hLiq);
+	if (calc > 100.0) {
+	  return calc;
+	}
       }
     } catch (Exception ex) {
       logger.debug("Latent heat estimation failed, using default", ex);
@@ -390,10 +383,10 @@ public class LNGTankLayeredModel implements Serializable {
   private double estimateCp(SystemInterface flashSystem) {
     try {
       if (flashSystem.hasPhaseType("oil")) {
-        // Cp in J/(mol*K)
-        double cpMass = flashSystem.getPhase("oil").getCp("J/kgK");
-        double molarMass = flashSystem.getPhase("oil").getMolarMass("kg/mol");
-        return cpMass * molarMass;
+	// Cp in J/(mol*K)
+	double cpMass = flashSystem.getPhase("oil").getCp("J/kgK");
+	double molarMass = flashSystem.getPhase("oil").getMolarMass("kg/mol");
+	return cpMass * molarMass;
       }
     } catch (Exception ex) {
       logger.debug("Cp estimation failed, using default", ex);
@@ -404,7 +397,7 @@ public class LNGTankLayeredModel implements Serializable {
   /**
    * Distribute heat ingress across multiple layers based on wall contact fraction.
    *
-   * @param totalHeatJ total heat ingress (J)
+   * @param totalHeatJ  total heat ingress (J)
    * @param flashSystem thermo system for Cp estimation
    */
   private void distributeHeatToLayers(double totalHeatJ, SystemInterface flashSystem) {
@@ -463,10 +456,10 @@ public class LNGTankLayeredModel implements Serializable {
     for (int i = 1; i < layers.size(); i++) {
       LNGTankLayer next = layers.get(i);
       if (current.getDensityDifference(next) < effectiveThreshold) {
-        current = mergeTwoLayers(current, next);
+	current = mergeTwoLayers(current, next);
       } else {
-        merged.add(current);
-        current = next;
+	merged.add(current);
+	current = next;
       }
     }
     merged.add(current);
@@ -493,46 +486,42 @@ public class LNGTankLayeredModel implements Serializable {
 
     // Mass-weighted temperature
     double mergedTemp = (totalMass > 0)
-        ? (lower.getTemperature() * massLow + upper.getTemperature() * massUp) / totalMass
-        : lower.getTemperature();
+	? (lower.getTemperature() * massLow + upper.getTemperature() * massUp) / totalMass
+	: lower.getTemperature();
 
     // Mole-averaged composition
     Map<String, Double> mergedComp = new LinkedHashMap<String, Double>();
     for (Map.Entry<String, Double> entry : lower.getComposition().entrySet()) {
       String comp = entry.getKey();
       double xLow = entry.getValue() * lower.getTotalMoles();
-      double xUp = upper.getComposition().containsKey(comp)
-          ? upper.getComposition().get(comp) * upper.getTotalMoles()
-          : 0.0;
+      double xUp = upper.getComposition().containsKey(comp) ? upper.getComposition().get(comp) * upper.getTotalMoles()
+	  : 0.0;
       mergedComp.put(comp, (xLow + xUp) / totalMoles);
     }
     // Add any components only in upper
     for (Map.Entry<String, Double> entry : upper.getComposition().entrySet()) {
       if (!mergedComp.containsKey(entry.getKey())) {
-        mergedComp.put(entry.getKey(), entry.getValue() * upper.getTotalMoles() / totalMoles);
+	mergedComp.put(entry.getKey(), entry.getValue() * upper.getTotalMoles() / totalMoles);
       }
     }
 
-    LNGTankLayer merged =
-        new LNGTankLayer(lower.getLayerIndex(), totalMoles, mergedTemp, lower.getPressure());
+    LNGTankLayer merged = new LNGTankLayer(lower.getLayerIndex(), totalMoles, mergedTemp, lower.getPressure());
     merged.setComposition(mergedComp);
     merged.setVolume(lower.getVolume() + upper.getVolume());
     merged.setMolarMass((totalMass > 0) ? totalMass / totalMoles : lower.getMolarMass());
-    merged
-        .setDensity((merged.getVolume() > 0) ? totalMass / merged.getVolume() : lower.getDensity());
+    merged.setDensity((merged.getVolume() > 0) ? totalMass / merged.getVolume() : lower.getDensity());
     return merged;
   }
 
   /**
    * Build an ageing result snapshot from current state.
    *
-   * @param heatIngressW heat ingress (W)
+   * @param heatIngressW    heat ingress (W)
    * @param bogMassRateKgHr BOG mass flow rate (kg/hr)
-   * @param bogMolesStep BOG moles removed this step
+   * @param bogMolesStep    BOG moles removed this step
    * @return result snapshot
    */
-  private LNGAgeingResult buildResult(double heatIngressW, double bogMassRateKgHr,
-      double bogMolesStep) {
+  private LNGAgeingResult buildResult(double heatIngressW, double bogMassRateKgHr, double bogMolesStep) {
     LNGAgeingResult result = new LNGAgeingResult();
 
     result.setTemperature(bulkTemperature);
@@ -563,10 +552,10 @@ public class LNGTankLayeredModel implements Serializable {
     if (layers.size() > 1) {
       double maxDiff = 0;
       for (int i = 0; i < layers.size() - 1; i++) {
-        double diff = layers.get(i).getDensityDifference(layers.get(i + 1));
-        if (diff > maxDiff) {
-          maxDiff = diff;
-        }
+	double diff = layers.get(i).getDensityDifference(layers.get(i + 1));
+	if (diff > maxDiff) {
+	  maxDiff = diff;
+	}
       }
       result.setMaxLayerDensityDifference(maxDiff);
     }
@@ -585,8 +574,8 @@ public class LNGTankLayeredModel implements Serializable {
    * Calculate ISO 6976 quality KPIs (WI, GCV) from current state.
    *
    * <p>
-   * If GERG-2008 mode is enabled, uses GERG-2008 EOS for density calculation. Always uses ISO 6976
-   * for calorific values.
+   * If GERG-2008 mode is enabled, uses GERG-2008 EOS for density calculation. Always uses ISO 6976 for calorific
+   * values.
    * </p>
    *
    * @param result ageing result to populate with quality data
@@ -606,19 +595,19 @@ public class LNGTankLayeredModel implements Serializable {
 
       // Density calculation: GERG-2008 or ISO 6578
       if (useGERG2008) {
-        double gergDensity = calculateGERG2008Density(topLayer);
-        if (gergDensity > 0) {
-          result.setDensity(gergDensity);
-        } else {
-          // Fall back to ISO 6578
-          Standard_ISO6578 densityStd = new Standard_ISO6578(qualitySystem);
-          densityStd.calculate();
-          result.setDensity(densityStd.getValue("density"));
-        }
+	double gergDensity = calculateGERG2008Density(topLayer);
+	if (gergDensity > 0) {
+	  result.setDensity(gergDensity);
+	} else {
+	  // Fall back to ISO 6578
+	  Standard_ISO6578 densityStd = new Standard_ISO6578(qualitySystem);
+	  densityStd.calculate();
+	  result.setDensity(densityStd.getValue("density"));
+	}
       } else {
-        Standard_ISO6578 densityStd = new Standard_ISO6578(qualitySystem);
-        densityStd.calculate();
-        result.setDensity(densityStd.getValue("density"));
+	Standard_ISO6578 densityStd = new Standard_ISO6578(qualitySystem);
+	densityStd.calculate();
+	result.setDensity(densityStd.getValue("density"));
       }
 
       // ISO 6976 quality
@@ -634,17 +623,17 @@ public class LNGTankLayeredModel implements Serializable {
       // Methane Number — use calculator if available, otherwise simplified correlation
       Map<String, Double> comp = topLayer.getComposition();
       if (methaneNumberCalculator != null) {
-        result.setMethaneNumber(methaneNumberCalculator.calculate(comp));
+	result.setMethaneNumber(methaneNumberCalculator.calculate(comp));
       } else {
-        double xC1 = comp.containsKey("methane") ? comp.get("methane") : 0;
-        double xC2 = comp.containsKey("ethane") ? comp.get("ethane") : 0;
-        double xC3 = comp.containsKey("propane") ? comp.get("propane") : 0;
-        double xN2 = comp.containsKey("nitrogen") ? comp.get("nitrogen") : 0;
-        double mn = 137.78 * xC1 - 29.948 * xC2 - 18.193 * xC3 - 167.06 * xN2;
-        if (mn < 0) {
-          mn = 0;
-        }
-        result.setMethaneNumber(mn);
+	double xC1 = comp.containsKey("methane") ? comp.get("methane") : 0;
+	double xC2 = comp.containsKey("ethane") ? comp.get("ethane") : 0;
+	double xC3 = comp.containsKey("propane") ? comp.get("propane") : 0;
+	double xN2 = comp.containsKey("nitrogen") ? comp.get("nitrogen") : 0;
+	double mn = 137.78 * xC1 - 29.948 * xC2 - 18.193 * xC3 - 167.06 * xN2;
+	if (mn < 0) {
+	  mn = 0;
+	}
+	result.setMethaneNumber(mn);
       }
     } catch (Exception ex) {
       logger.warn("Failed to calculate quality KPIs", ex);
@@ -655,9 +644,9 @@ public class LNGTankLayeredModel implements Serializable {
    * Calculate LNG density using GERG-2008 EOS.
    *
    * <p>
-   * Creates a GERG-2008 thermo system from the layer composition, runs a TP flash at the layer
-   * temperature and tank pressure, and returns the liquid density. This provides higher accuracy
-   * density than the Klosek-McKinley (ISO 6578) correlation.
+   * Creates a GERG-2008 thermo system from the layer composition, runs a TP flash at the layer temperature and tank
+   * pressure, and returns the liquid density. This provides higher accuracy density than the Klosek-McKinley (ISO 6578)
+   * correlation.
    * </p>
    *
    * @param layer the tank layer
@@ -669,9 +658,9 @@ public class LNGTankLayeredModel implements Serializable {
 
       Map<String, Double> comp = layer.getComposition();
       for (Map.Entry<String, Double> entry : comp.entrySet()) {
-        if (entry.getValue() > 1e-10) {
-          gergSystem.addComponent(entry.getKey(), entry.getValue());
-        }
+	if (entry.getValue() > 1e-10) {
+	  gergSystem.addComponent(entry.getKey(), entry.getValue());
+	}
       }
       gergSystem.setMixingRule(2);
       gergSystem.init(0);
@@ -681,9 +670,9 @@ public class LNGTankLayeredModel implements Serializable {
       gergSystem.initProperties();
 
       if (gergSystem.hasPhaseType("oil")) {
-        return gergSystem.getPhase("oil").getDensity("kg/m3");
+	return gergSystem.getPhase("oil").getDensity("kg/m3");
       } else if (gergSystem.getNumberOfPhases() > 0) {
-        return gergSystem.getPhase(0).getDensity("kg/m3");
+	return gergSystem.getPhase(0).getDensity("kg/m3");
       }
     } catch (Exception ex) {
       logger.debug("GERG-2008 density calculation failed, falling back to ISO 6578", ex);
@@ -695,10 +684,9 @@ public class LNGTankLayeredModel implements Serializable {
    * Apply inter-layer molecular diffusion using Fick's first law.
    *
    * <p>
-   * For each pair of adjacent layers, calculate mass transfer flux: J_i = D_eff * (c_upper_i -
-   * c_lower_i) / delta_h, where c is concentration (mole fraction), and transfer moles to equalise
-   * compositions over time. The effective diffusion coefficient includes both molecular diffusion
-   * and turbulent eddy diffusion from natural convection.
+   * For each pair of adjacent layers, calculate mass transfer flux: J_i = D_eff * (c_upper_i - c_lower_i) / delta_h,
+   * where c is concentration (mole fraction), and transfer moles to equalise compositions over time. The effective
+   * diffusion coefficient includes both molecular diffusion and turbulent eddy diffusion from natural convection.
    * </p>
    *
    * @param timeStepHours time step (hours)
@@ -714,7 +702,7 @@ public class LNGTankLayeredModel implements Serializable {
       double interfaceArea = estimateInterfaceArea();
       double deltaH = estimateLayerSpacing(lower, upper);
       if (deltaH <= 0 || interfaceArea <= 0) {
-        continue;
+	continue;
       }
 
       Map<String, Double> lowerComp = lower.getComposition();
@@ -732,21 +720,19 @@ public class LNGTankLayeredModel implements Serializable {
       Map<String, Double> newUpperComp = new LinkedHashMap<String, Double>(upperComp);
 
       for (String comp : lowerComp.keySet()) {
-        double xLower = lowerComp.containsKey(comp) ? lowerComp.get(comp) : 0;
-        double xUpper = upperComp.containsKey(comp) ? upperComp.get(comp) : 0;
-        double diff = xUpper - xLower;
+	double xLower = lowerComp.containsKey(comp) ? lowerComp.get(comp) : 0;
+	double xUpper = upperComp.containsKey(comp) ? upperComp.get(comp) : 0;
+	double diff = xUpper - xLower;
 
-        if (Math.abs(diff) > 1e-12) {
-          double molesTransferred = diff * transferScale;
-          // Transfer from higher concentration to lower
-          double fracOfLower =
-              lower.getTotalMoles() > 0 ? molesTransferred / lower.getTotalMoles() : 0;
-          double fracOfUpper =
-              upper.getTotalMoles() > 0 ? molesTransferred / upper.getTotalMoles() : 0;
+	if (Math.abs(diff) > 1e-12) {
+	  double molesTransferred = diff * transferScale;
+	  // Transfer from higher concentration to lower
+	  double fracOfLower = lower.getTotalMoles() > 0 ? molesTransferred / lower.getTotalMoles() : 0;
+	  double fracOfUpper = upper.getTotalMoles() > 0 ? molesTransferred / upper.getTotalMoles() : 0;
 
-          newLowerComp.put(comp, Math.max(0, xLower + fracOfLower));
-          newUpperComp.put(comp, Math.max(0, xUpper - fracOfUpper));
-        }
+	  newLowerComp.put(comp, Math.max(0, xLower + fracOfLower));
+	  newUpperComp.put(comp, Math.max(0, xUpper - fracOfUpper));
+	}
       }
 
       lower.setComposition(newLowerComp);
@@ -817,13 +803,13 @@ public class LNGTankLayeredModel implements Serializable {
 
     for (LNGTankLayer layer : layers) {
       for (Map.Entry<String, Double> entry : layer.getComposition().entrySet()) {
-        String comp = entry.getKey();
-        double contribution = entry.getValue() * layer.getTotalMoles() / totalMoles;
-        if (bulk.containsKey(comp)) {
-          bulk.put(comp, bulk.get(comp) + contribution);
-        } else {
-          bulk.put(comp, contribution);
-        }
+	String comp = entry.getKey();
+	double contribution = entry.getValue() * layer.getTotalMoles() / totalMoles;
+	if (bulk.containsKey(comp)) {
+	  bulk.put(comp, bulk.get(comp) + contribution);
+	} else {
+	  bulk.put(comp, contribution);
+	}
       }
     }
     return bulk;
@@ -977,9 +963,9 @@ public class LNGTankLayeredModel implements Serializable {
    * Set the sloshing mixing enhancement factor.
    *
    * <p>
-   * Sloshing from wave action enhances mixing between layers and surface renewal at the
-   * liquid-vapor interface. Factor of 1.0 means no enhancement (quiescent storage), values greater
-   * than 1.0 represent enhanced mixing due to ship motion.
+   * Sloshing from wave action enhances mixing between layers and surface renewal at the liquid-vapor interface. Factor
+   * of 1.0 means no enhancement (quiescent storage), values greater than 1.0 represent enhanced mixing due to ship
+   * motion.
    * </p>
    *
    * @param factor mixing factor (1.0 = no sloshing effect)

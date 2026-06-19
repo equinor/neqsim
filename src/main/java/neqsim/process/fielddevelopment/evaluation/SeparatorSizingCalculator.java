@@ -168,14 +168,14 @@ public class SeparatorSizingCalculator implements Serializable {
    * <li>μ = viscosity of continuous phase (Pa·s)</li>
    * </ul>
    *
-   * @param dropletDiameterM droplet or bubble diameter (m)
-   * @param heavyPhaseDensity density of heavier phase (kg/m³)
-   * @param lightPhaseDensity density of lighter phase (kg/m³)
+   * @param dropletDiameterM         droplet or bubble diameter (m)
+   * @param heavyPhaseDensity        density of heavier phase (kg/m³)
+   * @param lightPhaseDensity        density of lighter phase (kg/m³)
    * @param continuousPhaseViscosity viscosity of continuous phase (Pa·s)
    * @return settling velocity (m/s), positive = downward for droplets
    */
-  public double stokesSettlingVelocity(double dropletDiameterM, double heavyPhaseDensity,
-      double lightPhaseDensity, double continuousPhaseViscosity) {
+  public double stokesSettlingVelocity(double dropletDiameterM, double heavyPhaseDensity, double lightPhaseDensity,
+      double continuousPhaseViscosity) {
     if (continuousPhaseViscosity <= 0) {
       throw new IllegalArgumentException("Viscosity must be positive");
     }
@@ -192,13 +192,13 @@ public class SeparatorSizingCalculator implements Serializable {
    * Calculates oil droplet settling velocity in gas phase.
    *
    * @param dropletDiameterMicrons droplet diameter in microns
-   * @param oilDensity oil density (kg/m³)
-   * @param gasDensity gas density (kg/m³)
-   * @param gasViscosity gas viscosity (Pa·s)
+   * @param oilDensity             oil density (kg/m³)
+   * @param gasDensity             gas density (kg/m³)
+   * @param gasViscosity           gas viscosity (Pa·s)
    * @return settling velocity (m/s)
    */
-  public double oilDropletSettlingInGas(double dropletDiameterMicrons, double oilDensity,
-      double gasDensity, double gasViscosity) {
+  public double oilDropletSettlingInGas(double dropletDiameterMicrons, double oilDensity, double gasDensity,
+      double gasViscosity) {
     double diameterM = dropletDiameterMicrons * 1e-6;
     return stokesSettlingVelocity(diameterM, oilDensity, gasDensity, gasViscosity);
   }
@@ -207,13 +207,13 @@ public class SeparatorSizingCalculator implements Serializable {
    * Calculates gas bubble rise velocity in liquid phase.
    *
    * @param bubbleDiameterMm bubble diameter in mm
-   * @param liquidDensity liquid density (kg/m³)
-   * @param gasDensity gas density (kg/m³)
-   * @param liquidViscosity liquid viscosity (Pa·s)
+   * @param liquidDensity    liquid density (kg/m³)
+   * @param gasDensity       gas density (kg/m³)
+   * @param liquidViscosity  liquid viscosity (Pa·s)
    * @return rise velocity (m/s)
    */
-  public double gasBubbleRiseInLiquid(double bubbleDiameterMm, double liquidDensity,
-      double gasDensity, double liquidViscosity) {
+  public double gasBubbleRiseInLiquid(double bubbleDiameterMm, double liquidDensity, double gasDensity,
+      double liquidViscosity) {
     double diameterM = bubbleDiameterMm * 1e-3;
     return stokesSettlingVelocity(diameterM, liquidDensity, gasDensity, liquidViscosity);
   }
@@ -240,8 +240,7 @@ public class SeparatorSizingCalculator implements Serializable {
    * Calculates maximum gas velocity using Souders-Brown equation.
    *
    * <p>
-   * The Souders-Brown equation determines the maximum allowable gas velocity to prevent liquid
-   * entrainment:
+   * The Souders-Brown equation determines the maximum allowable gas velocity to prevent liquid entrainment:
    * </p>
    *
    * <pre>
@@ -257,9 +256,9 @@ public class SeparatorSizingCalculator implements Serializable {
    * <li>0.10-0.15 m/s for separators with wire mesh demister</li>
    * </ul>
    *
-   * @param kFactor Souders-Brown K factor (m/s)
+   * @param kFactor       Souders-Brown K factor (m/s)
    * @param liquidDensity liquid density (kg/m³)
-   * @param gasDensity gas density (kg/m³)
+   * @param gasDensity    gas density (kg/m³)
    * @return maximum gas velocity (m/s)
    */
   public double soudersbrownGasVelocity(double kFactor, double liquidDensity, double gasDensity) {
@@ -276,7 +275,7 @@ public class SeparatorSizingCalculator implements Serializable {
   /**
    * Returns recommended K-factor based on separator configuration.
    *
-   * @param type separator type
+   * @param type        separator type
    * @param hasDemister true if wire mesh demister is installed
    * @return recommended K-factor (m/s)
    */
@@ -304,13 +303,12 @@ public class SeparatorSizingCalculator implements Serializable {
    * <li>Slenderness ratio limits (L/D)</li>
    * </ul>
    *
-   * @param feed inlet stream to separator
-   * @param type separator orientation
+   * @param feed     inlet stream to separator
+   * @param type     separator orientation
    * @param standard design standard to apply
    * @return sizing result with dimensions and constraints
    */
-  public SeparatorSizingResult sizeSeparator(StreamInterface feed, SeparatorType type,
-      DesignStandard standard) {
+  public SeparatorSizingResult sizeSeparator(StreamInterface feed, SeparatorType type, DesignStandard standard) {
     // Run the feed to get properties
     if (feed.getFluid() == null) {
       throw new IllegalArgumentException("Feed stream must have a fluid");
@@ -381,9 +379,9 @@ public class SeparatorSizingCalculator implements Serializable {
       double actualGasVelocity = gasVolumeFlow / gasArea;
 
       if (actualGasVelocity > maxGasVelocity) {
-        // Gas constrained - increase diameter
-        diameter = Math.sqrt(4.0 * gasVolumeFlow / (maxGasVelocity * 0.5 * Math.PI));
-        length = ld * diameter;
+	// Gas constrained - increase diameter
+	diameter = Math.sqrt(4.0 * gasVolumeFlow / (maxGasVelocity * 0.5 * Math.PI));
+	length = ld * diameter;
       }
     }
 
@@ -415,13 +413,12 @@ public class SeparatorSizingCalculator implements Serializable {
   /**
    * Creates a sized Separator equipment from a sizing result.
    *
-   * @param name equipment name
-   * @param feed inlet stream
+   * @param name   equipment name
+   * @param feed   inlet stream
    * @param result sizing result
    * @return configured Separator
    */
-  public Separator createSeparator(String name, StreamInterface feed,
-      SeparatorSizingResult result) {
+  public Separator createSeparator(String name, StreamInterface feed, SeparatorSizingResult result) {
     Separator sep = new Separator(name, feed);
     sep.setInternalDiameter(result.internalDiameter);
     sep.setSeparatorLength(result.tanTanLength);
@@ -453,7 +450,7 @@ public class SeparatorSizingCalculator implements Serializable {
     result.slendernessRatio = result.tanTanLength / result.internalDiameter;
     result.kFactor = design.getGasLoadFactor();
     result.maxGasVelocity = design.getMaxDesignVolumeFlow()
-        / (Math.PI * result.internalDiameter * result.internalDiameter / 4.0);
+	/ (Math.PI * result.internalDiameter * result.internalDiameter / 4.0);
     result.requiredRetentionTime = design.getRetentionTime();
     result.designStandard = DesignStandard.API_12J;
 
@@ -525,18 +522,16 @@ public class SeparatorSizingCalculator implements Serializable {
      */
     public double getLiquidVolume() {
       if (separatorType == SeparatorType.VERTICAL) {
-        return getVolume() * 0.7; // 70% for liquid
+	return getVolume() * 0.7; // 70% for liquid
       } else {
-        return getVolume() * 0.5; // 50% for horizontal
+	return getVolume() * 0.5; // 50% for horizontal
       }
     }
 
     @Override
     public String toString() {
-      return String.format(
-          "SeparatorSizingResult[type=%s, D=%.2fm, L=%.2fm, L/D=%.1f, K=%.3f, t_ret=%.0fs]",
-          separatorType, internalDiameter, tanTanLength, slendernessRatio, kFactor,
-          requiredRetentionTime);
+      return String.format("SeparatorSizingResult[type=%s, D=%.2fm, L=%.2fm, L/D=%.1f, K=%.3f, t_ret=%.0fs]",
+	  separatorType, internalDiameter, tanTanLength, slendernessRatio, kFactor, requiredRetentionTime);
     }
   }
 }

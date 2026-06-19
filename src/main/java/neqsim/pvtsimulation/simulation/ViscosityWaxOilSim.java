@@ -56,7 +56,7 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
    * </p>
    *
    * @param temperature an array of type double
-   * @param pressure an array of type double
+   * @param pressure    an array of type double
    */
   public void setTemperaturesAndPressures(double[] temperature, double[] pressure) {
     this.pressure = pressure;
@@ -76,24 +76,23 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
       System.out.println("adding....");
 
       for (int i = 0; i < experimentalData[0].length; i++) {
-        ViscosityFunction function = new ViscosityFunction();
-        double[] guess = {1.0}; // getThermoSystem().getPhase(0).getComponent(0).getCriticalViscosity()};
-        function.setInitialGuess(guess);
+	ViscosityFunction function = new ViscosityFunction();
+	double[] guess = { 1.0 }; // getThermoSystem().getPhase(0).getComponent(0).getCriticalViscosity()};
+	function.setInitialGuess(guess);
 
-        SystemInterface tempSystem = getThermoSystem().clone();
+	SystemInterface tempSystem = getThermoSystem().clone();
 
-        tempSystem.setTemperature(temperature[i]);
-        tempSystem.setPressure(pressure[i]);
-        thermoOps.TPflash();
-        // tempSystem.display();
-        double[] sample1 = {shareRate[i]};
-        double viscosity = experimentalData[0][i];
-        double[] standardDeviation1 = {1.5};
-        SampleValue sample =
-            new SampleValue(viscosity, viscosity / 50.0, sample1, standardDeviation1);
-        sample.setFunction(function);
-        sample.setThermodynamicSystem(tempSystem);
-        sampleList.add(sample);
+	tempSystem.setTemperature(temperature[i]);
+	tempSystem.setPressure(pressure[i]);
+	thermoOps.TPflash();
+	// tempSystem.display();
+	double[] sample1 = { shareRate[i] };
+	double viscosity = experimentalData[0][i];
+	double[] standardDeviation1 = { 1.5 };
+	SampleValue sample = new SampleValue(viscosity, viscosity / 50.0, sample1, standardDeviation1);
+	sample.setFunction(function);
+	sample.setThermodynamicSystem(tempSystem);
+	sampleList.add(sample);
       }
     } catch (Exception ex) {
       logger.error("database error", ex);
@@ -130,20 +129,18 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
       getThermoSystem().initPhysicalProperties();
       waxFraction[i] = 0.0;
       if (getThermoSystem().hasPhaseType("wax") && getThermoSystem().hasPhaseType("oil")) {
-        waxFraction[i] =
-            getThermoSystem().getWtFraction(getThermoSystem().getPhaseNumberOfPhase("wax"));
-        oilwaxDispersionViscosity[i] = getThermoSystem().getPhase("oil").getPhysicalProperties()
-            .getViscosityOfWaxyOil(waxFraction[i], getShareRate()[i]);
+	waxFraction[i] = getThermoSystem().getWtFraction(getThermoSystem().getPhaseNumberOfPhase("wax"));
+	oilwaxDispersionViscosity[i] = getThermoSystem().getPhase("oil").getPhysicalProperties()
+	    .getViscosityOfWaxyOil(waxFraction[i], getShareRate()[i]);
       }
       if (getThermoSystem().hasPhaseType("gas")) {
-        gasViscosity[i] = getThermoSystem().getPhase("gas").getPhysicalProperties().getViscosity();
+	gasViscosity[i] = getThermoSystem().getPhase("gas").getPhysicalProperties().getViscosity();
       }
       if (getThermoSystem().hasPhaseType("oil")) {
-        oilViscosity[i] = getThermoSystem().getPhase("oil").getPhysicalProperties().getViscosity();
+	oilViscosity[i] = getThermoSystem().getPhase("oil").getPhysicalProperties().getViscosity();
       }
       if (getThermoSystem().hasPhaseType("aqueous")) {
-        aqueousViscosity[i] =
-            getThermoSystem().getPhase("aqueous").getPhysicalProperties().getViscosity();
+	aqueousViscosity[i] = getThermoSystem().getPhase("aqueous").getPhysicalProperties().getViscosity();
       }
     }
   }
@@ -175,13 +172,13 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
     tempSystem.init(1);
 
     ViscosityWaxOilSim sepSim = new ViscosityWaxOilSim(tempSystem);
-    double[] temps = {300.15, 293.15, 283.15, 273.15, 264.15};
-    double[] pres = {5, 5, 5, 5.0, 5.0};
+    double[] temps = { 300.15, 293.15, 283.15, 273.15, 264.15 };
+    double[] pres = { 5, 5, 5, 5.0, 5.0 };
     sepSim.setTemperaturesAndPressures(temps, pres);
-    sepSim.setShareRate(new double[] {0, 0, 0, 100, 100});
+    sepSim.setShareRate(new double[] { 0, 0, 0, 100, 100 });
     sepSim.runCalc();
 
-    double[][] expData = {{2e-4, 3e-4, 4e-4, 5e-4, 6e-4},};
+    double[][] expData = { { 2e-4, 3e-4, 4e-4, 5e-4, 6e-4 }, };
     sepSim.setExperimentalData(expData);
     sepSim.runTuning();
     // sepSim.runCalc();

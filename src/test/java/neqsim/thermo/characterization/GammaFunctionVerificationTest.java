@@ -11,9 +11,8 @@ import org.apache.logging.log4j.Logger;
 /**
  * Tests to verify correctness of the gamma function implementation in WhitsonGammaModel.
  *
- * Known exact values of Gamma function: - Gamma(1) = 1 - Gamma(2) = 1 - Gamma(3) = 2 - Gamma(0.5) =
- * sqrt(pi) = 1.7724538509 - Gamma(1.5) = sqrt(pi)/2 = 0.8862269255 - Gamma(2.5) = 3*sqrt(pi)/4 =
- * 1.3293403882
+ * Known exact values of Gamma function: - Gamma(1) = 1 - Gamma(2) = 1 - Gamma(3) = 2 - Gamma(0.5) = sqrt(pi) =
+ * 1.7724538509 - Gamma(1.5) = sqrt(pi)/2 = 0.8862269255 - Gamma(2.5) = 3*sqrt(pi)/4 = 1.3293403882
  */
 public class GammaFunctionVerificationTest {
   private static final Logger logger = LogManager.getLogger(GammaFunctionVerificationTest.class);
@@ -79,19 +78,18 @@ public class GammaFunctionVerificationTest {
   @Test
   void testGammaRecurrenceRelation() {
     // Test the fundamental property: Gamma(x+1) = x * Gamma(x)
-    double[] testValues = {1.0, 1.5, 2.0, 2.5, 3.0, 0.5};
+    double[] testValues = { 1.0, 1.5, 2.0, 2.5, 3.0, 0.5 };
 
     for (double x : testValues) {
       double gammaX = gammaModel.gamma(x);
       double gammaXplus1 = gammaModel.gamma(x + 1.0);
       double expected = x * gammaX;
 
-      logger
-          .info("Gamma(" + (x + 1.0) + ") = " + gammaXplus1 + ", x*Gamma(" + x + ") = " + expected);
+      logger.info("Gamma(" + (x + 1.0) + ") = " + gammaXplus1 + ", x*Gamma(" + x + ") = " + expected);
 
       // The recurrence should hold: Gamma(x+1) = x * Gamma(x)
       assertEquals(expected, gammaXplus1, TOLERANCE * Math.abs(expected),
-          "Recurrence relation Gamma(x+1) = x*Gamma(x) should hold for x = " + x);
+	  "Recurrence relation Gamma(x+1) = x*Gamma(x) should hold for x = " + x);
     }
   }
 
@@ -108,8 +106,7 @@ public class GammaFunctionVerificationTest {
     // Test typical alpha = 0.5
     double gamma05 = gammaModel.gamma(0.5);
     logger.info("Gamma(0.5) = " + gamma05);
-    assertTrue(gamma05 > 1.7 && gamma05 < 1.8,
-        "Gamma(0.5) should be approximately sqrt(pi) = 1.77, got: " + gamma05);
+    assertTrue(gamma05 > 1.7 && gamma05 < 1.8, "Gamma(0.5) should be approximately sqrt(pi) = 1.77, got: " + gamma05);
 
     // Test typical alpha = 2.0
     double gamma20 = gammaModel.gamma(2.0);

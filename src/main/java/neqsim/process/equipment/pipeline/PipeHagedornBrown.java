@@ -13,16 +13,15 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Pipeline simulation using Hagedorn and Brown empirical correlation for multiphase vertical flow.
  *
  * <p>
- * Implements the Hagedorn and Brown (1965) method for predicting pressure traverses in vertical and
- * near-vertical wells. This correlation is widely used for production tubing and vertical riser
- * calculations, particularly when the liquid phase is continuous.
+ * Implements the Hagedorn and Brown (1965) method for predicting pressure traverses in vertical and near-vertical
+ * wells. This correlation is widely used for production tubing and vertical riser calculations, particularly when the
+ * liquid phase is continuous.
  * </p>
  *
  * <h2>Reference</h2>
  * <p>
- * Hagedorn, A.R. and Brown, K.E., "Experimental Study of Pressure Gradients Occurring During
- * Continuous Two-Phase Flow in Small-Diameter Vertical Conduits", Journal of Petroleum Technology,
- * April 1965, pp. 475-484. SPE-940-PA.
+ * Hagedorn, A.R. and Brown, K.E., "Experimental Study of Pressure Gradients Occurring During Continuous Two-Phase Flow
+ * in Small-Diameter Vertical Conduits", Journal of Petroleum Technology, April 1965, pp. 475-484. SPE-940-PA.
  * </p>
  *
  * <h2>Method Overview</h2>
@@ -35,15 +34,14 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </pre>
  *
  * <p>
- * where rho_m is the mixture density accounting for slip between phases via the empirical liquid
- * holdup correlation. The denominator accounts for the acceleration pressure gradient (kinetic
- * energy changes).
+ * where rho_m is the mixture density accounting for slip between phases via the empirical liquid holdup correlation.
+ * The denominator accounts for the acceleration pressure gradient (kinetic energy changes).
  * </p>
  *
  * <h2>Liquid Holdup Determination</h2>
  * <p>
- * Liquid holdup (H_L) is determined from three dimensionless groups using empirical charts
- * (correlations fitted to Hagedorn-Brown experimental data):
+ * Liquid holdup (H_L) is determined from three dimensionless groups using empirical charts (correlations fitted to
+ * Hagedorn-Brown experimental data):
  * </p>
  * <ul>
  * <li>Liquid velocity number: N_vL = v_sL * (rho_L / (g * sigma))^0.25</li>
@@ -140,7 +138,7 @@ public class PipeHagedornBrown extends Pipeline {
   /**
    * Constructor with name and inlet stream.
    *
-   * @param name equipment name
+   * @param name     equipment name
    * @param inStream inlet stream
    */
   public PipeHagedornBrown(String name, StreamInterface inStream) {
@@ -151,13 +149,12 @@ public class PipeHagedornBrown extends Pipeline {
   @Override
   public void run(UUID id) {
     if (diameter <= 0) {
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(
-          "PipeHagedornBrown", "run", "diameter", "must be positive, got: " + diameter));
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeHagedornBrown", "run", "diameter",
+	  "must be positive, got: " + diameter));
     }
     if (numberOfIncrements <= 0) {
-      throw new RuntimeException(
-          new neqsim.util.exception.InvalidInputException("PipeHagedornBrown", "run",
-              "numberOfIncrements", "must be positive, got: " + numberOfIncrements));
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeHagedornBrown", "run",
+	  "numberOfIncrements", "must be positive, got: " + numberOfIncrements));
     }
 
     pressureProfileList = new ArrayList<Double>();
@@ -184,8 +181,8 @@ public class PipeHagedornBrown extends Pipeline {
       double dp = calcSegmentPressureDrop(system, segmentLength, segmentElevation);
       double pOut = system.getPressure() - dp;
       if (pOut < 0.1) {
-        logger.warn("Outlet pressure went below 0.1 bar at increment {}", i);
-        pOut = 0.1;
+	logger.warn("Outlet pressure went below 0.1 bar at increment {}", i);
+	pOut = 0.1;
       }
 
       system.setPressure(pOut);
@@ -207,9 +204,9 @@ public class PipeHagedornBrown extends Pipeline {
   /**
    * Calculate pressure drop for a single pipe segment using the Hagedorn-Brown method.
    *
-   * @param sys thermodynamic system at segment conditions
+   * @param sys       thermodynamic system at segment conditions
    * @param segLength segment length in meters
-   * @param segElev segment elevation change in meters (positive = upward)
+   * @param segElev   segment elevation change in meters (positive = upward)
    * @return pressure drop in bar
    */
   private double calcSegmentPressureDrop(SystemInterface sys, double segLength, double segElev) {
@@ -234,9 +231,9 @@ public class PipeHagedornBrown extends Pipeline {
       muL = sys.getPhase("oil").getViscosity("kg/msec");
       muG = sys.getPhase("gas").getViscosity("kg/msec");
       sigmaL = sys.getInterphaseProperties().getSurfaceTension(sys.getPhaseNumberOfPhase("oil"),
-          sys.getPhaseNumberOfPhase("gas"));
+	  sys.getPhaseNumberOfPhase("gas"));
       if (sigmaL < 1e-6) {
-        sigmaL = 0.02; // Default 20 mN/m
+	sigmaL = 0.02; // Default 20 mN/m
       }
       volFlowL = sys.getPhase("oil").getFlowRate("m3/sec");
       volFlowG = sys.getPhase("gas").getFlowRate("m3/sec");
@@ -312,8 +309,7 @@ public class PipeHagedornBrown extends Pipeline {
     // Pressure gradient components (Pa/m)
     double dpFriction = f * rhoNoSlip * mixtureVelocity * mixtureVelocity / (2.0 * diameter);
     double dpGravity = mixtureDensity * GRAVITY * (segElev / segLength);
-    double dpAccel =
-        mixtureDensity * mixtureVelocity * superficialGasVelocity / (system.getPressure() * 1e5);
+    double dpAccel = mixtureDensity * mixtureVelocity * superficialGasVelocity / (system.getPressure() * 1e5);
 
     // Total pressure gradient (Pa/m)
     double dpdzTotal = (dpFriction + dpGravity) / (1.0 - dpAccel);
@@ -326,14 +322,14 @@ public class PipeHagedornBrown extends Pipeline {
    * Calculate liquid holdup using the Hagedorn-Brown empirical correlation.
    *
    * <p>
-   * Uses curve-fit approximations to the original Hagedorn-Brown charts. The holdup is determined
-   * from a correlation function of dimensionless velocity, diameter, and viscosity numbers.
+   * Uses curve-fit approximations to the original Hagedorn-Brown charts. The holdup is determined from a correlation
+   * function of dimensionless velocity, diameter, and viscosity numbers.
    * </p>
    *
-   * @param nVl liquid velocity number
-   * @param nVg gas velocity number
-   * @param nD pipe diameter number
-   * @param nL liquid viscosity number
+   * @param nVl     liquid velocity number
+   * @param nVg     gas velocity number
+   * @param nD      pipe diameter number
+   * @param nL      liquid viscosity number
    * @param lambdaL no-slip liquid fraction
    * @return predicted liquid holdup (0 to 1)
    */
@@ -342,8 +338,8 @@ public class PipeHagedornBrown extends Pipeline {
     if (superficialGasVelocity < 0.15 && lambdaL > 0.5) {
       // Bubble flow regime: use Griffith correction
       double vSlip = 0.244; // m/s (Taylor bubble rise velocity)
-      double hl = 1.0 - 0.5 * (1.0 + mixtureVelocity / vSlip - Math
-          .sqrt(Math.pow(1.0 + mixtureVelocity / vSlip, 2) - 4.0 * superficialGasVelocity / vSlip));
+      double hl = 1.0 - 0.5 * (1.0 + mixtureVelocity / vSlip
+	  - Math.sqrt(Math.pow(1.0 + mixtureVelocity / vSlip, 2) - 4.0 * superficialGasVelocity / vSlip));
       return Math.max(lambdaL, Math.min(1.0, hl));
     }
 
@@ -355,8 +351,7 @@ public class PipeHagedornBrown extends Pipeline {
     // (NvL * P^0.1 * CNL) / (NvG^0.575 * P_atm^0.1 * ND)
     double pBara = system.getPressure();
     double pAtm = 1.01325;
-    double holdupParam = (nVl * Math.pow(pBara, 0.1) * cNl)
-        / (Math.pow(nVg, 0.575) * Math.pow(pAtm, 0.1) * nD + 1e-10);
+    double holdupParam = (nVl * Math.pow(pBara, 0.1) * cNl) / (Math.pow(nVg, 0.575) * Math.pow(pAtm, 0.1) * nD + 1e-10);
 
     // Step 3: Get holdup from correlation curve
     double hl = calcHoldupFromParam(holdupParam);

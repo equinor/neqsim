@@ -20,9 +20,9 @@ import neqsim.process.fielddevelopment.screening.SafetyScreener;
  * Main orchestrator for field development concept evaluation.
  *
  * <p>
- * This class is the primary entry point for the Field Development Engine. It coordinates all
- * screening analyses (flow assurance, safety, emissions, economics) and aggregates results into a
- * comprehensive {@link ConceptKPIs} object for decision support.
+ * This class is the primary entry point for the Field Development Engine. It coordinates all screening analyses (flow
+ * assurance, safety, emissions, economics) and aggregates results into a comprehensive {@link ConceptKPIs} object for
+ * decision support.
  * </p>
  *
  * <h2>Evaluation Workflow</h2>
@@ -72,9 +72,8 @@ import neqsim.process.fielddevelopment.screening.SafetyScreener;
  * <h3>Evaluation with Custom Facility</h3>
  *
  * <pre>
- * FacilityConfig facility =
- *     FacilityBuilder.builder().addBlock(BlockConfig.of(BlockType.INLET_SEPARATION))
- *         .addBlock(BlockConfig.of(BlockType.TEG_DEHYDRATION)).build();
+ * FacilityConfig facility = FacilityBuilder.builder().addBlock(BlockConfig.of(BlockType.INLET_SEPARATION))
+ *     .addBlock(BlockConfig.of(BlockType.TEG_DEHYDRATION)).build();
  *
  * ConceptKPIs kpis = evaluator.evaluate(concept, facility);
  * </pre>
@@ -88,9 +87,8 @@ import neqsim.process.fielddevelopment.screening.SafetyScreener;
  *
  * <h2>Thread Safety</h2>
  * <p>
- * This class is stateless and thread-safe. Multiple concepts can be evaluated concurrently using
- * the same evaluator instance, though thermodynamic database operations may require
- * synchronization.
+ * This class is stateless and thread-safe. Multiple concepts can be evaluated concurrently using the same evaluator
+ * instance, though thermodynamic database operations may require synchronization.
  * </p>
  *
  * @author ESOL
@@ -116,8 +114,8 @@ public class ConceptEvaluator {
    * Creates a new concept evaluator with default screeners.
    *
    * <p>
-   * This is the recommended constructor for typical usage. Each screener is instantiated with
-   * default parameters suitable for screening-level analysis.
+   * This is the recommended constructor for typical usage. Each screener is instantiated with default parameters
+   * suitable for screening-level analysis.
    * </p>
    */
   public ConceptEvaluator() {
@@ -131,18 +129,17 @@ public class ConceptEvaluator {
    * Creates a concept evaluator with custom screeners.
    *
    * <p>
-   * Use this constructor when you need to customize screener behavior, such as using different cost
-   * factors or risk thresholds.
+   * Use this constructor when you need to customize screener behavior, such as using different cost factors or risk
+   * thresholds.
    * </p>
    *
    * @param flowAssuranceScreener custom flow assurance screener
-   * @param safetyScreener custom safety screener
-   * @param emissionsTracker custom emissions tracker
-   * @param economicsEstimator custom economics estimator
+   * @param safetyScreener        custom safety screener
+   * @param emissionsTracker      custom emissions tracker
+   * @param economicsEstimator    custom economics estimator
    */
-  public ConceptEvaluator(FlowAssuranceScreener flowAssuranceScreener,
-      SafetyScreener safetyScreener, EmissionsTracker emissionsTracker,
-      EconomicsEstimator economicsEstimator) {
+  public ConceptEvaluator(FlowAssuranceScreener flowAssuranceScreener, SafetyScreener safetyScreener,
+      EmissionsTracker emissionsTracker, EconomicsEstimator economicsEstimator) {
     this.flowAssuranceScreener = flowAssuranceScreener;
     this.safetyScreener = safetyScreener;
     this.emissionsTracker = emissionsTracker;
@@ -153,9 +150,8 @@ public class ConceptEvaluator {
    * Evaluates a concept with auto-generated facility configuration.
    *
    * <p>
-   * The facility configuration is automatically generated based on the concept's reservoir
-   * properties and processing requirements. This is suitable for initial screening when detailed
-   * facility design is not yet available.
+   * The facility configuration is automatically generated based on the concept's reservoir properties and processing
+   * requirements. This is suitable for initial screening when detailed facility design is not yet available.
    * </p>
    *
    * @param concept field concept to evaluate (must not be null)
@@ -172,11 +168,11 @@ public class ConceptEvaluator {
    * Evaluates a concept with a provided facility configuration.
    *
    * <p>
-   * Use this method when you have a specific facility design to evaluate, such as when comparing
-   * different processing configurations for the same reservoir.
+   * Use this method when you have a specific facility design to evaluate, such as when comparing different processing
+   * configurations for the same reservoir.
    * </p>
    *
-   * @param concept field concept to evaluate (must not be null)
+   * @param concept        field concept to evaluate (must not be null)
    * @param facilityConfig facility configuration defining process blocks
    * @return comprehensive concept KPIs including all screening results
    */
@@ -226,8 +222,8 @@ public class ConceptEvaluator {
    * Performs quick screening without full facility evaluation.
    *
    * <p>
-   * This method provides a faster, lower-fidelity evaluation that skips safety screening and uses
-   * simplified facility assumptions. It's useful for:
+   * This method provides a faster, lower-fidelity evaluation that skips safety screening and uses simplified facility
+   * assumptions. It's useful for:
    * </p>
    * <ul>
    * <li>Initial concept filtering before detailed analysis</li>
@@ -236,8 +232,8 @@ public class ConceptEvaluator {
    * </ul>
    *
    * <p>
-   * <b>Note:</b> The results are marked with a "fidelity" note indicating reduced accuracy. Safety
-   * reports are not included in quick screening.
+   * <b>Note:</b> The results are marked with a "fidelity" note indicating reduced accuracy. Safety reports are not
+   * included in quick screening.
    * </p>
    *
    * @param concept field concept to screen
@@ -286,28 +282,26 @@ public class ConceptEvaluator {
       return;
     }
 
-    double plateauRateMsm3d =
-        gasConcept ? peakRatePerDay / 1.0e6 : peakRatePerDay * 0.158987 / 1.0e6;
+    double plateauRateMsm3d = gasConcept ? peakRatePerDay / 1.0e6 : peakRatePerDay * 0.158987 / 1.0e6;
     builder.plateauRate(plateauRateMsm3d);
 
     ProductionProfileGenerator generator = new ProductionProfileGenerator();
-    Map<Integer, Double> profile =
-        generator.generateFromReservoirInput(reservoir, peakRatePerDay, gasConcept, 2026, 30);
+    Map<Integer, Double> profile = generator.generateFromReservoirInput(reservoir, peakRatePerDay, gasConcept, 2026,
+	30);
 
     double targetRecoverable = reservoir != null ? reservoir.getRecoverableResourceEstimate() : 0.0;
     String resourceUnit = reservoir != null ? reservoir.getResourceUnit() : "";
-    double cumulativeInResourceUnit =
-        calculateCumulativeInResourceUnit(profile, gasConcept, resourceUnit, targetRecoverable);
+    double cumulativeInResourceUnit = calculateCumulativeInResourceUnit(profile, gasConcept, resourceUnit,
+	targetRecoverable);
     double resourceEstimate = reservoir != null ? reservoir.getResourceEstimate() : 0.0;
     double recoveryPercent = resourceEstimate > 0.0
-        ? Math.min(cumulativeInResourceUnit / resourceEstimate * 100.0, 100.0)
-        : defaultRecoveryFactor(reservoir) * 100.0;
+	? Math.min(cumulativeInResourceUnit / resourceEstimate * 100.0, 100.0)
+	: defaultRecoveryFactor(reservoir) * 100.0;
 
     builder.fieldLife(estimateFieldLifeYears(profile, gasConcept, resourceUnit, targetRecoverable));
     builder.estimatedRecovery(recoveryPercent);
     builder.addNote("production_forecast",
-        String.format("Arps forecast with 2-year ramp-up, 5-year plateau, %.0f%% recovery target",
-            recoveryPercent));
+	String.format("Arps forecast with 2-year ramp-up, 5-year plateau, %.0f%% recovery target", recoveryPercent));
   }
 
   /**
@@ -321,14 +315,14 @@ public class ConceptEvaluator {
       return true;
     }
     return reservoir.getFluidType() == ReservoirInput.FluidType.LEAN_GAS
-        || reservoir.getFluidType() == ReservoirInput.FluidType.RICH_GAS
-        || reservoir.getFluidType() == ReservoirInput.FluidType.GAS_CONDENSATE;
+	|| reservoir.getFluidType() == ReservoirInput.FluidType.RICH_GAS
+	|| reservoir.getFluidType() == ReservoirInput.FluidType.GAS_CONDENSATE;
   }
 
   /**
    * Gets the peak production rate in profile units.
    *
-   * @param concept field concept
+   * @param concept    field concept
    * @param gasConcept true for gas concepts
    * @return gas rate in Sm3/d or oil rate in bbl/d
    */
@@ -341,12 +335,11 @@ public class ConceptEvaluator {
     double totalRate = ratePerWell * concept.getWells().getProducerCount();
     if (gasConcept) {
       if (unit != null && unit.toLowerCase().contains("msm3")) {
-        return totalRate * 1.0e6;
+	return totalRate * 1.0e6;
       }
       return concept.getWells().getRatePerWellSm3d() * concept.getWells().getProducerCount();
     }
-    if (unit != null
-        && (unit.toLowerCase().contains("bbl") || unit.toLowerCase().contains("bopd"))) {
+    if (unit != null && (unit.toLowerCase().contains("bbl") || unit.toLowerCase().contains("bopd"))) {
       return totalRate;
     }
     return totalRate / 0.158987;
@@ -355,9 +348,9 @@ public class ConceptEvaluator {
   /**
    * Calculates cumulative production in the resource unit.
    *
-   * @param profile annual production profile
-   * @param gasConcept true for gas concepts
-   * @param resourceUnit resource unit
+   * @param profile           annual production profile
+   * @param gasConcept        true for gas concepts
+   * @param resourceUnit      resource unit
    * @param targetRecoverable target recoverable resource in the resource unit
    * @return cumulative production in the resource unit
    */
@@ -367,7 +360,7 @@ public class ConceptEvaluator {
     for (Double annualVolume : profile.values()) {
       cumulative += convertAnnualVolumeToResourceUnit(annualVolume, gasConcept, resourceUnit);
       if (targetRecoverable > 0.0 && cumulative >= targetRecoverable) {
-        return targetRecoverable;
+	return targetRecoverable;
       }
     }
     return cumulative;
@@ -376,14 +369,14 @@ public class ConceptEvaluator {
   /**
    * Estimates field life from the profile and recoverable-resource target.
    *
-   * @param profile annual production profile
-   * @param gasConcept true for gas concepts
-   * @param resourceUnit resource unit
+   * @param profile           annual production profile
+   * @param gasConcept        true for gas concepts
+   * @param resourceUnit      resource unit
    * @param targetRecoverable target recoverable resource in the resource unit
    * @return field life in years
    */
-  private double estimateFieldLifeYears(Map<Integer, Double> profile, boolean gasConcept,
-      String resourceUnit, double targetRecoverable) {
+  private double estimateFieldLifeYears(Map<Integer, Double> profile, boolean gasConcept, String resourceUnit,
+      double targetRecoverable) {
     if (targetRecoverable <= 0.0) {
       return profile.size();
     }
@@ -393,7 +386,7 @@ public class ConceptEvaluator {
       cumulative += convertAnnualVolumeToResourceUnit(annualVolume, gasConcept, resourceUnit);
       years++;
       if (cumulative >= targetRecoverable) {
-        return years;
+	return years;
       }
     }
     return years;
@@ -403,25 +396,24 @@ public class ConceptEvaluator {
    * Converts an annual profile volume to the reservoir resource unit.
    *
    * @param annualVolume annual volume in Sm3 for gas or bbl for oil
-   * @param gasConcept true for gas concepts
+   * @param gasConcept   true for gas concepts
    * @param resourceUnit resource unit
    * @return annual volume in the resource unit
    */
-  private double convertAnnualVolumeToResourceUnit(double annualVolume, boolean gasConcept,
-      String resourceUnit) {
+  private double convertAnnualVolumeToResourceUnit(double annualVolume, boolean gasConcept, String resourceUnit) {
     if (resourceUnit == null) {
       return annualVolume;
     }
     String normalizedUnit = resourceUnit.toLowerCase();
     if (gasConcept) {
       if (normalizedUnit.contains("gsm3")) {
-        return annualVolume / 1.0e9;
+	return annualVolume / 1.0e9;
       }
       if (normalizedUnit.contains("msm3")) {
-        return annualVolume / 1.0e6;
+	return annualVolume / 1.0e6;
       }
       if (normalizedUnit.contains("mmboe")) {
-        return annualVolume / 1000.0 / 1.0e6;
+	return annualVolume / 1000.0 / 1.0e6;
       }
       return annualVolume;
     }
@@ -448,44 +440,44 @@ public class ConceptEvaluator {
       return 0.60;
     }
     switch (reservoir.getFluidType()) {
-      case LEAN_GAS:
-      case RICH_GAS:
-        return 0.75;
-      case GAS_CONDENSATE:
-        return 0.65;
-      case BLACK_OIL:
-      case VOLATILE_OIL:
-        return 0.45;
-      case HEAVY_OIL:
-        return 0.25;
-      default:
-        return 0.55;
+    case LEAN_GAS:
+    case RICH_GAS:
+      return 0.75;
+    case GAS_CONDENSATE:
+      return 0.65;
+    case BLACK_OIL:
+    case VOLATILE_OIL:
+      return 0.45;
+    case HEAVY_OIL:
+      return 0.25;
+    default:
+      return 0.55;
     }
   }
 
-  private void calculateScores(ConceptKPIs.Builder builder, FlowAssuranceReport faReport,
-      SafetyReport safetyReport, EmissionsReport emissionsReport, EconomicsReport economicsReport) {
+  private void calculateScores(ConceptKPIs.Builder builder, FlowAssuranceReport faReport, SafetyReport safetyReport,
+      EmissionsReport emissionsReport, EconomicsReport economicsReport) {
     // Technical score (0-1) based on flow assurance and safety
     double technicalScore = 1.0;
     switch (faReport.getOverallResult()) {
-      case FAIL:
-        technicalScore -= 0.4;
-        break;
-      case MARGINAL:
-        technicalScore -= 0.15;
-        break;
-      default:
-        break;
+    case FAIL:
+      technicalScore -= 0.4;
+      break;
+    case MARGINAL:
+      technicalScore -= 0.15;
+      break;
+    default:
+      break;
     }
     switch (safetyReport.getOverallLevel()) {
-      case HIGH:
-        technicalScore -= 0.3;
-        break;
-      case ENHANCED:
-        technicalScore -= 0.1;
-        break;
-      default:
-        break;
+    case HIGH:
+      technicalScore -= 0.3;
+      break;
+    case ENHANCED:
+      technicalScore -= 0.1;
+      break;
+    default:
+      break;
     }
     builder.technicalScore(Math.max(0, technicalScore));
 
@@ -515,8 +507,8 @@ public class ConceptEvaluator {
     builder.overallScore(overall);
   }
 
-  private void addWarnings(ConceptKPIs.Builder builder, FlowAssuranceReport faReport,
-      SafetyReport safetyReport, EmissionsReport emissionsReport) {
+  private void addWarnings(ConceptKPIs.Builder builder, FlowAssuranceReport faReport, SafetyReport safetyReport,
+      EmissionsReport emissionsReport) {
     if (faReport.getOverallResult() == FlowAssuranceResult.FAIL) {
       builder.addWarning("flow_assurance", "Flow assurance FAIL - mitigation measures mandatory");
     } else if (faReport.getOverallResult() == FlowAssuranceResult.MARGINAL) {
@@ -532,8 +524,7 @@ public class ConceptEvaluator {
     }
 
     if (!safetyReport.meetsBlowdownTarget()) {
-      builder.addWarning("blowdown",
-          "Blowdown time exceeds 15-minute target - segmentation may be needed");
+      builder.addWarning("blowdown", "Blowdown time exceeds 15-minute target - segmentation may be needed");
     }
 
     if (emissionsReport.getIntensityKgCO2PerBoe() > 25) {

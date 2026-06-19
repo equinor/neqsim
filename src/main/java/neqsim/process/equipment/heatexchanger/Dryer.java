@@ -15,18 +15,14 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Dryer for removing moisture from wet solids or liquid streams.
  *
  * <p>
- * Models various drying equipment including drum dryers, spray dryers, and
- * flash dryers. The dryer
- * evaporates a specified amount of volatile components (typically water) from
- * the feed to achieve a
- * target moisture content or outlet temperature.
+ * Models various drying equipment including drum dryers, spray dryers, and flash dryers. The dryer evaporates a
+ * specified amount of volatile components (typically water) from the feed to achieve a target moisture content or
+ * outlet temperature.
  * </p>
  *
  * <p>
- * The drying process is modeled as a heated flash: the feed is heated to
- * generate vapor, which is
- * separated from the dried product. The energy input determines how much
- * moisture is removed.
+ * The drying process is modeled as a heated flash: the feed is heated to generate vapor, which is separated from the
+ * dried product. The energy input determines how much moisture is removed.
  * </p>
  *
  * <p>
@@ -358,8 +354,8 @@ public class Dryer extends ProcessEquipmentBaseClass {
       driedProductStream.setThermoSystem(system);
       SystemInterface emptySys = system.clone();
       for (int i = 0; i < emptySys.getNumberOfComponents(); i++) {
-        double moles = emptySys.getComponent(i).getNumberOfmoles();
-        emptySys.addComponent(i, -moles * 0.999);
+	double moles = emptySys.getComponent(i).getNumberOfmoles();
+	emptySys.addComponent(i, -moles * 0.999);
       }
       emptySys.initProperties();
       vaporStream.setThermoSystem(emptySys);
@@ -371,8 +367,7 @@ public class Dryer extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   /**

@@ -10,22 +10,21 @@ import org.apache.logging.log4j.Logger;
  * Detects rollover risk in stratified LNG tanks.
  *
  * <p>
- * LNG rollover is a sudden mixing event in a stratified tank where a denser upper layer (formed by
- * preferential evaporation of light components) rapidly exchanges position with a warmer, lighter
- * lower layer (heated by wall ingress). The resulting flash of the superheated lower layer produces
- * a surge of BOG that can exceed the tank's pressure relief capacity.
+ * LNG rollover is a sudden mixing event in a stratified tank where a denser upper layer (formed by preferential
+ * evaporation of light components) rapidly exchanges position with a warmer, lighter lower layer (heated by wall
+ * ingress). The resulting flash of the superheated lower layer produces a surge of BOG that can exceed the tank's
+ * pressure relief capacity.
  * </p>
  *
  * <p>
  * Detection criteria (based on published LNG rollover incidents and research):
  * </p>
  * <ul>
- * <li><b>Density inversion:</b> Upper layer denser than lower layer by more than a threshold
- * (typically 1-5 kg/m3)</li>
- * <li><b>Temperature differential:</b> Temperature difference between layers above a threshold
- * (typically 0.5-2.0 K) with lower layer warmer</li>
- * <li><b>Rayleigh number criterion:</b> Natural convection onset when Ra exceeds critical value
- * (~1700 for horizontal liquid layers)</li>
+ * <li><b>Density inversion:</b> Upper layer denser than lower layer by more than a threshold (typically 1-5 kg/m3)</li>
+ * <li><b>Temperature differential:</b> Temperature difference between layers above a threshold (typically 0.5-2.0 K)
+ * with lower layer warmer</li>
+ * <li><b>Rayleigh number criterion:</b> Natural convection onset when Ra exceeds critical value (~1700 for horizontal
+ * liquid layers)</li>
  * <li><b>Stability index:</b> Combined density and temperature stratification metric</li>
  * </ul>
  *
@@ -120,7 +119,7 @@ public class LNGRolloverDetector implements Serializable {
      * Constructor for RolloverAssessment.
      *
      * @param riskLevel the assessed risk level
-     * @param message descriptive message
+     * @param message   descriptive message
      */
     public RolloverAssessment(RolloverRiskLevel riskLevel, String message) {
       this.riskLevel = riskLevel;
@@ -275,7 +274,8 @@ public class LNGRolloverDetector implements Serializable {
   /**
    * Default constructor.
    */
-  public LNGRolloverDetector() {}
+  public LNGRolloverDetector() {
+  }
 
   /**
    * Assess rollover risk based on current layer state.
@@ -285,8 +285,7 @@ public class LNGRolloverDetector implements Serializable {
    */
   public RolloverAssessment assess(List<LNGTankLayer> layers) {
     if (layers == null || layers.size() < 2) {
-      return new RolloverAssessment(RolloverRiskLevel.NONE,
-          "Single layer or no layers — no rollover risk");
+      return new RolloverAssessment(RolloverRiskLevel.NONE, "Single layer or no layers — no rollover risk");
     }
 
     double maxDensityDiff = 0;
@@ -304,17 +303,17 @@ public class LNGRolloverDetector implements Serializable {
 
       // Positive densityDiff means upper is heavier — potential inversion
       if (densityDiff > maxDensityDiff) {
-        maxDensityDiff = densityDiff;
-        worstLower = i;
-        worstUpper = i + 1;
+	maxDensityDiff = densityDiff;
+	worstLower = i;
+	worstUpper = i + 1;
       }
       if (densityDiff > 0) {
-        hasInversion = true;
+	hasInversion = true;
       }
 
       // Positive tempDiff means lower is warmer — buoyancy instability
       if (tempDiff > maxTempDiff) {
-        maxTempDiff = tempDiff;
+	maxTempDiff = tempDiff;
       }
     }
 
@@ -328,23 +327,21 @@ public class LNGRolloverDetector implements Serializable {
 
     if (hasInversion && maxDensityDiff > densityAlarmThreshold) {
       level = RolloverRiskLevel.CRITICAL;
-      msg = String.format(
-          "CRITICAL: Density inversion %.1f kg/m3 exceeds alarm threshold %.1f. "
-              + "Rollover imminent. Initiate emergency mixing.",
-          maxDensityDiff, densityAlarmThreshold);
+      msg = String.format("CRITICAL: Density inversion %.1f kg/m3 exceeds alarm threshold %.1f. "
+	  + "Rollover imminent. Initiate emergency mixing.", maxDensityDiff, densityAlarmThreshold);
     } else if (hasInversion && maxDensityDiff > densityWarningThreshold) {
       level = RolloverRiskLevel.HIGH;
-      msg = String.format("HIGH: Density inversion %.1f kg/m3 between layers %d and %d. "
-          + "Initiate pump circulation or jet mixing.", maxDensityDiff, worstLower, worstUpper);
+      msg = String.format(
+	  "HIGH: Density inversion %.1f kg/m3 between layers %d and %d. " + "Initiate pump circulation or jet mixing.",
+	  maxDensityDiff, worstLower, worstUpper);
     } else if (ra > criticalRayleighNumber || maxTempDiff > temperatureThreshold) {
       level = RolloverRiskLevel.MEDIUM;
-      msg = String.format("MEDIUM: Thermal stratification dT=%.2f K, Ra=%.0f. "
-          + "Monitor closely, consider mixing.", maxTempDiff, ra);
+      msg = String.format("MEDIUM: Thermal stratification dT=%.2f K, Ra=%.0f. " + "Monitor closely, consider mixing.",
+	  maxTempDiff, ra);
     } else if (maxDensityDiff > densityWarningThreshold * 0.5) {
       level = RolloverRiskLevel.LOW;
-      msg = String.format(
-          "LOW: Minor stratification detected. Density diff=%.2f kg/m3. " + "Continue monitoring.",
-          maxDensityDiff);
+      msg = String.format("LOW: Minor stratification detected. Density diff=%.2f kg/m3. " + "Continue monitoring.",
+	  maxDensityDiff);
     } else {
       level = RolloverRiskLevel.NONE;
       msg = "No rollover risk — layers well mixed or stable configuration.";
@@ -383,11 +380,11 @@ public class LNGRolloverDetector implements Serializable {
    * </p>
    *
    * <p>
-   * where g = 9.81 m/s2, beta = thermal expansion coefficient, dT = temperature difference, H =
-   * layer height, nu = kinematic viscosity, alpha = thermal diffusivity.
+   * where g = 9.81 m/s2, beta = thermal expansion coefficient, dT = temperature difference, H = layer height, nu =
+   * kinematic viscosity, alpha = thermal diffusivity.
    * </p>
    *
-   * @param deltaT temperature difference between layers (K)
+   * @param deltaT      temperature difference between layers (K)
    * @param layerHeight height of the layer (m)
    * @return Rayleigh number
    */
@@ -396,16 +393,14 @@ public class LNGRolloverDetector implements Serializable {
       return 0;
     }
     double g = 9.81;
-    return g * thermalExpansionCoeff * deltaT * Math.pow(layerHeight, 3)
-        / (kinematicViscosity * thermalDiffusivity);
+    return g * thermalExpansionCoeff * deltaT * Math.pow(layerHeight, 3) / (kinematicViscosity * thermalDiffusivity);
   }
 
   /**
    * Estimate the height of a layer based on its volume and tank geometry.
    *
    * <p>
-   * Assumes a cylindrical tank for simplicity: h = V / (pi * r^2). Default tank diameter 40m gives
-   * an approximation.
+   * Assumes a cylindrical tank for simplicity: h = V / (pi * r^2). Default tank diameter 40m gives an approximation.
    * </p>
    *
    * @param layer the tank layer
@@ -498,11 +493,10 @@ public class LNGRolloverDetector implements Serializable {
    * Set LNG physical properties for Rayleigh calculation.
    *
    * @param thermalExpansionCoeff thermal expansion coefficient (1/K)
-   * @param kinematicViscosity kinematic viscosity (m2/s)
-   * @param thermalDiffusivity thermal diffusivity (m2/s)
+   * @param kinematicViscosity    kinematic viscosity (m2/s)
+   * @param thermalDiffusivity    thermal diffusivity (m2/s)
    */
-  public void setLNGProperties(double thermalExpansionCoeff, double kinematicViscosity,
-      double thermalDiffusivity) {
+  public void setLNGProperties(double thermalExpansionCoeff, double kinematicViscosity, double thermalDiffusivity) {
     this.thermalExpansionCoeff = thermalExpansionCoeff;
     this.kinematicViscosity = kinematicViscosity;
     this.thermalDiffusivity = thermalDiffusivity;
@@ -512,9 +506,8 @@ public class LNGRolloverDetector implements Serializable {
    * Estimate the time to rollover based on density difference trend.
    *
    * <p>
-   * Uses linear extrapolation of the density difference history to predict when a density inversion
-   * (heavier layer on top) will reach the alarm threshold. Requires at least 3 history points for
-   * extrapolation.
+   * Uses linear extrapolation of the density difference history to predict when a density inversion (heavier layer on
+   * top) will reach the alarm threshold. Requires at least 3 history points for extrapolation.
    * </p>
    *
    * @param currentDensityDiff current density difference (kg/m3)

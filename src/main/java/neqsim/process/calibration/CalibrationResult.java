@@ -27,15 +27,15 @@ public class CalibrationResult implements Serializable {
   /**
    * Private constructor - use factory methods.
    *
-   * @param success whether calibration was successful
-   * @param parameters the calibrated parameters
-   * @param rmse the root mean square error
-   * @param iterations number of iterations used
-   * @param samplesUsed number of samples used
+   * @param success      whether calibration was successful
+   * @param parameters   the calibrated parameters
+   * @param rmse         the root mean square error
+   * @param iterations   number of iterations used
+   * @param samplesUsed  number of samples used
    * @param errorMessage error message if failed
    */
-  private CalibrationResult(boolean success, Map<String, Double> parameters, double rmse,
-      int iterations, int samplesUsed, String errorMessage) {
+  private CalibrationResult(boolean success, Map<String, Double> parameters, double rmse, int iterations,
+      int samplesUsed, String errorMessage) {
     this.success = success;
     this.parameters = parameters != null ? Collections.unmodifiableMap(parameters) : null;
     this.rmse = rmse;
@@ -47,14 +47,14 @@ public class CalibrationResult implements Serializable {
   /**
    * Creates a successful calibration result.
    *
-   * @param parameters the calibrated parameters
-   * @param rmse the root mean square error achieved
-   * @param iterations number of iterations used
+   * @param parameters  the calibrated parameters
+   * @param rmse        the root mean square error achieved
+   * @param iterations  number of iterations used
    * @param samplesUsed number of samples used
    * @return successful calibration result
    */
-  public static CalibrationResult success(Map<String, Double> parameters, double rmse,
-      int iterations, int samplesUsed) {
+  public static CalibrationResult success(Map<String, Double> parameters, double rmse, int iterations,
+      int samplesUsed) {
     return new CalibrationResult(true, parameters, rmse, iterations, samplesUsed, null);
   }
 
@@ -153,7 +153,7 @@ public class CalibrationResult implements Serializable {
   public String toString() {
     if (success) {
       return String.format("CalibrationResult[success, RMSE=%.4f, params=%d, samples=%d]", rmse,
-          parameters != null ? parameters.size() : 0, samplesUsed);
+	  parameters != null ? parameters.size() : 0, samplesUsed);
     } else {
       return String.format("CalibrationResult[failed: %s]", errorMessage);
     }

@@ -17,9 +17,8 @@ import neqsim.thermo.system.SystemInterface;
  * Exports time-series data for reservoir simulator coupling (E300/ECLIPSE).
  *
  * <p>
- * Generates VFP tables, separator efficiency curves, and schedule keywords for coupling NeqSim
- * process models with reservoir simulators. Supports both Eclipse 100 and E300 (compositional)
- * formats.
+ * Generates VFP tables, separator efficiency curves, and schedule keywords for coupling NeqSim process models with
+ * reservoir simulators. Supports both Eclipse 100 and E300 (compositional) formats.
  * </p>
  *
  * <h2>Export Capabilities</h2>
@@ -204,7 +203,7 @@ public class ReservoirCouplingExporter implements Serializable {
     /**
      * Creates a new schedule entry.
      *
-     * @param date schedule date
+     * @param date    schedule date
      * @param keyword Eclipse keyword
      * @param content keyword content
      */
@@ -329,7 +328,7 @@ public class ReservoirCouplingExporter implements Serializable {
    *
    * @param minRate minimum rate (Sm3/d for liquid, MSm3/d for gas)
    * @param maxRate maximum rate
-   * @param points number of points
+   * @param points  number of points
    */
   public void setRateRange(double minRate, double maxRate, int points) {
     this.rateRange = linspace(minRate, maxRate, points);
@@ -374,12 +373,12 @@ public class ReservoirCouplingExporter implements Serializable {
    * Generate VFPPROD table for a producing well.
    *
    * <p>
-   * Creates a multi-dimensional VFP table mapping (rate, THP, WCT, GOR) to BHP using the process
-   * model for pressure drop calculations.
+   * Creates a multi-dimensional VFP table mapping (rate, THP, WCT, GOR) to BHP using the process model for pressure
+   * drop calculations.
    * </p>
    *
-   * @param wellName well name
-   * @param baseFluid base fluid composition
+   * @param wellName    well name
+   * @param baseFluid   base fluid composition
    * @param tableNumber VFP table number (1-9999)
    * @return the generated VFP table
    */
@@ -394,7 +393,7 @@ public class ReservoirCouplingExporter implements Serializable {
     vfp.thpValues = pressureRange.clone();
     vfp.wctValues = wctRange.clone();
     vfp.gorValues = gorRange.clone();
-    vfp.almValues = new double[] {0.0}; // No artificial lift by default
+    vfp.almValues = new double[] { 0.0 }; // No artificial lift by default
 
     int nFlow = rateRange.length;
     int nThp = pressureRange.length;
@@ -407,18 +406,18 @@ public class ReservoirCouplingExporter implements Serializable {
     // Generate BHP values for each combination
     for (int iFlow = 0; iFlow < nFlow; iFlow++) {
       for (int iThp = 0; iThp < nThp; iThp++) {
-        for (int iWct = 0; iWct < nWct; iWct++) {
-          for (int iGor = 0; iGor < nGor; iGor++) {
-            double rate = rateRange[iFlow];
-            double thp = pressureRange[iThp];
-            double wct = wctRange[iWct];
-            double gor = gorRange[iGor];
+	for (int iWct = 0; iWct < nWct; iWct++) {
+	  for (int iGor = 0; iGor < nGor; iGor++) {
+	    double rate = rateRange[iFlow];
+	    double thp = pressureRange[iThp];
+	    double wct = wctRange[iWct];
+	    double gor = gorRange[iGor];
 
-            // Calculate BHP using process model or correlation
-            double bhp = calculateBhp(baseFluid, rate, thp, wct, gor);
-            vfp.bhpValues[iFlow][iThp][iWct][iGor][0] = bhp;
-          }
-        }
+	    // Calculate BHP using process model or correlation
+	    double bhp = calculateBhp(baseFluid, rate, thp, wct, gor);
+	    vfp.bhpValues[iFlow][iThp][iWct][iGor][0] = bhp;
+	  }
+	}
       }
     }
 
@@ -431,9 +430,9 @@ public class ReservoirCouplingExporter implements Serializable {
   /**
    * Generate VFPINJ table for an injection well.
    *
-   * @param wellName well name
+   * @param wellName       well name
    * @param injectionFluid injection fluid (water or gas)
-   * @param tableNumber VFP table number
+   * @param tableNumber    VFP table number
    * @return the generated VFP table
    */
   public VfpTable generateVfpInj(String wellName, SystemInterface injectionFluid, int tableNumber) {
@@ -454,12 +453,12 @@ public class ReservoirCouplingExporter implements Serializable {
 
     for (int iFlow = 0; iFlow < nFlow; iFlow++) {
       for (int iThp = 0; iThp < nThp; iThp++) {
-        double rate = rateRange[iFlow];
-        double thp = pressureRange[iThp];
+	double rate = rateRange[iFlow];
+	double thp = pressureRange[iThp];
 
-        // Calculate BHP for injection
-        double bhp = calculateInjectionBhp(injectionFluid, rate, thp);
-        vfp.bhpValues[iFlow][iThp][0][0][0] = bhp;
+	// Calculate BHP for injection
+	double bhp = calculateInjectionBhp(injectionFluid, rate, thp);
+	vfp.bhpValues[iFlow][iThp][0][0][0] = bhp;
       }
     }
 
@@ -473,14 +472,13 @@ public class ReservoirCouplingExporter implements Serializable {
    * Calculate BHP from THP using process model.
    *
    * @param fluid the fluid system
-   * @param rate production rate in Sm3/day
-   * @param thp tubing head pressure in bara
-   * @param wct water cut fraction (0-1)
-   * @param gor gas-oil ratio Sm3/Sm3
+   * @param rate  production rate in Sm3/day
+   * @param thp   tubing head pressure in bara
+   * @param wct   water cut fraction (0-1)
+   * @param gor   gas-oil ratio Sm3/Sm3
    * @return calculated bottom hole pressure in bara
    */
-  private double calculateBhp(SystemInterface fluid, double rate, double thp, double wct,
-      double gor) {
+  private double calculateBhp(SystemInterface fluid, double rate, double thp, double wct, double gor) {
     // Simplified correlation - in practice would use full well model
     // BHP = THP + hydrostatic + friction
     double tvd = datumDepth;
@@ -498,8 +496,8 @@ public class ReservoirCouplingExporter implements Serializable {
    * Calculate injection BHP.
    *
    * @param fluid the fluid system
-   * @param rate injection rate in Sm3/day
-   * @param thp tubing head pressure in bara
+   * @param rate  injection rate in Sm3/day
+   * @param thp   tubing head pressure in bara
    * @return calculated bottom hole pressure in bara
    */
   private double calculateInjectionBhp(SystemInterface fluid, double rate, double thp) {
@@ -521,17 +519,15 @@ public class ReservoirCouplingExporter implements Serializable {
   /**
    * Add a platform rate constraint.
    *
-   * @param date effective date
+   * @param date      effective date
    * @param groupName group/platform name
-   * @param oilRate oil rate limit (Sm3/d)
-   * @param gasRate gas rate limit (Sm3/d)
+   * @param oilRate   oil rate limit (Sm3/d)
+   * @param gasRate   gas rate limit (Sm3/d)
    * @param waterRate water injection rate limit (Sm3/d)
    */
-  public void addGroupConstraint(Date date, String groupName, double oilRate, double gasRate,
-      double waterRate) {
+  public void addGroupConstraint(Date date, String groupName, double oilRate, double gasRate, double waterRate) {
     StringBuilder content = new StringBuilder();
-    content.append(
-        String.format("  '%s'  %.1f  %.1f  %.1f  /\n", groupName, oilRate, gasRate, waterRate));
+    content.append(String.format("  '%s'  %.1f  %.1f  %.1f  /\n", groupName, oilRate, gasRate, waterRate));
 
     scheduleEntries.add(new ScheduleEntry(date, "GCONPROD", content.toString()));
   }
@@ -539,15 +535,14 @@ public class ReservoirCouplingExporter implements Serializable {
   /**
    * Add well control mode change.
    *
-   * @param date effective date
-   * @param wellName well name
+   * @param date        effective date
+   * @param wellName    well name
    * @param controlMode control mode (ORAT, GRAT, LRAT, RESV, BHP)
    * @param targetValue target value
    */
   public void addWellControl(Date date, String wellName, String controlMode, double targetValue) {
     StringBuilder content = new StringBuilder();
-    content.append(
-        String.format("  '%s'  'OPEN'  '%s'  %.1f  /\n", wellName, controlMode, targetValue));
+    content.append(String.format("  '%s'  'OPEN'  '%s'  %.1f  /\n", wellName, controlMode, targetValue));
 
     scheduleEntries.add(new ScheduleEntry(date, "WCONPROD", content.toString()));
   }
@@ -555,8 +550,8 @@ public class ReservoirCouplingExporter implements Serializable {
   /**
    * Add VFP table reference for a well.
    *
-   * @param date effective date
-   * @param wellName well name
+   * @param date           effective date
+   * @param wellName       well name
    * @param vfpTableNumber VFP table number
    */
   public void addVfpReference(Date date, String wellName, int vfpTableNumber) {
@@ -577,13 +572,12 @@ public class ReservoirCouplingExporter implements Serializable {
    */
   private void appendVfpProdKeyword(VfpTable vfp) {
     keywordsBuffer.append("VFPPROD\n");
-    keywordsBuffer.append(String.format("-- VFP Production Table %d for %s\n", vfp.getTableNumber(),
-        vfp.getWellName()));
-    keywordsBuffer.append(String.format("-- Generated by NeqSim %s\n",
-        new SimpleDateFormat("yyyy-MM-dd HH:mm").format(new Date())));
     keywordsBuffer
-        .append(String.format("  %d  %.1f  'LIQ'  'WCT'  'GOR'  'THP'  '' 'METRIC'  'BHP' /\n",
-            vfp.getTableNumber(), vfp.getDatumDepth()));
+	.append(String.format("-- VFP Production Table %d for %s\n", vfp.getTableNumber(), vfp.getWellName()));
+    keywordsBuffer.append(
+	String.format("-- Generated by NeqSim %s\n", new SimpleDateFormat("yyyy-MM-dd HH:mm").format(new Date())));
+    keywordsBuffer.append(String.format("  %d  %.1f  'LIQ'  'WCT'  'GOR'  'THP'  '' 'METRIC'  'BHP' /\n",
+	vfp.getTableNumber(), vfp.getDatumDepth()));
 
     // Flow rate axis
     keywordsBuffer.append("-- Flow rates (Sm3/d)\n");
@@ -620,15 +614,14 @@ public class ReservoirCouplingExporter implements Serializable {
     keywordsBuffer.append("-- BHP values (bara)\n");
     for (int iThp = 0; iThp < vfp.thpValues.length; iThp++) {
       for (int iWct = 0; iWct < vfp.wctValues.length; iWct++) {
-        for (int iGor = 0; iGor < vfp.gorValues.length; iGor++) {
-          keywordsBuffer.append(String.format("-- THP=%.0f WCT=%.2f GOR=%.0f\n",
-              vfp.thpValues[iThp], vfp.wctValues[iWct], vfp.gorValues[iGor]));
-          for (int iFlow = 0; iFlow < vfp.flowRates.length; iFlow++) {
-            keywordsBuffer
-                .append(String.format("  %.2f", vfp.bhpValues[iFlow][iThp][iWct][iGor][0]));
-          }
-          keywordsBuffer.append("  /\n");
-        }
+	for (int iGor = 0; iGor < vfp.gorValues.length; iGor++) {
+	  keywordsBuffer.append(String.format("-- THP=%.0f WCT=%.2f GOR=%.0f\n", vfp.thpValues[iThp],
+	      vfp.wctValues[iWct], vfp.gorValues[iGor]));
+	  for (int iFlow = 0; iFlow < vfp.flowRates.length; iFlow++) {
+	    keywordsBuffer.append(String.format("  %.2f", vfp.bhpValues[iFlow][iThp][iWct][iGor][0]));
+	  }
+	  keywordsBuffer.append("  /\n");
+	}
       }
     }
     keywordsBuffer.append("\n");
@@ -641,10 +634,9 @@ public class ReservoirCouplingExporter implements Serializable {
    */
   private void appendVfpInjKeyword(VfpTable vfp) {
     keywordsBuffer.append("VFPINJ\n");
-    keywordsBuffer.append(String.format("-- VFP Injection Table %d for %s\n", vfp.getTableNumber(),
-        vfp.getWellName()));
-    keywordsBuffer.append(String.format("  %d  %.1f  'WAT'  'METRIC'  'BHP' /\n",
-        vfp.getTableNumber(), vfp.getDatumDepth()));
+    keywordsBuffer.append(String.format("-- VFP Injection Table %d for %s\n", vfp.getTableNumber(), vfp.getWellName()));
+    keywordsBuffer
+	.append(String.format("  %d  %.1f  'WAT'  'METRIC'  'BHP' /\n", vfp.getTableNumber(), vfp.getDatumDepth()));
 
     // Flow rate axis
     keywordsBuffer.append("-- Flow rates (Sm3/d)\n");
@@ -665,7 +657,7 @@ public class ReservoirCouplingExporter implements Serializable {
     for (int iThp = 0; iThp < vfp.thpValues.length; iThp++) {
       keywordsBuffer.append(String.format("-- THP=%.0f\n", vfp.thpValues[iThp]));
       for (int iFlow = 0; iFlow < vfp.flowRates.length; iFlow++) {
-        keywordsBuffer.append(String.format("  %.2f", vfp.bhpValues[iFlow][iThp][0][0][0]));
+	keywordsBuffer.append(String.format("  %.2f", vfp.bhpValues[iFlow][iThp][0][0][0]));
       }
       keywordsBuffer.append("  /\n");
     }
@@ -679,13 +671,12 @@ public class ReservoirCouplingExporter implements Serializable {
   /**
    * Export separator efficiency curves for E300 coupling.
    *
-   * @param separatorName separator equipment name
-   * @param pressurePoints pressure points to evaluate (bara)
+   * @param separatorName     separator equipment name
+   * @param pressurePoints    pressure points to evaluate (bara)
    * @param temperaturePoints temperature points to evaluate (K)
    * @return CSV data string
    */
-  public String exportSeparatorEfficiency(String separatorName, double[] pressurePoints,
-      double[] temperaturePoints) {
+  public String exportSeparatorEfficiency(String separatorName, double[] pressurePoints, double[] temperaturePoints) {
     StringBuilder csv = new StringBuilder();
     csv.append("-- Separator efficiency table for ").append(separatorName).append("\n");
     csv.append("-- Generated by NeqSim\n");
@@ -693,12 +684,12 @@ public class ReservoirCouplingExporter implements Serializable {
 
     for (double p : pressurePoints) {
       for (double t : temperaturePoints) {
-        // Would use actual separator model here
-        double oilRec = 0.98 - 0.001 * (100 - p);
-        double gasRec = 0.99;
-        double waterRec = 0.95;
+	// Would use actual separator model here
+	double oilRec = 0.98 - 0.001 * (100 - p);
+	double gasRec = 0.99;
+	double waterRec = 0.95;
 
-        csv.append(String.format("%.1f,%.1f,%.4f,%.4f,%.4f\n", p, t, oilRec, gasRec, waterRec));
+	csv.append(String.format("%.1f,%.1f,%.4f,%.4f,%.4f\n", p, t, oilRec, gasRec, waterRec));
       }
     }
 
@@ -720,8 +711,7 @@ public class ReservoirCouplingExporter implements Serializable {
     // Header
     full.append("-- ==========================================================\n");
     full.append("-- NeqSim Process Model Export\n");
-    full.append(String.format("-- Generated: %s\n",
-        new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())));
+    full.append(String.format("-- Generated: %s\n", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())));
     full.append("-- ==========================================================\n\n");
 
     // VFP tables
@@ -734,24 +724,23 @@ public class ReservoirCouplingExporter implements Serializable {
       // Sort by date
       List<ScheduleEntry> sorted = new ArrayList<ScheduleEntry>(scheduleEntries);
       java.util.Collections.sort(sorted, new java.util.Comparator<ScheduleEntry>() {
-        @Override
-        public int compare(ScheduleEntry a, ScheduleEntry b) {
-          return a.getDate().compareTo(b.getDate());
-        }
+	@Override
+	public int compare(ScheduleEntry a, ScheduleEntry b) {
+	  return a.getDate().compareTo(b.getDate());
+	}
       });
 
       SimpleDateFormat dateFmt = new SimpleDateFormat("dd MMM yyyy");
       Date lastDate = null;
 
       for (ScheduleEntry entry : sorted) {
-        if (lastDate == null || !entry.getDate().equals(lastDate)) {
-          full.append(String.format("\nDATES\n  %s /\n/\n\n",
-              dateFmt.format(entry.getDate()).toUpperCase()));
-          lastDate = entry.getDate();
-        }
-        full.append(entry.getKeyword()).append("\n");
-        full.append(entry.getContent());
-        full.append("/\n\n");
+	if (lastDate == null || !entry.getDate().equals(lastDate)) {
+	  full.append(String.format("\nDATES\n  %s /\n/\n\n", dateFmt.format(entry.getDate()).toUpperCase()));
+	  lastDate = entry.getDate();
+	}
+	full.append(entry.getKeyword()).append("\n");
+	full.append(entry.getContent());
+	full.append("/\n\n");
       }
     }
 
@@ -775,14 +764,13 @@ public class ReservoirCouplingExporter implements Serializable {
   /**
    * Export production forecast to CSV for import to other tools.
    *
-   * @param years forecast years
-   * @param oilRates oil rates by year (Sm3/d)
-   * @param gasRates gas rates by year (Sm3/d)
+   * @param years      forecast years
+   * @param oilRates   oil rates by year (Sm3/d)
+   * @param gasRates   gas rates by year (Sm3/d)
    * @param waterRates water rates by year (Sm3/d)
    * @return CSV string
    */
-  public String exportProductionForecastCsv(int[] years, double[] oilRates, double[] gasRates,
-      double[] waterRates) {
+  public String exportProductionForecastCsv(int[] years, double[] oilRates, double[] gasRates, double[] waterRates) {
     StringBuilder csv = new StringBuilder();
     csv.append("Year,Oil_Sm3d,Gas_Sm3d,Water_Sm3d,Liquid_Sm3d,WaterCut,GOR\n");
 
@@ -794,8 +782,7 @@ public class ReservoirCouplingExporter implements Serializable {
       double wct = liquid > 0 ? water / liquid : 0;
       double gor = oil > 0 ? gas / oil : 0;
 
-      csv.append(String.format("%d,%.1f,%.1f,%.1f,%.1f,%.3f,%.1f\n", years[i], oil, gas, water,
-          liquid, wct, gor));
+      csv.append(String.format("%d,%.1f,%.1f,%.1f,%.1f,%.3f,%.1f\n", years[i], oil, gas, water, liquid, wct, gor));
     }
 
     return csv.toString();
@@ -808,8 +795,8 @@ public class ReservoirCouplingExporter implements Serializable {
   /**
    * Generate linearly spaced array.
    *
-   * @param start the starting value of the sequence
-   * @param end the ending value of the sequence
+   * @param start  the starting value of the sequence
+   * @param end    the ending value of the sequence
    * @param points the number of points to generate
    * @return an array of linearly spaced values from start to end
    */

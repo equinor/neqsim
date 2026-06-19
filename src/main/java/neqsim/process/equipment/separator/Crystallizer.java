@@ -15,19 +15,15 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Crystallizer for producing solid crystals from solution.
  *
  * <p>
- * Models a crystallization process where dissolved solutes are brought out of
- * solution as solid
- * crystals. Supports cooling crystallization (reducing temperature),
- * evaporative crystallization
- * (removing solvent), and anti-solvent crystallization.
+ * Models a crystallization process where dissolved solutes are brought out of solution as solid crystals. Supports
+ * cooling crystallization (reducing temperature), evaporative crystallization (removing solvent), and anti-solvent
+ * crystallization.
  * </p>
  *
  * <p>
- * The crystallizer operates by flashing the feed at reduced temperature and/or
- * pressure to
- * concentrate the solution beyond the saturation point, causing
- * crystallization. NeqSim's solid
- * phase equilibrium capabilities (TPSolidflash) are leveraged when available.
+ * The crystallizer operates by flashing the feed at reduced temperature and/or pressure to concentrate the solution
+ * beyond the saturation point, causing crystallization. NeqSim's solid phase equilibrium capabilities (TPSolidflash)
+ * are leveraged when available.
  * </p>
  *
  * <p>
@@ -382,10 +378,10 @@ public class Crystallizer extends ProcessEquipmentBaseClass {
 
       double crystalFraction;
       if (compName.equals(targetSolute)) {
-        crystalFraction = solidRecovery;
+	crystalFraction = solidRecovery;
       } else {
-        // Small amount of mother liquor gets trapped in crystal cake
-        crystalFraction = 0.02; // 2% entrainment
+	// Small amount of mother liquor gets trapped in crystal cake
+	crystalFraction = 0.02; // 2% entrainment
       }
 
       double crystalMoles = totalMoles * crystalFraction;
@@ -412,8 +408,7 @@ public class Crystallizer extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   /**

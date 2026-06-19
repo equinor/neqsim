@@ -8,20 +8,18 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * Adapter that extracts chemistry-relevant scalars from a NeqSim {@link StreamInterface} or
- * {@link SystemInterface}.
+ * Adapter that extracts chemistry-relevant scalars from a NeqSim {@link StreamInterface} or {@link SystemInterface}.
  *
  * <p>
- * The chemistry models in {@code neqsim.process.chemistry} historically took only scalar inputs (Ca
- * mg/L, H2S ppm, etc.). This adapter is the single bridge used by every performance and
- * compatibility model to pull those scalars from a real flowsheet stream so the manual
- * transcription step is eliminated.
+ * The chemistry models in {@code neqsim.process.chemistry} historically took only scalar inputs (Ca mg/L, H2S ppm,
+ * etc.). This adapter is the single bridge used by every performance and compatibility model to pull those scalars from
+ * a real flowsheet stream so the manual transcription step is eliminated.
  * </p>
  *
  * <p>
- * The adapter is robust: if a phase or component is missing the corresponding getter returns
- * {@code 0.0} (or {@code Double.NaN} for pH which is undefined without an aqueous phase). All
- * concentrations are reported in conventional oilfield units (mg/L, ppm, bara, Celsius).
+ * The adapter is robust: if a phase or component is missing the corresponding getter returns {@code 0.0} (or
+ * {@code Double.NaN} for pH which is undefined without an aqueous phase). All concentrations are reported in
+ * conventional oilfield units (mg/L, ppm, bara, Celsius).
  * </p>
  *
  * @author ESOL
@@ -103,11 +101,11 @@ public class StreamChemistryAdapter implements Serializable {
    * Returns the molality of a component in the aqueous phase as mg/L of cation/anion.
    *
    * <p>
-   * Approximates concentration assuming aqueous-phase density of 1000 kg/m3. For most
-   * brine/produced-water concentrations this is within a few percent.
+   * Approximates concentration assuming aqueous-phase density of 1000 kg/m3. For most brine/produced-water
+   * concentrations this is within a few percent.
    * </p>
    *
-   * @param component component name (e.g. "Ca++", "Na+", "Cl-", "HCO3-")
+   * @param component     component name (e.g. "Ca++", "Na+", "Cl-", "HCO3-")
    * @param molarMassGmol molar mass of the species in g/mol
    * @return concentration in mg/L (0 if no aqueous phase or component absent)
    */
@@ -232,16 +230,16 @@ public class StreamChemistryAdapter implements Serializable {
    * @return TDS in mg/L
    */
   public double getTdsMgL() {
-    return getSodiumMgL() + getCalciumMgL() + getChlorideMgL() + getSulphateMgL()
-        + getBicarbonateMgL() + getBariumMgL() + getIronMgL();
+    return getSodiumMgL() + getCalciumMgL() + getChlorideMgL() + getSulphateMgL() + getBicarbonateMgL() + getBariumMgL()
+	+ getIronMgL();
   }
 
   /**
-   * Returns the wall shear stress estimate for a given pipe diameter and velocity, using a simple
-   * Darcy-Weisbach approximation (f = 0.02). Returns 0 if no aqueous phase.
+   * Returns the wall shear stress estimate for a given pipe diameter and velocity, using a simple Darcy-Weisbach
+   * approximation (f = 0.02). Returns 0 if no aqueous phase.
    *
    * @param pipeDiameterM pipe internal diameter in m
-   * @param velocityMs flow velocity in m/s
+   * @param velocityMs    flow velocity in m/s
    * @return wall shear stress in Pa
    */
   public double estimateWallShearStressPa(double pipeDiameterM, double velocityMs) {

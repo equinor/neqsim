@@ -8,25 +8,23 @@ import neqsim.thermo.system.SystemInterface;
  * Calculated Cetane Index - ASTM D4737 (four-variable) with ASTM D976 (two-variable) cross-check.
  *
  * <p>
- * The cetane index is a calculated estimate of the cetane number of a middle-distillate fuel (jet,
- * kerosene, diesel) derived from its density and distillation recovery temperatures. It is used as
- * a sales-specification surrogate for the engine-measured cetane number (ASTM D613) when an engine
- * test is not available.
+ * The cetane index is a calculated estimate of the cetane number of a middle-distillate fuel (jet, kerosene, diesel)
+ * derived from its density and distillation recovery temperatures. It is used as a sales-specification surrogate for
+ * the engine-measured cetane number (ASTM D613) when an engine test is not available.
  * </p>
  *
  * <p>
  * Two correlations are evaluated:
  * </p>
  * <ul>
- * <li><b>ASTM D4737</b> (primary, four-variable) using the 10 %, 50 % and 90 % recovered
- * temperatures and density at 15 &deg;C.</li>
- * <li><b>ASTM D976</b> (two-variable) using the 50 % recovered temperature and density at 15
+ * <li><b>ASTM D4737</b> (primary, four-variable) using the 10 %, 50 % and 90 % recovered temperatures and density at 15
  * &deg;C.</li>
+ * <li><b>ASTM D976</b> (two-variable) using the 50 % recovered temperature and density at 15 &deg;C.</li>
  * </ul>
  *
  * <p>
- * The required inputs are obtained internally from {@link Standard_ASTM_D86} (distillation curve)
- * and {@link Standard_ASTM_D4052} (density / API gravity), so only the fluid is required.
+ * The required inputs are obtained internally from {@link Standard_ASTM_D86} (distillation curve) and
+ * {@link Standard_ASTM_D4052} (density / API gravity), so only the fluid is required.
  * </p>
  *
  * <p>
@@ -41,9 +39,8 @@ import neqsim.thermo.system.SystemInterface;
  * </pre>
  *
  * <p>
- * where {@code T10N = T10 - 215}, {@code T50N = T50 - 260}, {@code T90N = T90 - 310} (temperatures
- * in &deg;C), {@code B = exp(-3.5*(D - 0.85)) - 1} and {@code D} is the density at 15 &deg;C in
- * g/mL.
+ * where {@code T10N = T10 - 215}, {@code T50N = T50 - 260}, {@code T90N = T90 - 310} (temperatures in &deg;C),
+ * {@code B = exp(-3.5*(D - 0.85)) - 1} and {@code D} is the density at 15 &deg;C in g/mL.
  * </p>
  *
  * <p>
@@ -114,10 +111,9 @@ public class Standard_ASTM_D4737 extends neqsim.standards.Standard {
       d4052.calculate();
       density15C = d4052.getValue("density");
 
-      if (Double.isNaN(t10C) || Double.isNaN(t50C) || Double.isNaN(t90C)
-          || Double.isNaN(density15C)) {
-        logger.error("Cetane index inputs unavailable (T10/T50/T90/density)");
-        return;
+      if (Double.isNaN(t10C) || Double.isNaN(t50C) || Double.isNaN(t90C) || Double.isNaN(density15C)) {
+	logger.error("Cetane index inputs unavailable (T10/T50/T90/density)");
+	return;
       }
 
       // Density in g/mL at 15 C for both correlations.
@@ -128,14 +124,12 @@ public class Standard_ASTM_D4737 extends neqsim.standards.Standard {
       double t50n = t50C - 260.0;
       double t90n = t90C - 310.0;
       double b = Math.exp(-3.5 * (dGmL - 0.85)) - 1.0;
-      cetaneIndexD4737 =
-          45.2 + 0.0892 * t10n + (0.131 + 0.901 * b) * t50n + (0.0523 - 0.420 * b) * t90n
-              + 0.00049 * (t10n * t10n - t90n * t90n) + 107.0 * b + 60.0 * b * b;
+      cetaneIndexD4737 = 45.2 + 0.0892 * t10n + (0.131 + 0.901 * b) * t50n + (0.0523 - 0.420 * b) * t90n
+	  + 0.00049 * (t10n * t10n - t90n * t90n) + 107.0 * b + 60.0 * b * b;
 
       // ASTM D976 (two-variable) using mid-boiling point T50.
       double logT50 = Math.log10(t50C);
-      cetaneIndexD976 =
-          454.74 - 1641.416 * dGmL + 774.74 * dGmL * dGmL - 0.554 * t50C + 97.803 * logT50 * logT50;
+      cetaneIndexD976 = 454.74 - 1641.416 * dGmL + 774.74 * dGmL * dGmL - 0.554 * t50C + 97.803 * logT50 * logT50;
     } catch (Exception ex) {
       logger.error("Cetane index calculation failed: {}", ex.getMessage());
     }
@@ -146,7 +140,7 @@ public class Standard_ASTM_D4737 extends neqsim.standards.Standard {
   public double getValue(String returnParameter, String returnUnit) {
     // Cetane index and the underlying temperatures are reported on a fixed basis.
     if ("T10".equalsIgnoreCase(returnParameter) || "T50".equalsIgnoreCase(returnParameter)
-        || "T90".equalsIgnoreCase(returnParameter)) {
+	|| "T90".equalsIgnoreCase(returnParameter)) {
       return convertTempFromC(getValue(returnParameter), returnUnit);
     }
     return getValue(returnParameter);
@@ -156,36 +150,35 @@ public class Standard_ASTM_D4737 extends neqsim.standards.Standard {
   @Override
   public double getValue(String returnParameter) {
     switch (returnParameter) {
-      case "cetaneIndex":
-      case "cetaneIndexD4737":
-      case "CCI":
-        return cetaneIndexD4737;
-      case "cetaneIndexD976":
-        return cetaneIndexD976;
-      case "T10":
-        return t10C;
-      case "T50":
-        return t50C;
-      case "T90":
-        return t90C;
-      case "density":
-      case "density15C":
-        return density15C;
-      default:
-        logger.error("returnParameter not supported: {}", returnParameter);
-        return Double.NaN;
+    case "cetaneIndex":
+    case "cetaneIndexD4737":
+    case "CCI":
+      return cetaneIndexD4737;
+    case "cetaneIndexD976":
+      return cetaneIndexD976;
+    case "T10":
+      return t10C;
+    case "T50":
+      return t50C;
+    case "T90":
+      return t90C;
+    case "density":
+    case "density15C":
+      return density15C;
+    default:
+      logger.error("returnParameter not supported: {}", returnParameter);
+      return Double.NaN;
     }
   }
 
   /** {@inheritDoc} */
   @Override
   public String getUnit(String returnParameter) {
-    if ("density".equalsIgnoreCase(returnParameter)
-        || "density15C".equalsIgnoreCase(returnParameter)) {
+    if ("density".equalsIgnoreCase(returnParameter) || "density15C".equalsIgnoreCase(returnParameter)) {
       return "kg/m3";
     }
     if ("T10".equalsIgnoreCase(returnParameter) || "T50".equalsIgnoreCase(returnParameter)
-        || "T90".equalsIgnoreCase(returnParameter)) {
+	|| "T90".equalsIgnoreCase(returnParameter)) {
       return "C";
     }
     return "-";
@@ -223,7 +216,7 @@ public class Standard_ASTM_D4737 extends neqsim.standards.Standard {
    * Converts a temperature from Celsius to the requested unit.
    *
    * @param valueC temperature value in Celsius (may be NaN)
-   * @param unit target unit, one of {@code "C"}, {@code "K"}, {@code "F"}, {@code "R"}
+   * @param unit   target unit, one of {@code "C"}, {@code "K"}, {@code "F"}, {@code "R"}
    * @return the converted temperature, or the Celsius value if the unit is unrecognised
    */
   private double convertTempFromC(double valueC, String unit) {

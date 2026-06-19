@@ -79,8 +79,8 @@ class SteamTurbineTest {
 
     double inletTemp = steamStream.getTemperature("C");
     double outletTemp = turbine.getOutletStream().getTemperature("C");
-    assertTrue(outletTemp < inletTemp, "Outlet temperature (" + outletTemp
-        + " C) should be less than inlet (" + inletTemp + " C)");
+    assertTrue(outletTemp < inletTemp,
+	"Outlet temperature (" + outletTemp + " C) should be less than inlet (" + inletTemp + " C)");
   }
 
   @Test

@@ -56,4 +56,3 @@ public class SurgeCurve extends BoundaryCurve {
     return getFlow(head) > flow;
   }
 }
-

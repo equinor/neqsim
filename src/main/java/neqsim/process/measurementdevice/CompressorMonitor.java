@@ -32,7 +32,7 @@ public class CompressorMonitor extends MeasurementDeviceBaseClass {
    * Constructor for CompressorMonitor.
    * </p>
    *
-   * @param name Name of Compressor
+   * @param name       Name of Compressor
    * @param compressor a {@link neqsim.process.equipment.compressor.Compressor}
    */
   public CompressorMonitor(String name, Compressor compressor) {

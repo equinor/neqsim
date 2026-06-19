@@ -36,8 +36,7 @@ class PVTRunnerTest {
     String result = PVTRunner.run(ExampleCatalog.pvtSaturationPressure());
     assertNotNull(result);
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
-    assertEquals("success", obj.get("status").getAsString(),
-        "Saturation pressure failed: " + result);
+    assertEquals("success", obj.get("status").getAsString(), "Saturation pressure failed: " + result);
   }
 
   @Test

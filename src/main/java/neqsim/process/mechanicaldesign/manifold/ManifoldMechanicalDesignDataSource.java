@@ -26,24 +26,24 @@ public class ManifoldMechanicalDesignDataSource implements Serializable {
   private static final long serialVersionUID = 1000L;
 
   /** Logger for this class. */
-  private static final Logger logger =
-      LogManager.getLogger(ManifoldMechanicalDesignDataSource.class);
+  private static final Logger logger = LogManager.getLogger(ManifoldMechanicalDesignDataSource.class);
 
   /**
    * Default constructor.
    */
-  public ManifoldMechanicalDesignDataSource() {}
+  public ManifoldMechanicalDesignDataSource() {
+  }
 
   /**
    * Load design parameters from database into calculator.
    *
-   * @param calc the calculator to load parameters into
-   * @param company the company for company-specific standards
-   * @param designCode the design code (ASME-B31.3, DNV-ST-F101, etc.)
+   * @param calc          the calculator to load parameters into
+   * @param company       the company for company-specific standards
+   * @param designCode    the design code (ASME-B31.3, DNV-ST-F101, etc.)
    * @param equipmentType the equipment type (Manifold)
    */
-  public void loadIntoCalculator(ManifoldMechanicalDesignCalculator calc, String company,
-      String designCode, String equipmentType) {
+  public void loadIntoCalculator(ManifoldMechanicalDesignCalculator calc, String company, String designCode,
+      String equipmentType) {
     loadCompanyRequirements(calc, company, equipmentType);
     loadStandardsParameters(calc, designCode, equipmentType);
   }
@@ -51,28 +51,26 @@ public class ManifoldMechanicalDesignDataSource implements Serializable {
   /**
    * Load company-specific requirements from TechnicalRequirements_Process.
    *
-   * @param calc the calculator to load parameters into
-   * @param company the company name
+   * @param calc          the calculator to load parameters into
+   * @param company       the company name
    * @param equipmentType the equipment type
    */
-  public void loadCompanyRequirements(ManifoldMechanicalDesignCalculator calc, String company,
-      String equipmentType) {
+  public void loadCompanyRequirements(ManifoldMechanicalDesignCalculator calc, String company, String equipmentType) {
     if (company == null || company.isEmpty()) {
       return;
     }
 
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase()) {
-      String sql =
-          "SELECT SPECIFICATION, MINVALUE, MAXVALUE, UNIT " + "FROM TechnicalRequirements_Process "
-              + "WHERE COMPANY = '" + company + "' AND EQUIPMENTTYPE = '" + equipmentType + "'";
+      String sql = "SELECT SPECIFICATION, MINVALUE, MAXVALUE, UNIT " + "FROM TechnicalRequirements_Process "
+	  + "WHERE COMPANY = '" + company + "' AND EQUIPMENTTYPE = '" + equipmentType + "'";
 
       try (ResultSet rs = database.getResultSet(sql)) {
-        while (rs.next()) {
-          String specName = rs.getString("SPECIFICATION");
-          double maxValue = rs.getDouble("MAXVALUE");
+	while (rs.next()) {
+	  String specName = rs.getString("SPECIFICATION");
+	  double maxValue = rs.getDouble("MAXVALUE");
 
-          applyCompanyParameter(calc, specName, maxValue, null);
-        }
+	  applyCompanyParameter(calc, specName, maxValue, null);
+	}
       }
     } catch (Exception ex) {
       logger.warn("Could not load company requirements for {}: {}", company, ex.getMessage());
@@ -82,8 +80,8 @@ public class ManifoldMechanicalDesignDataSource implements Serializable {
   /**
    * Load standards-specific parameters.
    *
-   * @param calc the calculator to load parameters into
-   * @param designCode the design code
+   * @param calc          the calculator to load parameters into
+   * @param designCode    the design code
    * @param equipmentType the equipment type
    */
   public void loadStandardsParameters(ManifoldMechanicalDesignCalculator calc, String designCode,
@@ -102,23 +100,22 @@ public class ManifoldMechanicalDesignDataSource implements Serializable {
   /**
    * Load ASME B31.3 parameters from asme_standards table.
    *
-   * @param calc the calculator
+   * @param calc          the calculator
    * @param equipmentType the equipment type
    */
   public void loadASMEParameters(ManifoldMechanicalDesignCalculator calc, String equipmentType) {
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase()) {
-      String sql =
-          "SELECT SPECIFICATION, MINVALUE, MAXVALUE, UNIT, DESCRIPTION " + "FROM asme_standards "
-              + "WHERE (EQUIPMENTTYPE = 'Manifold' OR EQUIPMENTTYPE = 'TopsidePiping')";
+      String sql = "SELECT SPECIFICATION, MINVALUE, MAXVALUE, UNIT, DESCRIPTION " + "FROM asme_standards "
+	  + "WHERE (EQUIPMENTTYPE = 'Manifold' OR EQUIPMENTTYPE = 'TopsidePiping')";
 
       try (ResultSet rs = database.getResultSet(sql)) {
-        while (rs.next()) {
-          String spec = rs.getString("SPECIFICATION");
-          double minVal = rs.getDouble("MINVALUE");
-          double maxVal = rs.getDouble("MAXVALUE");
+	while (rs.next()) {
+	  String spec = rs.getString("SPECIFICATION");
+	  double minVal = rs.getDouble("MINVALUE");
+	  double maxVal = rs.getDouble("MAXVALUE");
 
-          applyASMEParameter(calc, spec, minVal, maxVal);
-        }
+	  applyASMEParameter(calc, spec, minVal, maxVal);
+	}
       }
     } catch (Exception ex) {
       logger.warn("Could not load ASME parameters: {}", ex.getMessage());
@@ -128,24 +125,23 @@ public class ManifoldMechanicalDesignDataSource implements Serializable {
   /**
    * Load DNV-ST-F101 parameters from dnv_iso_en_standards table.
    *
-   * @param calc the calculator
+   * @param calc          the calculator
    * @param equipmentType the equipment type
    */
   public void loadDNVParameters(ManifoldMechanicalDesignCalculator calc, String equipmentType) {
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase()) {
-      String sql = "SELECT SPECIFICATION, MINVALUE, MAXVALUE, UNIT, DESCRIPTION "
-          + "FROM dnv_iso_en_standards " + "WHERE STANDARD_CODE = 'DNV-ST-F101' "
-          + "AND (EQUIPMENTTYPE = 'Manifold' OR EQUIPMENTTYPE = 'Pipeline' "
-          + "OR EQUIPMENTTYPE = 'SubseaEquipment')";
+      String sql = "SELECT SPECIFICATION, MINVALUE, MAXVALUE, UNIT, DESCRIPTION " + "FROM dnv_iso_en_standards "
+	  + "WHERE STANDARD_CODE = 'DNV-ST-F101' " + "AND (EQUIPMENTTYPE = 'Manifold' OR EQUIPMENTTYPE = 'Pipeline' "
+	  + "OR EQUIPMENTTYPE = 'SubseaEquipment')";
 
       try (ResultSet rs = database.getResultSet(sql)) {
-        while (rs.next()) {
-          String spec = rs.getString("SPECIFICATION");
-          double minVal = rs.getDouble("MINVALUE");
-          double maxVal = rs.getDouble("MAXVALUE");
+	while (rs.next()) {
+	  String spec = rs.getString("SPECIFICATION");
+	  double minVal = rs.getDouble("MINVALUE");
+	  double maxVal = rs.getDouble("MAXVALUE");
 
-          applyDNVParameter(calc, spec, minVal, maxVal);
-        }
+	  applyDNVParameter(calc, spec, minVal, maxVal);
+	}
       }
     } catch (Exception ex) {
       logger.warn("Could not load DNV parameters: {}", ex.getMessage());
@@ -155,49 +151,48 @@ public class ManifoldMechanicalDesignDataSource implements Serializable {
   /**
    * Apply company-specific parameter to calculator.
    *
-   * @param calc the calculator
+   * @param calc      the calculator
    * @param paramName parameter name
-   * @param numValue numeric value
+   * @param numValue  numeric value
    * @param textValue text value
    */
-  private void applyCompanyParameter(ManifoldMechanicalDesignCalculator calc, String paramName,
-      double numValue, String textValue) {
+  private void applyCompanyParameter(ManifoldMechanicalDesignCalculator calc, String paramName, double numValue,
+      String textValue) {
     if (paramName == null) {
       return;
     }
 
     switch (paramName) {
-      case "DesignFactor":
-        calc.setDesignFactor(numValue);
-        break;
-      case "CorrosionAllowance":
-        calc.setCorrosionAllowance(numValue / 1000.0); // mm to m
-        break;
-      case "JointEfficiency":
-        calc.setJointEfficiency(numValue);
-        break;
-      case "ErosionalCFactor":
-        calc.setErosionalCFactor(numValue);
-        break;
-      case "SafetyClassFactor":
-        calc.setSafetyClassFactor(numValue);
-        break;
-      default:
-        // Unknown parameter - ignore
-        break;
+    case "DesignFactor":
+      calc.setDesignFactor(numValue);
+      break;
+    case "CorrosionAllowance":
+      calc.setCorrosionAllowance(numValue / 1000.0); // mm to m
+      break;
+    case "JointEfficiency":
+      calc.setJointEfficiency(numValue);
+      break;
+    case "ErosionalCFactor":
+      calc.setErosionalCFactor(numValue);
+      break;
+    case "SafetyClassFactor":
+      calc.setSafetyClassFactor(numValue);
+      break;
+    default:
+      // Unknown parameter - ignore
+      break;
     }
   }
 
   /**
    * Apply ASME B31.3 parameter to calculator.
    *
-   * @param calc the calculator
-   * @param spec specification name
+   * @param calc   the calculator
+   * @param spec   specification name
    * @param minVal minimum value
    * @param maxVal maximum value
    */
-  private void applyASMEParameter(ManifoldMechanicalDesignCalculator calc, String spec,
-      double minVal, double maxVal) {
+  private void applyASMEParameter(ManifoldMechanicalDesignCalculator calc, String spec, double minVal, double maxVal) {
     if (spec == null) {
       return;
     }
@@ -212,13 +207,12 @@ public class ManifoldMechanicalDesignDataSource implements Serializable {
   /**
    * Apply DNV-ST-F101 parameter to calculator.
    *
-   * @param calc the calculator
-   * @param spec specification name
+   * @param calc   the calculator
+   * @param spec   specification name
    * @param minVal minimum value
    * @param maxVal maximum value
    */
-  private void applyDNVParameter(ManifoldMechanicalDesignCalculator calc, String spec,
-      double minVal, double maxVal) {
+  private void applyDNVParameter(ManifoldMechanicalDesignCalculator calc, String spec, double minVal, double maxVal) {
     if (spec == null) {
       return;
     }

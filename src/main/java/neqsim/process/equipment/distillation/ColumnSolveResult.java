@@ -4,9 +4,9 @@ package neqsim.process.equipment.distillation;
  * Immutable summary of a distillation column solve.
  *
  * <p>
- * The result captures convergence metrics immediately after a solver strategy completes. It is an
- * internal boundary object used by {@link ColumnSolver}; public callers should continue to use the
- * existing metric getters on {@link DistillationColumn}.
+ * The result captures convergence metrics immediately after a solver strategy completes. It is an internal boundary
+ * object used by {@link ColumnSolver}; public callers should continue to use the existing metric getters on
+ * {@link DistillationColumn}.
  * </p>
  *
  * @author esol
@@ -35,19 +35,19 @@ final class ColumnSolveResult {
   /**
    * Create a solve result.
    *
-   * @param solverType solver used for the run
-   * @param solved whether the column satisfies its convergence contract
-   * @param iterationCount number of iterations used
-   * @param temperatureResidual latest temperature residual in Kelvin
-   * @param massResidual latest relative mass residual
-   * @param energyResidual latest relative energy residual
-   * @param meshResidualNorm latest MESH residual infinity norm
+   * @param solverType              solver used for the run
+   * @param solved                  whether the column satisfies its convergence contract
+   * @param iterationCount          number of iterations used
+   * @param temperatureResidual     latest temperature residual in Kelvin
+   * @param massResidual            latest relative mass residual
+   * @param energyResidual          latest relative energy residual
+   * @param meshResidualNorm        latest MESH residual infinity norm
    * @param productDrawResidualNorm latest product-draw residual infinity norm
-   * @param solveTimeSeconds solver wall time in seconds
+   * @param solveTimeSeconds        solver wall time in seconds
    */
-  private ColumnSolveResult(DistillationColumn.SolverType solverType, boolean solved,
-      int iterationCount, double temperatureResidual, double massResidual, double energyResidual,
-      double meshResidualNorm, double productDrawResidualNorm, double solveTimeSeconds) {
+  private ColumnSolveResult(DistillationColumn.SolverType solverType, boolean solved, int iterationCount,
+      double temperatureResidual, double massResidual, double energyResidual, double meshResidualNorm,
+      double productDrawResidualNorm, double solveTimeSeconds) {
     this.solverType = solverType;
     this.solved = solved;
     this.iterationCount = iterationCount;
@@ -62,16 +62,15 @@ final class ColumnSolveResult {
   /**
    * Build a result from the current column diagnostics.
    *
-   * @param column solved column to summarize
+   * @param column     solved column to summarize
    * @param solverType solver used for the run
    * @return immutable solve result
    */
-  static ColumnSolveResult from(DistillationColumn column,
-      DistillationColumn.SolverType solverType) {
+  static ColumnSolveResult from(DistillationColumn column, DistillationColumn.SolverType solverType) {
     return new ColumnSolveResult(solverType, column.solved(), column.getLastIterationCount(),
-        column.getLastTemperatureResidual(), column.getLastMassResidual(),
-      column.getLastEnergyResidual(), column.getLastMeshResidualNorm(),
-      column.getLastMeshProductDrawResidualNorm(), column.getLastSolveTimeSeconds());
+	column.getLastTemperatureResidual(), column.getLastMassResidual(), column.getLastEnergyResidual(),
+	column.getLastMeshResidualNorm(), column.getLastMeshProductDrawResidualNorm(),
+	column.getLastSolveTimeSeconds());
   }
 
   /**

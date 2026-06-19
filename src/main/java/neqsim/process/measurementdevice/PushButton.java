@@ -7,13 +7,12 @@ import neqsim.process.logic.ProcessLogic;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * Push Button instrument for manual activation of equipment (e.g., ESD blowdown valves) and process
- * logic sequences.
+ * Push Button instrument for manual activation of equipment (e.g., ESD blowdown valves) and process logic sequences.
  *
  * <p>
- * A push button is a simple binary instrument that can be in one of two states: pushed (active) or
- * not pushed (inactive). It is typically used to manually trigger emergency shutdown (ESD) systems,
- * blowdown valves, or other safety-critical equipment.
+ * A push button is a simple binary instrument that can be in one of two states: pushed (active) or not pushed
+ * (inactive). It is typically used to manually trigger emergency shutdown (ESD) systems, blowdown valves, or other
+ * safety-critical equipment.
  *
  * <p>
  * Key features:
@@ -81,7 +80,7 @@ public class PushButton extends MeasurementDeviceBaseClass {
   /**
    * Constructor for PushButton with linked BlowdownValve.
    *
-   * @param name name of push button
+   * @param name          name of push button
    * @param blowdownValve blowdown valve to control
    */
   public PushButton(String name, BlowdownValve blowdownValve) {
@@ -93,8 +92,7 @@ public class PushButton extends MeasurementDeviceBaseClass {
    * Links this push button to a blowdown valve.
    *
    * <p>
-   * When the button is pushed, it will automatically activate the linked blowdown valve (if
-   * autoActivateValve is true).
+   * When the button is pushed, it will automatically activate the linked blowdown valve (if autoActivateValve is true).
    * </p>
    *
    * @param blowdownValve blowdown valve to control
@@ -116,8 +114,8 @@ public class PushButton extends MeasurementDeviceBaseClass {
    * Links this push button to a process logic sequence.
    *
    * <p>
-   * When the button is pushed, all linked logic sequences will be activated. This allows a single
-   * button to trigger complex multi-step operations like ESD sequences, startup procedures, etc.
+   * When the button is pushed, all linked logic sequences will be activated. This allows a single button to trigger
+   * complex multi-step operations like ESD sequences, startup procedures, etc.
    * </p>
    *
    * @param logic process logic to activate when button is pushed
@@ -141,8 +139,8 @@ public class PushButton extends MeasurementDeviceBaseClass {
    * Pushes the button, activating it.
    *
    * <p>
-   * If a blowdown valve is linked and auto-activation is enabled, this will also activate the
-   * valve. Additionally, all linked process logic sequences will be activated.
+   * If a blowdown valve is linked and auto-activation is enabled, this will also activate the valve. Additionally, all
+   * linked process logic sequences will be activated.
    * </p>
    */
   public void push() {
@@ -163,8 +161,8 @@ public class PushButton extends MeasurementDeviceBaseClass {
    * Resets the button to inactive (not pushed) state.
    *
    * <p>
-   * Note: This does NOT reset the linked blowdown valve. The valve must be reset separately for
-   * safety reasons - button reset only indicates operator acknowledgment, not system reset.
+   * Note: This does NOT reset the linked blowdown valve. The valve must be reset separately for safety reasons - button
+   * reset only indicates operator acknowledgment, not system reset.
    * </p>
    */
   public void reset() {
@@ -227,8 +225,8 @@ public class PushButton extends MeasurementDeviceBaseClass {
     if (unit == null || unit.isEmpty() || unit.equalsIgnoreCase("binary")) {
       return getMeasuredValue();
     }
-    throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
-        "getMeasuredValue", "unit", "PushButton only supports 'binary' unit"));
+    throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getMeasuredValue", "unit",
+	"PushButton only supports 'binary' unit"));
   }
 
   /**
@@ -258,17 +256,16 @@ public class PushButton extends MeasurementDeviceBaseClass {
     sb.append("State: ").append(isPushed ? "PUSHED" : "NOT PUSHED");
     if (linkedBlowdownValve != null) {
       sb.append(", Linked to: ").append(linkedBlowdownValve.getName());
-      sb.append(" (").append(linkedBlowdownValve.isActivated() ? "ACTIVATED" : "NOT ACTIVATED")
-          .append(")");
+      sb.append(" (").append(linkedBlowdownValve.isActivated() ? "ACTIVATED" : "NOT ACTIVATED").append(")");
     }
     if (!linkedLogics.isEmpty()) {
       sb.append(", Linked Logic: [");
       for (int i = 0; i < linkedLogics.size(); i++) {
-        if (i > 0) {
-          sb.append(", ");
-        }
-        ProcessLogic logic = linkedLogics.get(i);
-        sb.append(logic.getName()).append(" (").append(logic.getState()).append(")");
+	if (i > 0) {
+	  sb.append(", ");
+	}
+	ProcessLogic logic = linkedLogics.get(i);
+	sb.append(logic.getName()).append(" (").append(logic.getState()).append(")");
       }
       sb.append("]");
     }

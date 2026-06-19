@@ -9,24 +9,24 @@ import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.expander.TurboExpanderCompressor;
 
 /**
- * TurboExpanderSealGasEnvelope (P5) converts a thermodynamically feasible turbo-expander-compressor
- * operating point into a <em>mechanically allowable</em> one by checking the rotating-equipment
- * envelope that the thermodynamic model does not see:
+ * TurboExpanderSealGasEnvelope (P5) converts a thermodynamically feasible turbo-expander-compressor operating point
+ * into a <em>mechanically allowable</em> one by checking the rotating-equipment envelope that the thermodynamic model
+ * does not see:
  *
  * <ul>
- * <li>Net axial thrust as a function of expander and compressor differential pressure, and the
- * resulting thrust-bearing utilisation against its rated capacity.</li>
- * <li>Dry-gas-seal seal-gas flow and the seal-gas heater duty required to keep the seal-gas supply
- * above its dew-point margin, checked against the installed heater rating (Oseberg FE-25832 = 28 kW
- * with a 30 &deg;C thermostat set point).</li>
+ * <li>Net axial thrust as a function of expander and compressor differential pressure, and the resulting thrust-bearing
+ * utilisation against its rated capacity.</li>
+ * <li>Dry-gas-seal seal-gas flow and the seal-gas heater duty required to keep the seal-gas supply above its dew-point
+ * margin, checked against the installed heater rating (Oseberg FE-25832 = 28 kW with a 30 &deg;C thermostat set
+ * point).</li>
  * <li>First lateral critical-speed separation margin per API 617 (15% minimum).</li>
  * </ul>
  *
  * <p>
- * All quantities use simple, transparent engineering correlations with configurable areas and
- * limits so the envelope can be anchored to certified OEM data. The class is independent of the
- * heavier {@link TurboExpanderCompressorMechanicalDesign} so it can be used as a fast feasibility
- * gate inside operating-envelope sweeps.
+ * All quantities use simple, transparent engineering correlations with configurable areas and limits so the envelope
+ * can be anchored to certified OEM data. The class is independent of the heavier
+ * {@link TurboExpanderCompressorMechanicalDesign} so it can be used as a fast feasibility gate inside
+ * operating-envelope sweeps.
  * </p>
  *
  * @author NeqSim
@@ -87,7 +87,8 @@ public class TurboExpanderSealGasEnvelope implements Serializable {
   /**
    * Default constructor.
    */
-  public TurboExpanderSealGasEnvelope() {}
+  public TurboExpanderSealGasEnvelope() {
+  }
 
   /**
    * Constructs an envelope evaluator for the given machine.
@@ -99,11 +100,11 @@ public class TurboExpanderSealGasEnvelope implements Serializable {
   }
 
   /**
-   * Evaluate the full mechanical envelope at the machine's current operating point. The machine
-   * must already have been run so the streams and speed reflect the operating point.
+   * Evaluate the full mechanical envelope at the machine's current operating point. The machine must already have been
+   * run so the streams and speed reflect the operating point.
    *
-   * @return {@code true} if the operating point is mechanically allowable (thrust within bearing
-   *         capacity, heater duty within rating and critical-speed margin satisfied)
+   * @return {@code true} if the operating point is mechanically allowable (thrust within bearing capacity, heater duty
+   *         within rating and critical-speed margin satisfied)
    */
   public boolean evaluate() {
     calcAxialThrust();
@@ -113,8 +114,8 @@ public class TurboExpanderSealGasEnvelope implements Serializable {
   }
 
   /**
-   * Compute the net axial thrust from the expander and compressor differential pressures and the
-   * configured thrust-balance areas and balance-piston offload.
+   * Compute the net axial thrust from the expander and compressor differential pressures and the configured
+   * thrust-balance areas and balance-piston offload.
    *
    * @return the net axial thrust in N
    */
@@ -123,31 +124,30 @@ public class TurboExpanderSealGasEnvelope implements Serializable {
     double dpCompressorPa = 0.0;
     if (machine != null) {
       try {
-        double expIn = machine.getInletStream().getPressure("bara");
-        double expOut = machine.getExpanderOutPressure();
-        dpExpanderPa = (expIn - expOut) * 1.0e5;
+	double expIn = machine.getInletStream().getPressure("bara");
+	double expOut = machine.getExpanderOutPressure();
+	dpExpanderPa = (expIn - expOut) * 1.0e5;
       } catch (Exception ex) {
-        logger.debug("Could not read expander pressures for thrust", ex);
+	logger.debug("Could not read expander pressures for thrust", ex);
       }
       try {
-        double compIn = machine.getCompressorFeedStream().getPressure("bara");
-        double compOut = machine.getCompressorOutletStream().getPressure("bara");
-        dpCompressorPa = (compOut - compIn) * 1.0e5;
+	double compIn = machine.getCompressorFeedStream().getPressure("bara");
+	double compOut = machine.getCompressorOutletStream().getPressure("bara");
+	dpCompressorPa = (compOut - compIn) * 1.0e5;
       } catch (Exception ex) {
-        logger.debug("Could not read compressor pressures for thrust", ex);
+	logger.debug("Could not read compressor pressures for thrust", ex);
       }
     }
     // Expander and compressor axial thrusts act in opposite directions on a back-to-back rotor.
     double grossThrust = dpExpanderPa * expanderThrustArea - dpCompressorPa * compressorThrustArea;
     netAxialThrust = grossThrust * (1.0 - balancePistonOffload);
-    thrustUtilisation =
-        thrustBearingCapacity > 0.0 ? Math.abs(netAxialThrust) / thrustBearingCapacity : 0.0;
+    thrustUtilisation = thrustBearingCapacity > 0.0 ? Math.abs(netAxialThrust) / thrustBearingCapacity : 0.0;
     return netAxialThrust;
   }
 
   /**
-   * Compute the seal-gas heater duty required to raise the seal-gas supply from its supply
-   * temperature to the thermostat set point for both dry-gas seals.
+   * Compute the seal-gas heater duty required to raise the seal-gas supply from its supply temperature to the
+   * thermostat set point for both dry-gas seals.
    *
    * @return the required seal-gas heater duty in W
    */
@@ -164,8 +164,8 @@ public class TurboExpanderSealGasEnvelope implements Serializable {
   /**
    * Compute the first-critical-speed separation margin at the operating speed.
    *
-   * @return the separation margin (fraction); positive means the operating speed is sufficiently
-   *         above the first critical speed
+   * @return the separation margin (fraction); positive means the operating speed is sufficiently above the first
+   *         critical speed
    */
   public double calcCriticalSpeedMargin() {
     double speed = maxContinuousSpeed;
@@ -224,11 +224,11 @@ public class TurboExpanderSealGasEnvelope implements Serializable {
     map.put("heaterDutyAcceptable", isHeaterDutyAcceptable());
     map.put("firstCriticalSpeed_rpm", firstCriticalSpeed);
     map.put("operatingSpeed_rpm",
-        machine != null && machine.getSpeed() > 0.0 ? machine.getSpeed() : maxContinuousSpeed);
+	machine != null && machine.getSpeed() > 0.0 ? machine.getSpeed() : maxContinuousSpeed);
     map.put("criticalSpeedMargin_fraction", criticalSpeedMargin);
     map.put("criticalSpeedMarginAcceptable", isCriticalSpeedMarginAcceptable());
     map.put("mechanicallyAllowable",
-        isThrustAcceptable() && isHeaterDutyAcceptable() && isCriticalSpeedMarginAcceptable());
+	isThrustAcceptable() && isHeaterDutyAcceptable() && isCriticalSpeedMarginAcceptable());
     return map;
   }
 
@@ -238,8 +238,7 @@ public class TurboExpanderSealGasEnvelope implements Serializable {
    * @return a pretty-printed JSON string of the envelope results
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   // --- Getters / setters ---
@@ -292,7 +291,7 @@ public class TurboExpanderSealGasEnvelope implements Serializable {
   /**
    * Set the effective expander and compressor thrust-balance areas.
    *
-   * @param expanderArea the effective expander thrust area in m^2
+   * @param expanderArea   the effective expander thrust area in m^2
    * @param compressorArea the effective compressor thrust area in m^2
    */
   public void setThrustAreas(double expanderArea, double compressorArea) {

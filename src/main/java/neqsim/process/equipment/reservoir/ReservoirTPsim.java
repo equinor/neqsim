@@ -47,7 +47,7 @@ public class ReservoirTPsim extends ProcessEquipmentBaseClass {
    * Constructor for ReservoirTPsim.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name           a {@link java.lang.String} object
    * @param reservoirFluid a {@link neqsim.thermo.system.SystemInterface} object
    */
   public ReservoirTPsim(String name, SystemInterface reservoirFluid) {
@@ -93,7 +93,7 @@ public class ReservoirTPsim extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param reservoirPressure a double
-   * @param pUnit a {@link java.lang.String} object
+   * @param pUnit             a {@link java.lang.String} object
    */
   public void setPressure(double reservoirPressure, String pUnit) {
     this.pressure = reservoirPressure;
@@ -106,7 +106,7 @@ public class ReservoirTPsim extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param reservoirTemperature a double
-   * @param tUnit a {@link java.lang.String} object
+   * @param tUnit                a {@link java.lang.String} object
    */
   public void setTemperature(double reservoirTemperature, String tUnit) {
     this.temperature = reservoirTemperature;

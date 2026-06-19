@@ -6,10 +6,9 @@ import java.io.Serializable;
  * Probabilistic assumption bundle for a development-case template.
  *
  * <p>
- * The bundle keeps the most common screening uncertainties directly attached to a concept template:
- * resource, CAPEX, schedule, commodity price, and production-factor ranges. These values can be
- * used by notebooks, reports, or a sensitivity engine without recreating assumptions outside the
- * model.
+ * The bundle keeps the most common screening uncertainties directly attached to a concept template: resource, CAPEX,
+ * schedule, commodity price, and production-factor ranges. These values can be used by notebooks, reports, or a
+ * sensitivity engine without recreating assumptions outside the model.
  * </p>
  *
  * @author ESOL
@@ -27,14 +26,14 @@ public final class DevelopmentCaseUncertainty implements Serializable {
   /**
    * Creates an uncertainty bundle.
    *
-   * @param resource resource range
-   * @param capex CAPEX range
-   * @param scheduleMonths schedule range in months
-   * @param price price range
+   * @param resource         resource range
+   * @param capex            CAPEX range
+   * @param scheduleMonths   schedule range in months
+   * @param price            price range
    * @param productionFactor production-factor range
    */
-  private DevelopmentCaseUncertainty(UncertaintyRange resource, UncertaintyRange capex,
-      UncertaintyRange scheduleMonths, UncertaintyRange price, UncertaintyRange productionFactor) {
+  private DevelopmentCaseUncertainty(UncertaintyRange resource, UncertaintyRange capex, UncertaintyRange scheduleMonths,
+      UncertaintyRange price, UncertaintyRange productionFactor) {
     this.resource = resource;
     this.capex = capex;
     this.scheduleMonths = scheduleMonths;
@@ -49,10 +48,10 @@ public final class DevelopmentCaseUncertainty implements Serializable {
    */
   public static DevelopmentCaseUncertainty empty() {
     return builder().resource(UncertaintyRange.deterministic("Resource", "-", 0.0))
-        .capex(UncertaintyRange.deterministic("CAPEX", "MUSD", 0.0))
-        .scheduleMonths(UncertaintyRange.deterministic("Schedule", "months", 0.0))
-        .price(UncertaintyRange.deterministic("Price", "USD/unit", 0.0))
-        .productionFactor(UncertaintyRange.deterministic("Production factor", "-", 1.0)).build();
+	.capex(UncertaintyRange.deterministic("CAPEX", "MUSD", 0.0))
+	.scheduleMonths(UncertaintyRange.deterministic("Schedule", "months", 0.0))
+	.price(UncertaintyRange.deterministic("Price", "USD/unit", 0.0))
+	.productionFactor(UncertaintyRange.deterministic("Production factor", "-", 1.0)).build();
   }
 
   /**
@@ -124,11 +123,9 @@ public final class DevelopmentCaseUncertainty implements Serializable {
   public static final class Builder {
     private UncertaintyRange resource = UncertaintyRange.deterministic("Resource", "-", 0.0);
     private UncertaintyRange capex = UncertaintyRange.deterministic("CAPEX", "MUSD", 0.0);
-    private UncertaintyRange scheduleMonths =
-        UncertaintyRange.deterministic("Schedule", "months", 0.0);
+    private UncertaintyRange scheduleMonths = UncertaintyRange.deterministic("Schedule", "months", 0.0);
     private UncertaintyRange price = UncertaintyRange.deterministic("Price", "USD/unit", 0.0);
-    private UncertaintyRange productionFactor =
-        UncertaintyRange.deterministic("Production factor", "-", 1.0);
+    private UncertaintyRange productionFactor = UncertaintyRange.deterministic("Production factor", "-", 1.0);
 
     /**
      * Sets resource uncertainty.
@@ -191,8 +188,7 @@ public final class DevelopmentCaseUncertainty implements Serializable {
      * @return uncertainty bundle
      */
     public DevelopmentCaseUncertainty build() {
-      return new DevelopmentCaseUncertainty(resource, capex, scheduleMonths, price,
-          productionFactor);
+      return new DevelopmentCaseUncertainty(resource, capex, scheduleMonths, price, productionFactor);
     }
   }
 }

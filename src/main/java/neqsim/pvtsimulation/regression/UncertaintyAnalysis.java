@@ -4,8 +4,7 @@ package neqsim.pvtsimulation.regression;
  * Uncertainty analysis results for PVT regression.
  *
  * <p>
- * Provides parameter standard errors, confidence intervals, and correlation matrix from the
- * regression optimization.
+ * Provides parameter standard errors, confidence intervals, and correlation matrix from the regression optimization.
  * </p>
  *
  * @author ESOL
@@ -22,16 +21,15 @@ public class UncertaintyAnalysis {
   /**
    * Create an uncertainty analysis result.
    *
-   * @param parameterValues optimized parameter values
-   * @param standardErrors standard errors for each parameter
-   * @param correlationMatrix parameter correlation matrix
+   * @param parameterValues       optimized parameter values
+   * @param standardErrors        standard errors for each parameter
+   * @param correlationMatrix     parameter correlation matrix
    * @param confidenceIntervals95 95% confidence interval half-widths
-   * @param degreesOfFreedom degrees of freedom (N - p)
-   * @param residualVariance residual variance (chi-square / DOF)
+   * @param degreesOfFreedom      degrees of freedom (N - p)
+   * @param residualVariance      residual variance (chi-square / DOF)
    */
-  public UncertaintyAnalysis(double[] parameterValues, double[] standardErrors,
-      double[][] correlationMatrix, double[] confidenceIntervals95, int degreesOfFreedom,
-      double residualVariance) {
+  public UncertaintyAnalysis(double[] parameterValues, double[] standardErrors, double[][] correlationMatrix,
+      double[] confidenceIntervals95, int degreesOfFreedom, double residualVariance) {
     this.parameterValues = parameterValues;
     this.standardErrors = standardErrors;
     this.correlationMatrix = correlationMatrix;
@@ -126,7 +124,7 @@ public class UncertaintyAnalysis {
   public double[] getConfidenceIntervalBounds(int index) {
     double value = parameterValues[index];
     double ci = confidenceIntervals95[index];
-    return new double[] {value - ci, value + ci};
+    return new double[] { value - ci, value + ci };
   }
 
   /**
@@ -164,9 +162,9 @@ public class UncertaintyAnalysis {
   public boolean hasHighCorrelations() {
     for (int i = 0; i < correlationMatrix.length; i++) {
       for (int j = i + 1; j < correlationMatrix[i].length; j++) {
-        if (Math.abs(correlationMatrix[i][j]) > 0.8) {
-          return true;
-        }
+	if (Math.abs(correlationMatrix[i][j]) > 0.8) {
+	  return true;
+	}
       }
     }
     return false;
@@ -196,8 +194,8 @@ public class UncertaintyAnalysis {
 
     sb.append("Parameter Estimates:\n");
     for (int i = 0; i < parameterValues.length; i++) {
-      sb.append(String.format("  Parameter %d: %.6f ± %.6f (%.1f%%)\n", i, parameterValues[i],
-          confidenceIntervals95[i], getRelativeUncertainty(i)));
+      sb.append(String.format("  Parameter %d: %.6f ± %.6f (%.1f%%)\n", i, parameterValues[i], confidenceIntervals95[i],
+	  getRelativeUncertainty(i)));
     }
 
     sb.append("\nStatistics:\n");
@@ -213,7 +211,7 @@ public class UncertaintyAnalysis {
     for (int i = 0; i < correlationMatrix.length; i++) {
       sb.append("  ");
       for (int j = 0; j < correlationMatrix[i].length; j++) {
-        sb.append(String.format("%7.3f ", correlationMatrix[i][j]));
+	sb.append(String.format("%7.3f ", correlationMatrix[i][j]));
       }
       sb.append("\n");
     }

@@ -68,8 +68,7 @@ class InterfacialAreaCalculatorTest {
   void testSlugAreaPositive() {
     double usg = 2.0;
     double usl = 0.5;
-    double a =
-        InterfacialAreaCalculator.calculateSlugArea(DIAMETER, 0.5, RHO_G, RHO_L, usg, usl, SIGMA);
+    double a = InterfacialAreaCalculator.calculateSlugArea(DIAMETER, 0.5, RHO_G, RHO_L, usg, usl, SIGMA);
 
     assertTrue(a > 0, "Slug area should be positive");
   }
@@ -81,8 +80,8 @@ class InterfacialAreaCalculatorTest {
     double holdup = 0.3;
 
     for (FlowPattern pattern : FlowPattern.values()) {
-      double a = InterfacialAreaCalculator.calculateInterfacialArea(pattern, DIAMETER, holdup,
-          RHO_G, RHO_L, usg, usl, SIGMA);
+      double a = InterfacialAreaCalculator.calculateInterfacialArea(pattern, DIAMETER, holdup, RHO_G, RHO_L, usg, usl,
+	  SIGMA);
       assertTrue(a >= 0, "Interfacial area should be non-negative for " + pattern);
     }
   }

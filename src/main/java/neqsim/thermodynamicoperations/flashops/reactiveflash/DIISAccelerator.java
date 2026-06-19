@@ -4,10 +4,9 @@ package neqsim.thermodynamicoperations.flashops.reactiveflash;
  * DIIS (Direct Inversion in the Iterative Subspace) accelerator for fixed-point iterations.
  *
  * <p>
- * Implements the Pulay (1980) DIIS extrapolation to accelerate convergence of iterative solvers.
- * Stores a rolling history of iterate-residual pairs and finds the optimal linear combination
- * c_1,...,c_m that minimizes the squared residual norm subject to the constraint sum(c_i) = 1. The
- * extrapolated iterate is x_new = sum(c_i * x_i).
+ * Implements the Pulay (1980) DIIS extrapolation to accelerate convergence of iterative solvers. Stores a rolling
+ * history of iterate-residual pairs and finds the optimal linear combination c_1,...,c_m that minimizes the squared
+ * residual norm subject to the constraint sum(c_i) = 1. The extrapolated iterate is x_new = sum(c_i * x_i).
  * </p>
  *
  * <p>
@@ -66,7 +65,7 @@ public class DIISAccelerator implements java.io.Serializable {
    * Construct a DIIS accelerator.
    *
    * @param vectorLength length of each iterate and residual vector
-   * @param maxHistory maximum number of stored pairs (typically 5-8)
+   * @param maxHistory   maximum number of stored pairs (typically 5-8)
    */
   public DIISAccelerator(int vectorLength, int maxHistory) {
     this.vectorLength = vectorLength;
@@ -81,11 +80,10 @@ public class DIISAccelerator implements java.io.Serializable {
    * Store a new iterate-residual pair in the circular buffer.
    *
    * <p>
-   * The iterate and residual arrays are copied internally. When the buffer is full, the oldest
-   * entry is overwritten.
+   * The iterate and residual arrays are copied internally. When the buffer is full, the oldest entry is overwritten.
    * </p>
    *
-   * @param iterate the current iterate vector (will be copied)
+   * @param iterate  the current iterate vector (will be copied)
    * @param residual the residual vector at this iterate (will be copied)
    */
   public void addEntry(double[] iterate, double[] residual) {
@@ -110,9 +108,9 @@ public class DIISAccelerator implements java.io.Serializable {
    * Compute the DIIS-extrapolated iterate.
    *
    * <p>
-   * Solves the augmented Pulay system for optimal coefficients c_i that minimize the squared
-   * residual norm ||sum(c_i * r_i)||^2 subject to sum(c_i) = 1, then returns x_new = sum(c_i *
-   * x_i). Returns null if the Pulay matrix is singular or if fewer than 2 entries are stored.
+   * Solves the augmented Pulay system for optimal coefficients c_i that minimize the squared residual norm ||sum(c_i *
+   * r_i)||^2 subject to sum(c_i) = 1, then returns x_new = sum(c_i * x_i). Returns null if the Pulay matrix is singular
+   * or if fewer than 2 entries are stored.
    * </p>
    *
    * @return extrapolated iterate vector, or null if extrapolation failed
@@ -130,12 +128,12 @@ public class DIISAccelerator implements java.io.Serializable {
     for (int i = 0; i < m; i++) {
       int ii = bufferIndex(i);
       for (int j = 0; j < m; j++) {
-        int jj = bufferIndex(j);
-        double dot = 0.0;
-        for (int k = 0; k < vectorLength; k++) {
-          dot += residualHistory[ii][k] * residualHistory[jj][k];
-        }
-        aug[i][j] = dot;
+	int jj = bufferIndex(j);
+	double dot = 0.0;
+	for (int k = 0; k < vectorLength; k++) {
+	  dot += residualHistory[ii][k] * residualHistory[jj][k];
+	}
+	aug[i][j] = dot;
       }
       aug[i][m] = -1.0;
       aug[m][i] = -1.0;
@@ -149,24 +147,24 @@ public class DIISAccelerator implements java.io.Serializable {
       int pr = c;
       double mx = Math.abs(aug[c][c]);
       for (int r = c + 1; r < dim; r++) {
-        if (Math.abs(aug[r][c]) > mx) {
-          mx = Math.abs(aug[r][c]);
-          pr = r;
-        }
+	if (Math.abs(aug[r][c]) > mx) {
+	  mx = Math.abs(aug[r][c]);
+	  pr = r;
+	}
       }
       if (mx < 1.0e-30) {
-        return null;
+	return null;
       }
       if (pr != c) {
-        double[] tmp = aug[c];
-        aug[c] = aug[pr];
-        aug[pr] = tmp;
+	double[] tmp = aug[c];
+	aug[c] = aug[pr];
+	aug[pr] = tmp;
       }
       for (int r = c + 1; r < dim; r++) {
-        double f = aug[r][c] / aug[c][c];
-        for (int jj = c; jj <= dim; jj++) {
-          aug[r][jj] -= f * aug[c][jj];
-        }
+	double f = aug[r][c] / aug[c][c];
+	for (int jj = c; jj <= dim; jj++) {
+	  aug[r][jj] -= f * aug[c][jj];
+	}
       }
     }
 
@@ -174,10 +172,10 @@ public class DIISAccelerator implements java.io.Serializable {
     for (int i = dim - 1; i >= 0; i--) {
       sol[i] = aug[i][dim];
       for (int j = i + 1; j < dim; j++) {
-        sol[i] -= aug[i][j] * sol[j];
+	sol[i] -= aug[i][j] * sol[j];
       }
       if (Math.abs(aug[i][i]) < 1.0e-30) {
-        return null;
+	return null;
       }
       sol[i] /= aug[i][i];
     }
@@ -188,7 +186,7 @@ public class DIISAccelerator implements java.io.Serializable {
       int ii = bufferIndex(i);
       double ci = sol[i];
       for (int k = 0; k < vectorLength; k++) {
-        result[k] += ci * iterateHistory[ii][k];
+	result[k] += ci * iterateHistory[ii][k];
       }
     }
 

@@ -40,8 +40,7 @@ class ValidationProfileRunnerTest {
     String result = ValidationProfileRunner.run(json);
     assertNotNull(result);
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
-    assertEquals("success", obj.get("status").getAsString(),
-        "Get active profile failed: " + result);
+    assertEquals("success", obj.get("status").getAsString(), "Get active profile failed: " + result);
   }
 
   @Test
@@ -50,8 +49,7 @@ class ValidationProfileRunnerTest {
     String result = ValidationProfileRunner.run(json);
     assertNotNull(result);
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
-    assertEquals("success", obj.get("status").getAsString(),
-        "Equipment standards failed: " + result);
+    assertEquals("success", obj.get("status").getAsString(), "Equipment standards failed: " + result);
   }
 
   @Test

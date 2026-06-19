@@ -31,7 +31,8 @@ public class PhaseDesmukhMather extends PhaseGE {
    * Constructor for PhaseDesmukhMather.
    * </p>
    */
-  public PhaseDesmukhMather() {}
+  public PhaseDesmukhMather() {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -42,8 +43,7 @@ public class PhaseDesmukhMather extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
-      double beta) {
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt, double beta) {
     super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     if (initType != 0) {
       setType(pt);
@@ -60,38 +60,36 @@ public class PhaseDesmukhMather extends PhaseGE {
     this.bij = new double[numberOfComponents][numberOfComponents];
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       for (int k = 0; k < getNumberOfComponents(); k++) {
-        String component_name = getComponent(k).getComponentName();
+	String component_name = getComponent(k).getComponentName();
 
-        for (int l = k; l < getNumberOfComponents(); l++) {
-          if (k == l) {
-            if (getComponent(l).getComponentName().equals("MDEA")
-                && getComponent(k).getComponentName().equals("MDEA")) {
-              aij[k][l] = -0.0828487;
-              this.aij[l][k] = this.aij[k][l];
-            }
-          } else {
-            try (java.sql.ResultSet dataSet =
-                database.getResultSet("SELECT * FROM inter WHERE (comp1='" + component_name
-                    + "' AND comp2='" + getComponent(l).getComponentName() + "') OR (comp1='"
-                    + getComponent(l).getComponentName() + "' AND comp2='" + component_name
-                    + "')");) {
-              dataSet.next();
+	for (int l = k; l < getNumberOfComponents(); l++) {
+	  if (k == l) {
+	    if (getComponent(l).getComponentName().equals("MDEA")
+		&& getComponent(k).getComponentName().equals("MDEA")) {
+	      aij[k][l] = -0.0828487;
+	      this.aij[l][k] = this.aij[k][l];
+	    }
+	  } else {
+	    try (java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM inter WHERE (comp1='"
+		+ component_name + "' AND comp2='" + getComponent(l).getComponentName() + "') OR (comp1='"
+		+ getComponent(l).getComponentName() + "' AND comp2='" + component_name + "')");) {
+	      dataSet.next();
 
-              // if
-              // (dataSet.getString("comp1").trim().equals(getComponent(l).getComponentName())) {
-              // templ = k;
-              // tempk = l;
-              // }
-              this.aij[k][l] = Double.parseDouble(dataSet.getString("aijDesMath"));
-              this.bij[k][l] = Double.parseDouble(dataSet.getString("bijDesMath"));
-              this.aij[l][k] = this.aij[k][l];
-              this.bij[l][k] = this.bij[k][l];
-            } catch (Exception ex) {
-              logger.info("comp names " + component_name);
-              logger.error(ex.getMessage(), ex);
-            }
-          }
-        }
+	      // if
+	      // (dataSet.getString("comp1").trim().equals(getComponent(l).getComponentName())) {
+	      // templ = k;
+	      // tempk = l;
+	      // }
+	      this.aij[k][l] = Double.parseDouble(dataSet.getString("aijDesMath"));
+	      this.bij[k][l] = Double.parseDouble(dataSet.getString("bijDesMath"));
+	      this.aij[l][k] = this.aij[k][l];
+	      this.bij[l][k] = this.bij[k][l];
+	    } catch (Exception ex) {
+	      logger.info("comp names " + component_name);
+	      logger.error(ex.getMessage(), ex);
+	    }
+	  }
+	}
       }
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
@@ -197,12 +195,12 @@ public class PhaseDesmukhMather extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, PhaseType pt) {
+  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+      PhaseType pt) {
     GE = 0;
     for (int i = 0; i < numberOfComponents; i++) {
-      GE += phase.getComponent(i).getx() * Math.log(((ComponentDesmukhMather) componentArray[i])
-          .getGamma(phase, numberOfComponents, temperature, pressure, pt));
+      GE += phase.getComponent(i).getx() * Math.log(
+	  ((ComponentDesmukhMather) componentArray[i]).getGamma(phase, numberOfComponents, temperature, pressure, pt));
     }
     return R * temperature * numberOfMolesInPhase * GE;
   }
@@ -229,8 +227,7 @@ public class PhaseDesmukhMather extends PhaseGE {
   public double getIonicStrength() {
     double ionStrength = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
-      ionStrength +=
-          getComponent(i).getMolality(this) * Math.pow(getComponent(i).getIonicCharge(), 2.0);
+      ionStrength += getComponent(i).getMolality(this) * Math.pow(getComponent(i).getIonicCharge(), 2.0);
       // getComponent(i).getMolarity(this)*Math.pow(getComponent(i).getIonicCharge(),2.0);
     }
     return 0.5 * ionStrength;
@@ -247,7 +244,7 @@ public class PhaseDesmukhMather extends PhaseGE {
     double moles = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       if (getComponent(i).getReferenceStateType().equals("solvent")) {
-        moles += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getMolarMass();
+	moles += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getMolarMass();
       }
     }
     return moles;
@@ -276,8 +273,8 @@ public class PhaseDesmukhMather extends PhaseGE {
     double moles = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       if (getComponent(i).getReferenceStateType().equals("solvent")) {
-        molesMass += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getMolarMass();
-        moles = getComponent(i).getNumberOfMolesInPhase();
+	molesMass += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getMolarMass();
+	moles = getComponent(i).getNumberOfMolesInPhase();
       }
     }
     return molesMass / moles;

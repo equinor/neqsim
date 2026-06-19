@@ -156,8 +156,7 @@ class BowTieSvgExporterTest {
 
   @Test
   void testXmlEscaping() {
-    BowTieModel specialModel =
-        new BowTieModel("SPECIAL-001", "Hazard with \"quotes\" and 'apostrophes'");
+    BowTieModel specialModel = new BowTieModel("SPECIAL-001", "Hazard with \"quotes\" and 'apostrophes'");
     BowTieModel.Threat specialThreat = new BowTieModel.Threat("T-SPECIAL", "Threat <test>", 0.01);
     specialModel.addThreat(specialThreat);
 

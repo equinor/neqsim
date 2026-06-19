@@ -22,9 +22,9 @@ public class PumpCurve implements java.io.Serializable {
    * </p>
    */
   public PumpCurve() {
-    flow = new double[] {453.2, 600.0, 750.0};
-    head = new double[] {1000.0, 900.0, 800.0};
-    efficiency = new double[] {78.0, 79.0, 78.0};
+    flow = new double[] { 453.2, 600.0, 750.0 };
+    head = new double[] { 1000.0, 900.0, 800.0 };
+    efficiency = new double[] { 78.0, 79.0, 78.0 };
   }
 
   /**
@@ -32,9 +32,9 @@ public class PumpCurve implements java.io.Serializable {
    * Constructor for PumpCurve.
    * </p>
    *
-   * @param speed a double
-   * @param flow an array of type double
-   * @param head an array of type double
+   * @param speed      a double
+   * @param flow       an array of type double
+   * @param head       an array of type double
    * @param efficiency an array of type double
    */
   public PumpCurve(double speed, double[] flow, double[] head, double[] efficiency) {

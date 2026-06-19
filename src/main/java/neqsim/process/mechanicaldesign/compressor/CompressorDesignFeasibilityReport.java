@@ -17,9 +17,8 @@ import neqsim.process.equipment.compressor.CompressorChartInterface;
  * Comprehensive feasibility report for centrifugal gas compressor design.
  *
  * <p>
- * This class combines mechanical design (API 617), cost estimation, supplier matching, and
- * operating envelope validation into a single report that answers the question: "Is this compressor
- * realistic to build and operate?"
+ * This class combines mechanical design (API 617), cost estimation, supplier matching, and operating envelope
+ * validation into a single report that answers the question: "Is this compressor realistic to build and operate?"
  * </p>
  *
  * <p>
@@ -226,9 +225,8 @@ public class CompressorDesignFeasibilityReport {
    * Generate the complete feasibility report.
    *
    * <p>
-   * This method runs mechanical design, cost estimation, supplier matching, and feasibility
-   * validation. The compressor must have been run (i.e. outlet conditions calculated) before
-   * calling this method.
+   * This method runs mechanical design, cost estimation, supplier matching, and feasibility validation. The compressor
+   * must have been run (i.e. outlet conditions calculated) before calling this method.
    * </p>
    */
   public void generateReport() {
@@ -259,8 +257,8 @@ public class CompressorDesignFeasibilityReport {
     // Determine overall verdict
     for (FeasibilityIssue issue : issues) {
       if (issue.getSeverity() == IssueSeverity.BLOCKER) {
-        feasible = false;
-        break;
+	feasible = false;
+	break;
       }
     }
 
@@ -273,7 +271,7 @@ public class CompressorDesignFeasibilityReport {
   private void captureOperatingPoint() {
     if (compressor.getThermoSystem() == null) {
       issues.add(new FeasibilityIssue(IssueSeverity.BLOCKER, "INIT",
-          "Compressor has not been run - call run() before generating report"));
+	  "Compressor has not been run - call run() before generating report"));
       feasible = false;
       return;
     }
@@ -319,14 +317,14 @@ public class CompressorDesignFeasibilityReport {
     List<SupplierMatch> allSuppliers = loadSupplierDatabase();
     for (SupplierMatch supplier : allSuppliers) {
       if (isSupplierMatch(supplier)) {
-        matchingSuppliers.add(supplier);
+	matchingSuppliers.add(supplier);
       }
     }
 
     if (matchingSuppliers.isEmpty()) {
       issues.add(new FeasibilityIssue(IssueSeverity.WARNING, "SUPPLIER",
-          "No standard supplier found for this compressor specification. "
-              + "Custom or engineered-to-order solution may be required."));
+	  "No standard supplier found for this compressor specification. "
+	      + "Custom or engineered-to-order solution may be required."));
     }
   }
 
@@ -358,15 +356,13 @@ public class CompressorDesignFeasibilityReport {
     }
 
     // Number of stages
-    if (mechanicalDesign != null
-        && mechanicalDesign.getNumberOfStages() > supplier.getMaxStages()) {
+    if (mechanicalDesign != null && mechanicalDesign.getNumberOfStages() > supplier.getMaxStages()) {
       return false;
     }
 
     // Pressure ratio per stage
     double prPerStage = Math.pow(pressureRatio, 1.0 / mechanicalDesign.getNumberOfStages());
-    if (prPerStage < supplier.getMinPressureRatioPerStage()
-        || prPerStage > supplier.getMaxPressureRatioPerStage()) {
+    if (prPerStage < supplier.getMinPressureRatioPerStage() || prPerStage > supplier.getMaxPressureRatioPerStage()) {
       return false;
     }
 
@@ -383,7 +379,7 @@ public class CompressorDesignFeasibilityReport {
       generatedChart = chartGen.generateFromTemplate(curveTemplate, numberOfSpeedCurves);
     } catch (Exception ex) {
       issues.add(new FeasibilityIssue(IssueSeverity.WARNING, "CURVES",
-          "Could not generate compressor curves: " + ex.getMessage()));
+	  "Could not generate compressor curves: " + ex.getMessage()));
     }
   }
 
@@ -408,13 +404,12 @@ public class CompressorDesignFeasibilityReport {
     double maxTempC = mechanicalDesign.getMaxDischargeTemperatureC();
     if (outletTemperatureC > maxTempC) {
       issues.add(new FeasibilityIssue(IssueSeverity.BLOCKER, "TEMPERATURE",
-          "Discharge temperature " + String.format("%.1f", outletTemperatureC)
-              + " C exceeds maximum " + String.format("%.1f", maxTempC)
-              + " C. Consider intercooling or more stages."));
+	  "Discharge temperature " + String.format("%.1f", outletTemperatureC) + " C exceeds maximum "
+	      + String.format("%.1f", maxTempC) + " C. Consider intercooling or more stages."));
     } else if (outletTemperatureC > maxTempC * 0.9) {
       issues.add(new FeasibilityIssue(IssueSeverity.WARNING, "TEMPERATURE",
-          "Discharge temperature " + String.format("%.1f", outletTemperatureC)
-              + " C is within 10% of maximum " + String.format("%.1f", maxTempC) + " C."));
+	  "Discharge temperature " + String.format("%.1f", outletTemperatureC) + " C is within 10% of maximum "
+	      + String.format("%.1f", maxTempC) + " C."));
     }
   }
 
@@ -427,9 +422,8 @@ public class CompressorDesignFeasibilityReport {
     double maxPR = mechanicalDesign.getMaxPressureRatioPerStage();
     if (prPerStage > maxPR) {
       issues.add(new FeasibilityIssue(IssueSeverity.BLOCKER, "PRESSURE_RATIO",
-          "Pressure ratio per stage " + String.format("%.2f", prPerStage) + " exceeds maximum "
-              + String.format("%.2f", maxPR)
-              + ". Need more stages or consider reciprocating compressor."));
+	  "Pressure ratio per stage " + String.format("%.2f", prPerStage) + " exceeds maximum "
+	      + String.format("%.2f", maxPR) + ". Need more stages or consider reciprocating compressor."));
     }
   }
 
@@ -441,12 +435,11 @@ public class CompressorDesignFeasibilityReport {
     double maxTipSpeed = 350.0; // m/s for steel impellers
     if (tipSpeed > maxTipSpeed) {
       issues.add(new FeasibilityIssue(IssueSeverity.BLOCKER, "TIP_SPEED",
-          "Impeller tip speed " + String.format("%.0f", tipSpeed) + " m/s exceeds material limit "
-              + String.format("%.0f", maxTipSpeed) + " m/s. Reduce speed or increase stages."));
+	  "Impeller tip speed " + String.format("%.0f", tipSpeed) + " m/s exceeds material limit "
+	      + String.format("%.0f", maxTipSpeed) + " m/s. Reduce speed or increase stages."));
     } else if (tipSpeed > maxTipSpeed * 0.9) {
-      issues.add(new FeasibilityIssue(IssueSeverity.WARNING, "TIP_SPEED",
-          "Impeller tip speed " + String.format("%.0f", tipSpeed)
-              + " m/s is near material limit. Consider titanium impellers for margin."));
+      issues.add(new FeasibilityIssue(IssueSeverity.WARNING, "TIP_SPEED", "Impeller tip speed "
+	  + String.format("%.0f", tipSpeed) + " m/s is near material limit. Consider titanium impellers for margin."));
     }
   }
 
@@ -455,13 +448,11 @@ public class CompressorDesignFeasibilityReport {
    */
   private void checkPowerRange() {
     if (shaftPowerKW < 50) {
-      issues.add(new FeasibilityIssue(IssueSeverity.WARNING, "POWER",
-          "Power " + String.format("%.0f", shaftPowerKW)
-              + " kW is very low for centrifugal. Consider screw or reciprocating compressor."));
+      issues.add(new FeasibilityIssue(IssueSeverity.WARNING, "POWER", "Power " + String.format("%.0f", shaftPowerKW)
+	  + " kW is very low for centrifugal. Consider screw or reciprocating compressor."));
     } else if (shaftPowerKW > 100000) {
-      issues.add(new FeasibilityIssue(IssueSeverity.WARNING, "POWER",
-          "Power " + String.format("%.0f", shaftPowerKW)
-              + " kW is very high. Limited number of suppliers. Consider parallel trains."));
+      issues.add(new FeasibilityIssue(IssueSeverity.WARNING, "POWER", "Power " + String.format("%.0f", shaftPowerKW)
+	  + " kW is very high. Limited number of suppliers. Consider parallel trains."));
     }
   }
 
@@ -471,12 +462,12 @@ public class CompressorDesignFeasibilityReport {
   private void checkFlowRange() {
     if (volumeFlowM3hr < 100) {
       issues.add(new FeasibilityIssue(IssueSeverity.WARNING, "FLOW",
-          "Inlet volume flow " + String.format("%.0f", volumeFlowM3hr)
-              + " m3/hr is very low for centrifugal. Consider reciprocating compressor."));
+	  "Inlet volume flow " + String.format("%.0f", volumeFlowM3hr)
+	      + " m3/hr is very low for centrifugal. Consider reciprocating compressor."));
     } else if (volumeFlowM3hr > 500000) {
       issues.add(new FeasibilityIssue(IssueSeverity.WARNING, "FLOW",
-          "Inlet volume flow " + String.format("%.0f", volumeFlowM3hr)
-              + " m3/hr is very high. Consider parallel trains or axial compressor."));
+	  "Inlet volume flow " + String.format("%.0f", volumeFlowM3hr)
+	      + " m3/hr is very high. Consider parallel trains or axial compressor."));
     }
   }
 
@@ -489,11 +480,9 @@ public class CompressorDesignFeasibilityReport {
     if (firstCritical > 0 && operatingSpeed > 0) {
       double margin = Math.abs(firstCritical - operatingSpeed) / operatingSpeed * 100.0;
       if (margin < 15.0) {
-        issues.add(new FeasibilityIssue(IssueSeverity.WARNING, "ROTOR_DYNAMICS",
-            "Operating speed " + String.format("%.0f", operatingSpeed)
-                + " RPM is within 15% of first critical speed "
-                + String.format("%.0f", firstCritical)
-                + " RPM. API 617 requires minimum 15% separation margin."));
+	issues.add(new FeasibilityIssue(IssueSeverity.WARNING, "ROTOR_DYNAMICS",
+	    "Operating speed " + String.format("%.0f", operatingSpeed) + " RPM is within 15% of first critical speed "
+		+ String.format("%.0f", firstCritical) + " RPM. API 617 requires minimum 15% separation margin."));
       }
     }
   }
@@ -504,12 +493,12 @@ public class CompressorDesignFeasibilityReport {
   private void checkEfficiency() {
     if (polytropicEfficiency > 0.90) {
       issues.add(new FeasibilityIssue(IssueSeverity.WARNING, "EFFICIENCY",
-          "Polytropic efficiency " + String.format("%.1f", polytropicEfficiency * 100)
-              + "% is unrealistically high. Typical range is 75-85% for centrifugal."));
+	  "Polytropic efficiency " + String.format("%.1f", polytropicEfficiency * 100)
+	      + "% is unrealistically high. Typical range is 75-85% for centrifugal."));
     } else if (polytropicEfficiency < 0.65 && polytropicEfficiency > 0) {
       issues.add(new FeasibilityIssue(IssueSeverity.WARNING, "EFFICIENCY",
-          "Polytropic efficiency " + String.format("%.1f", polytropicEfficiency * 100)
-              + "% is low. Check impeller design or consider different compressor type."));
+	  "Polytropic efficiency " + String.format("%.1f", polytropicEfficiency * 100)
+	      + "% is low. Check impeller design or consider different compressor type."));
     }
   }
 
@@ -521,13 +510,11 @@ public class CompressorDesignFeasibilityReport {
     if (totalCost > 0 && shaftPowerKW > 0) {
       double costPerKW = totalCost / shaftPowerKW;
       if (costPerKW > 5000) {
-        issues.add(new FeasibilityIssue(IssueSeverity.INFO, "COST",
-            "Specific cost " + String.format("%.0f", costPerKW)
-                + " USD/kW is high. Consider alternative compressor types or parallel trains."));
+	issues.add(new FeasibilityIssue(IssueSeverity.INFO, "COST", "Specific cost " + String.format("%.0f", costPerKW)
+	    + " USD/kW is high. Consider alternative compressor types or parallel trains."));
       } else if (costPerKW < 100) {
-        issues.add(new FeasibilityIssue(IssueSeverity.INFO, "COST",
-            "Specific cost " + String.format("%.0f", costPerKW)
-                + " USD/kW is very low. Estimate may be optimistic."));
+	issues.add(new FeasibilityIssue(IssueSeverity.INFO, "COST",
+	    "Specific cost " + String.format("%.0f", costPerKW) + " USD/kW is very low. Estimate may be optimistic."));
       }
     }
   }
@@ -546,19 +533,19 @@ public class CompressorDesignFeasibilityReport {
     try {
       InputStream is = getClass().getResourceAsStream("/designdata/CompressorSuppliers.csv");
       if (is == null) {
-        return suppliers;
+	return suppliers;
       }
       BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
       String header = reader.readLine(); // skip header
       String line;
       while ((line = reader.readLine()) != null) {
-        if (line.trim().isEmpty()) {
-          continue;
-        }
-        SupplierMatch supplier = parseSupplierLine(line);
-        if (supplier != null) {
-          suppliers.add(supplier);
-        }
+	if (line.trim().isEmpty()) {
+	  continue;
+	}
+	SupplierMatch supplier = parseSupplierLine(line);
+	if (supplier != null) {
+	  suppliers.add(supplier);
+	}
       }
       reader.close();
     } catch (Exception ex) {
@@ -578,7 +565,7 @@ public class CompressorDesignFeasibilityReport {
       // Handle quoted CSV fields
       List<String> fields = parseCsvLine(line);
       if (fields.size() < 17) {
-        return null;
+	return null;
       }
 
       SupplierMatch supplier = new SupplierMatch();
@@ -599,7 +586,7 @@ public class CompressorDesignFeasibilityReport {
       supplier.setApplications(fields.get(15));
       supplier.setWebsite(fields.get(16));
       if (fields.size() > 17) {
-        supplier.setNotes(fields.get(17));
+	supplier.setNotes(fields.get(17));
       }
 
       return supplier;
@@ -621,12 +608,12 @@ public class CompressorDesignFeasibilityReport {
     for (int i = 0; i < line.length(); i++) {
       char c = line.charAt(i);
       if (c == '"') {
-        inQuotes = !inQuotes;
+	inQuotes = !inQuotes;
       } else if (c == ',' && !inQuotes) {
-        fields.add(current.toString().trim());
-        current = new StringBuilder();
+	fields.add(current.toString().trim());
+	current = new StringBuilder();
       } else {
-        current.append(c);
+	current.append(c);
       }
     }
     fields.add(current.toString().trim());
@@ -636,7 +623,7 @@ public class CompressorDesignFeasibilityReport {
   /**
    * Safely parse a double value.
    *
-   * @param value string value
+   * @param value        string value
    * @param defaultValue default if parsing fails
    * @return parsed value
    */
@@ -651,7 +638,7 @@ public class CompressorDesignFeasibilityReport {
   /**
    * Safely parse an int value.
    *
-   * @param value string value
+   * @param value        string value
    * @param defaultValue default if parsing fails
    * @return parsed value
    */
@@ -738,7 +725,7 @@ public class CompressorDesignFeasibilityReport {
     }
     for (FeasibilityIssue issue : issues) {
       if (issue.getSeverity() == IssueSeverity.WARNING) {
-        return "FEASIBLE_WITH_WARNINGS";
+	return "FEASIBLE_WITH_WARNINGS";
       }
     }
     return "FEASIBLE";
@@ -821,13 +808,12 @@ public class CompressorDesignFeasibilityReport {
       cost.put("bareModuleCost_USD", round(costEstimate.getBareModuleCost(), 0));
       cost.put("totalModuleCost_USD", round(costEstimate.getTotalCost(), 0));
       if (shaftPowerKW > 0) {
-        cost.put("specificCost_USDperKW", round(costEstimate.getTotalCost() / shaftPowerKW, 0));
+	cost.put("specificCost_USDperKW", round(costEstimate.getTotalCost() / shaftPowerKW, 0));
       }
 
       // OPEX
       Map<String, Object> opex = new LinkedHashMap<String, Object>();
-      double annualEnergy =
-          costEstimate.calcAnnualOperatingCost(annualOperatingHours, electricityRate, fuelRate);
+      double annualEnergy = costEstimate.calcAnnualOperatingCost(annualOperatingHours, electricityRate, fuelRate);
       double annualMaintenance = costEstimate.calcAnnualMaintenanceCost();
       opex.put("annualEnergyCost_USD", round(annualEnergy, 0));
       opex.put("annualMaintenanceCost_USD", round(annualMaintenance, 0));
@@ -837,8 +823,7 @@ public class CompressorDesignFeasibilityReport {
       cost.put("annualOperatingCost", opex);
 
       // Lifecycle (10-year simple)
-      double lifecycleCost =
-          costEstimate.getTotalCost() + (annualEnergy + annualMaintenance) * 10.0;
+      double lifecycleCost = costEstimate.getTotalCost() + (annualEnergy + annualMaintenance) * 10.0;
       cost.put("tenYearLifecycleCost_USD", round(lifecycleCost, 0));
 
       report.put("costEstimation", cost);
@@ -848,20 +833,20 @@ public class CompressorDesignFeasibilityReport {
     if (!matchingSuppliers.isEmpty()) {
       List<Map<String, Object>> supplierList = new ArrayList<Map<String, Object>>();
       for (SupplierMatch supplier : matchingSuppliers) {
-        Map<String, Object> sup = new LinkedHashMap<String, Object>();
-        sup.put("manufacturer", supplier.getManufacturer());
-        sup.put("compressorType", supplier.getCompressorType());
-        sup.put("powerRange_kW", supplier.getMinPowerKW() + " - " + supplier.getMaxPowerKW());
-        sup.put("flowRange_m3hr", supplier.getMinFlowM3hr() + " - " + supplier.getMaxFlowM3hr());
-        sup.put("maxDischargePressure_bara", supplier.getMaxDischargePressureBara());
-        sup.put("maxStages", supplier.getMaxStages());
-        sup.put("typicalEfficiency_pct", supplier.getTypicalEfficiencyPct());
-        sup.put("applications", supplier.getApplications());
-        sup.put("website", supplier.getWebsite());
-        if (supplier.getNotes() != null && !supplier.getNotes().trim().isEmpty()) {
-          sup.put("notes", supplier.getNotes());
-        }
-        supplierList.add(sup);
+	Map<String, Object> sup = new LinkedHashMap<String, Object>();
+	sup.put("manufacturer", supplier.getManufacturer());
+	sup.put("compressorType", supplier.getCompressorType());
+	sup.put("powerRange_kW", supplier.getMinPowerKW() + " - " + supplier.getMaxPowerKW());
+	sup.put("flowRange_m3hr", supplier.getMinFlowM3hr() + " - " + supplier.getMaxFlowM3hr());
+	sup.put("maxDischargePressure_bara", supplier.getMaxDischargePressureBara());
+	sup.put("maxStages", supplier.getMaxStages());
+	sup.put("typicalEfficiency_pct", supplier.getTypicalEfficiencyPct());
+	sup.put("applications", supplier.getApplications());
+	sup.put("website", supplier.getWebsite());
+	if (supplier.getNotes() != null && !supplier.getNotes().trim().isEmpty()) {
+	  sup.put("notes", supplier.getNotes());
+	}
+	supplierList.add(sup);
       }
       report.put("matchingSuppliers", supplierList);
       report.put("numberOfMatchingSuppliers", matchingSuppliers.size());
@@ -878,8 +863,8 @@ public class CompressorDesignFeasibilityReport {
       curves.put("numberOfSpeedCurves", numberOfSpeedCurves);
       double[] speeds = generatedChart.getSpeeds();
       if (speeds != null && speeds.length > 0) {
-        curves.put("minSpeed_rpm", round(speeds[0], 0));
-        curves.put("maxSpeed_rpm", round(speeds[speeds.length - 1], 0));
+	curves.put("minSpeed_rpm", round(speeds[0], 0));
+	curves.put("maxSpeed_rpm", round(speeds[speeds.length - 1], 0));
       }
       curves.put("chartCanBeAppliedToCompressor", true);
       report.put("compressorCurves", curves);
@@ -896,14 +881,13 @@ public class CompressorDesignFeasibilityReport {
     }
     report.put("issues", issueList);
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(report);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(report);
   }
 
   /**
    * Round a double value to the specified number of decimal places.
    *
-   * @param value the value to round
+   * @param value    the value to round
    * @param decimals number of decimal places
    * @return rounded value
    */
@@ -919,15 +903,14 @@ public class CompressorDesignFeasibilityReport {
    * Apply the generated compressor chart to the compressor.
    *
    * <p>
-   * After calling this method, the compressor will use chart-based calculations instead of
-   * equation-based. This is useful for simulating realistic compressor behaviour over varying
-   * operating conditions (e.g. declining reservoir pressure over years).
+   * After calling this method, the compressor will use chart-based calculations instead of equation-based. This is
+   * useful for simulating realistic compressor behaviour over varying operating conditions (e.g. declining reservoir
+   * pressure over years).
    * </p>
    */
   public void applyChartToCompressor() {
     if (generatedChart == null) {
-      throw new IllegalStateException(
-          "No chart generated. Call generateReport() with generateCurves=true first.");
+      throw new IllegalStateException("No chart generated. Call generateReport() with generateCurves=true first.");
     }
     compressor.setCompressorChart(generatedChart);
     compressor.getCompressorChart().setUseCompressorChart(true);
@@ -962,7 +945,7 @@ public class CompressorDesignFeasibilityReport {
      *
      * @param severity issue severity
      * @param category category code (e.g. "TEMPERATURE", "TIP_SPEED")
-     * @param message descriptive message
+     * @param message  descriptive message
      */
     public FeasibilityIssue(IssueSeverity severity, String category, String message) {
       this.severity = severity;

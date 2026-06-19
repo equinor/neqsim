@@ -16,9 +16,9 @@ import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMar
  * Batch parameter estimator using Levenberg-Marquardt optimization.
  *
  * <p>
- * This class provides batch (offline) parameter estimation for process models using historical or
- * experimental data. It bridges the process calibration framework with NeqSim's existing
- * Levenberg-Marquardt optimizer in the statistics package.
+ * This class provides batch (offline) parameter estimation for process models using historical or experimental data. It
+ * bridges the process calibration framework with NeqSim's existing Levenberg-Marquardt optimizer in the statistics
+ * package.
  * </p>
  *
  * <p>
@@ -122,14 +122,13 @@ public class BatchParameterEstimator implements Serializable {
     /**
      * Creates a tunable parameter.
      *
-     * @param path path to the parameter
-     * @param unit unit of the parameter
-     * @param lowerBound minimum value
-     * @param upperBound maximum value
+     * @param path         path to the parameter
+     * @param unit         unit of the parameter
+     * @param lowerBound   minimum value
+     * @param upperBound   maximum value
      * @param initialGuess initial guess for optimization
      */
-    public TunableParameter(String path, String unit, double lowerBound, double upperBound,
-        double initialGuess) {
+    public TunableParameter(String path, String unit, double lowerBound, double upperBound, double initialGuess) {
       this.path = path;
       this.unit = unit;
       this.lowerBound = lowerBound;
@@ -170,8 +169,8 @@ public class BatchParameterEstimator implements Serializable {
     /**
      * Creates a measured variable.
      *
-     * @param path path to the measurement
-     * @param unit unit of the measurement
+     * @param path              path to the measurement
+     * @param unit              unit of the measurement
      * @param standardDeviation measurement uncertainty (noise std dev)
      */
     public MeasuredVariable(String path, String unit, double standardDeviation) {
@@ -204,7 +203,7 @@ public class BatchParameterEstimator implements Serializable {
     /**
      * Creates a data point.
      *
-     * @param conditions operating conditions (path -&gt; value)
+     * @param conditions   operating conditions (path -&gt; value)
      * @param measurements measured values (path -&gt; value)
      */
     public DataPoint(Map<String, Double> conditions, Map<String, Double> measurements) {
@@ -238,15 +237,15 @@ public class BatchParameterEstimator implements Serializable {
   /**
    * Adds a tunable parameter.
    *
-   * @param path path to the parameter (e.g., "Pipe1.heatTransferCoefficient")
-   * @param unit unit of the parameter
-   * @param lowerBound minimum allowed value
-   * @param upperBound maximum allowed value
+   * @param path         path to the parameter (e.g., "Pipe1.heatTransferCoefficient")
+   * @param unit         unit of the parameter
+   * @param lowerBound   minimum allowed value
+   * @param upperBound   maximum allowed value
    * @param initialGuess initial guess for optimization
    * @return this estimator for chaining
    */
-  public BatchParameterEstimator addTunableParameter(String path, String unit, double lowerBound,
-      double upperBound, double initialGuess) {
+  public BatchParameterEstimator addTunableParameter(String path, String unit, double lowerBound, double upperBound,
+      double initialGuess) {
     tunableParameters.add(new TunableParameter(path, unit, lowerBound, upperBound, initialGuess));
     return this;
   }
@@ -254,13 +253,12 @@ public class BatchParameterEstimator implements Serializable {
   /**
    * Adds a measured variable.
    *
-   * @param path path to the measurement (e.g., "Manifold.outletStream.temperature")
-   * @param unit unit of the measurement
+   * @param path              path to the measurement (e.g., "Manifold.outletStream.temperature")
+   * @param unit              unit of the measurement
    * @param standardDeviation measurement uncertainty (noise standard deviation)
    * @return this estimator for chaining
    */
-  public BatchParameterEstimator addMeasuredVariable(String path, String unit,
-      double standardDeviation) {
+  public BatchParameterEstimator addMeasuredVariable(String path, String unit, double standardDeviation) {
     measuredVariables.add(new MeasuredVariable(path, unit, standardDeviation));
     return this;
   }
@@ -268,12 +266,11 @@ public class BatchParameterEstimator implements Serializable {
   /**
    * Adds a data point for calibration.
    *
-   * @param conditions operating conditions to apply (path -&gt; value)
+   * @param conditions   operating conditions to apply (path -&gt; value)
    * @param measurements measured values (path -&gt; value)
    * @return this estimator for chaining
    */
-  public BatchParameterEstimator addDataPoint(Map<String, Double> conditions,
-      Map<String, Double> measurements) {
+  public BatchParameterEstimator addDataPoint(Map<String, Double> conditions, Map<String, Double> measurements) {
     dataPoints.add(new DataPoint(conditions, measurements));
     return this;
   }
@@ -303,9 +300,8 @@ public class BatchParameterEstimator implements Serializable {
    * Enables or disables analytical Jacobian computation.
    *
    * <p>
-   * When enabled, uses {@link neqsim.process.util.sensitivity.ProcessSensitivityAnalyzer} for more
-   * efficient derivative computation, potentially reusing Broyden Jacobians from recycle
-   * convergence.
+   * When enabled, uses {@link neqsim.process.util.sensitivity.ProcessSensitivityAnalyzer} for more efficient derivative
+   * computation, potentially reusing Broyden Jacobians from recycle convergence.
    * </p>
    *
    * @param useAnalytical true to use analytical Jacobian
@@ -339,7 +335,7 @@ public class BatchParameterEstimator implements Serializable {
 
     // Solve
     logger.info("Starting Levenberg-Marquardt optimization with {} parameters and {} data points",
-        tunableParameters.size(), dataPoints.size());
+	tunableParameters.size(), dataPoints.size());
 
     optimizer.solve();
 
@@ -350,7 +346,7 @@ public class BatchParameterEstimator implements Serializable {
     lastResult = buildResult();
 
     logger.info("Optimization completed. Converged: {}, Chi-square: {}", lastResult.isConverged(),
-        lastResult.getChiSquare());
+	lastResult.getChiSquare());
 
     return lastResult;
   }
@@ -360,16 +356,15 @@ public class BatchParameterEstimator implements Serializable {
    */
   private void validateConfiguration() {
     if (tunableParameters.isEmpty()) {
-      throw new IllegalStateException("No tunable parameters defined. "
-          + "Use addTunableParameter() to add parameters to estimate.");
+      throw new IllegalStateException(
+	  "No tunable parameters defined. " + "Use addTunableParameter() to add parameters to estimate.");
     }
     if (measuredVariables.isEmpty()) {
       throw new IllegalStateException(
-          "No measured variables defined. " + "Use addMeasuredVariable() to add measurements.");
+	  "No measured variables defined. " + "Use addMeasuredVariable() to add measurements.");
     }
     if (dataPoints.isEmpty()) {
-      throw new IllegalStateException(
-          "No data points defined. " + "Use addDataPoint() to add calibration data.");
+      throw new IllegalStateException("No data points defined. " + "Use addDataPoint() to add calibration data.");
     }
   }
 
@@ -422,25 +417,24 @@ public class BatchParameterEstimator implements Serializable {
       DataPoint dp = dataPoints.get(dpIdx);
 
       for (int measIdx = 0; measIdx < measuredVariables.size(); measIdx++) {
-        MeasuredVariable meas = measuredVariables.get(measIdx);
-        String measPath = meas.getPath();
+	MeasuredVariable meas = measuredVariables.get(measIdx);
+	String measPath = meas.getPath();
 
-        // Get the experimental measurement value
-        Double expValue = dp.getMeasurements().get(measPath);
-        if (expValue == null) {
-          logger.warn("Data point {} missing measurement for {}. Skipping.", dpIdx, measPath);
-          continue;
-        }
+	// Get the experimental measurement value
+	Double expValue = dp.getMeasurements().get(measPath);
+	if (expValue == null) {
+	  logger.warn("Data point {} missing measurement for {}. Skipping.", dpIdx, measPath);
+	  continue;
+	}
 
-        // Create dependent values array: [dataPointIndex, measurementIndex]
-        double[] dependentValues = new double[] {dpIdx, measIdx};
+	// Create dependent values array: [dataPointIndex, measurementIndex]
+	double[] dependentValues = new double[] { dpIdx, measIdx };
 
-        // Create sample value with experimental value, std dev, and dependent values
-        SampleValue sample =
-            new SampleValue(expValue, meas.getStandardDeviation(), dependentValues);
-        sample.setFunction(function);
+	// Create sample value with experimental value, std dev, and dependent values
+	SampleValue sample = new SampleValue(expValue, meas.getStandardDeviation(), dependentValues);
+	sample.setFunction(function);
 
-        samples.add(sample);
+	samples.add(sample);
       }
     }
 
@@ -481,9 +475,8 @@ public class BatchParameterEstimator implements Serializable {
     }
 
     // Get chi-square
-    double chiSquare =
-        optimizer.getSampleSet().getSample(0).getFunction().getSystem() != null ? computeChiSquare()
-            : getChiSquareFromOptimizer();
+    double chiSquare = optimizer.getSampleSet().getSample(0).getFunction().getSystem() != null ? computeChiSquare()
+	: getChiSquareFromOptimizer();
 
     // Get iterations (approximate - L-M doesn't expose this directly)
     int iterations = maxIterations; // Use max as upper bound
@@ -495,8 +488,8 @@ public class BatchParameterEstimator implements Serializable {
     double[] stats = computeAdditionalStatistics();
 
     return new BatchResult(parameterNames, estimates, uncertainties, chiSquare, iterations,
-        dataPoints.size() * measuredVariables.size(), converged, covarianceMatrix,
-        correlationMatrix, stats[0], stats[1], stats[2]);
+	dataPoints.size() * measuredVariables.size(), converged, covarianceMatrix, correlationMatrix, stats[0],
+	stats[1], stats[2]);
   }
 
   /**
@@ -506,8 +499,7 @@ public class BatchParameterEstimator implements Serializable {
    */
   private double getChiSquareFromOptimizer() {
     try {
-      java.lang.reflect.Field field =
-          optimizer.getClass().getSuperclass().getDeclaredField("chiSquare");
+      java.lang.reflect.Field field = optimizer.getClass().getSuperclass().getDeclaredField("chiSquare");
       field.setAccessible(true);
       return field.getDouble(optimizer);
     } catch (Exception e) {
@@ -540,8 +532,8 @@ public class BatchParameterEstimator implements Serializable {
    */
   private double[] getParameterStandardDeviations() {
     try {
-      java.lang.reflect.Field field =
-          optimizer.getClass().getSuperclass().getDeclaredField("parameterStandardDeviation");
+      java.lang.reflect.Field field = optimizer.getClass().getSuperclass()
+	  .getDeclaredField("parameterStandardDeviation");
       field.setAccessible(true);
       return (double[]) field.get(optimizer);
     } catch (Exception e) {
@@ -556,13 +548,12 @@ public class BatchParameterEstimator implements Serializable {
    */
   private double[][] getCoVarianceMatrix() {
     try {
-      java.lang.reflect.Field field =
-          optimizer.getClass().getSuperclass().getDeclaredField("coVarianceMatrix");
+      java.lang.reflect.Field field = optimizer.getClass().getSuperclass().getDeclaredField("coVarianceMatrix");
       field.setAccessible(true);
       Object matrix = field.get(optimizer);
       if (matrix != null) {
-        java.lang.reflect.Method method = matrix.getClass().getMethod("getArrayCopy");
-        return (double[][]) method.invoke(matrix);
+	java.lang.reflect.Method method = matrix.getClass().getMethod("getArrayCopy");
+	return (double[][]) method.invoke(matrix);
       }
     } catch (Exception e) {
       // Ignore
@@ -578,13 +569,13 @@ public class BatchParameterEstimator implements Serializable {
   private double[][] getCorrelationMatrix() {
     try {
       optimizer.calcCorrelationMatrix();
-      java.lang.reflect.Field field =
-          optimizer.getClass().getSuperclass().getDeclaredField("parameterCorrelationMatrix");
+      java.lang.reflect.Field field = optimizer.getClass().getSuperclass()
+	  .getDeclaredField("parameterCorrelationMatrix");
       field.setAccessible(true);
       Object matrix = field.get(optimizer);
       if (matrix != null) {
-        java.lang.reflect.Method method = matrix.getClass().getMethod("getArrayCopy");
-        return (double[][]) method.invoke(matrix);
+	java.lang.reflect.Method method = matrix.getClass().getMethod("getArrayCopy");
+	return (double[][]) method.invoke(matrix);
       }
     } catch (Exception e) {
       // Ignore
@@ -630,7 +621,7 @@ public class BatchParameterEstimator implements Serializable {
     double bias = sumDev / n;
     double rSquared = sumSqTot > 0 ? 1.0 - sumSqRes / sumSqTot : Double.NaN;
 
-    return new double[] {mad, bias, rSquared};
+    return new double[] { mad, bias, rSquared };
   }
 
   // ==================== Results Access ====================

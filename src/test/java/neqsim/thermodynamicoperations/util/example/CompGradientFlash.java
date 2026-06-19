@@ -20,7 +20,7 @@ public class CompGradientFlash {
   private static final Logger logger = LogManager.getLogger(CompGradientFlash.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.

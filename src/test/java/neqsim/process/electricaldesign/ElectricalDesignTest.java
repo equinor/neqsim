@@ -59,7 +59,7 @@ public class ElectricalDesignTest {
 
     // Motor should be sized to next standard rating above 100 * 1.10 = 110 kW
     assertTrue(motor.getRatedPowerKW() >= 110.0,
-        "Motor should be sized above required power: " + motor.getRatedPowerKW());
+	"Motor should be sized above required power: " + motor.getRatedPowerKW());
     assertTrue(motor.getEfficiencyPercent() > 90.0, "Motor efficiency should be above 90%");
     assertTrue(motor.getPowerFactorFL() > 0.7, "Power factor should be reasonable");
     assertNotNull(motor.getFrameSize(), "Frame size should be assigned");
@@ -133,8 +133,7 @@ public class ElectricalDesignTest {
     assertTrue(transformer.getRatedPowerKVA() >= 800.0, "Transformer should cover load");
     assertEquals(11000.0, transformer.getPrimaryVoltageV());
     assertEquals(400.0, transformer.getSecondaryVoltageV());
-    assertTrue(transformer.getEfficiencyPercent() > 95.0,
-        "Transformer efficiency should be above 95%");
+    assertTrue(transformer.getEfficiencyPercent() > 95.0, "Transformer efficiency should be above 95%");
 
     String json = transformer.toJson();
     assertNotNull(json);
@@ -146,8 +145,7 @@ public class ElectricalDesignTest {
     Switchgear switchgear = new Switchgear();
     switchgear.sizeSwitchgear(300.0, 200.0, 400.0, false);
 
-    assertTrue(switchgear.getRatedCurrentA() >= 300.0,
-        "Switchgear rating should cover load current");
+    assertTrue(switchgear.getRatedCurrentA() >= 300.0, "Switchgear rating should cover load current");
     assertNotNull(switchgear.getStarterType());
 
     String json = switchgear.toJson();
@@ -182,7 +180,7 @@ public class ElectricalDesignTest {
 
     assertTrue(elecDesign.getShaftPowerKW() > 0, "Shaft power should be positive after run");
     assertTrue(elecDesign.getElectricalInputKW() >= elecDesign.getShaftPowerKW(),
-        "Electrical input should be >= shaft power");
+	"Electrical input should be >= shaft power");
     assertTrue(elecDesign.getMotor().getRatedPowerKW() > 0, "Motor should be sized");
 
     String json = elecDesign.toJson();
@@ -303,8 +301,7 @@ public class ElectricalDesignTest {
     Separator separator = new Separator("TestSep", testStream);
     separator.run();
 
-    SeparatorElectricalDesign elecDesign =
-        (SeparatorElectricalDesign) separator.getElectricalDesign();
+    SeparatorElectricalDesign elecDesign = (SeparatorElectricalDesign) separator.getElectricalDesign();
     assertNotNull(elecDesign, "Separator should have electrical design");
 
     elecDesign.calcDesign();
@@ -312,8 +309,7 @@ public class ElectricalDesignTest {
     // Separator has no shaft power — only auxiliary loads
     assertEquals(0.0, elecDesign.getShaftPowerKW(), 0.001);
     assertTrue(elecDesign.getTotalAuxiliaryKW() > 0, "Separator should have auxiliary loads");
-    assertTrue(elecDesign.getElectricalInputKW() > 0,
-        "Electrical input should reflect auxiliary loads");
+    assertTrue(elecDesign.getElectricalInputKW() > 0, "Electrical input should reflect auxiliary loads");
     assertEquals(400.0, elecDesign.getRatedVoltageV(), 0.01, "Separator should use 400V");
   }
 
@@ -322,17 +318,14 @@ public class ElectricalDesignTest {
     Separator separator = new Separator("HeatTracedSep", testStream);
     separator.run();
 
-    SeparatorElectricalDesign elecDesign =
-        (SeparatorElectricalDesign) separator.getElectricalDesign();
+    SeparatorElectricalDesign elecDesign = (SeparatorElectricalDesign) separator.getElectricalDesign();
     elecDesign.setHasHeatTracing(true);
     elecDesign.setHeatTracingKW(15.0);
     elecDesign.calcDesign();
 
-    double withoutTracing =
-        elecDesign.getNumberOfControlValves() * elecDesign.getControlValvePowerKW()
-            + elecDesign.getInstrumentationKW() + elecDesign.getLightingKW();
-    assertTrue(elecDesign.getTotalAuxiliaryKW() > withoutTracing,
-        "Heat tracing should add to auxiliary load");
+    double withoutTracing = elecDesign.getNumberOfControlValves() * elecDesign.getControlValvePowerKW()
+	+ elecDesign.getInstrumentationKW() + elecDesign.getLightingKW();
+    assertTrue(elecDesign.getTotalAuxiliaryKW() > withoutTracing, "Heat tracing should add to auxiliary load");
   }
 
   @Test
@@ -341,11 +334,10 @@ public class ElectricalDesignTest {
     heater.setOutTemperature(273.15 + 80.0);
     heater.run();
 
-    HeatExchangerElectricalDesign elecDesign =
-        (HeatExchangerElectricalDesign) heater.getElectricalDesign();
+    HeatExchangerElectricalDesign elecDesign = (HeatExchangerElectricalDesign) heater.getElectricalDesign();
     assertNotNull(elecDesign, "Heater should have electrical design");
-    assertEquals(HeatExchangerElectricalDesign.HeatExchangerType.ELECTRIC_HEATER,
-        elecDesign.getHeatExchangerType(), "Heater should be detected as electric heater");
+    assertEquals(HeatExchangerElectricalDesign.HeatExchangerType.ELECTRIC_HEATER, elecDesign.getHeatExchangerType(),
+	"Heater should be detected as electric heater");
 
     elecDesign.calcDesign();
 
@@ -359,11 +351,10 @@ public class ElectricalDesignTest {
     cooler.setOutTemperature(273.15 + 10.0);
     cooler.run();
 
-    HeatExchangerElectricalDesign elecDesign =
-        (HeatExchangerElectricalDesign) cooler.getElectricalDesign();
+    HeatExchangerElectricalDesign elecDesign = (HeatExchangerElectricalDesign) cooler.getElectricalDesign();
     assertNotNull(elecDesign, "Cooler should have electrical design");
-    assertEquals(HeatExchangerElectricalDesign.HeatExchangerType.AIR_COOLER,
-        elecDesign.getHeatExchangerType(), "Cooler should be detected as air cooler");
+    assertEquals(HeatExchangerElectricalDesign.HeatExchangerType.AIR_COOLER, elecDesign.getHeatExchangerType(),
+	"Cooler should be detected as air cooler");
 
     elecDesign.calcDesign();
 
@@ -378,8 +369,7 @@ public class ElectricalDesignTest {
     cooler.setOutTemperature(273.15 + 10.0);
     cooler.run();
 
-    HeatExchangerElectricalDesign elecDesign =
-        (HeatExchangerElectricalDesign) cooler.getElectricalDesign();
+    HeatExchangerElectricalDesign elecDesign = (HeatExchangerElectricalDesign) cooler.getElectricalDesign();
     elecDesign.setHeatExchangerType(HeatExchangerElectricalDesign.HeatExchangerType.SHELL_AND_TUBE);
     elecDesign.calcDesign();
 
@@ -419,10 +409,8 @@ public class ElectricalDesignTest {
 
     // Heat tracing: 30 W/m * 2000 m = 60 kW
     double expectedTracing = 30.0 * 2000.0 / 1000.0;
-    assertTrue(elecDesign.getTotalAuxiliaryKW() >= expectedTracing,
-        "Heat tracing should contribute 60 kW");
-    assertTrue(elecDesign.getElectricalInputKW() > 0,
-        "Electrical input should include heat tracing");
+    assertTrue(elecDesign.getTotalAuxiliaryKW() >= expectedTracing, "Heat tracing should contribute 60 kW");
+    assertTrue(elecDesign.getElectricalInputKW() > 0, "Electrical input should include heat tracing");
   }
 
   @Test
@@ -450,7 +438,7 @@ public class ElectricalDesignTest {
     assertNotNull(sysDesign, "System electrical design should not be null");
     assertTrue(sysDesign.getTotalProcessLoadKW() > 0, "Total process load should be positive");
     assertTrue(sysDesign.getTotalPlantLoadKW() > sysDesign.getTotalProcessLoadKW(),
-        "Plant load should include utility and UPS");
+	"Plant load should include utility and UPS");
     assertTrue(sysDesign.getMainTransformerKVA() > 0, "Main transformer should be sized");
     assertTrue(sysDesign.getEmergencyGeneratorKVA() > 0, "Emergency generator should be sized");
     assertNotNull(sysDesign.getLoadList(), "Load list should be populated");

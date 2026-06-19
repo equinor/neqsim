@@ -17,21 +17,20 @@ import com.google.gson.GsonBuilder;
  * Monte Carlo + tornado uncertainty analyser tailored to chemistry-package models.
  *
  * <p>
- * Use it to sample MIC, scavenger stoichiometry, kinetic-order, base-corrosion-rate, etc., and
- * report the P10/P50/P90 of an arbitrary scalar output, plus a tornado-style sensitivity ranking.
- * The user provides:
+ * Use it to sample MIC, scavenger stoichiometry, kinetic-order, base-corrosion-rate, etc., and report the P10/P50/P90
+ * of an arbitrary scalar output, plus a tornado-style sensitivity ranking. The user provides:
  * </p>
  * <ol>
- * <li>an ordered list of {@code UncertainParameter} entries (name, distribution sampler, low/base/
- * high for tornado);</li>
- * <li>a model function {@code f(double[] sample) -&gt; double} which receives the sampled values in
- * the same order they were registered and returns the scalar of interest;</li>
+ * <li>an ordered list of {@code UncertainParameter} entries (name, distribution sampler, low/base/ high for
+ * tornado);</li>
+ * <li>a model function {@code f(double[] sample) -&gt; double} which receives the sampled values in the same order they
+ * were registered and returns the scalar of interest;</li>
  * <li>the number of Monte Carlo trials (default 1000).</li>
  * </ol>
  *
  * <p>
- * The class is deliberately framework-light (no NeqSim {@code MonteCarloSimulator} coupling) so it
- * can wrap any {@code evaluate()/get*()} pair from this package without change.
+ * The class is deliberately framework-light (no NeqSim {@code MonteCarloSimulator} coupling) so it can wrap any
+ * {@code evaluate()/get*()} pair from this package without change.
  * </p>
  *
  * @author ESOL
@@ -67,14 +66,13 @@ public class ChemistryUncertaintyAnalyzer implements Serializable {
     /**
      * Builds an uncertain parameter.
      *
-     * @param name display name
+     * @param name    display name
      * @param sampler random sampler
-     * @param low low value (tornado)
-     * @param base base value (tornado)
-     * @param high high value (tornado)
+     * @param low     low value (tornado)
+     * @param base    base value (tornado)
+     * @param high    high value (tornado)
      */
-    public UncertainParameter(String name, DoubleSupplier sampler, double low, double base,
-        double high) {
+    public UncertainParameter(String name, DoubleSupplier sampler, double low, double base, double high) {
       this.name = name;
       this.sampler = sampler;
       this.low = low;
@@ -85,25 +83,24 @@ public class ChemistryUncertaintyAnalyzer implements Serializable {
     /**
      * Builds an uncertain parameter from a triangular distribution defined by low/base/high.
      *
-     * @param name display name
-     * @param low low value
-     * @param base base value
-     * @param high high value
+     * @param name   display name
+     * @param low    low value
+     * @param base   base value
+     * @param high   high value
      * @param random random source
      * @return parameter
      */
-    public static UncertainParameter triangular(String name, double low, double base, double high,
-        Random random) {
+    public static UncertainParameter triangular(String name, double low, double base, double high, Random random) {
       DoubleSupplier sampler = new DoubleSupplier() {
-        @Override
-        public double getAsDouble() {
-          double u = random.nextDouble();
-          double f = (base - low) / (high - low);
-          if (u < f) {
-            return low + Math.sqrt(u * (high - low) * (base - low));
-          }
-          return high - Math.sqrt((1.0 - u) * (high - low) * (high - base));
-        }
+	@Override
+	public double getAsDouble() {
+	  double u = random.nextDouble();
+	  double f = (base - low) / (high - low);
+	  if (u < f) {
+	    return low + Math.sqrt(u * (high - low) * (base - low));
+	  }
+	  return high - Math.sqrt((1.0 - u) * (high - low) * (high - base));
+	}
       };
       return new UncertainParameter(name, sampler, low, base, high);
     }
@@ -181,7 +178,8 @@ public class ChemistryUncertaintyAnalyzer implements Serializable {
   /**
    * Default constructor.
    */
-  public ChemistryUncertaintyAnalyzer() {}
+  public ChemistryUncertaintyAnalyzer() {
+  }
 
   /**
    * Adds an uncertain parameter.
@@ -221,7 +219,7 @@ public class ChemistryUncertaintyAnalyzer implements Serializable {
     double[] sample = new double[parameters.size()];
     for (int i = 0; i < numberOfTrials; i++) {
       for (int j = 0; j < parameters.size(); j++) {
-        sample[j] = parameters.get(j).sample();
+	sample[j] = parameters.get(j).sample();
       }
       outputs[i] = model.applyAsDouble(sample);
     }
@@ -269,7 +267,7 @@ public class ChemistryUncertaintyAnalyzer implements Serializable {
     Collections.sort(tmp, new java.util.Comparator<Map<String, Object>>() {
       @Override
       public int compare(Map<String, Object> a, Map<String, Object> b) {
-        return Double.compare((Double) b.get("swing"), (Double) a.get("swing"));
+	return Double.compare((Double) b.get("swing"), (Double) a.get("swing"));
       }
     });
     tornado.addAll(tmp);
@@ -284,7 +282,7 @@ public class ChemistryUncertaintyAnalyzer implements Serializable {
    * Convenience: scalar map output that picks one key from the model's result map.
    *
    * @param outputKey key to extract
-   * @param mapModel function returning a Map per sample
+   * @param mapModel  function returning a Map per sample
    * @return tornado-ready scalar function
    */
   public static java.util.function.ToDoubleFunction<double[]> mapOutput(final String outputKey,
@@ -292,12 +290,12 @@ public class ChemistryUncertaintyAnalyzer implements Serializable {
     return new java.util.function.ToDoubleFunction<double[]>() {
       @Override
       public double applyAsDouble(double[] x) {
-        Map<String, Object> m = mapModel.apply(x);
-        Object v = m.get(outputKey);
-        if (v == null) {
-          return Double.NaN;
-        }
-        return ((Number) v).doubleValue();
+	Map<String, Object> m = mapModel.apply(x);
+	Object v = m.get(outputKey);
+	if (v == null) {
+	  return Double.NaN;
+	}
+	return ((Number) v).doubleValue();
       }
     };
   }
@@ -306,7 +304,7 @@ public class ChemistryUncertaintyAnalyzer implements Serializable {
    * Linear-interpolation percentile of a sorted array.
    *
    * @param sorted sorted array
-   * @param frac percentile fraction (0-1)
+   * @param frac   percentile fraction (0-1)
    * @return value
    */
   private static double percentile(double[] sorted, double frac) {
@@ -417,7 +415,7 @@ public class ChemistryUncertaintyAnalyzer implements Serializable {
    * Helper to build a triangular sampler with this analyser's seeded random.
    *
    * @param name parameter name
-   * @param low low
+   * @param low  low
    * @param base base
    * @param high high
    * @return uncertain parameter
@@ -444,7 +442,7 @@ public class ChemistryUncertaintyAnalyzer implements Serializable {
     return new DoubleUnaryOperator() {
       @Override
       public double applyAsDouble(double x) {
-        return x;
+	return x;
       }
     };
   }

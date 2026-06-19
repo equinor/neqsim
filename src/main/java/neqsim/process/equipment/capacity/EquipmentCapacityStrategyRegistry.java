@@ -12,9 +12,9 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  * Registry for equipment capacity strategies.
  *
  * <p>
- * This registry maintains a collection of {@link EquipmentCapacityStrategy} implementations and
- * provides lookup functionality to find the appropriate strategy for any given equipment. The
- * registry uses a priority-based selection when multiple strategies support the same equipment.
+ * This registry maintains a collection of {@link EquipmentCapacityStrategy} implementations and provides lookup
+ * functionality to find the appropriate strategy for any given equipment. The registry uses a priority-based selection
+ * when multiple strategies support the same equipment.
  * </p>
  *
  * <p>
@@ -67,9 +67,9 @@ public class EquipmentCapacityStrategyRegistry {
   public static EquipmentCapacityStrategyRegistry getInstance() {
     if (instance == null) {
       synchronized (EquipmentCapacityStrategyRegistry.class) {
-        if (instance == null) {
-          instance = new EquipmentCapacityStrategyRegistry();
-        }
+	if (instance == null) {
+	  instance = new EquipmentCapacityStrategyRegistry();
+	}
       }
     }
     return instance;
@@ -118,8 +118,7 @@ public class EquipmentCapacityStrategyRegistry {
       strategies.removeIf(s -> s.getName().equals(strategy.getName()));
       strategies.add(strategy);
       // Sort by priority (highest first)
-      Collections.sort(strategies,
-          Comparator.comparingInt(EquipmentCapacityStrategy::getPriority).reversed());
+      Collections.sort(strategies, Comparator.comparingInt(EquipmentCapacityStrategy::getPriority).reversed());
       // Clear cache when strategies change
       strategyCache.clear();
     }
@@ -135,7 +134,7 @@ public class EquipmentCapacityStrategyRegistry {
     synchronized (strategies) {
       boolean removed = strategies.removeIf(s -> s.getName().equals(strategyName));
       if (removed) {
-        strategyCache.clear();
+	strategyCache.clear();
       }
       return removed;
     }
@@ -145,8 +144,7 @@ public class EquipmentCapacityStrategyRegistry {
    * Finds the best strategy for the given equipment.
    *
    * <p>
-   * Searches through registered strategies in priority order and returns the first one that
-   * supports the equipment.
+   * Searches through registered strategies in priority order and returns the first one that supports the equipment.
    * </p>
    *
    * @param equipment the equipment to find a strategy for
@@ -167,10 +165,10 @@ public class EquipmentCapacityStrategyRegistry {
     // Find matching strategy
     synchronized (strategies) {
       for (EquipmentCapacityStrategy strategy : strategies) {
-        if (strategy.supports(equipment)) {
-          strategyCache.put(equipmentClass, strategy);
-          return strategy;
-        }
+	if (strategy.supports(equipment)) {
+	  strategyCache.put(equipmentClass, strategy);
+	  return strategy;
+	}
       }
     }
 

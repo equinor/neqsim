@@ -21,11 +21,10 @@ class FlashRunnerTest {
 
   @Test
   void testTPFlash_simpleGas() {
-    String json =
-        "{" + "\"model\": \"SRK\"," + "\"temperature\": {\"value\": 25.0, \"unit\": \"C\"},"
-            + "\"pressure\": {\"value\": 50.0, \"unit\": \"bara\"}," + "\"flashType\": \"TP\","
-            + "\"components\": {\"methane\": 0.85, \"ethane\": 0.10, \"propane\": 0.05},"
-            + "\"mixingRule\": \"classic\"" + "}";
+    String json = "{" + "\"model\": \"SRK\"," + "\"temperature\": {\"value\": 25.0, \"unit\": \"C\"},"
+	+ "\"pressure\": {\"value\": 50.0, \"unit\": \"bara\"}," + "\"flashType\": \"TP\","
+	+ "\"components\": {\"methane\": 0.85, \"ethane\": 0.10, \"propane\": 0.05}," + "\"mixingRule\": \"classic\""
+	+ "}";
 
     String result = FlashRunner.run(json);
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
@@ -40,8 +39,7 @@ class FlashRunnerTest {
     assertTrue(root.has("qualityGate"));
     assertTrue(root.has("warnings"));
     assertTrue(root.getAsJsonObject("validation").get("valid").getAsBoolean());
-    assertEquals("VALIDATED",
-        root.getAsJsonObject("provenance").get("benchmarkTrustLevel").getAsString());
+    assertEquals("VALIDATED", root.getAsJsonObject("provenance").get("benchmarkTrustLevel").getAsString());
 
     // Check flash metadata
     JsonObject flash = root.getAsJsonObject("flash");
@@ -71,7 +69,7 @@ class FlashRunnerTest {
   @Test
   void testTPFlash_prModel() {
     String json = "{" + "\"model\": \"PR\"," + "\"temperature\": 300.0," + "\"pressure\": 10.0,"
-        + "\"components\": {\"methane\": 0.7, \"propane\": 0.3}" + "}";
+	+ "\"components\": {\"methane\": 0.7, \"propane\": 0.3}" + "}";
 
     String result = FlashRunner.run(json);
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
@@ -84,11 +82,9 @@ class FlashRunnerTest {
   @Test
   void testTPFlash_twoPhase() {
     // Low pressure, near bubble - CH4/C3 should split into two phases at 10 bara, -20C
-    String json =
-        "{" + "\"model\": \"SRK\"," + "\"temperature\": {\"value\": -20.0, \"unit\": \"C\"},"
-            + "\"pressure\": {\"value\": 10.0, \"unit\": \"bara\"},"
-            + "\"components\": {\"methane\": 0.5, \"propane\": 0.5},"
-            + "\"mixingRule\": \"classic\"" + "}";
+    String json = "{" + "\"model\": \"SRK\"," + "\"temperature\": {\"value\": -20.0, \"unit\": \"C\"},"
+	+ "\"pressure\": {\"value\": 10.0, \"unit\": \"bara\"},"
+	+ "\"components\": {\"methane\": 0.5, \"propane\": 0.5}," + "\"mixingRule\": \"classic\"" + "}";
 
     String result = FlashRunner.run(json);
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
@@ -100,10 +96,9 @@ class FlashRunnerTest {
 
   @Test
   void testTPFlash_hasTransportProperties() {
-    String json =
-        "{" + "\"model\": \"SRK\"," + "\"temperature\": {\"value\": 25.0, \"unit\": \"C\"},"
-            + "\"pressure\": {\"value\": 50.0, \"unit\": \"bara\"},"
-            + "\"components\": {\"methane\": 0.9, \"ethane\": 0.1}" + "}";
+    String json = "{" + "\"model\": \"SRK\"," + "\"temperature\": {\"value\": 25.0, \"unit\": \"C\"},"
+	+ "\"pressure\": {\"value\": 50.0, \"unit\": \"bara\"}," + "\"components\": {\"methane\": 0.9, \"ethane\": 0.1}"
+	+ "}";
 
     String result = FlashRunner.run(json);
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
@@ -118,11 +113,11 @@ class FlashRunnerTest {
     boolean hasViscosity = false;
     for (String key : properties.keySet()) {
       if (!"overall".equals(key)) {
-        JsonObject phaseProps = properties.getAsJsonObject(key);
-        if (phaseProps.has("viscosity")) {
-          hasViscosity = true;
-          break;
-        }
+	JsonObject phaseProps = properties.getAsJsonObject(key);
+	if (phaseProps.has("viscosity")) {
+	  hasViscosity = true;
+	  break;
+	}
       }
     }
     assertTrue(hasViscosity, "Expected transport properties in phase data");
@@ -134,10 +129,10 @@ class FlashRunnerTest {
   void testPHFlash() {
     // First do a TP flash to get a valid enthalpy, then use it
     String json = "{" + "\"model\": \"SRK\"," + "\"flashType\": \"PH\","
-        + "\"pressure\": {\"value\": 50.0, \"unit\": \"bara\"},"
-        + "\"temperature\": {\"value\": 25.0, \"unit\": \"C\"},"
-        + "\"components\": {\"methane\": 0.9, \"ethane\": 0.1},"
-        + "\"enthalpy\": {\"value\": -5000.0, \"unit\": \"J/mol\"}" + "}";
+	+ "\"pressure\": {\"value\": 50.0, \"unit\": \"bara\"},"
+	+ "\"temperature\": {\"value\": 25.0, \"unit\": \"C\"},"
+	+ "\"components\": {\"methane\": 0.9, \"ethane\": 0.1},"
+	+ "\"enthalpy\": {\"value\": -5000.0, \"unit\": \"J/mol\"}" + "}";
 
     String result = FlashRunner.run(json);
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
@@ -150,7 +145,7 @@ class FlashRunnerTest {
   @Test
   void testPHFlash_missingEnthalpy() {
     String json = "{" + "\"flashType\": \"PH\"," + "\"pressure\": 50.0,"
-        + "\"components\": {\"methane\": 0.9, \"ethane\": 0.1}" + "}";
+	+ "\"components\": {\"methane\": 0.9, \"ethane\": 0.1}" + "}";
 
     String result = FlashRunner.run(json);
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
@@ -165,10 +160,10 @@ class FlashRunnerTest {
   @Test
   void testPSFlash() {
     String json = "{" + "\"model\": \"SRK\"," + "\"flashType\": \"PS\","
-        + "\"pressure\": {\"value\": 50.0, \"unit\": \"bara\"},"
-        + "\"temperature\": {\"value\": 25.0, \"unit\": \"C\"},"
-        + "\"components\": {\"methane\": 0.9, \"ethane\": 0.1},"
-        + "\"entropy\": {\"value\": -30.0, \"unit\": \"J/molK\"}" + "}";
+	+ "\"pressure\": {\"value\": 50.0, \"unit\": \"bara\"},"
+	+ "\"temperature\": {\"value\": 25.0, \"unit\": \"C\"},"
+	+ "\"components\": {\"methane\": 0.9, \"ethane\": 0.1},"
+	+ "\"entropy\": {\"value\": -30.0, \"unit\": \"J/molK\"}" + "}";
 
     String result = FlashRunner.run(json);
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
@@ -180,24 +175,22 @@ class FlashRunnerTest {
   @Test
   void testPSFlash_missingEntropy() {
     String json = "{" + "\"flashType\": \"PS\"," + "\"pressure\": 50.0,"
-        + "\"components\": {\"methane\": 0.9, \"ethane\": 0.1}" + "}";
+	+ "\"components\": {\"methane\": 0.9, \"ethane\": 0.1}" + "}";
 
     String result = FlashRunner.run(json);
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
 
     assertEquals("error", root.get("status").getAsString());
-    assertEquals("MISSING_SPEC",
-        root.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
+    assertEquals("MISSING_SPEC", root.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
   }
 
   // --- Dew/Bubble point tests ---
 
   @Test
   void testDewPointTemperature() {
-    String json = "{" + "\"flashType\": \"dewPointT\","
-        + "\"pressure\": {\"value\": 50.0, \"unit\": \"bara\"},"
-        + "\"temperature\": {\"value\": 25.0, \"unit\": \"C\"},"
-        + "\"components\": {\"methane\": 0.85, \"ethane\": 0.10, \"propane\": 0.05}" + "}";
+    String json = "{" + "\"flashType\": \"dewPointT\"," + "\"pressure\": {\"value\": 50.0, \"unit\": \"bara\"},"
+	+ "\"temperature\": {\"value\": 25.0, \"unit\": \"C\"},"
+	+ "\"components\": {\"methane\": 0.85, \"ethane\": 0.10, \"propane\": 0.05}" + "}";
 
     String result = FlashRunner.run(json);
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
@@ -208,10 +201,9 @@ class FlashRunnerTest {
 
   @Test
   void testBubblePointPressure() {
-    String json = "{" + "\"flashType\": \"bubblePointP\","
-        + "\"temperature\": {\"value\": -50.0, \"unit\": \"C\"},"
-        + "\"pressure\": {\"value\": 30.0, \"unit\": \"bara\"},"
-        + "\"components\": {\"methane\": 0.5, \"ethane\": 0.3, \"propane\": 0.2}" + "}";
+    String json = "{" + "\"flashType\": \"bubblePointP\"," + "\"temperature\": {\"value\": -50.0, \"unit\": \"C\"},"
+	+ "\"pressure\": {\"value\": 30.0, \"unit\": \"bara\"},"
+	+ "\"components\": {\"methane\": 0.5, \"ethane\": 0.3, \"propane\": 0.2}" + "}";
 
     String result = FlashRunner.run(json);
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
@@ -231,8 +223,7 @@ class FlashRunnerTest {
     assertEquals("1.0", root.get("apiVersion").getAsString());
     assertTrue(root.has("validation"));
     assertTrue(root.has("qualityGate"));
-    assertEquals("INPUT_ERROR",
-        root.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
+    assertEquals("INPUT_ERROR", root.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
   }
 
   @Test
@@ -249,8 +240,7 @@ class FlashRunnerTest {
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
 
     assertEquals("error", root.get("status").getAsString());
-    assertEquals("JSON_PARSE_ERROR",
-        root.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
+    assertEquals("JSON_PARSE_ERROR", root.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
   }
 
   @Test
@@ -261,7 +251,7 @@ class FlashRunnerTest {
 
     assertEquals("error", root.get("status").getAsString());
     assertEquals("MISSING_COMPONENTS",
-        root.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
+	root.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
   }
 
   @Test
@@ -272,8 +262,7 @@ class FlashRunnerTest {
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
 
     assertEquals("error", root.get("status").getAsString());
-    assertEquals("UNKNOWN_MODEL",
-        root.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
+    assertEquals("UNKNOWN_MODEL", root.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
   }
 
   @Test
@@ -285,7 +274,7 @@ class FlashRunnerTest {
 
     assertEquals("error", root.get("status").getAsString());
     assertEquals("UNKNOWN_FLASH_TYPE",
-        root.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
+	root.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
   }
 
   @Test
@@ -296,8 +285,7 @@ class FlashRunnerTest {
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
 
     assertEquals("error", root.get("status").getAsString());
-    String message =
-        root.getAsJsonArray("errors").get(0).getAsJsonObject().get("message").getAsString();
+    String message = root.getAsJsonArray("errors").get(0).getAsJsonObject().get("message").getAsString();
     assertTrue(message.contains("metane"), "Error should mention the bad name");
     assertTrue(message.contains("methane"), "Error should suggest the correct name");
   }
@@ -311,16 +299,14 @@ class FlashRunnerTest {
 
   @Test
   void testTemperatureParsing_celsius() {
-    assertEquals(298.15,
-        FlashRunner.parseTemperature(JsonParser.parseString("{\"value\": 25.0, \"unit\": \"C\"}")),
-        0.01);
+    assertEquals(298.15, FlashRunner.parseTemperature(JsonParser.parseString("{\"value\": 25.0, \"unit\": \"C\"}")),
+	0.01);
   }
 
   @Test
   void testTemperatureParsing_fahrenheit() {
-    assertEquals(373.15,
-        FlashRunner.parseTemperature(JsonParser.parseString("{\"value\": 212.0, \"unit\": \"F\"}")),
-        0.1);
+    assertEquals(373.15, FlashRunner.parseTemperature(JsonParser.parseString("{\"value\": 212.0, \"unit\": \"F\"}")),
+	0.1);
   }
 
   @Test
@@ -330,16 +316,13 @@ class FlashRunnerTest {
 
   @Test
   void testPressureParsing_psi() {
-    assertEquals(6.89476,
-        FlashRunner.parsePressure(JsonParser.parseString("{\"value\": 100.0, \"unit\": \"psi\"}")),
-        0.01);
+    assertEquals(6.89476, FlashRunner.parsePressure(JsonParser.parseString("{\"value\": 100.0, \"unit\": \"psi\"}")),
+	0.01);
   }
 
   @Test
   void testPressureParsing_MPa() {
-    assertEquals(10.0,
-        FlashRunner.parsePressure(JsonParser.parseString("{\"value\": 1.0, \"unit\": \"MPa\"}")),
-        0.01);
+    assertEquals(10.0, FlashRunner.parsePressure(JsonParser.parseString("{\"value\": 1.0, \"unit\": \"MPa\"}")), 0.01);
   }
 
   // --- Utility method tests ---
@@ -366,13 +349,12 @@ class FlashRunnerTest {
   @Test
   void testTVFlash_missingVolume() {
     String json = "{" + "\"flashType\": \"TV\"," + "\"temperature\": 300.0,"
-        + "\"components\": {\"methane\": 0.9, \"ethane\": 0.1}" + "}";
+	+ "\"components\": {\"methane\": 0.9, \"ethane\": 0.1}" + "}";
 
     String result = FlashRunner.run(json);
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
 
     assertEquals("error", root.get("status").getAsString());
-    assertEquals("MISSING_SPEC",
-        root.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
+    assertEquals("MISSING_SPEC", root.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
   }
 }

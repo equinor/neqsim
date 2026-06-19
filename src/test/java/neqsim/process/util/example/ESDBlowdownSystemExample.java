@@ -17,8 +17,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Example demonstrating Emergency Shutdown (ESD) system with Control Valve, ESD Valve, Blowdown
- * Valve and Push Button.
+ * Example demonstrating Emergency Shutdown (ESD) system with Control Valve, ESD Valve, Blowdown Valve and Push Button.
  *
  * <p>
  * This example shows:
@@ -38,7 +37,6 @@ import org.apache.logging.log4j.Logger;
  */
 public class ESDBlowdownSystemExample {
   private static final Logger logger = LogManager.getLogger(ESDBlowdownSystemExample.class);
-
 
   /**
    * Main method to run the ESD blowdown system example.
@@ -91,7 +89,7 @@ public class ESDBlowdownSystemExample {
 
     // Splitter to divide gas between process and blowdown
     Splitter gasSplitter = new Splitter("Gas Splitter", separatorGasOut, 2);
-    gasSplitter.setSplitFactors(new double[] {1.0, 0.0}); // Initially all to process
+    gasSplitter.setSplitFactors(new double[] { 1.0, 0.0 }); // Initially all to process
 
     Stream processStream = new Stream("To Process", gasSplitter.getSplitStream(0));
     Stream blowdownStream = new Stream("To Blowdown", gasSplitter.getSplitStream(1));
@@ -138,7 +136,6 @@ public class ESDBlowdownSystemExample {
     logger.info("BD orifice: D=0.4m, d=0.05m, Cd=0.61 (beta=0.125, restrictive)");
     logger.info("Flare header: 1.5 bara");
 
-
     // Run initial steady state - normal operation
     logger.info("═══ NORMAL OPERATION ═══");
     feedStream.run();
@@ -153,23 +150,20 @@ public class ESDBlowdownSystemExample {
     blowdownStream.run();
     bdValve.run();
 
-    logger.printf(org.apache.logging.log4j.Level.INFO,
-        "Control valve: %.1f%% open, outlet P=%.2f bara%n", controlValve.getPercentValveOpening(),
-        afterControlValve.getPressure("bara"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Control valve: %.1f%% open, outlet P=%.2f bara%n",
+	controlValve.getPercentValveOpening(), afterControlValve.getPressure("bara"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "ESD inlet valve: %s, %.1f%% open%n",
-        esdInletValve.isEnergized() ? "ENERGIZED" : "DE-ENERGIZED",
-        esdInletValve.getPercentValveOpening());
+	esdInletValve.isEnergized() ? "ENERGIZED" : "DE-ENERGIZED", esdInletValve.getPercentValveOpening());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Separator inlet flow: %.1f kg/hr%n",
-        separatorInlet.getFlowRate("kg/hr"));
+	separatorInlet.getFlowRate("kg/hr"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Process flow: %.1f kg/hr%n",
-        processStream.getFlowRate("kg/hr"));
+	processStream.getFlowRate("kg/hr"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Blowdown flow: %.1f kg/hr%n",
-        blowdownStream.getFlowRate("kg/hr"));
+	blowdownStream.getFlowRate("kg/hr"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "BD valve state: %s%n",
-        bdValve.isActivated() ? "ACTIVATED" : "NOT ACTIVATED");
+	bdValve.isActivated() ? "ACTIVATED" : "NOT ACTIVATED");
     logger.printf(org.apache.logging.log4j.Level.INFO, "ESD button state: %s%n",
-        esdButton.isPushed() ? "PUSHED" : "NOT PUSHED");
-
+	esdButton.isPushed() ? "PUSHED" : "NOT PUSHED");
 
     // Simulate ESD activation - operator pushes button
     logger.info("═══ EMERGENCY SHUTDOWN ACTIVATED ═══");
@@ -182,27 +176,24 @@ public class ESDBlowdownSystemExample {
     esdInletValve.trip();
 
     // Redirect flow to blowdown
-    gasSplitter.setSplitFactors(new double[] {0.0, 1.0});
+    gasSplitter.setSplitFactors(new double[] { 0.0, 1.0 });
 
     // Now switch separator to dynamic/transient mode
     separator.setCalculateSteadyState(false);
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "ESD button state: %s%n",
-        esdButton.isPushed() ? "PUSHED" : "NOT PUSHED");
+	esdButton.isPushed() ? "PUSHED" : "NOT PUSHED");
     logger.printf(org.apache.logging.log4j.Level.INFO, "ESD inlet valve: %s%n",
-        esdInletValve.isClosing() ? "CLOSING" : "CLOSED");
+	esdInletValve.isClosing() ? "CLOSING" : "CLOSED");
     logger.printf(org.apache.logging.log4j.Level.INFO, "ESD inlet valve opening: %.1f%%%n",
-        esdInletValve.getPercentValveOpening());
+	esdInletValve.getPercentValveOpening());
     logger.printf(org.apache.logging.log4j.Level.INFO, "BD valve activated: %s%n",
-        bdValve.isActivated() ? "YES" : "NO");
-
+	bdValve.isActivated() ? "YES" : "NO");
 
     // Simulate blowdown over time with pressure monitoring
     logger.info("═══ BLOWDOWN SIMULATION WITH COORDINATED VALVE OPERATION ═══");
-    logger.info(
-        "Time (s) | Sep Press (bara) | ESD Valve (%) | BD Opening (%) | BD Flow (kg/hr) | Flare Heat (MW)");
-    logger.info(
-        "---------|------------------|---------------|----------------|-----------------|----------------");
+    logger.info("Time (s) | Sep Press (bara) | ESD Valve (%) | BD Opening (%) | BD Flow (kg/hr) | Flare Heat (MW)");
+    logger.info("---------|------------------|---------------|----------------|-----------------|----------------");
 
     double timeStep = 1.0;
     double totalTime = 20.0;
@@ -219,22 +210,22 @@ public class ESDBlowdownSystemExample {
 
       // Control feed flow based on inlet valve position
       if (esdInletValve.getPercentValveOpening() < 1.0) {
-        // Inlet valve closed - minimal purge flow to avoid numerical issues
-        separatorInlet.getThermoSystem().setTotalFlowRate(0.1, "kg/hr");
+	// Inlet valve closed - minimal purge flow to avoid numerical issues
+	separatorInlet.getThermoSystem().setTotalFlowRate(0.1, "kg/hr");
       } else {
-        // Inlet valve open - run normally
-        feedStream.run();
-        controlValve.run();
-        afterControlValve.run();
-        esdInletValve.run();
-        separatorInlet.run();
+	// Inlet valve open - run normally
+	feedStream.run();
+	controlValve.run();
+	afterControlValve.run();
+	esdInletValve.run();
+	separatorInlet.run();
       }
 
       // Run equipment with transient simulation for separator (after ESD)
       if (separator.getCalculateSteadyState()) {
-        separator.run();
+	separator.run();
       } else {
-        separator.runTransient(timeStep, java.util.UUID.randomUUID());
+	separator.runTransient(timeStep, java.util.UUID.randomUUID());
       }
       separatorGasOut.run();
       gasSplitter.run();
@@ -253,42 +244,33 @@ public class ESDBlowdownSystemExample {
       minPressure = Math.min(minPressure, currentPressure);
       maxPressure = Math.max(maxPressure, currentPressure);
       if (time == totalTime) {
-        pressureAtEnd = currentPressure;
+	pressureAtEnd = currentPressure;
       }
 
-      logger.printf(org.apache.logging.log4j.Level.INFO,
-          "%8.1f | %16.2f | %13.1f | %14.1f | %15.1f | %15.2f%n", time, currentPressure,
-          esdInletValve.getPercentValveOpening(), bdValve.getPercentValveOpening(),
-          toFlare.getFlowRate("kg/hr"), flare.getHeatDuty("MW"));
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%8.1f | %16.2f | %13.1f | %14.1f | %15.1f | %15.2f%n", time,
+	  currentPressure, esdInletValve.getPercentValveOpening(), bdValve.getPercentValveOpening(),
+	  toFlare.getFlowRate("kg/hr"), flare.getHeatDuty("MW"));
     }
-
 
     logger.info("═══ BLOWDOWN SUMMARY ═══");
     logger.printf(org.apache.logging.log4j.Level.INFO, "ESD inlet valve: %s (%.1f%% open)%n",
-        esdInletValve.hasTripCompleted() ? "TRIP COMPLETED" : "CLOSING",
-        esdInletValve.getPercentValveOpening());
+	esdInletValve.hasTripCompleted() ? "TRIP COMPLETED" : "CLOSING", esdInletValve.getPercentValveOpening());
     logger.printf(org.apache.logging.log4j.Level.INFO, "BD valve final opening: %.1f%%%n",
-        bdValve.getPercentValveOpening());
+	bdValve.getPercentValveOpening());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Total gas blown down: %.1f kg%n",
-        flare.getCumulativeGasBurned("kg"));
+	flare.getCumulativeGasBurned("kg"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Total heat released: %.2f GJ%n",
-        flare.getCumulativeHeatReleased("GJ"));
+	flare.getCumulativeHeatReleased("GJ"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Total CO2 emissions: %.1f kg%n",
-        flare.getCumulativeCO2Emission("kg"));
-
+	flare.getCumulativeCO2Emission("kg"));
 
     logger.info("═══ PRESSURE RELIEF VERIFICATION ═══");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Initial separator pressure: %.2f bara%n",
-        initialPressure);
-    logger.printf(org.apache.logging.log4j.Level.INFO,
-        "Minimum pressure during blowdown: %.2f bara%n", minPressure);
-    logger.printf(org.apache.logging.log4j.Level.INFO,
-        "Maximum pressure during blowdown: %.2f bara%n", maxPressure);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Final separator pressure: %.2f bara%n",
-        pressureAtEnd);
-    logger.printf(org.apache.logging.log4j.Level.INFO,
-        "Pressure drop: %.2f bar (%.1f%% reduction)%n", initialPressure - pressureAtEnd,
-        100.0 * (initialPressure - pressureAtEnd) / initialPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Initial separator pressure: %.2f bara%n", initialPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Minimum pressure during blowdown: %.2f bara%n", minPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Maximum pressure during blowdown: %.2f bara%n", maxPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Final separator pressure: %.2f bara%n", pressureAtEnd);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Pressure drop: %.2f bar (%.1f%% reduction)%n",
+	initialPressure - pressureAtEnd, 100.0 * (initialPressure - pressureAtEnd) / initialPressure);
 
     // Verification checks
     if (esdInletValve.hasTripCompleted() && esdInletValve.getPercentValveOpening() < 1.0) {
@@ -315,13 +297,11 @@ public class ESDBlowdownSystemExample {
       logger.info("✗ WARNING: No gas flow to flare detected");
     }
 
-
     logger.info("═══ SYSTEM STATUS ═══");
     logger.info(esdButton.toString());
     logger.info(controlValve.toString());
     logger.info(esdInletValve.toString());
     logger.info(bdValve.toString());
-
 
     logger.info("╔════════════════════════════════════════════════════════════════╗");
     logger.info("║              ESD BLOWDOWN EXAMPLE COMPLETED                    ║");

@@ -16,9 +16,7 @@ public class MecMeshSection extends SepDesignSection {
    * Constructor for MecMeshSection.
    * </p>
    *
-   * @param separatorSection a
-   *                         {@link neqsim.process.equipment.separator.sectiontype.SeparatorSection}
-   *                         object
+   * @param separatorSection a {@link neqsim.process.equipment.separator.sectiontype.SeparatorSection} object
    */
   public MecMeshSection(SeparatorSection separatorSection) {
     super(separatorSection);

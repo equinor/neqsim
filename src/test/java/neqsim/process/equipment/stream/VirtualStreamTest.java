@@ -44,7 +44,7 @@ public class VirtualStreamTest {
 
   @Test
   void testSetComposition() {
-    virtStream.setComposition(new double[] {0.6, 0.4}, "molefrac");
+    virtStream.setComposition(new double[] { 0.6, 0.4 }, "molefrac");
     virtStream.run();
     assertEquals(0.6, virtStream.getOutStream().getFluid().getComponent(0).getx(), 1e-6);
   }

@@ -5,8 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Node in a fault tree — either a basic event (with a probability) or a gate (AND / OR / VOTING)
- * with child nodes.
+ * Node in a fault tree — either a basic event (with a probability) or a gate (AND / OR / VOTING) with child nodes.
  *
  * <p>
  * Build trees programmatically via static factory methods and pass the root to
@@ -40,7 +39,7 @@ public class FaultTreeNode implements Serializable {
   /**
    * Create a basic event leaf.
    *
-   * @param name basic event name / ID
+   * @param name        basic event name / ID
    * @param probability failure probability
    * @return new basic-event node
    */
@@ -54,7 +53,7 @@ public class FaultTreeNode implements Serializable {
   /**
    * Create an AND gate (top fails only if all children fail).
    *
-   * @param name gate description
+   * @param name     gate description
    * @param children child nodes
    * @return new AND-gate node
    */
@@ -69,7 +68,7 @@ public class FaultTreeNode implements Serializable {
   /**
    * Create an OR gate (top fails if any child fails).
    *
-   * @param name gate description
+   * @param name     gate description
    * @param children child nodes
    * @return new OR-gate node
    */
@@ -84,8 +83,8 @@ public class FaultTreeNode implements Serializable {
   /**
    * Create a k-of-n voting gate.
    *
-   * @param name gate description
-   * @param k number of failed inputs that triggers gate
+   * @param name     gate description
+   * @param k        number of failed inputs that triggers gate
    * @param children child nodes (n)
    * @return new voting-gate node
    */

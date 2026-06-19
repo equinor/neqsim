@@ -19,13 +19,11 @@ class SafetySystemPerformanceRunnerTest {
    */
   @Test
   void testCatalogExampleRuns() {
-    String result = SafetySystemPerformanceRunner
-        .run(ExampleCatalog.getExample("safety", "safety-system-performance"));
+    String result = SafetySystemPerformanceRunner.run(ExampleCatalog.getExample("safety", "safety-system-performance"));
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
 
     assertEquals("success", obj.get("status").getAsString());
-    assertEquals("PASS_WITH_WARNINGS",
-        obj.getAsJsonObject("summary").get("overallVerdict").getAsString());
+    assertEquals("PASS_WITH_WARNINGS", obj.getAsJsonObject("summary").get("overallVerdict").getAsString());
     assertTrue(obj.getAsJsonObject("performanceReport").has("assessments"));
     assertTrue(obj.getAsJsonObject("standardsTemplates").has("NORSOK-S-001"));
     assertTrue(obj.getAsJsonObject("stidExtractionTemplates").has("causeAndEffect"));
@@ -36,8 +34,7 @@ class SafetySystemPerformanceRunnerTest {
    */
   @Test
   void testInvalidJsonReturnsError() {
-    JsonObject obj =
-        JsonParser.parseString(SafetySystemPerformanceRunner.run("not-json")).getAsJsonObject();
+    JsonObject obj = JsonParser.parseString(SafetySystemPerformanceRunner.run("not-json")).getAsJsonObject();
     assertEquals("error", obj.get("status").getAsString());
   }
 

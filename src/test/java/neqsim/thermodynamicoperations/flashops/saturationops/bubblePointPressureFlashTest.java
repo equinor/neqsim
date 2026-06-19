@@ -11,7 +11,7 @@ public class bubblePointPressureFlashTest {
   private static final Logger logger = LogManager.getLogger(bubblePointPressureFlashTest.class);
 
   /** Logger object for class. */
-  
+
   @Test
   void testRun() {
     SystemSrkEos fluid0_HC = new SystemSrkEos();

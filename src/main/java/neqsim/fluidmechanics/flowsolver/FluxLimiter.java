@@ -4,13 +4,12 @@ package neqsim.fluidmechanics.flowsolver;
  * Flux limiter functions for TVD (Total Variation Diminishing) advection schemes.
  *
  * <p>
- * Flux limiters prevent oscillations in higher-order schemes by reducing the scheme to first-order
- * near discontinuities while maintaining second-order accuracy in smooth regions.
+ * Flux limiters prevent oscillations in higher-order schemes by reducing the scheme to first-order near discontinuities
+ * while maintaining second-order accuracy in smooth regions.
  * </p>
  *
  * <p>
- * The limiter function φ(r) where r is the ratio of consecutive gradients: r = (φ_i - φ_{i-1}) /
- * (φ_{i+1} - φ_i)
+ * The limiter function φ(r) where r is the ratio of consecutive gradients: r = (φ_i - φ_{i-1}) / (φ_{i+1} - φ_i)
  * </p>
  *
  * <p>
@@ -22,7 +21,8 @@ package neqsim.fluidmechanics.flowsolver;
 public final class FluxLimiter {
 
   /** Private constructor to prevent instantiation. */
-  private FluxLimiter() {}
+  private FluxLimiter() {
+  }
 
   /**
    * Calculate the gradient ratio r for TVD schemes.
@@ -31,8 +31,8 @@ public final class FluxLimiter {
    * r = (φ_i - φ_{i-1}) / (φ_{i+1} - φ_i) for positive flow
    * </p>
    *
-   * @param phiUpstream value at upstream node (i-1)
-   * @param phiCenter value at center node (i)
+   * @param phiUpstream   value at upstream node (i-1)
+   * @param phiCenter     value at center node (i)
    * @param phiDownstream value at downstream node (i+1)
    * @return gradient ratio r
    */
@@ -43,7 +43,7 @@ public final class FluxLimiter {
     // Avoid division by zero
     if (Math.abs(denominator) < 1e-15) {
       if (Math.abs(numerator) < 1e-15) {
-        return 1.0; // Uniform field
+	return 1.0; // Uniform field
       }
       return numerator > 0 ? 1e10 : -1e10;
     }
@@ -101,8 +101,7 @@ public final class FluxLimiter {
    * </p>
    *
    * <p>
-   * Least diffusive symmetric TVD limiter. Best for sharp fronts but may be too compressive for
-   * smooth solutions.
+   * Least diffusive symmetric TVD limiter. Best for sharp fronts but may be too compressive for smooth solutions.
    * </p>
    *
    * @param r gradient ratio
@@ -161,22 +160,22 @@ public final class FluxLimiter {
    * Get the flux limiter value for a given advection scheme.
    *
    * @param scheme the advection scheme
-   * @param r gradient ratio
+   * @param r      gradient ratio
    * @return limiter value
    */
   public static double getLimiterValue(AdvectionScheme scheme, double r) {
     switch (scheme) {
-      case TVD_MINMOD:
-        return minmod(r);
-      case TVD_VAN_LEER:
-      case MUSCL_VAN_LEER:
-        return vanLeer(r);
-      case TVD_SUPERBEE:
-        return superbee(r);
-      case TVD_VAN_ALBADA:
-        return vanAlbada(r);
-      default:
-        return 0.0; // No limiting for non-TVD schemes
+    case TVD_MINMOD:
+      return minmod(r);
+    case TVD_VAN_LEER:
+    case MUSCL_VAN_LEER:
+      return vanLeer(r);
+    case TVD_SUPERBEE:
+      return superbee(r);
+    case TVD_VAN_ALBADA:
+      return vanAlbada(r);
+    default:
+      return 0.0; // No limiting for non-TVD schemes
     }
   }
 

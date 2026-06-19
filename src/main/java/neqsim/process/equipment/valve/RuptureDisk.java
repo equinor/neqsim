@@ -8,9 +8,8 @@ import neqsim.process.equipment.stream.StreamInterface;
  * </p>
  *
  * <p>
- * A rupture disk is a non-reclosing pressure relief device that bursts at a set pressure and
- * remains fully open. Unlike a safety valve, a rupture disk is a one-time use device that cannot
- * reseat after activation.
+ * A rupture disk is a non-reclosing pressure relief device that bursts at a set pressure and remains fully open. Unlike
+ * a safety valve, a rupture disk is a one-time use device that cannot reseat after activation.
  * </p>
  *
  * <p>
@@ -48,7 +47,7 @@ public class RuptureDisk extends ThrottlingValve {
    * Constructor for RuptureDisk.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name        a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.Stream} object
    */
   public RuptureDisk(String name, StreamInterface inletStream) {
@@ -113,8 +112,8 @@ public class RuptureDisk extends ThrottlingValve {
   }
 
   /**
-   * Reset the rupture disk to unruptured state (for simulation purposes only - in reality, the disk
-   * must be physically replaced).
+   * Reset the rupture disk to unruptured state (for simulation purposes only - in reality, the disk must be physically
+   * replaced).
    */
   public void reset() {
     hasRuptured = false;
@@ -130,26 +129,26 @@ public class RuptureDisk extends ThrottlingValve {
       double opening;
 
       if (!hasRuptured) {
-        // Disk has not ruptured yet - check if burst pressure is exceeded
-        if (inletPressure < burstPressure) {
-          // Below burst pressure - stay closed
-          opening = 0.0;
-        } else {
-          // Burst pressure exceeded - disk ruptures
-          hasRuptured = true;
+	// Disk has not ruptured yet - check if burst pressure is exceeded
+	if (inletPressure < burstPressure) {
+	  // Below burst pressure - stay closed
+	  opening = 0.0;
+	} else {
+	  // Burst pressure exceeded - disk ruptures
+	  hasRuptured = true;
 
-          if (inletPressure >= fullOpenPressure) {
-            // Fully open immediately
-            opening = 100.0;
-          } else {
-            // Rapid opening between burst and full open pressure
-            opening = 100.0 * (inletPressure - burstPressure) / (fullOpenPressure - burstPressure);
-          }
-        }
+	  if (inletPressure >= fullOpenPressure) {
+	    // Fully open immediately
+	    opening = 100.0;
+	  } else {
+	    // Rapid opening between burst and full open pressure
+	    opening = 100.0 * (inletPressure - burstPressure) / (fullOpenPressure - burstPressure);
+	  }
+	}
       } else {
-        // Disk has already ruptured - remains fully open regardless of pressure
-        // This is the key difference from a safety valve
-        opening = 100.0;
+	// Disk has already ruptured - remains fully open regardless of pressure
+	// This is the key difference from a safety valve
+	opening = 100.0;
       }
 
       // Set the calculated opening
@@ -168,12 +167,12 @@ public class RuptureDisk extends ThrottlingValve {
       double inletPressure = getInletStream().getPressure("bara");
 
       if (!hasRuptured && inletPressure >= burstPressure) {
-        hasRuptured = true;
-        setPercentValveOpening(100.0);
+	hasRuptured = true;
+	setPercentValveOpening(100.0);
       } else if (hasRuptured) {
-        setPercentValveOpening(100.0);
+	setPercentValveOpening(100.0);
       } else {
-        setPercentValveOpening(0.0);
+	setPercentValveOpening(0.0);
       }
     }
 

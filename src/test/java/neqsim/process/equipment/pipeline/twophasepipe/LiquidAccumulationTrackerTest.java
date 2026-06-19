@@ -32,7 +32,7 @@ class LiquidAccumulationTrackerTest {
     // Profile: flat -> down -> up -> flat
     // Elevations: 0, 0, -5, -10, -10, -5, 0, 0, 0, 0
     sections = new PipeSection[10];
-    double[] elevations = {0, 0, -5, -10, -10, -5, 0, 0, 0, 0};
+    double[] elevations = { 0, 0, -5, -10, -10, -5, 0, 0, 0, 0 };
 
     for (int i = 0; i < 10; i++) {
       sections[i] = new PipeSection(i * 100, 100, 0.3, 0);
@@ -41,8 +41,8 @@ class LiquidAccumulationTrackerTest {
 
       // Set inclination
       if (i > 0) {
-        double dz = elevations[i] - elevations[i - 1];
-        sections[i].setInclination(Math.atan2(dz, 100));
+	double dz = elevations[i] - elevations[i - 1];
+	sections[i].setInclination(Math.atan2(dz, 100));
       }
 
       // Set fluid properties
@@ -71,8 +71,7 @@ class LiquidAccumulationTrackerTest {
     assertFalse(zones.isEmpty(), "Should identify at least one accumulation zone");
 
     // Check that section 3 or 4 is marked as low point
-    assertTrue(sections[3].isLowPoint() || sections[4].isLowPoint(),
-        "Low point should be at sections 3 or 4");
+    assertTrue(sections[3].isLowPoint() || sections[4].isLowPoint(), "Low point should be at sections 3 or 4");
   }
 
   @Test
@@ -173,12 +172,12 @@ class LiquidAccumulationTrackerTest {
   @Test
   void testMultipleLowPoints() {
     // Create pipeline with two low points
-    double[] elevations = {0, -5, 0, -5, 0, 0, 0, 0, 0, 0};
+    double[] elevations = { 0, -5, 0, -5, 0, 0, 0, 0, 0, 0 };
     for (int i = 0; i < 10; i++) {
       sections[i].setElevation(elevations[i]);
       if (i > 0) {
-        double dz = elevations[i] - elevations[i - 1];
-        sections[i].setInclination(Math.atan2(dz, 100));
+	double dz = elevations[i] - elevations[i - 1];
+	sections[i].setInclination(Math.atan2(dz, 100));
       }
     }
 

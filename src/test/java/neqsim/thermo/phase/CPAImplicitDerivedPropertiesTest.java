@@ -11,12 +11,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Tests verifying that derived thermodynamic properties (enthalpy, entropy, Cp, fugacity
- * coefficients, fugacity derivatives) match between fully implicit and standard CPA solver.
+ * Tests verifying that derived thermodynamic properties (enthalpy, entropy, Cp, fugacity coefficients, fugacity
+ * derivatives) match between fully implicit and standard CPA solver.
  *
  * <p>
- * This ensures the finalization step (solveX, initCPAMatrix, calcdFdNtemp) correctly sets all
- * derivatives that feed into property calculations downstream.
+ * This ensures the finalization step (solveX, initCPAMatrix, calcdFdNtemp) correctly sets all derivatives that feed
+ * into property calculations downstream.
  * </p>
  *
  * @author Even Solbraa
@@ -24,7 +24,6 @@ import org.apache.logging.log4j.Logger;
  */
 class CPAImplicitDerivedPropertiesTest extends neqsim.NeqSimTest {
   private static final Logger logger = LogManager.getLogger(CPAImplicitDerivedPropertiesTest.class);
-
 
   /** Relative tolerance for property comparison. */
   private static final double REL_TOL = 1.0e-6;
@@ -140,13 +139,12 @@ class CPAImplicitDerivedPropertiesTest extends neqsim.NeqSimTest {
       String phName = standard.getPhase(p).getType().toString();
       int nComp = standard.getPhase(p).getNumberOfComponents();
       for (int c = 0; c < nComp; c++) {
-        double fugStd = standard.getPhase(p).getComponent(c).getFugacityCoefficient();
-        double fugImpl = implicit.getPhase(p).getComponent(c).getFugacityCoefficient();
-        String compName = standard.getPhase(p).getComponent(c).getComponentName();
+	double fugStd = standard.getPhase(p).getComponent(c).getFugacityCoefficient();
+	double fugImpl = implicit.getPhase(p).getComponent(c).getFugacityCoefficient();
+	String compName = standard.getPhase(p).getComponent(c).getComponentName();
 
-        double tolerance = Math.max(Math.abs(fugStd) * REL_TOL, 1.0e-12);
-        assertEquals(fugStd, fugImpl, tolerance,
-            phName + "/" + compName + " fugacity coefficient mismatch");
+	double tolerance = Math.max(Math.abs(fugStd) * REL_TOL, 1.0e-12);
+	assertEquals(fugStd, fugImpl, tolerance, phName + "/" + compName + " fugacity coefficient mismatch");
       }
     }
     logger.info("Fugacity coefficients: ALL MATCH within " + REL_TOL);
@@ -179,52 +177,52 @@ class CPAImplicitDerivedPropertiesTest extends neqsim.NeqSimTest {
       int nComp = standard.getPhase(p).getNumberOfComponents();
 
       for (int c = 0; c < nComp; c++) {
-        String compName = standard.getPhase(p).getComponent(c).getComponentName();
+	String compName = standard.getPhase(p).getComponent(c).getComponentName();
 
-        // dfugdp
-        double dfugdpStd = standard.getPhase(p).getComponent(c).getdfugdp();
-        double dfugdpImpl = implicit.getPhase(p).getComponent(c).getdfugdp();
-        double tolP = Math.max(Math.abs(dfugdpStd) * REL_TOL, 1.0e-15);
-        totalChecks++;
-        if (Math.abs(dfugdpStd - dfugdpImpl) > tolP) {
-          logger.printf(org.apache.logging.log4j.Level.INFO, "  MISMATCH %s/%s dfugdp: std=%.8e impl=%.8e diff=%.2e%n", phName,
-              compName, dfugdpStd, dfugdpImpl, Math.abs(dfugdpStd - dfugdpImpl));
-          failCount++;
-          allMatch = false;
-        }
+	// dfugdp
+	double dfugdpStd = standard.getPhase(p).getComponent(c).getdfugdp();
+	double dfugdpImpl = implicit.getPhase(p).getComponent(c).getdfugdp();
+	double tolP = Math.max(Math.abs(dfugdpStd) * REL_TOL, 1.0e-15);
+	totalChecks++;
+	if (Math.abs(dfugdpStd - dfugdpImpl) > tolP) {
+	  logger.printf(org.apache.logging.log4j.Level.INFO, "  MISMATCH %s/%s dfugdp: std=%.8e impl=%.8e diff=%.2e%n",
+	      phName, compName, dfugdpStd, dfugdpImpl, Math.abs(dfugdpStd - dfugdpImpl));
+	  failCount++;
+	  allMatch = false;
+	}
 
-        // dfugdt
-        double dfugdtStd = standard.getPhase(p).getComponent(c).getdfugdt();
-        double dfugdtImpl = implicit.getPhase(p).getComponent(c).getdfugdt();
-        double tolT = Math.max(Math.abs(dfugdtStd) * REL_TOL, 1.0e-15);
-        totalChecks++;
-        if (Math.abs(dfugdtStd - dfugdtImpl) > tolT) {
-          logger.printf(org.apache.logging.log4j.Level.INFO, "  MISMATCH %s/%s dfugdt: std=%.8e impl=%.8e diff=%.2e%n", phName,
-              compName, dfugdtStd, dfugdtImpl, Math.abs(dfugdtStd - dfugdtImpl));
-          failCount++;
-          allMatch = false;
-        }
+	// dfugdt
+	double dfugdtStd = standard.getPhase(p).getComponent(c).getdfugdt();
+	double dfugdtImpl = implicit.getPhase(p).getComponent(c).getdfugdt();
+	double tolT = Math.max(Math.abs(dfugdtStd) * REL_TOL, 1.0e-15);
+	totalChecks++;
+	if (Math.abs(dfugdtStd - dfugdtImpl) > tolT) {
+	  logger.printf(org.apache.logging.log4j.Level.INFO, "  MISMATCH %s/%s dfugdt: std=%.8e impl=%.8e diff=%.2e%n",
+	      phName, compName, dfugdtStd, dfugdtImpl, Math.abs(dfugdtStd - dfugdtImpl));
+	  failCount++;
+	  allMatch = false;
+	}
 
-        // dfugdn (cross-derivatives)
-        for (int c2 = 0; c2 < nComp; c2++) {
-          double dfugdnStd = standard.getPhase(p).getComponent(c).getdfugdn(c2);
-          double dfugdnImpl = implicit.getPhase(p).getComponent(c).getdfugdn(c2);
-          double tolN = Math.max(Math.abs(dfugdnStd) * REL_TOL, 1.0e-15);
-          totalChecks++;
-          if (Math.abs(dfugdnStd - dfugdnImpl) > tolN) {
-            logger.printf(org.apache.logging.log4j.Level.INFO, "  MISMATCH %s/%s dfugdn[%s]: std=%.8e impl=%.8e diff=%.2e%n", phName,
-                compName, standard.getPhase(p).getComponent(c2).getComponentName(), dfugdnStd,
-                dfugdnImpl, Math.abs(dfugdnStd - dfugdnImpl));
-            failCount++;
-            allMatch = false;
-          }
-        }
+	// dfugdn (cross-derivatives)
+	for (int c2 = 0; c2 < nComp; c2++) {
+	  double dfugdnStd = standard.getPhase(p).getComponent(c).getdfugdn(c2);
+	  double dfugdnImpl = implicit.getPhase(p).getComponent(c).getdfugdn(c2);
+	  double tolN = Math.max(Math.abs(dfugdnStd) * REL_TOL, 1.0e-15);
+	  totalChecks++;
+	  if (Math.abs(dfugdnStd - dfugdnImpl) > tolN) {
+	    logger.printf(org.apache.logging.log4j.Level.INFO,
+		"  MISMATCH %s/%s dfugdn[%s]: std=%.8e impl=%.8e diff=%.2e%n", phName, compName,
+		standard.getPhase(p).getComponent(c2).getComponentName(), dfugdnStd, dfugdnImpl,
+		Math.abs(dfugdnStd - dfugdnImpl));
+	    failCount++;
+	    allMatch = false;
+	  }
+	}
       }
     }
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "Derivs checked: %d  Failures: %d%n", totalChecks, failCount);
-    assertTrue(allMatch,
-        "Fugacity derivative mismatch: " + failCount + " out of " + totalChecks + " checks failed");
+    assertTrue(allMatch, "Fugacity derivative mismatch: " + failCount + " out of " + totalChecks + " checks failed");
   }
 
   /**
@@ -232,12 +230,12 @@ class CPAImplicitDerivedPropertiesTest extends neqsim.NeqSimTest {
    */
   @Test
   void testEnthalpyEntropyConsistency() {
-    double[][] conditions =
-        {{273.15 + 10, 1.0}, {273.15 + 50, 50.0}, {273.15 + 80, 100.0}, {273.15 + 120, 200.0}};
+    double[][] conditions = { { 273.15 + 10, 1.0 }, { 273.15 + 50, 50.0 }, { 273.15 + 80, 100.0 },
+	{ 273.15 + 120, 200.0 } };
 
     logger.info("\n=== Enthalpy/Entropy Consistency ===");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %12s %12s %12s %12s %12s%n", "T(C)/P(bar)", "H_std(J/mol)", "H_impl",
-        "S_std(J/K)", "S_impl", "Cp_match");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %12s %12s %12s %12s %12s%n", "T(C)/P(bar)",
+	"H_std(J/mol)", "H_impl", "S_std(J/K)", "S_impl", "Cp_match");
 
     for (double[] tp : conditions) {
       double T = tp[0];
@@ -265,15 +263,15 @@ class CPAImplicitDerivedPropertiesTest extends neqsim.NeqSimTest {
 
       boolean cpMatch = Math.abs(cpStd - cpImpl) < Math.max(Math.abs(cpStd) * REL_TOL, 1.0e-6);
 
-      logger.printf(org.apache.logging.log4j.Level.INFO, "%.0f/%.0f %12.2f %12.2f %12.4f %12.4f %s%n", T - 273.15, P, hStd, hImpl,
-          sStd, sImpl, cpMatch ? "YES" : "NO");
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%.0f/%.0f %12.2f %12.2f %12.4f %12.4f %s%n", T - 273.15, P,
+	  hStd, hImpl, sStd, sImpl, cpMatch ? "YES" : "NO");
 
       assertEquals(hStd, hImpl, Math.max(Math.abs(hStd) * REL_TOL, 1.0),
-          "Enthalpy mismatch at T=" + (T - 273.15) + " P=" + P);
+	  "Enthalpy mismatch at T=" + (T - 273.15) + " P=" + P);
       assertEquals(sStd, sImpl, Math.max(Math.abs(sStd) * REL_TOL, 0.01),
-          "Entropy mismatch at T=" + (T - 273.15) + " P=" + P);
+	  "Entropy mismatch at T=" + (T - 273.15) + " P=" + P);
       assertEquals(cpStd, cpImpl, Math.max(Math.abs(cpStd) * REL_TOL, 1.0e-3),
-          "Cp mismatch at T=" + (T - 273.15) + " P=" + P);
+	  "Cp mismatch at T=" + (T - 273.15) + " P=" + P);
     }
   }
 
@@ -305,8 +303,7 @@ class CPAImplicitDerivedPropertiesTest extends neqsim.NeqSimTest {
     sys.initProperties();
   }
 
-  private void comparePhaseProperties(SystemInterface standard, SystemInterface implicit,
-      String label) {
+  private void comparePhaseProperties(SystemInterface standard, SystemInterface implicit, String label) {
     int nPhStd = standard.getNumberOfPhases();
     int nPhImpl = implicit.getNumberOfPhases();
     assertEquals(nPhStd, nPhImpl, label + " phase count mismatch");
@@ -318,35 +315,31 @@ class CPAImplicitDerivedPropertiesTest extends neqsim.NeqSimTest {
       // Density
       double densStd = standard.getPhase(p).getDensity("kg/m3");
       double densImpl = implicit.getPhase(p).getDensity("kg/m3");
-      assertEquals(densStd, densImpl, Math.max(Math.abs(densStd) * REL_TOL, 0.01),
-          label + "/" + phName + " density");
+      assertEquals(densStd, densImpl, Math.max(Math.abs(densStd) * REL_TOL, 0.01), label + "/" + phName + " density");
 
       // Enthalpy
       double hStd = standard.getPhase(p).getEnthalpy();
       double hImpl = implicit.getPhase(p).getEnthalpy();
-      assertEquals(hStd, hImpl, Math.max(Math.abs(hStd) * REL_TOL, 1.0),
-          label + "/" + phName + " enthalpy");
+      assertEquals(hStd, hImpl, Math.max(Math.abs(hStd) * REL_TOL, 1.0), label + "/" + phName + " enthalpy");
 
       // Entropy
       double sStd = standard.getPhase(p).getEntropy();
       double sImpl = implicit.getPhase(p).getEntropy();
-      assertEquals(sStd, sImpl, Math.max(Math.abs(sStd) * REL_TOL, 0.01),
-          label + "/" + phName + " entropy");
+      assertEquals(sStd, sImpl, Math.max(Math.abs(sStd) * REL_TOL, 0.01), label + "/" + phName + " entropy");
 
       // Cp
       double cpStd = standard.getPhase(p).getCp();
       double cpImpl = implicit.getPhase(p).getCp();
-      assertEquals(cpStd, cpImpl, Math.max(Math.abs(cpStd) * REL_TOL, 1.0e-3),
-          label + "/" + phName + " Cp");
+      assertEquals(cpStd, cpImpl, Math.max(Math.abs(cpStd) * REL_TOL, 1.0e-3), label + "/" + phName + " Cp");
 
       // Compressibility
       double zStd = standard.getPhase(p).getZ();
       double zImpl = implicit.getPhase(p).getZ();
-      assertEquals(zStd, zImpl, Math.max(Math.abs(zStd) * REL_TOL, 1.0e-8),
-          label + "/" + phName + " Z");
+      assertEquals(zStd, zImpl, Math.max(Math.abs(zStd) * REL_TOL, 1.0e-8), label + "/" + phName + " Z");
 
-      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s: dens=%.4f/%.4f  H=%.1f/%.1f  S=%.4f/%.4f  Cp=%.4f/%.4f  MATCH%n",
-          phName, densStd, densImpl, hStd, hImpl, sStd, sImpl, cpStd, cpImpl);
+      logger.printf(org.apache.logging.log4j.Level.INFO,
+	  "  %s: dens=%.4f/%.4f  H=%.1f/%.1f  S=%.4f/%.4f  Cp=%.4f/%.4f  MATCH%n", phName, densStd, densImpl, hStd,
+	  hImpl, sStd, sImpl, cpStd, cpImpl);
     }
   }
 }

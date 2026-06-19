@@ -33,7 +33,7 @@ public class LevelTransmitter extends MeasurementDeviceBaseClass {
    * Constructor for LevelTransmitter.
    * </p>
    *
-   * @param name Name of LevelTransmitter
+   * @param name      Name of LevelTransmitter
    * @param separator a {@link neqsim.process.equipment.separator.Separator} object
    */
   public LevelTransmitter(String name, Separator separator) {
@@ -48,8 +48,7 @@ public class LevelTransmitter extends MeasurementDeviceBaseClass {
    * Returns the separator whose liquid level this transmitter measures.
    * </p>
    *
-   * @return the associated {@link neqsim.process.equipment.separator.Separator}, or {@code null} if
-   *         none was set
+   * @return the associated {@link neqsim.process.equipment.separator.Separator}, or {@code null} if none was set
    */
   public Separator getSeparator() {
     return separator;
@@ -66,8 +65,8 @@ public class LevelTransmitter extends MeasurementDeviceBaseClass {
   @Override
   public double getMeasuredValue(String unit) {
     if (!unit.equalsIgnoreCase("")) {
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
-          "getMeasuredValue", "unit", "currently only supports \"\""));
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getMeasuredValue", "unit",
+	  "currently only supports \"\""));
     }
     return separator.getLiquidLevel();
   }

@@ -10,8 +10,8 @@ import java.util.Map;
  * Multi-zone heat transfer model for LNG cargo tanks.
  *
  * <p>
- * Commercial LNG ageing simulators (Cargo Expert, LNGMAP, MACS III) use 4-6 heat transfer zones
- * instead of a single U*A value. Each zone has its own U-value, area, and boundary temperature:
+ * Commercial LNG ageing simulators (Cargo Expert, LNGMAP, MACS III) use 4-6 heat transfer zones instead of a single U*A
+ * value. Each zone has its own U-value, area, and boundary temperature:
  * </p>
  * <ul>
  * <li><b>Bottom slab:</b> contact with double-bottom ballast tanks (sea water temperature)</li>
@@ -54,7 +54,7 @@ public class TankHeatTransferModel implements Serializable {
   /**
    * Constructor with tank geometry, auto-creates standard zones.
    *
-   * @param geometry tank geometry definition
+   * @param geometry           tank geometry definition
    * @param ambientTemperature ambient air/sea temperature (K)
    */
   public TankHeatTransferModel(TankGeometry geometry, double ambientTemperature) {
@@ -66,7 +66,7 @@ public class TankHeatTransferModel implements Serializable {
   /**
    * Create standard heat transfer zones from tank geometry.
    *
-   * @param geometry tank geometry
+   * @param geometry    tank geometry
    * @param ambientTemp ambient temperature (K)
    */
   private void createStandardZones(TankGeometry geometry, double ambientTemp) {
@@ -79,8 +79,7 @@ public class TankHeatTransferModel implements Serializable {
     zones.add(new HeatTransferZone("bottom", uInsulation, geometry.getBottomArea(), seaWaterTemp));
 
     // Sidewalls — boundary is ambient air (through ballast/void spaces)
-    zones.add(
-        new HeatTransferZone("sidewalls", uInsulation, geometry.getSidewallArea(), ambientTemp));
+    zones.add(new HeatTransferZone("sidewalls", uInsulation, geometry.getSidewallArea(), ambientTemp));
 
     // Roof/dome — boundary is ambient + solar gain
     zones.add(new HeatTransferZone("roof", uInsulation * 1.1, geometry.getRoofArea(), ambientTemp));
@@ -89,9 +88,9 @@ public class TankHeatTransferModel implements Serializable {
   /**
    * Add a custom heat transfer zone.
    *
-   * @param name zone name
-   * @param uValue overall heat transfer coefficient (W/(m2*K))
-   * @param area heat transfer area (m2)
+   * @param name                zone name
+   * @param uValue              overall heat transfer coefficient (W/(m2*K))
+   * @param area                heat transfer area (m2)
    * @param boundaryTemperature boundary temperature (K)
    */
   public void addZone(String name, double uValue, double area, double boundaryTemperature) {
@@ -109,7 +108,7 @@ public class TankHeatTransferModel implements Serializable {
     for (HeatTransferZone zone : zones) {
       double q = zone.uValue * zone.area * (zone.boundaryTemperature - lngTemperature);
       if (q > 0) {
-        totalQ += q;
+	totalQ += q;
       }
     }
     return totalQ;
@@ -134,12 +133,12 @@ public class TankHeatTransferModel implements Serializable {
    * Calculate heat distribution to layers based on zone positions.
    *
    * <p>
-   * Bottom zone heat goes primarily to bottom layer, sidewall heat distributed by wetted area
-   * fraction, roof heat goes to top layer via vapor space.
+   * Bottom zone heat goes primarily to bottom layer, sidewall heat distributed by wetted area fraction, roof heat goes
+   * to top layer via vapor space.
    * </p>
    *
    * @param lngTemperature bulk LNG temperature (K)
-   * @param numLayers number of liquid layers
+   * @param numLayers      number of liquid layers
    * @return array of heat per layer (W), index 0 = bottom
    */
   public double[] calculateLayerHeatDistribution(double lngTemperature, int numLayers) {
@@ -151,21 +150,21 @@ public class TankHeatTransferModel implements Serializable {
     for (HeatTransferZone zone : zones) {
       double q = zone.uValue * zone.area * (zone.boundaryTemperature - lngTemperature);
       if (q <= 0) {
-        continue;
+	continue;
       }
 
       if ("bottom".equals(zone.name)) {
-        // Bottom heat goes to bottom layer
-        layerQ[0] += q;
+	// Bottom heat goes to bottom layer
+	layerQ[0] += q;
       } else if ("roof".equals(zone.name) || "dome".equals(zone.name)) {
-        // Roof heat goes to top layer (through vapor space)
-        layerQ[numLayers - 1] += q * 0.3; // 30% reaches top liquid via radiation/convection
+	// Roof heat goes to top layer (through vapor space)
+	layerQ[numLayers - 1] += q * 0.3; // 30% reaches top liquid via radiation/convection
       } else {
-        // Sidewall heat distributed proportionally across all layers
-        double perLayer = q / numLayers;
-        for (int i = 0; i < numLayers; i++) {
-          layerQ[i] += perLayer;
-        }
+	// Sidewall heat distributed proportionally across all layers
+	double perLayer = q / numLayers;
+	for (int i = 0; i < numLayers; i++) {
+	  layerQ[i] += perLayer;
+	}
       }
     }
     return layerQ;
@@ -174,22 +173,21 @@ public class TankHeatTransferModel implements Serializable {
   /**
    * Update boundary temperatures for time-varying conditions.
    *
-   * @param ambientTemperature new ambient temperature (K)
-   * @param solarRadiation solar radiation on deck (W/m2)
+   * @param ambientTemperature  new ambient temperature (K)
+   * @param solarRadiation      solar radiation on deck (W/m2)
    * @param seaWaterTemperature sea water temperature (K)
    */
-  public void updateBoundaryConditions(double ambientTemperature, double solarRadiation,
-      double seaWaterTemperature) {
+  public void updateBoundaryConditions(double ambientTemperature, double solarRadiation, double seaWaterTemperature) {
     for (HeatTransferZone zone : zones) {
       if ("bottom".equals(zone.name)) {
-        zone.boundaryTemperature = seaWaterTemperature;
+	zone.boundaryTemperature = seaWaterTemperature;
       } else if ("roof".equals(zone.name) || "dome".equals(zone.name)) {
-        // Roof temperature = ambient + solar gain
-        zone.boundaryTemperature = ambientTemperature + solarAbsorptivity * solarRadiation / 10.0;
+	// Roof temperature = ambient + solar gain
+	zone.boundaryTemperature = ambientTemperature + solarAbsorptivity * solarRadiation / 10.0;
       } else if ("cofferdam".equals(zone.name)) {
-        // Cofferdam unchanged (set by adjacent tank)
+	// Cofferdam unchanged (set by adjacent tank)
       } else {
-        zone.boundaryTemperature = ambientTemperature;
+	zone.boundaryTemperature = ambientTemperature;
       }
     }
   }
@@ -270,9 +268,9 @@ public class TankHeatTransferModel implements Serializable {
     /**
      * Constructor for HeatTransferZone.
      *
-     * @param name zone name
-     * @param uValue overall heat transfer coefficient (W/(m2*K))
-     * @param area heat transfer area (m2)
+     * @param name                zone name
+     * @param uValue              overall heat transfer coefficient (W/(m2*K))
+     * @param area                heat transfer area (m2)
      * @param boundaryTemperature boundary temperature (K)
      */
     public HeatTransferZone(String name, double uValue, double area, double boundaryTemperature) {

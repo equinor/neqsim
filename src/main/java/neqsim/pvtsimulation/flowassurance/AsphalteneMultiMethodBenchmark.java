@@ -59,8 +59,7 @@ public class AsphalteneMultiMethodBenchmark {
   private static final Logger logger = LogManager.getLogger(AsphalteneMultiMethodBenchmark.class);
 
   /** JSON serializer. */
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   // ─── Input data ───
 
@@ -152,12 +151,13 @@ public class AsphalteneMultiMethodBenchmark {
   /**
    * Default constructor.
    */
-  public AsphalteneMultiMethodBenchmark() {}
+  public AsphalteneMultiMethodBenchmark() {
+  }
 
   /**
    * Constructor with basic parameters.
    *
-   * @param reservoirPressure reservoir pressure (bara)
+   * @param reservoirPressure    reservoir pressure (bara)
    * @param reservoirTemperature reservoir temperature (K)
    */
   public AsphalteneMultiMethodBenchmark(double reservoirPressure, double reservoirTemperature) {
@@ -192,11 +192,10 @@ public class AsphalteneMultiMethodBenchmark {
     // Calculate errors vs measured data
     if (!Double.isNaN(measuredOnsetPressure)) {
       for (MethodResult result : methodResults.values()) {
-        if (!Double.isNaN(result.onsetPressure)) {
-          result.onsetPressureError = Math.abs(result.onsetPressure - measuredOnsetPressure);
-          result.onsetPressureRelativeError =
-              result.onsetPressureError / measuredOnsetPressure * 100.0;
-        }
+	if (!Double.isNaN(result.onsetPressure)) {
+	  result.onsetPressureError = Math.abs(result.onsetPressure - measuredOnsetPressure);
+	  result.onsetPressureRelativeError = result.onsetPressureError / measuredOnsetPressure * 100.0;
+	}
       }
     }
   }
@@ -218,23 +217,22 @@ public class AsphalteneMultiMethodBenchmark {
       // Need bubble point for undersaturation
       double bubbleP = Double.NaN;
       if (cpaSystem != null) {
-        SystemInterface workSystem = cpaSystem.clone();
-        workSystem.setTemperature(reservoirTemperature);
-        ThermodynamicOperations ops = new ThermodynamicOperations(workSystem);
-        ops.bubblePointPressureFlash(false);
-        bubbleP = workSystem.getPressure();
+	SystemInterface workSystem = cpaSystem.clone();
+	workSystem.setTemperature(reservoirTemperature);
+	ThermodynamicOperations ops = new ThermodynamicOperations(workSystem);
+	ops.bubblePointPressureFlash(false);
+	bubbleP = workSystem.getPressure();
       } else if (cubicSystem != null) {
-        SystemInterface workSystem = cubicSystem.clone();
-        workSystem.setTemperature(reservoirTemperature);
-        ThermodynamicOperations ops = new ThermodynamicOperations(workSystem);
-        ops.bubblePointPressureFlash(false);
-        bubbleP = workSystem.getPressure();
+	SystemInterface workSystem = cubicSystem.clone();
+	workSystem.setTemperature(reservoirTemperature);
+	ThermodynamicOperations ops = new ThermodynamicOperations(workSystem);
+	ops.bubblePointPressureFlash(false);
+	bubbleP = workSystem.getPressure();
       }
 
-      DeBoerAsphalteneScreening screening =
-          new DeBoerAsphalteneScreening(reservoirPressure, bubbleP, inSituDensity);
+      DeBoerAsphalteneScreening screening = new DeBoerAsphalteneScreening(reservoirPressure, bubbleP, inSituDensity);
       if (!Double.isNaN(asphaltenesFraction)) {
-        screening.setAsphalteneContent(asphaltenesFraction);
+	screening.setAsphalteneContent(asphaltenesFraction);
       }
 
       DeBoerAsphalteneScreening.DeBoerRisk risk = screening.evaluateRisk();
@@ -271,17 +269,17 @@ public class AsphalteneMultiMethodBenchmark {
     result.methodName = "SARA CII Analysis";
 
     try {
-      AsphalteneCharacterization sara =
-          new AsphalteneCharacterization(saturates, aromatics, resins, asphaltenesFraction);
+      AsphalteneCharacterization sara = new AsphalteneCharacterization(saturates, aromatics, resins,
+	  asphaltenesFraction);
       double cii = sara.getColloidalInstabilityIndex();
       double ra = sara.getResinToAsphalteneRatio();
 
       if (cii < 0.7) {
-        result.riskLevel = "STABLE";
+	result.riskLevel = "STABLE";
       } else if (cii < 0.9) {
-        result.riskLevel = "MODERATE_RISK";
+	result.riskLevel = "MODERATE_RISK";
       } else {
-        result.riskLevel = "HIGH_RISK";
+	result.riskLevel = "HIGH_RISK";
       }
 
       result.details.put("CII", cii);
@@ -318,12 +316,12 @@ public class AsphalteneMultiMethodBenchmark {
 
     try {
       if (!Double.isNaN(measuredRIOnset)) {
-        riScreening.setRiOnset(measuredRIOnset);
+	riScreening.setRiOnset(measuredRIOnset);
       } else if (!Double.isNaN(saturates)) {
-        riScreening.estimateOnsetRIFromSARA(saturates, aromatics, resins, asphaltenesFraction);
+	riScreening.estimateOnsetRIFromSARA(saturates, aromatics, resins, asphaltenesFraction);
       } else {
-        logger.info("Skipping RI method - no onset RI or SARA data");
-        return;
+	logger.info("Skipping RI method - no onset RI or SARA data");
+	return;
       }
 
       RefractiveIndexAsphalteneScreening.RIStability stability = riScreening.evaluateStability();
@@ -357,19 +355,18 @@ public class AsphalteneMultiMethodBenchmark {
     result.methodName = "Flory-Huggins Regular Solution";
 
     try {
-      FloryHugginsAsphalteneModel fhModel =
-          new FloryHugginsAsphalteneModel(sys, reservoirTemperature);
+      FloryHugginsAsphalteneModel fhModel = new FloryHugginsAsphalteneModel(sys, reservoirTemperature);
 
       // Configure asphaltene properties from API gravity if available
       if (!Double.isNaN(apiGravity)) {
-        fhModel.configureFromAPIGravity(apiGravity);
+	fhModel.configureFromAPIGravity(apiGravity);
       }
 
       // Configure from SARA data if available
       if (!Double.isNaN(saturates) && !Double.isNaN(asphaltenesFraction)) {
-        fhModel.configureFromSARA(saturates, aromatics, resins, asphaltenesFraction);
+	fhModel.configureFromSARA(saturates, aromatics, resins, asphaltenesFraction);
       } else if (!Double.isNaN(asphaltenesFraction)) {
-        fhModel.setAsphalteneWeightFraction(asphaltenesFraction);
+	fhModel.setAsphalteneWeightFraction(asphaltenesFraction);
       }
 
       // Calibrate the delta_L correlation to the actual system density
@@ -379,22 +376,20 @@ public class AsphalteneMultiMethodBenchmark {
       result.onsetPressure = onsetP;
 
       if (!Double.isNaN(onsetP)) {
-        result.riskLevel = (reservoirPressure > onsetP + 50) ? "STABLE"
-            : (reservoirPressure > onsetP) ? "MODERATE_RISK" : "HIGH_RISK";
+	result.riskLevel = (reservoirPressure > onsetP + 50) ? "STABLE"
+	    : (reservoirPressure > onsetP) ? "MODERATE_RISK" : "HIGH_RISK";
       } else {
-        result.riskLevel = "STABLE";
+	result.riskLevel = "STABLE";
       }
 
-      result.details.put("asphaltene_solubility_parameter_MPa05",
-          fhModel.getAsphalteneSolubilityParameter());
+      result.details.put("asphaltene_solubility_parameter_MPa05", fhModel.getAsphalteneSolubilityParameter());
       result.details.put("asphaltene_MW_gmol", fhModel.getAsphalteneMW());
 
       // Generate precipitation curve
       double maxP = reservoirPressure;
       double minP = 10.0;
       int nPoints = 30;
-      double[][] precipCurve =
-          fhModel.generatePrecipitationCurve(reservoirTemperature, maxP, minP, nPoints);
+      double[][] precipCurve = fhModel.generatePrecipitationCurve(reservoirTemperature, maxP, minP, nPoints);
       result.precipCurvePressures = precipCurve[0];
       result.precipCurveWtPct = precipCurve[1];
 
@@ -412,9 +407,9 @@ public class AsphalteneMultiMethodBenchmark {
    * Runs the CPA EOS thermodynamic method.
    *
    * <p>
-   * Uses a dual approach: (1) AsphalteneStabilityAnalyzer for solid-phase onset, (2) an independent
-   * multi-phase L-L split sweep. If the solid model gives an onset above reservoir pressure
-   * (overprediction), the L-L sweep result is preferred.
+   * Uses a dual approach: (1) AsphalteneStabilityAnalyzer for solid-phase onset, (2) an independent multi-phase L-L
+   * split sweep. If the solid model gives an onset above reservoir pressure (overprediction), the L-L sweep result is
+   * preferred.
    * </p>
    */
   private void runCPAMethod() {
@@ -431,7 +426,7 @@ public class AsphalteneMultiMethodBenchmark {
       // Approach 1: Standard solid-phase onset via AsphalteneStabilityAnalyzer
       AsphalteneStabilityAnalyzer analyzer = new AsphalteneStabilityAnalyzer(cpaSystem);
       if (!Double.isNaN(saturates)) {
-        analyzer.setSARAFractions(saturates, aromatics, resins, asphaltenesFraction);
+	analyzer.setSARAFractions(saturates, aromatics, resins, asphaltenesFraction);
       }
 
       double solidOnsetP = analyzer.calculateOnsetPressure(reservoirTemperature);
@@ -447,24 +442,24 @@ public class AsphalteneMultiMethodBenchmark {
       // Choose the better result: prefer L-L onset if solid onset overpredicts
       double onsetP;
       if (!Double.isNaN(llOnsetP) && !Double.isNaN(solidOnsetP)) {
-        // If solid onset is above reservoir pressure (overprediction), use L-L
-        if (solidOnsetP > reservoirPressure) {
-          onsetP = llOnsetP;
-          result.details.put("cpa_method_used", "L-L split (solid overpredicted)");
-        } else {
-          // Both valid — use average weighted toward the L-L split result
-          onsetP = 0.4 * solidOnsetP + 0.6 * llOnsetP;
-          result.details.put("cpa_method_used", "weighted average (solid+LL)");
-        }
+	// If solid onset is above reservoir pressure (overprediction), use L-L
+	if (solidOnsetP > reservoirPressure) {
+	  onsetP = llOnsetP;
+	  result.details.put("cpa_method_used", "L-L split (solid overpredicted)");
+	} else {
+	  // Both valid — use average weighted toward the L-L split result
+	  onsetP = 0.4 * solidOnsetP + 0.6 * llOnsetP;
+	  result.details.put("cpa_method_used", "weighted average (solid+LL)");
+	}
       } else if (!Double.isNaN(llOnsetP)) {
-        onsetP = llOnsetP;
-        result.details.put("cpa_method_used", "L-L split only");
+	onsetP = llOnsetP;
+	result.details.put("cpa_method_used", "L-L split only");
       } else if (!Double.isNaN(solidOnsetP)) {
-        onsetP = solidOnsetP;
-        result.details.put("cpa_method_used", "solid onset only");
+	onsetP = solidOnsetP;
+	result.details.put("cpa_method_used", "solid onset only");
       } else {
-        onsetP = Double.NaN;
-        result.details.put("cpa_method_used", "no onset found");
+	onsetP = Double.NaN;
+	result.details.put("cpa_method_used", "no onset found");
       }
 
       result.onsetPressure = onsetP;
@@ -474,7 +469,7 @@ public class AsphalteneMultiMethodBenchmark {
       result.details.put("solid_onset_bar", solidOnsetP);
       result.details.put("ll_onset_bar", llOnsetP);
       if (!Double.isNaN(onsetP)) {
-        result.details.put("safety_margin_bar", reservoirPressure - onsetP);
+	result.details.put("safety_margin_bar", reservoirPressure - onsetP);
       }
 
       // Generate precipitation curve via TP flash with solid check
@@ -493,12 +488,11 @@ public class AsphalteneMultiMethodBenchmark {
   /**
    * Generates precipitation curve using CPA EOS with solid phase check.
    *
-   * @param result the result object to populate
-   * @param sys the CPA system
+   * @param result      the result object to populate
+   * @param sys         the CPA system
    * @param temperature temperature (K)
    */
-  private void generateCPAPrecipitationCurve(MethodResult result, SystemInterface sys,
-      double temperature) {
+  private void generateCPAPrecipitationCurve(MethodResult result, SystemInterface sys, double temperature) {
     int nPoints = 30;
     double maxP = reservoirPressure;
     double minP = 10.0;
@@ -512,28 +506,28 @@ public class AsphalteneMultiMethodBenchmark {
       pressures[i] = p;
 
       try {
-        SystemInterface workSystem = sys.clone();
-        workSystem.setPressure(p);
-        workSystem.setTemperature(temperature);
-        workSystem.setSolidPhaseCheck("asphaltene");
+	SystemInterface workSystem = sys.clone();
+	workSystem.setPressure(p);
+	workSystem.setTemperature(temperature);
+	workSystem.setSolidPhaseCheck("asphaltene");
 
-        ThermodynamicOperations ops = new ThermodynamicOperations(workSystem);
-        ops.TPflash();
+	ThermodynamicOperations ops = new ThermodynamicOperations(workSystem);
+	ops.TPflash();
 
-        // Check for solid/asphaltene phase
-        double solidMoles = 0.0;
-        double totalMoles = 0.0;
-        for (int phase = 0; phase < workSystem.getNumberOfPhases(); phase++) {
-          totalMoles += workSystem.getPhase(phase).getNumberOfMolesInPhase();
-          if (workSystem.getPhase(phase).getPhaseTypeName().equals("solid")
-              || workSystem.getPhase(phase).getPhaseTypeName().equals("asphaltene")) {
-            solidMoles += workSystem.getPhase(phase).getNumberOfMolesInPhase();
-          }
-        }
-        precipWtPct[i] = totalMoles > 0 ? (solidMoles / totalMoles) * 100.0 : 0.0;
+	// Check for solid/asphaltene phase
+	double solidMoles = 0.0;
+	double totalMoles = 0.0;
+	for (int phase = 0; phase < workSystem.getNumberOfPhases(); phase++) {
+	  totalMoles += workSystem.getPhase(phase).getNumberOfMolesInPhase();
+	  if (workSystem.getPhase(phase).getPhaseTypeName().equals("solid")
+	      || workSystem.getPhase(phase).getPhaseTypeName().equals("asphaltene")) {
+	    solidMoles += workSystem.getPhase(phase).getNumberOfMolesInPhase();
+	  }
+	}
+	precipWtPct[i] = totalMoles > 0 ? (solidMoles / totalMoles) * 100.0 : 0.0;
 
       } catch (Exception e) {
-        precipWtPct[i] = 0.0;
+	precipWtPct[i] = 0.0;
       }
     }
 
@@ -545,13 +539,12 @@ public class AsphalteneMultiMethodBenchmark {
    * Finds asphaltene onset pressure using CPA with multi-phase L-L split detection.
    *
    * <p>
-   * This approach enables multi-phase check on the CPA system and sweeps pressure downward from
-   * reservoir pressure looking for a second liquid phase (asphaltene-rich). This is more physically
-   * correct for CPA than the solid phase model approach, as CPA models asphaltene as an associating
-   * liquid component.
+   * This approach enables multi-phase check on the CPA system and sweeps pressure downward from reservoir pressure
+   * looking for a second liquid phase (asphaltene-rich). This is more physically correct for CPA than the solid phase
+   * model approach, as CPA models asphaltene as an associating liquid component.
    * </p>
    *
-   * @param sys the CPA system
+   * @param sys         the CPA system
    * @param temperature temperature (K)
    * @return onset pressure in bar, or NaN if no L-L split found
    */
@@ -562,65 +555,64 @@ public class AsphalteneMultiMethodBenchmark {
 
     for (double p = startP; p >= minP; p -= step) {
       try {
-        SystemInterface workSystem = sys.clone();
-        workSystem.setPressure(p);
-        workSystem.setTemperature(temperature);
-        workSystem.setMultiPhaseCheck(true);
+	SystemInterface workSystem = sys.clone();
+	workSystem.setPressure(p);
+	workSystem.setTemperature(temperature);
+	workSystem.setMultiPhaseCheck(true);
 
-        ThermodynamicOperations ops = new ThermodynamicOperations(workSystem);
-        try {
-          ops.TPflash();
-        } catch (Exception flashEx) {
-          continue;
-        }
+	ThermodynamicOperations ops = new ThermodynamicOperations(workSystem);
+	try {
+	  ops.TPflash();
+	} catch (Exception flashEx) {
+	  continue;
+	}
 
-        // Count liquid phases (exclude gas)
-        int liquidPhases = 0;
-        for (int phase = 0; phase < workSystem.getNumberOfPhases(); phase++) {
-          String phaseType = workSystem.getPhase(phase).getPhaseTypeName();
-          if (phaseType.equals("oil") || phaseType.equals("liquid")
-              || phaseType.contains("asphaltene") || phaseType.contains("Asphaltene")) {
-            liquidPhases++;
-          }
-        }
+	// Count liquid phases (exclude gas)
+	int liquidPhases = 0;
+	for (int phase = 0; phase < workSystem.getNumberOfPhases(); phase++) {
+	  String phaseType = workSystem.getPhase(phase).getPhaseTypeName();
+	  if (phaseType.equals("oil") || phaseType.equals("liquid") || phaseType.contains("asphaltene")
+	      || phaseType.contains("Asphaltene")) {
+	    liquidPhases++;
+	  }
+	}
 
-        if (liquidPhases >= 2) {
-          // Refine with bisection
-          double high = p + step;
-          double low = p;
-          for (int iter = 0; iter < 20; iter++) {
-            double mid = (high + low) / 2.0;
-            SystemInterface ws2 = sys.clone();
-            ws2.setPressure(mid);
-            ws2.setTemperature(temperature);
-            ws2.setMultiPhaseCheck(true);
-            ThermodynamicOperations ops2 = new ThermodynamicOperations(ws2);
-            try {
-              ops2.TPflash();
-            } catch (Exception flashEx) {
-              high = mid;
-              continue;
-            }
+	if (liquidPhases >= 2) {
+	  // Refine with bisection
+	  double high = p + step;
+	  double low = p;
+	  for (int iter = 0; iter < 20; iter++) {
+	    double mid = (high + low) / 2.0;
+	    SystemInterface ws2 = sys.clone();
+	    ws2.setPressure(mid);
+	    ws2.setTemperature(temperature);
+	    ws2.setMultiPhaseCheck(true);
+	    ThermodynamicOperations ops2 = new ThermodynamicOperations(ws2);
+	    try {
+	      ops2.TPflash();
+	    } catch (Exception flashEx) {
+	      high = mid;
+	      continue;
+	    }
 
-            int liqPhases2 = 0;
-            for (int ph = 0; ph < ws2.getNumberOfPhases(); ph++) {
-              String pt = ws2.getPhase(ph).getPhaseTypeName();
-              if (pt.equals("oil") || pt.equals("liquid") || pt.contains("asphaltene")
-                  || pt.contains("Asphaltene")) {
-                liqPhases2++;
-              }
-            }
+	    int liqPhases2 = 0;
+	    for (int ph = 0; ph < ws2.getNumberOfPhases(); ph++) {
+	      String pt = ws2.getPhase(ph).getPhaseTypeName();
+	      if (pt.equals("oil") || pt.equals("liquid") || pt.contains("asphaltene") || pt.contains("Asphaltene")) {
+		liqPhases2++;
+	      }
+	    }
 
-            if (liqPhases2 >= 2) {
-              low = mid;
-            } else {
-              high = mid;
-            }
-          }
-          return (high + low) / 2.0;
-        }
+	    if (liqPhases2 >= 2) {
+	      low = mid;
+	    } else {
+	      high = mid;
+	    }
+	  }
+	  return (high + low) / 2.0;
+	}
       } catch (Exception e) {
-        logger.debug("CPA L-L sweep failed at P={}: {}", p, e.getMessage());
+	logger.debug("CPA L-L sweep failed at P={}: {}", p, e.getMessage());
       }
     }
 
@@ -644,7 +636,7 @@ public class AsphalteneMultiMethodBenchmark {
     try {
       PedersenAsphalteneCharacterization pedersen = new PedersenAsphalteneCharacterization(sys);
       if (!Double.isNaN(asphaltenesFraction)) {
-        pedersen.setAsphalteneWeightFraction(asphaltenesFraction);
+	pedersen.setAsphalteneWeightFraction(asphaltenesFraction);
       }
       pedersen.setAsphalteneMW(1200.0);
       pedersen.setAsphalteneDensity(1.15);
@@ -661,7 +653,7 @@ public class AsphalteneMultiMethodBenchmark {
       double totalMoles = workSys.getTotalNumberOfMoles();
       double aspMoles = totalMoles * 0.02;
       if (!Double.isNaN(asphaltenesFraction) && asphaltenesFraction > 0) {
-        aspMoles = totalMoles * asphaltenesFraction / pedersen.getAsphalteneMW();
+	aspMoles = totalMoles * asphaltenesFraction / pedersen.getAsphalteneMW();
       }
       pedersen.addAsphalteneToSystem(workSys, aspMoles);
       workSys.setMixingRule("classic");
@@ -674,10 +666,10 @@ public class AsphalteneMultiMethodBenchmark {
       result.onsetPressure = onsetP;
 
       if (!Double.isNaN(onsetP)) {
-        result.riskLevel = (reservoirPressure > onsetP + 50) ? "STABLE"
-            : (reservoirPressure > onsetP) ? "MODERATE_RISK" : "HIGH_RISK";
+	result.riskLevel = (reservoirPressure > onsetP + 50) ? "STABLE"
+	    : (reservoirPressure > onsetP) ? "MODERATE_RISK" : "HIGH_RISK";
       } else {
-        result.riskLevel = "STABLE";
+	result.riskLevel = "STABLE";
       }
 
     } catch (Exception e) {
@@ -694,82 +686,81 @@ public class AsphalteneMultiMethodBenchmark {
    * Finds the onset pressure using Pedersen's L-L split approach.
    *
    * <p>
-   * Uses a fine-grained pressure sweep (2 bar steps) with multi-phase check enabled, followed by
-   * bisection refinement when a liquid-liquid split is detected. Also enables multi-phase check on
-   * the system before flashing to improve detection of L-L splits that would otherwise be missed.
+   * Uses a fine-grained pressure sweep (2 bar steps) with multi-phase check enabled, followed by bisection refinement
+   * when a liquid-liquid split is detected. Also enables multi-phase check on the system before flashing to improve
+   * detection of L-L splits that would otherwise be missed.
    * </p>
    *
-   * @param sys the cubic EOS system
-   * @param pedersen the characterization object
+   * @param sys         the cubic EOS system
+   * @param pedersen    the characterization object
    * @param temperature temperature (K)
    * @return onset pressure or NaN
    */
-  private double findPedersenOnsetPressure(SystemInterface sys,
-      PedersenAsphalteneCharacterization pedersen, double temperature) {
+  private double findPedersenOnsetPressure(SystemInterface sys, PedersenAsphalteneCharacterization pedersen,
+      double temperature) {
     double startP = reservoirPressure;
     double minP = 10.0;
     double step = 2.0; // Fine step for better L-L split detection
 
     for (double p = startP; p >= minP; p -= step) {
       try {
-        SystemInterface workSystem = sys.clone();
-        workSystem.setPressure(p);
-        workSystem.setTemperature(temperature);
-        workSystem.setMultiPhaseCheck(true);
+	SystemInterface workSystem = sys.clone();
+	workSystem.setPressure(p);
+	workSystem.setTemperature(temperature);
+	workSystem.setMultiPhaseCheck(true);
 
-        ThermodynamicOperations ops = new ThermodynamicOperations(workSystem);
-        try {
-          ops.TPflash();
-        } catch (Exception flashEx) {
-          continue;
-        }
+	ThermodynamicOperations ops = new ThermodynamicOperations(workSystem);
+	try {
+	  ops.TPflash();
+	} catch (Exception flashEx) {
+	  continue;
+	}
 
-        // Check for multiple liquid phases
-        int liquidPhases = 0;
-        for (int phase = 0; phase < workSystem.getNumberOfPhases(); phase++) {
-          String phaseType = workSystem.getPhase(phase).getPhaseTypeName();
-          if (phaseType.equals("oil") || phaseType.equals("liquid")
-              || phaseType.contains("Asphaltene")) {
-            liquidPhases++;
-          }
-        }
+	// Check for multiple liquid phases
+	int liquidPhases = 0;
+	for (int phase = 0; phase < workSystem.getNumberOfPhases(); phase++) {
+	  String phaseType = workSystem.getPhase(phase).getPhaseTypeName();
+	  if (phaseType.equals("oil") || phaseType.equals("liquid") || phaseType.contains("Asphaltene")) {
+	    liquidPhases++;
+	  }
+	}
 
-        if (liquidPhases >= 2) {
-          // Refine by bisection
-          double high = p + step;
-          double low = p;
-          for (int iter = 0; iter < 20; iter++) {
-            double mid = (high + low) / 2.0;
-            SystemInterface ws2 = sys.clone();
-            ws2.setPressure(mid);
-            ws2.setTemperature(temperature);
-            ws2.setMultiPhaseCheck(true);
-            ThermodynamicOperations ops2 = new ThermodynamicOperations(ws2);
-            try {
-              ops2.TPflash();
-            } catch (Exception flashEx) {
-              high = mid;
-              continue;
-            }
+	if (liquidPhases >= 2) {
+	  // Refine by bisection
+	  double high = p + step;
+	  double low = p;
+	  for (int iter = 0; iter < 20; iter++) {
+	    double mid = (high + low) / 2.0;
+	    SystemInterface ws2 = sys.clone();
+	    ws2.setPressure(mid);
+	    ws2.setTemperature(temperature);
+	    ws2.setMultiPhaseCheck(true);
+	    ThermodynamicOperations ops2 = new ThermodynamicOperations(ws2);
+	    try {
+	      ops2.TPflash();
+	    } catch (Exception flashEx) {
+	      high = mid;
+	      continue;
+	    }
 
-            int liqPhases2 = 0;
-            for (int ph = 0; ph < ws2.getNumberOfPhases(); ph++) {
-              String pt = ws2.getPhase(ph).getPhaseTypeName();
-              if (pt.equals("oil") || pt.equals("liquid") || pt.contains("Asphaltene")) {
-                liqPhases2++;
-              }
-            }
+	    int liqPhases2 = 0;
+	    for (int ph = 0; ph < ws2.getNumberOfPhases(); ph++) {
+	      String pt = ws2.getPhase(ph).getPhaseTypeName();
+	      if (pt.equals("oil") || pt.equals("liquid") || pt.contains("Asphaltene")) {
+		liqPhases2++;
+	      }
+	    }
 
-            if (liqPhases2 >= 2) {
-              low = mid;
-            } else {
-              high = mid;
-            }
-          }
-          return (high + low) / 2.0;
-        }
+	    if (liqPhases2 >= 2) {
+	      low = mid;
+	    } else {
+	      high = mid;
+	    }
+	  }
+	  return (high + low) / 2.0;
+	}
       } catch (Exception e) {
-        // continue scanning
+	// continue scanning
       }
     }
 
@@ -788,13 +779,13 @@ public class AsphalteneMultiMethodBenchmark {
 
     for (int i = 0; i < n; i++) {
       for (int j = 0; j < n; j++) {
-        if (i == j) {
-          matrix[i][j] = 1.0;
-        } else {
-          String risk1 = methodResults.get(methods.get(i)).riskLevel;
-          String risk2 = methodResults.get(methods.get(j)).riskLevel;
-          matrix[i][j] = risksAgree(risk1, risk2) ? 1.0 : 0.0;
-        }
+	if (i == j) {
+	  matrix[i][j] = 1.0;
+	} else {
+	  String risk1 = methodResults.get(methods.get(i)).riskLevel;
+	  String risk2 = methodResults.get(methods.get(j)).riskLevel;
+	  matrix[i][j] = risksAgree(risk1, risk2) ? 1.0 : 0.0;
+	}
       }
     }
 
@@ -809,14 +800,10 @@ public class AsphalteneMultiMethodBenchmark {
    * @return true if risks are in the same broad category
    */
   private boolean risksAgree(String risk1, String risk2) {
-    boolean stable1 =
-        risk1.contains("STABLE") || risk1.equals("NO_PROBLEM") || risk1.equals("VERY_STABLE");
-    boolean stable2 =
-        risk2.contains("STABLE") || risk2.equals("NO_PROBLEM") || risk2.equals("VERY_STABLE");
-    boolean problem1 =
-        risk1.contains("HIGH") || risk1.contains("SEVERE") || risk1.contains("UNSTABLE");
-    boolean problem2 =
-        risk2.contains("HIGH") || risk2.contains("SEVERE") || risk2.contains("UNSTABLE");
+    boolean stable1 = risk1.contains("STABLE") || risk1.equals("NO_PROBLEM") || risk1.equals("VERY_STABLE");
+    boolean stable2 = risk2.contains("STABLE") || risk2.equals("NO_PROBLEM") || risk2.equals("VERY_STABLE");
+    boolean problem1 = risk1.contains("HIGH") || risk1.contains("SEVERE") || risk1.contains("UNSTABLE");
+    boolean problem2 = risk2.contains("HIGH") || risk2.contains("SEVERE") || risk2.contains("UNSTABLE");
 
     return (stable1 == stable2) || (problem1 == problem2);
   }
@@ -856,14 +843,14 @@ public class AsphalteneMultiMethodBenchmark {
       methodMap.put("method_name", mr.methodName);
       methodMap.put("risk_level", mr.riskLevel);
       if (!Double.isNaN(mr.onsetPressure)) {
-        methodMap.put("onset_pressure_bara", mr.onsetPressure);
+	methodMap.put("onset_pressure_bara", mr.onsetPressure);
       }
       if (!Double.isNaN(mr.bubblePointPressure)) {
-        methodMap.put("bubble_point_bara", mr.bubblePointPressure);
+	methodMap.put("bubble_point_bara", mr.bubblePointPressure);
       }
       if (!Double.isNaN(mr.onsetPressureError)) {
-        methodMap.put("onset_pressure_error_bar", mr.onsetPressureError);
-        methodMap.put("onset_pressure_relative_error_pct", mr.onsetPressureRelativeError);
+	methodMap.put("onset_pressure_error_bar", mr.onsetPressureError);
+	methodMap.put("onset_pressure_relative_error_pct", mr.onsetPressureRelativeError);
       }
       methodMap.put("computation_time_ms", mr.computationTimeMs);
       methodMap.put("details", mr.details);
@@ -883,15 +870,15 @@ public class AsphalteneMultiMethodBenchmark {
     int highRiskCount = 0;
     for (MethodResult mr : methodResults.values()) {
       if (mr.riskLevel != null) {
-        if (mr.riskLevel.contains("STABLE") || mr.riskLevel.equals("NO_PROBLEM")
-            || mr.riskLevel.equals("VERY_STABLE")) {
-          stableCount++;
-        } else if (mr.riskLevel.contains("HIGH") || mr.riskLevel.contains("SEVERE")
-            || mr.riskLevel.contains("UNSTABLE")) {
-          highRiskCount++;
-        } else {
-          moderateCount++;
-        }
+	if (mr.riskLevel.contains("STABLE") || mr.riskLevel.equals("NO_PROBLEM")
+	    || mr.riskLevel.equals("VERY_STABLE")) {
+	  stableCount++;
+	} else if (mr.riskLevel.contains("HIGH") || mr.riskLevel.contains("SEVERE")
+	    || mr.riskLevel.contains("UNSTABLE")) {
+	  highRiskCount++;
+	} else {
+	  moderateCount++;
+	}
       }
     }
     summary.put("stable_count", stableCount);
@@ -902,11 +889,11 @@ public class AsphalteneMultiMethodBenchmark {
     int total = stableCount + moderateCount + highRiskCount;
     if (total > 0) {
       if (stableCount >= total * 0.6) {
-        summary.put("consensus", "STABLE");
+	summary.put("consensus", "STABLE");
       } else if (highRiskCount >= total * 0.6) {
-        summary.put("consensus", "HIGH_RISK");
+	summary.put("consensus", "HIGH_RISK");
       } else {
-        summary.put("consensus", "INCONCLUSIVE");
+	summary.put("consensus", "INCONCLUSIVE");
       }
     }
 
@@ -922,24 +909,22 @@ public class AsphalteneMultiMethodBenchmark {
    */
   public String getComparisonTable() {
     StringBuilder sb = new StringBuilder();
-    sb.append(String.format("%-22s %-16s %-12s %-12s %-8s%n", "Method", "Risk Level",
-        "Onset P (bar)", "Error (bar)", "Time(ms)"));
+    sb.append(String.format("%-22s %-16s %-12s %-12s %-8s%n", "Method", "Risk Level", "Onset P (bar)", "Error (bar)",
+	"Time(ms)"));
     sb.append("──────────────────────────────────────────────────────────────────────────────\n");
 
     for (Map.Entry<String, MethodResult> entry : methodResults.entrySet()) {
       MethodResult mr = entry.getValue();
-      String onsetP =
-          Double.isNaN(mr.onsetPressure) ? "N/A" : String.format("%.1f", mr.onsetPressure);
-      String error = Double.isNaN(mr.onsetPressureError) ? "N/A"
-          : String.format("%.1f", mr.onsetPressureError);
-      sb.append(String.format("%-22s %-16s %-12s %-12s %-8d%n", entry.getKey(), mr.riskLevel,
-          onsetP, error, mr.computationTimeMs));
+      String onsetP = Double.isNaN(mr.onsetPressure) ? "N/A" : String.format("%.1f", mr.onsetPressure);
+      String error = Double.isNaN(mr.onsetPressureError) ? "N/A" : String.format("%.1f", mr.onsetPressureError);
+      sb.append(String.format("%-22s %-16s %-12s %-12s %-8d%n", entry.getKey(), mr.riskLevel, onsetP, error,
+	  mr.computationTimeMs));
     }
 
     if (!Double.isNaN(measuredOnsetPressure)) {
       sb.append("──────────────────────────────────────────────────────────────────────────────\n");
-      sb.append(String.format("%-22s %-16s %-12.1f %-12s %-8s%n", "MEASURED (reference)", "—",
-          measuredOnsetPressure, "0.0", "—"));
+      sb.append(String.format("%-22s %-16s %-12.1f %-12s %-8s%n", "MEASURED (reference)", "—", measuredOnsetPressure,
+	  "0.0", "—"));
     }
 
     return sb.toString();
@@ -967,8 +952,8 @@ public class AsphalteneMultiMethodBenchmark {
   // ───────────────── Setters ─────────────────
 
   /**
-   * Sets the CPA thermodynamic system. This system should use SystemSrkCPAstatoil and include
-   * asphaltene as a component.
+   * Sets the CPA thermodynamic system. This system should use SystemSrkCPAstatoil and include asphaltene as a
+   * component.
    *
    * @param cpaSystem the CPA system
    */
@@ -977,8 +962,7 @@ public class AsphalteneMultiMethodBenchmark {
   }
 
   /**
-   * Sets the classical cubic EOS system. This system should use SystemSrkEos or SystemPrEos, for
-   * the Pedersen method.
+   * Sets the classical cubic EOS system. This system should use SystemSrkEos or SystemPrEos, for the Pedersen method.
    *
    * @param cubicSystem the cubic EOS system
    */
@@ -1007,13 +991,12 @@ public class AsphalteneMultiMethodBenchmark {
   /**
    * Sets the SARA fractions.
    *
-   * @param saturates weight fraction of saturates
-   * @param aromatics weight fraction of aromatics
-   * @param resins weight fraction of resins
+   * @param saturates   weight fraction of saturates
+   * @param aromatics   weight fraction of aromatics
+   * @param resins      weight fraction of resins
    * @param asphaltenes weight fraction of asphaltenes
    */
-  public void setSARAFractions(double saturates, double aromatics, double resins,
-      double asphaltenes) {
+  public void setSARAFractions(double saturates, double aromatics, double resins, double asphaltenes) {
     this.saturates = saturates;
     this.aromatics = aromatics;
     this.resins = resins;
@@ -1069,8 +1052,8 @@ public class AsphalteneMultiMethodBenchmark {
    * Sets the API gravity of the crude oil.
    *
    * <p>
-   * When set, the Flory-Huggins model will auto-configure asphaltene properties (MW, density,
-   * solubility parameter) based on API gravity correlations from Akbarzadeh et al. (2005).
+   * When set, the Flory-Huggins model will auto-configure asphaltene properties (MW, density, solubility parameter)
+   * based on API gravity correlations from Akbarzadeh et al. (2005).
    * </p>
    *
    * @param apiGravity API gravity
@@ -1121,8 +1104,8 @@ public class AsphalteneMultiMethodBenchmark {
    * Represents a published literature case for asphaltene onset validation.
    *
    * <p>
-   * Stores the reference info, SARA data, and measured properties from published studies. Used to
-   * create benchmark instances that can be compared against measured data.
+   * Stores the reference info, SARA data, and measured properties from published studies. Used to create benchmark
+   * instances that can be compared against measured data.
    * </p>
    */
   public static class LiteratureCase {
@@ -1173,8 +1156,8 @@ public class AsphalteneMultiMethodBenchmark {
    * Returns a list of published literature cases for asphaltene onset validation.
    *
    * <p>
-   * These cases are drawn from well-known publications and provide measured onset pressures, SARA
-   * fractions, and fluid properties for benchmarking prediction methods.
+   * These cases are drawn from well-known publications and provide measured onset pressures, SARA fractions, and fluid
+   * properties for benchmarking prediction methods.
    * </p>
    *
    * <p>
@@ -1335,8 +1318,8 @@ public class AsphalteneMultiMethodBenchmark {
    * Generates a summary of prediction errors for all methods that produced onset pressures.
    *
    * <p>
-   * Returns a map with method names as keys, containing absolute error, relative error, and whether
-   * the method correctly identified the risk category.
+   * Returns a map with method names as keys, containing absolute error, relative error, and whether the method
+   * correctly identified the risk category.
    * </p>
    *
    * @return map of method name to error metrics
@@ -1388,25 +1371,25 @@ public class AsphalteneMultiMethodBenchmark {
     for (Map.Entry<String, MethodResult> entry : methodResults.entrySet()) {
       MethodResult mr = entry.getValue();
       if (!Double.isNaN(mr.onsetPressure) && !Double.isNaN(mr.onsetPressureError)) {
-        double absErr = mr.onsetPressureError;
-        double relErr = mr.onsetPressureRelativeError;
+	double absErr = mr.onsetPressureError;
+	double relErr = mr.onsetPressureRelativeError;
 
-        sumAbsErr += absErr;
-        sumRelErr += relErr;
-        sumSqErr += absErr * absErr;
-        count++;
+	sumAbsErr += absErr;
+	sumRelErr += relErr;
+	sumSqErr += absErr * absErr;
+	count++;
 
-        if (absErr > maxErr) {
-          maxErr = absErr;
-        }
-        if (absErr < bestErr) {
-          bestErr = absErr;
-          bestMethod = entry.getKey();
-        }
-        if (absErr > worstErr) {
-          worstErr = absErr;
-          worstMethod = entry.getKey();
-        }
+	if (absErr > maxErr) {
+	  maxErr = absErr;
+	}
+	if (absErr < bestErr) {
+	  bestErr = absErr;
+	  bestMethod = entry.getKey();
+	}
+	if (absErr > worstErr) {
+	  worstErr = absErr;
+	  worstMethod = entry.getKey();
+	}
       }
     }
 

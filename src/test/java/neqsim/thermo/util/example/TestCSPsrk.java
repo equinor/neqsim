@@ -20,7 +20,7 @@ public class TestCSPsrk {
   private static final Logger logger = LogManager.getLogger(TestCSPsrk.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.

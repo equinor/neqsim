@@ -19,10 +19,10 @@ public class ComponentLeachmanEos extends ComponentEos {
    * Constructor for ComponentLeachman.
    * </p>
    *
-   * @param name Name of component.
-   * @param moles Total number of moles of component.
+   * @param name         Name of component.
+   * @param moles        Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex Index number of component in phase object component array.
+   * @param compIndex    Index number of component in phase object component array.
    */
   public ComponentLeachmanEos(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
@@ -34,11 +34,11 @@ public class ComponentLeachmanEos extends ComponentEos {
    * </p>
    *
    * @param number a int. Not used.
-   * @param TC Critical temperature [K]
-   * @param PC Critical pressure [bara]
-   * @param M Molar mass
-   * @param a Acentric factor
-   * @param moles Total number of moles of component.
+   * @param TC     Critical temperature [K]
+   * @param PC     Critical pressure [bara]
+   * @param M      Molar mass
+   * @param a      Acentric factor
+   * @param moles  Total number of moles of component.
    */
   public ComponentLeachmanEos(int number, double TC, double PC, double M, double a, double moles) {
     super(number, TC, PC, M, a, moles);
@@ -68,8 +68,8 @@ public class ComponentLeachmanEos extends ComponentEos {
 
   /** {@inheritDoc} */
   @Override
-  public void Finit(PhaseInterface phase, double T, double p, double totalNumberOfMoles,
-      double beta, int numberOfComponents, int initType) {
+  public void Finit(PhaseInterface phase, double T, double p, double totalNumberOfMoles, double beta,
+      int numberOfComponents, int initType) {
     super.Finit(phase, T, p, totalNumberOfMoles, beta, numberOfComponents, initType);
 
     if (initType == 3) {
@@ -110,35 +110,29 @@ public class ComponentLeachmanEos extends ComponentEos {
 
   /** {@inheritDoc} */
   @Override
-  public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     return phase.getAlphares_Leachman()[0][0].val + phase.getAlphares_Leachman()[0][1].val; // single
-                                                                                            // component
-                                                                                            // EOS
+											    // component
+											    // EOS
   }
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdN(int i, PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdN(int i, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     return (2 * phase.getAlphares_Leachman()[0][1].val + phase.getAlphares_Leachman()[0][2].val)
-        / phase.getNumberOfMolesInPhase();
+	/ phase.getNumberOfMolesInPhase();
   }
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
-    return -(2 * phase.getAlphares_Leachman()[0][1].val + phase.getAlphares_Leachman()[0][2].val)
-        / phase.getVolume();
+  public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    return -(2 * phase.getAlphares_Leachman()[0][1].val + phase.getAlphares_Leachman()[0][2].val) / phase.getVolume();
   }
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
-    return -(phase.getAlphares_Leachman()[1][0].val + phase.getAlphares_Leachman()[1][1].val)
-        / phase.getTemperature();
+  public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    return -(phase.getAlphares_Leachman()[1][0].val + phase.getAlphares_Leachman()[1][1].val) / phase.getTemperature();
   }
 
   /** {@inheritDoc} */
@@ -146,8 +140,8 @@ public class ComponentLeachmanEos extends ComponentEos {
   public double fugcoef(PhaseInterface phase) {
     double temperature = phase.getTemperature();
     double pressure = phase.getPressure();
-    double logFugacityCoefficient =
-        dFdN(phase, phase.getNumberOfComponents(), temperature, pressure) - Math.log(phase.getZ());
+    double logFugacityCoefficient = dFdN(phase, phase.getNumberOfComponents(), temperature, pressure)
+	- Math.log(phase.getZ());
     double fugacityCoefficient = Math.exp(logFugacityCoefficient);
     return fugacityCoefficient;
   }

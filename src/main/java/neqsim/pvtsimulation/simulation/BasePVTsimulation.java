@@ -17,7 +17,7 @@ public class BasePVTsimulation implements SimulationInterface {
   private SystemInterface baseThermoSystem = null;
   public ThermodynamicOperations thermoOps = null;
   private double pressure;
-  public double[] pressures = {381.5, 338.9, 290.6, 242.3, 194.1, 145.8, 145.8, 97.5, 49.3};
+  public double[] pressures = { 381.5, 338.9, 290.6, 242.3, 194.1, 145.8, 145.8, 97.5, 49.3 };
   public double temperature = Double.NaN;
   double[][] experimentalData = null;
   double saturationVolume = 0;

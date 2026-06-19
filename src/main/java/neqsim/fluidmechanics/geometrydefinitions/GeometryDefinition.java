@@ -83,7 +83,8 @@ public abstract class GeometryDefinition
    * Constructor for GeometryDefinition.
    * </p>
    */
-  public GeometryDefinition() {}
+  public GeometryDefinition() {
+  }
 
   /**
    * <p>
@@ -103,7 +104,7 @@ public abstract class GeometryDefinition
    * Constructor for GeometryDefinition.
    * </p>
    *
-   * @param diameter a double
+   * @param diameter  a double
    * @param roughness a double
    */
   public GeometryDefinition(double diameter, double roughness) {
@@ -215,7 +216,8 @@ public abstract class GeometryDefinition
 
   /** {@inheritDoc} */
   @Override
-  public void setPackingType(int i) {}
+  public void setPackingType(int i) {
+  }
 
   /** {@inheritDoc} */
   @Override

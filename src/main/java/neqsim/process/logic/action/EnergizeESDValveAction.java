@@ -7,8 +7,8 @@ import neqsim.process.logic.LogicAction;
  * Action to energize an ESD valve and open it to a specified position.
  *
  * <p>
- * This action is commonly used in blowdown sequences where an ESD valve needs to be energized
- * (powered) and then opened to allow emergency depressurization through a flare system.
+ * This action is commonly used in blowdown sequences where an ESD valve needs to be energized (powered) and then opened
+ * to allow emergency depressurization through a flare system.
  *
  * <p>
  * Usage example:
@@ -33,7 +33,7 @@ public class EnergizeESDValveAction implements LogicAction {
   /**
    * Creates an action to energize and open an ESD valve.
    *
-   * @param valve The ESD valve to energize and open
+   * @param valve         The ESD valve to energize and open
    * @param targetOpening The target valve opening percentage (0-100)
    */
   public EnergizeESDValveAction(ESDValve valve, double targetOpening) {
@@ -67,15 +67,13 @@ public class EnergizeESDValveAction implements LogicAction {
 
   @Override
   public String getDescription() {
-    return String.format("Energize and open ESD valve %s to %.1f%%", valve.getName(),
-        targetOpening);
+    return String.format("Energize and open ESD valve %s to %.1f%%", valve.getName(), targetOpening);
   }
 
   @Override
   public boolean isComplete() {
     // Consider complete when executed, energized, and valve is within 5% of target
-    return executed && valve.isEnergized()
-        && Math.abs(valve.getPercentValveOpening() - targetOpening) < 5.0;
+    return executed && valve.isEnergized() && Math.abs(valve.getPercentValveOpening() - targetOpening) < 5.0;
   }
 
   @Override

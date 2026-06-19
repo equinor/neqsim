@@ -17,16 +17,15 @@ import neqsim.thermo.system.SystemSrkEos;
  * Tests for the PinchAnalysis class using a classic four-stream textbook example.
  *
  * <p>
- * Reference: Linnhoff, B. et al., "A User Guide on Process Integration for the Efficient Use of
- * Energy", IChemE, 1982. The standard four-stream problem is widely used in chemical engineering
- * courses for teaching pinch analysis.
+ * Reference: Linnhoff, B. et al., "A User Guide on Process Integration for the Efficient Use of Energy", IChemE, 1982.
+ * The standard four-stream problem is widely used in chemical engineering courses for teaching pinch analysis.
  * </p>
  */
 class PinchAnalysisTest {
 
   /**
-   * Four-stream problem with heat surplus. Hot streams have more energy than cold streams need, so
-   * hot utility should be zero and cold utility equals the net surplus.
+   * Four-stream problem with heat surplus. Hot streams have more energy than cold streams need, so hot utility should
+   * be zero and cold utility equals the net surplus.
    *
    * <p>
    * Hot streams:
@@ -75,8 +74,8 @@ class PinchAnalysisTest {
   }
 
   /**
-   * Four-stream problem that requires both hot and cold utility. This uses a problem where cold
-   * streams need more energy than hot streams provide.
+   * Four-stream problem that requires both hot and cold utility. This uses a problem where cold streams need more
+   * energy than hot streams provide.
    */
   @Test
   void testFourStreamProblemNeedingBothUtilities() {
@@ -216,8 +215,8 @@ class PinchAnalysisTest {
   }
 
   /**
-   * Test addProcessStream with a NeqSim stream object. Adds a gas stream that needs cooling from
-   * 100 C to 30 C and verifies it appears as a hot stream in the analysis.
+   * Test addProcessStream with a NeqSim stream object. Adds a gas stream that needs cooling from 100 C to 30 C and
+   * verifies it appears as a hot stream in the analysis.
    */
   @Test
   void testAddProcessStream() {
@@ -244,8 +243,8 @@ class PinchAnalysisTest {
   }
 
   /**
-   * Test fromProcessSystem with Heater and Cooler equipment. Creates a simple process with a heater
-   * and cooler, runs it, then extracts pinch data.
+   * Test fromProcessSystem with Heater and Cooler equipment. Creates a simple process with a heater and cooler, runs
+   * it, then extracts pinch data.
    */
   @Test
   void testFromProcessSystemWithHeaterAndCooler() {
@@ -290,13 +289,12 @@ class PinchAnalysisTest {
     assertTrue(pinch.getMinimumHeatingUtility() >= 0.0);
     assertTrue(pinch.getMinimumCoolingUtility() >= 0.0);
     assertTrue(pinch.getMaximumHeatRecovery() > 0.0,
-        "Heat recovery should be possible when hot and cold duties overlap");
+	"Heat recovery should be possible when hot and cold duties overlap");
 
     // Verify JSON contains all streams
     String json = pinch.toJson();
     assertNotNull(json);
-    assertTrue(json.contains("Cooler-1") || json.contains("Heater-1"),
-        "JSON should reference the equipment names");
+    assertTrue(json.contains("Cooler-1") || json.contains("Heater-1"), "JSON should reference the equipment names");
   }
 
   /**
@@ -334,20 +332,19 @@ class PinchAnalysisTest {
 
     // Should have extracted at least one hot and one cold stream
     int totalStreams = pinch.getNumberOfHotStreams() + pinch.getNumberOfColdStreams();
-    assertTrue(totalStreams >= 2,
-        "Should extract at least 2 streams from a two-stream HX, got " + totalStreams);
+    assertTrue(totalStreams >= 2, "Should extract at least 2 streams from a two-stream HX, got " + totalStreams);
 
     // Add a manual stream and run
     pinch.addColdStream("External cold", 20.0, 60.0, 10.0);
     pinch.run();
     // Allow tiny floating-point rounding error (e.g. -5.7e-14)
     assertTrue(pinch.getMinimumCoolingUtility() >= -1e-6,
-        "Cooling utility should be >= 0, got " + pinch.getMinimumCoolingUtility());
+	"Cooling utility should be >= 0, got " + pinch.getMinimumCoolingUtility());
   }
 
   /**
-   * Test that fromProcessSystem correctly identifies Cooler as hot stream. A cooler removes heat
-   * from the process, so the process side should be a hot stream in pinch terms.
+   * Test that fromProcessSystem correctly identifies Cooler as hot stream. A cooler removes heat from the process, so
+   * the process side should be a hot stream in pinch terms.
    */
   @Test
   void testCoolerIdentifiedAsHotStream() {
@@ -368,8 +365,7 @@ class PinchAnalysisTest {
     process.run();
 
     PinchAnalysis pinch = PinchAnalysis.fromProcessSystem(process, 10.0);
-    assertEquals(1, pinch.getNumberOfHotStreams(),
-        "Cooler process-side should be classified as hot stream");
+    assertEquals(1, pinch.getNumberOfHotStreams(), "Cooler process-side should be classified as hot stream");
     assertEquals(0, pinch.getNumberOfColdStreams(), "No cold streams expected");
   }
 }

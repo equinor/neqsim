@@ -25,8 +25,7 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
  *
  * <pre>
  * // Get a pressure vessel standard
- * DesignStandard pvStandard =
- *     StandardRegistry.createStandard(StandardType.ASME_VIII_DIV1, mechanicalDesign);
+ * DesignStandard pvStandard = StandardRegistry.createStandard(StandardType.ASME_VIII_DIV1, mechanicalDesign);
  *
  * // Find all applicable standards for a separator
  * List&lt;StandardType&gt; sepStandards = StandardRegistry.getApplicableStandards("Separator");
@@ -41,8 +40,7 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
 public final class StandardRegistry {
 
   /** Map of standard type to custom version overrides. */
-  private static final Map<StandardType, String> versionOverrides =
-      new HashMap<StandardType, String>();
+  private static final Map<StandardType, String> versionOverrides = new HashMap<StandardType, String>();
 
   /** Private constructor to prevent instantiation. */
   private StandardRegistry() {
@@ -53,17 +51,16 @@ public final class StandardRegistry {
    * Create a DesignStandard instance for the given standard type.
    *
    * <p>
-   * This factory method creates the appropriate DesignStandard subclass based on the standard
-   * type's category. The standard name is set to the standard code.
+   * This factory method creates the appropriate DesignStandard subclass based on the standard type's category. The
+   * standard name is set to the standard code.
    * </p>
    *
    * @param standardType the international standard type
-   * @param equipment the mechanical design equipment context
+   * @param equipment    the mechanical design equipment context
    * @return a new DesignStandard instance
    * @throws IllegalArgumentException if standardType is null
    */
-  public static DesignStandard createStandard(StandardType standardType,
-      MechanicalDesign equipment) {
+  public static DesignStandard createStandard(StandardType standardType, MechanicalDesign equipment) {
     return createStandard(standardType, null, equipment);
   }
 
@@ -71,13 +68,12 @@ public final class StandardRegistry {
    * Create a DesignStandard instance for the given standard type with a specific version.
    *
    * @param standardType the international standard type
-   * @param version the specific version to use (null for default)
-   * @param equipment the mechanical design equipment context
+   * @param version      the specific version to use (null for default)
+   * @param equipment    the mechanical design equipment context
    * @return a new DesignStandard instance
    * @throws IllegalArgumentException if standardType is null
    */
-  public static DesignStandard createStandard(StandardType standardType, String version,
-      MechanicalDesign equipment) {
+  public static DesignStandard createStandard(StandardType standardType, String version, MechanicalDesign equipment) {
     if (standardType == null) {
       throw new IllegalArgumentException("standardType cannot be null");
     }
@@ -89,33 +85,33 @@ public final class StandardRegistry {
 
     // Create appropriate standard based on category
     switch (category) {
-      case "pressure vessel design code":
-        return new PressureVesselDesignStandard(standardName, equipment);
+    case "pressure vessel design code":
+      return new PressureVesselDesignStandard(standardName, equipment);
 
-      case "separator process design":
-        return new SeparatorDesignStandard(standardName, equipment);
+    case "separator process design":
+      return new SeparatorDesignStandard(standardName, equipment);
 
-      case "gas scrubber process design":
-        return new GasScrubberDesignStandard(standardName, equipment);
+    case "gas scrubber process design":
+      return new GasScrubberDesignStandard(standardName, equipment);
 
-      case "pipeline design codes":
-        return new PipelineDesignStandard(standardName, equipment);
+    case "pipeline design codes":
+      return new PipelineDesignStandard(standardName, equipment);
 
-      case "compressor design codes":
-        return new CompressorDesignStandard(standardName, equipment);
+    case "compressor design codes":
+      return new CompressorDesignStandard(standardName, equipment);
 
-      case "material plate design codes":
-        return new MaterialPlateDesignStandard(standardName, equipment);
+    case "material plate design codes":
+      return new MaterialPlateDesignStandard(standardName, equipment);
 
-      case "material pipe design codes":
-        return new MaterialPipeDesignStandard(standardName, equipment);
+    case "material pipe design codes":
+      return new MaterialPipeDesignStandard(standardName, equipment);
 
-      case "valve design codes":
-        return new ValveDesignStandard(standardName, equipment);
+    case "valve design codes":
+      return new ValveDesignStandard(standardName, equipment);
 
-      default:
-        // Return base DesignStandard for unknown categories
-        return new DesignStandard(standardName, equipment);
+    default:
+      // Return base DesignStandard for unknown categories
+      return new DesignStandard(standardName, equipment);
     }
   }
 
@@ -137,7 +133,7 @@ public final class StandardRegistry {
    * Set a version override for a standard type.
    *
    * @param standardType the standard type to override
-   * @param version the version to use (null to clear override)
+   * @param version      the version to use (null to clear override)
    */
   public static void setVersionOverride(StandardType standardType, String version) {
     if (standardType == null) {
@@ -180,29 +176,29 @@ public final class StandardRegistry {
     String org = organization.trim().toUpperCase();
 
     switch (org) {
-      case "NORSOK":
-        return StandardType.getNorsokStandards();
-      case "ASME":
-        return StandardType.getAsmeStandards();
-      case "API":
-        return StandardType.getApiStandards();
-      case "DNV":
-        return StandardType.getDnvStandards();
-      case "ISO":
-        return StandardType.getIsoStandards();
-      case "ASTM":
-        return StandardType.getAstmStandards();
-      case "EN":
-        return StandardType.getEnStandards();
-      default:
-        // Search by prefix
-        List<StandardType> result = new ArrayList<StandardType>();
-        for (StandardType type : StandardType.values()) {
-          if (type.getCode().toUpperCase().startsWith(org)) {
-            result.add(type);
-          }
-        }
-        return result;
+    case "NORSOK":
+      return StandardType.getNorsokStandards();
+    case "ASME":
+      return StandardType.getAsmeStandards();
+    case "API":
+      return StandardType.getApiStandards();
+    case "DNV":
+      return StandardType.getDnvStandards();
+    case "ISO":
+      return StandardType.getIsoStandards();
+    case "ASTM":
+      return StandardType.getAstmStandards();
+    case "EN":
+      return StandardType.getEnStandards();
+    default:
+      // Search by prefix
+      List<StandardType> result = new ArrayList<StandardType>();
+      for (StandardType type : StandardType.values()) {
+	if (type.getCode().toUpperCase().startsWith(org)) {
+	  result.add(type);
+	}
+      }
+      return result;
     }
   }
 
@@ -247,7 +243,7 @@ public final class StandardRegistry {
   /**
    * Check if a standard type is applicable to an equipment type.
    *
-   * @param standardType the standard type to check
+   * @param standardType       the standard type to check
    * @param equipmentClassName the equipment class name
    * @return true if the standard applies to the equipment
    */
@@ -271,7 +267,7 @@ public final class StandardRegistry {
     for (StandardType type : applicable) {
       String category = type.getDesignStandardCategory();
       if (!result.containsKey(category)) {
-        result.put(category, new ArrayList<StandardType>());
+	result.put(category, new ArrayList<StandardType>());
       }
       result.get(category).add(type);
     }
@@ -289,16 +285,16 @@ public final class StandardRegistry {
     sb.append("Available Design Standards:\n");
     sb.append("===========================\n\n");
 
-    String[] orgs = {"NORSOK", "ASME", "API", "DNV", "ISO", "ASTM", "EN", "PD"};
+    String[] orgs = { "NORSOK", "ASME", "API", "DNV", "ISO", "ASTM", "EN", "PD" };
     for (String org : orgs) {
       List<StandardType> standards = getStandardsByOrganization(org);
       if (!standards.isEmpty()) {
-        sb.append(org).append(" Standards:\n");
-        for (StandardType std : standards) {
-          sb.append("  - ").append(std.toString()).append("\n");
-          sb.append("      Category: ").append(std.getDesignStandardCategory()).append("\n");
-        }
-        sb.append("\n");
+	sb.append(org).append(" Standards:\n");
+	for (StandardType std : standards) {
+	  sb.append("  - ").append(std.toString()).append("\n");
+	  sb.append("      Category: ").append(std.getDesignStandardCategory()).append("\n");
+	}
+	sb.append("\n");
       }
     }
 

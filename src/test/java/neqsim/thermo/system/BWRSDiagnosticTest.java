@@ -8,7 +8,6 @@ import org.apache.logging.log4j.Logger;
 public class BWRSDiagnosticTest {
   private static final Logger logger = LogManager.getLogger(BWRSDiagnosticTest.class);
 
-
   @Test
   public void jtDiagnosticAt10bar() {
     double pressure = 10.0;
@@ -38,12 +37,10 @@ public class BWRSDiagnosticTest {
     new ThermodynamicOperations(pr).TPflash();
     pr.initProperties();
 
-    System.out
-        .println("=== JT Diagnostic: Methane at " + temperature + " K, " + pressure + " bar ===");
+    System.out.println("=== JT Diagnostic: Methane at " + temperature + " K, " + pressure + " bar ===");
 
-
-    String[] names = {"BWRS", "GERG", "PR"};
-    SystemInterface[] systems = {bwrs, gerg, pr};
+    String[] names = { "BWRS", "GERG", "PR" };
+    SystemInterface[] systems = { bwrs, gerg, pr };
     double R = 8.3144621;
 
     for (int s = 0; s < 3; s++) {
@@ -62,12 +59,12 @@ public class BWRSDiagnosticTest {
       double Hres = phase.getHresTP();
       double F = 0, dFdT = 0, dFdTdV = 0, dFdV = 0, dFdVdV = 0;
       if (phase instanceof neqsim.thermo.phase.PhaseEos) {
-        neqsim.thermo.phase.PhaseEos phaseEos = (neqsim.thermo.phase.PhaseEos) phase;
-        F = phaseEos.getF();
-        dFdT = phaseEos.dFdT();
-        dFdTdV = phaseEos.dFdTdV();
-        dFdV = phaseEos.dFdV();
-        dFdVdV = phaseEos.dFdVdV();
+	neqsim.thermo.phase.PhaseEos phaseEos = (neqsim.thermo.phase.PhaseEos) phase;
+	F = phaseEos.getF();
+	dFdT = phaseEos.dFdT();
+	dFdTdV = phaseEos.dFdTdV();
+	dFdV = phaseEos.dFdV();
+	dFdVdV = phaseEos.dFdVdV();
       }
 
       // Analytical JT (PhaseEos formula)

@@ -9,10 +9,9 @@ import neqsim.process.processmodel.ProcessSystem;
  * Builder for a partial-oxidation hydrogen and syngas plant template.
  *
  * <p>
- * The template creates a methane, oxygen, and optional steam feed, routes it through a
- * {@link PartialOxidationReactor}, and can attach a PSA cascade for hydrogen recovery studies.
- * Water-gas shift is intentionally left to downstream user configuration so the same template can
- * support both hydrogen and CO-rich syngas studies.
+ * The template creates a methane, oxygen, and optional steam feed, routes it through a {@link PartialOxidationReactor},
+ * and can attach a PSA cascade for hydrogen recovery studies. Water-gas shift is intentionally left to downstream user
+ * configuration so the same template can support both hydrogen and CO-rich syngas studies.
  * </p>
  *
  * @author NeqSim contributors
@@ -110,8 +109,8 @@ public class POXHydrogenPlantBuilder extends HydrogenPlantBuilderBase {
    */
   public ProcessSystem build() {
     ProcessSystem process = new ProcessSystem();
-    Stream feed = createMethaneSteamOxygenFeed(name + " feed", methaneFeedMolePerSec,
-        steamToCarbonRatio, oxygenToCarbonRatio, feedTemperatureK, pressureBara);
+    Stream feed = createMethaneSteamOxygenFeed(name + " feed", methaneFeedMolePerSec, steamToCarbonRatio,
+	oxygenToCarbonRatio, feedTemperatureK, pressureBara);
 
     PartialOxidationReactor pox = new PartialOxidationReactor(name + " partial oxidation", feed);
     pox.setOxygenToCarbonTarget(oxygenToCarbonRatio);
@@ -134,7 +133,7 @@ public class POXHydrogenPlantBuilder extends HydrogenPlantBuilderBase {
   /**
    * Validates positive finite values.
    *
-   * @param value value to validate
+   * @param value         value to validate
    * @param parameterName parameter name for exception text
    */
   private void validatePositive(double value, String parameterName) {

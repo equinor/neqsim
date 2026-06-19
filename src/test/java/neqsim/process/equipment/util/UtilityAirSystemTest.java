@@ -89,26 +89,22 @@ public class UtilityAirSystemTest {
   @Test
   public void testAirQualityClasses() {
     // Class 1 should have lowest dew point
-    assertTrue(
-        AirQualityClass.CLASS_1.getMaxDewPointC() < AirQualityClass.CLASS_2.getMaxDewPointC());
+    assertTrue(AirQualityClass.CLASS_1.getMaxDewPointC() < AirQualityClass.CLASS_2.getMaxDewPointC());
 
     // Class 1 should have lowest oil content
     assertTrue(AirQualityClass.CLASS_1.getMaxOilMgM3() < AirQualityClass.CLASS_2.getMaxOilMgM3());
 
     // Class 1 should have smallest particle size
-    assertTrue(AirQualityClass.CLASS_1.getMaxParticleSizeMicron() < AirQualityClass.CLASS_5
-        .getMaxParticleSizeMicron());
+    assertTrue(AirQualityClass.CLASS_1.getMaxParticleSizeMicron() < AirQualityClass.CLASS_5.getMaxParticleSizeMicron());
   }
 
   @Test
   public void testDryerTypes() {
     // Desiccant should achieve lower dew point than refrigerated
-    assertTrue(DryerType.DESICCANT_HEATED.getAchievableDewPointC() < DryerType.REFRIGERATED
-        .getAchievableDewPointC());
+    assertTrue(DryerType.DESICCANT_HEATED.getAchievableDewPointC() < DryerType.REFRIGERATED.getAchievableDewPointC());
 
     // Refrigerated should have higher yield (less purge)
-    assertTrue(DryerType.REFRIGERATED.getAirYieldFraction() > DryerType.DESICCANT_HEATLESS
-        .getAirYieldFraction());
+    assertTrue(DryerType.REFRIGERATED.getAirYieldFraction() > DryerType.DESICCANT_HEATLESS.getAirYieldFraction());
   }
 
   @Test
@@ -190,8 +186,8 @@ public class UtilityAirSystemTest {
 
   @Test
   public void testAirConsumerClass() {
-    UtilityAirSystem.AirConsumer consumer =
-        new UtilityAirSystem.AirConsumer("Test Consumer", 100.0, AirQualityClass.CLASS_3);
+    UtilityAirSystem.AirConsumer consumer = new UtilityAirSystem.AirConsumer("Test Consumer", 100.0,
+	AirQualityClass.CLASS_3);
 
     assertEquals("Test Consumer", consumer.getName());
     assertEquals(100.0, consumer.getDemandNm3h(), 1e-6);

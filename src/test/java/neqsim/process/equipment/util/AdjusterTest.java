@@ -12,30 +12,28 @@ public class AdjusterTest {
     neqsim.thermo.system.SystemInterface fluid1 = neqsim.thermo.FluidCreator.create("light oil");
     fluid1.setMixingRule("classic");
 
-    neqsim.process.equipment.stream.Stream stream1 =
-        new neqsim.process.equipment.stream.Stream("light oil", fluid1.clone());
+    neqsim.process.equipment.stream.Stream stream1 = new neqsim.process.equipment.stream.Stream("light oil",
+	fluid1.clone());
     stream1.setFlowRate(1.5, "MSm3/day");
     stream1.setPressure(bottomholepressure, "bara");
     stream1.setTemperature(75.0, "C");
 
-    neqsim.process.equipment.pipeline.PipeBeggsAndBrills flowline1 =
-        new neqsim.process.equipment.pipeline.PipeBeggsAndBrills("flowline", stream1);
+    neqsim.process.equipment.pipeline.PipeBeggsAndBrills flowline1 = new neqsim.process.equipment.pipeline.PipeBeggsAndBrills(
+	"flowline", stream1);
     flowline1.setDiameter(0.25);
     flowline1.setPipeWallRoughness(15e-6);
     flowline1.setLength(1200);
     flowline1.setElevation(1200.0);
     flowline1.setNumberOfIncrements(20);
 
-    neqsim.process.equipment.util.Adjuster adjuster =
-        new neqsim.process.equipment.util.Adjuster("adjuster");
+    neqsim.process.equipment.util.Adjuster adjuster = new neqsim.process.equipment.util.Adjuster("adjuster");
     adjuster.setTargetVariable(flowline1.getOutletStream(), "pressure", wellheadpressure, "bara");
     adjuster.setAdjustedVariable(stream1, "flow", "MSm3/day");
     adjuster.setMaxAdjustedValue(10.0);
     adjuster.setMinAdjustedValue(1);
     adjuster.setTolerance(1e-5);
 
-    neqsim.process.processmodel.ProcessSystem process =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem process = new neqsim.process.processmodel.ProcessSystem();
     process.add(stream1);
     process.add(flowline1);
     process.add(adjuster);
@@ -53,30 +51,28 @@ public class AdjusterTest {
     neqsim.thermo.system.SystemInterface fluid1 = neqsim.thermo.FluidCreator.create("light oil");
     fluid1.setMixingRule("classic");
 
-    neqsim.process.equipment.stream.Stream stream1 =
-        new neqsim.process.equipment.stream.Stream("light oil", fluid1.clone());
+    neqsim.process.equipment.stream.Stream stream1 = new neqsim.process.equipment.stream.Stream("light oil",
+	fluid1.clone());
     stream1.setFlowRate(4.0, "MSm3/day");
     stream1.setPressure(170, "bara");
     stream1.setTemperature(75.0, "C");
 
-    neqsim.process.equipment.pipeline.PipeBeggsAndBrills flowline1 =
-        new neqsim.process.equipment.pipeline.PipeBeggsAndBrills("flowline", stream1);
+    neqsim.process.equipment.pipeline.PipeBeggsAndBrills flowline1 = new neqsim.process.equipment.pipeline.PipeBeggsAndBrills(
+	"flowline", stream1);
     flowline1.setDiameter(0.25);
     flowline1.setPipeWallRoughness(15e-6);
     flowline1.setLength(1200);
     flowline1.setElevation(1200.0);
     flowline1.setNumberOfIncrements(20);
 
-    neqsim.process.equipment.util.Adjuster adjuster =
-        new neqsim.process.equipment.util.Adjuster("adjuster");
+    neqsim.process.equipment.util.Adjuster adjuster = new neqsim.process.equipment.util.Adjuster("adjuster");
     adjuster.setTargetVariable(flowline1.getOutletStream(), "pressure", wellheadpressure, "bara");
     adjuster.setAdjustedVariable(stream1, "pressure", "bara");
     adjuster.setMaxAdjustedValue(260.0);
     adjuster.setMinAdjustedValue(50.1);
     adjuster.setTolerance(1e-5);
 
-    neqsim.process.processmodel.ProcessSystem process =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem process = new neqsim.process.processmodel.ProcessSystem();
     process.add(stream1);
     process.add(flowline1);
     process.add(adjuster);
@@ -89,12 +85,11 @@ public class AdjusterTest {
 
   @Test
   public void testFlexibleAdjuster() {
-    neqsim.thermo.system.SystemSrkEos testSystem =
-        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    neqsim.thermo.system.SystemSrkEos testSystem = new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
     testSystem.addComponent("methane", 100.0);
 
-    neqsim.process.equipment.stream.Stream inletStream =
-        new neqsim.process.equipment.stream.Stream("inlet stream", testSystem);
+    neqsim.process.equipment.stream.Stream inletStream = new neqsim.process.equipment.stream.Stream("inlet stream",
+	testSystem);
     inletStream.setFlowRate(100.0, "kg/hr");
     inletStream.setTemperature(25.0, "C");
     inletStream.run();
@@ -118,8 +113,7 @@ public class AdjusterTest {
     // Let's change initial flow to 50. 50 * 300 = 15000.
     inletStream.setFlowRate(50.0, "kg/hr");
 
-    neqsim.process.processmodel.ProcessSystem process =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem process = new neqsim.process.processmodel.ProcessSystem();
     process.add(inletStream);
     process.add(adjuster);
     process.run();
@@ -129,12 +123,11 @@ public class AdjusterTest {
 
   @Test
   public void testFlexibleAdjusterWithCustomSetter() {
-    neqsim.thermo.system.SystemSrkEos testSystem =
-        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    neqsim.thermo.system.SystemSrkEos testSystem = new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
     testSystem.addComponent("methane", 100.0);
 
-    neqsim.process.equipment.stream.Stream inletStream =
-        new neqsim.process.equipment.stream.Stream("inlet stream", testSystem);
+    neqsim.process.equipment.stream.Stream inletStream = new neqsim.process.equipment.stream.Stream("inlet stream",
+	testSystem);
     inletStream.setFlowRate(100.0, "kg/hr");
     inletStream.setTemperature(300.0, "K");
 
@@ -170,8 +163,7 @@ public class AdjusterTest {
       return s.getFlowRate("kg/hr") * s.getTemperature("K");
     });
 
-    neqsim.process.processmodel.ProcessSystem process =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem process = new neqsim.process.processmodel.ProcessSystem();
     process.add(inletStream);
     process.add(adjuster);
     process.run();
@@ -185,20 +177,19 @@ public class AdjusterTest {
     neqsim.thermo.system.SystemSrkEos fluid = new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
     fluid.addComponent("methane", 100.0); // 100 moles
 
-    neqsim.process.equipment.stream.Stream feed =
-        new neqsim.process.equipment.stream.Stream("feed", fluid);
+    neqsim.process.equipment.stream.Stream feed = new neqsim.process.equipment.stream.Stream("feed", fluid);
     feed.setFlowRate(1000.0, "kg/hr"); // Total flow 1000 kg/hr
 
-    neqsim.process.equipment.splitter.Splitter splitter =
-        new neqsim.process.equipment.splitter.Splitter("splitter", feed);
+    neqsim.process.equipment.splitter.Splitter splitter = new neqsim.process.equipment.splitter.Splitter("splitter",
+	feed);
     splitter.setSplitNumber(2);
-    splitter.setSplitFactors(new double[] {0.5, 0.5});
+    splitter.setSplitFactors(new double[] { 0.5, 0.5 });
 
     // Initial guess: split 50/50
-    neqsim.process.equipment.stream.Stream stream1 =
-        new neqsim.process.equipment.stream.Stream("stream1", splitter.getSplitStream(0));
-    neqsim.process.equipment.stream.Stream stream2 =
-        new neqsim.process.equipment.stream.Stream("stream2", splitter.getSplitStream(1));
+    neqsim.process.equipment.stream.Stream stream1 = new neqsim.process.equipment.stream.Stream("stream1",
+	splitter.getSplitStream(0));
+    neqsim.process.equipment.stream.Stream stream2 = new neqsim.process.equipment.stream.Stream("stream2",
+	splitter.getSplitStream(1));
 
     // We want to adjust stream 2 flow rate (via splitter)
     // so that stream 1 flow rate becomes 800 kg/hr.
@@ -216,7 +207,7 @@ public class AdjusterTest {
     // Setter: Adjusts the flow rate of the second outlet (index 1) of the splitter
     // Note: Splitter.setFlowRates takes an array of flow rates. -1 means calculated.
     adjuster.setAdjustedValueSetter((val) -> {
-      splitter.setFlowRates(new double[] {-1, val}, "kg/hr");
+      splitter.setFlowRates(new double[] { -1, val }, "kg/hr");
     });
 
     // Getter: Gets the current flow rate of the second outlet (index 1)
@@ -229,8 +220,7 @@ public class AdjusterTest {
       return stream1.getFlowRate("kg/hr");
     });
 
-    neqsim.process.processmodel.ProcessSystem process =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem process = new neqsim.process.processmodel.ProcessSystem();
     process.add(feed);
     process.add(splitter);
     process.add(stream1);

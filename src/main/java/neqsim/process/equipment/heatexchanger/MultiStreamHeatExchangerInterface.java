@@ -9,16 +9,14 @@ import neqsim.process.equipment.stream.StreamInterface;
  * MultiStreamHeatExchangerInterface interface.
  *
  * <p>
- * Defines the contract for a multi-stream heat exchanger, enabling the simulation and management of
- * multiple input and output streams. This interface extends the
- * {@link neqsim.process.equipment.ProcessEquipmentInterface} to integrate with the broader NeqSim
- * process simulation framework.
+ * Defines the contract for a multi-stream heat exchanger, enabling the simulation and management of multiple input and
+ * output streams. This interface extends the {@link neqsim.process.equipment.ProcessEquipmentInterface} to integrate
+ * with the broader NeqSim process simulation framework.
  * </p>
  *
  * <p>
- * Implementations of this interface should handle the addition and management of multiple streams,
- * perform energy and mass balance calculations, and provide methods to analyze the performance and
- * condition of the heat exchanger.
+ * Implementations of this interface should handle the addition and management of multiple streams, perform energy and
+ * mass balance calculations, and provide methods to analyze the performance and condition of the heat exchanger.
  * </p>
  *
  * @author esol
@@ -39,7 +37,7 @@ public interface MultiStreamHeatExchangerInterface extends ProcessEquipmentInter
   /**
    * Sets the feed stream at a specific index.
    *
-   * @param index Index of the stream to set
+   * @param index    Index of the stream to set
    * @param inStream Input stream to set at the specified index
    * @throws java.lang.IndexOutOfBoundsException if the index is out of range
    */
@@ -148,11 +146,10 @@ public interface MultiStreamHeatExchangerInterface extends ProcessEquipmentInter
   void setThermalEffectiveness(double thermalEffectiveness);
 
   /**
-   * Calculates the thermal effectiveness based on the Number of Transfer Units (NTU) and the
-   * capacity ratio (Cr).
+   * Calculates the thermal effectiveness based on the Number of Transfer Units (NTU) and the capacity ratio (Cr).
    *
    * @param NTU Number of Transfer Units
-   * @param Cr Capacity ratio (Cmin/Cmax)
+   * @param Cr  Capacity ratio (Cmin/Cmax)
    * @return Calculated thermal effectiveness
    */
   double calcThermalEffectiveness(double NTU, double Cr);
@@ -262,7 +259,7 @@ public interface MultiStreamHeatExchangerInterface extends ProcessEquipmentInter
    * Sets the guessed outlet temperature with a specified unit.
    *
    * @param guessOutTemperature Guessed outlet temperature
-   * @param unit Unit of the temperature (e.g., "K", "C")
+   * @param unit                Unit of the temperature (e.g., "K", "C")
    */
   void setGuessOutTemperature(double guessOutTemperature, String unit);
 

@@ -13,13 +13,13 @@ import neqsim.process.mechanicaldesign.data.StandardBasedCsvDataSource;
  * Loads well design parameters from CSV standards databases.
  *
  * <p>
- * This data source queries NORSOK D-010, API RP 90, API TR 5C3, and ISO 16530 entries from the
- * standards CSV files for well integrity, casing design, and barrier verification parameters.
+ * This data source queries NORSOK D-010, API RP 90, API TR 5C3, and ISO 16530 entries from the standards CSV files for
+ * well integrity, casing design, and barrier verification parameters.
  * </p>
  *
  * <p>
- * It follows the established NeqSim mechanical design pattern: CSV -&gt; DataSource -&gt;
- * Calculator -&gt; MechanicalDesign -&gt; JSON.
+ * It follows the established NeqSim mechanical design pattern: CSV -&gt; DataSource -&gt; Calculator -&gt;
+ * MechanicalDesign -&gt; JSON.
  * </p>
  *
  * @author ESOL
@@ -50,17 +50,18 @@ public class WellMechanicalDesignDataSource implements Serializable {
   /**
    * Default constructor.
    */
-  public WellMechanicalDesignDataSource() {}
+  public WellMechanicalDesignDataSource() {
+  }
 
   /**
    * Load NORSOK D-010 design factors into the calculator.
    *
    * <p>
-   * Reads burst, collapse, tension, and triaxial design factors from the standards database. If the
-   * database is unavailable, the calculator retains its hardcoded NORSOK D-010 defaults.
+   * Reads burst, collapse, tension, and triaxial design factors from the standards database. If the database is
+   * unavailable, the calculator retains its hardcoded NORSOK D-010 defaults.
    * </p>
    *
-   * @param calculator the well design calculator to configure
+   * @param calculator      the well design calculator to configure
    * @param isInjectionWell true if loading injection-specific design factors
    */
   public void loadNorskD010DesignFactors(WellDesignCalculator calculator, boolean isInjectionWell) {
@@ -70,8 +71,7 @@ public class WellMechanicalDesignDataSource implements Serializable {
       return;
     }
 
-    Map<String, double[]> specs =
-        source.getSpecificationValues("NORSOK-D-010", "Rev 5", EQUIPMENT_TYPE);
+    Map<String, double[]> specs = source.getSpecificationValues("NORSOK-D-010", "Rev 5", EQUIPMENT_TYPE);
     if (specs.isEmpty()) {
       logger.info("No NORSOK D-010 data found for SubseaWell, using defaults");
       return;
@@ -96,8 +96,7 @@ public class WellMechanicalDesignDataSource implements Serializable {
   /**
    * Load API RP 90 MAASP parameters.
    *
-   * @return map of MAASP parameters (safetyFactor, collapseFactor, pressureTolerance,
-   *         decayTestDuration, maxDecayRate)
+   * @return map of MAASP parameters (safetyFactor, collapseFactor, pressureTolerance, decayTestDuration, maxDecayRate)
    */
   public Map<String, Double> loadApiRp90Parameters() {
     Map<String, Double> params = new LinkedHashMap<String, Double>();
@@ -114,8 +113,7 @@ public class WellMechanicalDesignDataSource implements Serializable {
       return params;
     }
 
-    Map<String, double[]> specs =
-        source.getSpecificationValues("API-RP-90", "1st Ed", EQUIPMENT_TYPE);
+    Map<String, double[]> specs = source.getSpecificationValues("API-RP-90", "1st Ed", EQUIPMENT_TYPE);
     if (specs.isEmpty()) {
       return params;
     }
@@ -162,8 +160,7 @@ public class WellMechanicalDesignDataSource implements Serializable {
       return reqs;
     }
 
-    Map<String, double[]> specs =
-        source.getSpecificationValues("NORSOK-D-010", "Rev 5", EQUIPMENT_TYPE);
+    Map<String, double[]> specs = source.getSpecificationValues("NORSOK-D-010", "Rev 5", EQUIPMENT_TYPE);
     if (specs.isEmpty()) {
       return reqs;
     }
@@ -213,8 +210,7 @@ public class WellMechanicalDesignDataSource implements Serializable {
       return reqs;
     }
 
-    Map<String, double[]> specs =
-        source.getSpecificationValues("ISO-16530-1", "2017", EQUIPMENT_TYPE);
+    Map<String, double[]> specs = source.getSpecificationValues("ISO-16530-1", "2017", EQUIPMENT_TYPE);
     if (specs.isEmpty()) {
       return reqs;
     }
@@ -252,13 +248,13 @@ public class WellMechanicalDesignDataSource implements Serializable {
   /**
    * Apply a specification value from the database to the calculator.
    *
-   * @param specs the specification map from CSV
-   * @param specName CSV specification name
+   * @param specs      the specification map from CSV
+   * @param specName   CSV specification name
    * @param calculator the calculator to update
-   * @param target which calculator field to set ("burstDF", "collapseDF", "tensionDF", "vmeDF")
+   * @param target     which calculator field to set ("burstDF", "collapseDF", "tensionDF", "vmeDF")
    */
-  private void applySpecValue(Map<String, double[]> specs, String specName,
-      WellDesignCalculator calculator, String target) {
+  private void applySpecValue(Map<String, double[]> specs, String specName, WellDesignCalculator calculator,
+      String target) {
     if (!specs.containsKey(specName)) {
       return;
     }
@@ -282,10 +278,10 @@ public class WellMechanicalDesignDataSource implements Serializable {
   private StandardBasedCsvDataSource getNorsokSource() {
     if (norsokSource == null) {
       try {
-        norsokSource = new StandardBasedCsvDataSource(NORSOK_CSV);
+	norsokSource = new StandardBasedCsvDataSource(NORSOK_CSV);
       } catch (Exception e) {
-        logger.debug("Could not load NORSOK standards CSV: " + e.getMessage());
-        return null;
+	logger.debug("Could not load NORSOK standards CSV: " + e.getMessage());
+	return null;
       }
     }
     return norsokSource;
@@ -299,10 +295,10 @@ public class WellMechanicalDesignDataSource implements Serializable {
   private StandardBasedCsvDataSource getApiSource() {
     if (apiSource == null) {
       try {
-        apiSource = new StandardBasedCsvDataSource(API_CSV);
+	apiSource = new StandardBasedCsvDataSource(API_CSV);
       } catch (Exception e) {
-        logger.debug("Could not load API standards CSV: " + e.getMessage());
-        return null;
+	logger.debug("Could not load API standards CSV: " + e.getMessage());
+	return null;
       }
     }
     return apiSource;
@@ -316,10 +312,10 @@ public class WellMechanicalDesignDataSource implements Serializable {
   private StandardBasedCsvDataSource getIsoSource() {
     if (isoSource == null) {
       try {
-        isoSource = new StandardBasedCsvDataSource(ISO_CSV);
+	isoSource = new StandardBasedCsvDataSource(ISO_CSV);
       } catch (Exception e) {
-        logger.debug("Could not load ISO standards CSV: " + e.getMessage());
-        return null;
+	logger.debug("Could not load ISO standards CSV: " + e.getMessage());
+	return null;
       }
     }
     return isoSource;

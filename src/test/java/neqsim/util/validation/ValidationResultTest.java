@@ -46,8 +46,7 @@ class ValidationResultTest {
     String report = result.getReport();
 
     assertTrue(report.contains("TestSystem"));
-    assertTrue(report.contains("CRITICAL") || report.contains("ERROR")
-        || report.contains("Temperature too low"));
+    assertTrue(report.contains("CRITICAL") || report.contains("ERROR") || report.contains("Temperature too low"));
     assertTrue(report.contains("Mixing rule not set"));
   }
 
@@ -118,9 +117,8 @@ class ValidationResultTest {
   @Test
   @DisplayName("Exception getRemediation() - InvalidInputException provides hints")
   void testInvalidInputExceptionRemediation() {
-    neqsim.util.exception.InvalidInputException ex =
-        new neqsim.util.exception.InvalidInputException("TestClass", "testMethod", "temperature",
-            "must be positive");
+    neqsim.util.exception.InvalidInputException ex = new neqsim.util.exception.InvalidInputException("TestClass",
+	"testMethod", "temperature", "must be positive");
 
     String remediation = ex.getRemediation();
 
@@ -131,8 +129,8 @@ class ValidationResultTest {
   @Test
   @DisplayName("Exception getRemediation() - TooManyIterationsException provides hints")
   void testTooManyIterationsExceptionRemediation() {
-    neqsim.util.exception.TooManyIterationsException ex =
-        new neqsim.util.exception.TooManyIterationsException("TestClass", "testMethod", 100);
+    neqsim.util.exception.TooManyIterationsException ex = new neqsim.util.exception.TooManyIterationsException(
+	"TestClass", "testMethod", 100);
 
     String remediation = ex.getRemediation();
 
@@ -144,8 +142,8 @@ class ValidationResultTest {
   @Test
   @DisplayName("Exception getRemediation() - IsNaNException provides hints")
   void testIsNaNExceptionRemediation() {
-    neqsim.util.exception.IsNaNException ex =
-        new neqsim.util.exception.IsNaNException("TestClass", "testMethod", "compressibility");
+    neqsim.util.exception.IsNaNException ex = new neqsim.util.exception.IsNaNException("TestClass", "testMethod",
+	"compressibility");
 
     String remediation = ex.getRemediation();
 
@@ -156,8 +154,8 @@ class ValidationResultTest {
   @Test
   @DisplayName("Exception getRemediation() - InvalidOutputException provides context-specific hints")
   void testInvalidOutputExceptionRemediation() {
-    neqsim.util.exception.InvalidOutputException ex =
-        new neqsim.util.exception.InvalidOutputException("TestClass", "testMethod", "temperature");
+    neqsim.util.exception.InvalidOutputException ex = new neqsim.util.exception.InvalidOutputException("TestClass",
+	"testMethod", "temperature");
 
     String remediation = ex.getRemediation();
 
@@ -168,9 +166,8 @@ class ValidationResultTest {
   @Test
   @DisplayName("Exception getRemediation() - NotInitializedException provides hints")
   void testNotInitializedExceptionRemediation() {
-    neqsim.util.exception.NotInitializedException ex =
-        new neqsim.util.exception.NotInitializedException("TestClass", "testMethod",
-            "thermoProperties", "init(1)");
+    neqsim.util.exception.NotInitializedException ex = new neqsim.util.exception.NotInitializedException("TestClass",
+	"testMethod", "thermoProperties", "init(1)");
 
     String remediation = ex.getRemediation();
 
@@ -178,4 +175,3 @@ class ValidationResultTest {
     assertTrue(remediation.contains("init") || remediation.contains("initialize"));
   }
 }
-

@@ -70,8 +70,7 @@ class ThreeFluidConservationEquationsTest {
 
     // Higher pressure gradient should give more negative momentum RHS
     // (assuming positive pressure gradient means increasing pressure downstream)
-    assertTrue(rhsHighDp.gasMomentum < rhsLowDp.gasMomentum,
-        "Higher dP/dx should reduce momentum RHS");
+    assertTrue(rhsHighDp.gasMomentum < rhsLowDp.gasMomentum, "Higher dP/dx should reduce momentum RHS");
   }
 
   @Test
@@ -85,12 +84,9 @@ class ThreeFluidConservationEquationsTest {
     ThreeFluidRHS rhsUphill = equations.calcRHS(section, 100.0, section, section);
 
     // Uphill should have more negative momentum RHS due to gravity
-    assertTrue(rhsUphill.gasMomentum < rhsHoriz.gasMomentum,
-        "Uphill flow should reduce gas momentum more");
-    assertTrue(rhsUphill.oilMomentum < rhsHoriz.oilMomentum,
-        "Uphill flow should reduce oil momentum more");
-    assertTrue(rhsUphill.waterMomentum < rhsHoriz.waterMomentum,
-        "Uphill flow should reduce water momentum more");
+    assertTrue(rhsUphill.gasMomentum < rhsHoriz.gasMomentum, "Uphill flow should reduce gas momentum more");
+    assertTrue(rhsUphill.oilMomentum < rhsHoriz.oilMomentum, "Uphill flow should reduce oil momentum more");
+    assertTrue(rhsUphill.waterMomentum < rhsHoriz.waterMomentum, "Uphill flow should reduce water momentum more");
   }
 
   @Test
@@ -104,7 +100,7 @@ class ThreeFluidConservationEquationsTest {
 
     // With velocity differences, interfacial shear should be non-zero
     assertTrue(Math.abs(rhs.gasOilInterfacialShear) > 0 || section.getOilHoldup() < 1e-6,
-        "Gas-oil interfacial shear should be computed when phases present");
+	"Gas-oil interfacial shear should be computed when phases present");
   }
 
   @Test
@@ -141,7 +137,7 @@ class ThreeFluidConservationEquationsTest {
 
   @Test
   void testStateVectorSetting() {
-    double[] state = {10.0, 20.0, 15.0, 50.0, 20.0, 12.0, 0.0};
+    double[] state = { 10.0, 20.0, 15.0, 50.0, 20.0, 12.0, 0.0 };
 
     equations.setStateVector(section, state);
 
@@ -163,10 +159,9 @@ class ThreeFluidConservationEquationsTest {
     ThreeFluidRHS rhs = equations.calcRHS(section, 100.0, section, section);
 
     // With same velocities, interfacial shear should be zero
-    assertEquals(0.0, rhs.gasOilInterfacialShear, 1e-10,
-        "Interfacial shear should be zero when velocities are equal");
+    assertEquals(0.0, rhs.gasOilInterfacialShear, 1e-10, "Interfacial shear should be zero when velocities are equal");
     assertEquals(0.0, rhs.oilWaterInterfacialShear, 1e-10,
-        "Interfacial shear should be zero when velocities are equal");
+	"Interfacial shear should be zero when velocities are equal");
   }
 
   @Test
@@ -193,6 +188,6 @@ class ThreeFluidConservationEquationsTest {
 
     // Wall shear scales with velocity squared
     assertTrue(Math.abs(rhsHigh.gasWallShear) > Math.abs(rhsLow.gasWallShear),
-        "Higher velocity should give higher wall shear");
+	"Higher velocity should give higher wall shear");
   }
 }

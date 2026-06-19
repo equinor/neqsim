@@ -15,9 +15,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * Ensemble Kalman Filter (EnKF) estimator for online calibration of process parameters.
  *
  * <p>
- * This estimator uses the Ensemble Kalman Filter algorithm to estimate unknown process parameters
- * (such as heat transfer coefficients, valve coefficients, fouling factors) by matching simulation
- * outputs to measured plant data.
+ * This estimator uses the Ensemble Kalman Filter algorithm to estimate unknown process parameters (such as heat
+ * transfer coefficients, valve coefficients, fouling factors) by matching simulation outputs to measured plant data.
  * </p>
  *
  * <p>
@@ -135,15 +134,15 @@ public class EnKFParameterEstimator implements Serializable {
     /**
      * Constructor.
      *
-     * @param path variable path
-     * @param unit unit of measurement
-     * @param minValue minimum bound
-     * @param maxValue maximum bound
-     * @param initialValue starting value
+     * @param path               variable path
+     * @param unit               unit of measurement
+     * @param minValue           minimum bound
+     * @param maxValue           maximum bound
+     * @param initialValue       starting value
      * @param initialUncertainty initial std dev
      */
-    public TunableParameterSpec(String path, String unit, double minValue, double maxValue,
-        double initialValue, double initialUncertainty) {
+    public TunableParameterSpec(String path, String unit, double minValue, double maxValue, double initialValue,
+	double initialUncertainty) {
       this.path = path;
       this.unit = unit;
       this.minValue = minValue;
@@ -171,8 +170,8 @@ public class EnKFParameterEstimator implements Serializable {
     /**
      * Constructor.
      *
-     * @param path variable path
-     * @param unit unit of measurement
+     * @param path     variable path
+     * @param unit     unit of measurement
      * @param noiseStd measurement noise std dev
      */
     public MeasuredVariableSpec(String path, String unit, double noiseStd) {
@@ -199,15 +198,15 @@ public class EnKFParameterEstimator implements Serializable {
     /**
      * Constructor.
      *
-     * @param step update step number
-     * @param estimates parameter estimates
-     * @param uncertainties parameter uncertainties (std dev)
-     * @param measurements observed measurements
-     * @param predictions model predictions
+     * @param step            update step number
+     * @param estimates       parameter estimates
+     * @param uncertainties   parameter uncertainties (std dev)
+     * @param measurements    observed measurements
+     * @param predictions     model predictions
      * @param anomalyDetected whether anomaly was detected
      */
-    public EnKFResult(int step, double[] estimates, double[] uncertainties, double[] measurements,
-        double[] predictions, boolean anomalyDetected) {
+    public EnKFResult(int step, double[] estimates, double[] uncertainties, double[] measurements, double[] predictions,
+	boolean anomalyDetected) {
       this.step = step;
       this.estimates = estimates.clone();
       this.uncertainties = uncertainties.clone();
@@ -218,8 +217,8 @@ public class EnKFParameterEstimator implements Serializable {
       // Calculate RMSE
       double sumSq = 0;
       for (int i = 0; i < measurements.length; i++) {
-        double error = predictions[i] - measurements[i];
-        sumSq += error * error;
+	double error = predictions[i] - measurements[i];
+	sumSq += error * error;
       }
       this.rmse = Math.sqrt(sumSq / measurements.length);
     }
@@ -259,7 +258,7 @@ public class EnKFParameterEstimator implements Serializable {
     public double[] getConfidenceIntervalLower() {
       double[] lower = new double[estimates.length];
       for (int i = 0; i < estimates.length; i++) {
-        lower[i] = estimates[i] - 1.96 * uncertainties[i];
+	lower[i] = estimates[i] - 1.96 * uncertainties[i];
       }
       return lower;
     }
@@ -272,7 +271,7 @@ public class EnKFParameterEstimator implements Serializable {
     public double[] getConfidenceIntervalUpper() {
       double[] upper = new double[estimates.length];
       for (int i = 0; i < estimates.length; i++) {
-        upper[i] = estimates[i] + 1.96 * uncertainties[i];
+	upper[i] = estimates[i] + 1.96 * uncertainties[i];
       }
       return upper;
     }
@@ -322,7 +321,7 @@ public class EnKFParameterEstimator implements Serializable {
     public CalibrationResult toCalibrationResult(String[] parameterNames) {
       Map<String, Double> params = new HashMap<>();
       for (int i = 0; i < parameterNames.length && i < estimates.length; i++) {
-        params.put(parameterNames[i], estimates[i]);
+	params.put(parameterNames[i], estimates[i]);
       }
       return CalibrationResult.success(params, rmse, step, 1);
     }
@@ -341,44 +340,42 @@ public class EnKFParameterEstimator implements Serializable {
   /**
    * Adds a tunable parameter to estimate.
    *
-   * @param path variable path (e.g., "Pipe1.heatTransferCoefficient")
-   * @param unit unit of measurement
-   * @param minValue minimum bound
-   * @param maxValue maximum bound
+   * @param path         variable path (e.g., "Pipe1.heatTransferCoefficient")
+   * @param unit         unit of measurement
+   * @param minValue     minimum bound
+   * @param maxValue     maximum bound
    * @param initialValue initial/prior value
    * @return this estimator for chaining
    */
-  public EnKFParameterEstimator addTunableParameter(String path, String unit, double minValue,
-      double maxValue, double initialValue) {
+  public EnKFParameterEstimator addTunableParameter(String path, String unit, double minValue, double maxValue,
+      double initialValue) {
     double initialUncertainty = (maxValue - minValue) / 6.0; // ~99% within bounds
-    tunableParameters.add(
-        new TunableParameterSpec(path, unit, minValue, maxValue, initialValue, initialUncertainty));
+    tunableParameters.add(new TunableParameterSpec(path, unit, minValue, maxValue, initialValue, initialUncertainty));
     return this;
   }
 
   /**
    * Adds a tunable parameter with explicit uncertainty.
    *
-   * @param path variable path
-   * @param unit unit of measurement
-   * @param minValue minimum bound
-   * @param maxValue maximum bound
-   * @param initialValue initial value
+   * @param path               variable path
+   * @param unit               unit of measurement
+   * @param minValue           minimum bound
+   * @param maxValue           maximum bound
+   * @param initialValue       initial value
    * @param initialUncertainty initial standard deviation
    * @return this estimator for chaining
    */
-  public EnKFParameterEstimator addTunableParameter(String path, String unit, double minValue,
-      double maxValue, double initialValue, double initialUncertainty) {
-    tunableParameters.add(
-        new TunableParameterSpec(path, unit, minValue, maxValue, initialValue, initialUncertainty));
+  public EnKFParameterEstimator addTunableParameter(String path, String unit, double minValue, double maxValue,
+      double initialValue, double initialUncertainty) {
+    tunableParameters.add(new TunableParameterSpec(path, unit, minValue, maxValue, initialValue, initialUncertainty));
     return this;
   }
 
   /**
    * Adds a measured variable to match.
    *
-   * @param path variable path (e.g., "Separator.temperature")
-   * @param unit unit of measurement
+   * @param path     variable path (e.g., "Separator.temperature")
+   * @param unit     unit of measurement
    * @param noiseStd measurement noise standard deviation
    * @return this estimator for chaining
    */
@@ -413,7 +410,7 @@ public class EnKFParameterEstimator implements Serializable {
    * Initializes the EnKF ensemble.
    *
    * @param ensembleSize number of ensemble members (typically 20-100)
-   * @param seed random seed for reproducibility
+   * @param seed         random seed for reproducibility
    */
   public void initialize(int ensembleSize, long seed) {
     if (tunableParameters.isEmpty()) {
@@ -435,9 +432,9 @@ public class EnKFParameterEstimator implements Serializable {
     // Initialize ensemble from prior distribution
     for (int e = 0; e < ensembleSize; e++) {
       for (int p = 0; p < numParams; p++) {
-        TunableParameterSpec spec = tunableParameters.get(p);
-        double value = spec.initialValue + spec.initialUncertainty * rng.nextGaussian();
-        ensemble[e][p] = clipToBounds(value, spec);
+	TunableParameterSpec spec = tunableParameters.get(p);
+	double value = spec.initialValue + spec.initialUncertainty * rng.nextGaussian();
+	ensemble[e][p] = clipToBounds(value, spec);
       }
     }
 
@@ -458,7 +455,7 @@ public class EnKFParameterEstimator implements Serializable {
    * Clips a value to parameter bounds.
    *
    * @param value the value to clip
-   * @param spec the parameter specification with bounds
+   * @param spec  the parameter specification with bounds
    * @return the clipped value within bounds
    */
   private double clipToBounds(double value, TunableParameterSpec spec) {
@@ -513,7 +510,7 @@ public class EnKFParameterEstimator implements Serializable {
       MeasuredVariableSpec spec = measuredVariables.get(m);
       Double value = measurements.get(spec.path);
       if (value == null) {
-        throw new IllegalArgumentException("Missing measurement for: " + spec.path);
+	throw new IllegalArgumentException("Missing measurement for: " + spec.path);
       }
       measArray[m] = value;
       noiseStd[m] = spec.noiseStd;
@@ -522,9 +519,9 @@ public class EnKFParameterEstimator implements Serializable {
     // STEP 1: PREDICTION - Add process noise
     for (int e = 0; e < ensembleSize; e++) {
       for (int p = 0; p < numParams; p++) {
-        TunableParameterSpec spec = tunableParameters.get(p);
-        ensemble[e][p] += processNoiseStd * rng.nextGaussian();
-        ensemble[e][p] = clipToBounds(ensemble[e][p], spec);
+	TunableParameterSpec spec = tunableParameters.get(p);
+	ensemble[e][p] += processNoiseStd * rng.nextGaussian();
+	ensemble[e][p] = clipToBounds(ensemble[e][p], spec);
       }
     }
 
@@ -535,7 +532,7 @@ public class EnKFParameterEstimator implements Serializable {
     for (int e = 0; e < ensembleSize; e++) {
       predictions[e] = simulate(ensemble[e]);
       for (int m = 0; m < numMeas; m++) {
-        predMean[m] += predictions[e][m] / ensembleSize;
+	predMean[m] += predictions[e][m] / ensembleSize;
       }
     }
 
@@ -544,11 +541,11 @@ public class EnKFParameterEstimator implements Serializable {
     double[][] Pxy = new double[numParams][numMeas];
     for (int p = 0; p < numParams; p++) {
       for (int m = 0; m < numMeas; m++) {
-        double cov = 0;
-        for (int e = 0; e < ensembleSize; e++) {
-          cov += (ensemble[e][p] - ensembleMean[p]) * (predictions[e][m] - predMean[m]);
-        }
-        Pxy[p][m] = cov / (ensembleSize - 1);
+	double cov = 0;
+	for (int e = 0; e < ensembleSize; e++) {
+	  cov += (ensemble[e][p] - ensembleMean[p]) * (predictions[e][m] - predMean[m]);
+	}
+	Pxy[p][m] = cov / (ensembleSize - 1);
       }
     }
 
@@ -556,14 +553,14 @@ public class EnKFParameterEstimator implements Serializable {
     double[][] Pyy = new double[numMeas][numMeas];
     for (int i = 0; i < numMeas; i++) {
       for (int j = 0; j < numMeas; j++) {
-        double cov = 0;
-        for (int e = 0; e < ensembleSize; e++) {
-          cov += (predictions[e][i] - predMean[i]) * (predictions[e][j] - predMean[j]);
-        }
-        Pyy[i][j] = cov / (ensembleSize - 1);
-        if (i == j) {
-          Pyy[i][j] += noiseStd[i] * noiseStd[i]; // Add measurement noise
-        }
+	double cov = 0;
+	for (int e = 0; e < ensembleSize; e++) {
+	  cov += (predictions[e][i] - predMean[i]) * (predictions[e][j] - predMean[j]);
+	}
+	Pyy[i][j] = cov / (ensembleSize - 1);
+	if (i == j) {
+	  Pyy[i][j] += noiseStd[i] * noiseStd[i]; // Add measurement noise
+	}
       }
     }
 
@@ -572,9 +569,9 @@ public class EnKFParameterEstimator implements Serializable {
     double[][] K = new double[numParams][numMeas];
     for (int p = 0; p < numParams; p++) {
       for (int m = 0; m < numMeas; m++) {
-        for (int k = 0; k < numMeas; k++) {
-          K[p][m] += Pxy[p][k] * PyyInv[k][m];
-        }
+	for (int k = 0; k < numMeas; k++) {
+	  K[p][m] += Pxy[p][k] * PyyInv[k][m];
+	}
       }
     }
 
@@ -583,17 +580,17 @@ public class EnKFParameterEstimator implements Serializable {
       // Perturb measurements
       double[] perturbedMeas = new double[numMeas];
       for (int m = 0; m < numMeas; m++) {
-        perturbedMeas[m] = measArray[m] + noiseStd[m] * rng.nextGaussian();
+	perturbedMeas[m] = measArray[m] + noiseStd[m] * rng.nextGaussian();
       }
 
       // Update: param = param + K * (measurement - prediction)
       for (int p = 0; p < numParams; p++) {
-        double innovation = 0;
-        for (int m = 0; m < numMeas; m++) {
-          innovation += K[p][m] * (perturbedMeas[m] - predictions[e][m]);
-        }
-        TunableParameterSpec spec = tunableParameters.get(p);
-        ensemble[e][p] = clipToBounds(ensemble[e][p] + innovation, spec);
+	double innovation = 0;
+	for (int m = 0; m < numMeas; m++) {
+	  innovation += K[p][m] * (perturbedMeas[m] - predictions[e][m]);
+	}
+	TunableParameterSpec spec = tunableParameters.get(p);
+	ensemble[e][p] = clipToBounds(ensemble[e][p] + innovation, spec);
       }
     }
 
@@ -604,13 +601,13 @@ public class EnKFParameterEstimator implements Serializable {
     for (int p = 0; p < numParams; p++) {
       double sum = 0;
       for (int e = 0; e < ensembleSize; e++) {
-        sum += ensemble[e][p];
+	sum += ensemble[e][p];
       }
       newMean[p] = sum / ensembleSize;
 
       double sumSq = 0;
       for (int e = 0; e < ensembleSize; e++) {
-        sumSq += (ensemble[e][p] - newMean[p]) * (ensemble[e][p] - newMean[p]);
+	sumSq += (ensemble[e][p] - newMean[p]) * (ensemble[e][p] - newMean[p]);
       }
       newStd[p] = Math.sqrt(sumSq / (ensembleSize - 1));
     }
@@ -619,7 +616,7 @@ public class EnKFParameterEstimator implements Serializable {
     for (int p = 0; p < numParams; p++) {
       double change = newMean[p] - previousEstimate[p];
       if (Math.abs(change) > maxChangePerUpdate) {
-        newMean[p] = previousEstimate[p] + Math.signum(change) * maxChangePerUpdate;
+	newMean[p] = previousEstimate[p] + Math.signum(change) * maxChangePerUpdate;
       }
     }
 
@@ -639,8 +636,8 @@ public class EnKFParameterEstimator implements Serializable {
     boolean anomaly = maxError > 3.0; // > 3 sigma
 
     // Create result
-    EnKFResult result = new EnKFResult(updateCount, ensembleMean.clone(), ensembleStd.clone(),
-        measArray, lastPrediction.clone(), anomaly);
+    EnKFResult result = new EnKFResult(updateCount, ensembleMean.clone(), ensembleStd.clone(), measArray,
+	lastPrediction.clone(), anomaly);
     history.add(result);
 
     return result;
@@ -655,21 +652,20 @@ public class EnKFParameterEstimator implements Serializable {
   private double[][] invertMatrix(double[][] matrix) {
     int n = matrix.length;
     if (n == 1) {
-      return new double[][] {{1.0 / matrix[0][0]}};
+      return new double[][] { { 1.0 / matrix[0][0] } };
     }
     if (n == 2) {
       double det = matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
       if (Math.abs(det) < 1e-10) {
-        // Regularize
-        det = 1e-10;
+	// Regularize
+	det = 1e-10;
       }
-      return new double[][] {{matrix[1][1] / det, -matrix[0][1] / det},
-          {-matrix[1][0] / det, matrix[0][0] / det}};
+      return new double[][] { { matrix[1][1] / det, -matrix[0][1] / det },
+	  { -matrix[1][0] / det, matrix[0][0] / det } };
     }
     // For larger matrices, use Gaussian elimination or external library
     // This is a simplified implementation for small matrices
-    throw new UnsupportedOperationException(
-        "Matrix inversion for n>" + n + " not implemented. Use external library.");
+    throw new UnsupportedOperationException("Matrix inversion for n>" + n + " not implemented. Use external library.");
   }
 
   /**

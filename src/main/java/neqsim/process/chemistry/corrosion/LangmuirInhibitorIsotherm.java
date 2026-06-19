@@ -15,22 +15,19 @@ import com.google.gson.GsonBuilder;
  * theta = (K_ads * C) / (1 + K_ads * C)
  * </pre>
  *
- * where {@code C} is the inhibitor concentration in the bulk aqueous phase (mol/L) and
- * {@code K_ads} is the adsorption equilibrium constant. The temperature dependence of {@code K_ads}
- * follows the van 't Hoff equation
+ * where {@code C} is the inhibitor concentration in the bulk aqueous phase (mol/L) and {@code K_ads} is the adsorption
+ * equilibrium constant. The temperature dependence of {@code K_ads} follows the van 't Hoff equation
  *
  * <pre>
  * K_ads(T) = K_ads_ref * exp(-dHads / R * (1 / T - 1 / T_ref))
  * </pre>
  *
- * with adsorption enthalpy {@code dHads} typically in the range -20 to -60 kJ/mol for physisorption
- * of imidazoline / quaternary-ammonium inhibitors on carbon steel (Bentiss et al., 2002; Khaled,
- * 2008).
+ * with adsorption enthalpy {@code dHads} typically in the range -20 to -60 kJ/mol for physisorption of imidazoline /
+ * quaternary-ammonium inhibitors on carbon steel (Bentiss et al., 2002; Khaled, 2008).
  *
  * <p>
- * The inhibition efficiency is taken proportional to coverage: {@code eta = theta_max * theta}
- * where {@code theta_max} caps the maximum achievable efficiency (typical 0.90 - 0.99 for
- * high-performing imidazoline blends).
+ * The inhibition efficiency is taken proportional to coverage: {@code eta = theta_max * theta} where {@code theta_max}
+ * caps the maximum achievable efficiency (typical 0.90 - 0.99 for high-performing imidazoline blends).
  *
  * @author ESOL
  * @version 1.0
@@ -49,18 +46,18 @@ public class LangmuirInhibitorIsotherm implements Serializable {
   /**
    * Default constructor with imidazoline-typical parameters.
    */
-  public LangmuirInhibitorIsotherm() {}
+  public LangmuirInhibitorIsotherm() {
+  }
 
   /**
    * Constructs an isotherm with custom adsorption parameters.
    *
-   * @param kAdsRef reference adsorption constant at 298.15 K [L/mol]
+   * @param kAdsRef    reference adsorption constant at 298.15 K [L/mol]
    * @param dHadsKjMol adsorption enthalpy [kJ/mol] (negative for exothermic)
-   * @param thetaMax maximum coverage cap (0..1)
-   * @param molarMass inhibitor molar mass [g/mol]
+   * @param thetaMax   maximum coverage cap (0..1)
+   * @param molarMass  inhibitor molar mass [g/mol]
    */
-  public LangmuirInhibitorIsotherm(double kAdsRef, double dHadsKjMol, double thetaMax,
-      double molarMass) {
+  public LangmuirInhibitorIsotherm(double kAdsRef, double dHadsKjMol, double thetaMax, double molarMass) {
     this.kAdsRef = kAdsRef;
     this.dHadsKjMol = dHadsKjMol;
     this.thetaMax = Math.max(0.0, Math.min(1.0, thetaMax));
@@ -81,7 +78,7 @@ public class LangmuirInhibitorIsotherm implements Serializable {
   /**
    * Computes fractional surface coverage at the given inhibitor dose.
    *
-   * @param doseMgL inhibitor concentration [mg/L]
+   * @param doseMgL      inhibitor concentration [mg/L]
    * @param temperatureC operating temperature [C]
    * @return coverage theta in [0,1]
    */
@@ -95,7 +92,7 @@ public class LangmuirInhibitorIsotherm implements Serializable {
   /**
    * Computes inhibition efficiency (fraction of base corrosion rate suppressed).
    *
-   * @param doseMgL inhibitor concentration [mg/L]
+   * @param doseMgL      inhibitor concentration [mg/L]
    * @param temperatureC operating temperature [C]
    * @return efficiency in [0, thetaMax]
    */
@@ -107,7 +104,7 @@ public class LangmuirInhibitorIsotherm implements Serializable {
    * Solves for the dose that gives a target efficiency.
    *
    * @param targetEfficiency target efficiency (0..thetaMax)
-   * @param temperatureC operating temperature [C]
+   * @param temperatureC     operating temperature [C]
    * @return required dose [mg/L]; returns positive infinity if target exceeds thetaMax
    */
   public double getDoseForEfficiency(double targetEfficiency, double temperatureC) {
@@ -140,7 +137,6 @@ public class LangmuirInhibitorIsotherm implements Serializable {
    * @return JSON string
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 }

@@ -12,9 +12,8 @@ import neqsim.process.equipment.ProcessEquipmentBaseClass;
  * Injection conformance monitor for diagnosing out-of-zone injection.
  *
  * <p>
- * This class provides time-series analysis tools for injection well surveillance data. It uses Hall
- * plot analysis, slope change detection, and injection profile interpretation to identify
- * conformance issues such as:
+ * This class provides time-series analysis tools for injection well surveillance data. It uses Hall plot analysis,
+ * slope change detection, and injection profile interpretation to identify conformance issues such as:
  * </p>
  * <ul>
  * <li>Fracture initiation or extension (Hall slope decrease)</li>
@@ -25,10 +24,9 @@ import neqsim.process.equipment.ProcessEquipmentBaseClass;
  *
  * <h2>Hall Plot Analysis</h2>
  * <p>
- * The Hall plot is cumulative wellhead pressure times time (sum of WHP * dt) vs cumulative
- * injection volume. A constant Hall slope indicates stable injectivity. A decreasing slope
- * indicates fracture growth or improved injectivity. An increasing slope indicates plugging or skin
- * increase.
+ * The Hall plot is cumulative wellhead pressure times time (sum of WHP * dt) vs cumulative injection volume. A constant
+ * Hall slope indicates stable injectivity. A decreasing slope indicates fracture growth or improved injectivity. An
+ * increasing slope indicates plugging or skin increase.
  * </p>
  *
  * <h2>Usage Example</h2>
@@ -90,8 +88,8 @@ public class InjectionConformanceMonitor extends ProcessEquipmentBaseClass {
      * Create an injection data point.
      *
      * @param timeDays time in days
-     * @param whpBar wellhead pressure in bar
-     * @param rateM3d injection rate in m3/day
+     * @param whpBar   wellhead pressure in bar
+     * @param rateM3d  injection rate in m3/day
      */
     public InjectionDataPoint(double timeDays, double whpBar, double rateM3d) {
       this.timeDays = timeDays;
@@ -140,13 +138,12 @@ public class InjectionConformanceMonitor extends ProcessEquipmentBaseClass {
     /**
      * Create a zone profile data point.
      *
-     * @param zoneName zone name
-     * @param depthM zone depth in meters
+     * @param zoneName           zone name
+     * @param depthM             zone depth in meters
      * @param allocationFraction fraction of total injection going to this zone
-     * @param isTargetZone whether this is the intended injection zone
+     * @param isTargetZone       whether this is the intended injection zone
      */
-    public ZoneProfilePoint(String zoneName, double depthM, double allocationFraction,
-        boolean isTargetZone) {
+    public ZoneProfilePoint(String zoneName, double depthM, double allocationFraction, boolean isTargetZone) {
       this.zoneName = zoneName;
       this.depthM = depthM;
       this.allocationFraction = allocationFraction;
@@ -215,12 +212,11 @@ public class InjectionConformanceMonitor extends ProcessEquipmentBaseClass {
   /**
    * Record an injection data point.
    *
-   * @param timeDays time since start of monitoring (days)
-   * @param wellheadPressureBar wellhead pressure (bar)
+   * @param timeDays              time since start of monitoring (days)
+   * @param wellheadPressureBar   wellhead pressure (bar)
    * @param injectionRateM3perDay injection rate (m3/day)
    */
-  public void recordInjectionData(double timeDays, double wellheadPressureBar,
-      double injectionRateM3perDay) {
+  public void recordInjectionData(double timeDays, double wellheadPressureBar, double injectionRateM3perDay) {
     dataPoints.add(new InjectionDataPoint(timeDays, wellheadPressureBar, injectionRateM3perDay));
     hallPlotCalculated = false;
   }
@@ -228,13 +224,12 @@ public class InjectionConformanceMonitor extends ProcessEquipmentBaseClass {
   /**
    * Add a zone to the injection profile.
    *
-   * @param zoneName zone identifier
-   * @param depthM zone depth (m)
+   * @param zoneName           zone identifier
+   * @param depthM             zone depth (m)
    * @param allocationFraction fraction of total injection going to this zone (0.0-1.0)
-   * @param isTargetZone whether this is the intended injection zone
+   * @param isTargetZone       whether this is the intended injection zone
    */
-  public void addZoneProfile(String zoneName, double depthM, double allocationFraction,
-      boolean isTargetZone) {
+  public void addZoneProfile(String zoneName, double depthM, double allocationFraction, boolean isTargetZone) {
     injectionProfile.add(new ZoneProfilePoint(zoneName, depthM, allocationFraction, isTargetZone));
   }
 
@@ -242,8 +237,8 @@ public class InjectionConformanceMonitor extends ProcessEquipmentBaseClass {
    * Calculate the Hall plot from recorded injection data.
    *
    * <p>
-   * Hall integral is the cumulative sum of (WHP * dt) plotted against cumulative injection volume.
-   * The slope of this plot indicates injectivity behavior.
+   * Hall integral is the cumulative sum of (WHP * dt) plotted against cumulative injection volume. The slope of this
+   * plot indicates injectivity behavior.
    * </p>
    */
   public void calculateHallPlot() {
@@ -371,7 +366,7 @@ public class InjectionConformanceMonitor extends ProcessEquipmentBaseClass {
     double targetFraction = 0.0;
     for (ZoneProfilePoint point : injectionProfile) {
       if (point.isTargetZone()) {
-        targetFraction += point.getAllocationFraction();
+	targetFraction += point.getAllocationFraction();
       }
     }
     return targetFraction;
@@ -485,7 +480,7 @@ public class InjectionConformanceMonitor extends ProcessEquipmentBaseClass {
    * Calculate slope using least-squares linear regression on the Hall plot.
    *
    * @param startIdx start index (inclusive)
-   * @param endIdx end index (inclusive)
+   * @param endIdx   end index (inclusive)
    * @return slope (bar day / m3)
    */
   private double calculateSlopeLinearRegression(int startIdx, int endIdx) {
@@ -527,8 +522,8 @@ public class InjectionConformanceMonitor extends ProcessEquipmentBaseClass {
     if (!injectionProfile.isEmpty()) {
       double oozFraction = getOutOfZoneFraction();
       if (oozFraction > 0.2) {
-        diagnosis = ConformanceDiagnosis.OUT_OF_ZONE_SUSPECTED;
-        return;
+	diagnosis = ConformanceDiagnosis.OUT_OF_ZONE_SUSPECTED;
+	return;
       }
     }
 
@@ -556,19 +551,19 @@ public class InjectionConformanceMonitor extends ProcessEquipmentBaseClass {
    */
   private String getDiagnosisDescription() {
     switch (diagnosis) {
-      case NORMAL:
-        return "Stable injectivity, no conformance issues detected.";
-      case FRACTURE_GROWTH:
-        return "Hall slope decreased — possible fracture growth or improved injectivity. "
-            + "Risk of out-of-zone fracture extension.";
-      case PLUGGING:
-        return "Hall slope increased — possible near-wellbore plugging, scaling, or skin increase.";
-      case OUT_OF_ZONE_SUSPECTED:
-        return "Injection profile shows significant out-of-zone injection — "
-            + String.format("%.1f%% going to non-target zones.", getOutOfZoneFraction() * 100);
-      case INSUFFICIENT_DATA:
-      default:
-        return "Insufficient data for diagnosis (need at least 5 data points).";
+    case NORMAL:
+      return "Stable injectivity, no conformance issues detected.";
+    case FRACTURE_GROWTH:
+      return "Hall slope decreased — possible fracture growth or improved injectivity. "
+	  + "Risk of out-of-zone fracture extension.";
+    case PLUGGING:
+      return "Hall slope increased — possible near-wellbore plugging, scaling, or skin increase.";
+    case OUT_OF_ZONE_SUSPECTED:
+      return "Injection profile shows significant out-of-zone injection — "
+	  + String.format("%.1f%% going to non-target zones.", getOutOfZoneFraction() * 100);
+    case INSUFFICIENT_DATA:
+    default:
+      return "Insufficient data for diagnosis (need at least 5 data points).";
     }
   }
 

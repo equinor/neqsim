@@ -12,15 +12,13 @@ import neqsim.process.equipment.stream.StreamInterface;
  * Duty-controlled fired heater with thermal efficiency modeling.
  *
  * <p>
- * Models a process heater where the process stream is heated by burning fuel. Unlike a simple
- * {@link Heater} which applies duty directly, this class accounts for thermal efficiency, fuel
- * consumption, stack losses, and CO2 emissions.
+ * Models a process heater where the process stream is heated by burning fuel. Unlike a simple {@link Heater} which
+ * applies duty directly, this class accounts for thermal efficiency, fuel consumption, stack losses, and CO2 emissions.
  * </p>
  *
  * <p>
- * The user specifies the desired outlet temperature, and the heater calculates the required
- * absorbed duty, fuel consumption (based on thermal efficiency and fuel LHV), and flue gas
- * emissions.
+ * The user specifies the desired outlet temperature, and the heater calculates the required absorbed duty, fuel
+ * consumption (based on thermal efficiency and fuel LHV), and flue gas emissions.
  * </p>
  *
  * <p>
@@ -85,7 +83,7 @@ public class FiredHeater extends Heater {
   /**
    * Creates a fired heater with an inlet stream.
    *
-   * @param name equipment name
+   * @param name        equipment name
    * @param inletStream inlet process stream
    */
   public FiredHeater(String name, StreamInterface inletStream) {
@@ -273,7 +271,7 @@ public class FiredHeater extends Heater {
    * Converts power from Watts to the specified unit.
    *
    * @param valueW power in Watts
-   * @param unit target unit
+   * @param unit   target unit
    * @return converted value
    */
   private double convertPower(double valueW, String unit) {
@@ -324,7 +322,6 @@ public class FiredHeater extends Heater {
     emissions.put("CO2_tonnesPerYear", co2EmissionsKgPerSec * 3600.0 * 8760.0 / 1000.0);
     result.put("emissions", emissions);
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(result);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(result);
   }
 }

@@ -18,15 +18,18 @@ import java.util.List;
  * <li>Head limits - maximum and minimum head at each speed</li>
  * </ul>
  *
- * <p><strong>Envelope Definition</strong></p>
  * <p>
- * The operating envelope is typically defined by arrays of flow and head values at different
- * speeds. The surge line represents the minimum flow below which the compressor becomes unstable.
- * The stonewall (choke) line represents the maximum flow where the compressor can no longer
- * increase flow regardless of head.
+ * <strong>Envelope Definition</strong>
+ * </p>
+ * <p>
+ * The operating envelope is typically defined by arrays of flow and head values at different speeds. The surge line
+ * represents the minimum flow below which the compressor becomes unstable. The stonewall (choke) line represents the
+ * maximum flow where the compressor can no longer increase flow regardless of head.
  * </p>
  *
- * <p><strong>Example Usage</strong></p>
+ * <p>
+ * <strong>Example Usage</strong>
+ * </p>
  *
  * <pre>
  * OperatingEnvelope envelope = new OperatingEnvelope();
@@ -98,7 +101,8 @@ public class OperatingEnvelope implements Serializable {
   /**
    * Default constructor.
    */
-  public OperatingEnvelope() {}
+  public OperatingEnvelope() {
+  }
 
   /**
    * Constructor with speed limits.
@@ -114,8 +118,8 @@ public class OperatingEnvelope implements Serializable {
   /**
    * Sets the surge line from discrete points.
    *
-   * @param flows flow values in m3/h
-   * @param heads head values in kJ/kg
+   * @param flows  flow values in m3/h
+   * @param heads  head values in kJ/kg
    * @param speeds speed values in RPM
    */
   public void setSurgeLine(double[] flows, double[] heads, double[] speeds) {
@@ -141,8 +145,8 @@ public class OperatingEnvelope implements Serializable {
   /**
    * Sets the stonewall line from discrete points.
    *
-   * @param flows flow values in m3/h
-   * @param heads head values in kJ/kg
+   * @param flows  flow values in m3/h
+   * @param heads  head values in kJ/kg
    * @param speeds speed values in RPM
    */
   public void setStonewallLine(double[] flows, double[] heads, double[] speeds) {
@@ -163,8 +167,8 @@ public class OperatingEnvelope implements Serializable {
   /**
    * Checks if an operating point is within the envelope.
    *
-   * @param flow actual flow in m3/h
-   * @param head actual head in kJ/kg
+   * @param flow  actual flow in m3/h
+   * @param head  actual head in kJ/kg
    * @param speed actual speed in RPM
    * @return true if within envelope
    */
@@ -201,8 +205,8 @@ public class OperatingEnvelope implements Serializable {
    * Surge margin = (Q_actual - Q_surge) / Q_surge
    * </p>
    *
-   * @param flow actual flow in m3/h
-   * @param head actual head in kJ/kg
+   * @param flow  actual flow in m3/h
+   * @param head  actual head in kJ/kg
    * @param speed actual speed in RPM
    * @return surge margin as fraction (positive = safe, negative = in surge)
    */
@@ -221,8 +225,8 @@ public class OperatingEnvelope implements Serializable {
    * Stonewall margin = (Q_stonewall - Q_actual) / Q_stonewall
    * </p>
    *
-   * @param flow actual flow in m3/h
-   * @param head actual head in kJ/kg
+   * @param flow  actual flow in m3/h
+   * @param head  actual head in kJ/kg
    * @param speed actual speed in RPM
    * @return stonewall margin as fraction (positive = safe, negative = choked)
    */
@@ -237,7 +241,7 @@ public class OperatingEnvelope implements Serializable {
   /**
    * Gets the surge flow at a given head and speed.
    *
-   * @param head polytropic head in kJ/kg
+   * @param head  polytropic head in kJ/kg
    * @param speed shaft speed in RPM
    * @return surge flow in m3/h
    */
@@ -261,7 +265,7 @@ public class OperatingEnvelope implements Serializable {
   /**
    * Gets the stonewall flow at a given head and speed.
    *
-   * @param head polytropic head in kJ/kg
+   * @param head  polytropic head in kJ/kg
    * @param speed shaft speed in RPM
    * @return stonewall flow in m3/h
    */
@@ -284,8 +288,8 @@ public class OperatingEnvelope implements Serializable {
   /**
    * Gets the distance to the nearest envelope boundary.
    *
-   * @param flow actual flow in m3/h
-   * @param head actual head in kJ/kg
+   * @param flow  actual flow in m3/h
+   * @param head  actual head in kJ/kg
    * @param speed actual speed in RPM
    * @return distance as fraction (positive = inside, negative = outside)
    */
@@ -325,8 +329,8 @@ public class OperatingEnvelope implements Serializable {
   /**
    * Gets the limiting constraint at an operating point.
    *
-   * @param flow actual flow in m3/h
-   * @param head actual head in kJ/kg
+   * @param flow  actual flow in m3/h
+   * @param head  actual head in kJ/kg
    * @param speed actual speed in RPM
    * @return string describing the limiting constraint, or null if within envelope
    */
@@ -356,7 +360,7 @@ public class OperatingEnvelope implements Serializable {
     StringBuilder sb = new StringBuilder();
     for (int i = 0; i < violations.size(); i++) {
       if (i > 0) {
-        sb.append(", ");
+	sb.append(", ");
       }
       sb.append(violations.get(i));
     }
@@ -377,9 +381,9 @@ public class OperatingEnvelope implements Serializable {
     // Find bracketing points
     for (int i = 0; i < surgeHeads.length - 1; i++) {
       if (head >= surgeHeads[i + 1] && head <= surgeHeads[i]) {
-        // Linear interpolation
-        double fraction = (head - surgeHeads[i + 1]) / (surgeHeads[i] - surgeHeads[i + 1]);
-        return surgeFlows[i + 1] + fraction * (surgeFlows[i] - surgeFlows[i + 1]);
+	// Linear interpolation
+	double fraction = (head - surgeHeads[i + 1]) / (surgeHeads[i] - surgeHeads[i + 1]);
+	return surgeFlows[i + 1] + fraction * (surgeFlows[i] - surgeFlows[i + 1]);
       }
     }
 
@@ -404,9 +408,8 @@ public class OperatingEnvelope implements Serializable {
     // Find bracketing points
     for (int i = 0; i < stonewallHeads.length - 1; i++) {
       if (head >= stonewallHeads[i + 1] && head <= stonewallHeads[i]) {
-        double fraction =
-            (head - stonewallHeads[i + 1]) / (stonewallHeads[i] - stonewallHeads[i + 1]);
-        return stonewallFlows[i + 1] + fraction * (stonewallFlows[i] - stonewallFlows[i + 1]);
+	double fraction = (head - stonewallHeads[i + 1]) / (stonewallHeads[i] - stonewallHeads[i + 1]);
+	return stonewallFlows[i + 1] + fraction * (stonewallFlows[i] - stonewallFlows[i + 1]);
       }
     }
 

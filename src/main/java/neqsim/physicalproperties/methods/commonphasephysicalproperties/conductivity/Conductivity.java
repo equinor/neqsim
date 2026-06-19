@@ -11,8 +11,7 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  *
  * @author Even Solbraa
  */
-public abstract class Conductivity extends CommonPhysicalPropertyMethod
-    implements ConductivityInterface {
+public abstract class Conductivity extends CommonPhysicalPropertyMethod implements ConductivityInterface {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */

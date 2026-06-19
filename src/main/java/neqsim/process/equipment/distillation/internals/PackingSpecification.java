@@ -6,9 +6,8 @@ import java.io.Serializable;
  * Immutable packed-column packing data used by hydraulic and rate-based column models.
  *
  * <p>
- * The specification stores geometry, hydraulic capacity, material wetting data, and optional
- * Billet-Schultes constants in one reusable object. Nominal size is stored in millimetres to match
- * vendor and NeqSim design-data tables.
+ * The specification stores geometry, hydraulic capacity, material wetting data, and optional Billet-Schultes constants
+ * in one reusable object. Nominal size is stored in millimetres to match vendor and NeqSim design-data tables.
  * </p>
  *
  * @author NeqSim
@@ -54,23 +53,22 @@ public class PackingSpecification implements Serializable {
   /**
    * Create a packing specification.
    *
-   * @param name packing display name
-   * @param category packing category, normally random or structured
-   * @param material packing material, for example metal, plastic, or ceramic
-   * @param nominalSizeMm nominal packing size in millimetres, or zero for structured packing
-   * @param specificSurfaceArea specific surface area in m2/m3, must be positive
-   * @param voidFraction void fraction from zero to one, must be positive
-   * @param packingFactor hydraulic packing factor in 1/m, must be positive
+   * @param name                   packing display name
+   * @param category               packing category, normally random or structured
+   * @param material               packing material, for example metal, plastic, or ceramic
+   * @param nominalSizeMm          nominal packing size in millimetres, or zero for structured packing
+   * @param specificSurfaceArea    specific surface area in m2/m3, must be positive
+   * @param voidFraction           void fraction from zero to one, must be positive
+   * @param packingFactor          hydraulic packing factor in 1/m, must be positive
    * @param criticalSurfaceTension critical surface tension in N/m, must be positive
-   * @param billetLiquidConstant Billet-Schultes liquid-side constant, must be positive
-   * @param billetGasConstant Billet-Schultes gas-side constant, must be positive
-   * @param source source description for the data
+   * @param billetLiquidConstant   Billet-Schultes liquid-side constant, must be positive
+   * @param billetGasConstant      Billet-Schultes gas-side constant, must be positive
+   * @param source                 source description for the data
    * @throws IllegalArgumentException if a required numeric value is outside its valid range
    */
   public PackingSpecification(String name, String category, String material, double nominalSizeMm,
-      double specificSurfaceArea, double voidFraction, double packingFactor,
-      double criticalSurfaceTension, double billetLiquidConstant, double billetGasConstant,
-      String source) {
+      double specificSurfaceArea, double voidFraction, double packingFactor, double criticalSurfaceTension,
+      double billetLiquidConstant, double billetGasConstant, String source) {
     this.name = requireText(name, "name");
     this.category = requireText(category, "category");
     this.material = requireText(material, "material");
@@ -94,7 +92,7 @@ public class PackingSpecification implements Serializable {
   /**
    * Require a non-empty text field.
    *
-   * @param value text value to check
+   * @param value     text value to check
    * @param fieldName name of the field being checked
    * @return trimmed text value
    * @throws IllegalArgumentException if the value is null or empty
@@ -109,7 +107,7 @@ public class PackingSpecification implements Serializable {
   /**
    * Validate that a numeric value is positive and finite.
    *
-   * @param value value to validate
+   * @param value     value to validate
    * @param fieldName name of the field being checked
    * @throws IllegalArgumentException if the value is not positive or finite
    */
@@ -122,7 +120,7 @@ public class PackingSpecification implements Serializable {
   /**
    * Validate that a numeric value is non-negative and finite.
    *
-   * @param value value to validate
+   * @param value     value to validate
    * @param fieldName name of the field being checked
    * @throws IllegalArgumentException if the value is negative or not finite
    */
@@ -135,7 +133,7 @@ public class PackingSpecification implements Serializable {
   /**
    * Validate that a numeric value is a fraction between zero and one.
    *
-   * @param value value to validate
+   * @param value     value to validate
    * @param fieldName name of the field being checked
    * @throws IllegalArgumentException if the value is outside the open interval zero to one
    */

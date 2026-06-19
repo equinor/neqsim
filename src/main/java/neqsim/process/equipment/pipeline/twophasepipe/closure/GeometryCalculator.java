@@ -6,9 +6,8 @@ import java.io.Serializable;
  * Geometry calculations for stratified two-phase flow in circular pipes.
  *
  * <p>
- * Provides methods to calculate wetted perimeters, interfacial width, and phase areas based on
- * liquid level in stratified flow. These geometric parameters are essential for the two-fluid model
- * closure relations.
+ * Provides methods to calculate wetted perimeters, interfacial width, and phase areas based on liquid level in
+ * stratified flow. These geometric parameters are essential for the two-fluid model closure relations.
  * </p>
  *
  * <h2>Geometry Definition</h2>
@@ -75,7 +74,7 @@ public class GeometryCalculator implements Serializable {
    * </p>
    *
    * @param liquidLevel Height of liquid from pipe bottom (m)
-   * @param diameter Pipe inner diameter (m)
+   * @param diameter    Pipe inner diameter (m)
    * @return StratifiedGeometry with all geometric parameters
    */
   public StratifiedGeometry calculateFromLiquidLevel(double liquidLevel, double diameter) {
@@ -144,7 +143,7 @@ public class GeometryCalculator implements Serializable {
    * </p>
    *
    * @param liquidHoldup Target liquid holdup (0-1)
-   * @param diameter Pipe inner diameter (m)
+   * @param diameter     Pipe inner diameter (m)
    * @return StratifiedGeometry with all geometric parameters
    */
   public StratifiedGeometry calculateFromHoldup(double liquidHoldup, double diameter) {
@@ -170,7 +169,7 @@ public class GeometryCalculator implements Serializable {
       // Error
       double error = area - targetArea;
       if (Math.abs(error) < 1e-12 * Math.PI * R * R) {
-        break;
+	break;
       }
 
       // Derivative dA/dh
@@ -178,12 +177,12 @@ public class GeometryCalculator implements Serializable {
       // where dθ/dh = 1 / (R * sin(θ))
       double sinTheta = Math.sin(theta);
       if (Math.abs(sinTheta) < 1e-10) {
-        // Near empty or full pipe, use linear approximation
-        h += (targetArea - area) / (2.0 * R);
+	// Near empty or full pipe, use linear approximation
+	h += (targetArea - area) / (2.0 * R);
       } else {
-        double dThetaDh = 1.0 / (R * sinTheta);
-        double dAdh = R * R * dThetaDh * (1.0 - Math.cos(2.0 * theta));
-        h -= error / dAdh;
+	double dThetaDh = 1.0 / (R * sinTheta);
+	double dAdh = R * R * dThetaDh * (1.0 - Math.cos(2.0 * theta));
+	h -= error / dAdh;
       }
     }
 
@@ -197,7 +196,7 @@ public class GeometryCalculator implements Serializable {
    * Uses Hart's approximation for faster computation when high accuracy is not required.
    * </p>
    *
-   * @param holdup Liquid holdup (0-1)
+   * @param holdup   Liquid holdup (0-1)
    * @param diameter Pipe diameter (m)
    * @return Approximate liquid level (m)
    */
@@ -216,7 +215,7 @@ public class GeometryCalculator implements Serializable {
    * </p>
    *
    * @param filmThickness Liquid film thickness (m)
-   * @param diameter Pipe diameter (m)
+   * @param diameter      Pipe diameter (m)
    * @return Gas-interface perimeter (core perimeter)
    */
   public double calcAnnularGasPerimeter(double filmThickness, double diameter) {
@@ -235,7 +234,7 @@ public class GeometryCalculator implements Serializable {
    * </p>
    *
    * @param liquidHoldup Liquid holdup (0-1)
-   * @param diameter Pipe diameter (m)
+   * @param diameter     Pipe diameter (m)
    * @return Film thickness (m)
    */
   public double calcAnnularFilmThickness(double liquidHoldup, double diameter) {
@@ -257,7 +256,7 @@ public class GeometryCalculator implements Serializable {
    * </p>
    *
    * @param liquidLevel Liquid level (m)
-   * @param diameter Pipe diameter (m)
+   * @param diameter    Pipe diameter (m)
    * @return dA_L/dh (m)
    */
   public double calcAreaDerivative(double liquidLevel, double diameter) {
@@ -285,16 +284,16 @@ public class GeometryCalculator implements Serializable {
    * Stratified flow becomes unstable when gas velocity exceeds critical value.
    * </p>
    *
-   * @param gasVelocity Gas velocity (m/s)
-   * @param liquidLevel Liquid level (m)
-   * @param diameter Pipe diameter (m)
-   * @param gasDensity Gas density (kg/m³)
+   * @param gasVelocity   Gas velocity (m/s)
+   * @param liquidLevel   Liquid level (m)
+   * @param diameter      Pipe diameter (m)
+   * @param gasDensity    Gas density (kg/m³)
    * @param liquidDensity Liquid density (kg/m³)
-   * @param inclination Pipe inclination (radians, positive = uphill)
+   * @param inclination   Pipe inclination (radians, positive = uphill)
    * @return true if stratified flow is stable
    */
-  public boolean isStratifiedStable(double gasVelocity, double liquidLevel, double diameter,
-      double gasDensity, double liquidDensity, double inclination) {
+  public boolean isStratifiedStable(double gasVelocity, double liquidLevel, double diameter, double gasDensity,
+      double liquidDensity, double inclination) {
     StratifiedGeometry geom = calculateFromLiquidLevel(liquidLevel, diameter);
 
     if (geom.gasArea < 1e-10 || geom.liquidArea < 1e-10) {
@@ -312,8 +311,7 @@ public class GeometryCalculator implements Serializable {
     }
 
     double deltaRho = liquidDensity - gasDensity;
-    double critVelSquared =
-        deltaRho * g * Math.cos(inclination) * geom.gasArea / (gasDensity * dAdh);
+    double critVelSquared = deltaRho * g * Math.cos(inclination) * geom.gasArea / (gasDensity * dAdh);
 
     if (critVelSquared < 0) {
       return false; // Downhill flow, always unstable at some velocity

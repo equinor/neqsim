@@ -21,7 +21,7 @@ public class WaxFlash {
   private static final Logger logger = LogManager.getLogger(WaxFlash.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.
@@ -32,8 +32,7 @@ public class WaxFlash {
   @SuppressWarnings("unused")
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
-    NeqSimDataBase.setConnectionString(
-        "jdbc:derby:C:/Users/esol/OneDrive - Equinor/temp/neqsimthermodatabase");
+    NeqSimDataBase.setConnectionString("jdbc:derby:C:/Users/esol/OneDrive - Equinor/temp/neqsimthermodatabase");
     NeqSimDataBase.setCreateTemporaryTables(true);
 
     SystemInterface testSystem = new SystemSrkEos(273.0 + 30, 50.0);

@@ -34,23 +34,23 @@ import neqsim.util.validation.ValidationResult.ValidationIssue;
  * MCP runner for P&amp;ID-derived operational studies.
  *
  * <p>
- * The runner exposes the {@code neqsim.process.operations} orchestration helpers to MCP clients. It
- * intentionally delegates model interaction to existing NeqSim features: JSON process building,
- * {@link neqsim.process.automation.ProcessAutomation}, measurement-device field inputs, existing
- * valve logic actions, steady-state runs, and transient process execution.
+ * The runner exposes the {@code neqsim.process.operations} orchestration helpers to MCP clients. It intentionally
+ * delegates model interaction to existing NeqSim features: JSON process building,
+ * {@link neqsim.process.automation.ProcessAutomation}, measurement-device field inputs, existing valve logic actions,
+ * steady-state runs, and transient process execution.
  * </p>
  *
  * @author ESOL
  * @version 1.0
  */
 public final class OperationalStudyRunner {
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   /**
    * Private constructor for utility class.
    */
-  private OperationalStudyRunner() {}
+  private OperationalStudyRunner() {
+  }
 
   /**
    * Runs an operational study action.
@@ -61,7 +61,7 @@ public final class OperationalStudyRunner {
   public static String run(String json) {
     if (json == null || json.trim().isEmpty()) {
       return errorJson("INPUT_ERROR", "JSON input is null or empty",
-          "Provide an operational study JSON object with an 'action' field.");
+	  "Provide an operational study JSON object with an 'action' field.");
     }
 
     JsonObject input;
@@ -69,34 +69,34 @@ public final class OperationalStudyRunner {
       input = JsonParser.parseString(json).getAsJsonObject();
     } catch (RuntimeException ex) {
       return errorJson("JSON_PARSE_ERROR", "Failed to parse JSON: " + ex.getMessage(),
-          "Ensure the operational study input is valid JSON.");
+	  "Ensure the operational study input is valid JSON.");
     }
 
     String action = getString(input, "action", "getSchema");
     try {
       if ("getSchema".equalsIgnoreCase(action)) {
-        return getSchema();
+	return getSchema();
       } else if ("validateTagMap".equalsIgnoreCase(action)) {
-        return validateTagMap(input);
+	return validateTagMap(input);
       } else if ("applyFieldData".equalsIgnoreCase(action)) {
-        return applyFieldData(input);
+	return applyFieldData(input);
       } else if ("runScenario".equalsIgnoreCase(action)) {
-        return runScenario(input);
+	return runScenario(input);
       } else if ("runEvidencePackage".equalsIgnoreCase(action)) {
-        return runEvidencePackage(input);
+	return runEvidencePackage(input);
       } else if ("evaluateControllerResponse".equalsIgnoreCase(action)) {
-        return evaluateControllerResponse(input);
+	return evaluateControllerResponse(input);
       } else if ("analyzePipeSections".equalsIgnoreCase(action)) {
-        return analyzePipeSections(input);
+	return analyzePipeSections(input);
       } else if ("evaluateOperatingEnvelope".equalsIgnoreCase(action)) {
-        return evaluateOperatingEnvelope(input);
+	return evaluateOperatingEnvelope(input);
       }
       return errorJson("UNKNOWN_ACTION", "Unknown operational study action: " + action,
-          "Use getSchema, validateTagMap, applyFieldData, runScenario, runEvidencePackage, "
-              + "evaluateControllerResponse, analyzePipeSections, or evaluateOperatingEnvelope.");
+	  "Use getSchema, validateTagMap, applyFieldData, runScenario, runEvidencePackage, "
+	      + "evaluateControllerResponse, analyzePipeSections, or evaluateOperatingEnvelope.");
     } catch (RuntimeException ex) {
       return errorJson("OPERATIONAL_STUDY_ERROR", "Operational study failed: " + ex.getMessage(),
-          "Check the processJson, tagBindings, fieldData, action list, and units.");
+	  "Check the processJson, tagBindings, fieldData, action list, and units.");
     }
   }
 
@@ -110,8 +110,8 @@ public final class OperationalStudyRunner {
     root.addProperty("status", "success");
     root.addProperty("tool", "runOperationalStudy");
     root.addProperty("description",
-        "Run plant-agnostic operational studies from P&ID semantics, tag maps, valve actions, "
-            + "automation variables, and controller response time series.");
+	"Run plant-agnostic operational studies from P&ID semantics, tag maps, valve actions, "
+	    + "automation variables, and controller response time series.");
 
     JsonArray actions = new JsonArray();
     actions.add("getSchema");
@@ -127,8 +127,7 @@ public final class OperationalStudyRunner {
     JsonObject binding = new JsonObject();
     binding.addProperty("logicalTag", "stable public tag name, e.g. separator_pressure");
     binding.addProperty("historianTag", "optional private historian tag name");
-    binding.addProperty("automationAddress",
-        "optional NeqSim address such as Valve.percentValveOpening");
+    binding.addProperty("automationAddress", "optional NeqSim address such as Valve.percentValveOpening");
     binding.addProperty("unit", "engineering unit such as bara, C, kg/hr, or %");
     binding.addProperty("role", "INPUT, BENCHMARK, or VIRTUAL");
     root.add("tagBindingFields", binding);
@@ -211,14 +210,14 @@ public final class OperationalStudyRunner {
       return validationErrorJson(validation);
     }
 
-    Map<String, Double> fieldData =
-        input.has("fieldData") ? parseFieldData(input) : new LinkedHashMap<String, Double>();
+    Map<String, Double> fieldData = input.has("fieldData") ? parseFieldData(input)
+	: new LinkedHashMap<String, Double>();
     List<OperationalScenario> scenarios = buildScenarioList(input);
     double tolerance = parseBenchmarkTolerance(input);
 
     JsonObject packageReport = OperationalEvidencePackage.buildReport(
-        getString(input, "studyName", "operational evidence package"), process, tagMap, fieldData,
-        scenarios, tolerance);
+	getString(input, "studyName", "operational evidence package"), process, tagMap, fieldData, scenarios,
+	tolerance);
 
     JsonObject result = new JsonObject();
     result.addProperty("status", "success");
@@ -229,7 +228,7 @@ public final class OperationalStudyRunner {
     result.add("evidencePackage", packageReport);
 
     if (input.has("pipeSections") && input.get("pipeSections").isJsonArray()
-        && input.getAsJsonArray("pipeSections").size() > 0) {
+	&& input.getAsJsonArray("pipeSections").size() > 0) {
       String pipeResult = PipeSectionAnalyzer.run(GSON.toJson(input));
       result.add("pipeSectionAnalysis", JsonParser.parseString(pipeResult));
     }
@@ -286,7 +285,7 @@ public final class OperationalStudyRunner {
       OperationalTagMap tagMap = buildTagMap(input);
       ValidationResult validation = tagMap.validate(process);
       if (!validation.isValid()) {
-        return validationErrorJson(validation);
+	return validationErrorJson(validation);
       }
       Map<String, Double> applied = tagMap.applyFieldData(process, parseFieldData(input));
       result.add("validation", validationToJson(validation));
@@ -316,9 +315,8 @@ public final class OperationalStudyRunner {
     double[] processValue = parseDoubleArray(input, "processValue");
     double[] controllerOutput = parseDoubleArray(input, "controllerOutput");
 
-    ControllerTuningResult tuning =
-        ControllerTuningStudy.evaluateStepResponse(getString(input, "controllerName", ""), setPoint,
-            timeSeconds, processValue, controllerOutput, outputMin, outputMax, settlingTolerance);
+    ControllerTuningResult tuning = ControllerTuningStudy.evaluateStepResponse(getString(input, "controllerName", ""),
+	setPoint, timeSeconds, processValue, controllerOutput, outputMin, outputMax, settlingTolerance);
 
     JsonObject result = new JsonObject();
     result.addProperty("status", "success");
@@ -330,15 +328,13 @@ public final class OperationalStudyRunner {
    * Analyzes pipe sections that are not part of the main process model.
    *
    * <p>
-   * This action does not require {@code processJson}. It takes a fluid definition and a
-   * {@code pipeSections} array describing pipe geometry and operating conditions (which may come
-   * from P&amp;ID data and tagreader field data), runs a Beggs &amp; Brill hydraulic calculation
-   * for each section, and returns velocity, pressure drop, flow regime, and utilization against a
-   * design limit.
+   * This action does not require {@code processJson}. It takes a fluid definition and a {@code pipeSections} array
+   * describing pipe geometry and operating conditions (which may come from P&amp;ID data and tagreader field data),
+   * runs a Beggs &amp; Brill hydraulic calculation for each section, and returns velocity, pressure drop, flow regime,
+   * and utilization against a design limit.
    * </p>
    *
-   * @param input study input containing fluid, pipeSections, optional fieldData and
-   *        sectionTagBindings
+   * @param input study input containing fluid, pipeSections, optional fieldData and sectionTagBindings
    * @return JSON result with per-section analysis and summary
    */
   private static String analyzePipeSections(JsonObject input) {
@@ -349,9 +345,8 @@ public final class OperationalStudyRunner {
    * Evaluates process operating margins, simple margin trends, and advisory mitigations.
    *
    * <p>
-   * This action reuses {@link OperationalTagMap} for optional plant-data application and
-   * {@link EquipmentDesignData} for optional STID or datasheet capacity values before delegating to
-   * {@link OperationalEnvelopeEvaluator}.
+   * This action reuses {@link OperationalTagMap} for optional plant-data application and {@link EquipmentDesignData}
+   * for optional STID or datasheet capacity values before delegating to {@link OperationalEnvelopeEvaluator}.
    * </p>
    *
    * @param input operational study input
@@ -371,24 +366,24 @@ public final class OperationalStudyRunner {
       OperationalTagMap tagMap = buildTagMap(input);
       ValidationResult validation = tagMap.validate(process);
       if (!validation.isValid()) {
-        return validationErrorJson(validation);
+	return validationErrorJson(validation);
       }
       result.add("validation", validationToJson(validation));
       if (input.has("fieldData")) {
-        Map<String, Double> fieldData = parseFieldData(input);
-        Map<String, Double> applied = tagMap.applyFieldData(process, fieldData);
-        process.run();
-        result.add("applied", mapToJson(applied));
-        result.add("modelValues", mapToJson(tagMap.readValues(process)));
+	Map<String, Double> fieldData = parseFieldData(input);
+	Map<String, Double> applied = tagMap.applyFieldData(process, fieldData);
+	process.run();
+	result.add("applied", mapToJson(applied));
+	result.add("modelValues", mapToJson(tagMap.readValues(process)));
       }
     }
 
     Map<String, MarginTrendTracker> history = parseMarginHistory(input);
     double horizon = getDouble(input, "predictionHorizonSeconds",
-        OperationalEnvelopeEvaluator.DEFAULT_PREDICTION_HORIZON_SECONDS);
+	OperationalEnvelopeEvaluator.DEFAULT_PREDICTION_HORIZON_SECONDS);
     boolean includeMitigations = getBoolean(input, "includeMitigations", true);
-    OperationalEnvelopeReport report = OperationalEnvelopeEvaluator.evaluate(process, history,
-        horizon, includeMitigations);
+    OperationalEnvelopeReport report = OperationalEnvelopeEvaluator.evaluate(process, history, horizon,
+	includeMitigations);
     result.add("operatingEnvelope", report.toJsonObject());
     addOptionalPassThrough(input, result, "evidenceReferences", "evidenceReferences");
     addOptionalPassThrough(input, result, "evidenceRefs", "evidenceReferences");
@@ -401,20 +396,18 @@ public final class OperationalStudyRunner {
   /**
    * Applies design capacities when supplied and tags default data sources otherwise.
    *
-   * @param input operational study input
+   * @param input   operational study input
    * @param process process system to update
    * @return report of applied design capacities, or null when no design capacities were supplied
    */
-  private static JsonObject applyDesignCapacitiesIfProvided(JsonObject input,
-      ProcessSystem process) {
+  private static JsonObject applyDesignCapacitiesIfProvided(JsonObject input, ProcessSystem process) {
     if (input.has("designCapacities") && input.get("designCapacities").isJsonObject()) {
       JsonObject designCapacities = input.getAsJsonObject("designCapacities");
-      Map<String, EquipmentDesignData.ApplyResult> designResults =
-          EquipmentDesignData.apply(process, designCapacities);
+      Map<String, EquipmentDesignData.ApplyResult> designResults = EquipmentDesignData.apply(process, designCapacities);
       process.run();
       JsonObject designCapacitiesReport = new JsonObject();
       for (Map.Entry<String, EquipmentDesignData.ApplyResult> entry : designResults.entrySet()) {
-        designCapacitiesReport.add(entry.getKey(), entry.getValue().toJson());
+	designCapacitiesReport.add(entry.getKey(), entry.getValue().toJson());
       }
       return designCapacitiesReport;
     }
@@ -443,15 +436,15 @@ public final class OperationalStudyRunner {
       JsonObject sample = element.getAsJsonObject();
       String key = getString(sample, "key", getString(sample, "marginKey", ""));
       if (key.trim().isEmpty()) {
-        continue;
+	continue;
       }
       MarginTrendTracker tracker = trackers.get(key);
       if (tracker == null) {
-        tracker = new MarginTrendTracker(key);
-        trackers.put(key, tracker);
+	tracker = new MarginTrendTracker(key);
+	trackers.put(key, tracker);
       }
       double timestamp = getDouble(sample, "timestampSeconds",
-          getDouble(sample, "timeSeconds", getDouble(sample, "time", 0.0)));
+	  getDouble(sample, "timeSeconds", getDouble(sample, "time", 0.0)));
       double marginPercent = getDouble(sample, "marginPercent", 0.0);
       tracker.addSample(timestamp, marginPercent);
     }
@@ -470,8 +463,7 @@ public final class OperationalStudyRunner {
       throw new IllegalArgumentException("Missing required field 'processJson'");
     }
     JsonElement processElement = input.get("processJson");
-    String processJson =
-        processElement.isJsonObject() ? GSON.toJson(processElement) : processElement.getAsString();
+    String processJson = processElement.isJsonObject() ? GSON.toJson(processElement) : processElement.getAsString();
     SimulationResult simulationResult = ProcessSystem.fromJsonAndRun(processJson);
     if (simulationResult.isError()) {
       throw new IllegalArgumentException("Process failed: " + simulationResult.getErrors());
@@ -493,10 +485,9 @@ public final class OperationalStudyRunner {
       JsonObject binding = element.getAsJsonObject();
       String logicalTag = getString(binding, "logicalTag", "");
       OperationalTagBinding.Builder builder = OperationalTagBinding.builder(logicalTag)
-          .historianTag(getString(binding, "historianTag", ""))
-          .pidReference(getString(binding, "pidReference", ""))
-          .automationAddress(getString(binding, "automationAddress", ""))
-          .unit(getString(binding, "unit", "")).description(getString(binding, "description", ""));
+	  .historianTag(getString(binding, "historianTag", "")).pidReference(getString(binding, "pidReference", ""))
+	  .automationAddress(getString(binding, "automationAddress", "")).unit(getString(binding, "unit", ""))
+	  .description(getString(binding, "description", ""));
       builder.role(parseRole(getString(binding, "role", "VIRTUAL")));
       tagMap.addBinding(builder.build());
     }
@@ -543,8 +534,8 @@ public final class OperationalStudyRunner {
     if (input.has("scenarios") && input.get("scenarios").isJsonArray()) {
       JsonArray scenarioArray = input.getAsJsonArray("scenarios");
       for (int i = 0; i < scenarioArray.size(); i++) {
-        JsonObject scenarioObject = scenarioArray.get(i).getAsJsonObject();
-        scenarios.add(buildScenarioFromObject(scenarioObject, "scenario " + (i + 1)));
+	JsonObject scenarioObject = scenarioArray.get(i).getAsJsonObject();
+	scenarios.add(buildScenarioFromObject(scenarioObject, "scenario " + (i + 1)));
       }
       return scenarios;
     }
@@ -557,14 +548,13 @@ public final class OperationalStudyRunner {
   /**
    * Builds one operational scenario from a JSON object.
    *
-   * @param input scenario JSON object containing actions
+   * @param input       scenario JSON object containing actions
    * @param defaultName default scenario name
    * @return operational scenario
    */
   private static OperationalScenario buildScenarioFromObject(JsonObject input, String defaultName) {
     JsonArray actions = getArray(input, "actions", "scenarioActions");
-    OperationalScenario.Builder builder =
-        OperationalScenario.builder(getString(input, "scenarioName", defaultName));
+    OperationalScenario.Builder builder = OperationalScenario.builder(getString(input, "scenarioName", defaultName));
     for (JsonElement element : actions) {
       builder.addAction(parseAction(element.getAsJsonObject()));
     }
@@ -590,13 +580,12 @@ public final class OperationalStudyRunner {
   /**
    * Passes an optional JSON field through to the output.
    *
-   * @param input source JSON object
-   * @param result target JSON object
-   * @param inputName source field name
+   * @param input      source JSON object
+   * @param result     target JSON object
+   * @param inputName  source field name
    * @param outputName target field name
    */
-  private static void addOptionalPassThrough(JsonObject input, JsonObject result, String inputName,
-      String outputName) {
+  private static void addOptionalPassThrough(JsonObject input, JsonObject result, String inputName, String outputName) {
     if (input.has(inputName) && !result.has(outputName)) {
       result.add(outputName, input.get(inputName));
     }
@@ -612,23 +601,17 @@ public final class OperationalStudyRunner {
   private static OperationalAction parseAction(JsonObject action) {
     String type = getString(action, "type", "");
     if ("SET_VARIABLE".equalsIgnoreCase(type) || "setVariable".equalsIgnoreCase(type)) {
-      return OperationalAction.setVariable(getString(action, "target", ""),
-          getRequiredDouble(action, "value"), getString(action, "unit", ""));
-    } else if ("SET_VALVE_OPENING".equalsIgnoreCase(type)
-        || "setValveOpening".equalsIgnoreCase(type)) {
-      return OperationalAction.setValveOpening(getString(action, "target", ""),
-          getRequiredDouble(action, "value"));
-    } else if ("APPLY_FIELD_INPUTS".equalsIgnoreCase(type)
-        || "applyFieldInputs".equalsIgnoreCase(type)) {
+      return OperationalAction.setVariable(getString(action, "target", ""), getRequiredDouble(action, "value"),
+	  getString(action, "unit", ""));
+    } else if ("SET_VALVE_OPENING".equalsIgnoreCase(type) || "setValveOpening".equalsIgnoreCase(type)) {
+      return OperationalAction.setValveOpening(getString(action, "target", ""), getRequiredDouble(action, "value"));
+    } else if ("APPLY_FIELD_INPUTS".equalsIgnoreCase(type) || "applyFieldInputs".equalsIgnoreCase(type)) {
       return OperationalAction.applyFieldInputs();
-    } else if ("RUN_STEADY_STATE".equalsIgnoreCase(type)
-        || "runSteadyState".equalsIgnoreCase(type)) {
+    } else if ("RUN_STEADY_STATE".equalsIgnoreCase(type) || "runSteadyState".equalsIgnoreCase(type)) {
       return OperationalAction.runSteadyState();
     } else if ("RUN_TRANSIENT".equalsIgnoreCase(type) || "runTransient".equalsIgnoreCase(type)) {
-      double duration =
-          getDouble(action, "durationSeconds", getDouble(action, "duration_seconds", 0.0));
-      double step =
-          getDouble(action, "timeStepSeconds", getDouble(action, "timeStep_seconds", 0.0));
+      double duration = getDouble(action, "durationSeconds", getDouble(action, "duration_seconds", 0.0));
+      double step = getDouble(action, "timeStepSeconds", getDouble(action, "timeStep_seconds", 0.0));
       return OperationalAction.runTransient(duration, step);
     }
     throw new IllegalArgumentException("Unknown scenario action type: " + type);
@@ -661,8 +644,8 @@ public final class OperationalStudyRunner {
   /**
    * Reads an array under either of two accepted names.
    *
-   * @param input JSON object
-   * @param primary primary field name
+   * @param input     JSON object
+   * @param primary   primary field name
    * @param secondary secondary field name
    * @return JSON array
    * @throws IllegalArgumentException if neither field contains an array
@@ -715,8 +698,8 @@ public final class OperationalStudyRunner {
   /**
    * Returns an optional double field.
    *
-   * @param input source JSON object
-   * @param field field name
+   * @param input        source JSON object
+   * @param field        field name
    * @param defaultValue value returned when the field is missing
    * @return field value or default value
    */
@@ -727,8 +710,8 @@ public final class OperationalStudyRunner {
   /**
    * Returns an optional boolean field.
    *
-   * @param input source JSON object
-   * @param field field name
+   * @param input        source JSON object
+   * @param field        field name
    * @param defaultValue value returned when the field is missing
    * @return field value or default value
    */
@@ -739,14 +722,13 @@ public final class OperationalStudyRunner {
   /**
    * Returns an optional string field.
    *
-   * @param input source JSON object
-   * @param field field name
+   * @param input        source JSON object
+   * @param field        field name
    * @param defaultValue value returned when the field is missing
    * @return field value or default value
    */
   private static String getString(JsonObject input, String field, String defaultValue) {
-    return input.has(field) && !input.get(field).isJsonNull() ? input.get(field).getAsString()
-        : defaultValue;
+    return input.has(field) && !input.get(field).isJsonNull() ? input.get(field).getAsString() : defaultValue;
   }
 
   /**
@@ -791,15 +773,15 @@ public final class OperationalStudyRunner {
    * Adds a process report to a result when available.
    *
    * @param process process system
-   * @param result result object to update
+   * @param result  result object to update
    */
   private static void addProcessReport(ProcessSystem process, JsonObject result) {
     String report = process.getReport_json();
     if (report != null && !report.trim().isEmpty()) {
       try {
-        result.add("processReport", JsonParser.parseString(report));
+	result.add("processReport", JsonParser.parseString(report));
       } catch (RuntimeException ex) {
-        result.addProperty("processReport", report);
+	result.addProperty("processReport", report);
       }
     }
   }
@@ -822,8 +804,8 @@ public final class OperationalStudyRunner {
   /**
    * Builds a standard error JSON response.
    *
-   * @param code error code
-   * @param message human-readable message
+   * @param code        error code
+   * @param message     human-readable message
    * @param remediation remediation guidance
    * @return JSON string
    */

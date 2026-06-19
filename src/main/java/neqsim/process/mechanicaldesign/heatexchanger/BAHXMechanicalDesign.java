@@ -22,8 +22,8 @@ import neqsim.process.equipment.heatexchanger.LNGHeatExchanger;
  * </ul>
  *
  * <p>
- * Standards implemented: ASME VIII Div.1, ALPEMA (Aluminium Plate-Fin Heat Exchanger Manufacturers'
- * Association), API 662 Part II.
+ * Standards implemented: ASME VIII Div.1, ALPEMA (Aluminium Plate-Fin Heat Exchanger Manufacturers' Association), API
+ * 662 Part II.
  * </p>
  *
  * @author NeqSim
@@ -178,7 +178,7 @@ public class BAHXMechanicalDesign extends HeatExchangerMechanicalDesign {
       LNGHeatExchanger lngHX = (LNGHeatExchanger) equipment;
       LNGHeatExchanger.FinGeometry fin = lngHX.getStreamFinGeometry(0);
       if (fin != null) {
-        finHeight = fin.getFinHeight();
+	finHeight = fin.getFinHeight();
       }
     }
     double rMm = finHeight * 1000.0 / 2.0; // half passage width in mm
@@ -192,14 +192,12 @@ public class BAHXMechanicalDesign extends HeatExchangerMechanicalDesign {
     // Treat as flat plate: t = d * sqrt(C * P / S)
     // C = 0.33 for simply supported
     double headerWidthMm = 200.0; // typical BAHX header port width
-    requiredHeaderThicknessMm =
-        headerWidthMm * Math.sqrt(0.33 * pMPa / AL_5083_ALLOWABLE_STRESS_MPA);
+    requiredHeaderThicknessMm = headerWidthMm * Math.sqrt(0.33 * pMPa / AL_5083_ALLOWABLE_STRESS_MPA);
     requiredHeaderThicknessMm = Math.max(requiredHeaderThicknessMm, 10.0);
 
     // ── Nozzle wall thickness (cylindrical) ──
     double nozzleRadiusMm = nozzleODMm / 2.0;
-    requiredNozzleThicknessMm =
-        pMPa * nozzleRadiusMm / (AL_5083_ALLOWABLE_STRESS_MPA * 1.0 - 0.6 * pMPa);
+    requiredNozzleThicknessMm = pMPa * nozzleRadiusMm / (AL_5083_ALLOWABLE_STRESS_MPA * 1.0 - 0.6 * pMPa);
     requiredNozzleThicknessMm = Math.max(requiredNozzleThicknessMm, 3.0);
 
     // ── Core geometry from LNGHeatExchanger or estimated ──
@@ -207,24 +205,24 @@ public class BAHXMechanicalDesign extends HeatExchangerMechanicalDesign {
       LNGHeatExchanger lngHX = (LNGHeatExchanger) equipment;
       LNGHeatExchanger.CoreGeometry core = lngHX.getCoreGeometry();
       if (core != null && core.getLength() > 0) {
-        coreLengthM = core.getLength();
-        coreWidthM = core.getWidth();
-        coreHeightM = core.getHeight();
-        coreWeightKg = core.getWeight();
-        // If weight not set, estimate from core volume
-        if (coreWeightKg <= 0) {
-          double vol = coreLengthM * coreWidthM * coreHeightM;
-          coreWeightKg = vol * METAL_FRACTION * AL_DENSITY;
-        }
+	coreLengthM = core.getLength();
+	coreWidthM = core.getWidth();
+	coreHeightM = core.getHeight();
+	coreWeightKg = core.getWeight();
+	// If weight not set, estimate from core volume
+	if (coreWeightKg <= 0) {
+	  double vol = coreLengthM * coreWidthM * coreHeightM;
+	  coreWeightKg = vol * METAL_FRACTION * AL_DENSITY;
+	}
       }
       // Estimate area from UA if available
       double[] uaPerZone = lngHX.getUAPerZone();
       double totalUA = 0;
       for (double ua : uaPerZone) {
-        totalUA += ua;
+	totalUA += ua;
       }
       if (totalUA > 0) {
-        heatTransferAreaM2 = totalUA / 400.0; // typical h for BAHX
+	heatTransferAreaM2 = totalUA / 400.0; // typical h for BAHX
       }
     }
 
@@ -233,14 +231,14 @@ public class BAHXMechanicalDesign extends HeatExchangerMechanicalDesign {
       double duty = Math.abs(getDuty()); // W
       // If base class duty not set, try to get from equipment
       if (duty <= 0 && equipment instanceof LNGHeatExchanger) {
-        duty = Math.abs(((LNGHeatExchanger) equipment).getDuty());
+	duty = Math.abs(((LNGHeatExchanger) equipment).getDuty());
       }
       double lmtd = 10.0; // conservative LMTD estimate for LNG
       double uValue = 600.0; // W/(m2 K) typical BAHX
       if (duty > 0 && lmtd > 0) {
-        heatTransferAreaM2 = duty / (uValue * lmtd);
+	heatTransferAreaM2 = duty / (uValue * lmtd);
       } else {
-        heatTransferAreaM2 = 1000.0; // default 1000 m2
+	heatTransferAreaM2 = 1000.0; // default 1000 m2
       }
       double beta = 1000.0; // m2/m3 surface area density
       double coreVolume = heatTransferAreaM2 / beta;
@@ -257,7 +255,7 @@ public class BAHXMechanicalDesign extends HeatExchangerMechanicalDesign {
 
     double nozzleLength = 0.3; // m, typical nozzle length
     double nozzleVolume = numberOfNozzles * Math.PI * (nozzleODMm / 1000.0) * nozzleLength
-        * (requiredNozzleThicknessMm / 1000.0);
+	* (requiredNozzleThicknessMm / 1000.0);
     nozzleWeightKg = nozzleVolume * AL_DENSITY;
 
     // Total weight
@@ -279,8 +277,8 @@ public class BAHXMechanicalDesign extends HeatExchangerMechanicalDesign {
    * Calculate thermal fatigue assessment per API 662 Part II.
    *
    * <p>
-   * Evaluates thermal stress from cyclic temperature gradients across the core. The allowable
-   * number of cycles is estimated from the alternating stress amplitude using aluminium S-N data.
+   * Evaluates thermal stress from cyclic temperature gradients across the core. The allowable number of cycles is
+   * estimated from the alternating stress amplitude using aluminium S-N data.
    * </p>
    */
   private void calcThermalFatigue() {
@@ -291,9 +289,9 @@ public class BAHXMechanicalDesign extends HeatExchangerMechanicalDesign {
       LNGHeatExchanger lngHX = (LNGHeatExchanger) equipment;
       double[] gradients = lngHX.getThermalGradientPerZone();
       for (double g : gradients) {
-        if (Math.abs(g) > maxThermalGradient) {
-          maxThermalGradient = Math.abs(g);
-        }
+	if (Math.abs(g) > maxThermalGradient) {
+	  maxThermalGradient = Math.abs(g);
+	}
       }
     }
 
@@ -303,7 +301,7 @@ public class BAHXMechanicalDesign extends HeatExchangerMechanicalDesign {
       double coldTempC = -162.0; // LNG temperature
       double deltaT = Math.abs(hotTempC - coldTempC);
       if (coreLengthM > 0) {
-        maxThermalGradient = deltaT / coreLengthM;
+	maxThermalGradient = deltaT / coreLengthM;
       }
     }
 
@@ -361,8 +359,7 @@ public class BAHXMechanicalDesign extends HeatExchangerMechanicalDesign {
 
     // Wall thickness results
     Map<String, Object> wallThickness = new LinkedHashMap<String, Object>();
-    wallThickness.put("requiredPartingSheetThickness_mm",
-        round(requiredPartingSheetThicknessMm, 2));
+    wallThickness.put("requiredPartingSheetThickness_mm", round(requiredPartingSheetThicknessMm, 2));
     wallThickness.put("requiredHeaderThickness_mm", round(requiredHeaderThicknessMm, 1));
     wallThickness.put("requiredNozzleThickness_mm", round(requiredNozzleThicknessMm, 1));
     wallThickness.put("nozzleOD_mm", nozzleODMm);
@@ -401,8 +398,7 @@ public class BAHXMechanicalDesign extends HeatExchangerMechanicalDesign {
     fatigue.put("fatiguePassed", fatiguePassed);
     report.put("thermalFatigue", fatigue);
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(report);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(report);
   }
 
   // ============================================================================
@@ -631,7 +627,7 @@ public class BAHXMechanicalDesign extends HeatExchangerMechanicalDesign {
   /**
    * Round a double value to the specified number of decimal places.
    *
-   * @param value the value to round
+   * @param value    the value to round
    * @param decimals number of decimal places
    * @return rounded value
    */

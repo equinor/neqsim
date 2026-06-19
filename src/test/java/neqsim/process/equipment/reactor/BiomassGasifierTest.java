@@ -29,12 +29,9 @@ class BiomassGasifierTest {
     assertNotNull(gasifier.getCharAshOutStream(), "Char/ash stream should not be null");
 
     // Key species should be present in syngas
-    assertTrue(gasifier.getSyngasOutStream().getThermoSystem().hasComponent("CO"),
-        "Syngas should contain CO");
-    assertTrue(gasifier.getSyngasOutStream().getThermoSystem().hasComponent("hydrogen"),
-        "Syngas should contain H2");
-    assertTrue(gasifier.getSyngasOutStream().getThermoSystem().hasComponent("CO2"),
-        "Syngas should contain CO2");
+    assertTrue(gasifier.getSyngasOutStream().getThermoSystem().hasComponent("CO"), "Syngas should contain CO");
+    assertTrue(gasifier.getSyngasOutStream().getThermoSystem().hasComponent("hydrogen"), "Syngas should contain H2");
+    assertTrue(gasifier.getSyngasOutStream().getThermoSystem().hasComponent("CO2"), "Syngas should contain CO2");
 
     // Performance metrics should be reasonable
     assertTrue(gasifier.getColdGasEfficiency() > 0.0, "CGE should be positive");

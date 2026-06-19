@@ -19,14 +19,14 @@ import neqsim.process.equipment.pipeline.TwoFluidPipe;
  * Benchmark comparison harness for TwoFluidPipe profiles against external simulator or field data.
  *
  * <p>
- * The expected CSV columns are:
- * {@code case,time_s,position_m,variable,value,abs_tolerance,rel_tolerance,source}. This intentionally
- * uses a simple numeric export format that can be produced from OLGA, LedaFlow, field historians, or
+ * The expected CSV columns are: {@code case,time_s,position_m,variable,value,abs_tolerance,rel_tolerance,source}. This
+ * intentionally uses a simple numeric export format that can be produced from OLGA, LedaFlow, field historians, or
  * spreadsheet post-processing.
  * </p>
  */
 public final class TwoFluidBenchmarkHarness {
-  private TwoFluidBenchmarkHarness() {}
+  private TwoFluidBenchmarkHarness() {
+  }
 
   /**
    * Read benchmark points from a comma-separated file.
@@ -46,16 +46,14 @@ public final class TwoFluidBenchmarkHarness {
     for (int i = 1; i < lines.size(); i++) {
       String line = lines.get(i).trim();
       if (line.isEmpty() || line.startsWith("#")) {
-        continue;
+	continue;
       }
 
       String[] fields = line.split(",", -1);
-      points.add(new BenchmarkPoint(getString(fields, header, "case", ""),
-          getDouble(fields, header, "time_s", 0.0), getDouble(fields, header, "position_m", 0.0),
-          getString(fields, header, "variable", ""), getDouble(fields, header, "value", 0.0),
-          getDouble(fields, header, "abs_tolerance", 0.0),
-          getDouble(fields, header, "rel_tolerance", 0.0),
-          getString(fields, header, "source", "")));
+      points.add(new BenchmarkPoint(getString(fields, header, "case", ""), getDouble(fields, header, "time_s", 0.0),
+	  getDouble(fields, header, "position_m", 0.0), getString(fields, header, "variable", ""),
+	  getDouble(fields, header, "value", 0.0), getDouble(fields, header, "abs_tolerance", 0.0),
+	  getDouble(fields, header, "rel_tolerance", 0.0), getString(fields, header, "source", "")));
     }
     return points;
   }
@@ -86,7 +84,7 @@ public final class TwoFluidBenchmarkHarness {
   /**
    * Compare one snapshot against benchmark points.
    *
-   * @param snapshot model snapshot
+   * @param snapshot        model snapshot
    * @param referencePoints reference points
    * @return comparison result
    */
@@ -95,10 +93,9 @@ public final class TwoFluidBenchmarkHarness {
   }
 
   /**
-   * Compare transient snapshots against benchmark points using linear interpolation in time and
-   * position.
+   * Compare transient snapshots against benchmark points using linear interpolation in time and position.
    *
-   * @param snapshots model snapshots
+   * @param snapshots       model snapshots
    * @param referencePoints reference points
    * @return comparison result
    */
@@ -128,11 +125,10 @@ public final class TwoFluidBenchmarkHarness {
     for (int i = 0; i < snapshots.size() - 1; i++) {
       Snapshot left = snapshots.get(i);
       Snapshot right = snapshots.get(i + 1);
-      if (point.getTimeSeconds() >= left.getTimeSeconds()
-          && point.getTimeSeconds() <= right.getTimeSeconds()) {
-        lower = left;
-        upper = right;
-        break;
+      if (point.getTimeSeconds() >= left.getTimeSeconds() && point.getTimeSeconds() <= right.getTimeSeconds()) {
+	lower = left;
+	upper = right;
+	break;
       }
     }
 
@@ -157,8 +153,7 @@ public final class TwoFluidBenchmarkHarness {
     return header;
   }
 
-  private static String getString(String[] fields, Map<String, Integer> header, String key,
-      String defaultValue) {
+  private static String getString(String[] fields, Map<String, Integer> header, String key, String defaultValue) {
     Integer index = header.get(normalize(key));
     if (index == null || index >= fields.length) {
       return defaultValue;
@@ -166,8 +161,7 @@ public final class TwoFluidBenchmarkHarness {
     return fields[index].trim();
   }
 
-  private static double getDouble(String[] fields, Map<String, Integer> header, String key,
-      double defaultValue) {
+  private static double getDouble(String[] fields, Map<String, Integer> header, String key, double defaultValue) {
     String value = getString(fields, header, key, "");
     if (value.isEmpty()) {
       return defaultValue;
@@ -198,16 +192,14 @@ public final class TwoFluidBenchmarkHarness {
     private final double relativeTolerance;
     private final String source;
 
-    public BenchmarkPoint(String caseName, double timeSeconds, double positionMeters,
-        String variable, double value, double absoluteTolerance, double relativeTolerance,
-        String source) {
-      if (!Double.isFinite(timeSeconds) || !Double.isFinite(positionMeters)
-          || !Double.isFinite(value) || !Double.isFinite(absoluteTolerance)
-          || !Double.isFinite(relativeTolerance)) {
-        throw new IllegalArgumentException("Benchmark point contains non-finite numeric values");
+    public BenchmarkPoint(String caseName, double timeSeconds, double positionMeters, String variable, double value,
+	double absoluteTolerance, double relativeTolerance, String source) {
+      if (!Double.isFinite(timeSeconds) || !Double.isFinite(positionMeters) || !Double.isFinite(value)
+	  || !Double.isFinite(absoluteTolerance) || !Double.isFinite(relativeTolerance)) {
+	throw new IllegalArgumentException("Benchmark point contains non-finite numeric values");
       }
       if (absoluteTolerance < 0.0 || relativeTolerance < 0.0) {
-        throw new IllegalArgumentException("Benchmark tolerances must be non-negative");
+	throw new IllegalArgumentException("Benchmark tolerances must be non-negative");
       }
       this.caseName = caseName;
       this.timeSeconds = timeSeconds;
@@ -260,13 +252,13 @@ public final class TwoFluidBenchmarkHarness {
 
     public Snapshot(double timeSeconds, double[] positionsMeters, Map<String, double[]> variables) {
       if (!Double.isFinite(timeSeconds)) {
-        throw new IllegalArgumentException("Snapshot time must be finite");
+	throw new IllegalArgumentException("Snapshot time must be finite");
       }
       this.timeSeconds = timeSeconds;
       this.positionsMeters = positionsMeters.clone();
       this.variables = new HashMap<>();
       for (Map.Entry<String, double[]> entry : variables.entrySet()) {
-        this.variables.put(normalize(entry.getKey()), entry.getValue().clone());
+	this.variables.put(normalize(entry.getKey()), entry.getValue().clone());
       }
     }
 
@@ -281,32 +273,32 @@ public final class TwoFluidBenchmarkHarness {
     public double valueAt(String variable, double positionMeters) {
       double[] values = variables.get(normalize(variable));
       if (values == null || values.length == 0) {
-        throw new IllegalArgumentException("No model profile for variable: " + variable);
+	throw new IllegalArgumentException("No model profile for variable: " + variable);
       }
       if (positionsMeters.length != values.length) {
-        throw new IllegalArgumentException("Position and value profile lengths differ for "
-            + variable + ": " + positionsMeters.length + " vs " + values.length);
+	throw new IllegalArgumentException("Position and value profile lengths differ for " + variable + ": "
+	    + positionsMeters.length + " vs " + values.length);
       }
       return interpolatePosition(positionMeters, positionsMeters, values);
     }
 
     private double interpolatePosition(double x, double[] positions, double[] values) {
       if (x <= positions[0]) {
-        return values[0];
+	return values[0];
       }
       int last = positions.length - 1;
       if (x >= positions[last]) {
-        return values[last];
+	return values[last];
       }
       for (int i = 0; i < last; i++) {
-        if (x >= positions[i] && x <= positions[i + 1]) {
-          double dx = positions[i + 1] - positions[i];
-          if (Math.abs(dx) < 1e-12) {
-            return values[i];
-          }
-          double fraction = (x - positions[i]) / dx;
-          return values[i] + fraction * (values[i + 1] - values[i]);
-        }
+	if (x >= positions[i] && x <= positions[i + 1]) {
+	  double dx = positions[i + 1] - positions[i];
+	  if (Math.abs(dx) < 1e-12) {
+	    return values[i];
+	  }
+	  double fraction = (x - positions[i]) / dx;
+	  return values[i] + fraction * (values[i + 1] - values[i]);
+	}
       }
       return values[last];
     }
@@ -341,7 +333,7 @@ public final class TwoFluidBenchmarkHarness {
 
     public boolean isPassed() {
       return getAbsoluteError() <= reference.getAbsoluteTolerance()
-          || getRelativeError() <= reference.getRelativeTolerance();
+	  || getRelativeError() <= reference.getRelativeTolerance();
     }
   }
 
@@ -364,9 +356,9 @@ public final class TwoFluidBenchmarkHarness {
     public int getFailureCount() {
       int failures = 0;
       for (ComparisonRow row : rows) {
-        if (!row.isPassed()) {
-          failures++;
-        }
+	if (!row.isPassed()) {
+	  failures++;
+	}
       }
       return failures;
     }
@@ -374,7 +366,7 @@ public final class TwoFluidBenchmarkHarness {
     public double getMaximumRelativeError() {
       double max = 0.0;
       for (ComparisonRow row : rows) {
-        max = Math.max(max, row.getRelativeError());
+	max = Math.max(max, row.getRelativeError());
       }
       return max;
     }
@@ -382,15 +374,14 @@ public final class TwoFluidBenchmarkHarness {
     public String failureSummary() {
       StringBuilder summary = new StringBuilder();
       for (ComparisonRow row : rows) {
-        if (!row.isPassed()) {
-          BenchmarkPoint point = row.getReference();
-          summary.append(point.getCaseName()).append(" ").append(point.getVariable())
-              .append(" t=").append(point.getTimeSeconds()).append("s x=")
-              .append(point.getPositionMeters()).append("m ref=").append(point.getValue())
-              .append(" model=").append(row.getModelValue()).append(" absErr=")
-              .append(row.getAbsoluteError()).append(" relErr=").append(row.getRelativeError())
-              .append(System.lineSeparator());
-        }
+	if (!row.isPassed()) {
+	  BenchmarkPoint point = row.getReference();
+	  summary.append(point.getCaseName()).append(" ").append(point.getVariable()).append(" t=")
+	      .append(point.getTimeSeconds()).append("s x=").append(point.getPositionMeters()).append("m ref=")
+	      .append(point.getValue()).append(" model=").append(row.getModelValue()).append(" absErr=")
+	      .append(row.getAbsoluteError()).append(" relErr=").append(row.getRelativeError())
+	      .append(System.lineSeparator());
+	}
       }
       return summary.toString();
     }

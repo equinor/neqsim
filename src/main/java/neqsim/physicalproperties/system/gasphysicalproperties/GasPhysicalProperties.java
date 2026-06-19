@@ -37,9 +37,9 @@ public class GasPhysicalProperties extends PhysicalProperties {
    * Constructor for GasPhysicalProperties.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase                            a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param binaryDiffusionCoefficientMethod a int
-   * @param multicomponentDiffusionMethod a int
+   * @param multicomponentDiffusionMethod    a int
    */
   public GasPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
       int multicomponentDiffusionMethod) {
@@ -47,12 +47,10 @@ public class GasPhysicalProperties extends PhysicalProperties {
     if (phase instanceof PhaseSpanWagnerEos) {
       conductivityCalc = new CO2ConductivityMethod(this);
       viscosityCalc = new CO2ViscosityMethod(this);
-    } else if (phase.getNumberOfComponents() == 1
-        && "hydrogen".equalsIgnoreCase(phase.getComponent(0).getName())) {
+    } else if (phase.getNumberOfComponents() == 1 && "hydrogen".equalsIgnoreCase(phase.getComponent(0).getName())) {
       conductivityCalc = new HydrogenConductivityMethod(this);
       viscosityCalc = new PFCTViscosityMethodHeavyOil(this);
-    } else if (phase.getNumberOfComponents() == 1
-        && "water".equalsIgnoreCase(phase.getComponent(0).getName())) {
+    } else if (phase.getNumberOfComponents() == 1 && "water".equalsIgnoreCase(phase.getComponent(0).getName())) {
       conductivityCalc = new WaterConductivityMethod(this);
       viscosityCalc = new PFCTViscosityMethodHeavyOil(this);
     } else {
@@ -65,8 +63,7 @@ public class GasPhysicalProperties extends PhysicalProperties {
     }
 
     // viscosityCalc = new LBCViscosityMethod(this);
-    diffusivityCalc =
-        new neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.Diffusivity(this);
+    diffusivityCalc = new neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.Diffusivity(this);
     // diffusivityCalc = new WilkeLeeDiffusivity(this);
     densityCalc = new neqsim.physicalproperties.methods.gasphysicalproperties.density.Density(this);
   }

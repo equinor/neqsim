@@ -29,8 +29,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  * <h2>Performance Optimization</h2>
  * <p>
- * The generator includes a fluid cache keyed by (GOR, WC) to avoid regenerating the same fluid
- * composition multiple times during parallel VFP table generation.
+ * The generator includes a fluid cache keyed by (GOR, WC) to avoid regenerating the same fluid composition multiple
+ * times during parallel VFP table generation.
  * </p>
  *
  * <h2>Usage Example</h2>
@@ -92,7 +92,7 @@ public class RecombinationFlashGenerator implements Serializable {
   public RecombinationFlashGenerator(FluidMagicInput input) {
     if (!input.isReady()) {
       throw new IllegalArgumentException(
-          "FluidMagicInput must have phases separated. Call separateToStandardConditions() first.");
+	  "FluidMagicInput must have phases separated. Call separateToStandardConditions() first.");
     }
 
     this.gasPhase = input.getGasPhase();
@@ -138,19 +138,18 @@ public class RecombinationFlashGenerator implements Serializable {
    * Generate feed fluid at specified GOR and water cut.
    *
    * <p>
-   * Uses recombination flash: mix gas and oil at ratio to achieve target GOR, then add water based
-   * on water cut.
+   * Uses recombination flash: mix gas and oil at ratio to achieve target GOR, then add water based on water cut.
    * </p>
    *
-   * @param targetGOR target GOR in Sm3/Sm3
-   * @param waterCut water cut as fraction (0-1)
+   * @param targetGOR       target GOR in Sm3/Sm3
+   * @param waterCut        water cut as fraction (0-1)
    * @param totalLiquidRate total liquid rate (oil + water) in Sm3/hr
-   * @param temperature temperature in K
-   * @param pressure pressure in bara
+   * @param temperature     temperature in K
+   * @param pressure        pressure in bara
    * @return recombined fluid at specified conditions
    */
-  public SystemInterface generateFluid(double targetGOR, double waterCut, double totalLiquidRate,
-      double temperature, double pressure) {
+  public SystemInterface generateFluid(double targetGOR, double waterCut, double totalLiquidRate, double temperature,
+      double pressure) {
 
     // Check cache first
     String cacheKey = getCacheKey(targetGOR, waterCut);
@@ -175,8 +174,8 @@ public class RecombinationFlashGenerator implements Serializable {
     // Calculate gas rate from GOR (gas per oil volume)
     double gasRate = oilRate * targetGOR; // Sm3/hr gas
 
-    logger.debug("Generating fluid: GOR={:.0f}, WC={:.1f}%, Oil={:.1f}, Gas={:.1f}, Water={:.1f}",
-        targetGOR, waterCut * 100, oilRate, gasRate, waterRate);
+    logger.debug("Generating fluid: GOR={:.0f}, WC={:.1f}%, Oil={:.1f}, Gas={:.1f}, Water={:.1f}", targetGOR,
+	waterCut * 100, oilRate, gasRate, waterRate);
 
     // Create recombined fluid starting from gas phase composition
     SystemInterface recombined = createBaseFluid();
@@ -219,14 +218,13 @@ public class RecombinationFlashGenerator implements Serializable {
   /**
    * Generate fluid at specified GOR and water cut with default rates.
    *
-   * @param targetGOR target GOR in Sm3/Sm3
-   * @param waterCut water cut as fraction (0-1)
+   * @param targetGOR   target GOR in Sm3/Sm3
+   * @param waterCut    water cut as fraction (0-1)
    * @param temperature temperature in K
-   * @param pressure pressure in bara
+   * @param pressure    pressure in bara
    * @return recombined fluid
    */
-  public SystemInterface generateFluid(double targetGOR, double waterCut, double temperature,
-      double pressure) {
+  public SystemInterface generateFluid(double targetGOR, double waterCut, double temperature, double pressure) {
     return generateFluid(targetGOR, waterCut, 1000.0, temperature, pressure);
   }
 
@@ -271,8 +269,8 @@ public class RecombinationFlashGenerator implements Serializable {
       double molesToAdd = source.getComponent(i).getNumberOfmoles() * factor;
 
       if (molesToAdd > 0) {
-        // addComponent will handle both existing and new components
-        target.addComponent(compName, molesToAdd);
+	// addComponent will handle both existing and new components
+	target.addComponent(compName, molesToAdd);
       }
     }
   }
@@ -280,9 +278,9 @@ public class RecombinationFlashGenerator implements Serializable {
   /**
    * Scale fluid to desired total liquid rate.
    *
-   * @param fluid the fluid to scale
+   * @param fluid           the fluid to scale
    * @param totalLiquidRate desired total liquid rate in Sm3/hr
-   * @param waterCut water cut fraction
+   * @param waterCut        water cut fraction
    */
   private void scaleFluidToRate(SystemInterface fluid, double totalLiquidRate, double waterCut) {
     // Calculate current liquid volume at std conditions
@@ -301,8 +299,8 @@ public class RecombinationFlashGenerator implements Serializable {
     if (currentLiquidVolume > 0) {
       double scaleFactor = totalLiquidRate / currentLiquidVolume;
       for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
-        double moles = fluid.getComponent(i).getNumberOfmoles();
-        fluid.getComponent(i).setNumberOfmoles(moles * scaleFactor);
+	double moles = fluid.getComponent(i).getNumberOfmoles();
+	fluid.getComponent(i).setNumberOfmoles(moles * scaleFactor);
       }
     }
   }
@@ -311,7 +309,7 @@ public class RecombinationFlashGenerator implements Serializable {
    * Get cache key for GOR/WC combination.
    *
    * @param gor GOR value
-   * @param wc water cut value
+   * @param wc  water cut value
    * @return cache key string
    */
   private String getCacheKey(double gor, double wc) {
@@ -337,8 +335,7 @@ public class RecombinationFlashGenerator implements Serializable {
   public String getCacheStatistics() {
     int total = cacheHits + cacheMisses;
     double hitRate = (total > 0) ? (100.0 * cacheHits / total) : 0.0;
-    return String.format("Cache: %d hits, %d misses (%.1f%% hit rate)", cacheHits, cacheMisses,
-        hitRate);
+    return String.format("Cache: %d hits, %d misses (%.1f%% hit rate)", cacheHits, cacheMisses, hitRate);
   }
 
   /**
@@ -367,13 +364,12 @@ public class RecombinationFlashGenerator implements Serializable {
    * </p>
    *
    * @param targetGOR target GOR in Sm3/Sm3
-   * @param waterCut water cut fraction
+   * @param waterCut  water cut fraction
    * @param tolerance acceptable relative error (e.g., 0.05 for 5%)
    * @return true if actual GOR is within tolerance of target
    */
   public boolean validateGOR(double targetGOR, double waterCut, double tolerance) {
-    SystemInterface fluid =
-        generateFluid(targetGOR, waterCut, 1000.0, STD_TEMPERATURE_K, STD_PRESSURE_BARA);
+    SystemInterface fluid = generateFluid(targetGOR, waterCut, 1000.0, STD_TEMPERATURE_K, STD_PRESSURE_BARA);
 
     // Calculate actual GOR at std conditions
     fluid.setTemperature(STD_TEMPERATURE_K);
@@ -395,8 +391,8 @@ public class RecombinationFlashGenerator implements Serializable {
     double actualGOR = (oilVolume > 0) ? gasVolume / oilVolume : 0.0;
     double relativeError = Math.abs(actualGOR - targetGOR) / targetGOR;
 
-    logger.debug("GOR validation: target={:.1f}, actual={:.1f}, error={:.2f}%", targetGOR,
-        actualGOR, relativeError * 100);
+    logger.debug("GOR validation: target={:.1f}, actual={:.1f}, error={:.2f}%", targetGOR, actualGOR,
+	relativeError * 100);
 
     return relativeError <= tolerance;
   }

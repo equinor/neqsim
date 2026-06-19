@@ -13,16 +13,16 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
  * General mechanical design for filter vessels per ASME VIII Div 1.
  *
  * <p>
- * This class sizes a filter pressure vessel (diameter, length, wall thickness), selects filter
- * elements based on the required gas face velocity, estimates weight and cost, and calculates
- * maintenance intervals. It follows the standard pressure vessel design methodology (ASME Section
- * VIII Division 1) and industry practices for gas filtration equipment.
+ * This class sizes a filter pressure vessel (diameter, length, wall thickness), selects filter elements based on the
+ * required gas face velocity, estimates weight and cost, and calculates maintenance intervals. It follows the standard
+ * pressure vessel design methodology (ASME Section VIII Division 1) and industry practices for gas filtration
+ * equipment.
  * </p>
  *
  * <p>
- * Subclasses (e.g., {@link SulfurFilterMechanicalDesign}) can override the template methods to
- * provide filter-type-specific behaviour such as retrieving flow rates from specialised equipment
- * classes, adding contaminant-specific JSON sections, or customising the bill of materials.
+ * Subclasses (e.g., {@link SulfurFilterMechanicalDesign}) can override the template methods to provide
+ * filter-type-specific behaviour such as retrieving flow rates from specialised equipment classes, adding
+ * contaminant-specific JSON sections, or customising the bill of materials.
  * </p>
  *
  * <p>
@@ -144,8 +144,8 @@ public class FilterMechanicalDesign extends MechanicalDesign {
    * Returns the gas mass flow rate in kg/hr for element sizing.
    *
    * <p>
-   * Default implementation reads from the inlet stream. Subclasses may override to use a
-   * filter-type-specific method (e.g., a separate tracked flow rate field).
+   * Default implementation reads from the inlet stream. Subclasses may override to use a filter-type-specific method
+   * (e.g., a separate tracked flow rate field).
    * </p>
    *
    * @return gas flow rate in kg/hr
@@ -175,8 +175,7 @@ public class FilterMechanicalDesign extends MechanicalDesign {
    * Updates the element count on the equipment after sizing.
    *
    * <p>
-   * Default is a no-op. Subclasses should override to push the calculated count back to the
-   * equipment object.
+   * Default is a no-op. Subclasses should override to push the calculated count back to the equipment object.
    * </p>
    *
    * @param count the calculated number of filter elements
@@ -189,8 +188,8 @@ public class FilterMechanicalDesign extends MechanicalDesign {
    * Returns the filter element change interval in hours.
    *
    * <p>
-   * Default returns {@link Double#MAX_VALUE} (no scheduled replacement). Subclasses override to use
-   * the specific filter's change interval calculation.
+   * Default returns {@link Double#MAX_VALUE} (no scheduled replacement). Subclasses override to use the specific
+   * filter's change interval calculation.
    * </p>
    *
    * @return change interval in hours
@@ -212,8 +211,8 @@ public class FilterMechanicalDesign extends MechanicalDesign {
    * Adds equipment-specific data sections to the JSON report map.
    *
    * <p>
-   * Called by {@link #toJson()} after the common sections have been populated. Subclasses override
-   * to add contaminant-specific data (e.g., sulfur removal rates, particle size data).
+   * Called by {@link #toJson()} after the common sections have been populated. Subclasses override to add
+   * contaminant-specific data (e.g., sulfur removal rates, particle size data).
    * </p>
    *
    * @param result the JSON map to add sections to
@@ -262,12 +261,12 @@ public class FilterMechanicalDesign extends MechanicalDesign {
     double gasDensity = 50.0; // default kg/m3
     if (filter.getInletStream() != null && filter.getInletStream().getThermoSystem() != null) {
       try {
-        gasDensity = filter.getInletStream().getThermoSystem().getPhase(0).getDensity("kg/m3");
-        if (gasDensity < 0.1) {
-          gasDensity = 50.0;
-        }
+	gasDensity = filter.getInletStream().getThermoSystem().getPhase(0).getDensity("kg/m3");
+	if (gasDensity < 0.1) {
+	  gasDensity = 50.0;
+	}
       } catch (Exception e) {
-        gasDensity = 50.0;
+	gasDensity = 50.0;
       }
     }
 
@@ -502,8 +501,7 @@ public class FilterMechanicalDesign extends MechanicalDesign {
     // Subclass-specific sections
     addEquipmentSpecificJson(result);
 
-    return new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create()
-        .toJson(result);
+    return new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create().toJson(result);
   }
 
   // ============================================================================

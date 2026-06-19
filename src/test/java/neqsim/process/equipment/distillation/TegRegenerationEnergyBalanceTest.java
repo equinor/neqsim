@@ -12,12 +12,11 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
  * Regression test for the TLAB glycol-rig TEG regeneration column.
  *
  * <p>
- * This single-stage reboiled/condensed column previously reported a reboiler duty of only ~4-6 kW
- * and a global energy imbalance of ~ -20 kW because the phase-split out-streams built by
- * {@link SimpleTray} lost their single-phase designation and phase type (a liquid outlet was
- * evaluated on the vapour EOS root). The reference rig snapshot lists a reboiler power of 24.38 kW.
- * After the fix in {@code SimpleTray.scalePhaseSystemToNormalizedMoles} the column conserves energy
- * globally and reports a physically correct reboiler duty.
+ * This single-stage reboiled/condensed column previously reported a reboiler duty of only ~4-6 kW and a global energy
+ * imbalance of ~ -20 kW because the phase-split out-streams built by {@link SimpleTray} lost their single-phase
+ * designation and phase type (a liquid outlet was evaluated on the vapour EOS root). The reference rig snapshot lists a
+ * reboiler power of 24.38 kW. After the fix in {@code SimpleTray.scalePhaseSystemToNormalizedMoles} the column
+ * conserves energy globally and reports a physically correct reboiler duty.
  * </p>
  *
  * @author NeqSim
@@ -26,9 +25,9 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 public class TegRegenerationEnergyBalanceTest {
 
   /**
-   * Builds the TLAB TEG regeneration column and asserts that (1) the reboiler duty is physically
-   * correct (close to the 24.38 kW reference rig value) and (2) the column conserves energy
-   * globally (reboiler + condenser duty equals the change in stream enthalpy across the column).
+   * Builds the TLAB TEG regeneration column and asserts that (1) the reboiler duty is physically correct (close to the
+   * 24.38 kW reference rig value) and (2) the column conserves energy globally (reboiler + condenser duty equals the
+   * change in stream enthalpy across the column).
    */
   @Test
   public void tegRegenerationColumnConservesEnergy() {
@@ -47,7 +46,7 @@ public class TegRegenerationEnergyBalanceTest {
     teg.setPressure(pBottom, "bara");
 
     SystemInterface gasFluid = feedTeg.clone();
-    gasFluid.setMolarComposition(new double[] {1.0, 0.0, 0.0});
+    gasFluid.setMolarComposition(new double[] { 1.0, 0.0, 0.0 });
     Stream gas = new Stream("gas to reboiler", gasFluid);
     gas.setFlowRate(13.0, "kg/hr");
     gas.setTemperature(199.0, "C");
@@ -75,19 +74,17 @@ public class TegRegenerationEnergyBalanceTest {
 
     double hIn = teg.getFluid().getEnthalpy() + gas.getFluid().getEnthalpy();
     double hOut = column.getGasOutStream().getFluid().getEnthalpy()
-        + column.getLiquidOutStream().getFluid().getEnthalpy();
+	+ column.getLiquidOutStream().getFluid().getEnthalpy();
 
     // Reboiler duty must be physically correct (reference rig snapshot: 24.38 kW), not the
     // previously under-reported ~4-6 kW. Use a generous +/- band around the reference value.
-    assertEquals(24.38e3, qReb, 3.0e3,
-        "Reboiler duty should be close to the 24.38 kW reference value");
-    assertTrue(qReb > 20.0e3,
-        "Reboiler duty must exceed 20 kW (regression guard against ~4-6 kW under-report)");
+    assertEquals(24.38e3, qReb, 3.0e3, "Reboiler duty should be close to the 24.38 kW reference value");
+    assertTrue(qReb > 20.0e3, "Reboiler duty must exceed 20 kW (regression guard against ~4-6 kW under-report)");
 
     // Global energy balance over the whole column: Q_reb + Q_cond == H_out - H_in.
     double imbalance = (qReb + qCond) - (hOut - hIn);
     double relativeImbalance = Math.abs(imbalance) / Math.abs(hIn);
     assertTrue(relativeImbalance < 0.02,
-        "Column must conserve energy globally; relative imbalance was " + relativeImbalance);
+	"Column must conserve energy globally; relative imbalance was " + relativeImbalance);
   }
 }

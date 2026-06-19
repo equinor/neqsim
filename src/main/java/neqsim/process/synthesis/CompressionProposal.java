@@ -12,16 +12,14 @@ import neqsim.process.processmodel.ProcessSystem;
  * Result of {@link FlowsheetSynthesisEngine#proposeAndBuildCompression(CompressionDuty)}.
  *
  * <p>
- * A compression proposal carries the assembled {@link ProcessSystem} (compressors + inter-stage
- * coolers, optionally an after-cooler), the chosen number of stages, the per-stage pressure ratio,
- * a human-readable rationale, and the total estimated shaft power once the process has been
- * {@link ProcessSystem#run() run}.
+ * A compression proposal carries the assembled {@link ProcessSystem} (compressors + inter-stage coolers, optionally an
+ * after-cooler), the chosen number of stages, the per-stage pressure ratio, a human-readable rationale, and the total
+ * estimated shaft power once the process has been {@link ProcessSystem#run() run}.
  * </p>
  *
  * <p>
- * The engine does <em>not</em> automatically run the proposed process; the caller controls when
- * convergence happens so that downstream changes (e.g. integration with an existing network) can
- * be applied first.
+ * The engine does <em>not</em> automatically run the proposed process; the caller controls when convergence happens so
+ * that downstream changes (e.g. integration with an existing network) can be applied first.
  * </p>
  *
  * @author Even Solbraa
@@ -39,14 +37,14 @@ public final class CompressionProposal implements Serializable {
   /**
    * Creates a compression proposal.
    *
-   * @param processSystem the assembled flowsheet (non-null)
-   * @param stages number of compression stages
+   * @param processSystem         the assembled flowsheet (non-null)
+   * @param stages                number of compression stages
    * @param perStagePressureRatio per-stage ratio (geometric)
-   * @param rationale human-readable description
-   * @param stageNames ordered list of compressor unit names, oldest first
+   * @param rationale             human-readable description
+   * @param stageNames            ordered list of compressor unit names, oldest first
    */
-  public CompressionProposal(ProcessSystem processSystem, int stages, double perStagePressureRatio,
-      String rationale, List<String> stageNames) {
+  public CompressionProposal(ProcessSystem processSystem, int stages, double perStagePressureRatio, String rationale,
+      List<String> stageNames) {
     if (processSystem == null) {
       throw new IllegalArgumentException("processSystem must not be null");
     }
@@ -58,7 +56,7 @@ public final class CompressionProposal implements Serializable {
     this.perStagePressureRatio = perStagePressureRatio;
     this.rationale = rationale;
     this.stageNames = stageNames == null ? Collections.<String>emptyList()
-        : Collections.unmodifiableList(new ArrayList<String>(stageNames));
+	: Collections.unmodifiableList(new ArrayList<String>(stageNames));
   }
 
   /**
@@ -107,8 +105,8 @@ public final class CompressionProposal implements Serializable {
   }
 
   /**
-   * Returns a JSON summary of the proposal. The process system itself is not serialized; the
-   * caller can persist it separately via {@link ProcessSystem}'s lifecycle helpers.
+   * Returns a JSON summary of the proposal. The process system itself is not serialized; the caller can persist it
+   * separately via {@link ProcessSystem}'s lifecycle helpers.
    *
    * @return JSON string
    */

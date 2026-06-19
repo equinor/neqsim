@@ -20,12 +20,10 @@ class AgenticEngineeringKernelTest {
    */
   @Test
   void testPlanWorkflowBuildsIntentGraphAndWorkflow() {
-    String json =
-        "{\"action\":\"plan\",\"task\":\"Design gas compression and pipeline hydrate screening\","
-            + "\"objectives\":[{\"name\":\"minimize power\"}],"
-            + "\"constraints\":[{\"name\":\"hydrate margin positive\"}]}";
-    JsonObject result =
-        JsonParser.parseString(AgenticEngineeringKernel.run(json)).getAsJsonObject();
+    String json = "{\"action\":\"plan\",\"task\":\"Design gas compression and pipeline hydrate screening\","
+	+ "\"objectives\":[{\"name\":\"minimize power\"}],"
+	+ "\"constraints\":[{\"name\":\"hydrate margin positive\"}]}";
+    JsonObject result = JsonParser.parseString(AgenticEngineeringKernel.run(json)).getAsJsonObject();
     assertEquals("success", result.get("status").getAsString());
     assertTrue(result.has("engineeringIntent"));
     assertTrue(result.has("intentGraph"));
@@ -41,13 +39,11 @@ class AgenticEngineeringKernelTest {
    */
   @Test
   void testEvaluateTrustScoresEvidencePackage() {
-    String json = "{\"action\":\"trust\"," + "\"provenance\":{\"model\":\"SRK\"},"
-        + "\"validation\":{\"valid\":true}," + "\"qualityGate\":{\"verdict\":\"passed\"},"
-        + "\"benchmarkTrust\":{\"maturityLevel\":\"VALIDATED\"},"
-        + "\"evidence\":[{\"id\":\"NIST\",\"summary\":\"reference data\"}],"
-        + "\"assumptions\":[\"SRK screening model\"]," + "\"standards\":[\"ISO 6976\"]}";
-    JsonObject result =
-        JsonParser.parseString(AgenticEngineeringKernel.run(json)).getAsJsonObject();
+    String json = "{\"action\":\"trust\"," + "\"provenance\":{\"model\":\"SRK\"}," + "\"validation\":{\"valid\":true},"
+	+ "\"qualityGate\":{\"verdict\":\"passed\"}," + "\"benchmarkTrust\":{\"maturityLevel\":\"VALIDATED\"},"
+	+ "\"evidence\":[{\"id\":\"NIST\",\"summary\":\"reference data\"}],"
+	+ "\"assumptions\":[\"SRK screening model\"]," + "\"standards\":[\"ISO 6976\"]}";
+    JsonObject result = JsonParser.parseString(AgenticEngineeringKernel.run(json)).getAsJsonObject();
     assertEquals("success", result.get("status").getAsString());
     JsonObject trust = result.getAsJsonObject("trust");
     assertTrue(trust.get("score").getAsDouble() >= 80.0);
@@ -60,57 +56,46 @@ class AgenticEngineeringKernelTest {
   @Test
   void testRunStudyRanksFeasibleCandidates() {
     String json = "{\"action\":\"study\",\"studyName\":\"compressor alternatives\","
-        + "\"objectives\":[{\"metric\":\"power_kW\",\"goal\":\"minimize\",\"weight\":0.7},"
-        + "{\"metric\":\"throughput_kg_hr\",\"goal\":\"maximize\",\"weight\":0.3}],"
-        + "\"constraints\":[{\"metric\":\"dischargeTemperature_C\",\"operator\":\"<=\",\"value\":180.0}],"
-        + "\"candidates\":["
-        + "{\"name\":\"A\",\"metrics\":{\"power_kW\":1200,\"throughput_kg_hr\":5000,\"dischargeTemperature_C\":160}},"
-        + "{\"name\":\"B\",\"metrics\":{\"power_kW\":1000,\"throughput_kg_hr\":4800,\"dischargeTemperature_C\":170}},"
-        + "{\"name\":\"C\",\"metrics\":{\"power_kW\":900,\"throughput_kg_hr\":5200,\"dischargeTemperature_C\":210}}]}";
-    JsonObject result =
-        JsonParser.parseString(AgenticEngineeringKernel.run(json)).getAsJsonObject();
+	+ "\"objectives\":[{\"metric\":\"power_kW\",\"goal\":\"minimize\",\"weight\":0.7},"
+	+ "{\"metric\":\"throughput_kg_hr\",\"goal\":\"maximize\",\"weight\":0.3}],"
+	+ "\"constraints\":[{\"metric\":\"dischargeTemperature_C\",\"operator\":\"<=\",\"value\":180.0}],"
+	+ "\"candidates\":["
+	+ "{\"name\":\"A\",\"metrics\":{\"power_kW\":1200,\"throughput_kg_hr\":5000,\"dischargeTemperature_C\":160}},"
+	+ "{\"name\":\"B\",\"metrics\":{\"power_kW\":1000,\"throughput_kg_hr\":4800,\"dischargeTemperature_C\":170}},"
+	+ "{\"name\":\"C\",\"metrics\":{\"power_kW\":900,\"throughput_kg_hr\":5200,\"dischargeTemperature_C\":210}}]}";
+    JsonObject result = JsonParser.parseString(AgenticEngineeringKernel.run(json)).getAsJsonObject();
     assertEquals("success", result.get("status").getAsString());
     JsonArray ranking = result.getAsJsonArray("ranking");
     assertEquals("B", ranking.get(0).getAsJsonObject().get("name").getAsString());
     assertTrue(ranking.get(0).getAsJsonObject().get("feasible").getAsBoolean());
-    assertEquals("candidate_selected",
-        result.getAsJsonObject("recommendation").get("status").getAsString());
+    assertEquals("candidate_selected", result.getAsJsonObject("recommendation").get("status").getAsString());
   }
 
   /**
-   * Verifies readiness assessment flags missing critical task artifacts and accepts complete
-   * evidence packages.
+   * Verifies readiness assessment flags missing critical task artifacts and accepts complete evidence packages.
    */
   @Test
   void testAssessReadinessReportsCriticalGapsAndDesignReadiness() {
     String incompleteJson = "{\"action\":\"readiness\",\"scale\":\"standard\","
-        + "\"artifacts\":[{\"path\":\"step1_scope_and_research/task_spec.md\"}],"
-        + "\"result\":{\"key_results\":{\"pressure_drop_bar\":3.2}}}";
-    JsonObject incomplete =
-        JsonParser.parseString(AgenticEngineeringKernel.run(incompleteJson)).getAsJsonObject();
+	+ "\"artifacts\":[{\"path\":\"step1_scope_and_research/task_spec.md\"}],"
+	+ "\"result\":{\"key_results\":{\"pressure_drop_bar\":3.2}}}";
+    JsonObject incomplete = JsonParser.parseString(AgenticEngineeringKernel.run(incompleteJson)).getAsJsonObject();
     assertEquals("success", incomplete.get("status").getAsString());
     JsonObject incompleteReadiness = incomplete.getAsJsonObject("readiness");
     assertEquals("NOT_READY", incompleteReadiness.get("level").getAsString());
     assertTrue(incomplete.getAsJsonArray("missingCritical").size() > 0);
 
-    String completeJson = "{\"action\":\"readiness\",\"scale\":\"standard\","
-        + "\"workflowPlan\":{\"steps\":[]},"
-        + "\"artifacts\":["
-        + "{\"path\":\"step1_scope_and_research/task_spec.md\"},"
-        + "{\"path\":\"step1_scope_and_research/capability_assessment.md\"},"
-        + "{\"path\":\"step1_scope_and_research/analysis.md\"},"
-        + "{\"path\":\"step1_scope_and_research/neqsim_improvements.md\"},"
-        + "{\"path\":\"results.json\"},"
-        + "{\"path\":\"step2_analysis/02_benchmark_validation.ipynb\"},"
-        + "{\"path\":\"consistency_report.json\"}],"
-        + "\"result\":{\"key_results\":{\"pressure_drop_bar\":3.2},"
-        + "\"figure_discussion\":[{\"figure\":\"profile.png\"}],"
-        + "\"validation\":{\"acceptance_criteria_met\":true},"
-        + "\"benchmark_validation\":{\"status\":\"PASS\"},"
-        + "\"uncertainty\":{\"p50\":1.0},"
-        + "\"risk_evaluation\":{\"overall_risk_level\":\"Medium\"}}}";
-    JsonObject complete =
-        JsonParser.parseString(AgenticEngineeringKernel.run(completeJson)).getAsJsonObject();
+    String completeJson = "{\"action\":\"readiness\",\"scale\":\"standard\"," + "\"workflowPlan\":{\"steps\":[]},"
+	+ "\"artifacts\":[" + "{\"path\":\"step1_scope_and_research/task_spec.md\"},"
+	+ "{\"path\":\"step1_scope_and_research/capability_assessment.md\"},"
+	+ "{\"path\":\"step1_scope_and_research/analysis.md\"},"
+	+ "{\"path\":\"step1_scope_and_research/neqsim_improvements.md\"}," + "{\"path\":\"results.json\"},"
+	+ "{\"path\":\"step2_analysis/02_benchmark_validation.ipynb\"}," + "{\"path\":\"consistency_report.json\"}],"
+	+ "\"result\":{\"key_results\":{\"pressure_drop_bar\":3.2},"
+	+ "\"figure_discussion\":[{\"figure\":\"profile.png\"}]," + "\"validation\":{\"acceptance_criteria_met\":true},"
+	+ "\"benchmark_validation\":{\"status\":\"PASS\"}," + "\"uncertainty\":{\"p50\":1.0},"
+	+ "\"risk_evaluation\":{\"overall_risk_level\":\"Medium\"}}}";
+    JsonObject complete = JsonParser.parseString(AgenticEngineeringKernel.run(completeJson)).getAsJsonObject();
     JsonObject completeReadiness = complete.getAsJsonObject("readiness");
     assertEquals("READY_FOR_DESIGN_REVIEW", completeReadiness.get("level").getAsString());
     assertTrue(completeReadiness.get("designDecisionAllowed").getAsBoolean());
@@ -120,13 +105,13 @@ class AgenticEngineeringKernelTest {
    * Checks whether a workflow step id exists.
    *
    * @param steps workflow step array
-   * @param id step id
+   * @param id    step id
    * @return true when found
    */
   private static boolean containsStep(JsonArray steps, String id) {
     for (int i = 0; i < steps.size(); i++) {
       if (id.equals(steps.get(i).getAsJsonObject().get("id").getAsString())) {
-        return true;
+	return true;
       }
     }
     return false;

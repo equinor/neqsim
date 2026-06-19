@@ -25,25 +25,25 @@ public class CompressorDesignStandard extends DesignStandard {
    * Constructor for CompressorDesignStandard.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name         a {@link java.lang.String} object
    * @param equipmentInn a {@link neqsim.process.mechanicaldesign.MechanicalDesign} object
    */
   public CompressorDesignStandard(String name, MechanicalDesign equipmentInn) {
     super(name, equipmentInn);
 
-    try (neqsim.util.database.NeqSimProcessDesignDataBase database =
-        new neqsim.util.database.NeqSimProcessDesignDataBase()) {
-      try (java.sql.ResultSet dataSet = database.getResultSet(
-          ("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Compressor' AND Company='"
-              + standardName + "'"))) {
-        while (dataSet.next()) {
-          String specName = dataSet.getString("SPECIFICATION");
-          if (specName.equals("compressorFactor")) {
-            compressorFactor = Double.parseDouble(dataSet.getString("MAXVALUE"));
-          }
-        }
+    try (
+	neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase()) {
+      try (java.sql.ResultSet dataSet = database
+	  .getResultSet(("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Compressor' AND Company='"
+	      + standardName + "'"))) {
+	while (dataSet.next()) {
+	  String specName = dataSet.getString("SPECIFICATION");
+	  if (specName.equals("compressorFactor")) {
+	    compressorFactor = Double.parseDouble(dataSet.getString("MAXVALUE"));
+	  }
+	}
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+	logger.error(ex.getMessage(), ex);
       }
       // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
     } catch (Exception e) {

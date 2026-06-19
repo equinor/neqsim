@@ -13,16 +13,15 @@ import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
  * Closed-loop deposition-flow solver.
  *
  * <p>
- * Iteratively couples a {@link ScaleDepositionAccumulator} with the host {@link PipeBeggsAndBrills}
- * pipe so that the wall thickness build-up shrinks the effective internal diameter, raises the
- * local velocity and shear, and feeds back into the next deposition pass. The loop terminates when
- * the maximum thickness change between successive iterations falls below a tolerance, or after a
- * maximum number of iterations.
+ * Iteratively couples a {@link ScaleDepositionAccumulator} with the host {@link PipeBeggsAndBrills} pipe so that the
+ * wall thickness build-up shrinks the effective internal diameter, raises the local velocity and shear, and feeds back
+ * into the next deposition pass. The loop terminates when the maximum thickness change between successive iterations
+ * falls below a tolerance, or after a maximum number of iterations.
  *
  * <p>
- * This captures one of the most important physical effects missing from screening-level scale
- * predictors: the run-away condition where a thin deposit accelerates further deposition through
- * higher local mass-transfer rates and ultimately blocks the line.
+ * This captures one of the most important physical effects missing from screening-level scale predictors: the run-away
+ * condition where a thin deposit accelerates further deposition through higher local mass-transfer rates and ultimately
+ * blocks the line.
  *
  * <p>
  * Algorithm per iteration k:
@@ -30,13 +29,11 @@ import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
  * <li>Run pipe hydraulics with current effective diameter {@code d_k}.</li>
  * <li>Run {@link ScaleDepositionAccumulator#evaluate()} → max thickness {@code th_k}.</li>
  * <li>Update effective diameter {@code d_(k+1) = d_0 - 2 * th_k / 1000}.</li>
- * <li>Stop when {@code |d_(k+1) - d_k| < tol_m} or {@code k >= maxIter} or
- * {@code d_(k+1) <= 0}.</li>
+ * <li>Stop when {@code |d_(k+1) - d_k| < tol_m} or {@code k >= maxIter} or {@code d_(k+1) <= 0}.</li>
  * </ol>
  *
  * <p>
- * The original pipe diameter is restored after the solve so that the host {@code ProcessSystem}
- * state is unchanged.
+ * The original pipe diameter is restored after the solve so that the host {@code ProcessSystem} state is unchanged.
  *
  * @author ESOL
  * @version 1.0
@@ -60,11 +57,10 @@ public class ClosedLoopDepositionSolver implements Serializable {
   /**
    * Constructs a solver bound to the given pipe and accumulator.
    *
-   * @param pipe the host Beggs-and-Brills pipe
+   * @param pipe        the host Beggs-and-Brills pipe
    * @param accumulator the scale deposition accumulator (already configured with brine chemistry)
    */
-  public ClosedLoopDepositionSolver(PipeBeggsAndBrills pipe,
-      ScaleDepositionAccumulator accumulator) {
+  public ClosedLoopDepositionSolver(PipeBeggsAndBrills pipe, ScaleDepositionAccumulator accumulator) {
     this.pipe = pipe;
     this.accumulator = accumulator;
   }
@@ -109,53 +105,53 @@ public class ClosedLoopDepositionSolver implements Serializable {
 
     try {
       for (int k = 0; k < maxIterations; k++) {
-        iterationsTaken = k + 1;
-        pipe.setDiameter(currentD);
-        try {
-          pipe.run();
-        } catch (Exception ignore) {
-          // pipe may have already converged; tolerate failure and proceed with last profile
-        }
+	iterationsTaken = k + 1;
+	pipe.setDiameter(currentD);
+	try {
+	  pipe.run();
+	} catch (Exception ignore) {
+	  // pipe may have already converged; tolerate failure and proceed with last profile
+	}
 
-        accumulator.evaluate();
-        double thMm = accumulator.getMaxThicknessMm();
+	accumulator.evaluate();
+	double thMm = accumulator.getMaxThicknessMm();
 
-        diameterHistoryM.add(currentD);
-        maxThicknessHistoryMm.add(thMm);
+	diameterHistoryM.add(currentD);
+	maxThicknessHistoryMm.add(thMm);
 
-        double avgVelocity = 0.0;
-        try {
-          List<Double> vProfile = pipe.getMixtureSuperficialVelocityProfile();
-          if (vProfile != null && !vProfile.isEmpty()) {
-            double sum = 0.0;
-            for (Double v : vProfile) {
-              sum += v;
-            }
-            avgVelocity = sum / vProfile.size();
-          }
-        } catch (Exception ignore) {
-          // velocity profile not always available; default 0
-        }
-        velocityHistoryMs.add(avgVelocity);
+	double avgVelocity = 0.0;
+	try {
+	  List<Double> vProfile = pipe.getMixtureSuperficialVelocityProfile();
+	  if (vProfile != null && !vProfile.isEmpty()) {
+	    double sum = 0.0;
+	    for (Double v : vProfile) {
+	      sum += v;
+	    }
+	    avgVelocity = sum / vProfile.size();
+	  }
+	} catch (Exception ignore) {
+	  // velocity profile not always available; default 0
+	}
+	velocityHistoryMs.add(avgVelocity);
 
-        double newD = originalDiameter - 2.0 * thMm / 1000.0;
-        if (newD <= 0.0) {
-          // pipe blocked
-          finalEffectiveDiameterM = 0.0;
-          converged = true;
-          break;
-        }
+	double newD = originalDiameter - 2.0 * thMm / 1000.0;
+	if (newD <= 0.0) {
+	  // pipe blocked
+	  finalEffectiveDiameterM = 0.0;
+	  converged = true;
+	  break;
+	}
 
-        if (Math.abs(newD - previousD) < toleranceM) {
-          converged = true;
-          finalEffectiveDiameterM = newD;
-          break;
-        }
-        previousD = currentD;
-        currentD = newD;
+	if (Math.abs(newD - previousD) < toleranceM) {
+	  converged = true;
+	  finalEffectiveDiameterM = newD;
+	  break;
+	}
+	previousD = currentD;
+	currentD = newD;
       }
       if (!converged) {
-        finalEffectiveDiameterM = currentD;
+	finalEffectiveDiameterM = currentD;
       }
     } finally {
       // restore original geometry so process state is unchanged
@@ -242,8 +238,7 @@ public class ClosedLoopDepositionSolver implements Serializable {
    * @return pretty-printed JSON string
    */
   public String toJson() {
-    Gson gson = new GsonBuilder().setPrettyPrinting().serializeNulls()
-        .serializeSpecialFloatingPointValues().create();
+    Gson gson = new GsonBuilder().setPrettyPrinting().serializeNulls().serializeSpecialFloatingPointValues().create();
     return gson.toJson(toMap());
   }
 }

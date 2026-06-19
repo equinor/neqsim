@@ -69,7 +69,7 @@ class ClassicalNucleationTheoryTest {
 
     cnt.calculate();
     assertEquals(expectedRadius, cnt.getCriticalRadius(), expectedRadius * 1e-10,
-        "Critical radius must match Kelvin equation");
+	"Critical radius must match Kelvin equation");
   }
 
   @Test
@@ -95,8 +95,7 @@ class ClassicalNucleationTheoryTest {
     cnt.calculate();
     double rHigh = cnt.getCriticalRadius();
 
-    assertTrue(rHigh < rLow,
-        "Critical radius must decrease with increasing temperature (at fixed S)");
+    assertTrue(rHigh < rLow, "Critical radius must decrease with increasing temperature (at fixed S)");
   }
 
   // ============================================================================
@@ -115,19 +114,18 @@ class ClassicalNucleationTheoryTest {
     double vm = MW / (density * ClassicalNucleationTheory.N_AVOGADRO);
     double kT = ClassicalNucleationTheory.K_BOLTZMANN * T;
     double lnS = Math.log(S);
-    double expectedBarrier =
-        (16.0 * Math.PI / 3.0) * Math.pow(sigma, 3) * Math.pow(vm, 2) / Math.pow(kT * lnS, 2);
+    double expectedBarrier = (16.0 * Math.PI / 3.0) * Math.pow(sigma, 3) * Math.pow(vm, 2) / Math.pow(kT * lnS, 2);
 
     cnt.calculate();
     assertEquals(expectedBarrier, cnt.getFreeEnergyBarrier(), expectedBarrier * 1e-10,
-        "Free energy barrier must match CNT formula");
+	"Free energy barrier must match CNT formula");
   }
 
   @Test
   void testDimensionlessBarrierIsPositive() {
     cnt.calculate();
     assertTrue(cnt.getDimensionlessFreeEnergyBarrier() > 0.0,
-        "Dimensionless free energy barrier must be positive for S > 1");
+	"Dimensionless free energy barrier must be positive for S > 1");
   }
 
   @Test
@@ -150,8 +148,7 @@ class ClassicalNucleationTheoryTest {
   @Test
   void testCriticalNucleusMoleculesPositive() {
     cnt.calculate();
-    assertTrue(cnt.getCriticalNucleusMolecules() > 0.0,
-        "Critical nucleus must contain positive number of molecules");
+    assertTrue(cnt.getCriticalNucleusMolecules() > 0.0, "Critical nucleus must contain positive number of molecules");
   }
 
   @Test
@@ -166,7 +163,7 @@ class ClassicalNucleationTheoryTest {
     double expectedN = (4.0 * Math.PI / 3.0) * Math.pow(r, 3) / vm;
 
     assertEquals(expectedN, cnt.getCriticalNucleusMolecules(), expectedN * 1e-10,
-        "Critical nucleus molecules must be consistent with critical radius");
+	"Critical nucleus molecules must be consistent with critical radius");
   }
 
   // ============================================================================
@@ -225,8 +222,7 @@ class ClassicalNucleationTheoryTest {
   void testNucleationRateZeroAtEquilibrium() {
     cnt.setSupersaturationRatio(1.0);
     cnt.calculate();
-    assertEquals(0.0, cnt.getNucleationRate(), 0.0,
-        "Nucleation rate must be zero at equilibrium (S = 1)");
+    assertEquals(0.0, cnt.getNucleationRate(), 0.0, "Nucleation rate must be zero at equilibrium (S = 1)");
   }
 
   // ============================================================================
@@ -252,7 +248,7 @@ class ClassicalNucleationTheoryTest {
 
     cnt.calculate();
     assertEquals(expected, cnt.getCoagulationKernel(), expected * 1e-10,
-        "Coagulation kernel must match Smoluchowski formula");
+	"Coagulation kernel must match Smoluchowski formula");
   }
 
   // ============================================================================
@@ -278,22 +274,19 @@ class ClassicalNucleationTheoryTest {
   @Test
   void testParticleDiameterPositive() {
     cnt.calculate();
-    assertTrue(cnt.getMeanParticleDiameter() > 0.0,
-        "Mean particle diameter must be positive after nucleation");
+    assertTrue(cnt.getMeanParticleDiameter() > 0.0, "Mean particle diameter must be positive after nucleation");
   }
 
   @Test
   void testParticleNumberDensityPositive() {
     cnt.calculate();
-    assertTrue(cnt.getParticleNumberDensity() > 0.0,
-        "Particle number density must be positive after nucleation");
+    assertTrue(cnt.getParticleNumberDensity() > 0.0, "Particle number density must be positive after nucleation");
   }
 
   @Test
   void testParticleMassConcentrationPositive() {
     cnt.calculate();
-    assertTrue(cnt.getParticleMassConcentration() > 0.0,
-        "Mass concentration must be positive after nucleation");
+    assertTrue(cnt.getParticleMassConcentration() > 0.0, "Mass concentration must be positive after nucleation");
   }
 
   @Test
@@ -306,8 +299,7 @@ class ClassicalNucleationTheoryTest {
   void testGeometricStdDevReasonable() {
     cnt.calculate();
     double sigma = cnt.getGeometricStdDev();
-    assertTrue(sigma >= 1.0 && sigma <= 3.0,
-        "Geometric std dev should be 1.0 to 3.0, got " + sigma);
+    assertTrue(sigma >= 1.0 && sigma <= 3.0, "Geometric std dev should be 1.0 to 3.0, got " + sigma);
   }
 
   @Test
@@ -412,8 +404,7 @@ class ClassicalNucleationTheoryTest {
     cnt.calculate();
     double barrierHet = cnt.getFreeEnergyBarrier();
 
-    assertTrue(barrierHet < barrierHom,
-        "Heterogeneous barrier must be less than homogeneous barrier");
+    assertTrue(barrierHet < barrierHom, "Heterogeneous barrier must be less than homogeneous barrier");
   }
 
   @Test
@@ -437,7 +428,7 @@ class ClassicalNucleationTheoryTest {
     double barrierHet = cnt.getFreeEnergyBarrier();
 
     assertEquals(barrierHom, barrierHet, barrierHom * 1e-10,
-        "f(180) = 1, so heterogeneous barrier should equal homogeneous");
+	"f(180) = 1, so heterogeneous barrier should equal homogeneous");
   }
 
   @Test
@@ -452,7 +443,7 @@ class ClassicalNucleationTheoryTest {
     double barrierHet = cnt.getFreeEnergyBarrier();
 
     assertEquals(0.5 * barrierHom, barrierHet, barrierHom * 1e-10,
-        "f(90) = 0.5, so heterogeneous barrier should be half of homogeneous");
+	"f(90) = 0.5, so heterogeneous barrier should be half of homogeneous");
   }
 
   @Test
@@ -490,20 +481,19 @@ class ClassicalNucleationTheoryTest {
   @Test
   void testFromThermoSystemCreatesValidModel() {
     // Create a simple NeqSim system with a condensable component
-    neqsim.thermo.system.SystemInterface system =
-        new neqsim.thermo.system.SystemSrkEos(250.0, 50.0e5 / 1e5); // 250K, 50 bar
+    neqsim.thermo.system.SystemInterface system = new neqsim.thermo.system.SystemSrkEos(250.0, 50.0e5 / 1e5); // 250K,
+													      // 50 bar
     system.addComponent("methane", 0.95);
     system.addComponent("n-heptane", 0.05);
     system.setMixingRule("classic");
 
-    neqsim.thermodynamicoperations.ThermodynamicOperations ops =
-        new neqsim.thermodynamicoperations.ThermodynamicOperations(system);
+    neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+	system);
     ops.TPflash();
     system.initProperties();
 
     // Create CNT from thermo system for n-heptane condensation
-    ClassicalNucleationTheory cntFromEos =
-        ClassicalNucleationTheory.fromThermoSystem(system, "n-heptane");
+    ClassicalNucleationTheory cntFromEos = ClassicalNucleationTheory.fromThermoSystem(system, "n-heptane");
 
     assertNotNull(cntFromEos, "fromThermoSystem must return non-null model");
   }
@@ -557,8 +547,7 @@ class ClassicalNucleationTheoryTest {
   void testFilterCaptureEfficiencyBounds() {
     cnt.calculate();
     double eff10um = cnt.getFilterCaptureEfficiency(10.0e-6);
-    assertTrue(eff10um >= 0.0 && eff10um <= 1.0,
-        "Filter capture efficiency must be between 0 and 1");
+    assertTrue(eff10um >= 0.0 && eff10um <= 1.0, "Filter capture efficiency must be between 0 and 1");
   }
 
   @Test
@@ -566,8 +555,7 @@ class ClassicalNucleationTheoryTest {
     cnt.calculate();
     double frac = cnt.getFractionSmallerThan(cnt.getMeanParticleDiameter());
     // At the mean diameter, ~50% should be smaller for lognormal
-    assertTrue(frac > 0.3 && frac < 0.7,
-        "Fraction smaller than mean should be around 0.5, got " + frac);
+    assertTrue(frac > 0.3 && frac < 0.7, "Fraction smaller than mean should be around 0.5, got " + frac);
   }
 
   // ============================================================================
@@ -597,8 +585,7 @@ class ClassicalNucleationTheoryTest {
     cnt.setSaturationPressure(100.0);
     cnt.calculate();
 
-    assertEquals(10.0, cnt.getSupersaturationRatio(), 1e-10,
-        "S should be p_actual/p_sat = 1000/100 = 10");
+    assertEquals(10.0, cnt.getSupersaturationRatio(), 1e-10, "S should be p_actual/p_sat = 1000/100 = 10");
   }
 
   // ============================================================================
@@ -613,6 +600,6 @@ class ClassicalNucleationTheoryTest {
 
     String json = cnt.toJson();
     assertTrue(json.contains("heterogeneous") || json.contains("contactAngle"),
-        "JSON should contain heterogeneous nucleation info");
+	"JSON should contain heterogeneous nucleation info");
   }
 }

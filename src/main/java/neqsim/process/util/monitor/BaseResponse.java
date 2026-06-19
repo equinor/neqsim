@@ -54,7 +54,8 @@ public class BaseResponse {
    *
    * @param cfg a {@link neqsim.process.util.report.ReportConfig} object
    */
-  public void applyConfig(ReportConfig cfg) {}
+  public void applyConfig(ReportConfig cfg) {
+  }
 
   /**
    * Determine detail level for this response based on config.

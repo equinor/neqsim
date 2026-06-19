@@ -19,8 +19,8 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Test class to verify autoSize and mechanical design work for separators, three-phase separators,
- * scrubbers, and heat exchangers.
+ * Test class to verify autoSize and mechanical design work for separators, three-phase separators, scrubbers, and heat
+ * exchangers.
  *
  * @author NeqSim Development Team
  */

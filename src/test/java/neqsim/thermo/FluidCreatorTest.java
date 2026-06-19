@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 public class FluidCreatorTest {
   @Test
   void testCreate() {
-    String[] componentNames = new String[] {"methane", "ethane"};
+    String[] componentNames = new String[] { "methane", "ethane" };
     FluidCreator.create(componentNames);
   }
 
@@ -20,8 +20,8 @@ public class FluidCreatorTest {
 
   @Test
   void testCreate3() {
-    String[] componentNames = new String[] {"methane", "ethane"};
-    double[] rate = new double[] {1.0, 1.0};
+    String[] componentNames = new String[] { "methane", "ethane" };
+    double[] rate = new double[] { 1.0, 1.0 };
     String unit = "kg/sec";
     FluidCreator.create(componentNames, rate, unit);
   }

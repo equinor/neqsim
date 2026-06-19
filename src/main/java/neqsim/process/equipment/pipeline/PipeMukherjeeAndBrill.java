@@ -13,19 +13,19 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Pipeline simulation using the Mukherjee and Brill (1985) correlation for multiphase flow.
  *
  * <p>
- * Implements the Mukherjee-Brill correlation for predicting liquid holdup, pressure drop, and flow
- * pattern in two-phase gas-liquid flow at all pipe inclinations. This correlation was developed
- * from an extensive experimental database covering uphill, downhill, and horizontal flow.
+ * Implements the Mukherjee-Brill correlation for predicting liquid holdup, pressure drop, and flow pattern in two-phase
+ * gas-liquid flow at all pipe inclinations. This correlation was developed from an extensive experimental database
+ * covering uphill, downhill, and horizontal flow.
  * </p>
  *
  * <h2>Reference</h2>
  * <p>
- * Mukherjee, H. and Brill, J.P., "Pressure Drop Correlations for Inclined Two-Phase Flow", Journal
- * of Energy Resources Technology, December 1985, Vol. 107, pp. 549-554.
+ * Mukherjee, H. and Brill, J.P., "Pressure Drop Correlations for Inclined Two-Phase Flow", Journal of Energy Resources
+ * Technology, December 1985, Vol. 107, pp. 549-554.
  * </p>
  * <p>
- * Mukherjee, H. and Brill, J.P., "Empirical Equations to Predict Flow Patterns in Two-Phase
- * Inclined Flow", International Journal of Multiphase Flow, 1985, Vol. 11, No. 3, pp. 299-315.
+ * Mukherjee, H. and Brill, J.P., "Empirical Equations to Predict Flow Patterns in Two-Phase Inclined Flow",
+ * International Journal of Multiphase Flow, 1985, Vol. 11, No. 3, pp. 299-315.
  * </p>
  *
  * <h2>Flow Pattern Determination</h2>
@@ -39,8 +39,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <li><b>BUBBLE</b> — Small gas bubbles dispersed in liquid (high liquid rates)</li>
  * </ul>
  * <p>
- * Flow pattern boundaries depend on pipe inclination angle (theta), superficial gas and liquid
- * velocities, and fluid properties.
+ * Flow pattern boundaries depend on pipe inclination angle (theta), superficial gas and liquid velocities, and fluid
+ * properties.
  * </p>
  *
  * <h2>Liquid Holdup Correlation</h2>
@@ -54,14 +54,14 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </pre>
  *
  * <p>
- * where the coefficients C1-C6 depend on the flow pattern and pipe inclination direction (uphill,
- * downhill, or horizontal).
+ * where the coefficients C1-C6 depend on the flow pattern and pipe inclination direction (uphill, downhill, or
+ * horizontal).
  * </p>
  *
  * <h2>Friction Factor</h2>
  * <p>
- * Uses the Moody friction factor for no-slip Reynolds number, with a two-phase multiplier based on
- * holdup ratio to account for the increased wall shear from multiphase flow.
+ * Uses the Moody friction factor for no-slip Reynolds number, with a two-phase multiplier based on holdup ratio to
+ * account for the increased wall shear from multiphase flow.
  * </p>
  *
  * <h2>Applicability</h2>
@@ -182,7 +182,7 @@ public class PipeMukherjeeAndBrill extends Pipeline {
   /**
    * Constructor with name and inlet stream.
    *
-   * @param name equipment name
+   * @param name     equipment name
    * @param inStream inlet stream
    */
   public PipeMukherjeeAndBrill(String name, StreamInterface inStream) {
@@ -193,13 +193,12 @@ public class PipeMukherjeeAndBrill extends Pipeline {
   @Override
   public void run(UUID id) {
     if (diameter <= 0) {
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(
-          "PipeMukherjeeAndBrill", "run", "diameter", "must be positive, got: " + diameter));
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeMukherjeeAndBrill", "run",
+	  "diameter", "must be positive, got: " + diameter));
     }
     if (numberOfIncrements <= 0) {
-      throw new RuntimeException(
-          new neqsim.util.exception.InvalidInputException("PipeMukherjeeAndBrill", "run",
-              "numberOfIncrements", "must be positive, got: " + numberOfIncrements));
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeMukherjeeAndBrill", "run",
+	  "numberOfIncrements", "must be positive, got: " + numberOfIncrements));
     }
 
     pressureProfileList = new ArrayList<Double>();
@@ -227,8 +226,8 @@ public class PipeMukherjeeAndBrill extends Pipeline {
       double dp = calcSegmentPressureDrop(system, segmentLength, segmentElevation);
       double pOut = system.getPressure() - dp;
       if (pOut < 0.1) {
-        logger.warn("Outlet pressure went below 0.1 bar at increment {}", i);
-        pOut = 0.1;
+	logger.warn("Outlet pressure went below 0.1 bar at increment {}", i);
+	pOut = 0.1;
       }
 
       system.setPressure(pOut);
@@ -252,9 +251,9 @@ public class PipeMukherjeeAndBrill extends Pipeline {
   /**
    * Calculate pressure drop for a single pipe segment using the Mukherjee-Brill method.
    *
-   * @param sys thermodynamic system at segment conditions
+   * @param sys       thermodynamic system at segment conditions
    * @param segLength segment length in meters
-   * @param segElev segment elevation change in meters (positive = upward)
+   * @param segElev   segment elevation change in meters (positive = upward)
    * @return pressure drop in bar
    */
   private double calcSegmentPressureDrop(SystemInterface sys, double segLength, double segElev) {
@@ -278,9 +277,9 @@ public class PipeMukherjeeAndBrill extends Pipeline {
       muL = sys.getPhase("oil").getViscosity("kg/msec");
       muG = sys.getPhase("gas").getViscosity("kg/msec");
       sigmaL = sys.getInterphaseProperties().getSurfaceTension(sys.getPhaseNumberOfPhase("oil"),
-          sys.getPhaseNumberOfPhase("gas"));
+	  sys.getPhaseNumberOfPhase("gas"));
       if (sigmaL < 1e-6) {
-        sigmaL = 0.02;
+	sigmaL = 0.02;
       }
       volFlowL = sys.getPhase("oil").getFlowRate("m3/sec");
       volFlowG = sys.getPhase("gas").getFlowRate("m3/sec");
@@ -334,8 +333,8 @@ public class PipeMukherjeeAndBrill extends Pipeline {
     double theta = Math.asin(sinTheta); // radians
 
     // Determine flow pattern
-    currentFlowPattern = determineFlowPattern(superficialLiquidVelocity, superficialGasVelocity,
-        rhoL, rhoG, muL, sigmaL, theta);
+    currentFlowPattern = determineFlowPattern(superficialLiquidVelocity, superficialGasVelocity, rhoL, rhoG, muL,
+	sigmaL, theta);
 
     // Dimensionless numbers for holdup correlation
     double fourthRoot = Math.pow(rhoL / (GRAVITY * sigmaL), 0.25);
@@ -377,21 +376,21 @@ public class PipeMukherjeeAndBrill extends Pipeline {
    * Determine flow pattern using Mukherjee-Brill boundaries.
    *
    * <p>
-   * The flow pattern is determined from dimensionless gas and liquid velocity numbers, pipe
-   * inclination, and fluid properties.
+   * The flow pattern is determined from dimensionless gas and liquid velocity numbers, pipe inclination, and fluid
+   * properties.
    * </p>
    *
-   * @param vSl superficial liquid velocity in m/s
-   * @param vSg superficial gas velocity in m/s
-   * @param rhoL liquid density in kg/m3
-   * @param rhoG gas density in kg/m3
-   * @param muL liquid viscosity in Pa.s
+   * @param vSl   superficial liquid velocity in m/s
+   * @param vSg   superficial gas velocity in m/s
+   * @param rhoL  liquid density in kg/m3
+   * @param rhoG  gas density in kg/m3
+   * @param muL   liquid viscosity in Pa.s
    * @param sigma surface tension in N/m
    * @param theta pipe inclination angle in radians
    * @return identified flow pattern
    */
-  private FlowPattern determineFlowPattern(double vSl, double vSg, double rhoL, double rhoG,
-      double muL, double sigma, double theta) {
+  private FlowPattern determineFlowPattern(double vSl, double vSg, double rhoL, double rhoG, double muL, double sigma,
+      double theta) {
 
     double sinT = Math.sin(theta);
     double cosT = Math.cos(theta);
@@ -406,7 +405,7 @@ public class PipeMukherjeeAndBrill extends Pipeline {
       double b1 = Math.log10(frL + 1e-10);
       double b2 = -0.38 + 3.11 * sinT + 1.45 * sinT * sinT;
       if (b1 < b2) {
-        return FlowPattern.STRATIFIED;
+	return FlowPattern.STRATIFIED;
       }
     }
 
@@ -417,7 +416,7 @@ public class PipeMukherjeeAndBrill extends Pipeline {
     if (nlv > 0) {
       double bubbleLimit = 2.0 + 1.5 * Math.abs(sinT);
       if (ngv / nlv < 0.1 && nlv > bubbleLimit) {
-        return FlowPattern.BUBBLE;
+	return FlowPattern.BUBBLE;
       }
     }
 
@@ -434,14 +433,14 @@ public class PipeMukherjeeAndBrill extends Pipeline {
    * Calculate liquid holdup using the Mukherjee-Brill correlation.
    *
    * <p>
-   * The holdup is calculated from flow-pattern-dependent correlations using dimensionless velocity
-   * and viscosity numbers and the pipe inclination angle.
+   * The holdup is calculated from flow-pattern-dependent correlations using dimensionless velocity and viscosity
+   * numbers and the pipe inclination angle.
    * </p>
    *
-   * @param nLv liquid velocity number
-   * @param nGv gas velocity number
-   * @param nL liquid viscosity number
-   * @param theta pipe inclination angle in radians
+   * @param nLv     liquid velocity number
+   * @param nGv     gas velocity number
+   * @param nL      liquid viscosity number
+   * @param theta   pipe inclination angle in radians
    * @param lambdaL no-slip liquid fraction
    * @return predicted liquid holdup (0 to 1)
    */
@@ -459,67 +458,67 @@ public class PipeMukherjeeAndBrill extends Pipeline {
     if (theta >= 0) {
       // Uphill flow coefficients
       switch (currentFlowPattern) {
-        case STRATIFIED:
-          // Stratified rarely occurs uphill, use slug coefficients
-          c1 = -0.380113;
-          c2 = 0.129875;
-          c3 = -0.119788;
-          c4 = 2.343227;
-          c5 = 0.475686;
-          c6 = 0.288657;
-          break;
-        case ANNULAR:
-          c1 = -1.330282;
-          c2 = 4.808139;
-          c3 = 4.171584;
-          c4 = 56.262268;
-          c5 = 0.079951;
-          c6 = 0.504887;
-          break;
-        case BUBBLE:
-          c1 = -0.516644;
-          c2 = 0.789805;
-          c3 = 0.551627;
-          c4 = 15.519214;
-          c5 = 0.371771;
-          c6 = 0.393952;
-          break;
-        default: // SLUG
-          c1 = -0.380113;
-          c2 = 0.129875;
-          c3 = -0.119788;
-          c4 = 2.343227;
-          c5 = 0.475686;
-          c6 = 0.288657;
-          break;
+      case STRATIFIED:
+	// Stratified rarely occurs uphill, use slug coefficients
+	c1 = -0.380113;
+	c2 = 0.129875;
+	c3 = -0.119788;
+	c4 = 2.343227;
+	c5 = 0.475686;
+	c6 = 0.288657;
+	break;
+      case ANNULAR:
+	c1 = -1.330282;
+	c2 = 4.808139;
+	c3 = 4.171584;
+	c4 = 56.262268;
+	c5 = 0.079951;
+	c6 = 0.504887;
+	break;
+      case BUBBLE:
+	c1 = -0.516644;
+	c2 = 0.789805;
+	c3 = 0.551627;
+	c4 = 15.519214;
+	c5 = 0.371771;
+	c6 = 0.393952;
+	break;
+      default: // SLUG
+	c1 = -0.380113;
+	c2 = 0.129875;
+	c3 = -0.119788;
+	c4 = 2.343227;
+	c5 = 0.475686;
+	c6 = 0.288657;
+	break;
       }
     } else {
       // Downhill flow coefficients
       switch (currentFlowPattern) {
-        case STRATIFIED:
-          c1 = -1.330282;
-          c2 = 4.808139;
-          c3 = 4.171584;
-          c4 = 56.262268;
-          c5 = 0.079951;
-          c6 = 0.504887;
-          break;
-        case ANNULAR:
-          c1 = -0.516644;
-          c2 = 0.789805;
-          c3 = 0.551627;
-          c4 = 15.519214;
-          c5 = 0.371771;
-          c6 = 0.393952;
-          break;
-        default: // SLUG, BUBBLE
-          c1 = -0.380113;
-          c2 = 0.129875;
-          c3 = -0.119788;
-          c4 = 2.343227;
-          c5 = 0.475686;
-          c6 = 0.288657;
-          break;
+      case STRATIFIED:
+	c1 = -1.330282;
+	c2 = 4.808139;
+	c3 = 4.171584;
+	c4 = 56.262268;
+	c5 = 0.079951;
+	c6 = 0.504887;
+	break;
+      case ANNULAR:
+	c1 = -0.516644;
+	c2 = 0.789805;
+	c3 = 0.551627;
+	c4 = 15.519214;
+	c5 = 0.371771;
+	c6 = 0.393952;
+	break;
+      default: // SLUG, BUBBLE
+	c1 = -0.380113;
+	c2 = 0.129875;
+	c3 = -0.119788;
+	c4 = 2.343227;
+	c5 = 0.475686;
+	c6 = 0.288657;
+	break;
       }
     }
 
@@ -539,9 +538,8 @@ public class PipeMukherjeeAndBrill extends Pipeline {
    * Calculate two-phase friction factor multiplier from holdup ratio.
    *
    * <p>
-   * The Mukherjee-Brill friction factor correction accounts for the effect of slip between phases
-   * on the wall shear stress. The multiplier is based on the ratio of no-slip to actual liquid
-   * holdup.
+   * The Mukherjee-Brill friction factor correction accounts for the effect of slip between phases on the wall shear
+   * stress. The multiplier is based on the ratio of no-slip to actual liquid holdup.
    * </p>
    *
    * @param holdupRatio ratio of no-slip liquid fraction to actual holdup
@@ -553,7 +551,7 @@ public class PipeMukherjeeAndBrill extends Pipeline {
     }
     double logRatio = Math.log(holdupRatio);
     double s = logRatio / (-0.0523 + 3.182 * logRatio - 0.8725 * logRatio * logRatio
-        + 0.01853 * logRatio * logRatio * logRatio * logRatio);
+	+ 0.01853 * logRatio * logRatio * logRatio * logRatio);
     return Math.exp(s);
   }
 

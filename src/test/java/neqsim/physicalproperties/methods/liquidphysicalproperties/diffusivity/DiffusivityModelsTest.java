@@ -14,8 +14,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Tests for diffusivity models including Hayduk-Minhas, high-pressure correction, and automatic
- * model selection.
+ * Tests for diffusivity models including Hayduk-Minhas, high-pressure correction, and automatic model selection.
  *
  * @author Even Solbraa
  */
@@ -57,8 +56,8 @@ public class DiffusivityModelsTest {
     hydrocarbonSystem.initPhysicalProperties();
 
     if (hydrocarbonSystem.hasPhaseType("oil")) {
-      HaydukMinhasDiffusivity diffModel =
-          new HaydukMinhasDiffusivity(hydrocarbonSystem.getPhase("oil").getPhysicalProperties());
+      HaydukMinhasDiffusivity diffModel = new HaydukMinhasDiffusivity(
+	  hydrocarbonSystem.getPhase("oil").getPhysicalProperties());
       diffModel.setSolventType(HaydukMinhasDiffusivity.SolventType.PARAFFIN);
 
       double[][] D = diffModel.calcDiffusionCoefficients(0, 0);
@@ -69,12 +68,12 @@ public class DiffusivityModelsTest {
       // Typical liquid diffusivities are 1e-11 to 1e-8 m²/s
       // With fallback protection, should be in reasonable range
       for (int i = 0; i < hydrocarbonSystem.getPhase("oil").getNumberOfComponents(); i++) {
-        for (int j = 0; j < hydrocarbonSystem.getPhase("oil").getNumberOfComponents(); j++) {
-          if (D[i][j] > 0) {
-            assertTrue(D[i][j] > 1e-13, "Diffusivity should be > 1e-13 m²/s, got: " + D[i][j]);
-            assertTrue(D[i][j] < 1e-5, "Diffusivity should be < 1e-5 m²/s, got: " + D[i][j]);
-          }
-        }
+	for (int j = 0; j < hydrocarbonSystem.getPhase("oil").getNumberOfComponents(); j++) {
+	  if (D[i][j] > 0) {
+	    assertTrue(D[i][j] > 1e-13, "Diffusivity should be > 1e-13 m²/s, got: " + D[i][j]);
+	    assertTrue(D[i][j] < 1e-5, "Diffusivity should be < 1e-5 m²/s, got: " + D[i][j]);
+	  }
+	}
       }
     }
   }
@@ -86,8 +85,8 @@ public class DiffusivityModelsTest {
     aqueousSystem.initPhysicalProperties();
 
     if (aqueousSystem.hasPhaseType("aqueous")) {
-      HaydukMinhasDiffusivity diffModel =
-          new HaydukMinhasDiffusivity(aqueousSystem.getPhase("aqueous").getPhysicalProperties());
+      HaydukMinhasDiffusivity diffModel = new HaydukMinhasDiffusivity(
+	  aqueousSystem.getPhase("aqueous").getPhysicalProperties());
       diffModel.setSolventType(HaydukMinhasDiffusivity.SolventType.AQUEOUS);
 
       double D = diffModel.calcBinaryDiffusionCoefficient(0, 1, 0);
@@ -106,8 +105,8 @@ public class DiffusivityModelsTest {
     highPressureSystem.initPhysicalProperties();
 
     if (highPressureSystem.hasPhaseType("oil")) {
-      HighPressureDiffusivity diffModel =
-          new HighPressureDiffusivity(highPressureSystem.getPhase("oil").getPhysicalProperties());
+      HighPressureDiffusivity diffModel = new HighPressureDiffusivity(
+	  highPressureSystem.getPhase("oil").getPhysicalProperties());
 
       double[][] D = diffModel.calcDiffusionCoefficients(0, 0);
 
@@ -127,8 +126,8 @@ public class DiffusivityModelsTest {
     ops.TPflash();
 
     if (hydrocarbonSystem.hasPhaseType("oil")) {
-      DiffusivityModelSelector.DiffusivityModelType modelType =
-          DiffusivityModelSelector.selectOptimalModel(hydrocarbonSystem.getPhase("oil"));
+      DiffusivityModelSelector.DiffusivityModelType modelType = DiffusivityModelSelector
+	  .selectOptimalModel(hydrocarbonSystem.getPhase("oil"));
 
       // For low-pressure hydrocarbon, should select Hayduk-Minhas
       assertEquals(DiffusivityModelSelector.DiffusivityModelType.HAYDUK_MINHAS, modelType);
@@ -141,8 +140,8 @@ public class DiffusivityModelsTest {
     ops.TPflash();
 
     if (aqueousSystem.hasPhaseType("aqueous")) {
-      DiffusivityModelSelector.DiffusivityModelType modelType =
-          DiffusivityModelSelector.selectOptimalModel(aqueousSystem.getPhase("aqueous"));
+      DiffusivityModelSelector.DiffusivityModelType modelType = DiffusivityModelSelector
+	  .selectOptimalModel(aqueousSystem.getPhase("aqueous"));
 
       // For CO2 in aqueous system, should select CO2_WATER
       assertEquals(DiffusivityModelSelector.DiffusivityModelType.CO2_WATER, modelType);
@@ -155,12 +154,11 @@ public class DiffusivityModelsTest {
     ops.TPflash();
 
     if (highPressureSystem.hasPhaseType("oil")) {
-      DiffusivityModelSelector.DiffusivityModelType modelType =
-          DiffusivityModelSelector.selectOptimalModel(highPressureSystem.getPhase("oil"));
+      DiffusivityModelSelector.DiffusivityModelType modelType = DiffusivityModelSelector
+	  .selectOptimalModel(highPressureSystem.getPhase("oil"));
 
       // At 200 bar, should select high-pressure corrected model
-      assertEquals(DiffusivityModelSelector.DiffusivityModelType.HIGH_PRESSURE_CORRECTED,
-          modelType);
+      assertEquals(DiffusivityModelSelector.DiffusivityModelType.HIGH_PRESSURE_CORRECTED, modelType);
     }
   }
 
@@ -170,8 +168,7 @@ public class DiffusivityModelsTest {
     ops.TPflash();
 
     if (highPressureSystem.hasPhaseType("oil")) {
-      String reason =
-          DiffusivityModelSelector.getModelSelectionReason(highPressureSystem.getPhase("oil"));
+      String reason = DiffusivityModelSelector.getModelSelectionReason(highPressureSystem.getPhase("oil"));
 
       assertNotNull(reason);
       assertTrue(reason.contains("pressure") || reason.contains("High"));
@@ -186,7 +183,7 @@ public class DiffusivityModelsTest {
 
     if (hydrocarbonSystem.hasPhaseType("oil")) {
       Diffusivity autoModel = DiffusivityModelSelector
-          .createAutoSelectedModel(hydrocarbonSystem.getPhase("oil").getPhysicalProperties());
+	  .createAutoSelectedModel(hydrocarbonSystem.getPhase("oil").getPhysicalProperties());
 
       assertNotNull(autoModel);
       assertTrue(autoModel instanceof HaydukMinhasDiffusivity);
@@ -196,7 +193,7 @@ public class DiffusivityModelsTest {
   @Test
   void testDiffusivityTemperatureDependence() {
     // Test that diffusivity increases with temperature
-    double[] temps = {280.0, 300.0, 320.0, 340.0};
+    double[] temps = { 280.0, 300.0, 320.0, 340.0 };
     double[] diffusivities = new double[temps.length];
 
     for (int t = 0; t < temps.length; t++) {
@@ -211,17 +208,17 @@ public class DiffusivityModelsTest {
       testSystem.initPhysicalProperties();
 
       if (testSystem.hasPhaseType("oil")) {
-        HaydukMinhasDiffusivity diffModel =
-            new HaydukMinhasDiffusivity(testSystem.getPhase("oil").getPhysicalProperties());
-        diffusivities[t] = diffModel.calcBinaryDiffusionCoefficient(0, 1, 0);
+	HaydukMinhasDiffusivity diffModel = new HaydukMinhasDiffusivity(
+	    testSystem.getPhase("oil").getPhysicalProperties());
+	diffusivities[t] = diffModel.calcBinaryDiffusionCoefficient(0, 1, 0);
       }
     }
 
     // Diffusivity should increase with temperature
     for (int i = 1; i < diffusivities.length; i++) {
       if (diffusivities[i] > 0 && diffusivities[i - 1] > 0) {
-        assertTrue(diffusivities[i] >= diffusivities[i - 1] * 0.9,
-            "Diffusivity should generally increase with temperature");
+	assertTrue(diffusivities[i] >= diffusivities[i - 1] * 0.9,
+	    "Diffusivity should generally increase with temperature");
       }
     }
   }
@@ -233,26 +230,26 @@ public class DiffusivityModelsTest {
     hydrocarbonSystem.initPhysicalProperties();
 
     if (hydrocarbonSystem.hasPhaseType("oil")) {
-      HaydukMinhasDiffusivity diffModel =
-          new HaydukMinhasDiffusivity(hydrocarbonSystem.getPhase("oil").getPhysicalProperties());
+      HaydukMinhasDiffusivity diffModel = new HaydukMinhasDiffusivity(
+	  hydrocarbonSystem.getPhase("oil").getPhysicalProperties());
 
       double[][] D = diffModel.calcDiffusionCoefficients(0, 0);
 
       // After Vignes mixing, D[i][j] should be positive for all pairs
       // The exact relationship depends on mole fractions
       for (int i = 0; i < D.length; i++) {
-        for (int j = 0; j < D.length; j++) {
-          if (i != j) {
-            assertTrue(D[i][j] > 0, "D[" + i + "][" + j + "] should be positive");
-          }
-        }
+	for (int j = 0; j < D.length; j++) {
+	  if (i != j) {
+	    assertTrue(D[i][j] > 0, "D[" + i + "][" + j + "] should be positive");
+	  }
+	}
       }
     }
   }
 
   /**
-   * Test comparing Hayduk-Minhas with Siddiqi-Lucas for hydrocarbon systems. Both models should
-   * give values in the same order of magnitude for liquid diffusivities.
+   * Test comparing Hayduk-Minhas with Siddiqi-Lucas for hydrocarbon systems. Both models should give values in the same
+   * order of magnitude for liquid diffusivities.
    */
   @Test
   void testCompareHaydukMinhasWithSiddiqiLucas() {
@@ -270,55 +267,48 @@ public class DiffusivityModelsTest {
 
       int nComps = hydrocarbonSystem.getPhase("oil").getNumberOfComponents();
 
-      System.out
-          .println("\n=== Comparison: Hayduk-Minhas vs Siddiqi-Lucas (Hydrocarbon System) ===");
+      System.out.println("\n=== Comparison: Hayduk-Minhas vs Siddiqi-Lucas (Hydrocarbon System) ===");
       logger.info("T = " + hydrocarbonSystem.getPhase("oil").getTemperature() + " K, P = "
-          + hydrocarbonSystem.getPhase("oil").getPressure() + " bar");
-      logger.info(String.format("%-20s %-20s %-20s %-15s", "Component Pair", "Hayduk-Minhas",
-          "Siddiqi-Lucas", "Ratio (HM/SL)"));
+	  + hydrocarbonSystem.getPhase("oil").getPressure() + " bar");
+      logger.info(String.format("%-20s %-20s %-20s %-15s", "Component Pair", "Hayduk-Minhas", "Siddiqi-Lucas",
+	  "Ratio (HM/SL)"));
       logger.info(StringUtils.repeat("-", 80));
 
       int validComparisons = 0;
       for (int i = 0; i < nComps; i++) {
-        for (int j = 0; j < nComps; j++) {
-          if (i != j) {
-            double dHayduk = haydukModel.calcBinaryDiffusionCoefficient(i, j, 0);
-            double dSiddiqi = siddiqiModel.calcBinaryDiffusionCoefficient(i, j, 0);
+	for (int j = 0; j < nComps; j++) {
+	  if (i != j) {
+	    double dHayduk = haydukModel.calcBinaryDiffusionCoefficient(i, j, 0);
+	    double dSiddiqi = siddiqiModel.calcBinaryDiffusionCoefficient(i, j, 0);
 
-            String compI = hydrocarbonSystem.getPhase("oil").getComponent(i).getComponentName();
-            String compJ = hydrocarbonSystem.getPhase("oil").getComponent(j).getComponentName();
-            String pair = compI + "/" + compJ;
+	    String compI = hydrocarbonSystem.getPhase("oil").getComponent(i).getComponentName();
+	    String compJ = hydrocarbonSystem.getPhase("oil").getComponent(j).getComponentName();
+	    String pair = compI + "/" + compJ;
 
-            double ratio =
-                (dSiddiqi > 0 && Double.isFinite(dSiddiqi)) ? dHayduk / dSiddiqi : Double.NaN;
+	    double ratio = (dSiddiqi > 0 && Double.isFinite(dSiddiqi)) ? dHayduk / dSiddiqi : Double.NaN;
 
-            logger.info(
-                String.format("%-20s %-20.4e %-20.4e %-15.2f", pair, dHayduk, dSiddiqi, ratio));
+	    logger.info(String.format("%-20s %-20.4e %-20.4e %-15.2f", pair, dHayduk, dSiddiqi, ratio));
 
-            // Hayduk-Minhas should always be in reasonable liquid diffusivity range
-            assertTrue(dHayduk > 1e-12 && dHayduk < 1e-6,
-                "Hayduk-Minhas D[" + i + "][" + j + "] out of range: " + dHayduk);
+	    // Hayduk-Minhas should always be in reasonable liquid diffusivity range
+	    assertTrue(dHayduk > 1e-12 && dHayduk < 1e-6,
+		"Hayduk-Minhas D[" + i + "][" + j + "] out of range: " + dHayduk);
 
-            // Siddiqi-Lucas may return Infinity when viscosity is 0 (known limitation)
-            // Only validate if we get a finite, positive value
-            if (Double.isFinite(dSiddiqi) && dSiddiqi > 0) {
-              assertTrue(dSiddiqi < 1e-5,
-                  "Siddiqi-Lucas D[" + i + "][" + j + "] too large: " + dSiddiqi);
+	    // Siddiqi-Lucas may return Infinity when viscosity is 0 (known limitation)
+	    // Only validate if we get a finite, positive value
+	    if (Double.isFinite(dSiddiqi) && dSiddiqi > 0) {
+	      assertTrue(dSiddiqi < 1e-5, "Siddiqi-Lucas D[" + i + "][" + j + "] too large: " + dSiddiqi);
 
-              // Models should be within ~2 orders of magnitude of each other for valid data
-              assertTrue(ratio > 0.01 && ratio < 100,
-                  "Models differ by more than 2 orders of magnitude for " + pair);
-              validComparisons++;
-            }
-          }
-        }
+	      // Models should be within ~2 orders of magnitude of each other for valid data
+	      assertTrue(ratio > 0.01 && ratio < 100, "Models differ by more than 2 orders of magnitude for " + pair);
+	      validComparisons++;
+	    }
+	  }
+	}
       }
       logger.info("Valid model comparisons: " + validComparisons);
 
-
       // At least some comparisons should have valid Siddiqi-Lucas values
-      assertTrue(validComparisons > 0,
-          "At least some component pairs should have valid Siddiqi-Lucas values");
+      assertTrue(validComparisons > 0, "At least some component pairs should have valid Siddiqi-Lucas values");
     }
   }
 
@@ -353,31 +343,27 @@ public class DiffusivityModelsTest {
       logger.info(String.format("%-25s %-20s %-20s", "Model", "D (m²/s)", "vs Literature"));
       logger.info(StringUtils.repeat("-", 70));
       logger.info(String.format("%-25s %-20.4e %-20.2f%%", "Hayduk-Minhas (Aqueous)", dHayduk,
-          100 * (dHayduk - literatureValue) / literatureValue));
+	  100 * (dHayduk - literatureValue) / literatureValue));
       logger.info(String.format("%-25s %-20.4e %-20.2f%%", "Siddiqi-Lucas", dSiddiqi,
-          100 * (dSiddiqi - literatureValue) / literatureValue));
+	  100 * (dSiddiqi - literatureValue) / literatureValue));
       logger.info(String.format("%-25s %-20.4e %-20.2f%%", "CO2-Water (Tamimi)", dCO2water,
-          100 * (dCO2water - literatureValue) / literatureValue));
+	  100 * (dCO2water - literatureValue) / literatureValue));
       logger.info(String.format("%-25s %-20.4e", "Literature (~25°C)", literatureValue));
 
-
       // All models should give physically reasonable values
-      assertTrue(dHayduk > 1e-11 && dHayduk < 1e-7,
-          "Hayduk-Minhas CO2-water out of range: " + dHayduk);
-      assertTrue(dCO2water > 1e-11 && dCO2water < 1e-7,
-          "CO2-water model out of range: " + dCO2water);
+      assertTrue(dHayduk > 1e-11 && dHayduk < 1e-7, "Hayduk-Minhas CO2-water out of range: " + dHayduk);
+      assertTrue(dCO2water > 1e-11 && dCO2water < 1e-7, "CO2-water model out of range: " + dCO2water);
 
       // CO2-water specific model should be most accurate (designed for this system)
       // Should be within factor of 5 of literature
       assertTrue(dCO2water > literatureValue / 5 && dCO2water < literatureValue * 5,
-          "CO2-water model should be within factor of 5 of literature");
+	  "CO2-water model should be within factor of 5 of literature");
     }
   }
 
   /**
-   * Test Siddiqi-Lucas auto-detection of aqueous vs non-aqueous solvents. After the fix,
-   * calcBinaryDiffusionCoefficient automatically selects the correct correlation based on whether
-   * the solvent component is water.
+   * Test Siddiqi-Lucas auto-detection of aqueous vs non-aqueous solvents. After the fix, calcBinaryDiffusionCoefficient
+   * automatically selects the correct correlation based on whether the solvent component is water.
    */
   @Test
   void testSiddiqiLucasAutoDetection() {
@@ -393,13 +379,12 @@ public class DiffusivityModelsTest {
 
       // For a hydrocarbon system (no water), should use non-aqueous correlation
       for (int i = 0; i < nComps; i++) {
-        for (int j = 0; j < nComps; j++) {
-          if (i != j) {
-            double D = siddiqiModel.calcBinaryDiffusionCoefficient(i, j, 0);
-            assertTrue(D > 1e-12 && D < 1e-5,
-                "Siddiqi-Lucas D out of range for hydrocarbon system: " + D);
-          }
-        }
+	for (int j = 0; j < nComps; j++) {
+	  if (i != j) {
+	    double D = siddiqiModel.calcBinaryDiffusionCoefficient(i, j, 0);
+	    assertTrue(D > 1e-12 && D < 1e-5, "Siddiqi-Lucas D out of range for hydrocarbon system: " + D);
+	  }
+	}
       }
     }
   }
@@ -409,12 +394,11 @@ public class DiffusivityModelsTest {
    */
   @Test
   void testTemperatureDependenceComparison() {
-    double[] temps = {280.0, 300.0, 320.0, 350.0};
+    double[] temps = { 280.0, 300.0, 320.0, 350.0 };
 
     logger.info("\n=== Temperature Dependence Comparison ===");
     logger.info("System: methane/n-hexane at 10 bar");
-    System.out
-        .println(String.format("%-10s %-18s %-18s", "T (K)", "Hayduk-Minhas", "Siddiqi-Lucas"));
+    System.out.println(String.format("%-10s %-18s %-18s", "T (K)", "Hayduk-Minhas", "Siddiqi-Lucas"));
     logger.info(StringUtils.repeat("-", 50));
 
     for (double temp : temps) {
@@ -429,19 +413,19 @@ public class DiffusivityModelsTest {
       testSystem.initPhysicalProperties();
 
       if (testSystem.hasPhaseType("oil")) {
-        PhysicalProperties physProps = testSystem.getPhase("oil").getPhysicalProperties();
+	PhysicalProperties physProps = testSystem.getPhase("oil").getPhysicalProperties();
 
-        HaydukMinhasDiffusivity haydukModel = new HaydukMinhasDiffusivity(physProps);
-        haydukModel.setSolventType(HaydukMinhasDiffusivity.SolventType.PARAFFIN);
-        SiddiqiLucasMethod siddiqiModel = new SiddiqiLucasMethod(physProps);
+	HaydukMinhasDiffusivity haydukModel = new HaydukMinhasDiffusivity(physProps);
+	haydukModel.setSolventType(HaydukMinhasDiffusivity.SolventType.PARAFFIN);
+	SiddiqiLucasMethod siddiqiModel = new SiddiqiLucasMethod(physProps);
 
-        double dHayduk = haydukModel.calcBinaryDiffusionCoefficient(0, 1, 0);
-        double dSiddiqi = siddiqiModel.calcBinaryDiffusionCoefficient(0, 1, 0);
+	double dHayduk = haydukModel.calcBinaryDiffusionCoefficient(0, 1, 0);
+	double dSiddiqi = siddiqiModel.calcBinaryDiffusionCoefficient(0, 1, 0);
 
-        logger.info(String.format("%-10.1f %-18.4e %-18.4e", temp, dHayduk, dSiddiqi));
+	logger.info(String.format("%-10.1f %-18.4e %-18.4e", temp, dHayduk, dSiddiqi));
 
-        // All should increase with temperature
-        assertTrue(dHayduk > 0, "Hayduk-Minhas should be positive at T=" + temp);
+	// All should increase with temperature
+	assertTrue(dHayduk > 0, "Hayduk-Minhas should be positive at T=" + temp);
       }
     }
 
@@ -452,12 +436,12 @@ public class DiffusivityModelsTest {
    */
   @Test
   void testHighPressureEffectComparison() {
-    double[] pressures = {10.0, 50.0, 100.0, 200.0, 400.0};
+    double[] pressures = { 10.0, 50.0, 100.0, 200.0, 400.0 };
 
     logger.info("\n=== High-Pressure Effect Comparison ===");
     logger.info("System: methane/n-heptane at 350 K");
-    logger.info(String.format("%-10s %-18s %-18s %-18s %-12s", "P (bar)", "Hayduk-Minhas",
-        "HP-Corrected", "Siddiqi-Lucas", "HP Factor"));
+    logger.info(String.format("%-10s %-18s %-18s %-18s %-12s", "P (bar)", "Hayduk-Minhas", "HP-Corrected",
+	"Siddiqi-Lucas", "HP Factor"));
     logger.info(StringUtils.repeat("-", 85));
 
     for (double pressure : pressures) {
@@ -472,25 +456,25 @@ public class DiffusivityModelsTest {
       testSystem.initPhysicalProperties();
 
       if (testSystem.hasPhaseType("oil")) {
-        PhysicalProperties physProps = testSystem.getPhase("oil").getPhysicalProperties();
+	PhysicalProperties physProps = testSystem.getPhase("oil").getPhysicalProperties();
 
-        HaydukMinhasDiffusivity haydukModel = new HaydukMinhasDiffusivity(physProps);
-        HighPressureDiffusivity hpModel = new HighPressureDiffusivity(physProps);
-        SiddiqiLucasMethod siddiqiModel = new SiddiqiLucasMethod(physProps);
+	HaydukMinhasDiffusivity haydukModel = new HaydukMinhasDiffusivity(physProps);
+	HighPressureDiffusivity hpModel = new HighPressureDiffusivity(physProps);
+	SiddiqiLucasMethod siddiqiModel = new SiddiqiLucasMethod(physProps);
 
-        double dHayduk = haydukModel.calcBinaryDiffusionCoefficient(0, 1, 0);
-        double dHP = hpModel.calcBinaryDiffusionCoefficient(0, 1, 0);
-        double dSiddiqi = siddiqiModel.calcBinaryDiffusionCoefficient(0, 1, 0);
-        double hpFactor = hpModel.getPressureCorrectionFactor();
+	double dHayduk = haydukModel.calcBinaryDiffusionCoefficient(0, 1, 0);
+	double dHP = hpModel.calcBinaryDiffusionCoefficient(0, 1, 0);
+	double dSiddiqi = siddiqiModel.calcBinaryDiffusionCoefficient(0, 1, 0);
+	double hpFactor = hpModel.getPressureCorrectionFactor();
 
-        logger.info(String.format("%-10.1f %-18.4e %-18.4e %-18.4e %-12.4f", pressure, dHayduk, dHP,
-            dSiddiqi, hpFactor));
+	logger
+	    .info(String.format("%-10.1f %-18.4e %-18.4e %-18.4e %-12.4f", pressure, dHayduk, dHP, dSiddiqi, hpFactor));
 
-        // High-pressure corrected should be <= base model
-        assertTrue(dHP <= dHayduk * 1.01, "HP-corrected should be <= base model");
+	// High-pressure corrected should be <= base model
+	assertTrue(dHP <= dHayduk * 1.01, "HP-corrected should be <= base model");
 
-        // Correction factor should decrease with pressure
-        assertTrue(hpFactor <= 1.0, "HP factor should be <= 1");
+	// Correction factor should decrease with pressure
+	assertTrue(hpFactor <= 1.0, "HP factor should be <= 1");
       }
     }
 

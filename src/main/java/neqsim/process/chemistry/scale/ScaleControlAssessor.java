@@ -7,12 +7,12 @@ import java.util.Map;
 import neqsim.pvtsimulation.flowassurance.ScalePredictionCalculator;
 
 /**
- * Combines a {@link ScalePredictionCalculator} with one or more {@link ScaleInhibitorPerformance}
- * models to estimate the residual scaling risk after chemical treatment.
+ * Combines a {@link ScalePredictionCalculator} with one or more {@link ScaleInhibitorPerformance} models to estimate
+ * the residual scaling risk after chemical treatment.
  *
  * <p>
- * The inhibitor reduces the effective supersaturation seen by the system. The residual saturation
- * index after treatment is approximated as:
+ * The inhibitor reduces the effective supersaturation seen by the system. The residual saturation index after treatment
+ * is approximated as:
  * </p>
  *
  * <pre>
@@ -22,14 +22,14 @@ import neqsim.pvtsimulation.flowassurance.ScalePredictionCalculator;
  * </pre>
  *
  * <p>
- * If efficiency = 0 the residual SI equals the uninhibited SI; if efficiency = 1 the residual SI
- * approaches negative infinity (no scale). The model assumes the inhibitor acts on nucleation /
- * growth kinetics, not on thermodynamic equilibrium — so this is a screening-level risk metric.
+ * If efficiency = 0 the residual SI equals the uninhibited SI; if efficiency = 1 the residual SI approaches negative
+ * infinity (no scale). The model assumes the inhibitor acts on nucleation / growth kinetics, not on thermodynamic
+ * equilibrium — so this is a screening-level risk metric.
  * </p>
  *
  * <p>
- * Pattern: build with the prediction calculator, register inhibitors per scale type, call
- * {@link #evaluate()}, then read residual SIs and the verdict via {@link #toMap()}.
+ * Pattern: build with the prediction calculator, register inhibitors per scale type, call {@link #evaluate()}, then
+ * read residual SIs and the verdict via {@link #toMap()}.
  * </p>
  *
  * @author ESOL
@@ -41,10 +41,8 @@ public class ScaleControlAssessor implements Serializable {
   private static final long serialVersionUID = 1000L;
 
   private final ScalePredictionCalculator predictor;
-  private final Map<ScaleInhibitorPerformance.ScaleType, ScaleInhibitorPerformance> inhibitors =
-      new LinkedHashMap<ScaleInhibitorPerformance.ScaleType, ScaleInhibitorPerformance>();
-  private final Map<ScaleInhibitorPerformance.ScaleType, Double> residualSI =
-      new LinkedHashMap<ScaleInhibitorPerformance.ScaleType, Double>();
+  private final Map<ScaleInhibitorPerformance.ScaleType, ScaleInhibitorPerformance> inhibitors = new LinkedHashMap<ScaleInhibitorPerformance.ScaleType, ScaleInhibitorPerformance>();
+  private final Map<ScaleInhibitorPerformance.ScaleType, Double> residualSI = new LinkedHashMap<ScaleInhibitorPerformance.ScaleType, Double>();
   private boolean evaluated = false;
 
   /**
@@ -57,17 +55,15 @@ public class ScaleControlAssessor implements Serializable {
   }
 
   /**
-   * Convenience factory: builds a ScalePredictionCalculator pre-loaded with operating conditions
-   * and aqueous-phase concentrations from the given stream, then wraps it in a fresh
-   * ScaleControlAssessor.
+   * Convenience factory: builds a ScalePredictionCalculator pre-loaded with operating conditions and aqueous-phase
+   * concentrations from the given stream, then wraps it in a fresh ScaleControlAssessor.
    *
    * @param stream produced fluid stream
    * @return assessor with predictor initialised from the stream
    */
-  public static ScaleControlAssessor fromStream(
-      neqsim.process.equipment.stream.StreamInterface stream) {
-    neqsim.process.chemistry.util.StreamChemistryAdapter ad =
-        new neqsim.process.chemistry.util.StreamChemistryAdapter(stream);
+  public static ScaleControlAssessor fromStream(neqsim.process.equipment.stream.StreamInterface stream) {
+    neqsim.process.chemistry.util.StreamChemistryAdapter ad = new neqsim.process.chemistry.util.StreamChemistryAdapter(
+	stream);
     ScalePredictionCalculator p = new ScalePredictionCalculator();
     p.setTemperatureCelsius(ad.getTemperatureCelsius());
     p.setPressureBara(ad.getPressureBara());
@@ -88,8 +84,7 @@ public class ScaleControlAssessor implements Serializable {
    * @param scaleType target scale
    * @param inhibitor configured performance model
    */
-  public void addInhibitor(ScaleInhibitorPerformance.ScaleType scaleType,
-      ScaleInhibitorPerformance inhibitor) {
+  public void addInhibitor(ScaleInhibitorPerformance.ScaleType scaleType, ScaleInhibitorPerformance inhibitor) {
     inhibitors.put(scaleType, inhibitor);
   }
 
@@ -99,8 +94,7 @@ public class ScaleControlAssessor implements Serializable {
   public void evaluate() {
     predictor.calculate();
     residualSI.clear();
-    Map<ScaleInhibitorPerformance.ScaleType, Double> uninh =
-        new LinkedHashMap<ScaleInhibitorPerformance.ScaleType, Double>();
+    Map<ScaleInhibitorPerformance.ScaleType, Double> uninh = new LinkedHashMap<ScaleInhibitorPerformance.ScaleType, Double>();
     uninh.put(ScaleInhibitorPerformance.ScaleType.CACO3, predictor.getCaCO3SaturationIndex());
     uninh.put(ScaleInhibitorPerformance.ScaleType.BASO4, predictor.getBaSO4SaturationIndex());
     uninh.put(ScaleInhibitorPerformance.ScaleType.SRSO4, predictor.getSrSO4SaturationIndex());
@@ -110,16 +104,16 @@ public class ScaleControlAssessor implements Serializable {
     for (Map.Entry<ScaleInhibitorPerformance.ScaleType, Double> entry : uninh.entrySet()) {
       double si = entry.getValue();
       if (Double.isNaN(si)) {
-        residualSI.put(entry.getKey(), Double.NaN);
-        continue;
+	residualSI.put(entry.getKey(), Double.NaN);
+	continue;
       }
       ScaleInhibitorPerformance perf = inhibitors.get(entry.getKey());
       if (perf == null) {
-        residualSI.put(entry.getKey(), si);
-        continue;
+	residualSI.put(entry.getKey(), si);
+	continue;
       }
       if (!perf.isEvaluated()) {
-        perf.evaluate();
+	perf.evaluate();
       }
       double eff = Math.min(0.999, Math.max(0.0, perf.getEfficiency()));
       double residual = si + Math.log10(Math.max(1.0e-6, 1.0 - eff));
@@ -148,7 +142,7 @@ public class ScaleControlAssessor implements Serializable {
     double worst = Double.NEGATIVE_INFINITY;
     for (Double v : residualSI.values()) {
       if (v != null && !Double.isNaN(v) && v.doubleValue() > worst) {
-        worst = v.doubleValue();
+	worst = v.doubleValue();
       }
     }
     return worst == Double.NEGATIVE_INFINITY ? Double.NaN : worst;
@@ -194,8 +188,7 @@ public class ScaleControlAssessor implements Serializable {
     }
     map.put("residualSI", residual);
     Map<String, Object> inh = new LinkedHashMap<String, Object>();
-    for (Map.Entry<ScaleInhibitorPerformance.ScaleType, ScaleInhibitorPerformance> entry : inhibitors
-        .entrySet()) {
+    for (Map.Entry<ScaleInhibitorPerformance.ScaleType, ScaleInhibitorPerformance> entry : inhibitors.entrySet()) {
       inh.put(entry.getKey().name(), entry.getValue().toMap());
     }
     map.put("inhibitors", inh);
@@ -212,6 +205,6 @@ public class ScaleControlAssessor implements Serializable {
    */
   public java.util.List<java.util.Map<String, Object>> getStandardsApplied() {
     return neqsim.process.chemistry.util.StandardsRegistry
-        .toMapList(neqsim.process.chemistry.util.StandardsRegistry.NACE_TM0374);
+	.toMapList(neqsim.process.chemistry.util.StandardsRegistry.NACE_TM0374);
   }
 }

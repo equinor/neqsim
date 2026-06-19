@@ -20,7 +20,7 @@ public class TestFluidIssues {
   private static final Logger logger = LogManager.getLogger(TestFluidIssues.class);
 
   /** Logger object for class. */
-  
+
   /**
    * This method is just meant to test the thermo package.
    *

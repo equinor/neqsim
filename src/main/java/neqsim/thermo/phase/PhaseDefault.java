@@ -23,7 +23,8 @@ public class PhaseDefault extends Phase {
    * Constructor for PhaseDefault.
    * </p>
    */
-  public PhaseDefault() {}
+  public PhaseDefault() {
+  }
 
   /**
    * <p>
@@ -62,8 +63,7 @@ public class PhaseDefault extends Phase {
   /** {@inheritDoc} */
   @Override
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
-      throws neqsim.util.exception.IsNaNException,
-      neqsim.util.exception.TooManyIterationsException {
+      throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
     throw new UnsupportedOperationException("Unimplemented method 'molarVolume'");
   }
 
@@ -75,15 +75,18 @@ public class PhaseDefault extends Phase {
 
   /** {@inheritDoc} */
   @Override
-  public void setMixingRuleGEModel(String name) {}
+  public void setMixingRuleGEModel(String name) {
+  }
 
   /** {@inheritDoc} */
   @Override
-  public void setMixingRule(MixingRuleTypeInterface mr) {}
+  public void setMixingRule(MixingRuleTypeInterface mr) {
+  }
 
   /** {@inheritDoc} */
   @Override
-  public void resetMixingRule(MixingRuleTypeInterface mr) {}
+  public void resetMixingRule(MixingRuleTypeInterface mr) {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -96,8 +99,7 @@ public class PhaseDefault extends Phase {
   public double getGibbsEnergy() {
     double val = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
-      val +=
-          getComponent(i).getNumberOfMolesInPhase() * (getComponent(i).getLogFugacityCoefficient()); // +Math.log(getComponent(i).getx()*getComponent(i).getAntoineVaporPressure(temperature)));
+      val += getComponent(i).getNumberOfMolesInPhase() * (getComponent(i).getLogFugacityCoefficient()); // +Math.log(getComponent(i).getx()*getComponent(i).getAntoineVaporPressure(temperature)));
     }
     return R * temperature * ((val) + Math.log(pressure) * numberOfMolesInPhase);
   }

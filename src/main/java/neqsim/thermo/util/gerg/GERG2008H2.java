@@ -9,26 +9,23 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * GERG-2008-H2 class.
  *
  * <p>
- * Extension of the GERG-2008 equation of state with improved hydrogen parameters as described in:
- * "Extension of the equation of state for natural gases GERG-2008 with improved hydrogen
- * parameters" by Beckmüller et al. (2022). This class provides more accurate thermodynamic property
- * calculations for hydrogen-rich natural gas mixtures.
+ * Extension of the GERG-2008 equation of state with improved hydrogen parameters as described in: "Extension of the
+ * equation of state for natural gases GERG-2008 with improved hydrogen parameters" by Beckmüller et al. (2022). This
+ * class provides more accurate thermodynamic property calculations for hydrogen-rich natural gas mixtures.
  * </p>
  *
  * <p>
  * The improvements include:
  * </p>
  * <ul>
- * <li>Updated binary reducing parameters for hydrogen with methane, nitrogen, CO2, and other
- * hydrocarbons</li>
+ * <li>Updated binary reducing parameters for hydrogen with methane, nitrogen, CO2, and other hydrocarbons</li>
  * <li>Revised departure function parameters for hydrogen binary mixtures</li>
  * <li>Extended validation range for hydrogen-containing mixtures</li>
  * </ul>
  *
  * <p>
- * Reference: Beckmüller, R., Thol, M., Sampson, I., Lemmon, E.W., Span, R. (2022). "Extension of
- * the equation of state for natural gases GERG-2008 with improved hydrogen parameters". Fluid Phase
- * Equilibria, 557, 113411.
+ * Reference: Beckmüller, R., Thol, M., Sampson, I., Lemmon, E.W., Span, R. (2022). "Extension of the equation of state
+ * for natural gases GERG-2008 with improved hydrogen parameters". Fluid Phase Equilibria, 557, 113411.
  * </p>
  *
  * @author NeqSim team
@@ -51,8 +48,8 @@ public class GERG2008H2 extends GERG2008 {
    * Setup GERG-2008-H2 equation of state with improved hydrogen parameters.
    *
    * <p>
-   * This method initializes all the constants and parameters in the GERG-2008-H2 model, including
-   * the updated hydrogen binary interaction parameters and departure function coefficients.
+   * This method initializes all the constants and parameters in the GERG-2008-H2 model, including the updated hydrogen
+   * binary interaction parameters and departure function coefficients.
    * </p>
    */
   @Override
@@ -68,8 +65,8 @@ public class GERG2008H2 extends GERG2008 {
    * Set up the improved hydrogen binary interaction parameters and departure functions.
    *
    * <p>
-   * These parameters are from Beckmüller et al. (2022) and provide improved accuracy for
-   * hydrogen-containing natural gas mixtures.
+   * These parameters are from Beckmüller et al. (2022) and provide improved accuracy for hydrogen-containing natural
+   * gas mixtures.
    * </p>
    */
   private void setupImprovedHydrogenParameters() {
@@ -366,14 +363,14 @@ public class GERG2008H2 extends GERG2008 {
    * Recalculate the derived binary parameters after updating the hydrogen coefficients.
    *
    * <p>
-   * This method recalculates gvij, gtij, bvij, btij for hydrogen pairs using the same formulas as
-   * in the parent SetupGERG method. It also transforms the departure function coefficients
-   * (cijk, eijk, gijk) for models 8 (N2-H2) and 9 (CO2-H2) using the paper's beta_k values.
+   * This method recalculates gvij, gtij, bvij, btij for hydrogen pairs using the same formulas as in the parent
+   * SetupGERG method. It also transforms the departure function coefficients (cijk, eijk, gijk) for models 8 (N2-H2)
+   * and 9 (CO2-H2) using the paper's beta_k values.
    * </p>
    *
    * <p>
-   * The transformation from paper notation (eta, epsilon, beta, gamma) to code notation
-   * (c, e, g) is: c = -eta, e = 2*eta*epsilon - beta, g = -eta*epsilon^2 + beta*gamma.
+   * The transformation from paper notation (eta, epsilon, beta, gamma) to code notation (c, e, g) is: c = -eta, e =
+   * 2*eta*epsilon - beta, g = -eta*epsilon^2 + beta*gamma.
    * </p>
    */
   private void recalculateBinaryParameters() {
@@ -408,13 +405,11 @@ public class GERG2008H2 extends GERG2008 {
     double[][] bijk = new double[MaxMdl + 1][MaxTrmM + 1];
 
     // Set beta_k values for N2-H2 (Model 8) exponential terms from paper Table 6
-    for (int k = kpolij[MODEL_H2_N2] + 1; k <= kpolij[MODEL_H2_N2]
-        + kexpij[MODEL_H2_N2]; ++k) {
+    for (int k = kpolij[MODEL_H2_N2] + 1; k <= kpolij[MODEL_H2_N2] + kexpij[MODEL_H2_N2]; ++k) {
       bijk[MODEL_H2_N2][k] = 0.5;
     }
     // Set beta_k values for CO2-H2 (Model 9) exponential terms from paper Table 7
-    for (int k = kpolij[MODEL_H2_CO2] + 1; k <= kpolij[MODEL_H2_CO2]
-        + kexpij[MODEL_H2_CO2]; ++k) {
+    for (int k = kpolij[MODEL_H2_CO2] + 1; k <= kpolij[MODEL_H2_CO2] + kexpij[MODEL_H2_CO2]; ++k) {
       bijk[MODEL_H2_CO2][k] = 0.5;
     }
 
@@ -503,8 +498,7 @@ public class GERG2008H2 extends GERG2008 {
     doubleW JT = new doubleW(0.0);
     doubleW Kappa = new doubleW(0.0);
 
-    test.PropertiesGERG(T, D.val, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT,
-        Kappa, A);
+    test.PropertiesGERG(T, D.val, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT, Kappa, A);
 
     System.out.println();
     System.out.println("Thermodynamic Properties:");
@@ -534,8 +528,7 @@ public class GERG2008H2 extends GERG2008 {
     test.DensityGERG(iFlag, T, 10000.0, xH2, D, ierr, herr);
     System.out.println("Molar density [mol/l]: " + D.val);
 
-    test.PropertiesGERG(T, D.val, xH2, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT,
-        Kappa, A);
+    test.PropertiesGERG(T, D.val, xH2, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT, Kappa, A);
     System.out.println("Compressibility factor Z: " + Z.val);
     System.out.println("Speed of sound [m/s]: " + W.val);
   }

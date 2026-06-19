@@ -32,14 +32,12 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
     // refBWRSPhase = new PhaseSrkEos();
     refBWRSPhase.addComponent("methane", 1.0, 1.0, 0);
     refBWRSPhase.calcMolarVolume(false);
-    brefBWRSPhase = (Math.pow(2.0, 1.0 / 3.0) - 1.0) / 3.0 * R
-        * refBWRSPhase.getComponent(0).getTC() / refBWRSPhase.getComponent(0).getPC();
+    brefBWRSPhase = (Math.pow(2.0, 1.0 / 3.0) - 1.0) / 3.0 * R * refBWRSPhase.getComponent(0).getTC()
+	/ refBWRSPhase.getComponent(0).getPC();
     mrefBWRSPhase = (0.48 + 1.574 * refBWRSPhase.getComponent(0).getAcentricFactor()
-        - 0.175 * refBWRSPhase.getComponent(0).getAcentricFactor()
-            * refBWRSPhase.getComponent(0).getAcentricFactor());
-    acrefBWRSPhase = 1.0 / (9.0 * (Math.pow(2.0, 1.0 / 3.0) - 1.0)) * R * R
-        * refBWRSPhase.getComponent(0).getTC() * refBWRSPhase.getComponent(0).getTC()
-        / refBWRSPhase.getComponent(0).getPC();
+	- 0.175 * refBWRSPhase.getComponent(0).getAcentricFactor() * refBWRSPhase.getComponent(0).getAcentricFactor());
+    acrefBWRSPhase = 1.0 / (9.0 * (Math.pow(2.0, 1.0 / 3.0) - 1.0)) * R * R * refBWRSPhase.getComponent(0).getTC()
+	* refBWRSPhase.getComponent(0).getTC() / refBWRSPhase.getComponent(0).getPC();
   }
 
   /** {@inheritDoc} */
@@ -65,8 +63,7 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
-      double beta) {
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt, double beta) {
     double oldtemp = getTemperature();
     if (initType == 0) {
       refBWRSPhase.init(1.0, 1, 0, pt, 1.0);
@@ -90,30 +87,29 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
   /** {@inheritDoc} */
   @Override
   public double getF() {
-    return f_scale_mix * refBWRSPhase.getF() / refBWRSPhase.getNumberOfMolesInPhase()
-        * refBWRSPhase.getTemperature() / getTemperature();
+    return f_scale_mix * refBWRSPhase.getF() / refBWRSPhase.getNumberOfMolesInPhase() * refBWRSPhase.getTemperature()
+	/ getTemperature();
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdV() {
-    return (f_scale_mix * refBWRSPhase.dFdV() / refBWRSPhase.getNumberOfMolesInPhase()
-        / h_scale_mix) * refBWRSPhase.getTemperature() / getTemperature();
+    return (f_scale_mix * refBWRSPhase.dFdV() / refBWRSPhase.getNumberOfMolesInPhase() / h_scale_mix)
+	* refBWRSPhase.getTemperature() / getTemperature();
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdVdV() {
-    return (f_scale_mix * refBWRSPhase.dFdVdV() / refBWRSPhase.getNumberOfMolesInPhase()
-        / h_scale_mix / h_scale_mix) * refBWRSPhase.getTemperature() / getTemperature();
+    return (f_scale_mix * refBWRSPhase.dFdVdV() / refBWRSPhase.getNumberOfMolesInPhase() / h_scale_mix / h_scale_mix)
+	* refBWRSPhase.getTemperature() / getTemperature();
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdVdVdV() {
-    return (f_scale_mix * refBWRSPhase.dFdVdVdV() / refBWRSPhase.getNumberOfMolesInPhase()
-        / h_scale_mix / h_scale_mix / h_scale_mix) * refBWRSPhase.getTemperature()
-        / getTemperature();
+    return (f_scale_mix * refBWRSPhase.dFdVdVdV() / refBWRSPhase.getNumberOfMolesInPhase() / h_scale_mix / h_scale_mix
+	/ h_scale_mix) * refBWRSPhase.getTemperature() / getTemperature();
   }
 
   /**
@@ -211,10 +207,9 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
   /** {@inheritDoc} */
   @Override
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
-      throws neqsim.util.exception.IsNaNException,
-      neqsim.util.exception.TooManyIterationsException {
+      throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
     double BonV = pt == PhaseType.GAS ? pressure * getB() / (numberOfMolesInPhase * temperature * R)
-        : 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
+	: 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
     BonV = Math.max(1.0e-4, Math.min(1.0 - 1.0e-4, BonV));
 
     double Btemp = getB();
@@ -228,41 +223,41 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
       iterations++;
       BonVold = BonV;
       double h = BonV + Btemp * gV() + Btemp * Dtemp / (numberOfMolesInPhase * temperature) * fv()
-          - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
-      double dh = 1.0 - Btemp / (BonV * BonV)
-          * (Btemp * gVV() + Btemp * Dtemp * fVV() / (numberOfMolesInPhase * temperature));
+	  - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
+      double dh = 1.0
+	  - Btemp / (BonV * BonV) * (Btemp * gVV() + Btemp * Dtemp * fVV() / (numberOfMolesInPhase * temperature));
       double fvvv = 1.0 / (R * Btemp * (delta1 - delta2))
-          * (2.0 / Math.pow(numberOfMolesInPhase * getMolarVolume() + Btemp * delta1, 3.0)
-              - 2.0 / Math.pow(numberOfMolesInPhase * getMolarVolume() + Btemp * delta2, 3.0));
+	  * (2.0 / Math.pow(numberOfMolesInPhase * getMolarVolume() + Btemp * delta1, 3.0)
+	      - 2.0 / Math.pow(numberOfMolesInPhase * getMolarVolume() + Btemp * delta2, 3.0));
       double gvvv = 2.0 / Math.pow(numberOfMolesInPhase * getMolarVolume() - Btemp, 3.0)
-          - 2.0 / Math.pow(numberOfMolesInPhase * getMolarVolume(), 3.0);
+	  - 2.0 / Math.pow(numberOfMolesInPhase * getMolarVolume(), 3.0);
       double dhh = 2.0 * Btemp / Math.pow(BonV, 3.0)
-          * (Btemp * gVV() + Btemp * Dtemp / (numberOfMolesInPhase * temperature) * fVV())
-          + Btemp * Btemp / Math.pow(BonV, 4.0)
-              * (Btemp * gvvv + Btemp * Dtemp / (numberOfMolesInPhase * temperature) * fvvv);
+	  * (Btemp * gVV() + Btemp * Dtemp / (numberOfMolesInPhase * temperature) * fVV())
+	  + Btemp * Btemp / Math.pow(BonV, 4.0)
+	      * (Btemp * gvvv + Btemp * Dtemp / (numberOfMolesInPhase * temperature) * fvvv);
 
       double d1 = -h / dh;
       double d2 = -dh / dhh;
 
       if (Math.abs(d1 / d2) <= 1.0) {
-        BonV += d1 * (1.0 + 0.5 * d1 / d2);
+	BonV += d1 * (1.0 + 0.5 * d1 / d2);
       } else if (d1 / d2 < -1) {
-        BonV += d1 * (1.0 + 0.5 * -1.0);
+	BonV += d1 * (1.0 + 0.5 * -1.0);
       } else if (d1 / d2 > 1) {
-        BonV += d2;
-        double hnew = h + d2 * dh;
-        if (Math.abs(hnew) > Math.abs(h)) {
-          BonV += 0;
-        }
+	BonV += d2;
+	double hnew = h + d2 * dh;
+	if (Math.abs(hnew) > Math.abs(h)) {
+	  BonV += 0;
+	}
       }
 
       if (BonV > 1) {
-        BonV = 1.0 - 1.0e-16;
-        BonVold = 10;
+	BonV = 1.0 - 1.0e-16;
+	BonVold = 10;
       }
       if (BonV < 0) {
-        BonV = 1.0e-16;
-        BonVold = 10;
+	BonV = 1.0e-16;
+	BonVold = 10;
       }
 
       setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
@@ -276,8 +271,7 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
     // " +dh + " B " + Btemp + " D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv"
     // + fVV());
     if (iterations >= maxIterations) {
-      throw new neqsim.util.exception.TooManyIterationsException(this, "molarVolume",
-          maxIterations);
+      throw new neqsim.util.exception.TooManyIterationsException(this, "molarVolume", maxIterations);
     }
     if (Double.isNaN(getMolarVolume())) {
       throw new neqsim.util.exception.IsNaNException(this, "molarVolume", "Molar volume");

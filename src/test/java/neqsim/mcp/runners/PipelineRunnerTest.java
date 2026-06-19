@@ -37,14 +37,13 @@ class PipelineRunnerTest {
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
     assertEquals("success", obj.get("status").getAsString(), "Water hammer failed: " + result);
     JsonObject keyResults = obj.getAsJsonObject("keyResults");
-    assertTrue(keyResults.get("maxPressure_bara").getAsDouble()
-        >= keyResults.get("initialOutletPressure_bara").getAsDouble());
+    assertTrue(
+	keyResults.get("maxPressure_bara").getAsDouble() >= keyResults.get("initialOutletPressure_bara").getAsDouble());
   }
 
   @Test
   void testPipelineRunnerDispatchesWaterHammerMode() {
-    JsonObject input = JsonParser.parseString(ExampleCatalog.waterHammerValveClosure())
-        .getAsJsonObject();
+    JsonObject input = JsonParser.parseString(ExampleCatalog.waterHammerValveClosure()).getAsJsonObject();
     input.addProperty("mode", "waterHammer");
 
     String result = PipelineRunner.run(input.toString());

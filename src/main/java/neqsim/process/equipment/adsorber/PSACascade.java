@@ -12,9 +12,9 @@ import neqsim.thermo.system.SystemInterface;
  * Multi-bed Pressure-Swing-Adsorption (PSA) cascade for continuous H2 purification.
  *
  * <p>
- * Industrial H2-PSA skids never use a single bed: a Skarstrom-style 2-bed unit gives only batch
- * production, while modern hydrogen plants deploy 4-, 6-, 8-, 10- or 12-bed cascades to (a) deliver
- * continuous product flow and (b) recover more H2 via co-current pressure-equalisation steps.
+ * Industrial H2-PSA skids never use a single bed: a Skarstrom-style 2-bed unit gives only batch production, while
+ * modern hydrogen plants deploy 4-, 6-, 8-, 10- or 12-bed cascades to (a) deliver continuous product flow and (b)
+ * recover more H2 via co-current pressure-equalisation steps.
  * </p>
  *
  * <p>
@@ -22,13 +22,13 @@ import neqsim.thermo.system.SystemInterface;
  * </p>
  * <ol>
  * <li>The feed stream is split equally among {@code numberOfBeds} identical beds.</li>
- * <li>At cyclic steady state one bed is always in adsorption — so the product flow rate equals the
- * feed flow rate scaled by the cascade-level recovery.</li>
- * <li>Recovery improves with bed count because more beds allow more pressure-equalisation steps.
- * The cascade applies a configuration-dependent uplift on top of the single-bed recovery target;
- * see {@link CascadeConfiguration} for the bed-count → number-of-equalisations mapping.</li>
- * <li>Purity is taken from the single-bed simulation — equalisation primarily affects recovery
- * (less H2 vented with tail), not the product purity which is set by sorbent selectivity.</li>
+ * <li>At cyclic steady state one bed is always in adsorption — so the product flow rate equals the feed flow rate
+ * scaled by the cascade-level recovery.</li>
+ * <li>Recovery improves with bed count because more beds allow more pressure-equalisation steps. The cascade applies a
+ * configuration-dependent uplift on top of the single-bed recovery target; see {@link CascadeConfiguration} for the
+ * bed-count → number-of-equalisations mapping.</li>
+ * <li>Purity is taken from the single-bed simulation — equalisation primarily affects recovery (less H2 vented with
+ * tail), not the product purity which is set by sorbent selectivity.</li>
  * </ol>
  *
  * <p>
@@ -37,15 +37,13 @@ import neqsim.thermo.system.SystemInterface;
  * <ul>
  * <li>Yang, R.T. <em>Adsorbents: Fundamentals and Applications</em>. Wiley, 2003 — ch. 7.</li>
  * <li>Ruthven, D.M., Farooq, S., Knaebel, K.S. <em>Pressure Swing Adsorption</em>. VCH, 1994.</li>
- * <li>Sircar, S. "Pressure swing adsorption". <em>Ind. Eng. Chem. Res.</em> 41 (2002)
- * 1389-1392.</li>
- * <li>Voss, C. "Applications of pressure swing adsorption technology". <em>Adsorption</em> 11
- * (2005) 527-529.</li>
+ * <li>Sircar, S. "Pressure swing adsorption". <em>Ind. Eng. Chem. Res.</em> 41 (2002) 1389-1392.</li>
+ * <li>Voss, C. "Applications of pressure swing adsorption technology". <em>Adsorption</em> 11 (2005) 527-529.</li>
  * </ul>
  *
  * <p>
- * Provides one outlet stream (the cycle-averaged H2 product) plus a {@code tailGasStream} accessor
- * for the off-gas fed to the SMR furnace fuel system.
+ * Provides one outlet stream (the cycle-averaged H2 product) plus a {@code tailGasStream} accessor for the off-gas fed
+ * to the SMR furnace fuel system.
  * </p>
  *
  * @author NeqSim contributors
@@ -62,9 +60,9 @@ public class PSACascade extends TwoPortEquipment {
    * Standard industrial PSA cascade configurations and their recovery-uplift maps.
    *
    * <p>
-   * Recovery uplift is added to the per-bed recovery target to model the additional H2 captured
-   * back into the product during pressure-equalisation steps. Public data on industrial PSA skids
-   * (Linde, Air Products, Air Liquide) and the references above support the following bracketing:
+   * Recovery uplift is added to the per-bed recovery target to model the additional H2 captured back into the product
+   * during pressure-equalisation steps. Public data on industrial PSA skids (Linde, Air Products, Air Liquide) and the
+   * references above support the following bracketing:
    * </p>
    *
    * <table>
@@ -107,8 +105,7 @@ public class PSACascade extends TwoPortEquipment {
    * </table>
    *
    * <p>
-   * Cycle-averaged recovery is capped at 0.93 (no industrial unit exceeds ~93% on a wet shifted
-   * syngas feed).
+   * Cycle-averaged recovery is capped at 0.93 (no industrial unit exceeds ~93% on a wet shifted syngas feed).
    * </p>
    */
   public enum CascadeConfiguration {
@@ -204,7 +201,7 @@ public class PSACascade extends TwoPortEquipment {
   /**
    * Construct a PSA cascade with the given name and feed stream.
    *
-   * @param name name of the unit operation
+   * @param name        name of the unit operation
    * @param inletStream feed stream (typically shifted syngas at 20-30 bara)
    */
   public PSACascade(String name, StreamInterface inletStream) {
@@ -268,8 +265,8 @@ public class PSACascade extends TwoPortEquipment {
   }
 
   /**
-   * Set the single-bed recovery target. The cascade uplifts this with the configuration-dependent
-   * pressure-equalisation factor (see {@link CascadeConfiguration}).
+   * Set the single-bed recovery target. The cascade uplifts this with the configuration-dependent pressure-equalisation
+   * factor (see {@link CascadeConfiguration}).
    *
    * @param target single-bed recovery target (0,1]
    */
@@ -351,8 +348,8 @@ public class PSACascade extends TwoPortEquipment {
    * {@inheritDoc}
    *
    * <p>
-   * Runs the template bed at the cascade-level recovery target, then exposes the result on the
-   * outlet stream and constructs a separate tail-gas stream.
+   * Runs the template bed at the cascade-level recovery target, then exposes the result on the outlet stream and
+   * constructs a separate tail-gas stream.
    * </p>
    *
    * @param id calculation identifier
@@ -381,15 +378,15 @@ public class PSACascade extends TwoPortEquipment {
     tailGasStream = buildTailGasStream(feed);
 
     if (logger.isDebugEnabled()) {
-      logger.debug("PSACascade {} ({} beds): purity={}, recovery={}", getName(),
-          configuration.getBeds(), cascadeH2Purity, cascadeH2Recovery);
+      logger.debug("PSACascade {} ({} beds): purity={}, recovery={}", getName(), configuration.getBeds(),
+	  cascadeH2Purity, cascadeH2Recovery);
     }
     setCalculationIdentifier(id);
   }
 
   /**
-   * Build the tail-gas stream by cloning the feed and overwriting the per-component flows with the
-   * vented amounts from the template bed.
+   * Build the tail-gas stream by cloning the feed and overwriting the per-component flows with the vented amounts from
+   * the template bed.
    *
    * @param feed cascade feed stream
    * @return tail-gas stream at feed temperature and 1 bara (typical blowdown pressure)
@@ -413,7 +410,7 @@ public class PSACascade extends TwoPortEquipment {
       double current = tailSys.getPhase(0).getComponent(i).getNumberOfmoles();
       double delta = tailMoles[i] - current;
       if (Math.abs(delta) > 1e-18) {
-        tailSys.addComponent(i, delta);
+	tailSys.addComponent(i, delta);
       }
     }
     tailSys.setPressure(1.2, "bara");
@@ -445,8 +442,8 @@ public class PSACascade extends TwoPortEquipment {
   }
 
   /**
-   * Get the tail-gas stream (off-gas, typically routed to SMR furnace fuel system). Returns
-   * {@code null} until {@link #run(UUID)} has been called.
+   * Get the tail-gas stream (off-gas, typically routed to SMR furnace fuel system). Returns {@code null} until
+   * {@link #run(UUID)} has been called.
    *
    * @return tail-gas stream, or null
    */

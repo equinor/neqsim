@@ -77,7 +77,7 @@ public class EOSCGModel {
    * MolarMassGERG.
    * </p>
    *
-   * @param x an array of type double
+   * @param x  an array of type double
    * @param Mm a {@link org.netlib.util.doubleW} object
    */
   public void MolarMassEOSCG(double[] x, doubleW Mm) {
@@ -139,7 +139,7 @@ public class EOSCGModel {
     doubleW[][] ar = new doubleW[4][4];
     for (int i = 0; i < 4; i++) {
       for (int j = 0; j < 4; j++) {
-        ar[i][j] = new doubleW(0.0d);
+	ar[i][j] = new doubleW(0.0d);
       }
     }
     AlpharEOSCG(0, 0, T, D, x, ar);
@@ -155,15 +155,14 @@ public class EOSCGModel {
    * </p>
    *
    * @param iFlag a int
-   * @param T a double
-   * @param P a double
-   * @param x an array of type double
-   * @param D a {@link org.netlib.util.doubleW} object
-   * @param ierr a {@link org.netlib.util.intW} object
-   * @param herr a {@link org.netlib.util.StringW} object
+   * @param T     a double
+   * @param P     a double
+   * @param x     an array of type double
+   * @param D     a {@link org.netlib.util.doubleW} object
+   * @param ierr  a {@link org.netlib.util.intW} object
+   * @param herr  a {@link org.netlib.util.StringW} object
    */
-  public void DensityEOSCG(int iFlag, double T, double P, double[] x, doubleW D, intW ierr,
-      StringW herr) {
+  public void DensityEOSCG(int iFlag, double T, double P, double[] x, doubleW D, intW ierr, StringW herr) {
     // Sub DensityEOSCG(iFlag, T, P, x, D, ierr, herr)
 
     // Calculate density as a function of temperature and pressure. This is an
@@ -243,7 +242,7 @@ public class EOSCGModel {
     if (D.val > -epsilon) {
       D.val = P / REOSCG / T; // Ideal gas estimate for vapor phase
       if (iFlag == 2) {
-        D.val = Dcx.val * 3;
+	D.val = Dcx.val * 3;
       } // Initial estimate for liquid phase
     } else {
       D.val = Math.abs(D.val); // If D<0, then use as initial estimate
@@ -253,78 +252,75 @@ public class EOSCGModel {
     vlog = -Math.log(D.val);
     for (int it = 1; it <= 50; ++it) {
       if (vlog < -7 || vlog > 100 || it == 20 || it == 30 || it == 40 || iFail == 1) {
-        // Current state is bad or iteration is taking too long. Restart with completely
-        // different initial state
-        iFail = 0;
-        if (nFail > 2) {
-          // Iteration failed (above loop did not find a solution or checks made below
-          // indicate possible 2-phase state)
-          ierr.val = 1;
-          herr.val = "Calculation failed to converge in GERG method, ideal gas density returned.";
-          D.val = P / REOSCG / T;
-        }
-        nFail++;
-        if (nFail == 1) {
-          D.val = Dcx.val * 3; // If vapor phase search fails, look for root in liquid
-                               // region
-        } else if (nFail == 2) {
-          D.val = Dcx.val * 2.5; // If liquid phase search fails, look for root between
-                                 // liquid and critical
-                                 // regions
-        } else if (nFail == 3) {
-          D.val = Dcx.val * 2; // If search fails, look for root in critical region
-        }
-        vlog = -Math.log(D.val);
+	// Current state is bad or iteration is taking too long. Restart with completely
+	// different initial state
+	iFail = 0;
+	if (nFail > 2) {
+	  // Iteration failed (above loop did not find a solution or checks made below
+	  // indicate possible 2-phase state)
+	  ierr.val = 1;
+	  herr.val = "Calculation failed to converge in GERG method, ideal gas density returned.";
+	  D.val = P / REOSCG / T;
+	}
+	nFail++;
+	if (nFail == 1) {
+	  D.val = Dcx.val * 3; // If vapor phase search fails, look for root in liquid
+			       // region
+	} else if (nFail == 2) {
+	  D.val = Dcx.val * 2.5; // If liquid phase search fails, look for root between
+				 // liquid and critical
+				 // regions
+	} else if (nFail == 3) {
+	  D.val = Dcx.val * 2; // If search fails, look for root in critical region
+	}
+	vlog = -Math.log(D.val);
       }
       D.val = Math.exp(-vlog);
       PressureEOSCG(T, D.val, x, P2, Z);
       // System.out.println("DensityEOSCG: it=" + it + ", D=" + D.val + ", P2=" + P2.val + ", vlog="
       // + vlog + ", iFlag=" + iFlag);
       if (dPdDsave < epsilon || P2.val < epsilon) {
-        // Current state is 2-phase, try locating a different state that is single phase
-        vinc = 0.1;
-        if (D.val > Dcx.val) {
-          vinc = -0.1;
-        }
-        if (it > 5) {
-          vinc = vinc / 2;
-        }
-        if (it > 10 && it < 20) {
-          vinc = vinc / 5;
-        }
-        vlog += vinc;
+	// Current state is 2-phase, try locating a different state that is single phase
+	vinc = 0.1;
+	if (D.val > Dcx.val) {
+	  vinc = -0.1;
+	}
+	if (it > 5) {
+	  vinc = vinc / 2;
+	}
+	if (it > 10 && it < 20) {
+	  vinc = vinc / 5;
+	}
+	vlog += vinc;
       } else {
-        // Find the next density with a first order Newton's type iterative scheme, with
-        // log(P) as the known variable and log(v) as the unknown property.
-        // See AGA 8 publication for further information.
-        dpdlv = -D.val * dPdDsave; // d(p)/d[log(v)]
-        vdiff = (Math.log(P2.val) - plog) * P2.val / dpdlv;
-        vlog += -vdiff;
-        if (Math.abs(vdiff) < tolr) {
-          // Check to see if state is possibly 2-phase, and if so restart
-          if (dPdDsave < 0) {
-            iFail = 1;
-          } else {
-            D.val = Math.exp(-vlog);
+	// Find the next density with a first order Newton's type iterative scheme, with
+	// log(P) as the known variable and log(v) as the unknown property.
+	// See AGA 8 publication for further information.
+	dpdlv = -D.val * dPdDsave; // d(p)/d[log(v)]
+	vdiff = (Math.log(P2.val) - plog) * P2.val / dpdlv;
+	vlog += -vdiff;
+	if (Math.abs(vdiff) < tolr) {
+	  // Check to see if state is possibly 2-phase, and if so restart
+	  if (dPdDsave < 0) {
+	    iFail = 1;
+	  } else {
+	    D.val = Math.exp(-vlog);
 
-            // If requested, check to see if point is possibly 2-phase
-            if (iFlag > 0) {
-              PropertiesEOSCG(T, D.val, x, PP, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G,
-                  JT, Kappa, A);
-              if ((PP.val <= 0 || dPdD.val <= 0 || d2PdTD.val <= 0)
-                  || (Cv.val <= 0 || Cp.val <= 0 || W.val <= 0)) {
-                // Iteration failed (above loop did find a solution or checks made
-                // below
-                // indicate possible 2-phase state)
-                ierr.val = 1;
-                herr.val =
-                    "Calculation failed to converge in GERG method, ideal gas density returned.";
-                D.val = P / REOSCG / T;
-              }
-            }
-            return; // Iteration converged
-          }
-        }
+	    // If requested, check to see if point is possibly 2-phase
+	    if (iFlag > 0) {
+	      PropertiesEOSCG(T, D.val, x, PP, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT, Kappa, A);
+	      if ((PP.val <= 0 || dPdD.val <= 0 || d2PdTD.val <= 0) || (Cv.val <= 0 || Cp.val <= 0 || W.val <= 0)) {
+		// Iteration failed (above loop did find a solution or checks made
+		// below
+		// indicate possible 2-phase state)
+		ierr.val = 1;
+		herr.val = "Calculation failed to converge in GERG method, ideal gas density returned.";
+		D.val = P / REOSCG / T;
+	      }
+	    }
+	    return; // Iteration converged
+	  }
+	}
       }
     }
     // Iteration failed (above loop did not find a solution or checks made below
@@ -339,29 +335,29 @@ public class EOSCGModel {
    * PropertiesGERG.
    * </p>
    *
-   * @param T a double
-   * @param D a double
-   * @param x an array of type double
-   * @param P a {@link org.netlib.util.doubleW} object
-   * @param Z a {@link org.netlib.util.doubleW} object
-   * @param dPdD a {@link org.netlib.util.doubleW} object
+   * @param T      a double
+   * @param D      a double
+   * @param x      an array of type double
+   * @param P      a {@link org.netlib.util.doubleW} object
+   * @param Z      a {@link org.netlib.util.doubleW} object
+   * @param dPdD   a {@link org.netlib.util.doubleW} object
    * @param d2PdD2 a {@link org.netlib.util.doubleW} object
    * @param d2PdTD a {@link org.netlib.util.doubleW} object
-   * @param dPdT a {@link org.netlib.util.doubleW} object
-   * @param U a {@link org.netlib.util.doubleW} object
-   * @param H a {@link org.netlib.util.doubleW} object
-   * @param S a {@link org.netlib.util.doubleW} object
-   * @param Cv a {@link org.netlib.util.doubleW} object
-   * @param Cp a {@link org.netlib.util.doubleW} object
-   * @param W a {@link org.netlib.util.doubleW} object
-   * @param G a {@link org.netlib.util.doubleW} object
-   * @param JT a {@link org.netlib.util.doubleW} object
-   * @param Kappa a {@link org.netlib.util.doubleW} object
-   * @param A a {@link org.netlib.util.doubleW} object
+   * @param dPdT   a {@link org.netlib.util.doubleW} object
+   * @param U      a {@link org.netlib.util.doubleW} object
+   * @param H      a {@link org.netlib.util.doubleW} object
+   * @param S      a {@link org.netlib.util.doubleW} object
+   * @param Cv     a {@link org.netlib.util.doubleW} object
+   * @param Cp     a {@link org.netlib.util.doubleW} object
+   * @param W      a {@link org.netlib.util.doubleW} object
+   * @param G      a {@link org.netlib.util.doubleW} object
+   * @param JT     a {@link org.netlib.util.doubleW} object
+   * @param Kappa  a {@link org.netlib.util.doubleW} object
+   * @param A      a {@link org.netlib.util.doubleW} object
    */
-  public void PropertiesEOSCG(double T, double D, double[] x, doubleW P, doubleW Z, doubleW dPdD,
-      doubleW d2PdD2, doubleW d2PdTD, doubleW dPdT, doubleW U, doubleW H, doubleW S, doubleW Cv,
-      doubleW Cp, doubleW W, doubleW G, doubleW JT, doubleW Kappa, doubleW A) {
+  public void PropertiesEOSCG(double T, double D, double[] x, doubleW P, doubleW Z, doubleW dPdD, doubleW d2PdD2,
+      doubleW d2PdTD, doubleW dPdT, doubleW U, doubleW H, doubleW S, doubleW Cv, doubleW Cp, doubleW W, doubleW G,
+      doubleW JT, doubleW Kappa, doubleW A) {
     // Sub PropertiesEOSCG(T, D, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv,
     // Cp, W, G, JT, Kappa, A)
 
@@ -406,7 +402,7 @@ public class EOSCGModel {
 
     for (int i = 0; i < 4; i++) {
       for (int j = 0; j < 4; j++) {
-        ar[i][j] = new doubleW(0.0d);
+	ar[i][j] = new doubleW(0.0d);
       }
     }
 
@@ -442,8 +438,8 @@ public class EOSCGModel {
       Cp.val = Cv.val + T * (dPdT.val / D) * (dPdT.val / D) / dPdD.val;
       d2PdD2.val = RT * (2 * ar[0][1].val + 4 * ar[0][2].val + ar[0][3].val) / D;
       JT.val = (T / D * dPdT.val / dPdD.val - 1) / Cp.val / D; // '=(dB/dT*T-B)/Cp for an
-                                                               // ideal gas, but dB/dT is
-                                                               // not known
+							       // ideal gas, but dB/dT is
+							       // not known
     } else {
       Cp.val = Cv.val + R;
       d2PdD2.val = 0;
@@ -458,7 +454,7 @@ public class EOSCGModel {
   }
 
   /**
-   * @param x ...
+   * @param x  ...
    * @param Tr ...
    * @param Dr ...
    */
@@ -486,7 +482,7 @@ public class EOSCGModel {
     icheck = 0;
     for (int i = 1; i <= NcEOSCG; ++i) {
       if (Math.abs(x[i] - xold[i]) > 0.0000001) {
-        icheck = 1;
+	icheck = 1;
       }
       xold[i] = x[i];
     }
@@ -504,15 +500,15 @@ public class EOSCGModel {
     Tr.val = 0;
     for (int i = 1; i <= NcEOSCG; ++i) {
       if (x[i] > epsilon) {
-        F = 1;
-        for (int j = i; j <= NcEOSCG; ++j) {
-          if (x[j] > epsilon) {
-            xij = F * (x[i] * x[j]) * (x[i] + x[j]);
-            Vr = Vr + xij * gvij[i][j] / (bvij[i][j] * x[i] + x[j]);
-            Tr.val = Tr.val + xij * gtij[i][j] / (btij[i][j] * x[i] + x[j]);
-            F = 2;
-          }
-        }
+	F = 1;
+	for (int j = i; j <= NcEOSCG; ++j) {
+	  if (x[j] > epsilon) {
+	    xij = F * (x[i] * x[j]) * (x[i] + x[j]);
+	    Vr = Vr + xij * gvij[i][j] / (bvij[i][j] * x[i] + x[j]);
+	    Tr.val = Tr.val + xij * gtij[i][j] / (btij[i][j] * x[i] + x[j]);
+	    F = 2;
+	  }
+	}
       }
     }
     if (Vr > epsilon) {
@@ -523,9 +519,9 @@ public class EOSCGModel {
   }
 
   /**
-   * @param T ...
-   * @param D ...
-   * @param x ...
+   * @param T  ...
+   * @param D  ...
+   * @param x  ...
    * @param a0 ...
    */
   void Alpha0EOSCG(double T, double D, double[] x, doubleW[] a0) {
@@ -569,50 +565,50 @@ public class EOSCGModel {
     LogT = Math.log(T);
     for (int i = 1; i <= NcEOSCG; ++i) {
       if (x[i] > epsilon) {
-        LogxD = LogD + Math.log(x[i]);
-        SumHyp0 = 0;
-        SumHyp1 = 0;
-        SumHyp2 = 0;
-        for (int j = 4; j <= 7; ++j) {
-          if (th0i[i][j] < -0.5) {
-            // Special term n * tau^-1 = n * T / Tc
-            double term = n0i[i][j] * T / Tc[i];
-            a0[0].val += x[i] * term;
-            a0[1].val += x[i] * (-term);
-            a0[2].val += x[i] * (2 * term);
-          } else if (th0i[i][j] > epsilon) {
-            th0T = th0i[i][j] / T;
-            ep = Math.exp(th0T);
-            em = 1 / ep;
-            hsn = (ep - em) / 2;
-            hcn = (ep + em) / 2;
-            if (j == 4 || j == 6) {
-              LogHyp = Math.log(Math.abs(hsn));
-              SumHyp0 = SumHyp0 + n0i[i][j] * LogHyp;
-              SumHyp1 = SumHyp1 + n0i[i][j] * th0T * hcn / hsn;
-              SumHyp2 = SumHyp2 + n0i[i][j] * (th0T / hsn) * (th0T / hsn);
-            } else {
-              LogHyp = Math.log(Math.abs(hcn));
-              SumHyp0 = SumHyp0 - n0i[i][j] * LogHyp;
-              SumHyp1 = SumHyp1 - n0i[i][j] * th0T * hsn / hcn;
-              SumHyp2 = SumHyp2 + n0i[i][j] * (th0T / hcn) * (th0T / hcn);
-            }
-          }
-        }
-        a0[0].val += +x[i] * (LogxD + n0i[i][1] + n0i[i][2] / T - n0i[i][3] * LogT + SumHyp0);
-        a0[1].val += +x[i] * (n0i[i][3] + n0i[i][2] / T + SumHyp1);
-        a0[2].val += -x[i] * (n0i[i][3] + SumHyp2);
+	LogxD = LogD + Math.log(x[i]);
+	SumHyp0 = 0;
+	SumHyp1 = 0;
+	SumHyp2 = 0;
+	for (int j = 4; j <= 7; ++j) {
+	  if (th0i[i][j] < -0.5) {
+	    // Special term n * tau^-1 = n * T / Tc
+	    double term = n0i[i][j] * T / Tc[i];
+	    a0[0].val += x[i] * term;
+	    a0[1].val += x[i] * (-term);
+	    a0[2].val += x[i] * (2 * term);
+	  } else if (th0i[i][j] > epsilon) {
+	    th0T = th0i[i][j] / T;
+	    ep = Math.exp(th0T);
+	    em = 1 / ep;
+	    hsn = (ep - em) / 2;
+	    hcn = (ep + em) / 2;
+	    if (j == 4 || j == 6) {
+	      LogHyp = Math.log(Math.abs(hsn));
+	      SumHyp0 = SumHyp0 + n0i[i][j] * LogHyp;
+	      SumHyp1 = SumHyp1 + n0i[i][j] * th0T * hcn / hsn;
+	      SumHyp2 = SumHyp2 + n0i[i][j] * (th0T / hsn) * (th0T / hsn);
+	    } else {
+	      LogHyp = Math.log(Math.abs(hcn));
+	      SumHyp0 = SumHyp0 - n0i[i][j] * LogHyp;
+	      SumHyp1 = SumHyp1 - n0i[i][j] * th0T * hsn / hcn;
+	      SumHyp2 = SumHyp2 + n0i[i][j] * (th0T / hcn) * (th0T / hcn);
+	    }
+	  }
+	}
+	a0[0].val += +x[i] * (LogxD + n0i[i][1] + n0i[i][2] / T - n0i[i][3] * LogT + SumHyp0);
+	a0[1].val += +x[i] * (n0i[i][3] + n0i[i][2] / T + SumHyp1);
+	a0[2].val += -x[i] * (n0i[i][3] + SumHyp2);
       }
     }
   }
 
   /**
-   * @param itau ...
+   * @param itau   ...
    * @param idelta ...
-   * @param T ...
-   * @param D ....
-   * @param x ....
-   * @param ar ...
+   * @param T      ...
+   * @param D      ....
+   * @param x      ....
+   * @param ar     ...
    */
   void AlpharEOSCG(int itau, int idelta, double T, double D, double[] x, doubleW[][] ar) {
     // Private Sub AlpharEOSCG(itau, idelta, T, D, x, ar)
@@ -658,7 +654,7 @@ public class EOSCGModel {
 
     for (int i = 0; i <= 3; ++i) {
       for (int j = 0; j <= 3; ++j) {
-        ar[i][j].val = 0;
+	ar[i][j].val = 0;
       }
     }
 
@@ -684,134 +680,133 @@ public class EOSCGModel {
     // Calculate pure fluid contributions
     for (int i = 1; i <= NcEOSCG; ++i) {
       if (x[i] > epsilon) {
-        for (int k = 1; k <= kpol[i]; ++k) {
-          ndt = x[i] * delp[doik[i][k]] * taup[i][k];
-          ndtd = ndt * doik[i][k];
-          ar[0][1].val += ndtd;
-          ar[0][2].val += ndtd * (doik[i][k] - 1);
-          if (itau > 0) {
-            ndtt = ndt * toik[i][k];
-            ar[0][0].val += ndt;
-            ar[1][0].val += ndtt;
-            ar[2][0].val += ndtt * (toik[i][k] - 1);
-            ar[1][1].val += ndtt * doik[i][k];
-            ar[1][2].val += ndtt * doik[i][k] * (doik[i][k] - 1);
-            ar[0][3].val += ndtd * (doik[i][k] - 1) * (doik[i][k] - 2);
-          }
-        }
-        for (int k = 1 + kpol[i]; k <= kpol[i] + kexp[i]; ++k) {
-          ndt = x[i] * delp[doik[i][k]] * taup[i][k] * Expd[coik[i][k]];
-          ex = coik[i][k] * delp[coik[i][k]];
-          ex2 = doik[i][k] - ex;
-          ex3 = ex2 * (ex2 - 1);
-          ar[0][1].val += ndt * ex2;
-          ar[0][2].val += ndt * (ex3 - coik[i][k] * ex);
-          if (itau > 0) {
-            ndtt = ndt * toik[i][k];
-            ar[0][0].val += ndt;
-            ar[1][0].val += ndtt;
-            ar[2][0].val += ndtt * (toik[i][k] - 1);
-            ar[1][1].val += ndtt * ex2;
-            ar[1][2].val += ndtt * (ex3 - coik[i][k] * ex);
-            ar[0][3].val += ndt * (ex3 * (ex2 - 2) - ex * (3 * ex2 - 3 + coik[i][k]) * coik[i][k]);
-          }
-        }
-        for (int k = 1 + kpol[i] + kexp[i]; k <= kpol[i] + kexp[i] + kgauss[i]; ++k) {
-          double delta = del;
-          double tau_val = tau;
-          double d_val = doik[i][k];
-          double t_val = toik[i][k];
-          double eta = eta_pure[i][k];
-          double eps = epsilon_pure[i][k];
-          double beta = beta_pure[i][k];
-          double gam = gamma_pure[i][k];
-          double Delta = delta - eps;
-          double Theta = tau_val - gam;
-          double exp_val = Math.exp(-eta * Delta * Delta - beta * Theta * Theta);
-          ndt = x[i] * delp[(int) d_val] * taup[i][k] * exp_val;
+	for (int k = 1; k <= kpol[i]; ++k) {
+	  ndt = x[i] * delp[doik[i][k]] * taup[i][k];
+	  ndtd = ndt * doik[i][k];
+	  ar[0][1].val += ndtd;
+	  ar[0][2].val += ndtd * (doik[i][k] - 1);
+	  if (itau > 0) {
+	    ndtt = ndt * toik[i][k];
+	    ar[0][0].val += ndt;
+	    ar[1][0].val += ndtt;
+	    ar[2][0].val += ndtt * (toik[i][k] - 1);
+	    ar[1][1].val += ndtt * doik[i][k];
+	    ar[1][2].val += ndtt * doik[i][k] * (doik[i][k] - 1);
+	    ar[0][3].val += ndtd * (doik[i][k] - 1) * (doik[i][k] - 2);
+	  }
+	}
+	for (int k = 1 + kpol[i]; k <= kpol[i] + kexp[i]; ++k) {
+	  ndt = x[i] * delp[doik[i][k]] * taup[i][k] * Expd[coik[i][k]];
+	  ex = coik[i][k] * delp[coik[i][k]];
+	  ex2 = doik[i][k] - ex;
+	  ex3 = ex2 * (ex2 - 1);
+	  ar[0][1].val += ndt * ex2;
+	  ar[0][2].val += ndt * (ex3 - coik[i][k] * ex);
+	  if (itau > 0) {
+	    ndtt = ndt * toik[i][k];
+	    ar[0][0].val += ndt;
+	    ar[1][0].val += ndtt;
+	    ar[2][0].val += ndtt * (toik[i][k] - 1);
+	    ar[1][1].val += ndtt * ex2;
+	    ar[1][2].val += ndtt * (ex3 - coik[i][k] * ex);
+	    ar[0][3].val += ndt * (ex3 * (ex2 - 2) - ex * (3 * ex2 - 3 + coik[i][k]) * coik[i][k]);
+	  }
+	}
+	for (int k = 1 + kpol[i] + kexp[i]; k <= kpol[i] + kexp[i] + kgauss[i]; ++k) {
+	  double delta = del;
+	  double tau_val = tau;
+	  double d_val = doik[i][k];
+	  double t_val = toik[i][k];
+	  double eta = eta_pure[i][k];
+	  double eps = epsilon_pure[i][k];
+	  double beta = beta_pure[i][k];
+	  double gam = gamma_pure[i][k];
+	  double Delta = delta - eps;
+	  double Theta = tau_val - gam;
+	  double exp_val = Math.exp(-eta * Delta * Delta - beta * Theta * Theta);
+	  ndt = x[i] * delp[(int) d_val] * taup[i][k] * exp_val;
 
-          double term_d = d_val - 2 * eta * delta * Delta;
-          ar[0][1].val += ndt * term_d;
+	  double term_d = d_val - 2 * eta * delta * Delta;
+	  ar[0][1].val += ndt * term_d;
 
-          double delta_term_d_prime = -2 * eta * delta * (2 * delta - eps);
-          double term_d2 = term_d * term_d - term_d + delta_term_d_prime;
-          ar[0][2].val += ndt * term_d2;
+	  double delta_term_d_prime = -2 * eta * delta * (2 * delta - eps);
+	  double term_d2 = term_d * term_d - term_d + delta_term_d_prime;
+	  ar[0][2].val += ndt * term_d2;
 
-          if (itau > 0) {
-            ar[0][0].val += ndt;
+	  if (itau > 0) {
+	    ar[0][0].val += ndt;
 
-            double term_t = t_val - 2 * beta * tau_val * Theta;
-            ar[1][0].val += ndt * term_t;
+	    double term_t = t_val - 2 * beta * tau_val * Theta;
+	    ar[1][0].val += ndt * term_t;
 
-            double tau_term_t_prime = -2 * beta * tau_val * (2 * tau_val - gam);
-            double term_t2 = term_t * term_t - term_t + tau_term_t_prime;
-            ar[2][0].val += ndt * term_t2;
+	    double tau_term_t_prime = -2 * beta * tau_val * (2 * tau_val - gam);
+	    double term_t2 = term_t * term_t - term_t + tau_term_t_prime;
+	    ar[2][0].val += ndt * term_t2;
 
-            ar[1][1].val += ndt * term_t * term_d;
-            ar[1][2].val += ndt * term_t * term_d2;
+	    ar[1][1].val += ndt * term_t * term_d;
+	    ar[1][2].val += ndt * term_t * term_d2;
 
-            double delta2_term_d_double_prime = -4 * eta * delta * delta;
-            double delta_B_prime = 2 * term_d * delta_term_d_prime + delta2_term_d_double_prime;
-            double term_d3 = term_d * term_d2 + delta_B_prime - 2 * term_d2;
-            ar[0][3].val += ndt * term_d3;
-          }
-        }
+	    double delta2_term_d_double_prime = -4 * eta * delta * delta;
+	    double delta_B_prime = 2 * term_d * delta_term_d_prime + delta2_term_d_double_prime;
+	    double term_d3 = term_d * term_d2 + delta_B_prime - 2 * term_d2;
+	    ar[0][3].val += ndt * term_d3;
+	  }
+	}
       }
     }
 
     // Calculate mixture contributions
     for (int i = 1; i <= NcEOSCG - 1; ++i) {
       if (x[i] > epsilon) {
-        for (int j = i + 1; j <= NcEOSCG; ++j) {
-          if (x[j] > epsilon) {
-            mn = mNumb[i][j];
-            if (mn >= 0) {
-              xijf = x[i] * x[j] * fij[i][j];
-              for (int k = 1; k <= kpolij[mn]; ++k) {
-                ndt = xijf * delp[dijk[mn][k]] * taupijk[mn][k];
-                ndtd = ndt * dijk[mn][k];
-                ar[0][1].val += ndtd;
-                ar[0][2].val += ndtd * (dijk[mn][k] - 1);
-                if (itau > 0) {
-                  ndtt = ndt * tijk[mn][k];
-                  ar[0][0].val += ndt;
-                  ar[1][0].val += ndtt;
-                  ar[2][0].val += ndtt * (tijk[mn][k] - 1);
-                  ar[1][1].val += ndtt * dijk[mn][k];
-                  ar[1][2].val += ndtt * dijk[mn][k] * (dijk[mn][k] - 1);
-                  ar[0][3].val += ndtd * (dijk[mn][k] - 1) * (dijk[mn][k] - 2);
-                }
-              }
-              for (int k = 1 + kpolij[mn]; k <= kpolij[mn] + kexpij[mn]; ++k) {
-                cij0 = cijk[mn][k] * delp[2];
-                eij0 = eijk[mn][k] * del;
-                ndt = xijf * nijk[mn][k] * delp[dijk[mn][k]]
-                    * Math.exp(cij0 + eij0 + gijk[mn][k] + tijk[mn][k] * lntau);
-                ex = dijk[mn][k] + 2 * cij0 + eij0;
-                ex2 = (ex * ex - dijk[mn][k] + 2 * cij0);
-                ar[0][1].val += ndt * ex;
-                ar[0][2].val += ndt * ex2;
-                if (itau > 0) {
-                  ndtt = ndt * tijk[mn][k];
-                  ar[0][0].val += ndt;
-                  ar[1][0].val += ndtt;
-                  ar[2][0].val += ndtt * (tijk[mn][k] - 1);
-                  ar[1][1].val += ndtt * ex;
-                  ar[1][2].val += ndtt * ex2;
-                  ar[0][3].val +=
-                      ndt * (ex * (ex2 - 2 * (dijk[mn][k] - 2 * cij0)) + 2 * dijk[mn][k]);
-                }
-              }
-            }
-          }
-        }
+	for (int j = i + 1; j <= NcEOSCG; ++j) {
+	  if (x[j] > epsilon) {
+	    mn = mNumb[i][j];
+	    if (mn >= 0) {
+	      xijf = x[i] * x[j] * fij[i][j];
+	      for (int k = 1; k <= kpolij[mn]; ++k) {
+		ndt = xijf * delp[dijk[mn][k]] * taupijk[mn][k];
+		ndtd = ndt * dijk[mn][k];
+		ar[0][1].val += ndtd;
+		ar[0][2].val += ndtd * (dijk[mn][k] - 1);
+		if (itau > 0) {
+		  ndtt = ndt * tijk[mn][k];
+		  ar[0][0].val += ndt;
+		  ar[1][0].val += ndtt;
+		  ar[2][0].val += ndtt * (tijk[mn][k] - 1);
+		  ar[1][1].val += ndtt * dijk[mn][k];
+		  ar[1][2].val += ndtt * dijk[mn][k] * (dijk[mn][k] - 1);
+		  ar[0][3].val += ndtd * (dijk[mn][k] - 1) * (dijk[mn][k] - 2);
+		}
+	      }
+	      for (int k = 1 + kpolij[mn]; k <= kpolij[mn] + kexpij[mn]; ++k) {
+		cij0 = cijk[mn][k] * delp[2];
+		eij0 = eijk[mn][k] * del;
+		ndt = xijf * nijk[mn][k] * delp[dijk[mn][k]]
+		    * Math.exp(cij0 + eij0 + gijk[mn][k] + tijk[mn][k] * lntau);
+		ex = dijk[mn][k] + 2 * cij0 + eij0;
+		ex2 = (ex * ex - dijk[mn][k] + 2 * cij0);
+		ar[0][1].val += ndt * ex;
+		ar[0][2].val += ndt * ex2;
+		if (itau > 0) {
+		  ndtt = ndt * tijk[mn][k];
+		  ar[0][0].val += ndt;
+		  ar[1][0].val += ndtt;
+		  ar[2][0].val += ndtt * (tijk[mn][k] - 1);
+		  ar[1][1].val += ndtt * ex;
+		  ar[1][2].val += ndtt * ex2;
+		  ar[0][3].val += ndt * (ex * (ex2 - 2 * (dijk[mn][k] - 2 * cij0)) + 2 * dijk[mn][k]);
+		}
+	      }
+	    }
+	  }
+	}
       }
     }
   }
 
   /**
    * @param lntau ...
-   * @param x ....
+   * @param x     ....
    */
   void tTermsGERG(double lntau, double[] x) {
     // Private Sub tTermsGERG(lntau, x)
@@ -828,36 +823,36 @@ public class EOSCGModel {
     }
     for (i = 1; i <= NcEOSCG; ++i) {
       if (x[i] > epsilon) {
-        if (i > 4 && i != 15 && i != 18 && i != 20 && i != 22 && i < 23) {
-          for (int k = 1; k <= kpol[i] + kexp[i] + kgauss[i]; ++k) {
-            taup[i][k] = noik[i][k] * taup0[k];
-          }
-        } else {
-          for (int k = 1; k <= kpol[i] + kexp[i] + kgauss[i]; ++k) {
-            taup[i][k] = noik[i][k] * Math.exp(toik[i][k] * lntau);
-          }
-        }
+	if (i > 4 && i != 15 && i != 18 && i != 20 && i != 22 && i < 23) {
+	  for (int k = 1; k <= kpol[i] + kexp[i] + kgauss[i]; ++k) {
+	    taup[i][k] = noik[i][k] * taup0[k];
+	  }
+	} else {
+	  for (int k = 1; k <= kpol[i] + kexp[i] + kgauss[i]; ++k) {
+	    taup[i][k] = noik[i][k] * Math.exp(toik[i][k] * lntau);
+	  }
+	}
       }
     }
 
     for (i = 1; i <= NcEOSCG - 1; ++i) {
       if (x[i] > epsilon) {
-        for (int j = i + 1; j <= NcEOSCG; ++j) {
-          if (x[j] > epsilon) {
-            mn = mNumb[i][j];
-            if (mn >= 0) {
-              for (int k = 1; k <= kpolij[mn]; ++k) {
-                taupijk[mn][k] = nijk[mn][k] * Math.exp(tijk[mn][k] * lntau);
-              }
-            }
-          }
-        }
+	for (int j = i + 1; j <= NcEOSCG; ++j) {
+	  if (x[j] > epsilon) {
+	    mn = mNumb[i][j];
+	    if (mn >= 0) {
+	      for (int k = 1; k <= kpolij[mn]; ++k) {
+		taupijk[mn][k] = nijk[mn][k] * Math.exp(tijk[mn][k] * lntau);
+	      }
+	    }
+	  }
+	}
       }
     }
   }
 
   /**
-   * @param x composition
+   * @param x   composition
    * @param Tcx temperature in Kelvin
    * @param Dcx density
    */
@@ -1054,78 +1049,78 @@ public class EOSCGModel {
     }
     for (int i = 1; i <= 4; ++i) {
       if (i != 3) {
-        coik[i][1] = 0;
-        doik[i][1] = 1;
-        toik[i][1] = 0.125;
-        coik[i][2] = 0;
-        doik[i][2] = 1;
-        toik[i][2] = 1.125;
-        coik[i][3] = 0;
-        doik[i][3] = 2;
-        toik[i][3] = 0.375;
-        coik[i][4] = 0;
-        doik[i][4] = 2;
-        toik[i][4] = 1.125;
-        coik[i][5] = 0;
-        doik[i][5] = 4;
-        toik[i][5] = 0.625;
-        coik[i][6] = 0;
-        doik[i][6] = 4;
-        toik[i][6] = 1.5;
-        coik[i][7] = 1;
-        doik[i][7] = 1;
-        toik[i][7] = 0.625;
-        coik[i][8] = 1;
-        doik[i][8] = 1;
-        toik[i][8] = 2.625;
-        coik[i][9] = 1;
-        doik[i][9] = 1;
-        toik[i][9] = 2.75;
-        coik[i][10] = 1;
-        doik[i][10] = 2;
-        toik[i][10] = 2.125;
-        coik[i][11] = 1;
-        doik[i][11] = 3;
-        toik[i][11] = 2;
-        coik[i][12] = 1;
-        doik[i][12] = 6;
-        toik[i][12] = 1.75;
-        coik[i][13] = 2;
-        doik[i][13] = 2;
-        toik[i][13] = 4.5;
-        coik[i][14] = 2;
-        doik[i][14] = 3;
-        toik[i][14] = 4.75;
-        coik[i][15] = 2;
-        doik[i][15] = 3;
-        toik[i][15] = 5;
-        coik[i][16] = 2;
-        doik[i][16] = 4;
-        toik[i][16] = 4;
-        coik[i][17] = 2;
-        doik[i][17] = 4;
-        toik[i][17] = 4.5;
-        coik[i][18] = 3;
-        doik[i][18] = 2;
-        toik[i][18] = 7.5;
-        coik[i][19] = 3;
-        doik[i][19] = 3;
-        toik[i][19] = 14;
-        coik[i][20] = 3;
-        doik[i][20] = 4;
-        toik[i][20] = 11.5;
-        coik[i][21] = 6;
-        doik[i][21] = 5;
-        toik[i][21] = 26;
-        coik[i][22] = 6;
-        doik[i][22] = 6;
-        toik[i][22] = 28;
-        coik[i][23] = 6;
-        doik[i][23] = 6;
-        toik[i][23] = 30;
-        coik[i][24] = 6;
-        doik[i][24] = 7;
-        toik[i][24] = 16;
+	coik[i][1] = 0;
+	doik[i][1] = 1;
+	toik[i][1] = 0.125;
+	coik[i][2] = 0;
+	doik[i][2] = 1;
+	toik[i][2] = 1.125;
+	coik[i][3] = 0;
+	doik[i][3] = 2;
+	toik[i][3] = 0.375;
+	coik[i][4] = 0;
+	doik[i][4] = 2;
+	toik[i][4] = 1.125;
+	coik[i][5] = 0;
+	doik[i][5] = 4;
+	toik[i][5] = 0.625;
+	coik[i][6] = 0;
+	doik[i][6] = 4;
+	toik[i][6] = 1.5;
+	coik[i][7] = 1;
+	doik[i][7] = 1;
+	toik[i][7] = 0.625;
+	coik[i][8] = 1;
+	doik[i][8] = 1;
+	toik[i][8] = 2.625;
+	coik[i][9] = 1;
+	doik[i][9] = 1;
+	toik[i][9] = 2.75;
+	coik[i][10] = 1;
+	doik[i][10] = 2;
+	toik[i][10] = 2.125;
+	coik[i][11] = 1;
+	doik[i][11] = 3;
+	toik[i][11] = 2;
+	coik[i][12] = 1;
+	doik[i][12] = 6;
+	toik[i][12] = 1.75;
+	coik[i][13] = 2;
+	doik[i][13] = 2;
+	toik[i][13] = 4.5;
+	coik[i][14] = 2;
+	doik[i][14] = 3;
+	toik[i][14] = 4.75;
+	coik[i][15] = 2;
+	doik[i][15] = 3;
+	toik[i][15] = 5;
+	coik[i][16] = 2;
+	doik[i][16] = 4;
+	toik[i][16] = 4;
+	coik[i][17] = 2;
+	doik[i][17] = 4;
+	toik[i][17] = 4.5;
+	coik[i][18] = 3;
+	doik[i][18] = 2;
+	toik[i][18] = 7.5;
+	coik[i][19] = 3;
+	doik[i][19] = 3;
+	toik[i][19] = 14;
+	coik[i][20] = 3;
+	doik[i][20] = 4;
+	toik[i][20] = 11.5;
+	coik[i][21] = 6;
+	doik[i][21] = 5;
+	toik[i][21] = 26;
+	coik[i][22] = 6;
+	doik[i][22] = 6;
+	toik[i][22] = 28;
+	coik[i][23] = 6;
+	doik[i][23] = 6;
+	toik[i][23] = 30;
+	coik[i][24] = 6;
+	doik[i][24] = 7;
+	toik[i][24] = 16;
       }
     }
 
@@ -1484,8 +1479,7 @@ public class EOSCGModel {
     eta_pure[22][16] = 0.647;
 
     // Alpha0
-    n0i[22][1] =
-        -4.5414235721 + 3.0 * Math.log(430.64) + 1.0875 * Math.log(2.0) + 1.916 * Math.log(2.0);
+    n0i[22][1] = -4.5414235721 + 3.0 * Math.log(430.64) + 1.0875 * Math.log(2.0) + 1.916 * Math.log(2.0);
     n0i[22][2] = 4.4732289572 * 430.64 - 1.0875 * 783.0 / 2.0 - 1.916 * 1864.0 / 2.0;
     n0i[22][3] = 3.0;
     n0i[22][4] = 1.0875;
@@ -1882,11 +1876,9 @@ public class EOSCGModel {
     th0i[25][5] = 12.32 * 324.68 / 2.0;
     n0i[25][6] = 0.209996;
     th0i[25][6] = 19.41 * 324.68 / 2.0;
-    n0i[25][1] =
-        -4.069044527 + 2.5 * Math.log(324.68) + (0.0033327 + 0.935243 + 0.209996) * Math.log(2.0);
+    n0i[25][1] = -4.069044527 + 2.5 * Math.log(324.68) + (0.0033327 + 0.935243 + 0.209996) * Math.log(2.0);
     n0i[25][2] = 4.0257768311 * 324.68
-        - (0.0033327 * 0.924 * 324.68 + 0.935243 * 12.32 * 324.68 + 0.209996 * 19.41 * 324.68)
-            / 2.0;
+	- (0.0033327 * 0.924 * 324.68 + 0.935243 * 12.32 * 324.68 + 0.209996 * 19.41 * 324.68) / 2.0;
 
     // MEA (26)
     MMiEOSCG[26] = 61.0831;
@@ -2894,9 +2886,9 @@ public class EOSCGModel {
     for (int i = 1; i <= MaxFlds; ++i) {
       mNumb[i][i] = -1;
       for (int j = i + 1; j <= MaxFlds; ++j) {
-        fij[j][i] = fij[i][j];
-        mNumb[i][j] = -1;
-        mNumb[j][i] = -1;
+	fij[j][i] = fij[i][j];
+	mNumb[i][j] = -1;
+	mNumb[j][i] = -1;
       }
     }
 
@@ -4008,18 +4000,18 @@ public class EOSCGModel {
       gvij[i][i] = 1 / Dc[i];
       gtij[i][i] = Tc[i];
       for (int j = i + 1; j <= MaxFlds; ++j) {
-        gvij[i][j] = gvij[i][j] * bvij[i][j] * Math.pow(Vc3[i] + Vc3[j], 3);
-        gtij[i][j] = gtij[i][j] * btij[i][j] * Tc2[i] * Tc2[j];
-        bvij[i][j] = Math.pow(bvij[i][j], 2);
-        btij[i][j] = Math.pow(btij[i][j], 2);
+	gvij[i][j] = gvij[i][j] * bvij[i][j] * Math.pow(Vc3[i] + Vc3[j], 3);
+	gtij[i][j] = gtij[i][j] * btij[i][j] * Tc2[i] * Tc2[j];
+	bvij[i][j] = Math.pow(bvij[i][j], 2);
+	btij[i][j] = Math.pow(btij[i][j], 2);
       }
     }
 
     for (int i = 1; i <= MaxMdl; ++i) {
       for (int j = 1; j <= MaxTrmM; ++j) {
-        gijk[i][j] = -cijk[i][j] * Math.pow(eijk[i][j], 2) + bijk[i][j] * gijk[i][j];
-        eijk[i][j] = 2 * cijk[i][j] * eijk[i][j] - bijk[i][j];
-        cijk[i][j] = -cijk[i][j];
+	gijk[i][j] = -cijk[i][j] * Math.pow(eijk[i][j], 2) + bijk[i][j] * gijk[i][j];
+	eijk[i][j] = 2 * cijk[i][j] * eijk[i][j] - bijk[i][j];
+	cijk[i][j] = -cijk[i][j];
       }
     }
 
@@ -4030,7 +4022,7 @@ public class EOSCGModel {
       n0i[i][3] = n0i[i][3] - 1;
       n0i[i][2] = n0i[i][2] + T0;
       for (int j = 1; j <= 7; ++j) {
-        n0i[i][j] = Rsr * n0i[i][j];
+	n0i[i][j] = Rsr * n0i[i][j];
       }
       n0i[i][2] = n0i[i][2] - T0;
       n0i[i][1] = n0i[i][1] - Math.log(d0);
@@ -4064,131 +4056,130 @@ public class EOSCGModel {
 
   private void applyEOSCG2021ReducingParameters() {
     // EOS-CG-2021 Table 4: beta_T, gamma_T, beta_v, gamma_v, and F_ij.
-    setReducingParameter( 3, 18,  1.030538,  0.828472,  1.021392,  0.895156,  1.000000); // CO2 + H2O
-    setReducingParameter(27, 21,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // DEA + Ar
-    setReducingParameter( 2,  3,  1.005895,  1.107654,  0.977795,  1.047578,  1.000000); // N2 + CO2
-    setReducingParameter(25, 21,  1.000000,  1.074563,  1.000000,  1.001236,  0.000000); // HCl + Ar
-    setReducingParameter( 3, 16,  1.000000,  1.031986,  1.000000,  1.084460,  0.000000); // CO2 + O2
-    setReducingParameter(24, 21,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // Cl2 + Ar
-    setReducingParameter( 3, 21,  0.998705,  1.039675,  1.003766,  1.013833,  1.000000); // CO2 + Ar
-    setReducingParameter(21, 23,  1.146326,  0.998353,  0.756526,  1.041113,  1.000000); // Ar + NH3
-    setReducingParameter( 3, 17,  0.989782,  1.162130,  1.033802,  1.000162,  1.000000); // CO2 + CO
-    setReducingParameter(28, 21,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // MDEA + Ar
-    setReducingParameter( 3, 15,  0.979000,  1.961000,  1.198000,  0.842000,  1.000000); // CO2 + H2
-    setReducingParameter(17, 15,  1.078000,  1.105000,  1.037000,  1.040000,  1.000000); // CO + H2
-    setReducingParameter( 1,  3,  1.022624,  0.975665,  0.999518,  1.002807,  1.000000); // CH4 + CO2
-    setReducingParameter( 1, 17,  0.987412,  0.987473,  0.997341,  1.006103,  0.000000); // CH4 + CO
-    setReducingParameter( 3, 19,  1.016035,  0.926019,  0.906631,  1.024086,  0.000000); // CO2 + H2S
-    setReducingParameter(17, 19,  1.025537,  1.022750,  0.795660,  1.101731,  0.000000); // CO + H2S
-    setReducingParameter( 3, 22,  1.020063,  1.007975,  0.889865,  1.005778,  0.000000); // CO2 + SO2
-    setReducingParameter(22, 17,  1.000000,  1.177903,  1.000000,  1.007241,  0.000000); // SO2 + CO
-    setReducingParameter(26,  3,  1.000000,  1.070000,  1.000000,  1.000000,  0.000000); // MEA + CO2
-    setReducingParameter(26, 17,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // MEA + CO
-    setReducingParameter(27,  3,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // DEA + CO2
-    setReducingParameter(27, 17,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // DEA + CO
-    setReducingParameter(25,  3,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // HCl + CO2
-    setReducingParameter(25, 17,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // HCl + CO
-    setReducingParameter(24,  3,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // Cl2 + CO2
-    setReducingParameter(24, 17,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // Cl2 + CO
-    setReducingParameter(23,  3,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // NH3 + CO2
-    setReducingParameter(17, 23,  1.057512,  0.952705,  0.739937,  1.707000,  0.000000); // CO + NH3
-    setReducingParameter(28,  3,  1.081000,  1.386000,  1.000000,  1.000000,  0.000000); // MDEA + CO2
-    setReducingParameter(28, 17,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // MDEA + CO
-    setReducingParameter( 2, 18,  1.048054,  0.805147,  0.926245,  0.733443,  1.000000); // N2 + H2O
-    setReducingParameter( 1, 15,  1.010000,  1.440000,  1.086000,  0.804000,  1.000000); // CH4 + H2
-    setReducingParameter(16, 18,  1.253060,  0.807842,  1.028197,  0.873460,  0.601700); // O2 + H2O
-    setReducingParameter(15, 19,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // H2 + H2S
-    setReducingParameter(18, 21,  0.679104,  0.921000,  0.940398,  1.050952,  0.000000); // H2O + Ar
-    setReducingParameter(22, 15,  1.000000,  1.940852,  1.000000,  1.035171,  0.000000); // SO2 + H2
-    setReducingParameter(17, 18,  0.956090,  0.823984,  0.940426,  0.766756,  0.989700); // CO + H2O
-    setReducingParameter(26, 15,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // MEA + H2
-    setReducingParameter(15, 18,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // H2 + H2O
-    setReducingParameter(27, 15,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // DEA + H2
-    setReducingParameter( 1, 18,  1.263000,  0.748000,  1.176000,  1.038000,  1.000000); // CH4 + H2O
-    setReducingParameter(25, 15,  1.000000,  1.724556,  1.000000,  1.005948,  0.000000); // HCl + H2
-    setReducingParameter(19, 18,  0.960526,  0.924026,  0.945818,  1.189702,  1.000000); // H2S + H2O
-    setReducingParameter(24, 15,  1.000000,  1.914078,  1.000000,  1.035410,  0.000000); // Cl2 + H2
-    setReducingParameter(22, 18,  1.019562,  0.916311,  1.094032,  0.962547,  0.000000); // SO2 + H2O
-    setReducingParameter(15, 23,  0.988240,  1.126600,  1.010300,  0.729800,  1.000000); // H2 + NH3
-    setReducingParameter(26, 18,  1.004000,  0.957300,  1.007600,  1.089160,  1.000000); // MEA + H2O
-    setReducingParameter(28, 15,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // MDEA + H2
-    setReducingParameter(27, 18,  0.993200,  0.973400,  1.006000,  1.123000,  1.000000); // DEA + H2O
-    setReducingParameter( 1, 19,  1.011090,  0.961156,  1.012599,  1.040161,  0.000000); // CH4 + H2S
-    setReducingParameter(25, 18,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // HCl + H2O
-    setReducingParameter(22,  1,  0.999432,  1.115714,  1.315534,  1.119543,  0.000000); // SO2 + CH4
-    setReducingParameter(24, 18,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // Cl2 + H2O
-    setReducingParameter(26,  1,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // MEA + CH4
-    setReducingParameter(23, 18,  0.933585,  1.015826,  1.044759,  1.189754,  1.000000); // NH3 + H2O
-    setReducingParameter(27,  1,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // DEA + CH4
-    setReducingParameter(28, 18,  0.970000,  1.010000,  0.980000,  1.268700,  1.000000); // MDEA + H2O
-    setReducingParameter(25,  1,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // HCl + CH4
-    setReducingParameter( 2, 16,  0.997191,  0.995157,  0.999522,  0.997082,  0.000000); // N2 + O2
-    setReducingParameter(24,  1,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // Cl2 + CH4
-    setReducingParameter( 2, 21,  0.999442,  0.989311,  1.006697,  1.001549,  0.000000); // N2 + Ar
-    setReducingParameter( 1, 23,  1.022371,  0.940156,  1.006058,  1.069834,  0.000000); // CH4 + NH3
-    setReducingParameter( 2, 17,  1.002409,  0.994100,  1.000000,  1.001317,  0.000000); // N2 + CO
-    setReducingParameter(28,  1,  1.000000,  1.625000,  1.074000,  1.000000,  0.000000); // MDEA + CH4
-    setReducingParameter( 2, 15,  1.027000,  1.240000,  0.993000,  0.773000,  1.000000); // N2 + H2
-    setReducingParameter(22, 19,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // SO2 + H2S
-    setReducingParameter( 1,  2,  0.998099,  0.979273,  0.998721,  1.013950,  1.000000); // CH4 + N2
-    setReducingParameter(26, 19,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // MEA + H2S
-    setReducingParameter( 2, 19,  1.004692,  0.960174,  0.910394,  1.256844,  0.000000); // N2 + H2S
-    setReducingParameter(27, 19,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // DEA + H2S
-    setReducingParameter(22,  2,  1.045874,  1.194659,  0.903625,  1.215581,  0.000000); // SO2 + N2
-    setReducingParameter(25, 19,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // HCl + H2S
-    setReducingParameter(26,  2,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // MEA + N2
-    setReducingParameter(24, 19,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // Cl2 + H2S
-    setReducingParameter(27,  2,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // DEA + N2
-    setReducingParameter(23, 19,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // NH3 + H2S
-    setReducingParameter(25,  2,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // HCl + N2
-    setReducingParameter(28, 19,  1.000000,  1.059430,  1.000000,  1.140800,  0.000000); // MDEA + H2S
-    setReducingParameter(24,  2,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // Cl2 + N2
-    setReducingParameter(26, 22,  1.021293,  1.200045,  1.000000,  1.000000,  0.000000); // MEA + SO2
-    setReducingParameter( 2, 23,  1.057512,  0.952705,  0.739937,  1.447261,  0.000000); // N2 + NH3
-    setReducingParameter(27, 22,  1.021293,  1.200045,  1.000000,  1.000000,  0.000000); // DEA + SO2
-    setReducingParameter(28,  2,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // MDEA + N2
-    setReducingParameter(22, 25,  1.002605,  1.048380,  1.000000,  1.000000,  0.000000); // SO2 + HCl
-    setReducingParameter(16, 21,  0.999039,  0.988822,  1.006502,  1.001341,  0.000000); // O2 + Ar
-    setReducingParameter(24, 22,  1.015678,  0.927820,  1.024354,  1.016621,  0.000000); // Cl2 + SO2
-    setReducingParameter(16, 17,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // O2 + CO
-    setReducingParameter(23, 22,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // NH3 + SO2
-    setReducingParameter(15, 16,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // H2 + O2
-    setReducingParameter(28, 22,  1.000000,  1.037046,  1.000000,  1.097897,  0.000000); // MDEA + SO2
-    setReducingParameter( 1, 16,  1.000000,  0.950000,  1.000000,  1.000000,  0.000000); // CH4 + O2
-    setReducingParameter(27, 26,  1.015703,  1.020484,  0.766762,  0.852448,  0.000000); // DEA + MEA
-    setReducingParameter(16, 19,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // O2 + H2S
-    setReducingParameter(26, 25,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // MEA + HCl
-    setReducingParameter(22, 16,  0.927961,  1.035878,  1.219246,  1.660632,  0.000000); // SO2 + O2
-    setReducingParameter(26, 24,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // MEA + Cl2
-    setReducingParameter(26, 16,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // MEA + O2
-    setReducingParameter(23, 26,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // NH3 + MEA
-    setReducingParameter(27, 16,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // DEA + O2
-    setReducingParameter(28, 26,  1.000000,  0.805000,  1.000000,  1.000000,  0.000000); // MDEA + MEA
-    setReducingParameter(25, 16,  1.000000,  1.069638,  1.000000,  1.001592,  0.000000); // HCl + O2
-    setReducingParameter(27, 25,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // DEA + HCl
-    setReducingParameter(24, 16,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // Cl2 + O2
-    setReducingParameter(27, 24,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // DEA + Cl2
-    setReducingParameter(23, 16,  1.000000,  1.118566,  1.000000,  1.000002,  0.000000); // NH3 + O2
-    setReducingParameter(23, 27,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // NH3 + DEA
-    setReducingParameter(28, 16,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // MDEA + O2
-    setReducingParameter(28, 27,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // MDEA + DEA
-    setReducingParameter(17, 21,  1.000000,  0.954216,  1.000000,  1.159721,  0.000000); // CO + Ar
-    setReducingParameter(24, 25,  1.007373,  0.968865,  0.928100,  0.917288,  0.000000); // Cl2 + HCl
-    setReducingParameter(15, 21,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // H2 + Ar
-    setReducingParameter(23, 25,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // NH3 + HCl
-    setReducingParameter( 1, 21,  0.990954,  0.989843,  1.034630,  1.014679,  0.000000); // CH4 + Ar
-    setReducingParameter(28, 25,  1.000000,  1.086325,  1.000000,  1.173873,  0.000000); // MDEA + HCl
-    setReducingParameter(19, 21,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // H2S + Ar
-    setReducingParameter(23, 24,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // NH3 + Cl2
-    setReducingParameter(22, 21,  1.000000,  1.141020,  1.000000,  1.021291,  0.000000); // SO2 + Ar
-    setReducingParameter(28, 24,  1.000000,  1.041648,  1.000000,  1.096224,  0.000000); // MDEA + Cl2
-    setReducingParameter(26, 21,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // MEA + Ar
-    setReducingParameter(28, 23,  1.000000,  1.045755,  1.000000,  1.207629,  0.000000); // MDEA + NH3
+    setReducingParameter(3, 18, 1.030538, 0.828472, 1.021392, 0.895156, 1.000000); // CO2 + H2O
+    setReducingParameter(27, 21, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // DEA + Ar
+    setReducingParameter(2, 3, 1.005895, 1.107654, 0.977795, 1.047578, 1.000000); // N2 + CO2
+    setReducingParameter(25, 21, 1.000000, 1.074563, 1.000000, 1.001236, 0.000000); // HCl + Ar
+    setReducingParameter(3, 16, 1.000000, 1.031986, 1.000000, 1.084460, 0.000000); // CO2 + O2
+    setReducingParameter(24, 21, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // Cl2 + Ar
+    setReducingParameter(3, 21, 0.998705, 1.039675, 1.003766, 1.013833, 1.000000); // CO2 + Ar
+    setReducingParameter(21, 23, 1.146326, 0.998353, 0.756526, 1.041113, 1.000000); // Ar + NH3
+    setReducingParameter(3, 17, 0.989782, 1.162130, 1.033802, 1.000162, 1.000000); // CO2 + CO
+    setReducingParameter(28, 21, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // MDEA + Ar
+    setReducingParameter(3, 15, 0.979000, 1.961000, 1.198000, 0.842000, 1.000000); // CO2 + H2
+    setReducingParameter(17, 15, 1.078000, 1.105000, 1.037000, 1.040000, 1.000000); // CO + H2
+    setReducingParameter(1, 3, 1.022624, 0.975665, 0.999518, 1.002807, 1.000000); // CH4 + CO2
+    setReducingParameter(1, 17, 0.987412, 0.987473, 0.997341, 1.006103, 0.000000); // CH4 + CO
+    setReducingParameter(3, 19, 1.016035, 0.926019, 0.906631, 1.024086, 0.000000); // CO2 + H2S
+    setReducingParameter(17, 19, 1.025537, 1.022750, 0.795660, 1.101731, 0.000000); // CO + H2S
+    setReducingParameter(3, 22, 1.020063, 1.007975, 0.889865, 1.005778, 0.000000); // CO2 + SO2
+    setReducingParameter(22, 17, 1.000000, 1.177903, 1.000000, 1.007241, 0.000000); // SO2 + CO
+    setReducingParameter(26, 3, 1.000000, 1.070000, 1.000000, 1.000000, 0.000000); // MEA + CO2
+    setReducingParameter(26, 17, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // MEA + CO
+    setReducingParameter(27, 3, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // DEA + CO2
+    setReducingParameter(27, 17, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // DEA + CO
+    setReducingParameter(25, 3, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // HCl + CO2
+    setReducingParameter(25, 17, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // HCl + CO
+    setReducingParameter(24, 3, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // Cl2 + CO2
+    setReducingParameter(24, 17, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // Cl2 + CO
+    setReducingParameter(23, 3, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // NH3 + CO2
+    setReducingParameter(17, 23, 1.057512, 0.952705, 0.739937, 1.707000, 0.000000); // CO + NH3
+    setReducingParameter(28, 3, 1.081000, 1.386000, 1.000000, 1.000000, 0.000000); // MDEA + CO2
+    setReducingParameter(28, 17, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // MDEA + CO
+    setReducingParameter(2, 18, 1.048054, 0.805147, 0.926245, 0.733443, 1.000000); // N2 + H2O
+    setReducingParameter(1, 15, 1.010000, 1.440000, 1.086000, 0.804000, 1.000000); // CH4 + H2
+    setReducingParameter(16, 18, 1.253060, 0.807842, 1.028197, 0.873460, 0.601700); // O2 + H2O
+    setReducingParameter(15, 19, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // H2 + H2S
+    setReducingParameter(18, 21, 0.679104, 0.921000, 0.940398, 1.050952, 0.000000); // H2O + Ar
+    setReducingParameter(22, 15, 1.000000, 1.940852, 1.000000, 1.035171, 0.000000); // SO2 + H2
+    setReducingParameter(17, 18, 0.956090, 0.823984, 0.940426, 0.766756, 0.989700); // CO + H2O
+    setReducingParameter(26, 15, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // MEA + H2
+    setReducingParameter(15, 18, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // H2 + H2O
+    setReducingParameter(27, 15, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // DEA + H2
+    setReducingParameter(1, 18, 1.263000, 0.748000, 1.176000, 1.038000, 1.000000); // CH4 + H2O
+    setReducingParameter(25, 15, 1.000000, 1.724556, 1.000000, 1.005948, 0.000000); // HCl + H2
+    setReducingParameter(19, 18, 0.960526, 0.924026, 0.945818, 1.189702, 1.000000); // H2S + H2O
+    setReducingParameter(24, 15, 1.000000, 1.914078, 1.000000, 1.035410, 0.000000); // Cl2 + H2
+    setReducingParameter(22, 18, 1.019562, 0.916311, 1.094032, 0.962547, 0.000000); // SO2 + H2O
+    setReducingParameter(15, 23, 0.988240, 1.126600, 1.010300, 0.729800, 1.000000); // H2 + NH3
+    setReducingParameter(26, 18, 1.004000, 0.957300, 1.007600, 1.089160, 1.000000); // MEA + H2O
+    setReducingParameter(28, 15, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // MDEA + H2
+    setReducingParameter(27, 18, 0.993200, 0.973400, 1.006000, 1.123000, 1.000000); // DEA + H2O
+    setReducingParameter(1, 19, 1.011090, 0.961156, 1.012599, 1.040161, 0.000000); // CH4 + H2S
+    setReducingParameter(25, 18, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // HCl + H2O
+    setReducingParameter(22, 1, 0.999432, 1.115714, 1.315534, 1.119543, 0.000000); // SO2 + CH4
+    setReducingParameter(24, 18, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // Cl2 + H2O
+    setReducingParameter(26, 1, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // MEA + CH4
+    setReducingParameter(23, 18, 0.933585, 1.015826, 1.044759, 1.189754, 1.000000); // NH3 + H2O
+    setReducingParameter(27, 1, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // DEA + CH4
+    setReducingParameter(28, 18, 0.970000, 1.010000, 0.980000, 1.268700, 1.000000); // MDEA + H2O
+    setReducingParameter(25, 1, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // HCl + CH4
+    setReducingParameter(2, 16, 0.997191, 0.995157, 0.999522, 0.997082, 0.000000); // N2 + O2
+    setReducingParameter(24, 1, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // Cl2 + CH4
+    setReducingParameter(2, 21, 0.999442, 0.989311, 1.006697, 1.001549, 0.000000); // N2 + Ar
+    setReducingParameter(1, 23, 1.022371, 0.940156, 1.006058, 1.069834, 0.000000); // CH4 + NH3
+    setReducingParameter(2, 17, 1.002409, 0.994100, 1.000000, 1.001317, 0.000000); // N2 + CO
+    setReducingParameter(28, 1, 1.000000, 1.625000, 1.074000, 1.000000, 0.000000); // MDEA + CH4
+    setReducingParameter(2, 15, 1.027000, 1.240000, 0.993000, 0.773000, 1.000000); // N2 + H2
+    setReducingParameter(22, 19, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // SO2 + H2S
+    setReducingParameter(1, 2, 0.998099, 0.979273, 0.998721, 1.013950, 1.000000); // CH4 + N2
+    setReducingParameter(26, 19, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // MEA + H2S
+    setReducingParameter(2, 19, 1.004692, 0.960174, 0.910394, 1.256844, 0.000000); // N2 + H2S
+    setReducingParameter(27, 19, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // DEA + H2S
+    setReducingParameter(22, 2, 1.045874, 1.194659, 0.903625, 1.215581, 0.000000); // SO2 + N2
+    setReducingParameter(25, 19, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // HCl + H2S
+    setReducingParameter(26, 2, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // MEA + N2
+    setReducingParameter(24, 19, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // Cl2 + H2S
+    setReducingParameter(27, 2, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // DEA + N2
+    setReducingParameter(23, 19, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // NH3 + H2S
+    setReducingParameter(25, 2, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // HCl + N2
+    setReducingParameter(28, 19, 1.000000, 1.059430, 1.000000, 1.140800, 0.000000); // MDEA + H2S
+    setReducingParameter(24, 2, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // Cl2 + N2
+    setReducingParameter(26, 22, 1.021293, 1.200045, 1.000000, 1.000000, 0.000000); // MEA + SO2
+    setReducingParameter(2, 23, 1.057512, 0.952705, 0.739937, 1.447261, 0.000000); // N2 + NH3
+    setReducingParameter(27, 22, 1.021293, 1.200045, 1.000000, 1.000000, 0.000000); // DEA + SO2
+    setReducingParameter(28, 2, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // MDEA + N2
+    setReducingParameter(22, 25, 1.002605, 1.048380, 1.000000, 1.000000, 0.000000); // SO2 + HCl
+    setReducingParameter(16, 21, 0.999039, 0.988822, 1.006502, 1.001341, 0.000000); // O2 + Ar
+    setReducingParameter(24, 22, 1.015678, 0.927820, 1.024354, 1.016621, 0.000000); // Cl2 + SO2
+    setReducingParameter(16, 17, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // O2 + CO
+    setReducingParameter(23, 22, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // NH3 + SO2
+    setReducingParameter(15, 16, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // H2 + O2
+    setReducingParameter(28, 22, 1.000000, 1.037046, 1.000000, 1.097897, 0.000000); // MDEA + SO2
+    setReducingParameter(1, 16, 1.000000, 0.950000, 1.000000, 1.000000, 0.000000); // CH4 + O2
+    setReducingParameter(27, 26, 1.015703, 1.020484, 0.766762, 0.852448, 0.000000); // DEA + MEA
+    setReducingParameter(16, 19, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // O2 + H2S
+    setReducingParameter(26, 25, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // MEA + HCl
+    setReducingParameter(22, 16, 0.927961, 1.035878, 1.219246, 1.660632, 0.000000); // SO2 + O2
+    setReducingParameter(26, 24, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // MEA + Cl2
+    setReducingParameter(26, 16, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // MEA + O2
+    setReducingParameter(23, 26, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // NH3 + MEA
+    setReducingParameter(27, 16, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // DEA + O2
+    setReducingParameter(28, 26, 1.000000, 0.805000, 1.000000, 1.000000, 0.000000); // MDEA + MEA
+    setReducingParameter(25, 16, 1.000000, 1.069638, 1.000000, 1.001592, 0.000000); // HCl + O2
+    setReducingParameter(27, 25, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // DEA + HCl
+    setReducingParameter(24, 16, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // Cl2 + O2
+    setReducingParameter(27, 24, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // DEA + Cl2
+    setReducingParameter(23, 16, 1.000000, 1.118566, 1.000000, 1.000002, 0.000000); // NH3 + O2
+    setReducingParameter(23, 27, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // NH3 + DEA
+    setReducingParameter(28, 16, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // MDEA + O2
+    setReducingParameter(28, 27, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // MDEA + DEA
+    setReducingParameter(17, 21, 1.000000, 0.954216, 1.000000, 1.159721, 0.000000); // CO + Ar
+    setReducingParameter(24, 25, 1.007373, 0.968865, 0.928100, 0.917288, 0.000000); // Cl2 + HCl
+    setReducingParameter(15, 21, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // H2 + Ar
+    setReducingParameter(23, 25, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // NH3 + HCl
+    setReducingParameter(1, 21, 0.990954, 0.989843, 1.034630, 1.014679, 0.000000); // CH4 + Ar
+    setReducingParameter(28, 25, 1.000000, 1.086325, 1.000000, 1.173873, 0.000000); // MDEA + HCl
+    setReducingParameter(19, 21, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // H2S + Ar
+    setReducingParameter(23, 24, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // NH3 + Cl2
+    setReducingParameter(22, 21, 1.000000, 1.141020, 1.000000, 1.021291, 0.000000); // SO2 + Ar
+    setReducingParameter(28, 24, 1.000000, 1.041648, 1.000000, 1.096224, 0.000000); // MDEA + Cl2
+    setReducingParameter(26, 21, 1.000000, 1.000000, 1.000000, 1.000000, 0.000000); // MEA + Ar
+    setReducingParameter(28, 23, 1.000000, 1.045755, 1.000000, 1.207629, 0.000000); // MDEA + NH3
   }
 
-
-  private void setReducingParameter(int i, int j, double betaT, double gammaT, double betaV,
-      double gammaV, double departureWeight) {
+  private void setReducingParameter(int i, int j, double betaT, double gammaT, double betaV, double gammaV,
+      double departureWeight) {
     int row = Math.min(i, j);
     int col = Math.max(i, j);
     btij[row][col] = betaT;
@@ -4221,8 +4212,8 @@ public class EOSCGModel {
     int iFlag = 0;
     StringW herr = new StringW("");
 
-    double[] x = {0.0, 0.77824, 0.02, 0.06, 0.08, 0.03, 0.0015, 0.003, 0.0005, 0.00165, 0.00215,
-        0.00088, 0.00024, 0.00015, 0.00009, 0.004, 0.005, 0.002, 0.0001, 0.0025, 0.007, 0.001};
+    double[] x = { 0.0, 0.77824, 0.02, 0.06, 0.08, 0.03, 0.0015, 0.003, 0.0005, 0.00165, 0.00215, 0.00088, 0.00024,
+	0.00015, 0.00009, 0.004, 0.005, 0.002, 0.0001, 0.0025, 0.007, 0.001 };
 
     test.MolarMassEOSCG(x, Mm);
 
@@ -4253,49 +4244,37 @@ public class EOSCGModel {
     doubleW JT = new doubleW(0.0d);
     doubleW Kappa = new doubleW(0.0d);
     doubleW PP = new doubleW(0.0d);
-    test.PropertiesEOSCG(T, D.val, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT,
-        Kappa, A);
+    test.PropertiesEOSCG(T, D.val, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT, Kappa, A);
 
     /*
-     * // test.PressureEOSCG(400, 12.798286, x); String herr = ""; test.DensityEOSCG(0, T, P, x,
-     * ierr, herr); double pres = test.P; double molarmass = test.Mm;
+     * // test.PressureEOSCG(400, 12.798286, x); String herr = ""; test.DensityEOSCG(0, T, P, x, ierr, herr); double
+     * pres = test.P; double molarmass = test.Mm;
      *
-     * // double dPdD=0.0, dPdD2=0.0, d2PdTD=0.0, dPdT=0.0, U=0.0, H=0.0, S=0.0, // Cv=0.0, Cp=0.0,
-     * W=0.0, G=0.0, JT=0.0, Kappa=0.0, A=0.0;
+     * // double dPdD=0.0, dPdD2=0.0, d2PdTD=0.0, dPdT=0.0, U=0.0, H=0.0, S=0.0, // Cv=0.0, Cp=0.0, W=0.0, G=0.0,
+     * JT=0.0, Kappa=0.0, A=0.0;
      *
-     * // void DensityEOSCG(const int iFlag, const double T, const double P, const //
-     * std::vector<double> &x, double &D, int &ierr, std::string &herr) // test.DensityEOSCG(0, T,
-     * P, x, ierr, herr);
+     * // void DensityEOSCG(const int iFlag, const double T, const double P, const // std::vector<double> &x, double &D,
+     * int &ierr, std::string &herr) // test.DensityEOSCG(0, T, P, x, ierr, herr);
      *
-     * // Sub PropertiesEOSCG(T, D, x, P, Z, dPdD, dPdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, // W, G,
-     * JT, Kappa) // test.PropertiesEOSCG(T, test.D, x);
+     * // Sub PropertiesEOSCG(T, D, x, P, Z, dPdD, dPdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, // W, G, JT, Kappa) //
+     * test.PropertiesEOSCG(T, test.D, x);
      */
     System.out.println("Outputs-----\n");
-    System.out
-        .println("Molar mass [g/mol]:                 20.54274450160000 != %0.16g\n" + Mm.val);
+    System.out.println("Molar mass [g/mol]:                 20.54274450160000 != %0.16g\n" + Mm.val);
     System.out.println("Molar density [mol/l]:              12.79828626082062 != %0.16g\n" + D.val);
     System.out.println("Pressure [kPa]:                     50000.00000000001 != %0.16g\n" + P.val);
     System.out.println("Compressibility factor:             1.174690666383717 != %0.16g\n" + Z.val);
-    System.out
-        .println("d(P)/d(rho) [kPa/(mol/l)]:          7000.694030193327 != %0.16g\n" + dPdD.val);
-    System.out
-        .println("d^2(P)/d(rho)^2 [kPa/(mol/l)^2]:    1130.481239114938 != %0.16g\n" + d2PdD2.val);
-    System.out
-        .println("d(P)/d(T) [kPa/K]:                  235.9832292593096 != %0.16g\n" + dPdT.val);
-    System.out
-        .println("Energy [J/mol]:                     -2746.492901212530 != %0.16g\n" + U.val);
+    System.out.println("d(P)/d(rho) [kPa/(mol/l)]:          7000.694030193327 != %0.16g\n" + dPdD.val);
+    System.out.println("d^2(P)/d(rho)^2 [kPa/(mol/l)^2]:    1130.481239114938 != %0.16g\n" + d2PdD2.val);
+    System.out.println("d(P)/d(T) [kPa/K]:                  235.9832292593096 != %0.16g\n" + dPdT.val);
+    System.out.println("Energy [J/mol]:                     -2746.492901212530 != %0.16g\n" + U.val);
     System.out.println("Enthalpy [J/mol]:                   1160.280160510973 != %0.16g\n" + H.val);
-    System.out
-        .println("Entropy [J/mol-K]:                  -38.57590392409089 != %0.16g\n" + S.val);
-    System.out
-        .println("Isochoric heat capacity [J/mol-K]:  39.02948218156372 != %0.16g\n" + Cv.val);
-    System.out
-        .println("Isobaric heat capacity [J/mol-K]:   58.45522051000366 != %0.16g\n" + Cp.val);
+    System.out.println("Entropy [J/mol-K]:                  -38.57590392409089 != %0.16g\n" + S.val);
+    System.out.println("Isochoric heat capacity [J/mol-K]:  39.02948218156372 != %0.16g\n" + Cv.val);
+    System.out.println("Isobaric heat capacity [J/mol-K]:   58.45522051000366 != %0.16g\n" + Cp.val);
     System.out.println("Speed of sound [m/s]:               714.4248840596024 != %0.16g\n" + W.val);
     System.out.println("Gibbs energy [J/mol]:               16590.64173014733 != %0.16g\n" + G.val);
-    System.out
-        .println("Joule-Thomson coefficient [K/kPa]:  7.155629581480913E-05 != %0.16g\n" + JT.val);
-    System.out
-        .println("Isentropic exponent:                2.683820255058032 != %0.16g\n" + Kappa.val);
+    System.out.println("Joule-Thomson coefficient [K/kPa]:  7.155629581480913E-05 != %0.16g\n" + JT.val);
+    System.out.println("Isentropic exponent:                2.683820255058032 != %0.16g\n" + Kappa.val);
   }
 }

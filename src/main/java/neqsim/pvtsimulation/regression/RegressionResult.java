@@ -8,8 +8,7 @@ import neqsim.thermo.system.SystemInterface;
  * Result of a PVT regression optimization.
  *
  * <p>
- * Contains the tuned fluid, objective function values, optimized parameters, and uncertainty
- * analysis.
+ * Contains the tuned fluid, objective function values, optimized parameters, and uncertainty analysis.
  * </p>
  *
  * @author ESOL
@@ -26,16 +25,16 @@ public class RegressionResult {
   /**
    * Create a regression result.
    *
-   * @param tunedFluid the tuned fluid
-   * @param objectiveValues objective function values by experiment type
-   * @param parameterConfigs parameter configurations
-   * @param uncertainty uncertainty analysis
+   * @param tunedFluid          the tuned fluid
+   * @param objectiveValues     objective function values by experiment type
+   * @param parameterConfigs    parameter configurations
+   * @param uncertainty         uncertainty analysis
    * @param optimizedParameters optimized parameter values
-   * @param finalChiSquare final chi-square value
+   * @param finalChiSquare      final chi-square value
    */
   public RegressionResult(SystemInterface tunedFluid, Map<ExperimentType, Double> objectiveValues,
-      List<RegressionParameterConfig> parameterConfigs, UncertaintyAnalysis uncertainty,
-      double[] optimizedParameters, double finalChiSquare) {
+      List<RegressionParameterConfig> parameterConfigs, UncertaintyAnalysis uncertainty, double[] optimizedParameters,
+      double finalChiSquare) {
     this.tunedFluid = tunedFluid;
     this.objectiveValues = objectiveValues;
     this.parameterConfigs = parameterConfigs;
@@ -104,7 +103,7 @@ public class RegressionResult {
   public double getOptimizedValue(RegressionParameter parameter) {
     for (RegressionParameterConfig config : parameterConfigs) {
       if (config.getParameter() == parameter) {
-        return config.getOptimizedValue();
+	return config.getOptimizedValue();
       }
     }
     return Double.NaN;
@@ -132,9 +131,9 @@ public class RegressionResult {
 
     for (int i = 0; i < parameterConfigs.size(); i++) {
       if (parameterConfigs.get(i).getParameter() == parameter) {
-        double value = optimizedParameters[i];
-        double ci = uncertainty.getConfidenceInterval95(i);
-        return new double[] {value - ci, value + ci};
+	double value = optimizedParameters[i];
+	double ci = uncertainty.getConfidenceInterval95(i);
+	return new double[] { value - ci, value + ci };
       }
     }
     return null;
@@ -172,7 +171,7 @@ public class RegressionResult {
       RegressionParameterConfig config = parameterConfigs.get(i);
       sb.append(String.format("  %s: %.6f", config.getParameter().name(), optimizedParameters[i]));
       if (uncertainty != null) {
-        sb.append(String.format(" ± %.6f (95%% CI)", uncertainty.getConfidenceInterval95(i)));
+	sb.append(String.format(" ± %.6f (95%% CI)", uncertainty.getConfidenceInterval95(i)));
       }
       sb.append("\n");
     }
@@ -185,8 +184,7 @@ public class RegressionResult {
 
     sb.append("\nFit Quality:\n");
     sb.append(String.format("  Chi-square: %.6f\n", finalChiSquare));
-    sb.append(
-        String.format("  Average Absolute Deviation: %.2f%%\n", getAverageAbsoluteDeviation()));
+    sb.append(String.format("  Average Absolute Deviation: %.2f%%\n", getAverageAbsoluteDeviation()));
 
     return sb.toString();
   }

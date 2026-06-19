@@ -14,9 +14,8 @@ import org.apache.logging.log4j.Logger;
  * Session-scoped ProcessSystem manager for multi-user online simulation.
  *
  * <p>
- * Manages isolated simulation sessions where each user/request gets their own copy of a
- * ProcessSystem. Supports template-based creation (copy-on-create), automatic session expiry, and
- * concurrent access control.
+ * Manages isolated simulation sessions where each user/request gets their own copy of a ProcessSystem. Supports
+ * template-based creation (copy-on-create), automatic session expiry, and concurrent access control.
  * </p>
  *
  * <h2>Usage from Python (via JPype):</h2>
@@ -95,7 +94,7 @@ public class ProcessSimulationSession {
      * Creates a session entry.
      *
      * @param processSystem the process system
-     * @param templateName name of the template used (nullable)
+     * @param templateName  name of the template used (nullable)
      */
     SessionEntry(ProcessSystem processSystem, String templateName) {
       this.processSystem = processSystem;
@@ -133,27 +132,26 @@ public class ProcessSimulationSession {
    * Creates a session manager with custom settings.
    *
    * @param timeoutMinutes session timeout in minutes (0 = no timeout)
-   * @param maxSessions maximum number of concurrent sessions
+   * @param maxSessions    maximum number of concurrent sessions
    */
   public ProcessSimulationSession(long timeoutMinutes, int maxSessions) {
     this.timeoutMinutes = timeoutMinutes;
     this.maxSessions = maxSessions;
 
     if (timeoutMinutes > 0) {
-      cleanupExecutor =
-          Executors.newSingleThreadScheduledExecutor(new java.util.concurrent.ThreadFactory() {
-            @Override
-            public Thread newThread(Runnable r) {
-              Thread t = new Thread(r, "neqsim-session-cleanup");
-              t.setDaemon(true);
-              return t;
-            }
-          });
+      cleanupExecutor = Executors.newSingleThreadScheduledExecutor(new java.util.concurrent.ThreadFactory() {
+	@Override
+	public Thread newThread(Runnable r) {
+	  Thread t = new Thread(r, "neqsim-session-cleanup");
+	  t.setDaemon(true);
+	  return t;
+	}
+      });
       cleanupExecutor.scheduleAtFixedRate(new Runnable() {
-        @Override
-        public void run() {
-          cleanupExpiredSessions();
-        }
+	@Override
+	public void run() {
+	  cleanupExpiredSessions();
+	}
       }, timeoutMinutes, Math.max(1, timeoutMinutes / 2), TimeUnit.MINUTES);
     }
   }
@@ -162,11 +160,11 @@ public class ProcessSimulationSession {
    * Registers a named template ProcessSystem for copy-on-create session instantiation.
    *
    * <p>
-   * The template is deeply copied when creating new sessions, so modifications to the template
-   * after registration will not affect existing sessions.
+   * The template is deeply copied when creating new sessions, so modifications to the template after registration will
+   * not affect existing sessions.
    * </p>
    *
-   * @param name the template name
+   * @param name     the template name
    * @param template the process system to use as a template
    */
   public void registerTemplate(String name, ProcessSystem template) {
@@ -214,15 +212,14 @@ public class ProcessSimulationSession {
     if (sessions.size() >= maxSessions) {
       cleanupExpiredSessions();
       if (sessions.size() >= maxSessions) {
-        throw new IllegalStateException("Maximum number of sessions (" + maxSessions + ") reached. "
-            + "Destroy existing sessions or increase the limit.");
+	throw new IllegalStateException("Maximum number of sessions (" + maxSessions + ") reached. "
+	    + "Destroy existing sessions or increase the limit.");
       }
     }
 
     ProcessSystem template = templates.get(templateName);
     if (template == null) {
-      throw new IllegalArgumentException(
-          "Template '" + templateName + "' not found. Available: " + templates.keySet());
+      throw new IllegalArgumentException("Template '" + templateName + "' not found. Available: " + templates.keySet());
     }
 
     ProcessSystem sessionProcess = template.copy();
@@ -242,8 +239,7 @@ public class ProcessSimulationSession {
     if (sessions.size() >= maxSessions) {
       cleanupExpiredSessions();
       if (sessions.size() >= maxSessions) {
-        throw new IllegalStateException(
-            "Maximum number of sessions (" + maxSessions + ") reached.");
+	throw new IllegalStateException("Maximum number of sessions (" + maxSessions + ") reached.");
       }
     }
 
@@ -264,9 +260,8 @@ public class ProcessSimulationSession {
     if (sessions.size() >= maxSessions) {
       cleanupExpiredSessions();
       if (sessions.size() >= maxSessions) {
-        return SimulationResult.error("MAX_SESSIONS",
-            "Maximum number of sessions (" + maxSessions + ") reached",
-            "Destroy existing sessions or increase the limit");
+	return SimulationResult.error("MAX_SESSIONS", "Maximum number of sessions (" + maxSessions + ") reached",
+	    "Destroy existing sessions or increase the limit");
       }
     }
 
@@ -317,8 +312,7 @@ public class ProcessSimulationSession {
       ProcessSystem process = getSession(sessionId);
       return process.runAndReport();
     } catch (IllegalArgumentException e) {
-      return SimulationResult.error("SESSION_NOT_FOUND", e.getMessage(),
-          "Create a new session first");
+      return SimulationResult.error("SESSION_NOT_FOUND", e.getMessage(), "Create a new session first");
     }
   }
 
@@ -381,8 +375,7 @@ public class ProcessSimulationSession {
   public Map<String, String> getSessionInfo() {
     Map<String, String> info = new ConcurrentHashMap<>();
     for (Map.Entry<String, SessionEntry> entry : sessions.entrySet()) {
-      info.put(entry.getKey(),
-          entry.getValue().templateName != null ? entry.getValue().templateName : "(blank)");
+      info.put(entry.getKey(), entry.getValue().templateName != null ? entry.getValue().templateName : "(blank)");
     }
     return info;
   }
@@ -400,9 +393,9 @@ public class ProcessSimulationSession {
     int removed = 0;
     for (Map.Entry<String, SessionEntry> entry : sessions.entrySet()) {
       if (entry.getValue().isExpired(timeoutMs)) {
-        sessions.remove(entry.getKey());
-        removed++;
-        logger.info("Expired session '{}'", entry.getKey());
+	sessions.remove(entry.getKey());
+	removed++;
+	logger.info("Expired session '{}'", entry.getKey());
       }
     }
     return removed;

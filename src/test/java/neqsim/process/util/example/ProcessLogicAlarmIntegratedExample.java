@@ -73,8 +73,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version 1.0
  */
 public class ProcessLogicAlarmIntegratedExample {
-  private static final Logger logger =
-      LogManager.getLogger(ProcessLogicAlarmIntegratedExample.class);
+  private static final Logger logger = LogManager.getLogger(ProcessLogicAlarmIntegratedExample.class);
 
   // Safety setpoints with layered protection
   private static final double HIGH_PRESSURE_ALARM = 53.0; // bara (HI - operator notification)
@@ -185,7 +184,7 @@ public class ProcessLogicAlarmIntegratedExample {
 
     // Gas routing splitter (process/PSV/ESD) - 3 outputs
     Splitter gasSplitter = new Splitter("Gas Splitter", separator.getGasOutStream(), 3);
-    gasSplitter.setSplitFactors(new double[] {1.0, 0.0, 0.0});
+    gasSplitter.setSplitFactors(new double[] { 1.0, 0.0, 0.0 });
 
     // Process outlet stream
     Stream processStream = new Stream("Process Stream", gasSplitter.getSplitStream(0));
@@ -226,12 +225,10 @@ public class ProcessLogicAlarmIntegratedExample {
     system.add(flareHeader);
     system.add(flare);
 
-    System.out
-        .println("Process system built with " + system.getUnitOperations().size() + " units:");
+    System.out.println("Process system built with " + system.getUnitOperations().size() + " units:");
     for (int i = 0; i < system.getUnitOperations().size(); i++) {
       logger.info("  " + (i + 1) + ". " + system.getUnitOperations().get(i).getName());
     }
-
 
     return system;
   }
@@ -239,7 +236,7 @@ public class ProcessLogicAlarmIntegratedExample {
   /**
    * Sets up instrumentation with comprehensive alarm configuration.
    *
-   * @param system the process system to instrument
+   * @param system       the process system to instrument
    * @param alarmManager the alarm manager to register devices with
    * @return the instrumentation setup containing all configured devices
    */
@@ -256,43 +253,40 @@ public class ProcessLogicAlarmIntegratedExample {
     // Pressure monitoring with layered protection
     setup.separatorPT = new PressureTransmitter("PT-101", separator.getGasOutStream());
     setup.separatorPT.setAlarmConfig(AlarmConfig.builder().highLimit(HIGH_PRESSURE_ALARM)
-        .highHighLimit(HIGH_HIGH_PRESSURE_ALARM).deadband(0.5).delay(1.0).unit("bara").build());
+	.highHighLimit(HIGH_HIGH_PRESSURE_ALARM).deadband(0.5).delay(1.0).unit("bara").build());
     alarmManager.register(setup.separatorPT);
 
     // Temperature monitoring with cooling trigger
     setup.separatorTT = new TemperatureTransmitter("TT-101", separator.getGasOutStream());
     setup.separatorTT.setAlarmConfig(AlarmConfig.builder().highLimit(HIGH_TEMP_ALARM)
-        .highHighLimit(HIGH_HIGH_TEMP_ALARM).deadband(2.0).delay(3.0).unit("C").build());
+	.highHighLimit(HIGH_HIGH_TEMP_ALARM).deadband(2.0).delay(3.0).unit("C").build());
     alarmManager.register(setup.separatorTT);
 
     // Flow monitoring with low flow protection
     setup.flowTransmitter = new VolumeFlowTransmitter("FT-201", processStream);
-    setup.flowTransmitter.setAlarmConfig(AlarmConfig.builder().lowLimit(100.0).lowLowLimit(50.0)
-        .highLimit(2000.0).deadband(10.0).delay(5.0).unit("m3/hr").build());
+    setup.flowTransmitter.setAlarmConfig(AlarmConfig.builder().lowLimit(100.0).lowLowLimit(50.0).highLimit(2000.0)
+	.deadband(10.0).delay(5.0).unit("m3/hr").build());
     alarmManager.register(setup.flowTransmitter);
 
     // Level monitoring with shutdown protection
     setup.levelTransmitter = new LevelTransmitter("LT-101", separator);
-    setup.levelTransmitter.setAlarmConfig(AlarmConfig.builder().lowLowLimit(LOW_LOW_LEVEL_ALARM)
-        .lowLimit(LOW_LEVEL_ALARM).highLimit(HIGH_LEVEL_ALARM).highHighLimit(HIGH_HIGH_LEVEL_ALARM)
-        .deadband(2.0).delay(2.0).unit("%").build());
+    setup.levelTransmitter.setAlarmConfig(
+	AlarmConfig.builder().lowLowLimit(LOW_LOW_LEVEL_ALARM).lowLimit(LOW_LEVEL_ALARM).highLimit(HIGH_LEVEL_ALARM)
+	    .highHighLimit(HIGH_HIGH_LEVEL_ALARM).deadband(2.0).delay(2.0).unit("%").build());
     alarmManager.register(setup.levelTransmitter);
 
     // HIPPS pressure transmitters (2oo3 voting) - no delay for safety-critical operation
 
-    PressureTransmitter hippsPT1 =
-        new PressureTransmitter("PT-HIPPS-1", inletValve.getOutletStream());
-    PressureTransmitter hippsPT2 =
-        new PressureTransmitter("PT-HIPPS-2", inletValve.getOutletStream());
-    PressureTransmitter hippsPT3 =
-        new PressureTransmitter("PT-HIPPS-3", inletValve.getOutletStream());
+    PressureTransmitter hippsPT1 = new PressureTransmitter("PT-HIPPS-1", inletValve.getOutletStream());
+    PressureTransmitter hippsPT2 = new PressureTransmitter("PT-HIPPS-2", inletValve.getOutletStream());
+    PressureTransmitter hippsPT3 = new PressureTransmitter("PT-HIPPS-3", inletValve.getOutletStream());
 
     hippsValve.addPressureTransmitter(hippsPT1);
     hippsValve.addPressureTransmitter(hippsPT2);
     hippsValve.addPressureTransmitter(hippsPT3);
 
-    AlarmConfig hippsAlarmConfig = AlarmConfig.builder().highHighLimit(HIPPS_ACTIVATION_PRESSURE)
-        .deadband(0.2).delay(0.0).unit("bara").build();
+    AlarmConfig hippsAlarmConfig = AlarmConfig.builder().highHighLimit(HIPPS_ACTIVATION_PRESSURE).deadband(0.2)
+	.delay(0.0).unit("bara").build();
 
     hippsPT1.setAlarmConfig(hippsAlarmConfig);
     hippsPT2.setAlarmConfig(hippsAlarmConfig);
@@ -302,10 +296,9 @@ public class ProcessLogicAlarmIntegratedExample {
     alarmManager.register(hippsPT3);
 
     // ESD trigger pressure transmitter
-    setup.esdPressureTransmitter =
-        new PressureTransmitter("PT-ESD-001", separator.getGasOutStream());
-    setup.esdPressureTransmitter.setAlarmConfig(AlarmConfig.builder()
-        .highHighLimit(ESD_ACTIVATION_PRESSURE).deadband(0.5).delay(0.0).unit("bara").build());
+    setup.esdPressureTransmitter = new PressureTransmitter("PT-ESD-001", separator.getGasOutStream());
+    setup.esdPressureTransmitter.setAlarmConfig(
+	AlarmConfig.builder().highHighLimit(ESD_ACTIVATION_PRESSURE).deadband(0.5).delay(0.0).unit("bara").build());
     alarmManager.register(setup.esdPressureTransmitter);
 
     // Manual ESD button
@@ -344,32 +337,27 @@ public class ProcessLogicAlarmIntegratedExample {
    * Registers automatic alarm-triggered actions with the alarm manager.
    *
    * @param alarmManager the alarm manager to register actions with
-   * @param system the process system containing equipment
-   * @param logicSetup the process logic setup containing ESD and HIPPS logic
+   * @param system       the process system containing equipment
+   * @param logicSetup   the process logic setup containing ESD and HIPPS logic
    */
   private static void registerAlarmActions(ProcessAlarmManager alarmManager, ProcessSystem system,
       ProcessLogicSetup logicSetup) {
     ControlValve inletValve = (ControlValve) system.getUnit("Inlet Control Valve");
 
     // Create pressure control logic for automatic valve throttling
-    PressureControlLogic throttleLogic =
-        new PressureControlLogic("Pressure HIHI Auto-Throttle", inletValve, 50.0, system);
+    PressureControlLogic throttleLogic = new PressureControlLogic("Pressure HIHI Auto-Throttle", inletValve, 50.0,
+	system);
 
     // HIHI pressure alarm triggers automatic valve throttling logic
-    alarmManager
-        .registerActionHandler(AlarmActionHandler.activateLogicOnHIHI("PT-101", throttleLogic));
+    alarmManager.registerActionHandler(AlarmActionHandler.activateLogicOnHIHI("PT-101", throttleLogic));
 
     // HIPPS transmitter alarms trigger HIPPS logic
-    alarmManager.registerActionHandler(
-        AlarmActionHandler.activateLogicOnHIHI("PT-HIPPS-1", logicSetup.hippsLogic));
-    alarmManager.registerActionHandler(
-        AlarmActionHandler.activateLogicOnHIHI("PT-HIPPS-2", logicSetup.hippsLogic));
-    alarmManager.registerActionHandler(
-        AlarmActionHandler.activateLogicOnHIHI("PT-HIPPS-3", logicSetup.hippsLogic));
+    alarmManager.registerActionHandler(AlarmActionHandler.activateLogicOnHIHI("PT-HIPPS-1", logicSetup.hippsLogic));
+    alarmManager.registerActionHandler(AlarmActionHandler.activateLogicOnHIHI("PT-HIPPS-2", logicSetup.hippsLogic));
+    alarmManager.registerActionHandler(AlarmActionHandler.activateLogicOnHIHI("PT-HIPPS-3", logicSetup.hippsLogic));
 
     // ESD pressure alarm triggers ESD logic
-    alarmManager.registerActionHandler(
-        AlarmActionHandler.activateLogicOnHIHI("PT-ESD-001", logicSetup.esdLogic));
+    alarmManager.registerActionHandler(AlarmActionHandler.activateLogicOnHIHI("PT-ESD-001", logicSetup.esdLogic));
 
     logger.info("═══════════════════════════════════════════════════════════");
     logger.info("           AUTOMATIC ALARM ACTIONS REGISTERED");
@@ -383,12 +371,11 @@ public class ProcessLogicAlarmIntegratedExample {
   /**
    * Sets up process logic sequences.
    *
-   * @param system the process system containing equipment
+   * @param system      the process system containing equipment
    * @param instruments the instrumentation setup containing measurement devices
    * @return the process logic setup containing configured logic sequences
    */
-  private static ProcessLogicSetup setupProcessLogic(ProcessSystem system,
-      InstrumentationSetup instruments) {
+  private static ProcessLogicSetup setupProcessLogic(ProcessSystem system, InstrumentationSetup instruments) {
     ProcessLogicSetup setup = new ProcessLogicSetup();
 
     // Get equipment references
@@ -406,7 +393,7 @@ public class ProcessLogicAlarmIntegratedExample {
     setup.esdLogic = new ESDLogic("ESD Level 1");
     setup.esdLogic.addAction(new CloseValveAction(inletValve), 0.0);
     setup.esdLogic.addAction(new CloseValveAction(esdInletValve), 0.0);
-    setup.esdLogic.addAction(new SetSplitterAction(gasSplitter, new double[] {0.0, 0.0, 1.0}), 0.5);
+    setup.esdLogic.addAction(new SetSplitterAction(gasSplitter, new double[] { 0.0, 0.0, 1.0 }), 0.5);
     setup.esdLogic.addAction(new EnergizeESDValveAction(bdValve, 100.0), 0.5);
     setup.esdLogic.addAction(new SetSeparatorModeAction(separator, false), 1.0);
 
@@ -429,22 +416,20 @@ public class ProcessLogicAlarmIntegratedExample {
     logger.info("  - ESD Logic: Triggered by PT-ESD-001 HIHI alarm or manual button");
     logger.info("  - Startup Logic: Permissives check no active alarms");
 
-
     return setup;
   }
 
   /**
    * Runs comprehensive alarm-triggered scenarios.
    *
-   * @param runner the scenario runner for executing scenarios
+   * @param runner       the scenario runner for executing scenarios
    * @param alarmManager the alarm manager for evaluation and tracking
-   * @param instruments the instrumentation setup containing devices
-   * @param logicSetup the process logic setup containing logic sequences
-   * @param system the process system
+   * @param instruments  the instrumentation setup containing devices
+   * @param logicSetup   the process logic setup containing logic sequences
+   * @param system       the process system
    */
-  private static void runAlarmTriggeredScenarios(ProcessScenarioRunner runner,
-      ProcessAlarmManager alarmManager, InstrumentationSetup instruments,
-      ProcessLogicSetup logicSetup, ProcessSystem system) {
+  private static void runAlarmTriggeredScenarios(ProcessScenarioRunner runner, ProcessAlarmManager alarmManager,
+      InstrumentationSetup instruments, ProcessLogicSetup logicSetup, ProcessSystem system) {
     ScenarioTestRunner testRunner = new ScenarioTestRunner(runner);
     testRunner.printHeader();
 
@@ -452,8 +437,7 @@ public class ProcessLogicAlarmIntegratedExample {
     // Scenario 1: Normal operation with alarm monitoring
     // ═══════════════════════════════════════════════════════════════
     printScenarioHeader("SCENARIO 1: Normal Operation with Alarm Monitoring");
-    ProcessSafetyScenario normalScenario =
-        ProcessSafetyScenario.builder("Normal Operation").build();
+    ProcessSafetyScenario normalScenario = ProcessSafetyScenario.builder("Normal Operation").build();
     testRunner.executeScenario("Normal Operation", normalScenario, "System Startup", 30.0, 1.0);
     runScenarioStep(system, alarmManager, instruments, 30.0);
     AlarmReporter.displayAlarmStatus(alarmManager, "Normal Operation");
@@ -462,13 +446,13 @@ public class ProcessLogicAlarmIntegratedExample {
     // Scenario 2: HI Alarm - Operator Notification Only
     // ═══════════════════════════════════════════════════════════════
     printScenarioHeader("SCENARIO 2: HI Pressure Alarm - Operator Notification");
-    ProcessSafetyScenario hiAlarmScenario =
-        ProcessSafetyScenario.builder("HI Alarm").customManipulator("HP Feed", equipment -> {
-          if (equipment instanceof Stream) {
-            ((Stream) equipment).setPressure(54.0, "bara");
-            logger.info("  ➤ Feed pressure increased to 54 bara (above HI limit)");
-          }
-        }).build();
+    ProcessSafetyScenario hiAlarmScenario = ProcessSafetyScenario.builder("HI Alarm")
+	.customManipulator("HP Feed", equipment -> {
+	  if (equipment instanceof Stream) {
+	    ((Stream) equipment).setPressure(54.0, "bara");
+	    logger.info("  ➤ Feed pressure increased to 54 bara (above HI limit)");
+	  }
+	}).build();
     testRunner.executeScenario("HI Alarm", hiAlarmScenario, 15.0, 0.5);
     runScenarioStep(system, alarmManager, instruments, 15.0);
     AlarmReporter.displayAlarmStatus(alarmManager, "After HI Alarm");
@@ -479,13 +463,13 @@ public class ProcessLogicAlarmIntegratedExample {
     // Scenario 3: HIHI Alarm - Automatic Valve Throttling
     // ═══════════════════════════════════════════════════════════════
     printScenarioHeader("SCENARIO 3: HIHI Pressure Alarm - Automatic Control Action");
-    ProcessSafetyScenario hihiAlarmScenario =
-        ProcessSafetyScenario.builder("HIHI Alarm").customManipulator("HP Feed", equipment -> {
-          if (equipment instanceof Stream) {
-            ((Stream) equipment).setPressure(57.0, "bara");
-            logger.info("  ➤ Feed pressure increased to 57 bara (above HIHI limit)");
-          }
-        }).build();
+    ProcessSafetyScenario hihiAlarmScenario = ProcessSafetyScenario.builder("HIHI Alarm")
+	.customManipulator("HP Feed", equipment -> {
+	  if (equipment instanceof Stream) {
+	    ((Stream) equipment).setPressure(57.0, "bara");
+	    logger.info("  ➤ Feed pressure increased to 57 bara (above HIHI limit)");
+	  }
+	}).build();
     testRunner.executeScenario("HIHI Alarm", hihiAlarmScenario, 20.0, 0.5);
     runScenarioStep(system, alarmManager, instruments, 20.0);
     alarmManager.acknowledgeAll(simulationTime);
@@ -495,13 +479,13 @@ public class ProcessLogicAlarmIntegratedExample {
     // Scenario 4: HIPPS Activation via Alarm
     // ═══════════════════════════════════════════════════════════════
     printScenarioHeader("SCENARIO 4: HIPPS Triggered by Pressure Alarm");
-    ProcessSafetyScenario hippsScenario =
-        ProcessSafetyScenario.builder("HIPPS Trigger").customManipulator("HP Feed", equipment -> {
-          if (equipment instanceof Stream) {
-            ((Stream) equipment).setPressure(60.0, "bara");
-            logger.info("  ➤ Feed pressure increased to 60 bara (HIPPS activation level)");
-          }
-        }).build();
+    ProcessSafetyScenario hippsScenario = ProcessSafetyScenario.builder("HIPPS Trigger")
+	.customManipulator("HP Feed", equipment -> {
+	  if (equipment instanceof Stream) {
+	    ((Stream) equipment).setPressure(60.0, "bara");
+	    logger.info("  ➤ Feed pressure increased to 60 bara (HIPPS activation level)");
+	  }
+	}).build();
     testRunner.executeScenario("HIPPS Trigger", hippsScenario, 15.0, 0.2);
     runScenarioStep(system, alarmManager, instruments, 15.0);
     alarmManager.acknowledgeAll(simulationTime);
@@ -511,13 +495,13 @@ public class ProcessLogicAlarmIntegratedExample {
     // Scenario 5: Full ESD Triggered by Alarm
     // ═══════════════════════════════════════════════════════════════
     printScenarioHeader("SCENARIO 5: ESD Triggered by HIHI Pressure Alarm");
-    ProcessSafetyScenario esdAlarmScenario =
-        ProcessSafetyScenario.builder("ESD Alarm").customManipulator("HP Feed", equipment -> {
-          if (equipment instanceof Stream) {
-            ((Stream) equipment).setPressure(61.0, "bara");
-            logger.info("  ➤ Feed pressure increased to 61 bara (ESD activation level)");
-          }
-        }).build();
+    ProcessSafetyScenario esdAlarmScenario = ProcessSafetyScenario.builder("ESD Alarm")
+	.customManipulator("HP Feed", equipment -> {
+	  if (equipment instanceof Stream) {
+	    ((Stream) equipment).setPressure(61.0, "bara");
+	    logger.info("  ➤ Feed pressure increased to 61 bara (ESD activation level)");
+	  }
+	}).build();
     testRunner.executeScenario("ESD Alarm", esdAlarmScenario, 15.0, 0.2);
     runScenarioStep(system, alarmManager, instruments, 15.0);
     alarmManager.acknowledgeAll(simulationTime);
@@ -526,12 +510,12 @@ public class ProcessLogicAlarmIntegratedExample {
     // Scenario 6: Low Level Alarm Triggering Shutdown
     // ═══════════════════════════════════════════════════════════════
     printScenarioHeader("SCENARIO 6: LOLO Level Alarm - Emergency Shutdown");
-    ProcessSafetyScenario lowLevelScenario =
-        ProcessSafetyScenario.builder("Low Level").customManipulator("LT-101", equipment -> {
-          if (equipment instanceof LevelTransmitter) {
-            logger.info("  ➤ Simulating level drop to " + LOW_LOW_LEVEL_ALARM + "% (LOLO trigger)");
-          }
-        }).build();
+    ProcessSafetyScenario lowLevelScenario = ProcessSafetyScenario.builder("Low Level")
+	.customManipulator("LT-101", equipment -> {
+	  if (equipment instanceof LevelTransmitter) {
+	    logger.info("  ➤ Simulating level drop to " + LOW_LOW_LEVEL_ALARM + "% (LOLO trigger)");
+	  }
+	}).build();
     testRunner.executeScenario("Low Level", lowLevelScenario, 15.0, 0.5);
     simulationTime += 15.0;
     simulateLowLevelAlarm(logicSetup.esdLogic, alarmManager);
@@ -549,15 +533,14 @@ public class ProcessLogicAlarmIntegratedExample {
   /**
    * Simulates low level alarm triggering shutdown.
    *
-   * @param esdLogic the ESD logic to activate
+   * @param esdLogic     the ESD logic to activate
    * @param alarmManager the alarm manager for acknowledgement
    */
   private static void simulateLowLevelAlarm(ESDLogic esdLogic, ProcessAlarmManager alarmManager) {
     logger.info("\n  ╔═══════════════════════════════════════════════════════╗");
     logger.info("  ║  ⚠️  LOLO LEVEL ALARM - EMERGENCY SHUTDOWN           ║");
     logger.info("  ╠═══════════════════════════════════════════════════════╣");
-    System.out
-        .println("  ║  Trigger: LT-101 LOLO at " + LOW_LOW_LEVEL_ALARM + "%                  ║");
+    System.out.println("  ║  Trigger: LT-101 LOLO at " + LOW_LOW_LEVEL_ALARM + "%                  ║");
     logger.info("  ║  Action: Emergency shutdown to prevent dry running   ║");
     logger.info("  ╚═══════════════════════════════════════════════════════╝\n");
 
@@ -570,10 +553,10 @@ public class ProcessLogicAlarmIntegratedExample {
   /**
    * Runs transient blowdown simulation after ESD activation.
    *
-   * @param system the process system
-   * @param instruments the instrumentation setup
+   * @param system       the process system
+   * @param instruments  the instrumentation setup
    * @param alarmManager the alarm manager
-   * @param startTime the simulation start time
+   * @param startTime    the simulation start time
    */
   private static void runBlowdownSimulation(ProcessSystem system, InstrumentationSetup instruments,
       ProcessAlarmManager alarmManager, double startTime) {
@@ -586,8 +569,8 @@ public class ProcessLogicAlarmIntegratedExample {
     double blowdownTime = 60.0; // Simulate 60 seconds of blowdown
     double currentTime = startTime;
 
-    logger.info(String.format("%-10s %-15s %-15s %-15s %-15s", "Time [s]", "Pressure [bara]",
-        "Temp [°C]", "Flow [kg/hr]", "Level [%]"));
+    logger.info(String.format("%-10s %-15s %-15s %-15s %-15s", "Time [s]", "Pressure [bara]", "Temp [°C]",
+	"Flow [kg/hr]", "Level [%]"));
     logger.info("─────────────────────────────────────────────────────────────────────");
 
     for (int i = 0; i < (int) (blowdownTime / timeStep); i++) {
@@ -598,30 +581,24 @@ public class ProcessLogicAlarmIntegratedExample {
 
       // Evaluate alarms during blowdown
       if (i % 10 == 0) { // Every 10 seconds
-        AlarmEvaluator
-            .evaluateDevices(alarmManager,
-                Arrays.asList(instruments.separatorPT, instruments.separatorTT,
-                    instruments.flowTransmitter, instruments.levelTransmitter),
-                timeStep, currentTime);
+	AlarmEvaluator.evaluateDevices(alarmManager, Arrays.asList(instruments.separatorPT, instruments.separatorTT,
+	    instruments.flowTransmitter, instruments.levelTransmitter), timeStep, currentTime);
 
-        // Display current state
-        logger.info(String.format("%-10.1f %-15.2f %-15.2f %-15.2f %-15.2f",
-            currentTime - startTime, instruments.separatorPT.getMeasuredValue(),
-            instruments.separatorTT.getMeasuredValue(),
-            instruments.flowTransmitter.getMeasuredValue(),
-            instruments.levelTransmitter.getMeasuredValue()));
+	// Display current state
+	logger.info(String.format("%-10.1f %-15.2f %-15.2f %-15.2f %-15.2f", currentTime - startTime,
+	    instruments.separatorPT.getMeasuredValue(), instruments.separatorTT.getMeasuredValue(),
+	    instruments.flowTransmitter.getMeasuredValue(), instruments.levelTransmitter.getMeasuredValue()));
       }
 
       // Stop if pressure is sufficiently low
       if (instruments.separatorPT.getMeasuredValue() < 2.0) {
-        logger.info("\n✓ Blowdown complete - pressure reduced to safe level");
-        break;
+	logger.info("\n✓ Blowdown complete - pressure reduced to safe level");
+	break;
       }
     }
 
     logger.info("─────────────────────────────────────────────────────────────────────");
-    logger.info(
-        String.format("Final pressure: %.2f bara", instruments.separatorPT.getMeasuredValue()));
+    logger.info(String.format("Final pressure: %.2f bara", instruments.separatorPT.getMeasuredValue()));
     logger.info(String.format("Blowdown duration: %.1f seconds\n", currentTime - startTime));
   }
 
@@ -637,19 +614,18 @@ public class ProcessLogicAlarmIntegratedExample {
   /**
    * Executes a scenario step and evaluates alarms.
    *
-   * @param system the process system
+   * @param system       the process system
    * @param alarmManager the alarm manager
-   * @param instruments the instrumentation setup
-   * @param deltaTime time increment for this step
+   * @param instruments  the instrumentation setup
+   * @param deltaTime    time increment for this step
    */
   private static void runScenarioStep(ProcessSystem system, ProcessAlarmManager alarmManager,
       InstrumentationSetup instruments, double deltaTime) {
     simulationTime += deltaTime;
     system.run();
-    AlarmEvaluator.evaluateAndDisplay(alarmManager,
-        Arrays.asList(instruments.separatorPT, instruments.separatorTT, instruments.flowTransmitter,
-            instruments.levelTransmitter, instruments.esdPressureTransmitter),
-        deltaTime, simulationTime);
+    AlarmEvaluator.evaluateAndDisplay(alarmManager, Arrays.asList(instruments.separatorPT, instruments.separatorTT,
+	instruments.flowTransmitter, instruments.levelTransmitter, instruments.esdPressureTransmitter), deltaTime,
+	simulationTime);
   }
 
   /**

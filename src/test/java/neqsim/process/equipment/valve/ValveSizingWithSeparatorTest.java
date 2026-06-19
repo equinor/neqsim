@@ -13,15 +13,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Tests to verify that Cv/Kv is calculated correctly for valves connected to separator outlets.
- * This ensures proper sizing for both gas and liquid valves in typical process configurations.
+ * Tests to verify that Cv/Kv is calculated correctly for valves connected to separator outlets. This ensures proper
+ * sizing for both gas and liquid valves in typical process configurations.
  */
 public class ValveSizingWithSeparatorTest {
   private static final Logger logger = LogManager.getLogger(ValveSizingWithSeparatorTest.class);
 
   /**
-   * Test that gas and liquid valves connected to separator outlets get correctly calculated Cv/Kv*
-   * values based on their respective flow rates and pressure drops.
+   * Test that gas and liquid valves connected to separator outlets get correctly calculated Cv/Kv* values based on
+   * their respective flow rates and pressure drops.
    */
 
   @Test
@@ -48,8 +48,7 @@ public class ValveSizingWithSeparatorTest {
     gasValve.setPercentValveOpening(50.0);
 
     // Create liquid outlet valve at 50% opening
-    ThrottlingValve liquidValve =
-        new ThrottlingValve("liquid valve", separator.getLiquidOutStream());
+    ThrottlingValve liquidValve = new ThrottlingValve("liquid valve", separator.getLiquidOutStream());
     liquidValve.setOutletPressure(40.0, "bara");
     liquidValve.setPercentValveOpening(50.0);
 
@@ -71,8 +70,7 @@ public class ValveSizingWithSeparatorTest {
     logger.info("=== Valve Sizing Results ===");
     logger.info("Gas valve:");
     logger.info("  Flow rate: " + gasValve.getInletStream().getFlowRate("kg/hr") + " kg/hr");
-    System.out
-        .println("  Flow rate: " + gasValve.getInletStream().getFlowRate("Sm3/hr") + " Sm3/hr");
+    System.out.println("  Flow rate: " + gasValve.getInletStream().getFlowRate("Sm3/hr") + " Sm3/hr");
     logger.info("  Inlet P: " + gasValve.getInletStream().getPressure("bara") + " bara");
     logger.info("  Outlet P: " + gasValve.getOutletStream().getPressure("bara") + " bara");
     logger.info("  Kv: " + gasKv);
@@ -80,13 +78,10 @@ public class ValveSizingWithSeparatorTest {
     logger.info("  isGasValve: " + gasValve.isGasValve());
 
     logger.info("Liquid valve:");
-    System.out
-        .println("  Flow rate: " + liquidValve.getInletStream().getFlowRate("kg/hr") + " kg/hr");
-    System.out
-        .println("  Flow rate: " + liquidValve.getInletStream().getFlowRate("m3/hr") + " m3/hr");
+    System.out.println("  Flow rate: " + liquidValve.getInletStream().getFlowRate("kg/hr") + " kg/hr");
+    System.out.println("  Flow rate: " + liquidValve.getInletStream().getFlowRate("m3/hr") + " m3/hr");
     logger.info("  Inlet P: " + liquidValve.getInletStream().getPressure("bara") + " bara");
-    System.out
-        .println("  Outlet P: " + liquidValve.getOutletStream().getPressure("bara") + " bara");
+    System.out.println("  Outlet P: " + liquidValve.getOutletStream().getPressure("bara") + " bara");
     logger.info("  Kv: " + liquidKv);
     logger.info("  Cv: " + liquidCv);
     logger.info("  isGasValve: " + liquidValve.isGasValve());
@@ -129,9 +124,9 @@ public class ValveSizingWithSeparatorTest {
 
     // Flow should remain approximately the same since conditions haven't changed
     assertEquals(gasFlowBefore, gasFlowAfter, gasFlowBefore * 0.01,
-        "Gas flow should remain stable after transient run");
+	"Gas flow should remain stable after transient run");
     assertEquals(liquidFlowBefore, liquidFlowAfter, liquidFlowBefore * 0.01,
-        "Liquid flow should remain stable after transient run");
+	"Liquid flow should remain stable after transient run");
   }
 
   /**
@@ -189,7 +184,7 @@ public class ValveSizingWithSeparatorTest {
     // Because Kv represents the valve coefficient at 100% opening
     // When sized at 50%, the 100%-equivalent Kv must be larger
     assertEquals(kvAt100 * 2.0, kvAt50, kvAt100 * 0.05,
-        "Kv sized at 50% opening should be 2x larger than Kv sized at 100%");
+	"Kv sized at 50% opening should be 2x larger than Kv sized at 100%");
   }
 
   /**
@@ -226,8 +221,7 @@ public class ValveSizingWithSeparatorTest {
     process.run();
     double kvAfterFlowChange = valve.getKv();
     logger.info("Kv after flow change (no recalc): " + kvAfterFlowChange);
-    assertEquals(kvInitial, kvAfterFlowChange, 0.001,
-        "Kv should not change without explicit recalculation");
+    assertEquals(kvInitial, kvAfterFlowChange, 0.001, "Kv should not change without explicit recalculation");
 
     // Force recalculation
     valve.setValveKvSet(false);
@@ -237,7 +231,7 @@ public class ValveSizingWithSeparatorTest {
 
     // Kv should be approximately 2x now (double the flow)
     assertEquals(kvInitial * 2.0, kvRecalculated, kvInitial * 0.1,
-        "Recalculated Kv should be ~2x for double flow rate");
+	"Recalculated Kv should be ~2x for double flow rate");
   }
 
   /**
@@ -263,8 +257,7 @@ public class ValveSizingWithSeparatorTest {
     gasValve.setOutletPressure(20.0, "bara");
     gasValve.setPercentValveOpening(75.0);
 
-    ThrottlingValve liquidValve =
-        new ThrottlingValve("liquid valve", separator.getLiquidOutStream());
+    ThrottlingValve liquidValve = new ThrottlingValve("liquid valve", separator.getLiquidOutStream());
     liquidValve.setOutletPressure(20.0, "bara");
     liquidValve.setPercentValveOpening(75.0);
 
@@ -306,10 +299,9 @@ public class ValveSizingWithSeparatorTest {
     logger.info("Transient liquid flow: " + liquidFlowTransient + " kg/hr");
 
     // Flows should be similar (within 5%) since conditions haven't changed significantly
-    assertEquals(gasFlowSteady, gasFlowTransient, gasFlowSteady * 0.05,
-        "Transient gas flow should match steady state");
+    assertEquals(gasFlowSteady, gasFlowTransient, gasFlowSteady * 0.05, "Transient gas flow should match steady state");
     assertEquals(liquidFlowSteady, liquidFlowTransient, liquidFlowSteady * 0.05,
-        "Transient liquid flow should match steady state");
+	"Transient liquid flow should match steady state");
   }
 
   /**

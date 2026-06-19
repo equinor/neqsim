@@ -7,10 +7,9 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  * Base class for MPC variables (manipulated, controlled, or disturbance).
  *
  * <p>
- * An MPCVariable binds a process equipment property to the MPC formulation. It defines how to read
- * the current value from the equipment and, for manipulated variables, how to write new setpoints.
- * This abstraction allows the MPC to work with any NeqSim process equipment without hard-coding
- * specific property accessors.
+ * An MPCVariable binds a process equipment property to the MPC formulation. It defines how to read the current value
+ * from the equipment and, for manipulated variables, how to write new setpoints. This abstraction allows the MPC to
+ * work with any NeqSim process equipment without hard-coding specific property accessors.
  * </p>
  *
  * <p>
@@ -20,12 +19,12 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  * <pre>
  * {@code
  * // Create a manipulated variable for valve opening
- * ManipulatedVariable mv = new ManipulatedVariable("ValveOpening", valve, "opening")
- *     .setBounds(0.0, 1.0).setRateLimit(-0.1, 0.1);
+ * ManipulatedVariable mv = new ManipulatedVariable("ValveOpening", valve, "opening").setBounds(0.0, 1.0)
+ *     .setRateLimit(-0.1, 0.1);
  *
  * // Create a controlled variable for separator pressure
- * ControlledVariable cv = new ControlledVariable("Pressure", separator, "pressure", "bara")
- *     .setSetpoint(50.0).setSoftConstraints(45.0, 55.0);
+ * ControlledVariable cv = new ControlledVariable("Pressure", separator, "pressure", "bara").setSetpoint(50.0)
+ *     .setSoftConstraints(45.0, 55.0);
  * }
  * </pre>
  *
@@ -75,8 +74,8 @@ public abstract class MPCVariable implements Serializable {
   /**
    * Construct an MPC variable bound to equipment.
    *
-   * @param name unique identifier for this variable
-   * @param equipment the process equipment to bind to
+   * @param name         unique identifier for this variable
+   * @param equipment    the process equipment to bind to
    * @param propertyName the property to read/write
    */
   protected MPCVariable(String name, ProcessEquipmentInterface equipment, String propertyName) {
@@ -88,13 +87,12 @@ public abstract class MPCVariable implements Serializable {
   /**
    * Construct an MPC variable bound to equipment with unit specification.
    *
-   * @param name unique identifier for this variable
-   * @param equipment the process equipment to bind to
+   * @param name         unique identifier for this variable
+   * @param equipment    the process equipment to bind to
    * @param propertyName the property to read/write
-   * @param unit the unit for the property value
+   * @param unit         the unit for the property value
    */
-  protected MPCVariable(String name, ProcessEquipmentInterface equipment, String propertyName,
-      String unit) {
+  protected MPCVariable(String name, ProcessEquipmentInterface equipment, String propertyName, String unit) {
     this(name, equipment, propertyName);
     this.unit = unit;
   }
@@ -244,8 +242,8 @@ public abstract class MPCVariable implements Serializable {
    * Read the current value from the bound equipment.
    *
    * <p>
-   * This method uses reflection or equipment-specific accessors to read the property value. The
-   * implementation varies by variable type and property.
+   * This method uses reflection or equipment-specific accessors to read the property value. The implementation varies
+   * by variable type and property.
    * </p>
    *
    * @return the current value read from equipment

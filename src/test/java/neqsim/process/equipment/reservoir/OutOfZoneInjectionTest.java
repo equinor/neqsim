@@ -25,8 +25,7 @@ public class OutOfZoneInjectionTest {
 
   @Test
   void testWellFlowInjectionMode() {
-    neqsim.thermo.system.SystemInterface fluid =
-        new neqsim.thermo.system.SystemSrkEos(373.15, 200.0);
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(373.15, 200.0);
     fluid.addComponent("water", 1.0);
     fluid.setMixingRule(2);
 
@@ -37,17 +36,14 @@ public class OutOfZoneInjectionTest {
 
   @Test
   void testWellFlowAddInjectionZone() {
-    neqsim.thermo.system.SystemInterface fluid =
-        new neqsim.thermo.system.SystemSrkEos(373.15, 200.0);
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(373.15, 200.0);
     fluid.addComponent("water", 1.0);
     fluid.setMixingRule(2);
 
     WellFlow wellflow = new WellFlow("injection well");
     wellflow.setFlowMode(WellFlow.FlowMode.INJECTION);
-    neqsim.process.equipment.stream.Stream s1 =
-        new neqsim.process.equipment.stream.Stream("s1", fluid.clone());
-    neqsim.process.equipment.stream.Stream s2 =
-        new neqsim.process.equipment.stream.Stream("s2", fluid.clone());
+    neqsim.process.equipment.stream.Stream s1 = new neqsim.process.equipment.stream.Stream("s1", fluid.clone());
+    neqsim.process.equipment.stream.Stream s2 = new neqsim.process.equipment.stream.Stream("s2", fluid.clone());
     wellflow.addInjectionZone("Target Zone", s1, 250.0, 1e-3, 300.0);
     wellflow.addInjectionZone("Thief Zone", s2, 200.0, 2e-3, 280.0);
     wellflow.setTargetZone("Target Zone");
@@ -58,13 +54,11 @@ public class OutOfZoneInjectionTest {
 
   @Test
   void testReservoirLayerFractureContainment() {
-    neqsim.thermo.system.SystemInterface fluid =
-        new neqsim.thermo.system.SystemSrkEos(373.15, 200.0);
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(373.15, 200.0);
     fluid.addComponent("water", 1.0);
     fluid.setMixingRule(2);
 
-    neqsim.process.equipment.stream.Stream stream =
-        new neqsim.process.equipment.stream.Stream("test", fluid);
+    neqsim.process.equipment.stream.Stream stream = new neqsim.process.equipment.stream.Stream("test", fluid);
 
     WellFlow wellflow = new WellFlow("test well");
     WellFlow.ReservoirLayer layer = new WellFlow.ReservoirLayer("Test Layer", stream, 200.0, 1e-3);
@@ -105,14 +99,14 @@ public class OutOfZoneInjectionTest {
     model.setDrainageRadius(500.0);
     model.setWellboreRadius(0.1);
 
-    InjectionWellModel.InjectionZone zone1 =
-        new InjectionWellModel.InjectionZone("Target", 2500.0, 250.0, 100.0, 20.0, 350.0);
+    InjectionWellModel.InjectionZone zone1 = new InjectionWellModel.InjectionZone("Target", 2500.0, 250.0, 100.0, 20.0,
+	350.0);
     zone1.skinFactor = 2.0;
     zone1.isTargetZone = true;
     model.addZone(zone1);
 
-    InjectionWellModel.InjectionZone zone2 =
-        new InjectionWellModel.InjectionZone("Thief", 2400.0, 220.0, 200.0, 15.0, 300.0);
+    InjectionWellModel.InjectionZone zone2 = new InjectionWellModel.InjectionZone("Thief", 2400.0, 220.0, 200.0, 15.0,
+	300.0);
     zone2.skinFactor = 0.0;
     zone2.isTargetZone = false;
     model.addZone(zone2);
@@ -122,7 +116,7 @@ public class OutOfZoneInjectionTest {
     assertNotNull(result);
     assertTrue(result.totalRate > 0, "Total injection rate should be positive");
     assertTrue(result.injectionEfficiency >= 0 && result.injectionEfficiency <= 1.0,
-        "Injection efficiency should be 0-1");
+	"Injection efficiency should be 0-1");
     assertTrue(result.commonBHP > 0, "Common BHP should be positive");
 
     // Thief zone has higher permeability and lower reservoir pressure,
@@ -141,12 +135,10 @@ public class OutOfZoneInjectionTest {
 
     assertTrue(model.isThermalStressEnabled());
     double thermalReduction = model.getThermalStressReduction();
-    assertTrue(thermalReduction > 0,
-        "Thermal stress reduction should be positive for cold injection");
+    assertTrue(thermalReduction > 0, "Thermal stress reduction should be positive for cold injection");
 
     double effectiveFracPres = model.getEffectiveFracturePressure();
-    assertTrue(effectiveFracPres < 350.0,
-        "Effective fracture pressure should be reduced by thermal stress");
+    assertTrue(effectiveFracPres < 350.0, "Effective fracture pressure should be reduced by thermal stress");
     assertEquals(350.0 - thermalReduction, effectiveFracPres, 0.001);
   }
 
@@ -222,8 +214,7 @@ public class OutOfZoneInjectionTest {
 
   @Test
   void testMultiCompartmentReservoirBasic() {
-    neqsim.thermo.system.SystemInterface fluid =
-        new neqsim.thermo.system.SystemSrkEos(373.15, 250.0);
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(373.15, 250.0);
     fluid.addComponent("methane", 0.9);
     fluid.addComponent("ethane", 0.1);
     fluid.setMixingRule(2);
@@ -254,8 +245,7 @@ public class OutOfZoneInjectionTest {
 
   @Test
   void testMultiCompartmentReservoirCrossFlow() {
-    neqsim.thermo.system.SystemInterface fluid =
-        new neqsim.thermo.system.SystemSrkEos(373.15, 250.0);
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(373.15, 250.0);
     fluid.addComponent("methane", 0.9);
     fluid.addComponent("ethane", 0.1);
     fluid.setMixingRule(2);
@@ -285,8 +275,7 @@ public class OutOfZoneInjectionTest {
 
   @Test
   void testMultiCompartmentReservoirReset() {
-    neqsim.thermo.system.SystemInterface fluid =
-        new neqsim.thermo.system.SystemSrkEos(373.15, 250.0);
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(373.15, 250.0);
     fluid.addComponent("methane", 1.0);
     fluid.setMixingRule(2);
 
@@ -348,8 +337,7 @@ public class OutOfZoneInjectionTest {
     // CO2-resistant cement should degrade slower
     double portlandDepth = portlandCement.getDegradationDepth(30.0, "mm");
     double resistantDepth = resistantCement.getDegradationDepth(30.0, "mm");
-    assertTrue(resistantDepth < portlandDepth,
-        "CO2-resistant cement should degrade slower than Portland");
+    assertTrue(resistantDepth < portlandDepth, "CO2-resistant cement should degrade slower than Portland");
   }
 
   @Test

@@ -208,10 +208,9 @@ public class TankMechanicalDesign extends MechanicalDesign {
     // Estimate liquid density if available
     if (tank.getLiquidOutStream() != null && tank.getLiquidOutStream().getThermoSystem() != null) {
       try {
-        designSpecificGravity =
-            tank.getLiquidOutStream().getThermoSystem().getDensity("kg/m3") / 1000.0;
+	designSpecificGravity = tank.getLiquidOutStream().getThermoSystem().getDensity("kg/m3") / 1000.0;
       } catch (Exception e) {
-        designSpecificGravity = 0.85; // Default for oil
+	designSpecificGravity = 0.85; // Default for oil
       }
     } else {
       designSpecificGravity = 0.85;
@@ -244,8 +243,7 @@ public class TankMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Size tank geometry (diameter and height) for given volume. Optimizes for minimum surface area
-   * (economic design).
+   * Size tank geometry (diameter and height) for given volume. Optimizes for minimum surface area (economic design).
    *
    * @param volumeM3 required volume in m³
    */
@@ -291,24 +289,24 @@ public class TankMechanicalDesign extends MechanicalDesign {
     if (designPressure > 1.07) {
       // Low pressure tank per API 620
       if (nominalCapacity > 5000) {
-        tankType = TankType.SPHERICAL;
+	tankType = TankType.SPHERICAL;
       } else {
-        tankType = TankType.HORIZONTAL_CYLINDRICAL;
+	tankType = TankType.HORIZONTAL_CYLINDRICAL;
       }
     } else {
       // Atmospheric tank per API 650
       if (nominalCapacity > 50000) {
-        tankType = TankType.EXTERNAL_FLOATING_ROOF;
-        roofType = RoofType.FLOATING;
-        hasFloatingRoof = true;
+	tankType = TankType.EXTERNAL_FLOATING_ROOF;
+	roofType = RoofType.FLOATING;
+	hasFloatingRoof = true;
       } else if (nominalCapacity > 10000) {
-        tankType = TankType.INTERNAL_FLOATING_ROOF;
-        roofType = RoofType.SELF_SUPPORTING_CONE;
-        hasFloatingRoof = true;
+	tankType = TankType.INTERNAL_FLOATING_ROOF;
+	roofType = RoofType.SELF_SUPPORTING_CONE;
+	hasFloatingRoof = true;
       } else {
-        tankType = TankType.FIXED_CONE_ROOF;
-        roofType = RoofType.SELF_SUPPORTING_CONE;
-        hasFloatingRoof = false;
+	tankType = TankType.FIXED_CONE_ROOF;
+	roofType = RoofType.SELF_SUPPORTING_CONE;
+	hasFloatingRoof = false;
       }
     }
   }
@@ -323,7 +321,7 @@ public class TankMechanicalDesign extends MechanicalDesign {
       // Height from bottom of course to design liquid level
       double liquidHeight = designLiquidLevel - i * courseHeight;
       if (liquidHeight < 0) {
-        liquidHeight = 0;
+	liquidHeight = 0;
       }
 
       // Hydrostatic pressure at bottom of course
@@ -333,7 +331,7 @@ public class TankMechanicalDesign extends MechanicalDesign {
       // Shell thickness per API 650: t = 4.9 * D * (H - 0.3) * G / (S * E)
       // Simplified: t = P * D / (2 * S * E) + CA
       double requiredThickness = (hydrostaticPressureMPa * tankDiameter * 1000.0)
-          / (2.0 * ALLOWABLE_STRESS_A36 * JOINT_EFFICIENCY);
+	  / (2.0 * ALLOWABLE_STRESS_A36 * JOINT_EFFICIENCY);
 
       // Add corrosion allowance
       requiredThickness += CORROSION_ALLOWANCE;
@@ -353,12 +351,12 @@ public class TankMechanicalDesign extends MechanicalDesign {
    * @return standard plate thickness
    */
   private double roundToStandardThickness(double thickness) {
-    double[] standardThicknesses = {5.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 25.0,
-        28.0, 30.0, 32.0, 35.0, 38.0, 40.0, 45.0, 50.0};
+    double[] standardThicknesses = { 5.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 25.0, 28.0, 30.0, 32.0,
+	35.0, 38.0, 40.0, 45.0, 50.0 };
 
     for (double std : standardThicknesses) {
       if (std >= thickness) {
-        return std;
+	return std;
       }
     }
     return standardThicknesses[standardThicknesses.length - 1];
@@ -390,7 +388,7 @@ public class TankMechanicalDesign extends MechanicalDesign {
       // Self-supporting cone roof
       // Maximum diameter for self-supporting: ~20m
       if (tankDiameter > 20.0) {
-        roofType = RoofType.SUPPORTED_CONE;
+	roofType = RoofType.SUPPORTED_CONE;
       }
       roofThickness = MIN_ROOF_THICKNESS + CORROSION_ALLOWANCE;
     } else if (roofType == RoofType.DOME) {
@@ -428,8 +426,7 @@ public class TankMechanicalDesign extends MechanicalDesign {
     } else if (roofType == RoofType.DOME) {
       // Dome roof area
       double roofRadius = tankDiameter * 0.8;
-      double roofHeight =
-          roofRadius - Math.sqrt(roofRadius * roofRadius - tankDiameter * tankDiameter / 4.0);
+      double roofHeight = roofRadius - Math.sqrt(roofRadius * roofRadius - tankDiameter * tankDiameter / 4.0);
       roofArea = 2.0 * Math.PI * roofRadius * roofHeight;
     } else {
       // Flat or floating roof
@@ -449,8 +446,7 @@ public class TankMechanicalDesign extends MechanicalDesign {
     structuralWeight = estimateStructuralWeight();
 
     // Total weight
-    double emptyWeight =
-        shellWeight + bottomWeight + roofWeight + appurtenancesWeight + structuralWeight;
+    double emptyWeight = shellWeight + bottomWeight + roofWeight + appurtenancesWeight + structuralWeight;
 
     // Set base class weights
     weigthVesselShell = shellWeight;
@@ -505,8 +501,8 @@ public class TankMechanicalDesign extends MechanicalDesign {
 
       // Intermediate girders for tall tanks
       if (tankHeight > 15.0) {
-        int numGirders = (int) (tankHeight / 10.0);
-        weight += numGirders * Math.PI * tankDiameter * 12.0;
+	int numGirders = (int) (tankHeight / 10.0);
+	weight += numGirders * Math.PI * tankDiameter * 12.0;
       }
     }
 
@@ -727,25 +723,20 @@ public class TankMechanicalDesign extends MechanicalDesign {
     Container dialogContentPane = dialog.getContentPane();
     dialogContentPane.setLayout(new BorderLayout());
 
-    String[] columnNames = {"Parameter", "Value", "Unit"};
-    String[][] data =
-        {{"Tank Type", tankType.toString(), ""}, {"Roof Type", roofType.toString(), ""},
-            {"Diameter", String.format("%.1f", tankDiameter), "m"},
-            {"Height", String.format("%.1f", tankHeight), "m"},
-            {"Number of Courses", String.valueOf(numberOfCourses), ""},
-            {"Bottom Course Thickness",
-                String.format("%.1f", shellThicknesses != null ? shellThicknesses[0] : 0), "mm"},
-            {"Top Course Thickness",
-                String.format("%.1f",
-                    shellThicknesses != null ? shellThicknesses[numberOfCourses - 1] : 0),
-                "mm"},
-            {"Bottom Thickness", String.format("%.1f", bottomThickness), "mm"},
-            {"Roof Thickness", String.format("%.1f", roofThickness), "mm"},
-            {"Nominal Capacity", String.format("%.0f", nominalCapacity), "m³"},
-            {"Working Capacity", String.format("%.0f", workingCapacity), "m³"},
-            {"Shell Weight", String.format("%.0f", shellWeight), "kg"},
-            {"Total Weight", String.format("%.0f", getWeightTotal()), "kg"},
-            {"Foundation Load", String.format("%.0f", foundationLoad), "kN"}};
+    String[] columnNames = { "Parameter", "Value", "Unit" };
+    String[][] data = { { "Tank Type", tankType.toString(), "" }, { "Roof Type", roofType.toString(), "" },
+	{ "Diameter", String.format("%.1f", tankDiameter), "m" }, { "Height", String.format("%.1f", tankHeight), "m" },
+	{ "Number of Courses", String.valueOf(numberOfCourses), "" },
+	{ "Bottom Course Thickness", String.format("%.1f", shellThicknesses != null ? shellThicknesses[0] : 0), "mm" },
+	{ "Top Course Thickness",
+	    String.format("%.1f", shellThicknesses != null ? shellThicknesses[numberOfCourses - 1] : 0), "mm" },
+	{ "Bottom Thickness", String.format("%.1f", bottomThickness), "mm" },
+	{ "Roof Thickness", String.format("%.1f", roofThickness), "mm" },
+	{ "Nominal Capacity", String.format("%.0f", nominalCapacity), "m³" },
+	{ "Working Capacity", String.format("%.0f", workingCapacity), "m³" },
+	{ "Shell Weight", String.format("%.0f", shellWeight), "kg" },
+	{ "Total Weight", String.format("%.0f", getWeightTotal()), "kg" },
+	{ "Foundation Load", String.format("%.0f", foundationLoad), "kN" } };
 
     JTable table = new JTable(data, columnNames);
     JScrollPane scrollPane = new JScrollPane(table);

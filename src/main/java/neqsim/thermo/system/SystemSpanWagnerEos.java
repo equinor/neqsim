@@ -38,8 +38,8 @@ public class SystemSpanWagnerEos extends SystemEos {
    * Constructor for SystemSpanWagnerEos.
    * </p>
    *
-   * @param T a double
-   * @param P a double
+   * @param T              a double
+   * @param P              a double
    * @param checkForSolids a boolean
    */
   public SystemSpanWagnerEos(double T, double P, boolean checkForSolids) {

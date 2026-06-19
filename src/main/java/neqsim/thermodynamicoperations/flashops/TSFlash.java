@@ -32,7 +32,7 @@ public class TSFlash extends QfuncFlash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param Sspec a double
+   * @param Sspec  a double
    */
   public TSFlash(SystemInterface system, double Sspec) {
     this.system = system;
@@ -62,9 +62,9 @@ public class TSFlash extends QfuncFlash {
   }
 
   /**
-   * Calculate the gradient of Q with respect to pressure for TS-flash. For isentropic flash at
-   * fixed T, we solve for P such that S(T,P) = Sspec. Q = Sspec - S, so dQ/dP = -dS/dP. By Maxwell
-   * relation: (dS/dP)_T = -(dV/dT)_P Therefore: dQ/dP = -(-dV/dT) = dV/dT
+   * Calculate the gradient of Q with respect to pressure for TS-flash. For isentropic flash at fixed T, we solve for P
+   * such that S(T,P) = Sspec. Q = Sspec - S, so dQ/dP = -dS/dP. By Maxwell relation: (dS/dP)_T = -(dV/dT)_P Therefore:
+   * dQ/dP = -(-dV/dT) = dV/dT
    *
    * @return gradient dQ/dP
    */
@@ -75,8 +75,8 @@ public class TSFlash extends QfuncFlash {
   }
 
   /**
-   * Calculate the second derivative of Q with respect to pressure for TS-flash. d²Q/dP² =
-   * d(dV/dT)/dP This approximation uses finite differencing concept for stability.
+   * Calculate the second derivative of Q with respect to pressure for TS-flash. d²Q/dP² = d(dV/dT)/dP This
+   * approximation uses finite differencing concept for stability.
    *
    * @return second derivative d²Q/dP²
    */
@@ -121,7 +121,7 @@ public class TSFlash extends QfuncFlash {
 
       // Avoid division by zero
       if (Math.abs(dSdP) < 1e-20) {
-        dSdP = (dSdP >= 0) ? 1e-20 : -1e-20;
+	dSdP = (dSdP >= 0) ? 1e-20 : -1e-20;
       }
 
       // Newton step: P_new = P_old - residual / (d residual / dP)
@@ -130,7 +130,7 @@ public class TSFlash extends QfuncFlash {
       // Limit step size to avoid divergence
       double maxDeltaP = 0.3 * oldPres;
       if (Math.abs(deltaP) > maxDeltaP) {
-        deltaP = Math.signum(deltaP) * maxDeltaP;
+	deltaP = Math.signum(deltaP) * maxDeltaP;
       }
 
       // Apply damping factor that increases with iterations
@@ -139,10 +139,10 @@ public class TSFlash extends QfuncFlash {
 
       // Ensure pressure stays positive and physical
       if (nyPres <= 0.01) {
-        nyPres = 0.01;
+	nyPres = 0.01;
       }
       if (nyPres > 1000) {
-        nyPres = oldPres * 0.9;
+	nyPres = oldPres * 0.9;
       }
 
       system.setPressure(nyPres);
@@ -158,7 +158,8 @@ public class TSFlash extends QfuncFlash {
    * onPhaseSolve.
    * </p>
    */
-  public void onPhaseSolve() {}
+  public void onPhaseSolve() {
+  }
 
   /** {@inheritDoc} */
   @Override

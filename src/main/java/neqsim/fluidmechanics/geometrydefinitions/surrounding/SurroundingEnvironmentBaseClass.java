@@ -17,7 +17,8 @@ public class SurroundingEnvironmentBaseClass implements SurroundingEnvironment {
    * Constructor for SurroundingEnvironmentBaseClass.
    * </p>
    */
-  public SurroundingEnvironmentBaseClass() {}
+  public SurroundingEnvironmentBaseClass() {
+  }
 
   /** {@inheritDoc} */
   @Override

@@ -9,9 +9,9 @@ import java.util.Set;
  * Study classification for engineering deliverables.
  *
  * <p>
- * Defines which deliverables are required for each study class according to oil &amp; gas industry
- * practice. Class A studies (FEED/Detailed Design) require the full set of engineering documents
- * while Class B (Concept/Pre-FEED) requires a reduced set.
+ * Defines which deliverables are required for each study class according to oil &amp; gas industry practice. Class A
+ * studies (FEED/Detailed Design) require the full set of engineering documents while Class B (Concept/Pre-FEED)
+ * requires a reduced set.
  * </p>
  *
  * <table>
@@ -82,7 +82,7 @@ public enum StudyClass {
    */
   CLASS_B("Class B (Concept/Pre-FEED)",
       toSet(DeliverableType.PFD, DeliverableType.THERMAL_UTILITIES, DeliverableType.FIRE_SCENARIOS,
-          DeliverableType.INSTRUMENT_SCHEDULE, DeliverableType.REFERENCE_DESIGNATION_SCHEDULE)),
+	  DeliverableType.INSTRUMENT_SCHEDULE, DeliverableType.REFERENCE_DESIGNATION_SCHEDULE)),
 
   /**
    * Class C: Screening study. Minimal deliverable set.
@@ -95,7 +95,7 @@ public enum StudyClass {
   /**
    * Constructor.
    *
-   * @param displayName human-readable name
+   * @param displayName          human-readable name
    * @param requiredDeliverables set of required deliverable types
    */
   StudyClass(String displayName, Set<DeliverableType> requiredDeliverables) {

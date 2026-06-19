@@ -7,9 +7,8 @@ import org.junit.jupiter.api.Test;
  * Unit tests for the {@link Iapws_if97} steam table implementation.
  *
  * <p>
- * All numeric literals include units explicitly in comments. Input pressure values are given in MPa
- * and temperatures in Kelvin. Output values are documented with their units alongside the
- * assertions.
+ * All numeric literals include units explicitly in comments. Input pressure values are given in MPa and temperatures in
+ * Kelvin. Output values are documented with their units alongside the assertions.
  * </p>
  */
 public class Iapws_if97Test {

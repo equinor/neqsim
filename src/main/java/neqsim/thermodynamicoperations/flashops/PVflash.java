@@ -13,13 +13,13 @@ import neqsim.thermo.system.SystemInterface;
  * Pressure-Volume (PV) flash calculation.
  *
  * <p>
- * Solves for temperature T given specified pressure P and volume V. Uses Newton iteration with the
- * thermodynamic derivative (∂V/∂T)_P.
+ * Solves for temperature T given specified pressure P and volume V. Uses Newton iteration with the thermodynamic
+ * derivative (∂V/∂T)_P.
  * </p>
  *
  * <p>
- * Applications include fixed volume vessels at constant pressure and process simulation where
- * pressure and volume are specified independently.
+ * Applications include fixed volume vessels at constant pressure and process simulation where pressure and volume are
+ * specified independently.
  * </p>
  *
  * @author Even Solbraa
@@ -39,7 +39,7 @@ public class PVflash extends QfuncFlash {
    * Constructor for PVflash.
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param Vspec specified volume in m³
+   * @param Vspec  specified volume in m³
    */
   public PVflash(SystemInterface system, double Vspec) {
     this.system = system;
@@ -103,23 +103,23 @@ public class PVflash extends QfuncFlash {
       // Numerical derivative from previous iteration
       double dVdT_numerical = 0.0;
       if (iterations > 1 && Math.abs(tempStep) > 1e-10) {
-        dVdT_numerical = (dV - olddV) / tempStep;
+	dVdT_numerical = (dV - olddV) / tempStep;
       }
 
       // Use analytical for first iterations, switch to numerical for stability
       double dVdT;
       if (iterations < 5 || Math.abs(dVdT_numerical) < 1e-12) {
-        dVdT = dVdT_analytical;
+	dVdT = dVdT_analytical;
       } else {
-        dVdT = dVdT_numerical;
+	dVdT = dVdT_numerical;
       }
 
       // Avoid division by zero
       if (Math.abs(dVdT) < 1e-10) {
-        dVdT = Math.signum(dVdT) * 1e-10;
-        if (dVdT == 0) {
-          dVdT = 1e-10;
-        }
+	dVdT = Math.signum(dVdT) * 1e-10;
+	if (dVdT == 0) {
+	  dVdT = 1e-10;
+	}
       }
 
       // Newton step with damping
@@ -128,17 +128,17 @@ public class PVflash extends QfuncFlash {
 
       // Limit step size to 20% of current temperature
       if (Math.abs(deltaT) > 0.2 * oldTemp) {
-        deltaT = Math.signum(deltaT) * 0.2 * oldTemp;
+	deltaT = Math.signum(deltaT) * 0.2 * oldTemp;
       }
 
       nyTemp = oldTemp + deltaT;
 
       // Ensure temperature stays within bounds
       if (nyTemp <= 10.0) {
-        nyTemp = 10.0;
+	nyTemp = 10.0;
       }
       if (nyTemp > 2000.0) {
-        nyTemp = 2000.0;
+	nyTemp = 2000.0;
       }
 
       tempStep = nyTemp - oldTemp;

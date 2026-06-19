@@ -13,13 +13,13 @@ import neqsim.thermo.system.SystemInterface;
  * Temperature-Enthalpy (TH) flash calculation.
  *
  * <p>
- * Solves for pressure P given specified temperature T and enthalpy H. Uses Newton iteration with
- * the thermodynamic derivative (∂H/∂P)_T = V - T(∂V/∂T)_P.
+ * Solves for pressure P given specified temperature T and enthalpy H. Uses Newton iteration with the thermodynamic
+ * derivative (∂H/∂P)_T = V - T(∂V/∂T)_P.
  * </p>
  *
  * <p>
- * Applications include heat exchanger design at fixed temperature and process simulation where
- * temperature and enthalpy are specified independently.
+ * Applications include heat exchanger design at fixed temperature and process simulation where temperature and enthalpy
+ * are specified independently.
  * </p>
  *
  * @author Even Solbraa
@@ -39,7 +39,7 @@ public class THflash extends QfuncFlash {
    * Constructor for THflash.
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param Hspec specified enthalpy in J
+   * @param Hspec  specified enthalpy in J
    */
   public THflash(SystemInterface system, double Hspec) {
     this.system = system;
@@ -60,8 +60,8 @@ public class THflash extends QfuncFlash {
    * Calculates the derivative d²Q/dP² = (∂H/∂P)_T.
    *
    * <p>
-   * Using thermodynamic relation: (∂H/∂P)_T = V - T(∂V/∂T)_P = V + T * dVdT where dVdT is defined
-   * as -dV/dT in NeqSim convention.
+   * Using thermodynamic relation: (∂H/∂P)_T = V - T(∂V/∂T)_P = V + T * dVdT where dVdT is defined as -dV/dT in NeqSim
+   * convention.
    * </p>
    *
    * @return derivative of enthalpy with respect to pressure at constant T
@@ -112,23 +112,23 @@ public class THflash extends QfuncFlash {
       // Numerical derivative from previous iteration
       double dHdP_numerical = 0.0;
       if (iterations > 1 && Math.abs(pressureStep) > 1e-10) {
-        dHdP_numerical = (dH - olddH) / pressureStep;
+	dHdP_numerical = (dH - olddH) / pressureStep;
       }
 
       // Use analytical for first iterations, switch to numerical for stability
       double dHdP;
       if (iterations < 5 || Math.abs(dHdP_numerical) < 1e-10) {
-        dHdP = dHdP_analytical;
+	dHdP = dHdP_analytical;
       } else {
-        dHdP = dHdP_numerical;
+	dHdP = dHdP_numerical;
       }
 
       // Avoid division by zero
       if (Math.abs(dHdP) < 1.0) {
-        dHdP = Math.signum(dHdP) * 1.0;
-        if (dHdP == 0) {
-          dHdP = 1.0;
-        }
+	dHdP = Math.signum(dHdP) * 1.0;
+	if (dHdP == 0) {
+	  dHdP = 1.0;
+	}
       }
 
       // Newton step with damping
@@ -137,17 +137,17 @@ public class THflash extends QfuncFlash {
 
       // Limit step size
       if (Math.abs(deltaP) > 0.5 * oldPres) {
-        deltaP = Math.signum(deltaP) * 0.5 * oldPres;
+	deltaP = Math.signum(deltaP) * 0.5 * oldPres;
       }
 
       nyPres = oldPres + deltaP;
 
       // Ensure pressure stays positive
       if (nyPres <= 0.01) {
-        nyPres = 0.01;
+	nyPres = 0.01;
       }
       if (nyPres > 10000.0) {
-        nyPres = 10000.0;
+	nyPres = 10000.0;
       }
 
       pressureStep = nyPres - oldPres;

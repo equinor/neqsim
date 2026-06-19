@@ -6,8 +6,8 @@ import java.io.Serializable;
  * Describes one plant-agnostic operation to apply to a NeqSim process model.
  *
  * <p>
- * Actions are intentionally small and map to existing NeqSim capabilities: automation writes,
- * valve-opening logic actions, steady-state runs, field-input application, and transient steps.
+ * Actions are intentionally small and map to existing NeqSim capabilities: automation writes, valve-opening logic
+ * actions, steady-state runs, field-input application, and transient steps.
  * </p>
  *
  * @author ESOL
@@ -41,16 +41,16 @@ public final class OperationalAction implements Serializable {
   /**
    * Creates an action.
    *
-   * @param type action type
-   * @param target action target such as an automation address or valve name
-   * @param value action value
-   * @param unit engineering unit for the value
+   * @param type            action type
+   * @param target          action target such as an automation address or valve name
+   * @param value           action value
+   * @param unit            engineering unit for the value
    * @param durationSeconds transient duration in seconds
    * @param timeStepSeconds transient time step in seconds
-   * @param description human-readable description
+   * @param description     human-readable description
    */
-  private OperationalAction(ActionType type, String target, double value, String unit,
-      double durationSeconds, double timeStepSeconds, String description) {
+  private OperationalAction(ActionType type, String target, double value, String unit, double durationSeconds,
+      double timeStepSeconds, String description) {
     if (type == null) {
       throw new IllegalArgumentException("type must not be null");
     }
@@ -67,25 +67,25 @@ public final class OperationalAction implements Serializable {
    * Creates an action that writes an automation variable.
    *
    * @param address automation address
-   * @param value value to set
-   * @param unit engineering unit
+   * @param value   value to set
+   * @param unit    engineering unit
    * @return operational action
    */
   public static OperationalAction setVariable(String address, double value, String unit) {
     return new OperationalAction(ActionType.SET_VARIABLE, address, value, unit, 0.0, 0.0,
-        "Set " + address + " to " + value + " " + clean(unit));
+	"Set " + address + " to " + value + " " + clean(unit));
   }
 
   /**
    * Creates an action that sets a throttling valve opening percentage.
    *
-   * @param valveName valve unit name
+   * @param valveName   valve unit name
    * @param percentOpen target opening in percent from 0 to 100
    * @return operational action
    */
   public static OperationalAction setValveOpening(String valveName, double percentOpen) {
-    return new OperationalAction(ActionType.SET_VALVE_OPENING, valveName, percentOpen, "%", 0.0,
-        0.0, "Set valve " + clean(valveName) + " opening to " + percentOpen + "%");
+    return new OperationalAction(ActionType.SET_VALVE_OPENING, valveName, percentOpen, "%", 0.0, 0.0,
+	"Set valve " + clean(valveName) + " opening to " + percentOpen + "%");
   }
 
   /**
@@ -95,7 +95,7 @@ public final class OperationalAction implements Serializable {
    */
   public static OperationalAction applyFieldInputs() {
     return new OperationalAction(ActionType.APPLY_FIELD_INPUTS, "", Double.NaN, "", 0.0, 0.0,
-        "Apply field input measurements");
+	"Apply field input measurements");
   }
 
   /**
@@ -105,7 +105,7 @@ public final class OperationalAction implements Serializable {
    */
   public static OperationalAction runSteadyState() {
     return new OperationalAction(ActionType.RUN_STEADY_STATE, "", Double.NaN, "", 0.0, 0.0,
-        "Run steady-state calculation");
+	"Run steady-state calculation");
   }
 
   /**
@@ -116,8 +116,8 @@ public final class OperationalAction implements Serializable {
    * @return operational action
    */
   public static OperationalAction runTransient(double durationSeconds, double timeStepSeconds) {
-    return new OperationalAction(ActionType.RUN_TRANSIENT, "", Double.NaN, "", durationSeconds,
-        timeStepSeconds, "Run transient simulation for " + durationSeconds + " s");
+    return new OperationalAction(ActionType.RUN_TRANSIENT, "", Double.NaN, "", durationSeconds, timeStepSeconds,
+	"Run transient simulation for " + durationSeconds + " s");
   }
 
   /**

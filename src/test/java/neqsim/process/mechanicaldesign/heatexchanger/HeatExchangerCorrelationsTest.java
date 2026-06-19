@@ -10,8 +10,7 @@ import org.junit.jupiter.api.Test;
  * Tests for heat exchanger two-phase and fouling correlations.
  *
  * <p>
- * Covers: ShahCondensation, BoilingHeatTransfer, TwoPhasePressureDrop, FoulingModel, and
- * TubeInsertModel.
+ * Covers: ShahCondensation, BoilingHeatTransfer, TwoPhasePressureDrop, FoulingModel, and TubeInsertModel.
  * </p>
  *
  * @author NeqSim Development Team
@@ -65,16 +64,14 @@ public class HeatExchangerCorrelationsTest {
 
   @Test
   void testShahLocalHTC_InvalidInputs() {
-    assertEquals(0.0, ShahCondensation.calcLocalHTC(-1.0, 0.5, 0.1),
-        "Negative hLo should return 0");
-    assertEquals(0.0, ShahCondensation.calcLocalHTC(3000.0, 0.5, -0.1),
-        "Negative Pr should return 0");
+    assertEquals(0.0, ShahCondensation.calcLocalHTC(-1.0, 0.5, 0.1), "Negative hLo should return 0");
+    assertEquals(0.0, ShahCondensation.calcLocalHTC(3000.0, 0.5, -0.1), "Negative Pr should return 0");
   }
 
   @Test
   void testShahLiquidOnlyHTC() {
-    double h = ShahCondensation.calcLiquidOnlyHTC(MASS_FLUX, TUBE_ID, LIQUID_DENSITY,
-        LIQUID_VISCOSITY, LIQUID_CP, LIQUID_CONDUCTIVITY);
+    double h = ShahCondensation.calcLiquidOnlyHTC(MASS_FLUX, TUBE_ID, LIQUID_DENSITY, LIQUID_VISCOSITY, LIQUID_CP,
+	LIQUID_CONDUCTIVITY);
     assertTrue(h > 500, "Liquid-only HTC should be > 500 W/(m2*K) for typical conditions");
     assertTrue(h < 20000, "Liquid-only HTC should be < 20000 W/(m2*K) for typical conditions");
   }
@@ -97,8 +94,7 @@ public class HeatExchangerCorrelationsTest {
   @Test
   void testShahVerticalTubeHTC() {
     double hLo = 3000.0;
-    double h = ShahCondensation.calcVerticalTubeHTC(hLo, 0.5, 0.1, MASS_FLUX, TUBE_ID,
-        VAPOR_DENSITY, LIQUID_DENSITY);
+    double h = ShahCondensation.calcVerticalTubeHTC(hLo, 0.5, 0.1, MASS_FLUX, TUBE_ID, VAPOR_DENSITY, LIQUID_DENSITY);
     assertTrue(h > 0, "Vertical tube HTC must be positive");
   }
 
@@ -108,9 +104,8 @@ public class HeatExchangerCorrelationsTest {
 
   @Test
   void testChenHTC_MidQuality() {
-    double h = BoilingHeatTransfer.calcChenHTC(MASS_FLUX, 0.3, TUBE_ID, LIQUID_DENSITY,
-        VAPOR_DENSITY, LIQUID_VISCOSITY, VAPOR_VISCOSITY, LIQUID_CP, LIQUID_CONDUCTIVITY,
-        SURFACE_TENSION, HEAT_OF_VAPORIZATION, 5.0, 50000.0);
+    double h = BoilingHeatTransfer.calcChenHTC(MASS_FLUX, 0.3, TUBE_ID, LIQUID_DENSITY, VAPOR_DENSITY, LIQUID_VISCOSITY,
+	VAPOR_VISCOSITY, LIQUID_CP, LIQUID_CONDUCTIVITY, SURFACE_TENSION, HEAT_OF_VAPORIZATION, 5.0, 50000.0);
     assertTrue(h > 0, "Chen HTC must be positive");
     assertTrue(h > 500, "Chen HTC should be > 500 for nucleate boiling conditions");
   }
@@ -118,26 +113,23 @@ public class HeatExchangerCorrelationsTest {
   @Test
   void testChenHTC_NoWallSuperheat() {
     // Without wall superheat, nucleate boiling component is zero
-    double h = BoilingHeatTransfer.calcChenHTC(MASS_FLUX, 0.3, TUBE_ID, LIQUID_DENSITY,
-        VAPOR_DENSITY, LIQUID_VISCOSITY, VAPOR_VISCOSITY, LIQUID_CP, LIQUID_CONDUCTIVITY,
-        SURFACE_TENSION, HEAT_OF_VAPORIZATION, 0.0, 0.0);
+    double h = BoilingHeatTransfer.calcChenHTC(MASS_FLUX, 0.3, TUBE_ID, LIQUID_DENSITY, VAPOR_DENSITY, LIQUID_VISCOSITY,
+	VAPOR_VISCOSITY, LIQUID_CP, LIQUID_CONDUCTIVITY, SURFACE_TENSION, HEAT_OF_VAPORIZATION, 0.0, 0.0);
     assertTrue(h > 0, "Chen HTC with F*h_l only should still be positive");
   }
 
   @Test
   void testChenHTC_InvalidInputs() {
     assertEquals(0.0,
-        BoilingHeatTransfer.calcChenHTC(0.0, 0.3, TUBE_ID, LIQUID_DENSITY, VAPOR_DENSITY,
-            LIQUID_VISCOSITY, VAPOR_VISCOSITY, LIQUID_CP, LIQUID_CONDUCTIVITY, SURFACE_TENSION,
-            HEAT_OF_VAPORIZATION, 5.0, 50000.0));
+	BoilingHeatTransfer.calcChenHTC(0.0, 0.3, TUBE_ID, LIQUID_DENSITY, VAPOR_DENSITY, LIQUID_VISCOSITY,
+	    VAPOR_VISCOSITY, LIQUID_CP, LIQUID_CONDUCTIVITY, SURFACE_TENSION, HEAT_OF_VAPORIZATION, 5.0, 50000.0));
   }
 
   @Test
   void testGungorWintertonHTC() {
     double heatFlux = 20000.0; // W/m2
-    double h = BoilingHeatTransfer.calcGungorWintertonHTC(MASS_FLUX, 0.3, TUBE_ID, LIQUID_DENSITY,
-        VAPOR_DENSITY, LIQUID_VISCOSITY, LIQUID_CP, LIQUID_CONDUCTIVITY, heatFlux,
-        HEAT_OF_VAPORIZATION);
+    double h = BoilingHeatTransfer.calcGungorWintertonHTC(MASS_FLUX, 0.3, TUBE_ID, LIQUID_DENSITY, VAPOR_DENSITY,
+	LIQUID_VISCOSITY, LIQUID_CP, LIQUID_CONDUCTIVITY, heatFlux, HEAT_OF_VAPORIZATION);
     assertTrue(h > 0, "Gungor-Winterton HTC must be positive");
     assertTrue(h > 500, "Gungor-Winterton should give > 500 W/(m2*K) for these conditions");
   }
@@ -145,19 +137,17 @@ public class HeatExchangerCorrelationsTest {
   @Test
   void testGungorWintertonHTC_QualityEffect() {
     double heatFlux = 20000.0;
-    double h1 = BoilingHeatTransfer.calcGungorWintertonHTC(MASS_FLUX, 0.1, TUBE_ID, LIQUID_DENSITY,
-        VAPOR_DENSITY, LIQUID_VISCOSITY, LIQUID_CP, LIQUID_CONDUCTIVITY, heatFlux,
-        HEAT_OF_VAPORIZATION);
-    double h2 = BoilingHeatTransfer.calcGungorWintertonHTC(MASS_FLUX, 0.5, TUBE_ID, LIQUID_DENSITY,
-        VAPOR_DENSITY, LIQUID_VISCOSITY, LIQUID_CP, LIQUID_CONDUCTIVITY, heatFlux,
-        HEAT_OF_VAPORIZATION);
+    double h1 = BoilingHeatTransfer.calcGungorWintertonHTC(MASS_FLUX, 0.1, TUBE_ID, LIQUID_DENSITY, VAPOR_DENSITY,
+	LIQUID_VISCOSITY, LIQUID_CP, LIQUID_CONDUCTIVITY, heatFlux, HEAT_OF_VAPORIZATION);
+    double h2 = BoilingHeatTransfer.calcGungorWintertonHTC(MASS_FLUX, 0.5, TUBE_ID, LIQUID_DENSITY, VAPOR_DENSITY,
+	LIQUID_VISCOSITY, LIQUID_CP, LIQUID_CONDUCTIVITY, heatFlux, HEAT_OF_VAPORIZATION);
     assertTrue(h2 > h1, "HTC should increase with quality in convective boiling regime");
   }
 
   @Test
   void testMartinelliParameter() {
-    double Xtt = BoilingHeatTransfer.calcMartinelliParameter(0.5, LIQUID_DENSITY, VAPOR_DENSITY,
-        LIQUID_VISCOSITY, VAPOR_VISCOSITY);
+    double Xtt = BoilingHeatTransfer.calcMartinelliParameter(0.5, LIQUID_DENSITY, VAPOR_DENSITY, LIQUID_VISCOSITY,
+	VAPOR_VISCOSITY);
     assertTrue(Xtt > 0, "Martinelli parameter must be positive");
     assertTrue(Xtt < 100, "Martinelli parameter should be reasonable");
   }
@@ -179,9 +169,8 @@ public class HeatExchangerCorrelationsTest {
   @Test
   void testBoilingAverageHTC() {
     double heatFlux = 20000.0;
-    double hAvg = BoilingHeatTransfer.calcAverageHTC(MASS_FLUX, TUBE_ID, LIQUID_DENSITY,
-        VAPOR_DENSITY, LIQUID_VISCOSITY, LIQUID_CP, LIQUID_CONDUCTIVITY, heatFlux,
-        HEAT_OF_VAPORIZATION, 0.1, 0.9, 20);
+    double hAvg = BoilingHeatTransfer.calcAverageHTC(MASS_FLUX, TUBE_ID, LIQUID_DENSITY, VAPOR_DENSITY,
+	LIQUID_VISCOSITY, LIQUID_CP, LIQUID_CONDUCTIVITY, heatFlux, HEAT_OF_VAPORIZATION, 0.1, 0.9, 20);
     assertTrue(hAvg > 0, "Average boiling HTC must be positive");
   }
 
@@ -191,72 +180,69 @@ public class HeatExchangerCorrelationsTest {
 
   @Test
   void testFriedelGradient_MidQuality() {
-    double dPdz = TwoPhasePressureDrop.calcFriedelGradient(MASS_FLUX, 0.5, TUBE_ID, LIQUID_DENSITY,
-        VAPOR_DENSITY, LIQUID_VISCOSITY, VAPOR_VISCOSITY, SURFACE_TENSION);
+    double dPdz = TwoPhasePressureDrop.calcFriedelGradient(MASS_FLUX, 0.5, TUBE_ID, LIQUID_DENSITY, VAPOR_DENSITY,
+	LIQUID_VISCOSITY, VAPOR_VISCOSITY, SURFACE_TENSION);
     assertTrue(dPdz > 0, "Friedel gradient must be positive");
   }
 
   @Test
   void testFriedelGradient_ZeroQuality() {
-    double dPdz = TwoPhasePressureDrop.calcFriedelGradient(MASS_FLUX, 0.0, TUBE_ID, LIQUID_DENSITY,
-        VAPOR_DENSITY, LIQUID_VISCOSITY, VAPOR_VISCOSITY, SURFACE_TENSION);
+    double dPdz = TwoPhasePressureDrop.calcFriedelGradient(MASS_FLUX, 0.0, TUBE_ID, LIQUID_DENSITY, VAPOR_DENSITY,
+	LIQUID_VISCOSITY, VAPOR_VISCOSITY, SURFACE_TENSION);
     // At zero quality, should be equal to single-phase liquid drop
     assertTrue(dPdz > 0, "All-liquid gradient should be positive");
   }
 
   @Test
   void testFriedelGradient_QualityIncreases() {
-    double dPdz_lo = TwoPhasePressureDrop.calcFriedelGradient(MASS_FLUX, 0.1, TUBE_ID,
-        LIQUID_DENSITY, VAPOR_DENSITY, LIQUID_VISCOSITY, VAPOR_VISCOSITY, SURFACE_TENSION);
-    double dPdz_hi = TwoPhasePressureDrop.calcFriedelGradient(MASS_FLUX, 0.8, TUBE_ID,
-        LIQUID_DENSITY, VAPOR_DENSITY, LIQUID_VISCOSITY, VAPOR_VISCOSITY, SURFACE_TENSION);
-    assertTrue(dPdz_hi > dPdz_lo,
-        "Pressure drop gradient should increase with quality due to lower mixture density");
+    double dPdz_lo = TwoPhasePressureDrop.calcFriedelGradient(MASS_FLUX, 0.1, TUBE_ID, LIQUID_DENSITY, VAPOR_DENSITY,
+	LIQUID_VISCOSITY, VAPOR_VISCOSITY, SURFACE_TENSION);
+    double dPdz_hi = TwoPhasePressureDrop.calcFriedelGradient(MASS_FLUX, 0.8, TUBE_ID, LIQUID_DENSITY, VAPOR_DENSITY,
+	LIQUID_VISCOSITY, VAPOR_VISCOSITY, SURFACE_TENSION);
+    assertTrue(dPdz_hi > dPdz_lo, "Pressure drop gradient should increase with quality due to lower mixture density");
   }
 
   @Test
   void testFriedelGradient_InvalidInputs() {
-    assertEquals(0.0, TwoPhasePressureDrop.calcFriedelGradient(0.0, 0.5, TUBE_ID, LIQUID_DENSITY,
-        VAPOR_DENSITY, LIQUID_VISCOSITY, VAPOR_VISCOSITY, SURFACE_TENSION));
+    assertEquals(0.0, TwoPhasePressureDrop.calcFriedelGradient(0.0, 0.5, TUBE_ID, LIQUID_DENSITY, VAPOR_DENSITY,
+	LIQUID_VISCOSITY, VAPOR_VISCOSITY, SURFACE_TENSION));
   }
 
   @Test
   void testFriedelPressureDrop() {
     double tubeLength = 5.0; // m
-    double dP = TwoPhasePressureDrop.calcFriedelPressureDrop(MASS_FLUX, 0.5, TUBE_ID, tubeLength,
-        LIQUID_DENSITY, VAPOR_DENSITY, LIQUID_VISCOSITY, VAPOR_VISCOSITY, SURFACE_TENSION);
+    double dP = TwoPhasePressureDrop.calcFriedelPressureDrop(MASS_FLUX, 0.5, TUBE_ID, tubeLength, LIQUID_DENSITY,
+	VAPOR_DENSITY, LIQUID_VISCOSITY, VAPOR_VISCOSITY, SURFACE_TENSION);
     assertTrue(dP > 0, "Pressure drop must be positive");
 
     // Longer tube -> higher pressure drop
-    double dP2 = TwoPhasePressureDrop.calcFriedelPressureDrop(MASS_FLUX, 0.5, TUBE_ID, 10.0,
-        LIQUID_DENSITY, VAPOR_DENSITY, LIQUID_VISCOSITY, VAPOR_VISCOSITY, SURFACE_TENSION);
+    double dP2 = TwoPhasePressureDrop.calcFriedelPressureDrop(MASS_FLUX, 0.5, TUBE_ID, 10.0, LIQUID_DENSITY,
+	VAPOR_DENSITY, LIQUID_VISCOSITY, VAPOR_VISCOSITY, SURFACE_TENSION);
     assertTrue(dP2 > dP, "Doubling tube length should increase pressure drop");
   }
 
   @Test
   void testMullerSteinhagenHeckGradient() {
-    double dPdz = TwoPhasePressureDrop.calcMullerSteinhagenHeckGradient(MASS_FLUX, 0.5, TUBE_ID,
-        LIQUID_DENSITY, VAPOR_DENSITY, LIQUID_VISCOSITY, VAPOR_VISCOSITY);
+    double dPdz = TwoPhasePressureDrop.calcMullerSteinhagenHeckGradient(MASS_FLUX, 0.5, TUBE_ID, LIQUID_DENSITY,
+	VAPOR_DENSITY, LIQUID_VISCOSITY, VAPOR_VISCOSITY);
     assertTrue(dPdz > 0, "MSH gradient must be positive");
   }
 
   @Test
   void testGravitationalGradient() {
     // Method returns rho_tp * g (assumes vertical)
-    double dPdz =
-        TwoPhasePressureDrop.calcGravitationalGradient(0.3, LIQUID_DENSITY, VAPOR_DENSITY);
+    double dPdz = TwoPhasePressureDrop.calcGravitationalGradient(0.3, LIQUID_DENSITY, VAPOR_DENSITY);
     assertTrue(dPdz > 0, "Gravitational gradient must be positive");
     // Should be between pure vapor and pure liquid gravitational gradients
     double dPdz_liquid = LIQUID_DENSITY * 9.81;
     double dPdz_vapor = VAPOR_DENSITY * 9.81;
     assertTrue(dPdz > dPdz_vapor && dPdz < dPdz_liquid,
-        "Two-phase gravity gradient should be between single-phase extremes");
+	"Two-phase gravity gradient should be between single-phase extremes");
   }
 
   @Test
   void testAccelerationPressureDrop() {
-    double dP = TwoPhasePressureDrop.calcAccelerationPressureDrop(MASS_FLUX, 0.1, 0.9,
-        LIQUID_DENSITY, VAPOR_DENSITY);
+    double dP = TwoPhasePressureDrop.calcAccelerationPressureDrop(MASS_FLUX, 0.1, 0.9, LIQUID_DENSITY, VAPOR_DENSITY);
     assertTrue(dP > 0 || dP < 0, "Acceleration pressure drop can be positive or negative");
   }
 
@@ -366,10 +352,8 @@ public class HeatExchangerCorrelationsTest {
   @Test
   void testTubeInsert_None() {
     TubeInsertModel model = new TubeInsertModel();
-    assertEquals(1.0, model.getHeatTransferEnhancementRatio(50000, 5.0), 1e-10,
-        "No insert should give ratio = 1.0");
-    assertEquals(1.0, model.getPressureDropPenaltyRatio(50000), 1e-10,
-        "No insert should give ratio = 1.0");
+    assertEquals(1.0, model.getHeatTransferEnhancementRatio(50000, 5.0), 1e-10, "No insert should give ratio = 1.0");
+    assertEquals(1.0, model.getPressureDropPenaltyRatio(50000), 1e-10, "No insert should give ratio = 1.0");
   }
 
   @Test
@@ -398,8 +382,7 @@ public class HeatExchangerCorrelationsTest {
     double hTight = tight.getHeatTransferEnhancementRatio(Re, Pr);
     double hLoose = loose.getHeatTransferEnhancementRatio(Re, Pr);
 
-    assertTrue(hTight > hLoose,
-        "Tighter twist should give more enhancement: tight=" + hTight + " loose=" + hLoose);
+    assertTrue(hTight > hLoose, "Tighter twist should give more enhancement: tight=" + hTight + " loose=" + hLoose);
   }
 
   @Test
@@ -423,8 +406,8 @@ public class HeatExchangerCorrelationsTest {
     TubeInsertModel sparse = TubeInsertModel.createWireMatrix(0.3);
     TubeInsertModel dense = TubeInsertModel.createWireMatrix(0.7);
 
-    assertTrue(dense.getHeatTransferEnhancementRatio(Re, Pr) > sparse
-        .getHeatTransferEnhancementRatio(Re, Pr), "Denser matrix should give more enhancement");
+    assertTrue(dense.getHeatTransferEnhancementRatio(Re, Pr) > sparse.getHeatTransferEnhancementRatio(Re, Pr),
+	"Denser matrix should give more enhancement");
   }
 
   @Test
@@ -502,28 +485,25 @@ public class HeatExchangerCorrelationsTest {
   @Test
   void testFriedel_vs_MSH_SameOrder() {
     // Both methods should give the same order of magnitude for the same conditions
-    double dPdz_F = TwoPhasePressureDrop.calcFriedelGradient(MASS_FLUX, 0.3, TUBE_ID,
-        LIQUID_DENSITY, VAPOR_DENSITY, LIQUID_VISCOSITY, VAPOR_VISCOSITY, SURFACE_TENSION);
-    double dPdz_M = TwoPhasePressureDrop.calcMullerSteinhagenHeckGradient(MASS_FLUX, 0.3, TUBE_ID,
-        LIQUID_DENSITY, VAPOR_DENSITY, LIQUID_VISCOSITY, VAPOR_VISCOSITY);
+    double dPdz_F = TwoPhasePressureDrop.calcFriedelGradient(MASS_FLUX, 0.3, TUBE_ID, LIQUID_DENSITY, VAPOR_DENSITY,
+	LIQUID_VISCOSITY, VAPOR_VISCOSITY, SURFACE_TENSION);
+    double dPdz_M = TwoPhasePressureDrop.calcMullerSteinhagenHeckGradient(MASS_FLUX, 0.3, TUBE_ID, LIQUID_DENSITY,
+	VAPOR_DENSITY, LIQUID_VISCOSITY, VAPOR_VISCOSITY);
     assertTrue(dPdz_F > 0 && dPdz_M > 0, "Both methods should give positive values");
     double ratio = dPdz_F / dPdz_M;
-    assertTrue(ratio > 0.1 && ratio < 10,
-        "Friedel and MSH should agree within an order of magnitude: ratio=" + ratio);
+    assertTrue(ratio > 0.1 && ratio < 10, "Friedel and MSH should agree within an order of magnitude: ratio=" + ratio);
   }
 
   @Test
   void testChen_vs_GungorWinterton_SameOrder() {
     // Both methods should give similar range for same conditions
-    double hChen = BoilingHeatTransfer.calcChenHTC(MASS_FLUX, 0.3, TUBE_ID, LIQUID_DENSITY,
-        VAPOR_DENSITY, LIQUID_VISCOSITY, VAPOR_VISCOSITY, LIQUID_CP, LIQUID_CONDUCTIVITY,
-        SURFACE_TENSION, HEAT_OF_VAPORIZATION, 5.0, 50000.0);
-    double hGW = BoilingHeatTransfer.calcGungorWintertonHTC(MASS_FLUX, 0.3, TUBE_ID, LIQUID_DENSITY,
-        VAPOR_DENSITY, LIQUID_VISCOSITY, LIQUID_CP, LIQUID_CONDUCTIVITY, 20000.0,
-        HEAT_OF_VAPORIZATION);
+    double hChen = BoilingHeatTransfer.calcChenHTC(MASS_FLUX, 0.3, TUBE_ID, LIQUID_DENSITY, VAPOR_DENSITY,
+	LIQUID_VISCOSITY, VAPOR_VISCOSITY, LIQUID_CP, LIQUID_CONDUCTIVITY, SURFACE_TENSION, HEAT_OF_VAPORIZATION, 5.0,
+	50000.0);
+    double hGW = BoilingHeatTransfer.calcGungorWintertonHTC(MASS_FLUX, 0.3, TUBE_ID, LIQUID_DENSITY, VAPOR_DENSITY,
+	LIQUID_VISCOSITY, LIQUID_CP, LIQUID_CONDUCTIVITY, 20000.0, HEAT_OF_VAPORIZATION);
     assertTrue(hChen > 0 && hGW > 0, "Both correlations should give positive HTC");
     double ratio = hChen / hGW;
-    assertTrue(ratio > 0.1 && ratio < 10,
-        "Chen and GW should agree within order of magnitude: ratio=" + ratio);
+    assertTrue(ratio > 0.1 && ratio < 10, "Chen and GW should agree within order of magnitude: ratio=" + ratio);
   }
 }

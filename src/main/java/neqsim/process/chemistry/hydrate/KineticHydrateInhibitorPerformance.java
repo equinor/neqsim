@@ -11,17 +11,16 @@ import neqsim.process.chemistry.util.StandardsRegistry;
 import neqsim.process.chemistry.util.StandardsRegistry.StandardReference;
 
 /**
- * Performance model for kinetic hydrate inhibitors (KHI / LDHI). KHIs do not move the hydrate
- * equilibrium curve; they delay nucleation by an induction time {@code t_ind}. The model is the
- * Larsen-Makogon-Sloan style fit:
+ * Performance model for kinetic hydrate inhibitors (KHI / LDHI). KHIs do not move the hydrate equilibrium curve; they
+ * delay nucleation by an induction time {@code t_ind}. The model is the Larsen-Makogon-Sloan style fit:
  *
  * <p>
  * {@code log10(t_ind) = a + b * dose - c * subcooling}
  * </p>
  *
  * <p>
- * with default coefficients tuned to PVP/Luvicap-class polymers (literature ranges; intended for
- * screening only). The class returns:
+ * with default coefficients tuned to PVP/Luvicap-class polymers (literature ranges; intended for screening only). The
+ * class returns:
  * </p>
  * <ul>
  * <li>predicted induction time at the given subcooling and dose</li>
@@ -30,8 +29,7 @@ import neqsim.process.chemistry.util.StandardsRegistry.StandardReference;
  * </ul>
  *
  * <p>
- * Reference: Sloan &amp; Koh, Clathrate Hydrates of Natural Gases, 3rd ed., Chapter 8 (LDHI
- * screening).
+ * Reference: Sloan &amp; Koh, Clathrate Hydrates of Natural Gases, 3rd ed., Chapter 8 (LDHI screening).
  * </p>
  *
  * @author ESOL
@@ -67,7 +65,8 @@ public class KineticHydrateInhibitorPerformance implements Serializable {
   /**
    * Default constructor.
    */
-  public KineticHydrateInhibitorPerformance() {}
+  public KineticHydrateInhibitorPerformance() {
+  }
 
   /**
    * Sets the empirical coefficients.
@@ -117,15 +116,14 @@ public class KineticHydrateInhibitorPerformance implements Serializable {
     double log10t = a + b * doseWtPct - c * subcoolingC;
     predictedInductionTimeHours = Math.pow(10.0, log10t);
     // Inverse: required dose for target induction time.
-    requiredDoseWtPct =
-        (Math.log10(Math.max(1.0e-3, targetInductionTimeHours)) - a + c * subcoolingC) / b;
+    requiredDoseWtPct = (Math.log10(Math.max(1.0e-3, targetInductionTimeHours)) - a + c * subcoolingC) / b;
     if (subcoolingC > maxAllowedSubcoolingC) {
-      warnings.add("Subcooling " + subcoolingC + " C exceeds typical KHI envelope ("
-          + maxAllowedSubcoolingC + " C) — switch to THI or AA-LDHI");
+      warnings.add("Subcooling " + subcoolingC + " C exceeds typical KHI envelope (" + maxAllowedSubcoolingC
+	  + " C) — switch to THI or AA-LDHI");
     }
     if (requiredDoseWtPct > maxDoseWtPct) {
-      warnings.add("Required dose " + String.format("%.2f", requiredDoseWtPct)
-          + " wt% exceeds typical maximum " + maxDoseWtPct + " wt%");
+      warnings.add("Required dose " + String.format("%.2f", requiredDoseWtPct) + " wt% exceeds typical maximum "
+	  + maxDoseWtPct + " wt%");
     }
     if (requiredDoseWtPct < minDoseWtPct) {
       warnings.add("Required dose below typical minimum effective " + minDoseWtPct + " wt%");
@@ -176,7 +174,7 @@ public class KineticHydrateInhibitorPerformance implements Serializable {
    */
   public List<Map<String, Object>> getStandardsApplied() {
     return StandardsRegistry.toMapList(new StandardReference("Sloan & Koh 2008", "Industrial",
-        "Clathrate Hydrates of Natural Gases — LDHI screening"));
+	"Clathrate Hydrates of Natural Gases — LDHI screening"));
   }
 
   /**

@@ -3,7 +3,9 @@ package neqsim.thermo.mixingrule;
 import java.io.Serializable;
 
 /**
- * <p>MixingRulesInterface interface.</p>
+ * <p>
+ * MixingRulesInterface interface.
+ * </p>
  *
  * @author ASMF
  */

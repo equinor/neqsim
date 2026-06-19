@@ -70,8 +70,8 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicoperations.B
    * setPressureRange.
    * </p>
    *
-   * @param minPressure a double
-   * @param maxPressure a double
+   * @param minPressure   a double
+   * @param maxPressure   a double
    * @param numberOfSteps a int
    */
   public void setPressureRange(double minPressure, double maxPressure, int numberOfSteps) {
@@ -91,7 +91,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicoperations.B
    *
    * @param minTemperature a double
    * @param maxTemperature a double
-   * @param numberOfSteps a int
+   * @param numberOfSteps  a int
    */
   public void setTemperatureRange(double minTemperature, double maxTemperature, int numberOfSteps) {
     temperatures = new double[numberOfSteps];
@@ -143,76 +143,74 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicoperations.B
     for (int i = 0; i < pressures.length; i++) {
       thermoSystem.setPressure(pressures[i]);
       for (int j = 0; j < temperatures.length; j++) {
-        thermoSystem.setTemperature(temperatures[j]);
-        try {
-          thermoOps.TPflash();
-        } catch (Exception ex) {
-          logger.error(ex.getMessage(), ex);
-        }
-        thermoSystem.init(3);
-        thermoSystem.initPhysicalProperties();
+	thermoSystem.setTemperature(temperatures[j]);
+	try {
+	  thermoOps.TPflash();
+	} catch (Exception ex) {
+	  logger.error(ex.getMessage(), ex);
+	}
+	thermoSystem.init(3);
+	thermoSystem.initPhysicalProperties();
 
-        if (thermoSystem.hasPhaseType("gas")) {
-          // set gas properties
-        }
+	if (thermoSystem.hasPhaseType("gas")) {
+	  // set gas properties
+	}
 
-        if (thermoSystem.hasPhaseType("oil")) {
-          // set oil properties
-        }
+	if (thermoSystem.hasPhaseType("oil")) {
+	  // set oil properties
+	}
 
-        if (thermoSystem.hasPhaseType("aqueous")) {
-          // set aqueous properties
-        }
+	if (thermoSystem.hasPhaseType("aqueous")) {
+	  // set aqueous properties
+	}
 
-        if (!thermoSystem.hasPhaseType("gas")) {
-          thermoSystem.setPhaseType(thermoSystem.getPhaseNumberOfPhase(PhaseType.OIL),
-              PhaseType.GAS);
-          thermoSystem.init(3);
-          thermoSystem.initPhysicalProperties();
+	if (!thermoSystem.hasPhaseType("gas")) {
+	  thermoSystem.setPhaseType(thermoSystem.getPhaseNumberOfPhase(PhaseType.OIL), PhaseType.GAS);
+	  thermoSystem.init(3);
+	  thermoSystem.initPhysicalProperties();
 
-          // setGasProperties();
-          // set gas properties
-        }
+	  // setGasProperties();
+	  // set gas properties
+	}
 
-        if (!thermoSystem.hasPhaseType("oil")) {
-          thermoSystem.setPhaseType(thermoSystem.getPhaseNumberOfPhase(PhaseType.GAS),
-              PhaseType.GAS);
-          thermoSystem.init(3);
-          thermoSystem.initPhysicalProperties();
+	if (!thermoSystem.hasPhaseType("oil")) {
+	  thermoSystem.setPhaseType(thermoSystem.getPhaseNumberOfPhase(PhaseType.GAS), PhaseType.GAS);
+	  thermoSystem.init(3);
+	  thermoSystem.initPhysicalProperties();
 
-          // setOilProperties();
-          // set gas properties
-        }
+	  // setOilProperties();
+	  // set gas properties
+	}
 
-        if (!thermoSystem.hasPhaseType("aqueous")) {
-          thermoSystem.setPhaseType(1, PhaseType.GAS);
-          thermoSystem.init(3);
-          thermoSystem.initPhysicalProperties();
+	if (!thermoSystem.hasPhaseType("aqueous")) {
+	  thermoSystem.setPhaseType(1, PhaseType.GAS);
+	  thermoSystem.init(3);
+	  thermoSystem.initPhysicalProperties();
 
-          // setOilProperties();
-          // set gas properties
-        }
+	  // setOilProperties();
+	  // set gas properties
+	}
 
-        // set extropalated oil values
-        // set gas properties as it was liquid
-        ROG[i][j] = thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
-        ROL[i][j] = thermoSystem.getPhase(1).getPhysicalProperties().getDensity();
-        DROGDP[i][j] = thermoSystem.getPhase(0).getdrhodP();
-        DROHLDP[i][j] = thermoSystem.getPhase(1).getdrhodP();
-        DROGDT[i][j] = thermoSystem.getPhase(0).getdrhodT();
-        DROHLDT[i][j] = thermoSystem.getPhase(1).getdrhodT();
-        CPG[i][j] = thermoSystem.getPhase(0).getCp();
-        CPHL[i][j] = thermoSystem.getPhase(1).getCp();
-        HG[i][j] = thermoSystem.getPhase(0).getEnthalpy();
-        HHL[i][j] = thermoSystem.getPhase(1).getEnthalpy();
-        TCG[i][j] = thermoSystem.getPhase(0).getPhysicalProperties().getConductivity();
-        TCHL[i][j] = thermoSystem.getPhase(1).getPhysicalProperties().getConductivity();
-        VISG[i][j] = thermoSystem.getPhase(0).getPhysicalProperties().getViscosity();
-        VISHL[i][j] = thermoSystem.getPhase(1).getPhysicalProperties().getViscosity();
-        SIGGHL[i][j] = thermoSystem.getInterphaseProperties().getSurfaceTension(0, 1);
-        SEG[i][j] = thermoSystem.getPhase(0).getEntropy();
-        SEHL[i][j] = thermoSystem.getPhase(1).getEntropy();
-        RS[i][j] = thermoSystem.getPhase(0).getBeta();
+	// set extropalated oil values
+	// set gas properties as it was liquid
+	ROG[i][j] = thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
+	ROL[i][j] = thermoSystem.getPhase(1).getPhysicalProperties().getDensity();
+	DROGDP[i][j] = thermoSystem.getPhase(0).getdrhodP();
+	DROHLDP[i][j] = thermoSystem.getPhase(1).getdrhodP();
+	DROGDT[i][j] = thermoSystem.getPhase(0).getdrhodT();
+	DROHLDT[i][j] = thermoSystem.getPhase(1).getdrhodT();
+	CPG[i][j] = thermoSystem.getPhase(0).getCp();
+	CPHL[i][j] = thermoSystem.getPhase(1).getCp();
+	HG[i][j] = thermoSystem.getPhase(0).getEnthalpy();
+	HHL[i][j] = thermoSystem.getPhase(1).getEnthalpy();
+	TCG[i][j] = thermoSystem.getPhase(0).getPhysicalProperties().getConductivity();
+	TCHL[i][j] = thermoSystem.getPhase(1).getPhysicalProperties().getConductivity();
+	VISG[i][j] = thermoSystem.getPhase(0).getPhysicalProperties().getViscosity();
+	VISHL[i][j] = thermoSystem.getPhase(1).getPhysicalProperties().getViscosity();
+	SIGGHL[i][j] = thermoSystem.getInterphaseProperties().getSurfaceTension(0, 1);
+	SEG[i][j] = thermoSystem.getPhase(0).getEntropy();
+	SEHL[i][j] = thermoSystem.getPhase(1).getEntropy();
+	RS[i][j] = thermoSystem.getPhase(0).getBeta();
       }
     }
   }
@@ -225,8 +223,8 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicoperations.B
     for (int i = 0; i < pressures.length; i++) {
       thermoSystem.setPressure(pressures[i]);
       for (int j = 0; j < temperatures.length; j++) {
-        logger.info("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j] + " ROG "
-            + ROG[i][j] + " ROL " + ROL[i][j]);
+	logger.info("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j] + " ROG " + ROG[i][j] + " ROL "
+	    + ROL[i][j]);
       }
     }
     writeOLGAinpFile("");
@@ -241,14 +239,14 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicoperations.B
    */
   public void writeOLGAinpFile(String filename) {
     try (Writer writer = new BufferedWriter(
-        new OutputStreamWriter(new FileOutputStream("c:/temp/filename.txt"), "utf-8"))) {
+	new OutputStreamWriter(new FileOutputStream("c:/temp/filename.txt"), "utf-8"))) {
       writer.write("PRESSURE= (");
       for (int i = 0; i < pressures.length; i++) {
-        thermoSystem.setPressure(pressures[i]);
-        for (int j = 0; j < temperatures.length; j++) {
-          thermoSystem.setTemperature(temperatures[j]);
-          writer.write(ROG[i][j] + ",");
-        }
+	thermoSystem.setPressure(pressures[i]);
+	for (int j = 0; j < temperatures.length; j++) {
+	  thermoSystem.setTemperature(temperatures[j]);
+	  writer.write(ROG[i][j] + ",");
+	}
       }
     } catch (IOException ex) {
       // report

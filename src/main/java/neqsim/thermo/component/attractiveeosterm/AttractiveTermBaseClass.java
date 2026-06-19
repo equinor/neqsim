@@ -157,11 +157,11 @@ public abstract class AttractiveTermBaseClass implements AttractiveTermInterface
     }
     if (component == null) {
       if (other.component != null) {
-        return false;
+	return false;
       }
     } /*
-       * else if (!component.equals(other.component)) { // Typically equality is checked from
-       * component so this will infinitely recursive return false; }
+       * else if (!component.equals(other.component)) { // Typically equality is checked from component so this will
+       * infinitely recursive return false; }
        */
     return true;
   }

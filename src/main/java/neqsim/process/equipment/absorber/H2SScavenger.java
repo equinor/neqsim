@@ -10,9 +10,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * H2S Scavenger unit operation for removing hydrogen sulfide from gas streams.
  *
  * <p>
- * This unit operation models H2S removal using chemical scavengers without rigorous chemical
- * reaction calculations. Instead, it uses empirical correlations based on scavenger type, injection
- * rate, and operating conditions.
+ * This unit operation models H2S removal using chemical scavengers without rigorous chemical reaction calculations.
+ * Instead, it uses empirical correlations based on scavenger type, injection rate, and operating conditions.
  * </p>
  *
  * <p>
@@ -81,33 +80,31 @@ public class H2SScavenger extends TwoPortEquipment {
    */
   public enum ScavengerType {
     /**
-     * MEA-triazine based scavenger. Most common for oilfield applications. Reaction: 3H2S +
-     * C6H15N3O3 → products (dithiazine + thiadiazine). Typical stoichiometry: 3.5-6.0 lb scavenger
-     * per lb H2S.
+     * MEA-triazine based scavenger. Most common for oilfield applications. Reaction: 3H2S + C6H15N3O3 → products
+     * (dithiazine + thiadiazine). Typical stoichiometry: 3.5-6.0 lb scavenger per lb H2S.
      */
     TRIAZINE("MEA-Triazine", 4.5, 0.95, 1.07),
 
     /**
-     * Glyoxal-based scavenger. Good for high CO2 systems. Typical stoichiometry: 4.0-7.0 lb
-     * scavenger per lb H2S.
+     * Glyoxal-based scavenger. Good for high CO2 systems. Typical stoichiometry: 4.0-7.0 lb scavenger per lb H2S.
      */
     GLYOXAL("Glyoxal", 5.5, 0.90, 1.10),
 
     /**
-     * Iron sponge (iron oxide on wood chips). Used for dry gas treating. Regenerable with air.
-     * Capacity: 0.4-0.6 lb H2S per lb iron oxide.
+     * Iron sponge (iron oxide on wood chips). Used for dry gas treating. Regenerable with air. Capacity: 0.4-0.6 lb H2S
+     * per lb iron oxide.
      */
     IRON_SPONGE("Iron Sponge", 2.5, 0.98, 0.0),
 
     /**
-     * Caustic (NaOH) scrubbing. Very effective but produces liquid waste. Stoichiometry: 2.4 lb
-     * NaOH per lb H2S (based on 2NaOH + H2S → Na2S + 2H2O).
+     * Caustic (NaOH) scrubbing. Very effective but produces liquid waste. Stoichiometry: 2.4 lb NaOH per lb H2S (based
+     * on 2NaOH + H2S → Na2S + 2H2O).
      */
     CAUSTIC("Sodium Hydroxide", 2.4, 0.95, 1.05),
 
     /**
-     * Liquid redox processes (LO-CAT, SulFerox). Catalytic conversion to elemental sulfur. Very
-     * high efficiency for large scale.
+     * Liquid redox processes (LO-CAT, SulFerox). Catalytic conversion to elemental sulfur. Very high efficiency for
+     * large scale.
      */
     LIQUID_REDOX("Liquid Redox", 0.0, 0.995, 1.02);
 
@@ -119,13 +116,12 @@ public class H2SScavenger extends TwoPortEquipment {
     /**
      * Constructor for ScavengerType enum.
      *
-     * @param displayName human-readable name
+     * @param displayName       human-readable name
      * @param baseStoichiometry theoretical lb scavenger per lb H2S
-     * @param baseEfficiency base removal efficiency (0-1)
-     * @param density specific gravity of liquid scavenger
+     * @param baseEfficiency    base removal efficiency (0-1)
+     * @param density           specific gravity of liquid scavenger
      */
-    ScavengerType(String displayName, double baseStoichiometry, double baseEfficiency,
-        double density) {
+    ScavengerType(String displayName, double baseStoichiometry, double baseEfficiency, double density) {
       this.displayName = displayName;
       this.baseStoichiometry = baseStoichiometry;
       this.baseEfficiency = baseEfficiency;
@@ -203,7 +199,7 @@ public class H2SScavenger extends TwoPortEquipment {
   /**
    * Constructor for H2SScavenger with inlet stream.
    *
-   * @param name equipment name
+   * @param name     equipment name
    * @param inStream inlet gas stream
    */
   public H2SScavenger(String name, StreamInterface inStream) {
@@ -369,12 +365,11 @@ public class H2SScavenger extends TwoPortEquipment {
    * </ul>
    *
    * @param inletH2SMassFlow H2S mass flow in inlet stream (kg/hr)
-   * @param temperature operating temperature (K)
-   * @param pressure operating pressure (bara)
+   * @param temperature      operating temperature (K)
+   * @param pressure         operating pressure (bara)
    * @return removal efficiency as fraction (0-1)
    */
-  private double calculateRemovalEfficiency(double inletH2SMassFlow, double temperature,
-      double pressure) {
+  private double calculateRemovalEfficiency(double inletH2SMassFlow, double temperature, double pressure) {
     if (inletH2SMassFlow <= 0 || scavengerInjectionRate <= 0) {
       return 0.0;
     }
@@ -425,8 +420,7 @@ public class H2SScavenger extends TwoPortEquipment {
     double mixCorrection = 0.5 + 0.5 * mixingEfficiency;
 
     // Combined efficiency
-    double efficiency =
-        baseEff * excessCorrection * contactCorrection * tempCorrection * mixCorrection;
+    double efficiency = baseEff * excessCorrection * contactCorrection * tempCorrection * mixCorrection;
 
     return Math.max(0.0, Math.min(0.999, efficiency));
   }
@@ -438,18 +432,18 @@ public class H2SScavenger extends TwoPortEquipment {
    */
   private double getKineticConstant() {
     switch (scavengerType) {
-      case TRIAZINE:
-        return 1.8; // Fast reaction
-      case GLYOXAL:
-        return 1.5;
-      case CAUSTIC:
-        return 2.5; // Very fast
-      case LIQUID_REDOX:
-        return 3.0; // Catalytic, very efficient
-      case IRON_SPONGE:
-        return 1.2; // Solid bed, slower
-      default:
-        return 1.5;
+    case TRIAZINE:
+      return 1.8; // Fast reaction
+    case GLYOXAL:
+      return 1.5;
+    case CAUSTIC:
+      return 2.5; // Very fast
+    case LIQUID_REDOX:
+      return 3.0; // Catalytic, very efficient
+    case IRON_SPONGE:
+      return 1.2; // Solid bed, slower
+    default:
+      return 1.5;
     }
   }
 
@@ -498,14 +492,13 @@ public class H2SScavenger extends TwoPortEquipment {
       scavengerInjectionRate = testRateKgHr;
       injectionRateUnit = "kg/hr";
 
-      double efficiency =
-          calculateRemovalEfficiency(h2sMassFlow, system.getTemperature(), system.getPressure());
+      double efficiency = calculateRemovalEfficiency(h2sMassFlow, system.getTemperature(), system.getPressure());
 
       scavengerInjectionRate = tempRate;
       injectionRateUnit = tempUnit;
 
       if (efficiency >= requiredRemoval) {
-        break;
+	break;
       }
       rate *= 1.2; // Increase by 20%
     }
@@ -560,7 +553,7 @@ public class H2SScavenger extends TwoPortEquipment {
 
     // Calculate removal efficiency
     h2sRemovalEfficiency = calculateRemovalEfficiency(h2sMassFlow, outletSystem.getTemperature(),
-        outletSystem.getPressure());
+	outletSystem.getPressure());
 
     // Calculate H2S removed
     h2sRemoved = h2sMassFlow * h2sRemovalEfficiency; // kg/hr
@@ -674,7 +667,7 @@ public class H2SScavenger extends TwoPortEquipment {
    * Calculate scavenger cost.
    *
    * @param costPerUnit cost per unit of scavenger
-   * @param unit cost unit basis ("$/L", "$/gal", "$/kg", "$/lb")
+   * @param unit        cost unit basis ("$/L", "$/gal", "$/kg", "$/lb")
    * @return hourly cost in same currency
    */
   public double calculateHourlyCost(double costPerUnit, String unit) {
@@ -702,8 +695,7 @@ public class H2SScavenger extends TwoPortEquipment {
     StringBuilder sb = new StringBuilder();
     sb.append("=== H2S Scavenger Performance Summary ===\n");
     sb.append(String.format("Scavenger Type: %s\n", scavengerType.getDisplayName()));
-    sb.append(
-        String.format("Injection Rate: %.2f %s\n", scavengerInjectionRate, injectionRateUnit));
+    sb.append(String.format("Injection Rate: %.2f %s\n", scavengerInjectionRate, injectionRateUnit));
     sb.append(String.format("Active Concentration: %.1f%%\n", scavengerConcentration * 100));
     sb.append("\n--- Results ---\n");
     sb.append(String.format("Inlet H2S: %.1f ppm\n", inletH2SConcentration));
@@ -719,7 +711,7 @@ public class H2SScavenger extends TwoPortEquipment {
   @Override
   public String toJson() {
     return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create()
-        .toJson(new H2SScavengerResponse(this));
+	.toJson(new H2SScavengerResponse(this));
   }
 
   /**

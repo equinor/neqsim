@@ -9,9 +9,8 @@ import java.util.Map;
  * Rule-based SPE-PRMS / NPD resource classification helper.
  *
  * <p>
- * Maps a discrete project maturity stage onto the high-level petroleum resource categories defined
- * by the Petroleum Resources Management System (SPE-PRMS) and used by the Norwegian Petroleum
- * Directorate (NPD/Sokkeldirektoratet):
+ * Maps a discrete project maturity stage onto the high-level petroleum resource categories defined by the Petroleum
+ * Resources Management System (SPE-PRMS) and used by the Norwegian Petroleum Directorate (NPD/Sokkeldirektoratet):
  * </p>
  *
  * <table>
@@ -44,9 +43,9 @@ import java.util.Map;
  * </table>
  *
  * <p>
- * This is a deterministic mapping aid, not a volumetric estimate. It does not assign volumes,
- * recovery factors, or chance of commerciality. A formal SPE-PRMS or NPD estimate with qualified
- * subsurface review is required for project decisions.
+ * This is a deterministic mapping aid, not a volumetric estimate. It does not assign volumes, recovery factors, or
+ * chance of commerciality. A formal SPE-PRMS or NPD estimate with qualified subsurface review is required for project
+ * decisions.
  * </p>
  *
  * @author NeqSim Community
@@ -108,14 +107,13 @@ public final class ReservesClassification implements Serializable {
     /**
      * Creates a classification result.
      *
-     * @param resourceClass the normalised maturity stage identifier
+     * @param resourceClass    the normalised maturity stage identifier
      * @param resourceCategory the high-level resource category
-     * @param prmsClassRange a human-readable PRMS class label
-     * @param maturityWarning screening flag: {@code "ok"}, {@code "watch"}, or
-     *        {@code "unclassified"}
+     * @param prmsClassRange   a human-readable PRMS class label
+     * @param maturityWarning  screening flag: {@code "ok"}, {@code "watch"}, or {@code "unclassified"}
      */
     public Result(String resourceClass, ResourceCategory resourceCategory, String prmsClassRange,
-        String maturityWarning) {
+	String maturityWarning) {
       this.resourceClass = resourceClass;
       this.resourceCategory = resourceCategory;
       this.prmsClassRange = prmsClassRange;
@@ -162,8 +160,8 @@ public final class ReservesClassification implements Serializable {
   /**
    * Classifies a maturity stage assuming commerciality is unknown.
    *
-   * @param maturityStage the project maturity stage (e.g. {@code "on production"},
-   *        {@code "development pending"}, {@code "prospect"}); must be non-null and non-blank
+   * @param maturityStage the project maturity stage (e.g. {@code "on production"}, {@code "development pending"},
+   *                      {@code "prospect"}); must be non-null and non-blank
    * @return the {@link Result} of the classification
    * @throws IllegalArgumentException if {@code maturityStage} is null or blank
    */
@@ -174,11 +172,11 @@ public final class ReservesClassification implements Serializable {
   /**
    * Classifies a maturity stage against the SPE-PRMS categories.
    *
-   * @param maturityStage the project maturity stage (e.g. {@code "on production"},
-   *        {@code "development pending"}, {@code "prospect"}); must be non-null and non-blank
-   * @param commercial whether the volumes are judged commercial; may be {@code null} when unknown.
-   *        When {@link Boolean#FALSE} on a reserves-stage input the warning is raised to
-   *        {@code "watch"} because reserves require commercial volumes.
+   * @param maturityStage the project maturity stage (e.g. {@code "on production"}, {@code "development pending"},
+   *                      {@code "prospect"}); must be non-null and non-blank
+   * @param commercial    whether the volumes are judged commercial; may be {@code null} when unknown. When
+   *                      {@link Boolean#FALSE} on a reserves-stage input the warning is raised to {@code "watch"}
+   *                      because reserves require commercial volumes.
    * @return the {@link Result} of the classification
    * @throws IllegalArgumentException if {@code maturityStage} is null or blank
    */
@@ -191,16 +189,13 @@ public final class ReservesClassification implements Serializable {
 
     if (RESERVES_STAGES.containsKey(normalized)) {
       String warning = Boolean.FALSE.equals(commercial) ? "watch" : "ok";
-      return new Result(normalized, ResourceCategory.RESERVES, RESERVES_STAGES.get(normalized),
-          warning);
+      return new Result(normalized, ResourceCategory.RESERVES, RESERVES_STAGES.get(normalized), warning);
     }
     if (CONTINGENT_STAGES.containsKey(normalized)) {
-      return new Result(normalized, ResourceCategory.CONTINGENT_RESOURCES,
-          CONTINGENT_STAGES.get(normalized), "ok");
+      return new Result(normalized, ResourceCategory.CONTINGENT_RESOURCES, CONTINGENT_STAGES.get(normalized), "ok");
     }
     if (PROSPECTIVE_STAGES.containsKey(normalized)) {
-      return new Result(normalized, ResourceCategory.PROSPECTIVE_RESOURCES,
-          PROSPECTIVE_STAGES.get(normalized), "ok");
+      return new Result(normalized, ResourceCategory.PROSPECTIVE_RESOURCES, PROSPECTIVE_STAGES.get(normalized), "ok");
     }
     return new Result(normalized, ResourceCategory.UNRECOVERABLE, "unclassified", "unclassified");
   }

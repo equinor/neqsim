@@ -95,8 +95,7 @@ class CapabilitiesRunnerTest {
 
   @Test
   void testEverySchemaBackedToolHasCapabilityDescriptor() {
-    JsonObject root =
-        JsonParser.parseString(CapabilitiesRunner.getCapabilities()).getAsJsonObject();
+    JsonObject root = JsonParser.parseString(CapabilitiesRunner.getCapabilities()).getAsJsonObject();
     JsonObject toolCapabilities = root.getAsJsonObject("toolCapabilities");
 
     Set<String> advertisedSchemaTools = new HashSet<String>();
@@ -106,15 +105,13 @@ class CapabilitiesRunnerTest {
     }
 
     for (String schemaToolName : SchemaCatalog.getToolNames()) {
-      assertTrue(advertisedSchemaTools.contains(schemaToolName),
-          "Missing capability descriptor for " + schemaToolName);
+      assertTrue(advertisedSchemaTools.contains(schemaToolName), "Missing capability descriptor for " + schemaToolName);
     }
   }
 
   @Test
   void testAdvertisedCapabilitiesResolveSchemasExamplesAndTemplates() {
-    JsonObject root =
-        JsonParser.parseString(CapabilitiesRunner.getCapabilities()).getAsJsonObject();
+    JsonObject root = JsonParser.parseString(CapabilitiesRunner.getCapabilities()).getAsJsonObject();
     JsonObject toolCapabilities = root.getAsJsonObject("toolCapabilities");
     JsonObject setupTemplates = root.getAsJsonObject("setupTemplates");
 
@@ -122,18 +119,14 @@ class CapabilitiesRunnerTest {
       JsonObject descriptor = entry.getValue().getAsJsonObject();
       String schemaToolName = descriptor.get("schemaToolName").getAsString();
 
-      assertNotNull(SchemaCatalog.getSchema(schemaToolName, "input"),
-          "Missing input schema for " + schemaToolName);
-      assertNotNull(SchemaCatalog.getSchema(schemaToolName, "output"),
-          "Missing output schema for " + schemaToolName);
+      assertNotNull(SchemaCatalog.getSchema(schemaToolName, "input"), "Missing input schema for " + schemaToolName);
+      assertNotNull(SchemaCatalog.getSchema(schemaToolName, "output"), "Missing output schema for " + schemaToolName);
 
       JsonArray examples = descriptor.getAsJsonArray("examples");
       assertTrue(examples.size() > 0, "Missing example reference for " + schemaToolName);
       JsonObject example = examples.get(0).getAsJsonObject();
-      assertNotNull(
-          ExampleCatalog.getExample(example.get("category").getAsString(),
-              example.get("name").getAsString()),
-          "Example reference does not resolve for " + schemaToolName);
+      assertNotNull(ExampleCatalog.getExample(example.get("category").getAsString(), example.get("name").getAsString()),
+	  "Example reference does not resolve for " + schemaToolName);
 
       JsonArray templates = descriptor.getAsJsonArray("setupTemplates");
       assertTrue(templates.size() > 0, "Missing setup template reference for " + schemaToolName);
@@ -142,10 +135,8 @@ class CapabilitiesRunnerTest {
 
       assertTrue(descriptor.has("validationCoverage"));
       assertTrue(descriptor.has("responseContractCoverage"));
-      assertTrue(
-          descriptor.getAsJsonObject("validationCoverage").get("inputSchema").getAsBoolean());
-      assertTrue(descriptor.getAsJsonObject("responseContractCoverage").get("outputSchema")
-          .getAsBoolean());
+      assertTrue(descriptor.getAsJsonObject("validationCoverage").get("inputSchema").getAsBoolean());
+      assertTrue(descriptor.getAsJsonObject("responseContractCoverage").get("outputSchema").getAsBoolean());
     }
   }
 

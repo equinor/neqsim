@@ -21,8 +21,7 @@ import neqsim.thermo.system.SystemSrkEos;
 public class EquipmentFactoryTest extends neqsim.NeqSimTest {
   @Test
   public void createEquipmentFromEnum() {
-    ProcessEquipmentInterface equipment =
-        EquipmentFactory.createEquipment("valve1", EquipmentEnum.ThrottlingValve);
+    ProcessEquipmentInterface equipment = EquipmentFactory.createEquipment("valve1", EquipmentEnum.ThrottlingValve);
 
     assertInstanceOf(ThrottlingValve.class, equipment);
     assertEquals("valve1", equipment.getName());
@@ -38,8 +37,7 @@ public class EquipmentFactoryTest extends neqsim.NeqSimTest {
 
   @Test
   public void ejectorRequiresStreams() {
-    assertThrows(IllegalArgumentException.class,
-        () -> EquipmentFactory.createEquipment("ej", "ejector"));
+    assertThrows(IllegalArgumentException.class, () -> EquipmentFactory.createEquipment("ej", "ejector"));
 
     StreamInterface motive = new Stream("motive");
     StreamInterface suction = new Stream("suction");
@@ -51,7 +49,7 @@ public class EquipmentFactoryTest extends neqsim.NeqSimTest {
   @Test
   public void gorfitterRequiresInletStream() {
     assertThrows(IllegalArgumentException.class,
-        () -> EquipmentFactory.createEquipment("gor", EquipmentEnum.GORfitter));
+	() -> EquipmentFactory.createEquipment("gor", EquipmentEnum.GORfitter));
 
     StreamInterface inlet = new Stream("inlet");
     GORfitter fitter = EquipmentFactory.createGORfitter("gor", inlet);
@@ -61,7 +59,7 @@ public class EquipmentFactoryTest extends neqsim.NeqSimTest {
   @Test
   public void reservoirSimRequiresFluid() {
     assertThrows(IllegalArgumentException.class,
-        () -> EquipmentFactory.createEquipment("cvd", EquipmentEnum.ReservoirCVDsim));
+	() -> EquipmentFactory.createEquipment("cvd", EquipmentEnum.ReservoirCVDsim));
 
     SystemInterface fluid = new SystemSrkEos(273.15, 100.0);
     fluid.addComponent("methane", 1.0);

@@ -16,9 +16,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Template for creating TEG (Triethylene Glycol) gas dehydration systems.
  *
  * <p>
- * This template creates a standard TEG dehydration unit consisting of an absorber column, glycol
- * regeneration system, and associated equipment. The design follows industry standards for natural
- * gas dehydration.
+ * This template creates a standard TEG dehydration unit consisting of an absorber column, glycol regeneration system,
+ * and associated equipment. The design follows industry standards for natural gas dehydration.
  * </p>
  *
  * <h2>Features</h2>
@@ -139,20 +138,18 @@ public class DehydrationTemplate implements ProcessTemplate {
     process.add(absorber);
 
     // Rich glycol flash drum
-    ThrottlingValve richGlycolValve =
-        new ThrottlingValve("Rich Glycol Valve", absorber.getSolventOutStream());
+    ThrottlingValve richGlycolValve = new ThrottlingValve("Rich Glycol Valve", absorber.getSolventOutStream());
     richGlycolValve.setOutletPressure(5.0); // Flash at 5 bara
     process.add(richGlycolValve);
 
-    Separator flashDrum =
-        new Separator("Rich Glycol Flash Drum", richGlycolValve.getOutletStream());
+    Separator flashDrum = new Separator("Rich Glycol Flash Drum", richGlycolValve.getOutletStream());
     process.add(flashDrum);
 
     // Rich glycol heater (simulates heat from lean/rich exchanger)
     // Using separate Heater/Cooler instead of HeatExchanger for template simplicity
     Heater richGlycolHeater = new Heater("Rich Glycol Heater", flashDrum.getLiquidOutStream());
     richGlycolHeater.setOutTemperature(reboilerTemp - 20.0 + 273.15); // Preheat to near reboiler
-                                                                      // temp
+								      // temp
     process.add(richGlycolHeater);
 
     // Regeneration still (simplified as heater + separator)
@@ -169,9 +166,8 @@ public class DehydrationTemplate implements ProcessTemplate {
     process.add(glycolPump);
 
     // Lean glycol cooler
-    neqsim.process.equipment.heatexchanger.Cooler glycolCooler =
-        new neqsim.process.equipment.heatexchanger.Cooler("Lean Glycol Cooler",
-            glycolPump.getOutletStream());
+    neqsim.process.equipment.heatexchanger.Cooler glycolCooler = new neqsim.process.equipment.heatexchanger.Cooler(
+	"Lean Glycol Cooler", glycolPump.getOutletStream());
     glycolCooler.setOutTemperature(leanGlycolTemp + 273.15);
     process.add(glycolCooler);
 
@@ -184,7 +180,7 @@ public class DehydrationTemplate implements ProcessTemplate {
   /**
    * Creates a TEG fluid for the dehydration system.
    *
-   * @param purity TEG mass fraction (typically 0.98-0.995)
+   * @param purity   TEG mass fraction (typically 0.98-0.995)
    * @param pressure system pressure in bara
    * @return TEG fluid system
    */
@@ -210,15 +206,15 @@ public class DehydrationTemplate implements ProcessTemplate {
       // Check if fluid contains water
       boolean hasWater = false;
       for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
-        String name = fluid.getComponent(i).getName().toLowerCase();
-        if (name.equals("water") || name.equals("h2o")) {
-          hasWater = true;
-          break;
-        }
+	String name = fluid.getComponent(i).getName().toLowerCase();
+	if (name.equals("water") || name.equals("h2o")) {
+	  hasWater = true;
+	  break;
+	}
       }
 
       if (!hasWater) {
-        return false;
+	return false;
       }
 
       // Check if predominantly gas
@@ -237,16 +233,15 @@ public class DehydrationTemplate implements ProcessTemplate {
   /** {@inheritDoc} */
   @Override
   public String[] getRequiredEquipmentTypes() {
-    return new String[] {"SimpleTEGAbsorber", "Separator", "Heater", "Pump", "Cooler",
-        "ThrottlingValve"};
+    return new String[] { "SimpleTEGAbsorber", "Separator", "Heater", "Pump", "Cooler", "ThrottlingValve" };
   }
 
   /** {@inheritDoc} */
   @Override
   public String[] getExpectedOutputs() {
-    return new String[] {"Dry Gas - Dehydrated gas meeting pipeline specification",
-        "Flash Gas - Hydrocarbon-rich gas from flash drum",
-        "Water - Produced water from regeneration still", "TEG Losses - Estimated glycol losses"};
+    return new String[] { "Dry Gas - Dehydrated gas meeting pipeline specification",
+	"Flash Gas - Hydrocarbon-rich gas from flash drum", "Water - Produced water from regeneration still",
+	"TEG Losses - Estimated glycol losses" };
   }
 
   /** {@inheritDoc} */
@@ -259,20 +254,19 @@ public class DehydrationTemplate implements ProcessTemplate {
   @Override
   public String getDescription() {
     return "TEG (Triethylene Glycol) gas dehydration system with absorber, "
-        + "flash drum, lean/rich heat exchanger, and regeneration still. "
-        + "Suitable for pipeline-spec gas dehydration and cryogenic pre-treatment.";
+	+ "flash drum, lean/rich heat exchanger, and regeneration still. "
+	+ "Suitable for pipeline-spec gas dehydration and cryogenic pre-treatment.";
   }
 
   /**
    * Calculates required TEG circulation rate for target water content.
    *
-   * @param gasFlowRate gas flow rate in MMscfd
-   * @param inletWaterContent inlet water content in lb/MMscf
+   * @param gasFlowRate        gas flow rate in MMscfd
+   * @param inletWaterContent  inlet water content in lb/MMscf
    * @param outletWaterContent target outlet water content in lb/MMscf
    * @return required TEG circulation rate in gal/hr
    */
-  public static double calculateTEGRate(double gasFlowRate, double inletWaterContent,
-      double outletWaterContent) {
+  public static double calculateTEGRate(double gasFlowRate, double inletWaterContent, double outletWaterContent) {
     double waterRemoved = (inletWaterContent - outletWaterContent) * gasFlowRate; // lb/day
     double tegRateGalPerDay = waterRemoved * 3.0; // 3 gal TEG per lb water (typical)
     return tegRateGalPerDay / 24.0; // Convert to gal/hr
@@ -281,13 +275,12 @@ public class DehydrationTemplate implements ProcessTemplate {
   /**
    * Estimates equilibrium water content above TEG at given conditions.
    *
-   * @param tegPurity TEG mass fraction
+   * @param tegPurity   TEG mass fraction
    * @param temperature temperature in Celsius
-   * @param pressure pressure in bara
+   * @param pressure    pressure in bara
    * @return equilibrium water content in lb/MMscf
    */
-  public static double estimateEquilibriumWater(double tegPurity, double temperature,
-      double pressure) {
+  public static double estimateEquilibriumWater(double tegPurity, double temperature, double pressure) {
     // McKetta-Wehe correlation (simplified)
     // Water content decreases with TEG purity and pressure, increases with temperature
     double dewPoint = -12.5 * Math.log10(1.0 - tegPurity) + 0.7 * temperature - 20.0;

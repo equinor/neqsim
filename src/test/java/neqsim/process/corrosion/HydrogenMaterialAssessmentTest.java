@@ -12,8 +12,8 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Tests for {@link HydrogenMaterialAssessment} — comprehensive hydrogen material compatibility
- * assessment integrating ASME B31.12, API 941, NACE MR0175/ISO 15156.
+ * Tests for {@link HydrogenMaterialAssessment} — comprehensive hydrogen material compatibility assessment integrating
+ * ASME B31.12, API 941, NACE MR0175/ISO 15156.
  *
  * @author ESOL
  * @version 1.0
@@ -144,7 +144,7 @@ public class HydrogenMaterialAssessmentTest {
     assessment.evaluate();
 
     assertTrue(assessment.getHTHARisk().contains("Not applicable"),
-        "HTHA should not apply below 200°C: " + assessment.getHTHARisk());
+	"HTHA should not apply below 200°C: " + assessment.getHTHARisk());
     assertTrue(assessment.isHTHAAcceptable());
   }
 
@@ -158,10 +158,9 @@ public class HydrogenMaterialAssessmentTest {
     assessment.evaluate();
 
     // 280°C + 20 bar H2 on carbon steel — should be above Nelson curve
-    assertFalse(assessment.isHTHAAcceptable(),
-        "280°C at 20 bar H2 should be above Nelson curve for carbon steel");
+    assertFalse(assessment.isHTHAAcceptable(), "280°C at 20 bar H2 should be above Nelson curve for carbon steel");
     assertTrue(assessment.getHTHARisk().contains("High") || assessment.getHTHARisk().contains("Very"),
-        "Risk should be High or Very High: " + assessment.getHTHARisk());
+	"Risk should be High or Very High: " + assessment.getHTHARisk());
   }
 
   @Test
@@ -174,8 +173,7 @@ public class HydrogenMaterialAssessmentTest {
     assessment.evaluate();
 
     // 350°C + 10 bar H2 on 2.25Cr-1Mo — should be well below Nelson curve
-    assertTrue(assessment.isHTHAAcceptable(),
-        "350°C at 10 bar H2 should be safe for 2.25Cr-1Mo");
+    assertTrue(assessment.isHTHAAcceptable(), "350°C at 10 bar H2 should be safe for 2.25Cr-1Mo");
   }
 
   @Test
@@ -188,7 +186,7 @@ public class HydrogenMaterialAssessmentTest {
     assessment.evaluate();
 
     assertTrue(assessment.getHICRisk().contains("Not applicable"),
-        "Should be N/A with no H2S: " + assessment.getHICRisk());
+	"Should be N/A with no H2S: " + assessment.getHICRisk());
     assertTrue(assessment.isSourServiceOk());
   }
 
@@ -203,9 +201,9 @@ public class HydrogenMaterialAssessmentTest {
     assessment.evaluate();
 
     assertFalse(assessment.getHICRisk().contains("Not applicable"),
-        "Should flag sour service: " + assessment.getHICRisk());
+	"Should flag sour service: " + assessment.getHICRisk());
     assertTrue(assessment.getHICRisk().contains("Region 1"),
-        "pH2S 0.1 bar should be Region 1: " + assessment.getHICRisk());
+	"pH2S 0.1 bar should be Region 1: " + assessment.getHICRisk());
   }
 
   @Test
@@ -219,7 +217,7 @@ public class HydrogenMaterialAssessmentTest {
     assessment.evaluate();
 
     assertTrue(assessment.getHICRisk().contains("Region 3"),
-        "pH2S 2 bar should be Region 3: " + assessment.getHICRisk());
+	"pH2S 2 bar should be Region 3: " + assessment.getHICRisk());
   }
 
   @Test
@@ -231,8 +229,7 @@ public class HydrogenMaterialAssessmentTest {
     assessment.setMaterialGrade("X52");
     assessment.evaluate();
 
-    assertTrue(assessment.getHICRisk().contains("Trace"),
-        "0.01 bar H2S should be 'Trace': " + assessment.getHICRisk());
+    assertTrue(assessment.getHICRisk().contains("Trace"), "0.01 bar H2S should be 'Trace': " + assessment.getHICRisk());
     assertTrue(assessment.isSourServiceOk());
   }
 
@@ -253,7 +250,7 @@ public class HydrogenMaterialAssessmentTest {
     assertFalse(overall.isEmpty());
     // With multiple mechanisms, risk should be at least Medium
     assertTrue("Medium".equals(overall) || "High".equals(overall) || "Very High".equals(overall),
-        "Combined risk should be elevated: " + overall);
+	"Combined risk should be elevated: " + overall);
   }
 
   @Test
@@ -266,8 +263,7 @@ public class HydrogenMaterialAssessmentTest {
     assessment.evaluate();
 
     // 25 HRC > 22 HRC limit
-    assertFalse(assessment.isHydrogenEmbrittlementAcceptable(),
-        "Hardness 25 HRC should fail against 22 HRC limit");
+    assertFalse(assessment.isHydrogenEmbrittlementAcceptable(), "Hardness 25 HRC should fail against 22 HRC limit");
     assertTrue(assessment.getWarnings().size() > 0, "Should have warnings about hardness");
   }
 
@@ -280,8 +276,7 @@ public class HydrogenMaterialAssessmentTest {
     assessment.evaluate();
 
     // X80 SMYS 552 MPa > 480 MPa limit
-    assertFalse(assessment.isHydrogenEmbrittlementAcceptable(),
-        "X80 (SMYS 552) should fail against 480 MPa limit");
+    assertFalse(assessment.isHydrogenEmbrittlementAcceptable(), "X80 (SMYS 552) should fail against 480 MPa limit");
   }
 
   @Test
@@ -310,8 +305,8 @@ public class HydrogenMaterialAssessmentTest {
     boolean cyclicHasWarnings = false;
     for (String w : cyclicAssessment.getWarnings()) {
       if (w.contains("Cyclic") || w.contains("fatigue")) {
-        cyclicHasWarnings = true;
-        break;
+	cyclicHasWarnings = true;
+	break;
       }
     }
     assertTrue(cyclicHasWarnings, "Cyclic service should produce fatigue warning");
@@ -365,8 +360,8 @@ public class HydrogenMaterialAssessmentTest {
     boolean hasPwhtWarning = false;
     for (String w : assessment.getWarnings()) {
       if (w.contains("PWHT")) {
-        hasPwhtWarning = true;
-        break;
+	hasPwhtWarning = true;
+	break;
       }
     }
     assertTrue(hasPwhtWarning, "Should warn about missing PWHT at pH2 > 5 bar");
@@ -380,8 +375,7 @@ public class HydrogenMaterialAssessmentTest {
     assessment.evaluate();
 
     String rec = assessment.getRecommendedMaterial();
-    assertTrue(rec.contains("acceptable"),
-        "Very low H2 should state material acceptable: " + rec);
+    assertTrue(rec.contains("acceptable"), "Very low H2 should state material acceptable: " + rec);
   }
 
   @Test
@@ -392,8 +386,7 @@ public class HydrogenMaterialAssessmentTest {
     assessment.evaluate();
 
     String rec = assessment.getRecommendedMaterial();
-    assertTrue(rec.contains("X52") || rec.contains("lower"),
-        "5 bar H2 with X65 should recommend downgrade: " + rec);
+    assertTrue(rec.contains("X52") || rec.contains("lower"), "5 bar H2 with X65 should recommend downgrade: " + rec);
   }
 
   @Test
@@ -440,7 +433,7 @@ public class HydrogenMaterialAssessmentTest {
     // Should detect both H2 and H2S
     assertTrue(assessment.getH2PartialPressureBar() > 0.0, "Should detect H2");
     assertFalse(assessment.getHICRisk().contains("Not applicable (no H2S)"),
-        "Should detect H2S for sour assessment: " + assessment.getHICRisk());
+	"Should detect H2S for sour assessment: " + assessment.getHICRisk());
   }
 
   @Test
@@ -499,13 +492,13 @@ public class HydrogenMaterialAssessmentTest {
     boolean hasNace = false;
     for (String s : standards) {
       if (s.contains("B31.12")) {
-        hasB3112 = true;
+	hasB3112 = true;
       }
       if (s.contains("941")) {
-        hasApi941 = true;
+	hasApi941 = true;
       }
       if (s.contains("NACE") || s.contains("15156")) {
-        hasNace = true;
+	hasNace = true;
       }
     }
     assertTrue(hasB3112, "Should apply ASME B31.12");
@@ -540,8 +533,7 @@ public class HydrogenMaterialAssessmentTest {
     assessment.evaluate();
 
     // 316L has SMYS 170 MPa, well below all limits
-    assertTrue(assessment.isHydrogenEmbrittlementAcceptable(),
-        "316L should be acceptable for hydrogen service");
+    assertTrue(assessment.isHydrogenEmbrittlementAcceptable(), "316L should be acceptable for hydrogen service");
   }
 
   @Test

@@ -8,8 +8,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Verifies that every code example in docs/process/pipeline_network_optimization.md compiles and
- * runs correctly.
+ * Verifies that every code example in docs/process/pipeline_network_optimization.md compiles and runs correctly.
  */
 class PipelineNetworkDocExamplesTest {
 
@@ -66,8 +65,7 @@ class PipelineNetworkDocExamplesTest {
   }
 
   /**
-   * Tests the convenience methods from the doc: optimizeProductionNLP() and
-   * optimizeMultiObjective().
+   * Tests the convenience methods from the doc: optimizeProductionNLP() and optimizeMultiObjective().
    */
   @Test
   void testConvenienceMethodsExample() {
@@ -123,10 +121,10 @@ class PipelineNetworkDocExamplesTest {
     for (int i = 0; i < n; i++) {
       matA[i][i] = 4.0;
       if (i > 0) {
-        matA[i][i - 1] = -1.0;
+	matA[i][i - 1] = -1.0;
       }
       if (i < n - 1) {
-        matA[i][i + 1] = -1.0;
+	matA[i][i + 1] = -1.0;
       }
       vecB[i] = 1.0;
     }
@@ -161,8 +159,7 @@ class PipelineNetworkDocExamplesTest {
   @Test
   void testValidationBenchmarksExample() {
     // Direct call
-    List<NetworkValidationBenchmarks.BenchmarkResult> results =
-        NetworkValidationBenchmarks.runAllBenchmarks();
+    List<NetworkValidationBenchmarks.BenchmarkResult> results = NetworkValidationBenchmarks.runAllBenchmarks();
     assertNotNull(results);
     assertTrue(results.size() >= 6, "Should have at least 6 benchmarks");
 
@@ -173,15 +170,13 @@ class PipelineNetworkDocExamplesTest {
     }
 
     // Static convenience method on LoopedPipeNetwork
-    List<NetworkValidationBenchmarks.BenchmarkResult> results2 =
-        LoopedPipeNetwork.runValidationBenchmarks();
+    List<NetworkValidationBenchmarks.BenchmarkResult> results2 = LoopedPipeNetwork.runValidationBenchmarks();
     assertNotNull(results2);
     assertEquals(results.size(), results2.size());
   }
 
   /**
-   * Tests the OptimizationResult fields referenced in the doc: paretoWeight,
-   * totalCompressorPowerKW.
+   * Tests the OptimizationResult fields referenced in the doc: paretoWeight, totalCompressorPowerKW.
    */
   @Test
   void testParetoResultFields() {
@@ -205,8 +200,7 @@ class PipelineNetworkDocExamplesTest {
 
     for (NetworkOptimizer.OptimizationResult r : pareto) {
       // Fields referenced in doc
-      assertTrue(r.paretoWeight >= 0.0 && r.paretoWeight <= 1.0,
-          "Pareto weight should be in [0,1]");
+      assertTrue(r.paretoWeight >= 0.0 && r.paretoWeight <= 1.0, "Pareto weight should be in [0,1]");
       assertTrue(r.totalProductionKgHr >= 0);
       assertTrue(r.totalCompressorPowerKW >= 0);
     }

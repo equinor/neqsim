@@ -7,8 +7,8 @@ import java.util.Locale;
  * Container for axial profiles from plug flow reactor simulation.
  *
  * <p>
- * Stores temperature, pressure, conversion, molar flow, and reaction rate profiles along the
- * reactor length. Provides interpolation and export methods for post-processing and visualization.
+ * Stores temperature, pressure, conversion, molar flow, and reaction rate profiles along the reactor length. Provides
+ * interpolation and export methods for post-processing and visualization.
  * </p>
  *
  * <p>
@@ -57,9 +57,9 @@ public class ReactorAxialProfile implements Serializable {
   /**
    * Constructor for ReactorAxialProfile.
    *
-   * @param numberOfSteps number of axial discretization points
+   * @param numberOfSteps      number of axial discretization points
    * @param numberOfComponents number of chemical components
-   * @param componentNames names of components
+   * @param componentNames     names of components
    */
   public ReactorAxialProfile(int numberOfSteps, int numberOfComponents, String[] componentNames) {
     this.numberOfSteps = numberOfSteps;
@@ -75,24 +75,22 @@ public class ReactorAxialProfile implements Serializable {
   /**
    * Set data at a specific axial step.
    *
-   * @param step step index (0-based)
-   * @param z axial position [m]
-   * @param temp temperature [K]
+   * @param step  step index (0-based)
+   * @param z     axial position [m]
+   * @param temp  temperature [K]
    * @param press pressure [bara]
-   * @param conv conversion of key component [-]
-   * @param rate total reaction rate [mol/(m3*s)]
+   * @param conv  conversion of key component [-]
+   * @param rate  total reaction rate [mol/(m3*s)]
    * @param flows molar flows for each component [mol/s]
    */
-  public void setData(int step, double z, double temp, double press, double conv, double rate,
-      double[] flows) {
+  public void setData(int step, double z, double temp, double press, double conv, double rate, double[] flows) {
     position[step] = z;
     temperature[step] = temp;
     pressure[step] = press;
     conversion[step] = conv;
     reactionRate[step] = rate;
     if (flows != null) {
-      System.arraycopy(flows, 0, molarFlows[step], 0,
-          Math.min(flows.length, molarFlows[step].length));
+      System.arraycopy(flows, 0, molarFlows[step], 0, Math.min(flows.length, molarFlows[step].length));
     }
   }
 
@@ -131,7 +129,7 @@ public class ReactorAxialProfile implements Serializable {
    *
    * @param xArr independent variable array
    * @param yArr dependent variable array
-   * @param x target interpolation point
+   * @param x    target interpolation point
    * @return interpolated y value
    */
   private double interpolate(double[] xArr, double[] yArr, double x) {
@@ -146,8 +144,8 @@ public class ReactorAxialProfile implements Serializable {
     }
     for (int i = 0; i < numberOfSteps - 1; i++) {
       if (x >= xArr[i] && x <= xArr[i + 1]) {
-        double fraction = (x - xArr[i]) / (xArr[i + 1] - xArr[i]);
-        return yArr[i] + fraction * (yArr[i + 1] - yArr[i]);
+	double fraction = (x - xArr[i]) / (xArr[i + 1] - xArr[i]);
+	return yArr[i] + fraction * (yArr[i + 1] - yArr[i]);
       }
     }
     return yArr[numberOfSteps - 1];
@@ -165,7 +163,7 @@ public class ReactorAxialProfile implements Serializable {
     sb.append("  \"components\": [");
     for (int i = 0; i < componentNames.length; i++) {
       if (i > 0) {
-        sb.append(", ");
+	sb.append(", ");
       }
       sb.append("\"").append(componentNames[i]).append("\"");
     }
@@ -181,7 +179,7 @@ public class ReactorAxialProfile implements Serializable {
     for (int i = 0; i < numberOfSteps; i++) {
       sb.append("    ").append(arrayToJson(molarFlows[i]));
       if (i < numberOfSteps - 1) {
-        sb.append(",");
+	sb.append(",");
       }
       sb.append("\n");
     }
@@ -208,10 +206,10 @@ public class ReactorAxialProfile implements Serializable {
 
     // Data rows
     for (int i = 0; i < numberOfSteps; i++) {
-      sb.append(String.format(Locale.US, "%.6f,%.4f,%.6f,%.8f,%.6e", position[i], temperature[i],
-          pressure[i], conversion[i], reactionRate[i]));
+      sb.append(String.format(Locale.US, "%.6f,%.4f,%.6f,%.8f,%.6e", position[i], temperature[i], pressure[i],
+	  conversion[i], reactionRate[i]));
       for (int j = 0; j < componentNames.length; j++) {
-        sb.append(String.format(Locale.US, ",%.8e", molarFlows[i][j]));
+	sb.append(String.format(Locale.US, ",%.8e", molarFlows[i][j]));
       }
       sb.append("\n");
     }
@@ -230,12 +228,12 @@ public class ReactorAxialProfile implements Serializable {
     sb.append("[");
     for (int i = 0; i < arr.length; i++) {
       if (i > 0) {
-        sb.append(", ");
+	sb.append(", ");
       }
       if (Double.isNaN(arr[i]) || Double.isInfinite(arr[i])) {
-        sb.append("null");
+	sb.append("null");
       } else {
-        sb.append(String.format(Locale.US, "%.8g", arr[i]));
+	sb.append(String.format(Locale.US, "%.8g", arr[i]));
       }
     }
     sb.append("]");

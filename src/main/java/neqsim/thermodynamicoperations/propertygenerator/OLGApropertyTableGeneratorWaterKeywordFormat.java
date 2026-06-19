@@ -20,8 +20,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author Kjetil Raul
  * @version $Id: $Id
  */
-public class OLGApropertyTableGeneratorWaterKeywordFormat
-    extends neqsim.thermodynamicoperations.BaseOperation {
+public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermodynamicoperations.BaseOperation {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -93,8 +92,8 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
    * setPressureRange.
    * </p>
    *
-   * @param minPressure a double
-   * @param maxPressure a double
+   * @param minPressure   a double
+   * @param maxPressure   a double
    * @param numberOfSteps a int
    */
   public void setPressureRange(double minPressure, double maxPressure, int numberOfSteps) {
@@ -114,7 +113,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
    *
    * @param minTemperature a double
    * @param maxTemperature a double
-   * @param numberOfSteps a int
+   * @param numberOfSteps  a int
    */
   public void setTemperatureRange(double minTemperature, double maxTemperature, int numberOfSteps) {
     temperatures = new double[numberOfSteps];
@@ -159,12 +158,12 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
     for (int i = 0; i < temperatures.length; i++) {
       thermoSystem.setTemperature(temperatures[i]);
       try {
-        thermoOps.bubblePointPressureFlash(false);
-        bubP[i] = thermoSystem.getPressure();
-        bubPLOG[i] = bubP[i] * 1e5;
+	thermoOps.bubblePointPressureFlash(false);
+	bubP[i] = thermoSystem.getPressure();
+	bubPLOG[i] = bubP[i] * 1e5;
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
-        bubP[i] = 0;
+	logger.error(ex.getMessage(), ex);
+	bubP[i] = 0;
       }
     }
     return bubP;
@@ -184,12 +183,12 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
     for (int i = 0; i < temperatures.length; i++) {
       thermoSystem.setTemperature(temperatures[i]);
       try {
-        thermoOps.dewPointPressureFlash();
-        dewP[i] = thermoSystem.getPressure();
-        dewPLOG[i] = dewP[i] * 1e5;
+	thermoOps.dewPointPressureFlash();
+	dewP[i] = thermoSystem.getPressure();
+	dewPLOG[i] = dewP[i] * 1e5;
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
-        dewP[i] = 0;
+	logger.error(ex.getMessage(), ex);
+	dewP[i] = 0;
       }
     }
     return dewP;
@@ -209,12 +208,12 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
     for (int i = 0; i < pressures.length; i++) {
       thermoSystem.setPressure(pressures[i]);
       try {
-        thermoOps.bubblePointTemperatureFlash();
-        bubT[i] = thermoSystem.getTemperature();
-        bubTLOG[i] = bubT[i] - 273.15;
+	thermoOps.bubblePointTemperatureFlash();
+	bubT[i] = thermoSystem.getTemperature();
+	bubTLOG[i] = bubT[i] - 273.15;
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
-        bubT[i] = 0.0;
+	logger.error(ex.getMessage(), ex);
+	bubT[i] = 0.0;
       }
     }
     return bubT;
@@ -262,8 +261,8 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
     thermoSystem.init(1);
 
     RSWTOB = thermoSystem.getPhase(0).getComponent("water").getNumberOfmoles()
-        * thermoSystem.getPhase(0).getComponent("water").getMolarMass()
-        / (thermoSystem.getTotalNumberOfMoles() * thermoSystem.getMolarMass());
+	* thermoSystem.getPhase(0).getComponent("water").getMolarMass()
+	/ (thermoSystem.getTotalNumberOfMoles() * thermoSystem.getMolarMass());
   }
 
   /** {@inheritDoc} */
@@ -278,223 +277,203 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
     namesKeyword = new String[nProps];
     calcPhaseEnvelope();
     /*
-     * ROG = new double[pressures.length][temperatures.length]; ROL = new
-     * double[pressures.length][temperatures.length]; CPG = new
-     * double[pressures.length][temperatures.length]; CPHL = new
-     * double[pressures.length][temperatures.length]; HG = new
-     * double[pressures.length][temperatures.length]; HHL = new
-     * double[pressures.length][temperatures.length]; VISG = new
-     * double[pressures.length][temperatures.length]; VISHL = new
-     * double[pressures.length][temperatures.length]; TCG = new
-     * double[pressures.length][temperatures.length]; TCHL = new
-     * double[pressures.length][temperatures.length]; // SIGGHL = new
-     * double[pressures.length][temperatures.length]; SEG = new
-     * double[pressures.length][temperatures.length]; SEHL = new
-     * double[pressures.length][temperatures.length]; RS = new
-     * double[pressures.length][temperatures.length]; // DROGDP = new
-     * double[pressures.length][temperatures.length]; // DROHLDP = new
-     * double[pressures.length][temperatures.length]; // DROGDT = new
-     * double[pressures.length][temperatures.length]; // DROHLDT = new
-     * double[pressures.length][temperatures.length];
+     * ROG = new double[pressures.length][temperatures.length]; ROL = new double[pressures.length][temperatures.length];
+     * CPG = new double[pressures.length][temperatures.length]; CPHL = new
+     * double[pressures.length][temperatures.length]; HG = new double[pressures.length][temperatures.length]; HHL = new
+     * double[pressures.length][temperatures.length]; VISG = new double[pressures.length][temperatures.length]; VISHL =
+     * new double[pressures.length][temperatures.length]; TCG = new double[pressures.length][temperatures.length]; TCHL
+     * = new double[pressures.length][temperatures.length]; // SIGGHL = new
+     * double[pressures.length][temperatures.length]; SEG = new double[pressures.length][temperatures.length]; SEHL =
+     * new double[pressures.length][temperatures.length]; RS = new double[pressures.length][temperatures.length]; //
+     * DROGDP = new double[pressures.length][temperatures.length]; // DROHLDP = new
+     * double[pressures.length][temperatures.length]; // DROGDT = new double[pressures.length][temperatures.length]; //
+     * DROHLDT = new double[pressures.length][temperatures.length];
      */
 
     for (int i = 0; i < pressures.length; i++) {
       thermoSystem.setPressure(pressures[i]);
       for (int j = 0; j < temperatures.length; j++) {
-        thermoSystem.setTemperature(temperatures[j]);
-        try {
-          thermoOps.TPflash();
-        } catch (Exception ex) {
-          logger.error(ex.getMessage(), ex);
-        }
-        thermoSystem.init(3);
-        thermoSystem.initPhysicalProperties();
-        /*
-         * ROG[i][j] = thermoSystem.getPhase(0).getPhysicalProperties().getDensity(); ROL[i][j] =
-         * thermoSystem.getPhase(1).getPhysicalProperties().getDensity(); DROGDP[i][j] =
-         * thermoSystem.getPhase(0).getdrhodP(); // DROHLDP[i][j] =
-         * thermoSystem.getPhase(1).getdrhodP(); // DROGDT[i][j] =
-         * thermoSystem.getPhase(0).getdrhodT(); // DROHLDT[i][j] =
-         * thermoSystem.getPhase(1).getdrhodT(); CPG[i][j] = thermoSystem.getPhase(0).getCp();
-         * CPHL[i][j] = thermoSystem.getPhase(1).getCp(); HG[i][j] =
-         * thermoSystem.getPhase(0).getEnthalpy(); HHL[i][j] =
-         * thermoSystem.getPhase(1).getEnthalpy(); TCG[i][j] =
-         * thermoSystem.getPhase(0).getPhysicalProperties().getConductivity(); TCHL[i][j] =
-         * thermoSystem.getPhase(1).getPhysicalProperties().getConductivity(); VISG[i][j] =
-         * thermoSystem.getPhase(0).getPhysicalProperties().getViscosity(); VISHL[i][j] =
-         * thermoSystem.getPhase(1).getPhysicalProperties().getViscosity(); // SIGGHL[i][j] =
-         * thermoSystem.getInterphaseProperties().getSurfaceTension(0, 1); SEG[i][j] =
-         * thermoSystem.getPhase(0).getEntropy(); SEHL[i][j] =
-         * thermoSystem.getPhase(1).getEntropy(); RS[i][j] = thermoSystem.getPhase(0).getBeta();
-         */
+	thermoSystem.setTemperature(temperatures[j]);
+	try {
+	  thermoOps.TPflash();
+	} catch (Exception ex) {
+	  logger.error(ex.getMessage(), ex);
+	}
+	thermoSystem.init(3);
+	thermoSystem.initPhysicalProperties();
+	/*
+	 * ROG[i][j] = thermoSystem.getPhase(0).getPhysicalProperties().getDensity(); ROL[i][j] =
+	 * thermoSystem.getPhase(1).getPhysicalProperties().getDensity(); DROGDP[i][j] =
+	 * thermoSystem.getPhase(0).getdrhodP(); // DROHLDP[i][j] = thermoSystem.getPhase(1).getdrhodP(); //
+	 * DROGDT[i][j] = thermoSystem.getPhase(0).getdrhodT(); // DROHLDT[i][j] = thermoSystem.getPhase(1).getdrhodT();
+	 * CPG[i][j] = thermoSystem.getPhase(0).getCp(); CPHL[i][j] = thermoSystem.getPhase(1).getCp(); HG[i][j] =
+	 * thermoSystem.getPhase(0).getEnthalpy(); HHL[i][j] = thermoSystem.getPhase(1).getEnthalpy(); TCG[i][j] =
+	 * thermoSystem.getPhase(0).getPhysicalProperties().getConductivity(); TCHL[i][j] =
+	 * thermoSystem.getPhase(1).getPhysicalProperties().getConductivity(); VISG[i][j] =
+	 * thermoSystem.getPhase(0).getPhysicalProperties().getViscosity(); VISHL[i][j] =
+	 * thermoSystem.getPhase(1).getPhysicalProperties().getViscosity(); // SIGGHL[i][j] =
+	 * thermoSystem.getInterphaseProperties().getSurfaceTension(0, 1); SEG[i][j] =
+	 * thermoSystem.getPhase(0).getEntropy(); SEHL[i][j] = thermoSystem.getPhase(1).getEntropy(); RS[i][j] =
+	 * thermoSystem.getPhase(0).getBeta();
+	 */
 
-        int k = 0;
-        props[k][i][j] = thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
-        names[k] = "GAS DENSITY";
-        units[k] = "KG/M3";
-        namesKeyword[k] = "ROG";
-        k++;
-        props[k][i][j] = thermoSystem.getPhase(1).getPhysicalProperties().getDensity();
-        names[k] = "LIQUID DENSITY";
-        units[k] = "KG/M3";
-        namesKeyword[k] = "ROHL";
-        k++;
-        props[k][i][j] = thermoSystem.getPhase(2).getPhysicalProperties().getDensity();
-        names[k] = "WATER DENSITY";
-        units[k] = "KG/M3";
-        namesKeyword[k] = "ROWT";
-        k++;
-        props[k][i][j] = thermoSystem.getPhase(0).getdrhodP() / 1.0e5;
-        names[k] = "DRHOG/DP";
-        units[k] = "S2/M2";
-        namesKeyword[k] = "DROGDP";
-        k++;
-        props[k][i][j] = thermoSystem.getPhase(1).getdrhodP() / 1.0e5;
-        names[k] = "DRHOL/DP";
-        units[k] = "S2/M2";
-        namesKeyword[k] = "DROHLDP";
-        k++;
-        props[k][i][j] = thermoSystem.getPhase(2).getdrhodP() / 1.0e5;
-        names[k] = "DRHOWAT/DP";
-        units[k] = "S2/M2";
-        namesKeyword[k] = "DROWTDP";
-        k++;
-        props[k][i][j] = thermoSystem.getPhase(0).getdrhodT();
-        names[k] = "DRHOG/DT";
-        units[k] = "KG/M3-K";
-        namesKeyword[k] = "DROGDT";
-        k++;
-        props[k][i][j] = thermoSystem.getPhase(1).getdrhodT();
-        names[k] = "DRHOL/DT";
-        units[k] = "KG/M3-K";
-        namesKeyword[k] = "DROHLDT";
-        k++;
-        props[k][i][j] = thermoSystem.getPhase(2).getdrhodT();
-        names[k] = "DRHOWAT/DT";
-        units[k] = "KG/M3-K";
-        namesKeyword[k] = "DROWTDT";
-        k++;
-        props[k][i][j] = thermoSystem.getPhase(0).getBeta()
-            * thermoSystem.getPhase(0).getMolarMass() / thermoSystem.getMolarMass();
-        names[k] = "GAS MASS FRACTION";
-        units[k] = "-";
-        namesKeyword[k] = "RS";
-        k++;
-        props[k][i][j] = thermoSystem.getPhase(0).getComponent("water").getx()
-            * thermoSystem.getPhase(0).getComponent("water").getMolarMass()
-            / thermoSystem.getPhase(0).getMolarMass();
-        names[k] = "WATER VAPOR MASS FRACTION";
-        units[k] = "-";
-        namesKeyword[k] = "RSW";
-        k++;
-        props[k][i][j] = thermoSystem.getPhase(0).getPhysicalProperties().getViscosity();
-        names[k] = "GAS VISCOSITY";
-        units[k] = "NS/M2";
-        namesKeyword[k] = "VISG";
-        k++;
-        props[k][i][j] = thermoSystem.getPhase(1).getPhysicalProperties().getViscosity();
-        names[k] = "LIQUID VISCOSITY";
-        units[k] = "NS/M2";
-        namesKeyword[k] = "VISHL";
-        k++;
-        props[k][i][j] = thermoSystem.getPhase(2).getPhysicalProperties().getViscosity();
-        names[k] = "WATER VISCOSITY";
-        units[k] = "NS/M2";
-        namesKeyword[k] = "VISWT";
-        k++;
-        props[k][i][j] =
-            thermoSystem.getPhase(0).getCp() / thermoSystem.getPhase(0).getNumberOfMolesInPhase()
-                / thermoSystem.getPhase(0).getMolarMass();
-        names[k] = "GAS HEAT CAPACITY";
-        units[k] = "J/KG-K";
-        namesKeyword[k] = "CPG";
-        k++;
-        props[k][i][j] =
-            thermoSystem.getPhase(1).getCp() / thermoSystem.getPhase(1).getNumberOfMolesInPhase()
-                / thermoSystem.getPhase(1).getMolarMass();
-        names[k] = "LIQUID HEAT CAPACITY";
-        units[k] = "J/KG-K";
-        namesKeyword[k] = "CPHL";
-        k++;
-        props[k][i][j] =
-            thermoSystem.getPhase(2).getCp() / thermoSystem.getPhase(2).getNumberOfMolesInPhase()
-                / thermoSystem.getPhase(2).getMolarMass();
-        names[k] = "WATER HEAT CAPACITY";
-        units[k] = "J/KG-K";
-        namesKeyword[k] = "CPWT";
-        k++;
-        props[k][i][j] = thermoSystem.getPhase(0).getEnthalpy()
-            / thermoSystem.getPhase(0).getNumberOfMolesInPhase()
-            / thermoSystem.getPhase(0).getMolarMass();
-        names[k] = "GAS ENTHALPY";
-        units[k] = "J/KG";
-        namesKeyword[k] = "HG";
-        k++;
-        props[k][i][j] = thermoSystem.getPhase(1).getEnthalpy()
-            / thermoSystem.getPhase(1).getNumberOfMolesInPhase()
-            / thermoSystem.getPhase(1).getMolarMass();
-        names[k] = "LIQUID ENTHALPY";
-        units[k] = "J/KG";
-        namesKeyword[k] = "HHL";
-        k++;
-        props[k][i][j] = thermoSystem.getPhase(2).getEnthalpy()
-            / thermoSystem.getPhase(2).getNumberOfMolesInPhase()
-            / thermoSystem.getPhase(2).getMolarMass();
-        names[k] = "WATER ENTHALPY";
-        units[k] = "J/KG";
-        namesKeyword[k] = "HWT";
-        k++; // fra neqsim er entalpi per mol
-        props[k][i][j] = thermoSystem.getPhase(0).getPhysicalProperties().getConductivity();
-        names[k] = "GAS THERMAL CONDUCTIVITY";
-        units[k] = "W/M-K";
-        namesKeyword[k] = "TCG";
-        k++;
-        props[k][i][j] = thermoSystem.getPhase(1).getPhysicalProperties().getConductivity();
-        names[k] = "LIQUID THERMAL CONDUCTIVITY";
-        units[k] = "W/M-K";
-        namesKeyword[k] = "TCHL";
-        k++;
-        props[k][i][j] = thermoSystem.getPhase(2).getPhysicalProperties().getConductivity();
-        names[k] = "WATER THERMAL CONDUCTIVITY";
-        units[k] = "W/M-K";
-        namesKeyword[k] = "TCWT";
-        k++;
-        props[k][i][j] = thermoSystem.getInterphaseProperties().getSurfaceTension(0, 1);
-        names[k] = "VAPOR-LIQUID SURFACE TENSION";
-        units[k] = "N/M";
-        namesKeyword[k] = "SIGGHL";
-        k++;
-        props[k][i][j] = thermoSystem.getInterphaseProperties().getSurfaceTension(0, 2);
-        names[k] = "VAPOR-WATER SURFACE TENSION";
-        units[k] = "N/M";
-        namesKeyword[k] = "SIGGWT";
-        k++;
-        props[k][i][j] = thermoSystem.getInterphaseProperties().getSurfaceTension(1, 2);
-        names[k] = "LIQUID-WATER SURFACE TENSION";
-        units[k] = "N/M";
-        namesKeyword[k] = "SIGHLWT";
-        k++;
-        props[k][i][j] = thermoSystem.getPhase(0).getEntropy()
-            / thermoSystem.getPhase(0).getNumberOfMolesInPhase()
-            / thermoSystem.getPhase(0).getMolarMass();
-        names[k] = "GAS ENTROPY";
-        units[k] = "J/KG/K";
-        namesKeyword[k] = "SEG";
-        k++;
-        props[k][i][j] = thermoSystem.getPhase(1).getEntropy()
-            / thermoSystem.getPhase(1).getNumberOfMolesInPhase()
-            / thermoSystem.getPhase(1).getMolarMass();
-        names[k] = "LIQUID ENTROPY";
-        units[k] = "J/KG/K";
-        namesKeyword[k] = "SEHL";
-        k++;
-        props[k][i][j] = thermoSystem.getPhase(2).getEntropy()
-            / thermoSystem.getPhase(2).getNumberOfMolesInPhase()
-            / thermoSystem.getPhase(2).getMolarMass();
-        names[k] = "WATER ENTROPY";
-        units[k] = "J/KG/K";
-        namesKeyword[k] = "SEWT";
-        k++;
+	int k = 0;
+	props[k][i][j] = thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
+	names[k] = "GAS DENSITY";
+	units[k] = "KG/M3";
+	namesKeyword[k] = "ROG";
+	k++;
+	props[k][i][j] = thermoSystem.getPhase(1).getPhysicalProperties().getDensity();
+	names[k] = "LIQUID DENSITY";
+	units[k] = "KG/M3";
+	namesKeyword[k] = "ROHL";
+	k++;
+	props[k][i][j] = thermoSystem.getPhase(2).getPhysicalProperties().getDensity();
+	names[k] = "WATER DENSITY";
+	units[k] = "KG/M3";
+	namesKeyword[k] = "ROWT";
+	k++;
+	props[k][i][j] = thermoSystem.getPhase(0).getdrhodP() / 1.0e5;
+	names[k] = "DRHOG/DP";
+	units[k] = "S2/M2";
+	namesKeyword[k] = "DROGDP";
+	k++;
+	props[k][i][j] = thermoSystem.getPhase(1).getdrhodP() / 1.0e5;
+	names[k] = "DRHOL/DP";
+	units[k] = "S2/M2";
+	namesKeyword[k] = "DROHLDP";
+	k++;
+	props[k][i][j] = thermoSystem.getPhase(2).getdrhodP() / 1.0e5;
+	names[k] = "DRHOWAT/DP";
+	units[k] = "S2/M2";
+	namesKeyword[k] = "DROWTDP";
+	k++;
+	props[k][i][j] = thermoSystem.getPhase(0).getdrhodT();
+	names[k] = "DRHOG/DT";
+	units[k] = "KG/M3-K";
+	namesKeyword[k] = "DROGDT";
+	k++;
+	props[k][i][j] = thermoSystem.getPhase(1).getdrhodT();
+	names[k] = "DRHOL/DT";
+	units[k] = "KG/M3-K";
+	namesKeyword[k] = "DROHLDT";
+	k++;
+	props[k][i][j] = thermoSystem.getPhase(2).getdrhodT();
+	names[k] = "DRHOWAT/DT";
+	units[k] = "KG/M3-K";
+	namesKeyword[k] = "DROWTDT";
+	k++;
+	props[k][i][j] = thermoSystem.getPhase(0).getBeta() * thermoSystem.getPhase(0).getMolarMass()
+	    / thermoSystem.getMolarMass();
+	names[k] = "GAS MASS FRACTION";
+	units[k] = "-";
+	namesKeyword[k] = "RS";
+	k++;
+	props[k][i][j] = thermoSystem.getPhase(0).getComponent("water").getx()
+	    * thermoSystem.getPhase(0).getComponent("water").getMolarMass() / thermoSystem.getPhase(0).getMolarMass();
+	names[k] = "WATER VAPOR MASS FRACTION";
+	units[k] = "-";
+	namesKeyword[k] = "RSW";
+	k++;
+	props[k][i][j] = thermoSystem.getPhase(0).getPhysicalProperties().getViscosity();
+	names[k] = "GAS VISCOSITY";
+	units[k] = "NS/M2";
+	namesKeyword[k] = "VISG";
+	k++;
+	props[k][i][j] = thermoSystem.getPhase(1).getPhysicalProperties().getViscosity();
+	names[k] = "LIQUID VISCOSITY";
+	units[k] = "NS/M2";
+	namesKeyword[k] = "VISHL";
+	k++;
+	props[k][i][j] = thermoSystem.getPhase(2).getPhysicalProperties().getViscosity();
+	names[k] = "WATER VISCOSITY";
+	units[k] = "NS/M2";
+	namesKeyword[k] = "VISWT";
+	k++;
+	props[k][i][j] = thermoSystem.getPhase(0).getCp() / thermoSystem.getPhase(0).getNumberOfMolesInPhase()
+	    / thermoSystem.getPhase(0).getMolarMass();
+	names[k] = "GAS HEAT CAPACITY";
+	units[k] = "J/KG-K";
+	namesKeyword[k] = "CPG";
+	k++;
+	props[k][i][j] = thermoSystem.getPhase(1).getCp() / thermoSystem.getPhase(1).getNumberOfMolesInPhase()
+	    / thermoSystem.getPhase(1).getMolarMass();
+	names[k] = "LIQUID HEAT CAPACITY";
+	units[k] = "J/KG-K";
+	namesKeyword[k] = "CPHL";
+	k++;
+	props[k][i][j] = thermoSystem.getPhase(2).getCp() / thermoSystem.getPhase(2).getNumberOfMolesInPhase()
+	    / thermoSystem.getPhase(2).getMolarMass();
+	names[k] = "WATER HEAT CAPACITY";
+	units[k] = "J/KG-K";
+	namesKeyword[k] = "CPWT";
+	k++;
+	props[k][i][j] = thermoSystem.getPhase(0).getEnthalpy() / thermoSystem.getPhase(0).getNumberOfMolesInPhase()
+	    / thermoSystem.getPhase(0).getMolarMass();
+	names[k] = "GAS ENTHALPY";
+	units[k] = "J/KG";
+	namesKeyword[k] = "HG";
+	k++;
+	props[k][i][j] = thermoSystem.getPhase(1).getEnthalpy() / thermoSystem.getPhase(1).getNumberOfMolesInPhase()
+	    / thermoSystem.getPhase(1).getMolarMass();
+	names[k] = "LIQUID ENTHALPY";
+	units[k] = "J/KG";
+	namesKeyword[k] = "HHL";
+	k++;
+	props[k][i][j] = thermoSystem.getPhase(2).getEnthalpy() / thermoSystem.getPhase(2).getNumberOfMolesInPhase()
+	    / thermoSystem.getPhase(2).getMolarMass();
+	names[k] = "WATER ENTHALPY";
+	units[k] = "J/KG";
+	namesKeyword[k] = "HWT";
+	k++; // fra neqsim er entalpi per mol
+	props[k][i][j] = thermoSystem.getPhase(0).getPhysicalProperties().getConductivity();
+	names[k] = "GAS THERMAL CONDUCTIVITY";
+	units[k] = "W/M-K";
+	namesKeyword[k] = "TCG";
+	k++;
+	props[k][i][j] = thermoSystem.getPhase(1).getPhysicalProperties().getConductivity();
+	names[k] = "LIQUID THERMAL CONDUCTIVITY";
+	units[k] = "W/M-K";
+	namesKeyword[k] = "TCHL";
+	k++;
+	props[k][i][j] = thermoSystem.getPhase(2).getPhysicalProperties().getConductivity();
+	names[k] = "WATER THERMAL CONDUCTIVITY";
+	units[k] = "W/M-K";
+	namesKeyword[k] = "TCWT";
+	k++;
+	props[k][i][j] = thermoSystem.getInterphaseProperties().getSurfaceTension(0, 1);
+	names[k] = "VAPOR-LIQUID SURFACE TENSION";
+	units[k] = "N/M";
+	namesKeyword[k] = "SIGGHL";
+	k++;
+	props[k][i][j] = thermoSystem.getInterphaseProperties().getSurfaceTension(0, 2);
+	names[k] = "VAPOR-WATER SURFACE TENSION";
+	units[k] = "N/M";
+	namesKeyword[k] = "SIGGWT";
+	k++;
+	props[k][i][j] = thermoSystem.getInterphaseProperties().getSurfaceTension(1, 2);
+	names[k] = "LIQUID-WATER SURFACE TENSION";
+	units[k] = "N/M";
+	namesKeyword[k] = "SIGHLWT";
+	k++;
+	props[k][i][j] = thermoSystem.getPhase(0).getEntropy() / thermoSystem.getPhase(0).getNumberOfMolesInPhase()
+	    / thermoSystem.getPhase(0).getMolarMass();
+	names[k] = "GAS ENTROPY";
+	units[k] = "J/KG/K";
+	namesKeyword[k] = "SEG";
+	k++;
+	props[k][i][j] = thermoSystem.getPhase(1).getEntropy() / thermoSystem.getPhase(1).getNumberOfMolesInPhase()
+	    / thermoSystem.getPhase(1).getMolarMass();
+	names[k] = "LIQUID ENTROPY";
+	units[k] = "J/KG/K";
+	namesKeyword[k] = "SEHL";
+	k++;
+	props[k][i][j] = thermoSystem.getPhase(2).getEntropy() / thermoSystem.getPhase(2).getNumberOfMolesInPhase()
+	    / thermoSystem.getPhase(2).getMolarMass();
+	names[k] = "WATER ENTROPY";
+	units[k] = "J/KG/K";
+	namesKeyword[k] = "SEWT";
+	k++;
       }
     }
     bubP = calcBubP(temperatures);
@@ -512,8 +491,8 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
     for (int i = 0; i < pressures.length; i++) {
       thermoSystem.setPressure(pressures[i]);
       for (int j = 0; j < temperatures.length; j++) {
-        logger.info("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j]);
-        // + " ROG " + ROG[i][j] + " ROL " + ROL[i][j]);
+	logger.info("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j]);
+	// + " ROG " + ROG[i][j] + " ROL " + ROL[i][j]);
       }
     }
     writeOLGAinpFile("test.tab");
@@ -525,44 +504,43 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
    * @param filename a {@link java.lang.String} object
    */
   public void writeOLGAinpFile(String filename) {
-    try (Writer writer =
-        new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filename), "utf-8"))) {
+    try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filename), "utf-8"))) {
       writer.write("PVTTABLE LABEL = \"NewFluid\", PHASE = THREE,\\\n");
       writer.write("EOS = \"Equation\",\\\n");
 
       writer.write("COMPONENTS = (");
       for (int i = 0; i < molfracs.length; i++) {
-        writer.write("\"" + components[i] + "\"");
-        if (i < molfracs.length - 1) {
-          writer.write(",");
-        }
+	writer.write("\"" + components[i] + "\"");
+	if (i < molfracs.length - 1) {
+	  writer.write(",");
+	}
       }
       writer.write("),\\\n");
 
       writer.write("MOLES = (");
       for (int i = 0; i < molfracs.length; i++) {
-        writer.write(Double.toString(molfracs[i]));
-        if (i < molfracs.length - 1) {
-          writer.write(",");
-        }
+	writer.write(Double.toString(molfracs[i]));
+	if (i < molfracs.length - 1) {
+	  writer.write(",");
+	}
       }
       writer.write("),\\\n");
 
       writer.write("MOLWEIGHT = (");
       for (int i = 0; i < molfracs.length; i++) {
-        writer.write(Double.toString(MW[i]));
-        if (i < molfracs.length - 1) {
-          writer.write(",");
-        }
+	writer.write(Double.toString(MW[i]));
+	if (i < molfracs.length - 1) {
+	  writer.write(",");
+	}
       }
       writer.write(") g/mol,\\\n");
 
       writer.write("DENSITY = (");
       for (int i = 0; i < molfracs.length; i++) {
-        writer.write(Double.toString(dens[i]));
-        if (i < molfracs.length - 1) {
-          writer.write(",");
-        }
+	writer.write(Double.toString(dens[i]));
+	if (i < molfracs.length - 1) {
+	  writer.write(",");
+	}
       }
       writer.write(") g/cm3,\\\n");
 
@@ -579,60 +557,60 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
 
       writer.write("PRESSURE = (");
       for (int i = 0; i < pressures.length; i++) {
-        writer.write(Double.toString(pressureLOG[i]));
-        if (i < pressures.length - 1) {
-          writer.write(",");
-        }
+	writer.write(Double.toString(pressureLOG[i]));
+	if (i < pressures.length - 1) {
+	  writer.write(",");
+	}
       }
       writer.write(") Pa,\\\n");
 
       writer.write("TEMPERATURE = (");
       for (int i = 0; i < temperatures.length; i++) {
-        writer.write(Double.toString(temperatureLOG[i]));
-        if (i < temperatures.length - 1) {
-          writer.write(",");
-        }
+	writer.write(Double.toString(temperatureLOG[i]));
+	if (i < temperatures.length - 1) {
+	  writer.write(",");
+	}
       }
       writer.write(") C,\\\n");
 
       writer.write("BUBBLEPRESSURES = (");
       for (int i = 0; i < temperatures.length; i++) {
-        writer.write(Double.toString(bubPLOG[i]));
-        if (i < temperatures.length - 1) {
-          writer.write(",");
-        }
+	writer.write(Double.toString(bubPLOG[i]));
+	if (i < temperatures.length - 1) {
+	  writer.write(",");
+	}
       }
       writer.write(") Pa,\\\n");
 
       writer.write("BUBBLETEMPERATURES = (");
       for (int i = 0; i < pressures.length; i++) {
-        writer.write(Double.toString(bubTLOG[i]));
-        if (i < pressures.length - 1) {
-          writer.write(",");
-        }
+	writer.write(Double.toString(bubTLOG[i]));
+	if (i < pressures.length - 1) {
+	  writer.write(",");
+	}
       }
       writer.write(") C,\\\n");
 
       writer.write("COLUMNS = (PT,TM,");
       for (int k = 0; k < nProps; k++) {
-        writer.write(namesKeyword[k]);
-        if (k < nProps - 1) {
-          writer.write(",");
-        }
+	writer.write(namesKeyword[k]);
+	if (k < nProps - 1) {
+	  writer.write(",");
+	}
       }
       writer.write(")\n");
 
       for (int i = 0; i < pressures.length; i++) {
-        thermoSystem.setPressure(pressures[i]);
-        for (int j = 0; j < temperatures.length; j++) {
-          thermoSystem.setTemperature(temperatures[j]);
-          writer.write("PVTTABLE POINT = (");
-          writer.write(pressureLOG[i] + "," + temperatureLOG[j]);
-          for (int k = 0; k < nProps; k++) {
-            writer.write("," + props[k][i][j]);
-          }
-          writer.write(")\n");
-        }
+	thermoSystem.setPressure(pressures[i]);
+	for (int j = 0; j < temperatures.length; j++) {
+	  thermoSystem.setTemperature(temperatures[j]);
+	  writer.write("PVTTABLE POINT = (");
+	  writer.write(pressureLOG[i] + "," + temperatureLOG[j]);
+	  for (int k = 0; k < nProps; k++) {
+	    writer.write("," + props[k][i][j]);
+	  }
+	  writer.write(")\n");
+	}
       }
     } catch (IOException ex) {
       ex.printStackTrace();

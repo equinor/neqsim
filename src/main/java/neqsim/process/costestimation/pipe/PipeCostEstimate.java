@@ -9,9 +9,8 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
  * Cost estimation class for pipelines and piping systems.
  *
  * <p>
- * This class provides pipe-specific cost estimation methods using chemical engineering cost
- * correlations for carbon steel, stainless steel, and other piping materials. Includes costs for
- * fittings, flanges, valves, and installation.
+ * This class provides pipe-specific cost estimation methods using chemical engineering cost correlations for carbon
+ * steel, stainless steel, and other piping materials. Includes costs for fittings, flanges, valves, and installation.
  * </p>
  *
  * @author AGAS
@@ -167,8 +166,7 @@ public class PipeCostEstimate extends UnitCostEstimateBaseClass {
     } else if ("160".equals(pipeSchedule)) {
       scheduleInt = 160;
     }
-    double pipingCost =
-        getCostCalculator().calcPipingCost(nominalDiameter * 0.0254, pipeLength, scheduleInt);
+    double pipingCost = getCostCalculator().calcPipingCost(nominalDiameter * 0.0254, pipeLength, scheduleInt);
 
     // Apply material factor
     pipingCost *= getMaterialFactor();

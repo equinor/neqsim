@@ -8,8 +8,8 @@ import java.util.List;
  * Defines a shutdown profile for compressor shutdown sequences.
  *
  * <p>
- * This class defines the sequence of speed/time points that define how a compressor should be
- * stopped. It includes safety considerations for normal and emergency shutdowns.
+ * This class defines the sequence of speed/time points that define how a compressor should be stopped. It includes
+ * safety considerations for normal and emergency shutdowns.
  * </p>
  *
  * @author esol
@@ -58,9 +58,9 @@ public class ShutdownProfile implements Serializable {
     /**
      * Constructor for ProfilePoint.
      *
-     * @param time elapsed time from shutdown start in seconds
+     * @param time        elapsed time from shutdown start in seconds
      * @param targetSpeed target speed at this point in RPM
-     * @param action action or check description
+     * @param action      action or check description
      */
     public ProfilePoint(double time, double targetSpeed, String action) {
       this.time = time;
@@ -106,7 +106,7 @@ public class ShutdownProfile implements Serializable {
   /**
    * Constructor with shutdown type.
    *
-   * @param type the shutdown type
+   * @param type         the shutdown type
    * @param currentSpeed current operating speed in RPM
    */
   public ShutdownProfile(ShutdownType type, double currentSpeed) {
@@ -117,28 +117,28 @@ public class ShutdownProfile implements Serializable {
   /**
    * Create profile based on shutdown type.
    *
-   * @param type shutdown type
+   * @param type         shutdown type
    * @param currentSpeed current speed in RPM
    */
   private void createProfile(ShutdownType type, double currentSpeed) {
     profile.clear();
 
     switch (type) {
-      case NORMAL:
-        createNormalProfile(currentSpeed);
-        break;
-      case RAPID:
-        createRapidProfile(currentSpeed);
-        break;
-      case EMERGENCY:
-        createEmergencyProfile(currentSpeed);
-        break;
-      case COASTDOWN:
-        createCoastdownProfile(currentSpeed);
-        break;
-      default:
-        createNormalProfile(currentSpeed);
-        break;
+    case NORMAL:
+      createNormalProfile(currentSpeed);
+      break;
+    case RAPID:
+      createRapidProfile(currentSpeed);
+      break;
+    case EMERGENCY:
+      createEmergencyProfile(currentSpeed);
+      break;
+    case COASTDOWN:
+      createCoastdownProfile(currentSpeed);
+      break;
+    default:
+      createNormalProfile(currentSpeed);
+      break;
     }
   }
 
@@ -152,12 +152,11 @@ public class ShutdownProfile implements Serializable {
 
     profile.add(new ProfilePoint(0.0, currentSpeed, "Initiate shutdown, open antisurge valve"));
     profile.add(new ProfilePoint(antisurgeOpenDelay, currentSpeed * 0.9, "Begin ramp down"));
-    profile.add(new ProfilePoint(antisurgeOpenDelay + rampDownTime * 0.5, minimumIdleSpeed * 1.5,
-        "Intermediate speed check"));
-    profile.add(new ProfilePoint(antisurgeOpenDelay + rampDownTime, minimumIdleSpeed,
-        "Idle speed reached, begin rundown"));
-    profile.add(new ProfilePoint(antisurgeOpenDelay + rampDownTime + idleRundownTime, 0.0,
-        "Stop complete"));
+    profile.add(
+	new ProfilePoint(antisurgeOpenDelay + rampDownTime * 0.5, minimumIdleSpeed * 1.5, "Intermediate speed check"));
+    profile.add(
+	new ProfilePoint(antisurgeOpenDelay + rampDownTime, minimumIdleSpeed, "Idle speed reached, begin rundown"));
+    profile.add(new ProfilePoint(antisurgeOpenDelay + rampDownTime + idleRundownTime, 0.0, "Stop complete"));
   }
 
   /**
@@ -181,8 +180,7 @@ public class ShutdownProfile implements Serializable {
   private void createEmergencyProfile(double currentSpeed) {
     double rampDownTime = currentSpeed / emergencyRampRate;
 
-    profile
-        .add(new ProfilePoint(0.0, currentSpeed, "EMERGENCY SHUTDOWN - Trip all, open antisurge"));
+    profile.add(new ProfilePoint(0.0, currentSpeed, "EMERGENCY SHUTDOWN - Trip all, open antisurge"));
     profile.add(new ProfilePoint(rampDownTime, 0.0, "Emergency stop complete"));
   }
 
@@ -202,7 +200,7 @@ public class ShutdownProfile implements Serializable {
   /**
    * Get the target speed at a given elapsed time during shutdown.
    *
-   * @param elapsedTime time since shutdown began in seconds
+   * @param elapsedTime  time since shutdown began in seconds
    * @param initialSpeed the speed when shutdown started in RPM
    * @return target speed in RPM
    */
@@ -218,10 +216,10 @@ public class ShutdownProfile implements Serializable {
     for (int i = 0; i < profile.size(); i++) {
       ProfilePoint point = profile.get(i);
       if (point.getTime() <= elapsedTime) {
-        current = point;
-        if (i + 1 < profile.size()) {
-          next = profile.get(i + 1);
-        }
+	current = point;
+	if (i + 1 < profile.size()) {
+	  next = profile.get(i + 1);
+	}
       }
     }
 
@@ -266,7 +264,7 @@ public class ShutdownProfile implements Serializable {
   /**
    * Check if shutdown is complete.
    *
-   * @param elapsedTime time since shutdown began in seconds
+   * @param elapsedTime  time since shutdown began in seconds
    * @param currentSpeed current actual speed in RPM
    * @return true if shutdown is complete
    */
@@ -284,7 +282,7 @@ public class ShutdownProfile implements Serializable {
     for (int i = profile.size() - 1; i >= 0; i--) {
       ProfilePoint point = profile.get(i);
       if (point.getTime() <= elapsedTime) {
-        return point.getAction();
+	return point.getAction();
       }
     }
     return "Pre-shutdown";
@@ -323,7 +321,7 @@ public class ShutdownProfile implements Serializable {
   /**
    * Set shutdown type and rebuild profile.
    *
-   * @param type shutdown type
+   * @param type         shutdown type
    * @param currentSpeed current operating speed in RPM
    */
   public void setShutdownType(ShutdownType type, double currentSpeed) {

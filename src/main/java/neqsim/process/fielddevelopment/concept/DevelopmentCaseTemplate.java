@@ -11,8 +11,8 @@ import neqsim.process.fielddevelopment.screening.LifecycleEmissionsProfile;
  * Standardized field-development case template for concept comparison.
  *
  * <p>
- * The template bundles the concept definition, generated facility configuration, CAPEX breakdown,
- * production profile, emissions, schedule, and screening economics into one comparable object.
+ * The template bundles the concept definition, generated facility configuration, CAPEX breakdown, production profile,
+ * emissions, schedule, and screening economics into one comparable object.
  * </p>
  *
  * @author ESOL
@@ -40,56 +40,53 @@ public final class DevelopmentCaseTemplate implements Serializable {
   /**
    * Creates a development case template.
    *
-   * @param name case name
-   * @param caseType case type label
-   * @param concept field concept
-   * @param facilityConfig facility configuration or null if not generated
-   * @param capexBreakdownMusd CAPEX breakdown in MUSD
-   * @param productionProfile annual production profile in Sm3/year for gas or bbl/year for oil
-   * @param annualOpexMusd annual OPEX in MUSD/year
-   * @param powerMw estimated power demand in MW
-   * @param annualEmissionsTonnes annual emissions in tonnes CO2e/year
-   * @param firstProductionYear first production year
+   * @param name                      case name
+   * @param caseType                  case type label
+   * @param concept                   field concept
+   * @param facilityConfig            facility configuration or null if not generated
+   * @param capexBreakdownMusd        CAPEX breakdown in MUSD
+   * @param productionProfile         annual production profile in Sm3/year for gas or bbl/year for oil
+   * @param annualOpexMusd            annual OPEX in MUSD/year
+   * @param powerMw                   estimated power demand in MW
+   * @param annualEmissionsTonnes     annual emissions in tonnes CO2e/year
+   * @param firstProductionYear       first production year
    * @param developmentDurationMonths development duration in months
-   * @param economics cash-flow result
-   * @param assumptionsSummary concise assumptions summary
+   * @param economics                 cash-flow result
+   * @param assumptionsSummary        concise assumptions summary
    */
-  public DevelopmentCaseTemplate(String name, String caseType, FieldConcept concept,
-      FacilityConfig facilityConfig, Map<String, Double> capexBreakdownMusd,
-      Map<Integer, Double> productionProfile, double annualOpexMusd, double powerMw,
-      double annualEmissionsTonnes, int firstProductionYear, int developmentDurationMonths,
+  public DevelopmentCaseTemplate(String name, String caseType, FieldConcept concept, FacilityConfig facilityConfig,
+      Map<String, Double> capexBreakdownMusd, Map<Integer, Double> productionProfile, double annualOpexMusd,
+      double powerMw, double annualEmissionsTonnes, int firstProductionYear, int developmentDurationMonths,
       CashFlowEngine.CashFlowResult economics, String assumptionsSummary) {
-    this(name, caseType, concept, facilityConfig, capexBreakdownMusd, productionProfile,
-        annualOpexMusd, powerMw, annualEmissionsTonnes, firstProductionYear,
-        developmentDurationMonths, economics, assumptionsSummary,
-        DevelopmentCaseUncertainty.empty(), LifecycleEmissionsProfile.empty());
+    this(name, caseType, concept, facilityConfig, capexBreakdownMusd, productionProfile, annualOpexMusd, powerMw,
+	annualEmissionsTonnes, firstProductionYear, developmentDurationMonths, economics, assumptionsSummary,
+	DevelopmentCaseUncertainty.empty(), LifecycleEmissionsProfile.empty());
   }
 
   /**
    * Creates a development case template with uncertainty and lifecycle emissions.
    *
-   * @param name case name
-   * @param caseType case type label
-   * @param concept field concept
-   * @param facilityConfig facility configuration or null if not generated
-   * @param capexBreakdownMusd CAPEX breakdown in MUSD
-   * @param productionProfile annual production profile in Sm3/year for gas or bbl/year for oil
-   * @param annualOpexMusd annual OPEX in MUSD/year
-   * @param powerMw estimated power demand in MW
-   * @param annualEmissionsTonnes annual emissions in tonnes CO2e/year
-   * @param firstProductionYear first production year
+   * @param name                      case name
+   * @param caseType                  case type label
+   * @param concept                   field concept
+   * @param facilityConfig            facility configuration or null if not generated
+   * @param capexBreakdownMusd        CAPEX breakdown in MUSD
+   * @param productionProfile         annual production profile in Sm3/year for gas or bbl/year for oil
+   * @param annualOpexMusd            annual OPEX in MUSD/year
+   * @param powerMw                   estimated power demand in MW
+   * @param annualEmissionsTonnes     annual emissions in tonnes CO2e/year
+   * @param firstProductionYear       first production year
    * @param developmentDurationMonths development duration in months
-   * @param economics cash-flow result
-   * @param assumptionsSummary concise assumptions summary
-   * @param uncertainty probabilistic assumption bundle
+   * @param economics                 cash-flow result
+   * @param assumptionsSummary        concise assumptions summary
+   * @param uncertainty               probabilistic assumption bundle
    * @param lifecycleEmissionsProfile lifecycle emissions time series
    */
-  public DevelopmentCaseTemplate(String name, String caseType, FieldConcept concept,
-      FacilityConfig facilityConfig, Map<String, Double> capexBreakdownMusd,
-      Map<Integer, Double> productionProfile, double annualOpexMusd, double powerMw,
-      double annualEmissionsTonnes, int firstProductionYear, int developmentDurationMonths,
-      CashFlowEngine.CashFlowResult economics, String assumptionsSummary,
-      DevelopmentCaseUncertainty uncertainty, LifecycleEmissionsProfile lifecycleEmissionsProfile) {
+  public DevelopmentCaseTemplate(String name, String caseType, FieldConcept concept, FacilityConfig facilityConfig,
+      Map<String, Double> capexBreakdownMusd, Map<Integer, Double> productionProfile, double annualOpexMusd,
+      double powerMw, double annualEmissionsTonnes, int firstProductionYear, int developmentDurationMonths,
+      CashFlowEngine.CashFlowResult economics, String assumptionsSummary, DevelopmentCaseUncertainty uncertainty,
+      LifecycleEmissionsProfile lifecycleEmissionsProfile) {
     this.name = name;
     this.caseType = caseType;
     this.concept = concept;
@@ -104,9 +101,8 @@ public final class DevelopmentCaseTemplate implements Serializable {
     this.economics = economics;
     this.assumptionsSummary = assumptionsSummary;
     this.uncertainty = uncertainty == null ? DevelopmentCaseUncertainty.empty() : uncertainty;
-    this.lifecycleEmissionsProfile =
-        lifecycleEmissionsProfile == null ? LifecycleEmissionsProfile.empty()
-            : lifecycleEmissionsProfile;
+    this.lifecycleEmissionsProfile = lifecycleEmissionsProfile == null ? LifecycleEmissionsProfile.empty()
+	: lifecycleEmissionsProfile;
   }
 
   /**
@@ -274,9 +270,8 @@ public final class DevelopmentCaseTemplate implements Serializable {
   public String getSummary() {
     double npv = economics != null ? economics.getNpv() : Double.NaN;
     double irr = economics != null ? economics.getIrr() : Double.NaN;
-    return String.format(
-        "%s [%s]: CAPEX %.0f MUSD, OPEX %.1f MUSD/y, power %.1f MW, " + "NPV %.0f MUSD, IRR %.1f%%",
-        name, caseType, getTotalCapexMusd(), annualOpexMusd, powerMw, npv, irr * 100.0);
+    return String.format("%s [%s]: CAPEX %.0f MUSD, OPEX %.1f MUSD/y, power %.1f MW, " + "NPV %.0f MUSD, IRR %.1f%%",
+	name, caseType, getTotalCapexMusd(), annualOpexMusd, powerMw, npv, irr * 100.0);
   }
 
   @Override

@@ -73,13 +73,13 @@ public class Graph2b extends javax.swing.JFrame {
     for (int serLen = 0; serLen < points.length / 2; serLen++) {
       XYSeries series = new XYSeries(seriesNames[serLen]);
       for (int i = 0; i < points[2 * serLen].length; i++) {
-        series.add(points[2 * serLen][i], points[2 * serLen + 1][i]);
+	series.add(points[2 * serLen][i], points[2 * serLen + 1][i]);
       }
       seriesCol.addSeries(series);
     }
 
     chart = ChartFactory.createScatterPlot(tit, xaxtitle, yaxtitle, seriesCol,
-        org.jfree.chart.plot.PlotOrientation.VERTICAL, true, false, false);
+	org.jfree.chart.plot.PlotOrientation.VERTICAL, true, false, false);
     // StandardTitle title = (StandardTitle)chart.getTitle();
     // title.setTitle(titl);
     // chart.setBackgroundPaint(java.awt.P)ackgroundPaint(new GradientPaint(0, 0,
@@ -87,9 +87,8 @@ public class Graph2b extends javax.swing.JFrame {
     // org.jfree.chart.plot.Plot myPlot = chart.getPlot();
 
     chartPanel4 = new ChartPanel(chart);
-    chartPanel4
-        .setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4),
-            BorderFactory.createLineBorder(Color.darkGray, 1)));
+    chartPanel4.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4),
+	BorderFactory.createLineBorder(Color.darkGray, 1)));
     initComponents();
     getContentPane().add(chartPanel4, java.awt.BorderLayout.WEST);
     pack();
@@ -100,11 +99,11 @@ public class Graph2b extends javax.swing.JFrame {
    * Constructor for graph2b.
    * </p>
    *
-   * @param points an array of type double
+   * @param points      an array of type double
    * @param seriesNames an array of {@link java.lang.String} objects
-   * @param tit a {@link java.lang.String} object
-   * @param xaxis a {@link java.lang.String} object
-   * @param yaxis a {@link java.lang.String} object
+   * @param tit         a {@link java.lang.String} object
+   * @param xaxis       a {@link java.lang.String} object
+   * @param yaxis       a {@link java.lang.String} object
    */
   public Graph2b(double[][] points, String[] seriesNames, String tit, String xaxis, String yaxis) {
     XYSeriesCollection seriesCol = new XYSeriesCollection();
@@ -112,13 +111,13 @@ public class Graph2b extends javax.swing.JFrame {
     for (int serLen = 0; serLen < points.length / 2; serLen++) {
       XYSeries series = new XYSeries(seriesNames[serLen]);
       for (int i = 0; i < points[2 * serLen].length; i++) {
-        series.add(points[2 * serLen][i], points[2 * serLen + 1][i]);
-        // System.out.println(points[2*serLen][i]+" "+points[2*serLen+1][i]);
+	series.add(points[2 * serLen][i], points[2 * serLen + 1][i]);
+	// System.out.println(points[2*serLen][i]+" "+points[2*serLen+1][i]);
       }
       seriesCol.addSeries(series);
     }
-    chart = ChartFactory.createScatterPlot(tit, xaxis, yaxis, seriesCol,
-        org.jfree.chart.plot.PlotOrientation.VERTICAL, true, false, false);
+    chart = ChartFactory.createScatterPlot(tit, xaxis, yaxis, seriesCol, org.jfree.chart.plot.PlotOrientation.VERTICAL,
+	true, false, false);
 
     // StandardTitle title = (StandardTitle)chart.getTitle();
     // title.setTitle(titl);
@@ -128,9 +127,8 @@ public class Graph2b extends javax.swing.JFrame {
     // org.jfree.chart.plot.Plot myPlot = chart.getPlot();
 
     chartPanel4 = new ChartPanel(chart);
-    chartPanel4
-        .setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4),
-            BorderFactory.createLineBorder(Color.darkGray, 1)));
+    chartPanel4.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4),
+	BorderFactory.createLineBorder(Color.darkGray, 1)));
     chartPanel4.setBackground(Color.white);
     initComponents();
     getContentPane().add(chartPanel4, java.awt.BorderLayout.WEST);
@@ -142,27 +140,26 @@ public class Graph2b extends javax.swing.JFrame {
    * Constructor for graph2b.
    * </p>
    *
-   * @param xpoints an array of type double
-   * @param points an array of type double
+   * @param xpoints     an array of type double
+   * @param points      an array of type double
    * @param seriesNames an array of {@link java.lang.String} objects
-   * @param tit a {@link java.lang.String} object
-   * @param xaxis a {@link java.lang.String} object
-   * @param yaxis a {@link java.lang.String} object
+   * @param tit         a {@link java.lang.String} object
+   * @param xaxis       a {@link java.lang.String} object
+   * @param yaxis       a {@link java.lang.String} object
    */
-  public Graph2b(double[][] xpoints, double[][] points, String[] seriesNames, String tit,
-      String xaxis, String yaxis) {
+  public Graph2b(double[][] xpoints, double[][] points, String[] seriesNames, String tit, String xaxis, String yaxis) {
     XYSeriesCollection seriesCol = new XYSeriesCollection();
 
     for (int serLen = 0; serLen < points.length; serLen++) {
       XYSeries series = new XYSeries(seriesNames[serLen]);
       for (int i = 0; i < points[serLen].length; i++) {
-        series.add(xpoints[serLen][i], points[serLen][i]);
-        // System.out.println(points[2*serLen][i]+" "+points[2*serLen+1][i]);
+	series.add(xpoints[serLen][i], points[serLen][i]);
+	// System.out.println(points[2*serLen][i]+" "+points[2*serLen+1][i]);
       }
       seriesCol.addSeries(series);
     }
-    chart = ChartFactory.createScatterPlot(tit, xaxis, yaxis, seriesCol,
-        org.jfree.chart.plot.PlotOrientation.VERTICAL, true, false, false);
+    chart = ChartFactory.createScatterPlot(tit, xaxis, yaxis, seriesCol, org.jfree.chart.plot.PlotOrientation.VERTICAL,
+	true, false, false);
 
     // StandardTitle title = (StandardTitle)chart.getTitle();
     // title.setTitle(titl);
@@ -172,9 +169,8 @@ public class Graph2b extends javax.swing.JFrame {
     // org.jfree.chart.plot.Plot myPlot = chart.getPlot();
 
     chartPanel4 = new ChartPanel(chart);
-    chartPanel4
-        .setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4),
-            BorderFactory.createLineBorder(Color.darkGray, 1)));
+    chartPanel4.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4),
+	BorderFactory.createLineBorder(Color.darkGray, 1)));
     chartPanel4.setBackground(Color.white);
     initComponents();
     getContentPane().add(chartPanel4, java.awt.BorderLayout.WEST);
@@ -193,8 +189,7 @@ public class Graph2b extends javax.swing.JFrame {
       System.out.println("start creating png figure...");
       java.io.File temp = new java.io.File(fileName);
       org.jfree.chart.ChartUtils.saveChartAsPNG(temp, chart, 500, 500);
-      System.out.println("figure png created in " + neqsim.util.util.FileSystemSettings.tempDir
-          + "NeqSimTempFig.png");
+      System.out.println("figure png created in " + neqsim.util.util.FileSystemSettings.tempDir + "NeqSimTempFig.png");
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
@@ -219,8 +214,8 @@ public class Graph2b extends javax.swing.JFrame {
   }
 
   /**
-   * This method is called from within the constructor to initialize the form. WARNING: Do NOT
-   * modify this code. The content of this method is always regenerated by the FormEditor.
+   * This method is called from within the constructor to initialize the form. WARNING: Do NOT modify this code. The
+   * content of this method is always regenerated by the FormEditor.
    */
   private void initComponents() { // GEN-BEGIN:initComponents
     jTextPane1 = new javax.swing.JTextPane();
@@ -229,12 +224,12 @@ public class Graph2b extends javax.swing.JFrame {
     addWindowListener(new java.awt.event.WindowAdapter() {
       @Override
       public void windowClosing(java.awt.event.WindowEvent evt) {
-        exitForm(evt);
+	exitForm(evt);
       }
 
       @Override
       public void windowClosed(java.awt.event.WindowEvent evt) {
-        exit(evt);
+	exit(evt);
       }
     });
 
@@ -264,16 +259,14 @@ public class Graph2b extends javax.swing.JFrame {
    */
   public CategoryDataset createCategoryDataSource() {
     /*
-     * Number[][] data = new Integer[][] { { Integer.valueOf(10), Integer.valueOf(4),
-     * Integer.valueOf(15), Integer.valueOf(14) }, { Integer.valueOf(5), Integer.valueOf(7),
-     * Integer.valueOf(14), Integer.valueOf(3) }, { Integer.valueOf(6), Integer.valueOf(17),
-     * Integer.valueOf(12), Integer.valueOf(7) }, { Integer.valueOf(7), Integer.valueOf(15),
-     * Integer.valueOf(11), Integer.valueOf(0) }, { Integer.valueOf(8), Integer.valueOf(6),
-     * Integer.valueOf(10), Integer.valueOf(9) }, { Integer.valueOf(9), Integer.valueOf(8),
-     * Integer.valueOf(8), Integer.valueOf(6) }, { Integer.valueOf(10), Integer.valueOf(9),
-     * Integer.valueOf(7), Integer.valueOf(7) }, { Integer.valueOf(11), Integer.valueOf(13),
-     * Integer.valueOf(9), Integer.valueOf(9) }, { Integer.valueOf(3), Integer.valueOf(7),
-     * Integer.valueOf(11), Integer.valueOf(10) } };
+     * Number[][] data = new Integer[][] { { Integer.valueOf(10), Integer.valueOf(4), Integer.valueOf(15),
+     * Integer.valueOf(14) }, { Integer.valueOf(5), Integer.valueOf(7), Integer.valueOf(14), Integer.valueOf(3) }, {
+     * Integer.valueOf(6), Integer.valueOf(17), Integer.valueOf(12), Integer.valueOf(7) }, { Integer.valueOf(7),
+     * Integer.valueOf(15), Integer.valueOf(11), Integer.valueOf(0) }, { Integer.valueOf(8), Integer.valueOf(6),
+     * Integer.valueOf(10), Integer.valueOf(9) }, { Integer.valueOf(9), Integer.valueOf(8), Integer.valueOf(8),
+     * Integer.valueOf(6) }, { Integer.valueOf(10), Integer.valueOf(9), Integer.valueOf(7), Integer.valueOf(7) }, {
+     * Integer.valueOf(11), Integer.valueOf(13), Integer.valueOf(9), Integer.valueOf(9) }, { Integer.valueOf(3),
+     * Integer.valueOf(7), Integer.valueOf(11), Integer.valueOf(10) } };
      */
     return null; // new DefaultCategoryDataset(data);
   }

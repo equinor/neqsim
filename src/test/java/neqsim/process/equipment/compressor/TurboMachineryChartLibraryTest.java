@@ -54,8 +54,8 @@ public class TurboMachineryChartLibraryTest {
     SystemInterface gas = fluid();
     new neqsim.thermodynamicoperations.ThermodynamicOperations(gas).TPflash();
     gas.initThermoProperties();
-    CompressorChartKhader2015 chart =
-        library.getCompressorChart(TurboMachineryChartLibrary.GENERIC_CENTRIFUGAL_3SPEED, gas, 0.3);
+    CompressorChartKhader2015 chart = library.getCompressorChart(TurboMachineryChartLibrary.GENERIC_CENTRIFUGAL_3SPEED,
+	gas, 0.3);
     double head = chart.getPolytropicHead(2600.0, 10500.0);
     double eff = chart.getPolytropicEfficiency(2600.0, 10500.0);
     assertTrue(head > 0.0, "head must be positive: " + head);
@@ -72,19 +72,16 @@ public class TurboMachineryChartLibraryTest {
     TurboMachineryChartLibrary library = new TurboMachineryChartLibrary();
     SystemInterface ref = fluid();
 
-    ExpanderChartKhader cryo =
-        library.getExpanderChart(TurboMachineryChartLibrary.GENERIC_CRYO_EXPANDER, ref);
+    ExpanderChartKhader cryo = library.getExpanderChart(TurboMachineryChartLibrary.GENERIC_CRYO_EXPANDER, ref);
     double ucPeak = cryo.getOptimumVelocityRatio(1.0);
     double etaPeak = cryo.getEfficiency(ucPeak, 1.0);
     assertTrue(etaPeak > 0.80 && etaPeak < 0.95, "cryo peak efficiency out of range: " + etaPeak);
     assertTrue(cryo.getStageHeadDrop(ucPeak, 1.0, ref) > 0.0, "cryo head must be positive");
 
-    ExpanderChartKhader geom =
-        library.getExpanderChart(TurboMachineryChartLibrary.GEOMETRY_RADIAL_IFR, ref);
+    ExpanderChartKhader geom = library.getExpanderChart(TurboMachineryChartLibrary.GEOMETRY_RADIAL_IFR, ref);
     double geomUcPeak = geom.getOptimumVelocityRatio(1.0);
     double geomEtaPeak = geom.getEfficiency(geomUcPeak, 1.0);
-    assertTrue(geomEtaPeak > 0.70 && geomEtaPeak < 0.95,
-        "geometry peak efficiency out of range: " + geomEtaPeak);
+    assertTrue(geomEtaPeak > 0.70 && geomEtaPeak < 0.95, "geometry peak efficiency out of range: " + geomEtaPeak);
   }
 
   /**
@@ -97,13 +94,13 @@ public class TurboMachineryChartLibraryTest {
     assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {
       @Override
       public void execute() {
-        library.getCompressorChart("DOES_NOT_EXIST", gas, 0.3);
+	library.getCompressorChart("DOES_NOT_EXIST", gas, 0.3);
       }
     });
     assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {
       @Override
       public void execute() {
-        library.getExpanderChart("DOES_NOT_EXIST", gas);
+	library.getExpanderChart("DOES_NOT_EXIST", gas);
       }
     });
   }

@@ -18,16 +18,13 @@ class SystemBlackOilTest {
   // private static final Logger logger = LogManager.getLogger(SystemBlackOilTest.class);
 
   private static String sampleDeck() {
-    return String.join("\n",
-        Arrays.asList("UNITS  METRIC", "", "DENSITY", "  800.0   1000.0   1.2  /", "", "PVTO",
-            "-- Rs     Pb     Bo      mu_o", "  0.0     250    1.20    1.50",
-            "  300     1.15   1.40", "  400     1.12   1.30 /", "  100.0   200    1.35    1.60",
-            "  250     1.30   1.50", "  300     1.26   1.40 /", "  200.0   150    1.50    1.80",
-            "  200     1.42   1.70", "  250     1.36   1.60 /", "/", "", "PVTG",
-            "-- Rv     Pd     Bg       mu_g", "  0.0     120    0.0045   0.012",
-            "  150     0.0042 0.011", "  200     0.0040 0.010 /", "/", "", "PVTW",
-            "-- P      Bw      mu_w", "  50      1.02    0.5", "  150     1.01    0.6",
-            "  250     1.00    0.7 /", "/"));
+    return String.join("\n", Arrays.asList("UNITS  METRIC", "", "DENSITY", "  800.0   1000.0   1.2  /", "", "PVTO",
+	"-- Rs     Pb     Bo      mu_o", "  0.0     250    1.20    1.50", "  300     1.15   1.40",
+	"  400     1.12   1.30 /", "  100.0   200    1.35    1.60", "  250     1.30   1.50", "  300     1.26   1.40 /",
+	"  200.0   150    1.50    1.80", "  200     1.42   1.70", "  250     1.36   1.60 /", "/", "", "PVTG",
+	"-- Rv     Pd     Bg       mu_g", "  0.0     120    0.0045   0.012", "  150     0.0042 0.011",
+	"  200     0.0040 0.010 /", "/", "", "PVTW", "-- P      Bw      mu_w", "  50      1.02    0.5",
+	"  150     1.01    0.6", "  250     1.00    0.7 /", "/"));
   }
 
   @Test
@@ -78,23 +75,23 @@ class SystemBlackOilTest {
 
   @Test
   void testDirectPVTTable() {
-    double[] boP = {100, 200, 300};
-    double[] boV = {1.5, 1.4, 1.3};
+    double[] boP = { 100, 200, 300 };
+    double[] boV = { 1.5, 1.4, 1.3 };
 
-    double[] bgP = {120, 150, 200};
-    double[] bgV = {0.0045, 0.0042, 0.0040};
+    double[] bgP = { 120, 150, 200 };
+    double[] bgV = { 0.0045, 0.0042, 0.0040 };
 
-    double[] bwP = {50, 150, 250};
-    double[] bwV = {1.02, 1.01, 1.00};
+    double[] bwP = { 50, 150, 250 };
+    double[] bwV = { 1.02, 1.01, 1.00 };
 
-    double[] rsP = {0.0, 100.0, 200.0};
-    double[] rsV = {1.2, 1.15, 1.12};
+    double[] rsP = { 0.0, 100.0, 200.0 };
+    double[] rsV = { 1.2, 1.15, 1.12 };
 
-    double[] rvP = {0.0, 150.0, 200.0};
-    double[] rvV = {0.0045, 0.0042, 0.0040};
+    double[] rvP = { 0.0, 150.0, 200.0 };
+    double[] rvV = { 0.0045, 0.0042, 0.0040 };
 
     // Build a merged pressure grid and create records by interpolation
-    double[] grid = {100, 120, 150, 170, 200, 250, 300};
+    double[] grid = { 100, 120, 150, 170, 200, 250, 300 };
 
     List<BlackOilPVTTable.Record> recs = new ArrayList<>();
     for (double p : grid) {
@@ -140,8 +137,8 @@ class SystemBlackOilTest {
       return yp[0];
     for (int i = 0; i < xp.length - 1; i++) {
       if (x <= xp[i + 1]) {
-        double t = (x - xp[i]) / (xp[i + 1] - xp[i]);
-        return yp[i] * (1.0 - t) + yp[i + 1] * t;
+	double t = (x - xp[i]) / (xp[i + 1] - xp[i]);
+	return yp[i] * (1.0 - t) + yp[i + 1] * t;
       }
     }
     return yp[yp.length - 1];

@@ -40,8 +40,8 @@ public class PVTRegressionTest {
   public void testAddCCEData() {
     PVTRegression regression = new PVTRegression(testFluid);
 
-    double[] pressures = {300.0, 250.0, 200.0, 150.0, 100.0};
-    double[] relativeVolumes = {0.985, 1.000, 1.050, 1.150, 1.350};
+    double[] pressures = { 300.0, 250.0, 200.0, 150.0, 100.0 };
+    double[] relativeVolumes = { 0.985, 1.000, 1.050, 1.150, 1.350 };
     double temperature = 373.15;
 
     regression.addCCEData(pressures, relativeVolumes, temperature);
@@ -55,9 +55,9 @@ public class PVTRegressionTest {
   public void testAddCVDData() {
     PVTRegression regression = new PVTRegression(testFluid);
 
-    double[] pressures = {250.0, 200.0, 150.0, 100.0};
-    double[] liquidDropout = {0.0, 5.0, 12.0, 8.0};
-    double[] zFactors = {0.85, 0.88, 0.91, 0.94};
+    double[] pressures = { 250.0, 200.0, 150.0, 100.0 };
+    double[] liquidDropout = { 0.0, 5.0, 12.0, 8.0 };
+    double[] zFactors = { 0.85, 0.88, 0.91, 0.94 };
     double temperature = 373.15;
 
     regression.addCVDData(pressures, liquidDropout, zFactors, temperature);
@@ -70,10 +70,10 @@ public class PVTRegressionTest {
   public void testAddDLEData() {
     PVTRegression regression = new PVTRegression(testFluid);
 
-    double[] pressures = {250.0, 200.0, 150.0, 100.0};
-    double[] rs = {150.0, 120.0, 85.0, 50.0};
-    double[] bo = {1.45, 1.38, 1.30, 1.20};
-    double[] oilDensity = {720.0, 740.0, 760.0, 780.0};
+    double[] pressures = { 250.0, 200.0, 150.0, 100.0 };
+    double[] rs = { 150.0, 120.0, 85.0, 50.0 };
+    double[] bo = { 1.45, 1.38, 1.30, 1.20 };
+    double[] oilDensity = { 720.0, 740.0, 760.0, 780.0 };
     double temperature = 373.15;
 
     regression.addDLEData(pressures, rs, bo, oilDensity, temperature);
@@ -96,8 +96,8 @@ public class PVTRegressionTest {
   public void testAddViscosityData() {
     PVTRegression regression = new PVTRegression(testFluid);
 
-    double[] pressures = {1.0, 5.0, 10.0};
-    double[] viscosities = {3.0e-4, 3.2e-4, 3.5e-4};
+    double[] pressures = { 1.0, 5.0, 10.0 };
+    double[] viscosities = { 3.0e-4, 3.2e-4, 3.5e-4 };
     double temperature = 320.0;
 
     regression.addViscosityData(pressures, viscosities, temperature, "oil");
@@ -117,8 +117,7 @@ public class PVTRegressionTest {
     RegressionParameter.VISCOSITY_CSP_3.applyToFluid(viscosityFluid, 1.1);
     RegressionParameter.VISCOSITY_CSP_4.applyToFluid(viscosityFluid, 0.9);
 
-    double[] correctionFactors =
-        viscosityFluid.getPhase(0).getPhysicalProperties().getCspViscosityCorrectionFactors();
+    double[] correctionFactors = viscosityFluid.getPhase(0).getPhysicalProperties().getCspViscosityCorrectionFactors();
     assertEquals(0.6232, correctionFactors[0], 1e-6);
     assertEquals(1.1507, correctionFactors[1], 1e-6);
     assertEquals(1.1, correctionFactors[2], 1e-6);
@@ -128,13 +127,12 @@ public class PVTRegressionTest {
   @Test
   public void testRegressionFitsSingleCspViscosityParameter() {
     double temperature = 320.0;
-    double[] pressures = {1.0, 5.0, 15.0};
+    double[] pressures = { 1.0, 5.0, 15.0 };
     double targetFactor = 1.35;
     double[] viscosities = new double[pressures.length];
 
     for (int i = 0; i < pressures.length; i++) {
-      viscosities[i] =
-          calculateOilViscosity(createViscosityFluid(), pressures[i], temperature, targetFactor);
+      viscosities[i] = calculateOilViscosity(createViscosityFluid(), pressures[i], temperature, targetFactor);
     }
 
     PVTRegression regression = new PVTRegression(createViscosityFluid());
@@ -156,7 +154,7 @@ public class PVTRegressionTest {
     regression.addRegressionParameter(RegressionParameter.BIP_METHANE_C7PLUS, 0.0, 0.10, 0.03);
 
     // Add some data to avoid exception
-    regression.addCCEData(new double[] {200.0}, new double[] {1.0}, 373.15);
+    regression.addCCEData(new double[] { 200.0 }, new double[] { 1.0 }, 373.15);
 
     // Should not throw
     assertNotNull(regression);
@@ -169,7 +167,7 @@ public class PVTRegressionTest {
     regression.addRegressionParameter(RegressionParameter.VOLUME_SHIFT_C7PLUS);
 
     // Add some data
-    regression.addCCEData(new double[] {200.0}, new double[] {1.0}, 373.15);
+    regression.addCCEData(new double[] { 200.0 }, new double[] { 1.0 }, 373.15);
 
     assertNotNull(regression);
   }
@@ -194,7 +192,7 @@ public class PVTRegressionTest {
   @Test
   public void testRegressionWithNoParameters() {
     PVTRegression regression = new PVTRegression(testFluid);
-    regression.addCCEData(new double[] {200.0}, new double[] {1.0}, 373.15);
+    regression.addCCEData(new double[] { 200.0 }, new double[] { 1.0 }, 373.15);
 
     assertThrows(IllegalStateException.class, () -> {
       regression.runRegression();
@@ -262,8 +260,8 @@ public class PVTRegressionTest {
 
   @Test
   public void testRegressionParameterConfig() {
-    RegressionParameterConfig config =
-        new RegressionParameterConfig(RegressionParameter.BIP_METHANE_C7PLUS, 0.0, 0.10, 0.03);
+    RegressionParameterConfig config = new RegressionParameterConfig(RegressionParameter.BIP_METHANE_C7PLUS, 0.0, 0.10,
+	0.03);
 
     assertEquals(RegressionParameter.BIP_METHANE_C7PLUS, config.getParameter());
     assertEquals(0.0, config.getLowerBound(), 1e-6);
@@ -277,13 +275,12 @@ public class PVTRegressionTest {
 
   @Test
   public void testUncertaintyAnalysis() {
-    double[] paramValues = {0.045, 1.02};
-    double[] stdErrors = {0.005, 0.01};
-    double[][] corrMatrix = {{1.0, 0.2}, {0.2, 1.0}};
-    double[] ci95 = {0.01, 0.02};
+    double[] paramValues = { 0.045, 1.02 };
+    double[] stdErrors = { 0.005, 0.01 };
+    double[][] corrMatrix = { { 1.0, 0.2 }, { 0.2, 1.0 } };
+    double[] ci95 = { 0.01, 0.02 };
 
-    UncertaintyAnalysis uncertainty =
-        new UncertaintyAnalysis(paramValues, stdErrors, corrMatrix, ci95, 10, 0.001);
+    UncertaintyAnalysis uncertainty = new UncertaintyAnalysis(paramValues, stdErrors, corrMatrix, ci95, 10, 0.001);
 
     assertEquals(0.045, uncertainty.getParameterValue(0), 1e-6);
     assertEquals(0.005, uncertainty.getStandardError(0), 1e-6);
@@ -306,10 +303,10 @@ public class PVTRegressionTest {
   @Test
   public void testClearData() {
     PVTRegression regression = new PVTRegression(testFluid);
-    regression.addCCEData(new double[] {200.0}, new double[] {1.0}, 373.15);
-    regression.addDLEData(new double[] {200.0}, new double[] {100.0}, new double[] {1.3},
-        new double[] {750.0}, 373.15);
-    regression.addViscosityData(new double[] {10.0}, new double[] {3.5e-4}, 320.0, "oil");
+    regression.addCCEData(new double[] { 200.0 }, new double[] { 1.0 }, 373.15);
+    regression.addDLEData(new double[] { 200.0 }, new double[] { 100.0 }, new double[] { 1.3 }, new double[] { 750.0 },
+	373.15);
+    regression.addViscosityData(new double[] { 10.0 }, new double[] { 3.5e-4 }, 320.0, "oil");
 
     assertEquals(1, regression.getCCEData().size());
     assertEquals(1, regression.getDLEData().size());
@@ -341,26 +338,24 @@ public class PVTRegressionTest {
     fluid.setMixingRule(2);
     fluid.init(0);
 
-    java.util.Map<ExperimentType, Double> objectiveValues =
-        new java.util.EnumMap<>(ExperimentType.class);
+    java.util.Map<ExperimentType, Double> objectiveValues = new java.util.EnumMap<>(ExperimentType.class);
     objectiveValues.put(ExperimentType.CCE, 0.001);
 
     java.util.List<RegressionParameterConfig> paramConfigs = new java.util.ArrayList<>();
-    RegressionParameterConfig config =
-        new RegressionParameterConfig(RegressionParameter.BIP_METHANE_C7PLUS, 0.0, 0.10, 0.03);
+    RegressionParameterConfig config = new RegressionParameterConfig(RegressionParameter.BIP_METHANE_C7PLUS, 0.0, 0.10,
+	0.03);
     config.setOptimizedValue(0.045);
     paramConfigs.add(config);
 
-    double[] paramValues = {0.045};
-    double[] stdErrors = {0.005};
-    double[][] corrMatrix = {{1.0}};
-    double[] ci95 = {0.01};
+    double[] paramValues = { 0.045 };
+    double[] stdErrors = { 0.005 };
+    double[][] corrMatrix = { { 1.0 } };
+    double[] ci95 = { 0.01 };
 
-    UncertaintyAnalysis uncertainty =
-        new UncertaintyAnalysis(paramValues, stdErrors, corrMatrix, ci95, 10, 0.001);
+    UncertaintyAnalysis uncertainty = new UncertaintyAnalysis(paramValues, stdErrors, corrMatrix, ci95, 10, 0.001);
 
-    RegressionResult result =
-        new RegressionResult(fluid, objectiveValues, paramConfigs, uncertainty, paramValues, 0.001);
+    RegressionResult result = new RegressionResult(fluid, objectiveValues, paramConfigs, uncertainty, paramValues,
+	0.001);
 
     // Test result methods
     assertNotNull(result.getTunedFluid());
@@ -394,14 +389,13 @@ public class PVTRegressionTest {
   /**
    * Calculate oil viscosity for one pressure, temperature and CSP factor.
    *
-   * @param fluid fluid to calculate with
-   * @param pressure pressure in bara
+   * @param fluid       fluid to calculate with
+   * @param pressure    pressure in bara
    * @param temperature temperature in K
-   * @param cspFactor third CSP viscosity correction factor
+   * @param cspFactor   third CSP viscosity correction factor
    * @return calculated oil viscosity in Pa s
    */
-  private double calculateOilViscosity(SystemInterface fluid, double pressure, double temperature,
-      double cspFactor) {
+  private double calculateOilViscosity(SystemInterface fluid, double pressure, double temperature, double cspFactor) {
     fluid.setPressure(pressure);
     fluid.setTemperature(temperature);
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);

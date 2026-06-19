@@ -8,8 +8,8 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  * Instrument design for heat exchangers.
  *
  * <p>
- * Determines the required instrumentation for heat exchangers (shell-and-tube, air coolers,
- * electric heaters). A heat exchanger typically requires:
+ * Determines the required instrumentation for heat exchangers (shell-and-tube, air coolers, electric heaters). A heat
+ * exchanger typically requires:
  * </p>
  * <ul>
  * <li>Temperature: inlet TT, outlet TT (both sides for shell-and-tube)</li>
@@ -72,40 +72,35 @@ public class HeatExchangerInstrumentDesign extends InstrumentDesign {
     super.calcDesign();
 
     // === Process side temperature ===
-    getInstrumentList().add(
-        new InstrumentSpecification("TT", "Process Inlet Temperature", -50.0, 400.0, "degC", "AI"));
-    getInstrumentList().add(new InstrumentSpecification("TT", "Process Outlet Temperature", -50.0,
-        400.0, "degC", "AI"));
+    getInstrumentList().add(new InstrumentSpecification("TT", "Process Inlet Temperature", -50.0, 400.0, "degC", "AI"));
+    getInstrumentList()
+	.add(new InstrumentSpecification("TT", "Process Outlet Temperature", -50.0, 400.0, "degC", "AI"));
 
     // === Process side pressure ===
-    getInstrumentList()
-        .add(new InstrumentSpecification("PT", "Process Inlet Pressure", 0.0, 200.0, "bara", "AI"));
-    getInstrumentList().add(
-        new InstrumentSpecification("PT", "Process Outlet Pressure", 0.0, 200.0, "bara", "AI"));
+    getInstrumentList().add(new InstrumentSpecification("PT", "Process Inlet Pressure", 0.0, 200.0, "bara", "AI"));
+    getInstrumentList().add(new InstrumentSpecification("PT", "Process Outlet Pressure", 0.0, 200.0, "bara", "AI"));
 
     // === Differential pressure (fouling / blockage detection) ===
-    getInstrumentList()
-        .add(new InstrumentSpecification("PDT", "Process Side dP", 0.0, 10.0, "bar", "AI"));
+    getInstrumentList().add(new InstrumentSpecification("PDT", "Process Side dP", 0.0, 10.0, "bar", "AI"));
 
     // === Safety: overtemperature trip ===
     if (isIncludeSafetyInstruments()) {
-      getInstrumentList().add(
-          new InstrumentSpecification("TSHH", "Overtemperature Trip", "DI", getDefaultSilLevel()));
+      getInstrumentList().add(new InstrumentSpecification("TSHH", "Overtemperature Trip", "DI", getDefaultSilLevel()));
     }
 
     // === Type-specific instruments ===
     switch (heatExchangerType) {
-      case SHELL_AND_TUBE:
-        addShellAndTubeInstruments();
-        break;
-      case AIR_COOLER:
-        addAirCoolerInstruments();
-        break;
-      case ELECTRIC_HEATER:
-        addElectricHeaterInstruments();
-        break;
-      default:
-        break;
+    case SHELL_AND_TUBE:
+      addShellAndTubeInstruments();
+      break;
+    case AIR_COOLER:
+      addAirCoolerInstruments();
+      break;
+    case ELECTRIC_HEATER:
+      addElectricHeaterInstruments();
+      break;
+    default:
+      break;
     }
   }
 
@@ -113,26 +108,21 @@ public class HeatExchangerInstrumentDesign extends InstrumentDesign {
    * Add shell-and-tube-specific instruments (utility side T and P).
    */
   private void addShellAndTubeInstruments() {
-    getInstrumentList().add(
-        new InstrumentSpecification("TT", "Utility Inlet Temperature", -50.0, 400.0, "degC", "AI"));
-    getInstrumentList().add(new InstrumentSpecification("TT", "Utility Outlet Temperature", -50.0,
-        400.0, "degC", "AI"));
+    getInstrumentList().add(new InstrumentSpecification("TT", "Utility Inlet Temperature", -50.0, 400.0, "degC", "AI"));
     getInstrumentList()
-        .add(new InstrumentSpecification("PT", "Utility Inlet Pressure", 0.0, 50.0, "bara", "AI"));
+	.add(new InstrumentSpecification("TT", "Utility Outlet Temperature", -50.0, 400.0, "degC", "AI"));
+    getInstrumentList().add(new InstrumentSpecification("PT", "Utility Inlet Pressure", 0.0, 50.0, "bara", "AI"));
   }
 
   /**
    * Add air cooler-specific instruments (fan and air-side).
    */
   private void addAirCoolerInstruments() {
-    getInstrumentList().add(
-        new InstrumentSpecification("TT", "Ambient Air Temperature", -40.0, 60.0, "degC", "AI"));
+    getInstrumentList().add(new InstrumentSpecification("TT", "Ambient Air Temperature", -40.0, 60.0, "degC", "AI"));
     // Fan speed/status
-    getInstrumentList()
-        .add(new InstrumentSpecification("ST", "Fan Speed", 0.0, 1800.0, "rpm", "AI"));
+    getInstrumentList().add(new InstrumentSpecification("ST", "Fan Speed", 0.0, 1800.0, "rpm", "AI"));
     // Fan vibration
-    getInstrumentList()
-        .add(new InstrumentSpecification("VT", "Fan Vibration", 0.0, 100.0, "mm/s", "AI"));
+    getInstrumentList().add(new InstrumentSpecification("VT", "Fan Vibration", 0.0, 100.0, "mm/s", "AI"));
   }
 
   /**
@@ -140,12 +130,11 @@ public class HeatExchangerInstrumentDesign extends InstrumentDesign {
    */
   private void addElectricHeaterInstruments() {
     // Element temperature monitoring
-    getInstrumentList().add(
-        new InstrumentSpecification("TT", "Heating Element Temperature", 0.0, 600.0, "degC", "AI"));
+    getInstrumentList().add(new InstrumentSpecification("TT", "Heating Element Temperature", 0.0, 600.0, "degC", "AI"));
     // Overtemperature trip on element
     if (isIncludeSafetyInstruments()) {
-      getInstrumentList().add(new InstrumentSpecification("TSHH", "Element Overtemperature Trip",
-          "DI", getDefaultSilLevel()));
+      getInstrumentList()
+	  .add(new InstrumentSpecification("TSHH", "Element Overtemperature Trip", "DI", getDefaultSilLevel()));
     }
   }
 

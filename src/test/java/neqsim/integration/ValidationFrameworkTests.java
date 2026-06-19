@@ -46,7 +46,7 @@ public class ValidationFrameworkTests {
 
     // Should have warning about mixing rule
     assertTrue(result.getWarnings().size() > 0 || !result.isReady(),
-        "Validation should warn about missing mixing rule");
+	"Validation should warn about missing mixing rule");
   }
 
   /**
@@ -55,10 +55,9 @@ public class ValidationFrameworkTests {
   @Test
   public void testValidationErrorSeverity() {
     // Constructor order: Severity, category, message, remediation
-    ValidationError criticalError =
-        new ValidationError(ValidationError.Severity.CRITICAL, "test", "Critical error", "Fix it");
-    ValidationError majorError =
-        new ValidationError(ValidationError.Severity.MAJOR, "test", "Major error", "Fix it");
+    ValidationError criticalError = new ValidationError(ValidationError.Severity.CRITICAL, "test", "Critical error",
+	"Fix it");
+    ValidationError majorError = new ValidationError(ValidationError.Severity.MAJOR, "test", "Major error", "Fix it");
 
     assertEquals(ValidationError.Severity.CRITICAL, criticalError.getSeverity());
     assertEquals(ValidationError.Severity.MAJOR, majorError.getSeverity());

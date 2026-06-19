@@ -13,8 +13,8 @@ package neqsim.process.safety;
  * </ul>
  *
  * <p>
- * This enum is used with {@link ProcessSafetyScenario} to define the type of initiating event and
- * enable automatic configuration of appropriate boundary conditions and response logic.
+ * This enum is used with {@link ProcessSafetyScenario} to define the type of initiating event and enable automatic
+ * configuration of appropriate boundary conditions and response logic.
  * </p>
  *
  * @author ESOL
@@ -112,9 +112,8 @@ public enum InitiatingEvent {
    * @return true if release to atmosphere is expected
    */
   public boolean isReleaseEvent() {
-    return this == LEAK_SMALL || this == LEAK_MEDIUM || this == LEAK_LARGE
-        || this == FULL_BORE_RUPTURE || this == RUPTURE || this == PSV_LIFT
-        || this == LOSS_OF_CONTAINMENT;
+    return this == LEAK_SMALL || this == LEAK_MEDIUM || this == LEAK_LARGE || this == FULL_BORE_RUPTURE
+	|| this == RUPTURE || this == PSV_LIFT || this == LOSS_OF_CONTAINMENT;
   }
 
   /**
@@ -142,16 +141,16 @@ public enum InitiatingEvent {
    */
   public double[] getTypicalHoleDiameter() {
     switch (this) {
-      case LEAK_SMALL:
-        return new double[] {1.0, 10.0};
-      case LEAK_MEDIUM:
-        return new double[] {10.0, 50.0};
-      case LEAK_LARGE:
-        return new double[] {50.0, 150.0};
-      case FULL_BORE_RUPTURE:
-        return new double[] {150.0, 500.0};
-      default:
-        return null;
+    case LEAK_SMALL:
+      return new double[] { 1.0, 10.0 };
+    case LEAK_MEDIUM:
+      return new double[] { 10.0, 50.0 };
+    case LEAK_LARGE:
+      return new double[] { 50.0, 150.0 };
+    case FULL_BORE_RUPTURE:
+      return new double[] { 150.0, 500.0 };
+    default:
+      return null;
     }
   }
 

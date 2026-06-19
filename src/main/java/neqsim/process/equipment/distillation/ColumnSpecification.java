@@ -6,9 +6,8 @@ import java.io.Serializable;
  * Represents a column specification (degree of freedom) for a distillation column.
  *
  * <p>
- * In a distillation column with a condenser and reboiler, there are two degrees of freedom that
- * must be satisfied. Each specification constrains one degree of freedom. Common specification types
- * include:
+ * In a distillation column with a condenser and reboiler, there are two degrees of freedom that must be satisfied. Each
+ * specification constrains one degree of freedom. Common specification types include:
  * </p>
  * <ul>
  * <li>Product purity (mole fraction of a component in distillate or bottoms)</li>
@@ -24,16 +23,12 @@ import java.io.Serializable;
  *
  * <pre>
  * // Specify 95% methane purity in the top product
- * ColumnSpecification topSpec = new ColumnSpecification(
- *     ColumnSpecification.SpecificationType.PRODUCT_PURITY,
- *     ColumnSpecification.ProductLocation.TOP,
- *     0.95, "methane");
+ * ColumnSpecification topSpec = new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
+ *     ColumnSpecification.ProductLocation.TOP, 0.95, "methane");
  *
  * // Specify reflux ratio of 3.0 at the condenser
- * ColumnSpecification condenserSpec = new ColumnSpecification(
- *     ColumnSpecification.SpecificationType.REFLUX_RATIO,
- *     ColumnSpecification.ProductLocation.TOP,
- *     3.0);
+ * ColumnSpecification condenserSpec = new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
+ *     ColumnSpecification.ProductLocation.TOP, 3.0);
  *
  * column.setTopSpecification(topSpec);
  * column.setBottomSpecification(condenserSpec);
@@ -57,8 +52,7 @@ public class ColumnSpecification implements Serializable {
    */
   public enum SpecificationType {
     /**
-     * Mole fraction of a named component in the specified product stream. Requires
-     * {@code componentName} to be set.
+     * Mole fraction of a named component in the specified product stream. Requires {@code componentName} to be set.
      */
     PRODUCT_PURITY,
 
@@ -68,8 +62,8 @@ public class ColumnSpecification implements Serializable {
     REFLUX_RATIO,
 
     /**
-     * Fraction of a named component's feed that is recovered in the specified product. Requires
-     * {@code componentName} to be set. Value is between 0 and 1.
+     * Fraction of a named component's feed that is recovered in the specified product. Requires {@code componentName}
+     * to be set. Value is between 0 and 1.
      */
     COMPONENT_RECOVERY,
 
@@ -104,8 +98,8 @@ public class ColumnSpecification implements Serializable {
   /**
    * Creates a column specification that does not require a component name.
    *
-   * @param type the specification type (REFLUX_RATIO, PRODUCT_FLOW_RATE, or DUTY)
-   * @param location which end of the column this applies to
+   * @param type        the specification type (REFLUX_RATIO, PRODUCT_FLOW_RATE, or DUTY)
+   * @param location    which end of the column this applies to
    * @param targetValue the target value for this specification
    */
   public ColumnSpecification(SpecificationType type, ProductLocation location, double targetValue) {
@@ -115,11 +109,10 @@ public class ColumnSpecification implements Serializable {
   /**
    * Creates a column specification with a component name.
    *
-   * @param type the specification type
-   * @param location which end of the column this applies to
-   * @param targetValue the target value for this specification
-   * @param componentName the name of the component (required for PRODUCT_PURITY and
-   *        COMPONENT_RECOVERY)
+   * @param type          the specification type
+   * @param location      which end of the column this applies to
+   * @param targetValue   the target value for this specification
+   * @param componentName the name of the component (required for PRODUCT_PURITY and COMPONENT_RECOVERY)
    */
   public ColumnSpecification(SpecificationType type, ProductLocation location, double targetValue,
       String componentName) {
@@ -147,32 +140,27 @@ public class ColumnSpecification implements Serializable {
     }
     if (type == SpecificationType.PRODUCT_PURITY || type == SpecificationType.COMPONENT_RECOVERY) {
       if (componentName == null || componentName.trim().isEmpty()) {
-        throw new IllegalArgumentException(
-            type + " specification requires a component name");
+	throw new IllegalArgumentException(type + " specification requires a component name");
       }
     }
     if (type == SpecificationType.PRODUCT_PURITY) {
       if (targetValue < 0.0 || targetValue > 1.0) {
-        throw new IllegalArgumentException(
-            "Product purity must be between 0 and 1, got: " + targetValue);
+	throw new IllegalArgumentException("Product purity must be between 0 and 1, got: " + targetValue);
       }
     }
     if (type == SpecificationType.COMPONENT_RECOVERY) {
       if (targetValue < 0.0 || targetValue > 1.0) {
-        throw new IllegalArgumentException(
-            "Component recovery must be between 0 and 1, got: " + targetValue);
+	throw new IllegalArgumentException("Component recovery must be between 0 and 1, got: " + targetValue);
       }
     }
     if (type == SpecificationType.REFLUX_RATIO) {
       if (targetValue < 0.0) {
-        throw new IllegalArgumentException(
-            "Reflux/boilup ratio must be non-negative, got: " + targetValue);
+	throw new IllegalArgumentException("Reflux/boilup ratio must be non-negative, got: " + targetValue);
       }
     }
     if (type == SpecificationType.PRODUCT_FLOW_RATE) {
       if (targetValue <= 0.0) {
-        throw new IllegalArgumentException(
-            "Product flow rate must be positive, got: " + targetValue);
+	throw new IllegalArgumentException("Product flow rate must be positive, got: " + targetValue);
       }
     }
   }
@@ -250,8 +238,7 @@ public class ColumnSpecification implements Serializable {
    */
   public void setMaxIterations(int maxIterations) {
     if (maxIterations <= 0) {
-      throw new IllegalArgumentException(
-          "Max iterations must be positive, got: " + maxIterations);
+      throw new IllegalArgumentException("Max iterations must be positive, got: " + maxIterations);
     }
     this.maxIterations = maxIterations;
   }

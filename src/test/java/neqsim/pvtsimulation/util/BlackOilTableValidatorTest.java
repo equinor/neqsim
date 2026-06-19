@@ -15,9 +15,9 @@ public class BlackOilTableValidatorTest {
   @Test
   void testValidBoRsTable() {
     // Valid black-oil table (decreasing with pressure)
-    double[] pressures = {300.0, 250.0, 200.0, 150.0, 100.0};
-    double[] Bo = {1.45, 1.40, 1.35, 1.30, 1.25};
-    double[] Rs = {200.0, 170.0, 140.0, 110.0, 80.0};
+    double[] pressures = { 300.0, 250.0, 200.0, 150.0, 100.0 };
+    double[] Bo = { 1.45, 1.40, 1.35, 1.30, 1.25 };
+    double[] Rs = { 200.0, 170.0, 140.0, 110.0, 80.0 };
 
     ValidationResult result = BlackOilTableValidator.validate(pressures, Bo, Rs, null, null, null);
 
@@ -29,9 +29,9 @@ public class BlackOilTableValidatorTest {
   @Test
   void testNonMonotonicBo() {
     // Bo with non-monotonic behavior
-    double[] pressures = {300.0, 250.0, 200.0, 150.0, 100.0};
-    double[] Bo = {1.45, 1.40, 1.42, 1.30, 1.25}; // Jump at index 2
-    double[] Rs = {200.0, 170.0, 140.0, 110.0, 80.0};
+    double[] pressures = { 300.0, 250.0, 200.0, 150.0, 100.0 };
+    double[] Bo = { 1.45, 1.40, 1.42, 1.30, 1.25 }; // Jump at index 2
+    double[] Rs = { 200.0, 170.0, 140.0, 110.0, 80.0 };
 
     ValidationResult result = BlackOilTableValidator.validate(pressures, Bo, Rs, null, null, null);
 
@@ -42,9 +42,9 @@ public class BlackOilTableValidatorTest {
   @Test
   void testNonMonotonicRs() {
     // Rs with non-monotonic behavior
-    double[] pressures = {300.0, 250.0, 200.0, 150.0, 100.0};
-    double[] Bo = {1.45, 1.40, 1.35, 1.30, 1.25};
-    double[] Rs = {200.0, 170.0, 175.0, 110.0, 80.0}; // Jump at index 2
+    double[] pressures = { 300.0, 250.0, 200.0, 150.0, 100.0 };
+    double[] Bo = { 1.45, 1.40, 1.35, 1.30, 1.25 };
+    double[] Rs = { 200.0, 170.0, 175.0, 110.0, 80.0 }; // Jump at index 2
 
     ValidationResult result = BlackOilTableValidator.validate(pressures, Bo, Rs, null, null, null);
 
@@ -54,9 +54,9 @@ public class BlackOilTableValidatorTest {
 
   @Test
   void testNegativeBo() {
-    double[] pressures = {300.0, 250.0, 200.0};
-    double[] Bo = {1.45, -0.5, 1.35}; // Negative value
-    double[] Rs = {200.0, 170.0, 140.0};
+    double[] pressures = { 300.0, 250.0, 200.0 };
+    double[] Bo = { 1.45, -0.5, 1.35 }; // Negative value
+    double[] Rs = { 200.0, 170.0, 140.0 };
 
     ValidationResult result = BlackOilTableValidator.validate(pressures, Bo, Rs, null, null, null);
 
@@ -66,9 +66,9 @@ public class BlackOilTableValidatorTest {
 
   @Test
   void testNegativeRs() {
-    double[] pressures = {300.0, 250.0, 200.0};
-    double[] Bo = {1.45, 1.40, 1.35};
-    double[] Rs = {200.0, -10.0, 140.0}; // Negative value
+    double[] pressures = { 300.0, 250.0, 200.0 };
+    double[] Bo = { 1.45, 1.40, 1.35 };
+    double[] Rs = { 200.0, -10.0, 140.0 }; // Negative value
 
     ValidationResult result = BlackOilTableValidator.validate(pressures, Bo, Rs, null, null, null);
 
@@ -79,11 +79,10 @@ public class BlackOilTableValidatorTest {
   @Test
   void testValidBgTable() {
     // Bg should increase with decreasing pressure
-    double[] pressures = {300.0, 250.0, 200.0, 150.0, 100.0};
-    double[] Bg = {0.005, 0.006, 0.008, 0.010, 0.015};
+    double[] pressures = { 300.0, 250.0, 200.0, 150.0, 100.0 };
+    double[] Bg = { 0.005, 0.006, 0.008, 0.010, 0.015 };
 
-    ValidationResult result =
-        BlackOilTableValidator.validate(pressures, null, null, Bg, null, null);
+    ValidationResult result = BlackOilTableValidator.validate(pressures, null, null, Bg, null, null);
 
     assertTrue(result.isValid());
     assertTrue(result.getReport().contains("Bg monotonicity: PASS"));
@@ -92,11 +91,10 @@ public class BlackOilTableValidatorTest {
   @Test
   void testNonMonotonicBg() {
     // Bg decreasing (wrong direction)
-    double[] pressures = {300.0, 250.0, 200.0, 150.0, 100.0};
-    double[] Bg = {0.015, 0.010, 0.008, 0.006, 0.005}; // Wrong direction
+    double[] pressures = { 300.0, 250.0, 200.0, 150.0, 100.0 };
+    double[] Bg = { 0.015, 0.010, 0.008, 0.006, 0.005 }; // Wrong direction
 
-    ValidationResult result =
-        BlackOilTableValidator.validate(pressures, null, null, Bg, null, null);
+    ValidationResult result = BlackOilTableValidator.validate(pressures, null, null, Bg, null, null);
 
     assertTrue(result.hasWarnings());
     assertTrue(result.getReport().contains("non-monotonic"));
@@ -105,22 +103,20 @@ public class BlackOilTableValidatorTest {
   @Test
   void testValidOilViscosity() {
     // Oil viscosity typically increases as gas liberates
-    double[] pressures = {300.0, 250.0, 200.0, 150.0, 100.0};
-    double[] oilVisc = {0.5, 0.6, 0.7, 0.9, 1.2};
+    double[] pressures = { 300.0, 250.0, 200.0, 150.0, 100.0 };
+    double[] oilVisc = { 0.5, 0.6, 0.7, 0.9, 1.2 };
 
-    ValidationResult result =
-        BlackOilTableValidator.validate(pressures, null, null, null, oilVisc, null);
+    ValidationResult result = BlackOilTableValidator.validate(pressures, null, null, null, oilVisc, null);
 
     assertTrue(result.isValid());
   }
 
   @Test
   void testNonPositiveOilViscosity() {
-    double[] pressures = {300.0, 250.0, 200.0};
-    double[] oilVisc = {0.5, 0.0, 0.7}; // Zero value
+    double[] pressures = { 300.0, 250.0, 200.0 };
+    double[] oilVisc = { 0.5, 0.0, 0.7 }; // Zero value
 
-    ValidationResult result =
-        BlackOilTableValidator.validate(pressures, null, null, null, oilVisc, null);
+    ValidationResult result = BlackOilTableValidator.validate(pressures, null, null, null, oilVisc, null);
 
     assertFalse(result.isValid());
     assertTrue(result.getReport().contains("non-positive"));
@@ -128,11 +124,10 @@ public class BlackOilTableValidatorTest {
 
   @Test
   void testGasViscosityValidation() {
-    double[] pressures = {300.0, 250.0, 200.0, 150.0};
-    double[] gasVisc = {0.015, 0.014, 0.013, 0.012};
+    double[] pressures = { 300.0, 250.0, 200.0, 150.0 };
+    double[] gasVisc = { 0.015, 0.014, 0.013, 0.012 };
 
-    ValidationResult result =
-        BlackOilTableValidator.validate(pressures, null, null, null, null, gasVisc);
+    ValidationResult result = BlackOilTableValidator.validate(pressures, null, null, null, null, gasVisc);
 
     assertTrue(result.isValid());
     assertTrue(result.getReport().contains("PASS"));
@@ -140,11 +135,10 @@ public class BlackOilTableValidatorTest {
 
   @Test
   void testNegativeGasViscosity() {
-    double[] pressures = {300.0, 250.0, 200.0};
-    double[] gasVisc = {0.015, -0.01, 0.013}; // Negative value
+    double[] pressures = { 300.0, 250.0, 200.0 };
+    double[] gasVisc = { 0.015, -0.01, 0.013 }; // Negative value
 
-    ValidationResult result =
-        BlackOilTableValidator.validate(pressures, null, null, null, null, gasVisc);
+    ValidationResult result = BlackOilTableValidator.validate(pressures, null, null, null, null, gasVisc);
 
     assertFalse(result.isValid());
     assertTrue(result.getReport().contains("non-positive"));
@@ -152,7 +146,7 @@ public class BlackOilTableValidatorTest {
 
   @Test
   void testNullPressures() {
-    double[] Bo = {1.45, 1.40, 1.35};
+    double[] Bo = { 1.45, 1.40, 1.35 };
 
     ValidationResult result = BlackOilTableValidator.validate(null, Bo, null, null, null, null);
 
@@ -165,8 +159,7 @@ public class BlackOilTableValidatorTest {
     double[] pressures = {};
     double[] Bo = {};
 
-    ValidationResult result =
-        BlackOilTableValidator.validate(pressures, Bo, null, null, null, null);
+    ValidationResult result = BlackOilTableValidator.validate(pressures, Bo, null, null, null, null);
 
     assertFalse(result.isValid());
     assertTrue(result.getReport().contains("null or empty"));
@@ -175,15 +168,14 @@ public class BlackOilTableValidatorTest {
   @Test
   void testCompleteValidation() {
     // Complete black-oil table
-    double[] pressures = {300.0, 250.0, 200.0, 150.0, 100.0};
-    double[] Bo = {1.45, 1.40, 1.35, 1.30, 1.25};
-    double[] Rs = {200.0, 170.0, 140.0, 110.0, 80.0};
-    double[] Bg = {0.005, 0.006, 0.008, 0.010, 0.015};
-    double[] oilVisc = {0.5, 0.6, 0.7, 0.9, 1.2};
-    double[] gasVisc = {0.015, 0.014, 0.013, 0.012, 0.011};
+    double[] pressures = { 300.0, 250.0, 200.0, 150.0, 100.0 };
+    double[] Bo = { 1.45, 1.40, 1.35, 1.30, 1.25 };
+    double[] Rs = { 200.0, 170.0, 140.0, 110.0, 80.0 };
+    double[] Bg = { 0.005, 0.006, 0.008, 0.010, 0.015 };
+    double[] oilVisc = { 0.5, 0.6, 0.7, 0.9, 1.2 };
+    double[] gasVisc = { 0.015, 0.014, 0.013, 0.012, 0.011 };
 
-    ValidationResult result =
-        BlackOilTableValidator.validate(pressures, Bo, Rs, Bg, oilVisc, gasVisc);
+    ValidationResult result = BlackOilTableValidator.validate(pressures, Bo, Rs, Bg, oilVisc, gasVisc);
 
     assertTrue(result.isValid());
     String report = result.getReport();
@@ -195,11 +187,10 @@ public class BlackOilTableValidatorTest {
 
   @Test
   void testBoLessThanOne() {
-    double[] pressures = {300.0, 250.0, 200.0};
-    double[] Bo = {0.95, 0.90, 0.85}; // Bo < 1 (unusual)
+    double[] pressures = { 300.0, 250.0, 200.0 };
+    double[] Bo = { 0.95, 0.90, 0.85 }; // Bo < 1 (unusual)
 
-    ValidationResult result =
-        BlackOilTableValidator.validate(pressures, Bo, null, null, null, null);
+    ValidationResult result = BlackOilTableValidator.validate(pressures, Bo, null, null, null, null);
 
     assertTrue(result.hasWarnings());
     assertTrue(result.getReport().contains("less than 1.0"));
@@ -207,8 +198,8 @@ public class BlackOilTableValidatorTest {
 
   @Test
   void testInterpolation() {
-    double[] pressures = {300.0, 200.0, 100.0};
-    double[] Bo = {1.50, 1.30, 1.10};
+    double[] pressures = { 300.0, 200.0, 100.0 };
+    double[] Bo = { 1.50, 1.30, 1.10 };
 
     // Interpolate at 250 bar
     double interpolated = BlackOilTableValidator.interpolate(pressures, Bo, 250.0);
@@ -225,8 +216,8 @@ public class BlackOilTableValidatorTest {
 
   @Test
   void testInterpolationOutOfRange() {
-    double[] pressures = {300.0, 200.0, 100.0};
-    double[] Bo = {1.50, 1.30, 1.10};
+    double[] pressures = { 300.0, 200.0, 100.0 };
+    double[] Bo = { 1.50, 1.30, 1.10 };
 
     // Outside range should return NaN
     double result = BlackOilTableValidator.interpolate(pressures, Bo, 400.0);
@@ -244,11 +235,10 @@ public class BlackOilTableValidatorTest {
 
   @Test
   void testValidationReport() {
-    double[] pressures = {300.0, 250.0, 200.0};
-    double[] Bo = {1.45, 1.40, 1.35};
+    double[] pressures = { 300.0, 250.0, 200.0 };
+    double[] Bo = { 1.45, 1.40, 1.35 };
 
-    ValidationResult result =
-        BlackOilTableValidator.validate(pressures, Bo, null, null, null, null);
+    ValidationResult result = BlackOilTableValidator.validate(pressures, Bo, null, null, null, null);
 
     String report = result.getReport();
     assertTrue(report.contains("Black-Oil Table Validation Report"));
@@ -259,9 +249,9 @@ public class BlackOilTableValidatorTest {
   @Test
   void testBoRsConsistencyCheck() {
     // Inconsistent Bo-Rs (Bo increases while Rs decreases)
-    double[] pressures = {300.0, 250.0, 200.0, 150.0, 100.0};
-    double[] Bo = {1.25, 1.30, 1.35, 1.40, 1.45}; // Increasing (wrong for decreasing pressure)
-    double[] Rs = {200.0, 170.0, 140.0, 110.0, 80.0}; // Decreasing (correct)
+    double[] pressures = { 300.0, 250.0, 200.0, 150.0, 100.0 };
+    double[] Bo = { 1.25, 1.30, 1.35, 1.40, 1.45 }; // Increasing (wrong for decreasing pressure)
+    double[] Rs = { 200.0, 170.0, 140.0, 110.0, 80.0 }; // Decreasing (correct)
 
     ValidationResult result = BlackOilTableValidator.validate(pressures, Bo, Rs, null, null, null);
 

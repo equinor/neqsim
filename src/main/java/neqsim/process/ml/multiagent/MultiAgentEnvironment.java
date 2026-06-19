@@ -15,12 +15,11 @@ import neqsim.process.processmodel.ProcessSystem;
  * Multi-agent environment for coordinated process control.
  *
  * <p>
- * Manages multiple agents that each control a subset of process equipment while respecting global
- * constraints. Supports various multi-agent paradigms:
+ * Manages multiple agents that each control a subset of process equipment while respecting global constraints. Supports
+ * various multi-agent paradigms:
  * <ul>
  * <li><b>Independent</b> - Agents act independently with local observations</li>
- * <li><b>Centralized Training Decentralized Execution (CTDE)</b> - Shared critic during
- * training</li>
+ * <li><b>Centralized Training Decentralized Execution (CTDE)</b> - Shared critic during training</li>
  * <li><b>Communicating</b> - Agents exchange messages before acting</li>
  * </ul>
  *
@@ -101,15 +100,14 @@ public class MultiAgentEnvironment implements Serializable {
      * Constructor.
      *
      * @param observations agent observations
-     * @param rewards agent rewards
-     * @param terminated episode terminated
-     * @param truncated episode truncated
-     * @param infos agent infos
-     * @param globalState global state
+     * @param rewards      agent rewards
+     * @param terminated   episode terminated
+     * @param truncated    episode truncated
+     * @param infos        agent infos
+     * @param globalState  global state
      */
-    public MultiAgentStepResult(Map<String, double[]> observations, Map<String, Double> rewards,
-        boolean terminated, boolean truncated, Map<String, Map<String, Object>> infos,
-        StateVector globalState) {
+    public MultiAgentStepResult(Map<String, double[]> observations, Map<String, Double> rewards, boolean terminated,
+	boolean truncated, Map<String, Map<String, Object>> infos, StateVector globalState) {
       this.observations = observations;
       this.rewards = rewards;
       this.terminated = terminated;
@@ -217,15 +215,15 @@ public class MultiAgentEnvironment implements Serializable {
     if (coordinationMode == CoordinationMode.COMMUNICATING) {
       messages.clear();
       for (String agentId : agentOrder) {
-        Agent agent = agents.get(agentId);
-        double[] msg = agent.getMessage(currentGlobalState);
-        if (msg.length > 0) {
-          messages.put(agentId, msg);
-        }
+	Agent agent = agents.get(agentId);
+	double[] msg = agent.getMessage(currentGlobalState);
+	if (msg.length > 0) {
+	  messages.put(agentId, msg);
+	}
       }
       // Distribute messages
       for (Agent agent : agents.values()) {
-        agent.receiveMessages(messages);
+	agent.receiveMessages(messages);
       }
     }
 
@@ -252,19 +250,19 @@ public class MultiAgentEnvironment implements Serializable {
       // Shared team reward
       double teamReward = computeTeamReward(currentGlobalState, actions);
       for (String agentId : agentOrder) {
-        rewards.put(agentId, teamReward);
+	rewards.put(agentId, teamReward);
       }
     } else {
       // Individual rewards
       for (String agentId : agentOrder) {
-        Agent agent = agents.get(agentId);
-        double[] action = actions.getOrDefault(agentId, new double[agent.getActionDim()]);
-        double reward = agent.computeReward(currentGlobalState, action);
-        // Add constraint penalty
-        if (constraintViolation) {
-          reward -= 100.0;
-        }
-        rewards.put(agentId, reward);
+	Agent agent = agents.get(agentId);
+	double[] action = actions.getOrDefault(agentId, new double[agent.getActionDim()]);
+	double reward = agent.computeReward(currentGlobalState, action);
+	// Add constraint penalty
+	if (constraintViolation) {
+	  reward -= 100.0;
+	}
+	rewards.put(agentId, reward);
       }
     }
 
@@ -272,8 +270,8 @@ public class MultiAgentEnvironment implements Serializable {
     terminated = constraintViolation;
     for (Agent agent : agents.values()) {
       if (agent.isTerminated(currentGlobalState)) {
-        terminated = true;
-        break;
+	terminated = true;
+	break;
       }
     }
 
@@ -294,8 +292,7 @@ public class MultiAgentEnvironment implements Serializable {
       infos.put(agentId, info);
     }
 
-    return new MultiAgentStepResult(observations, rewards, terminated, truncated, infos,
-        currentGlobalState);
+    return new MultiAgentStepResult(observations, rewards, terminated, truncated, infos, currentGlobalState);
   }
 
   /**
@@ -310,8 +307,8 @@ public class MultiAgentEnvironment implements Serializable {
     if (process.getUnitOperations().size() > 0) {
       ProcessEquipmentInterface unit = process.getUnitOperations().get(0);
       if (unit.getFluid() != null) {
-        state.add("pressure", unit.getFluid().getPressure("bar"), 0.0, 200.0, "bar");
-        state.add("temperature", unit.getFluid().getTemperature("K"), 200.0, 500.0, "K");
+	state.add("pressure", unit.getFluid().getPressure("bar"), 0.0, 200.0, "bar");
+	state.add("temperature", unit.getFluid().getTemperature("K"), 200.0, 500.0, "K");
       }
     }
     return state;
@@ -320,7 +317,7 @@ public class MultiAgentEnvironment implements Serializable {
   /**
    * Compute team reward for cooperative mode.
    *
-   * @param state global state
+   * @param state   global state
    * @param actions all agent actions
    * @return team reward
    */

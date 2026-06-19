@@ -6,8 +6,8 @@ import java.io.Serializable;
  * Represents a single process stream for heat integration (pinch) analysis.
  *
  * <p>
- * A heat stream has a supply temperature, target temperature, heat capacity flow rate (MCp), and
- * can be classified as HOT (needs cooling) or COLD (needs heating).
+ * A heat stream has a supply temperature, target temperature, heat capacity flow rate (MCp), and can be classified as
+ * HOT (needs cooling) or COLD (needs heating).
  * </p>
  *
  * @author Even Solbraa
@@ -36,9 +36,9 @@ public class HeatStream implements Serializable {
   /**
    * Constructor for HeatStream.
    *
-   * @param name stream name
-   * @param supplyTemperature_C supply temperature in Celsius
-   * @param targetTemperature_C target temperature in Celsius
+   * @param name                        stream name
+   * @param supplyTemperature_C         supply temperature in Celsius
+   * @param targetTemperature_C         target temperature in Celsius
    * @param heatCapacityFlowRate_kWperK heat capacity flow rate in kW/K
    */
   public HeatStream(String name, double supplyTemperature_C, double targetTemperature_C,
@@ -152,8 +152,7 @@ public class HeatStream implements Serializable {
    */
   public void setSupplyTemperatureC(double supplyTemp_C) {
     this.supplyTemperature = supplyTemp_C + 273.15;
-    this.type =
-        (this.supplyTemperature >= this.targetTemperature) ? StreamType.HOT : StreamType.COLD;
+    this.type = (this.supplyTemperature >= this.targetTemperature) ? StreamType.HOT : StreamType.COLD;
   }
 
   /**
@@ -163,7 +162,6 @@ public class HeatStream implements Serializable {
    */
   public void setTargetTemperatureC(double targetTemp_C) {
     this.targetTemperature = targetTemp_C + 273.15;
-    this.type =
-        (this.supplyTemperature >= this.targetTemperature) ? StreamType.HOT : StreamType.COLD;
+    this.type = (this.supplyTemperature >= this.targetTemperature) ? StreamType.HOT : StreamType.COLD;
   }
 }

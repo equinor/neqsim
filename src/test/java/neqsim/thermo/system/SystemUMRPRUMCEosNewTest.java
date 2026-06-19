@@ -16,7 +16,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
   private static final Logger logger = LogManager.getLogger(SystemUMRPRUMCEosNewTest.class);
 
   /** Logger object for class. */
-  
+
   static neqsim.thermo.system.SystemInterface testSystem = null;
   static neqsim.thermo.ThermodynamicModelTest testModel = null;
   neqsim.thermo.ThermodynamicModelTest fugTest;
@@ -211,8 +211,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     try {
       testOps.calcPTphaseEnvelope();
-      logger.info("Cricondenbar " + (testOps.get("cricondenbar")[0] - 273.15) + " "
-          + testOps.get("cricondenbar")[1]);
+      logger.info("Cricondenbar " + (testOps.get("cricondenbar")[0] - 273.15) + " " + testOps.get("cricondenbar")[1]);
     } catch (Exception ex) {
       assertTrue(false);
       throw new Exception(ex);
@@ -262,8 +261,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     try {
       testOps.calcPTphaseEnvelope();
-      logger.info("Cricondenbar " + (testOps.get("cricondenbar")[0] - 273.15) + " "
-          + testOps.get("cricondenbar")[1]);
+      logger.info("Cricondenbar " + (testOps.get("cricondenbar")[0] - 273.15) + " " + testOps.get("cricondenbar")[1]);
     } catch (Exception ex) {
       assertTrue(false);
       throw new Exception(ex);
@@ -306,11 +304,11 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * Regression test pinning the identity (model name and attractive term number) of the three
-   * UMR-PRU variants. The attractive term number selects the alpha correlation and, through
-   * {@link neqsim.thermo.phase.PhaseGEUnifacUMRPRU#useMcInteractionParameters()}, the group
-   * interaction parameter tables (<code>_umr</code> vs <code>_umrmc</code>). Pinning these values
-   * guards against accidental re-routing of the validated variants.
+   * Regression test pinning the identity (model name and attractive term number) of the three UMR-PRU variants. The
+   * attractive term number selects the alpha correlation and, through
+   * {@link neqsim.thermo.phase.PhaseGEUnifacUMRPRU#useMcInteractionParameters()}, the group interaction parameter
+   * tables (<code>_umr</code> vs <code>_umrmc</code>). Pinning these values guards against accidental re-routing of the
+   * validated variants.
    */
   @Test
   @DisplayName("UMR-PRU variant identity (model name and attractive term number)")

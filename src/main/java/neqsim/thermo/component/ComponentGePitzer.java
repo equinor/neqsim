@@ -16,10 +16,10 @@ public class ComponentGePitzer extends ComponentGE {
   /**
    * Constructor for ComponentGePitzer.
    *
-   * @param name Name of component
-   * @param moles total number of moles
+   * @param name         Name of component
+   * @param moles        total number of moles
    * @param molesInPhase moles in phase
-   * @param compIndex component index
+   * @param compIndex    component index
    */
   public ComponentGePitzer(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
@@ -28,16 +28,14 @@ public class ComponentGePitzer extends ComponentGE {
   /** {@inheritDoc} */
   @Override
   public double fugcoef(PhaseInterface phase) {
-    getGamma(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure(),
-        phase.getType());
+    getGamma(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure(), phase.getType());
     return super.fugcoef(phase);
   }
 
   /** {@inheritDoc} */
   @Override
-  public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] intparam,
-      String[][] mixRule) {
+  public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+      PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] intparam, String[][] mixRule) {
     return getGamma(phase, numberOfComponents, temperature, pressure, pt);
   }
 
@@ -45,22 +43,21 @@ public class ComponentGePitzer extends ComponentGE {
    * Calculate activity coefficient using the Pitzer model.
    *
    * <p>
-   * For ions (charge != 0): computes the single-ion activity coefficient from the Pitzer
-   * Debye-Huckel term and binary cation-anion interaction parameters. For the solvent (water,
-   * referenceStateType = "solvent"): computes the activity coefficient from the Pitzer osmotic
-   * coefficient using the Harvie and Weare (1980) mixed-electrolyte framework. For other neutral
-   * species (dissolved gases): returns gamma = 1.0 (no lambda/mu parameters available).
+   * For ions (charge != 0): computes the single-ion activity coefficient from the Pitzer Debye-Huckel term and binary
+   * cation-anion interaction parameters. For the solvent (water, referenceStateType = "solvent"): computes the activity
+   * coefficient from the Pitzer osmotic coefficient using the Harvie and Weare (1980) mixed-electrolyte framework. For
+   * other neutral species (dissolved gases): returns gamma = 1.0 (no lambda/mu parameters available).
    * </p>
    *
-   * @param phase phase object
+   * @param phase              phase object
    * @param numberOfComponents number of components in phase
-   * @param temperature temperature in Kelvin
-   * @param pressure pressure in bara
-   * @param pt phase type
+   * @param temperature        temperature in Kelvin
+   * @param pressure           pressure in bara
+   * @param pt                 phase type
    * @return activity coefficient (dimensionless)
    */
-  public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, PhaseType pt) {
+  public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+      PhaseType pt) {
     double charge = getIonicCharge();
 
     // Solvent (water): compute gamma from Pitzer osmotic coefficient
@@ -94,7 +91,7 @@ public class ComponentGePitzer extends ComponentGE {
     for (int j = 0; j < numberOfComponents; j++) {
       double chargej = phase.getComponent(j).getIonicCharge();
       if (Math.abs(chargej) > 0.5) {
-        Zsum += phase.getComponent(j).getMolality(phase) * Math.abs(chargej);
+	Zsum += phase.getComponent(j).getMolality(phase) * Math.abs(chargej);
       }
     }
 
@@ -103,11 +100,11 @@ public class ComponentGePitzer extends ComponentGE {
     double sum = 0.0;
     for (int j = 0; j < numberOfComponents; j++) {
       if (j == componentNumber) {
-        continue;
+	continue;
       }
       double chargej = phase.getComponent(j).getIonicCharge();
       if (chargej * charge >= 0) {
-        continue;
+	continue;
       }
       double m_j = phase.getComponent(j).getMolality(phase);
       double beta0 = pitz.getBeta0ij(componentNumber, j, temperature);
@@ -119,19 +116,19 @@ public class ComponentGePitzer extends ComponentGE {
       double alpha2;
       boolean is22 = (Math.abs(charge) >= 1.5 && Math.abs(chargej) >= 1.5);
       if (is22) {
-        alpha1 = 1.4;
-        alpha2 = 12.0;
+	alpha1 = 1.4;
+	alpha2 = 12.0;
       } else {
-        alpha1 = 2.0;
-        alpha2 = 0.0;
+	alpha1 = 2.0;
+	alpha2 = 0.0;
       }
 
       double x1 = alpha1 * sqrtI;
       double g1 = 0.0;
       double gp1 = 0.0;
       if (x1 > 1e-12) {
-        g1 = 2.0 * (1.0 - (1.0 + x1) * Math.exp(-x1)) / (x1 * x1);
-        gp1 = -2.0 * (1.0 - (1.0 + x1 + x1 * x1 / 2.0) * Math.exp(-x1)) / (x1 * x1);
+	g1 = 2.0 * (1.0 - (1.0 + x1) * Math.exp(-x1)) / (x1 * x1);
+	gp1 = -2.0 * (1.0 - (1.0 + x1 + x1 * x1 / 2.0) * Math.exp(-x1)) / (x1 * x1);
       }
       double Bval = beta0 + beta1 * g1;
       // B'(I) = dB/dI for the F-term (Pitzer 1991 Eq. 8-2-8)
@@ -139,20 +136,20 @@ public class ComponentGePitzer extends ComponentGE {
 
       // Add beta2 contribution for 2-2 electrolytes
       if (is22) {
-        double beta2val = pitz.getBeta2ij(componentNumber, j);
-        if (Math.abs(beta2val) > 1e-20) {
-          double x2 = alpha2 * sqrtI;
-          double g2 = 0.0;
-          double gp2 = 0.0;
-          if (x2 > 1e-12) {
-            g2 = 2.0 * (1.0 - (1.0 + x2) * Math.exp(-x2)) / (x2 * x2);
-            gp2 = -2.0 * (1.0 - (1.0 + x2 + x2 * x2 / 2.0) * Math.exp(-x2)) / (x2 * x2);
-          }
-          Bval += beta2val * g2;
-          if (I > 1e-12) {
-            Bprime += beta2val * gp2 / I;
-          }
-        }
+	double beta2val = pitz.getBeta2ij(componentNumber, j);
+	if (Math.abs(beta2val) > 1e-20) {
+	  double x2 = alpha2 * sqrtI;
+	  double g2 = 0.0;
+	  double gp2 = 0.0;
+	  if (x2 > 1e-12) {
+	    g2 = 2.0 * (1.0 - (1.0 + x2) * Math.exp(-x2)) / (x2 * x2);
+	    gp2 = -2.0 * (1.0 - (1.0 + x2 + x2 * x2 / 2.0) * Math.exp(-x2)) / (x2 * x2);
+	  }
+	  Bval += beta2val * g2;
+	  if (I > 1e-12) {
+	    Bprime += beta2val * gp2 / I;
+	  }
+	}
       }
 
       // C_ca = Cphi_ca / (2 * sqrt(|z_c * z_a|)) per Pitzer 1991 Eq. 8-2-10
@@ -169,12 +166,12 @@ public class ComponentGePitzer extends ComponentGE {
     // Theta and psi mixing terms for same-sign ion interactions
     for (int j = 0; j < numberOfComponents; j++) {
       if (j == componentNumber) {
-        continue;
+	continue;
       }
       double chargej = phase.getComponent(j).getIonicCharge();
       // Same sign as this ion: cation-cation or anion-anion
       if (Math.abs(chargej) < 0.5 || chargej * charge <= 0) {
-        continue;
+	continue;
       }
       double m_j = phase.getComponent(j).getMolality(phase);
       double thetaij = pitz.getThetaij(componentNumber, j);
@@ -182,13 +179,13 @@ public class ComponentGePitzer extends ComponentGE {
 
       // Psi ternary terms: sum over opposite-sign ions
       for (int k = 0; k < numberOfComponents; k++) {
-        double chargek = phase.getComponent(k).getIonicCharge();
-        if (chargek * charge >= 0 || Math.abs(chargek) < 0.5) {
-          continue;
-        }
-        double m_k = phase.getComponent(k).getMolality(phase);
-        double psiijk = pitz.getPsiijk(componentNumber, j, k);
-        sum += m_j * m_k * psiijk;
+	double chargek = phase.getComponent(k).getIonicCharge();
+	if (chargek * charge >= 0 || Math.abs(chargek) < 0.5) {
+	  continue;
+	}
+	double m_k = phase.getComponent(k).getMolality(phase);
+	double psiijk = pitz.getPsiijk(componentNumber, j, k);
+	sum += m_j * m_k * psiijk;
       }
     }
 
@@ -219,9 +216,9 @@ public class ComponentGePitzer extends ComponentGE {
    * Activity coefficient (Raoult convention): gamma_w = a_w / x_w
    * </p>
    *
-   * @param phase the Pitzer phase
+   * @param phase              the Pitzer phase
    * @param numberOfComponents number of components
-   * @param TK temperature in Kelvin
+   * @param TK                 temperature in Kelvin
    * @return water activity coefficient (mole fraction basis, Raoult convention)
    */
   private double getWaterGamma(PhaseInterface phase, int numberOfComponents, double TK) {
@@ -236,7 +233,7 @@ public class ComponentGePitzer extends ComponentGE {
     double sumMolalities = 0.0;
     for (int k = 0; k < numberOfComponents; k++) {
       if (phase.getComponent(k).getIonicCharge() != 0) {
-        sumMolalities += phase.getComponent(k).getMolality(phase);
+	sumMolalities += phase.getComponent(k).getMolality(phase);
       }
     }
 
@@ -252,8 +249,7 @@ public class ComponentGePitzer extends ComponentGE {
     // Z = sum |z_i| * m_i (over all ions)
     double Z = 0.0;
     for (int k = 0; k < numberOfComponents; k++) {
-      Z += Math.abs(phase.getComponent(k).getIonicCharge())
-          * phase.getComponent(k).getMolality(phase);
+      Z += Math.abs(phase.getComponent(k).getIonicCharge()) * phase.getComponent(k).getMolality(phase);
     }
 
     // Binary cation-anion interaction sum
@@ -261,42 +257,42 @@ public class ComponentGePitzer extends ComponentGE {
     for (int ic = 0; ic < numberOfComponents; ic++) {
       double zc = phase.getComponent(ic).getIonicCharge();
       if (zc <= 0) {
-        continue;
+	continue;
       }
       double mc = phase.getComponent(ic).getMolality(phase);
 
       for (int ia = 0; ia < numberOfComponents; ia++) {
-        double za = phase.getComponent(ia).getIonicCharge();
-        if (za >= 0) {
-          continue;
-        }
-        double ma = phase.getComponent(ia).getMolality(phase);
+	double za = phase.getComponent(ia).getIonicCharge();
+	if (za >= 0) {
+	  continue;
+	}
+	double ma = phase.getComponent(ia).getMolality(phase);
 
-        double beta0 = pitz.getBeta0ij(ic, ia, TK);
-        double beta1 = pitz.getBeta1ij(ic, ia, TK);
-        double Cphi = pitz.getCphiij(ic, ia, TK);
+	double beta0 = pitz.getBeta0ij(ic, ia, TK);
+	double beta1 = pitz.getBeta1ij(ic, ia, TK);
+	double Cphi = pitz.getCphiij(ic, ia, TK);
 
-        // Determine alpha values based on electrolyte type
-        boolean is22 = (Math.abs(zc) >= 1.5 && Math.abs(za) >= 1.5);
-        double alpha1 = is22 ? 1.4 : 2.0;
+	// Determine alpha values based on electrolyte type
+	boolean is22 = (Math.abs(zc) >= 1.5 && Math.abs(za) >= 1.5);
+	double alpha1 = is22 ? 1.4 : 2.0;
 
-        // B^phi_ca = beta0 + beta1 * exp(-alpha1 * sqrt(I))
-        double BphiCA = beta0 + beta1 * Math.exp(-alpha1 * sqrtI);
+	// B^phi_ca = beta0 + beta1 * exp(-alpha1 * sqrt(I))
+	double BphiCA = beta0 + beta1 * Math.exp(-alpha1 * sqrtI);
 
-        // Add beta2 contribution for 2-2 electrolytes
-        if (is22) {
-          double beta2val = pitz.getBeta2ij(ic, ia);
-          if (Math.abs(beta2val) > 1e-20) {
-            double alpha2 = 12.0;
-            BphiCA += beta2val * Math.exp(-alpha2 * sqrtI);
-          }
-        }
+	// Add beta2 contribution for 2-2 electrolytes
+	if (is22) {
+	  double beta2val = pitz.getBeta2ij(ic, ia);
+	  if (Math.abs(beta2val) > 1e-20) {
+	    double alpha2 = 12.0;
+	    BphiCA += beta2val * Math.exp(-alpha2 * sqrtI);
+	  }
+	}
 
-        // C_ca = Cphi / (2 * sqrt(|zc * za|))
-        double absZcZa = Math.abs(zc * za);
-        double CCA = (absZcZa > 0) ? Cphi / (2.0 * Math.sqrt(absZcZa)) : 0.0;
+	// C_ca = Cphi / (2 * sqrt(|zc * za|))
+	double absZcZa = Math.abs(zc * za);
+	double CCA = (absZcZa > 0) ? Cphi / (2.0 * Math.sqrt(absZcZa)) : 0.0;
 
-        binarySum += mc * ma * (BphiCA + Z * CCA);
+	binarySum += mc * ma * (BphiCA + Z * CCA);
       }
     }
 
@@ -306,52 +302,52 @@ public class ComponentGePitzer extends ComponentGE {
     for (int ic1 = 0; ic1 < numberOfComponents; ic1++) {
       double zc1 = phase.getComponent(ic1).getIonicCharge();
       if (zc1 <= 0) {
-        continue;
+	continue;
       }
       double mc1 = phase.getComponent(ic1).getMolality(phase);
       for (int ic2 = ic1 + 1; ic2 < numberOfComponents; ic2++) {
-        double zc2 = phase.getComponent(ic2).getIonicCharge();
-        if (zc2 <= 0) {
-          continue;
-        }
-        double mc2 = phase.getComponent(ic2).getMolality(phase);
-        double thetaCC = pitz.getThetaij(ic1, ic2);
-        thetaPsiSum += mc1 * mc2 * thetaCC;
-        // Psi cation-cation-anion
-        for (int ia = 0; ia < numberOfComponents; ia++) {
-          double za = phase.getComponent(ia).getIonicCharge();
-          if (za >= 0) {
-            continue;
-          }
-          double ma = phase.getComponent(ia).getMolality(phase);
-          thetaPsiSum += mc1 * mc2 * ma * pitz.getPsiijk(ic1, ic2, ia);
-        }
+	double zc2 = phase.getComponent(ic2).getIonicCharge();
+	if (zc2 <= 0) {
+	  continue;
+	}
+	double mc2 = phase.getComponent(ic2).getMolality(phase);
+	double thetaCC = pitz.getThetaij(ic1, ic2);
+	thetaPsiSum += mc1 * mc2 * thetaCC;
+	// Psi cation-cation-anion
+	for (int ia = 0; ia < numberOfComponents; ia++) {
+	  double za = phase.getComponent(ia).getIonicCharge();
+	  if (za >= 0) {
+	    continue;
+	  }
+	  double ma = phase.getComponent(ia).getMolality(phase);
+	  thetaPsiSum += mc1 * mc2 * ma * pitz.getPsiijk(ic1, ic2, ia);
+	}
       }
     }
     // Anion-anion theta + psi
     for (int ia1 = 0; ia1 < numberOfComponents; ia1++) {
       double za1 = phase.getComponent(ia1).getIonicCharge();
       if (za1 >= 0) {
-        continue;
+	continue;
       }
       double ma1 = phase.getComponent(ia1).getMolality(phase);
       for (int ia2 = ia1 + 1; ia2 < numberOfComponents; ia2++) {
-        double za2 = phase.getComponent(ia2).getIonicCharge();
-        if (za2 >= 0) {
-          continue;
-        }
-        double ma2 = phase.getComponent(ia2).getMolality(phase);
-        double thetaAA = pitz.getThetaij(ia1, ia2);
-        thetaPsiSum += ma1 * ma2 * thetaAA;
-        // Psi anion-anion-cation
-        for (int ic = 0; ic < numberOfComponents; ic++) {
-          double zc = phase.getComponent(ic).getIonicCharge();
-          if (zc <= 0) {
-            continue;
-          }
-          double mc = phase.getComponent(ic).getMolality(phase);
-          thetaPsiSum += ma1 * ma2 * mc * pitz.getPsiijk(ia1, ia2, ic);
-        }
+	double za2 = phase.getComponent(ia2).getIonicCharge();
+	if (za2 >= 0) {
+	  continue;
+	}
+	double ma2 = phase.getComponent(ia2).getMolality(phase);
+	double thetaAA = pitz.getThetaij(ia1, ia2);
+	thetaPsiSum += ma1 * ma2 * thetaAA;
+	// Psi anion-anion-cation
+	for (int ic = 0; ic < numberOfComponents; ic++) {
+	  double zc = phase.getComponent(ic).getIonicCharge();
+	  if (zc <= 0) {
+	    continue;
+	  }
+	  double mc = phase.getComponent(ic).getMolality(phase);
+	  thetaPsiSum += ma1 * ma2 * mc * pitz.getPsiijk(ia1, ia2, ic);
+	}
       }
     }
 
@@ -382,7 +378,7 @@ public class ComponentGePitzer extends ComponentGE {
     if (phase instanceof PhasePitzer) {
       double solventWeight = ((PhasePitzer) phase).getSolventWeight();
       if (solventWeight > 0) {
-        return getNumberOfMolesInPhase() / solventWeight;
+	return getNumberOfMolesInPhase() / solventWeight;
       }
     }
     return 0.0;
@@ -392,9 +388,9 @@ public class ComponentGePitzer extends ComponentGE {
    * Calculates the Pitzer Debye-Hückel Aphi parameter as a function of temperature.
    *
    * <p>
-   * Uses the Bradley-Pitzer (1979) correlation for the osmotic coefficient Debye-Hückel parameter.
-   * The Aphi value is in ln-based units (Aphi = Agamma/3). Water density uses the IAPWS simplified
-   * equation valid at pressures typical for oilfield brine (liquid state).
+   * Uses the Bradley-Pitzer (1979) correlation for the osmotic coefficient Debye-Hückel parameter. The Aphi value is in
+   * ln-based units (Aphi = Agamma/3). Water density uses the IAPWS simplified equation valid at pressures typical for
+   * oilfield brine (liquid state).
    * </p>
    *
    * @param TK temperature in Kelvin
@@ -404,8 +400,7 @@ public class ComponentGePitzer extends ComponentGE {
     // Water density (kg/m³) — Kell (1975) polynomial valid 0-150 °C at ~1 atm
     // with pressure boost for liquid water above 100°C
     double TC = TK - 273.15;
-    double rho = 999.83 + 5.0948e-2 * TC - 7.5722e-3 * TC * TC + 3.8907e-5 * TC * TC * TC
-        - 1.2e-7 * TC * TC * TC * TC;
+    double rho = 999.83 + 5.0948e-2 * TC - 7.5722e-3 * TC * TC + 3.8907e-5 * TC * TC * TC - 1.2e-7 * TC * TC * TC * TC;
     // Above 100°C, the Kell formula under-predicts liquid density under pressure.
     // Apply approximate correction: in pressurized systems, liquid density stays higher
     // than atmospheric-boiling values. Use linear interpolation toward IAPWS values.
@@ -436,4 +431,3 @@ public class ComponentGePitzer extends ComponentGE {
     return 3.0 * Aphi;
   }
 }
-

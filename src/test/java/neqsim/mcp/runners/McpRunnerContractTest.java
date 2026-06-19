@@ -39,15 +39,15 @@ class McpRunnerContractTest {
       JsonObject response = JsonParser.parseString(responseJson).getAsJsonObject();
 
       assertTrue(!"error".equals(response.get("status").getAsString()),
-          toolName + " returned an error response: " + responseJson);
-      assertEquals(contract.get("apiVersion").getAsString(),
-          response.get("apiVersion").getAsString(), toolName + " apiVersion mismatch");
+	  toolName + " returned an error response: " + responseJson);
+      assertEquals(contract.get("apiVersion").getAsString(), response.get("apiVersion").getAsString(),
+	  toolName + " apiVersion mismatch");
       assertEquals(toolName, response.get("tool").getAsString(), toolName + " tool mismatch");
       assertRequiredFields(toolName, response, contract.getAsJsonArray("requiredFields"));
       assertRequiredFields(toolName, response.getAsJsonObject("validation"),
-          contract.getAsJsonArray("requiredValidationFields"));
+	  contract.getAsJsonArray("requiredValidationFields"));
       assertRequiredFields(toolName, response.getAsJsonObject("qualityGate"),
-          contract.getAsJsonArray("requiredQualityGateFields"));
+	  contract.getAsJsonArray("requiredQualityGateFields"));
     }
   }
 
@@ -58,8 +58,7 @@ class McpRunnerContractTest {
    * @throws Exception if the resource is missing or unreadable
    */
   private JsonObject readContractFixture() throws Exception {
-    InputStream stream =
-        getClass().getResourceAsStream("/neqsim/mcp/contracts/standard_response_contract.json");
+    InputStream stream = getClass().getResourceAsStream("/neqsim/mcp/contracts/standard_response_contract.json");
     assertNotNull(stream, "standard_response_contract.json must exist");
     Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8);
     try {
@@ -111,12 +110,12 @@ class McpRunnerContractTest {
       return AutomationRunner.listVariables(ExampleCatalog.processSimpleSeparation(), "HP Sep");
     }
     if ("getSimulationVariable".equals(toolName)) {
-      return AutomationRunner.getVariable(ExampleCatalog.processSimpleSeparation(),
-          "HP Sep.gasOutStream.temperature", "C");
+      return AutomationRunner.getVariable(ExampleCatalog.processSimpleSeparation(), "HP Sep.gasOutStream.temperature",
+	  "C");
     }
     if ("setSimulationVariable".equals(toolName)) {
-      return AutomationRunner.setVariableAndRun(ExampleCatalog.processSimpleSeparation(),
-          "feed.temperature", 35.0, "C");
+      return AutomationRunner.setVariableAndRun(ExampleCatalog.processSimpleSeparation(), "feed.temperature", 35.0,
+	  "C");
     }
     if ("saveSimulationState".equals(toolName)) {
       return AutomationRunner.saveState(ExampleCatalog.processSimpleSeparation(), "base", "1.0");
@@ -131,8 +130,7 @@ class McpRunnerContractTest {
       return AutomationRunner.compareStates(baseState.toJson(), updatedState.toJson());
     }
     if ("diagnoseAutomation".equals(toolName)) {
-      return AutomationRunner.diagnose(ExampleCatalog.processSimpleSeparation(),
-          "HP separator.gasOut.temp", "get");
+      return AutomationRunner.diagnose(ExampleCatalog.processSimpleSeparation(), "HP separator.gasOut.temp", "get");
     }
     if ("getAutomationLearningReport".equals(toolName)) {
       return AutomationRunner.getLearningReport(ExampleCatalog.processSimpleSeparation());
@@ -143,12 +141,11 @@ class McpRunnerContractTest {
   /**
    * Verifies that a JSON object contains all required fields.
    *
-   * @param label assertion label
-   * @param response JSON object to inspect
+   * @param label          assertion label
+   * @param response       JSON object to inspect
    * @param requiredFields required field names
    */
-  private static void assertRequiredFields(String label, JsonObject response,
-      JsonArray requiredFields) {
+  private static void assertRequiredFields(String label, JsonObject response, JsonArray requiredFields) {
     for (JsonElement fieldElement : requiredFields) {
       String fieldName = fieldElement.getAsString();
       assertTrue(response.has(fieldName), label + " missing required field " + fieldName);

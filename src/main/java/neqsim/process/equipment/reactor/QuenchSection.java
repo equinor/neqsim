@@ -13,9 +13,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Fast-quench section for POX and ATR syngas cooling studies.
  *
  * <p>
- * The section cools a hot syngas stream to a specified target temperature at nearly constant
- * pressure, estimates the required heat removal, and exposes a quench severity metric. It is a
- * screening substitute for detailed radiant/convective syngas coolers and water-quench hardware.
+ * The section cools a hot syngas stream to a specified target temperature at nearly constant pressure, estimates the
+ * required heat removal, and exposes a quench severity metric. It is a screening substitute for detailed
+ * radiant/convective syngas coolers and water-quench hardware.
  * </p>
  *
  * @author NeqSim contributors
@@ -49,7 +49,7 @@ public class QuenchSection extends TwoPortEquipment {
   /**
    * Creates a quench section with an inlet stream.
    *
-   * @param name equipment name
+   * @param name        equipment name
    * @param inletStream hot syngas inlet stream
    */
   public QuenchSection(String name, StreamInterface inletStream) {
@@ -72,7 +72,7 @@ public class QuenchSection extends TwoPortEquipment {
    * Sets the target outlet temperature with unit conversion.
    *
    * @param temperature temperature value
-   * @param unit temperature unit, either K or C
+   * @param unit        temperature unit, either K or C
    */
   public void setTargetTemperature(double temperature, String unit) {
     if ("C".equalsIgnoreCase(unit)) {
@@ -185,7 +185,6 @@ public class QuenchSection extends TwoPortEquipment {
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(getResults());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(getResults());
   }
 }

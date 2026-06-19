@@ -509,70 +509,63 @@ public class WaterTreatmentEquipmentTest {
     MechanicalDesign md = hc.getMechanicalDesign();
     assertNotNull(md, "getMechanicalDesign() should not return null after init");
     assertTrue(md instanceof HydrocycloneMechanicalDesign,
-        "Should be HydrocycloneMechanicalDesign, not " + md.getClass().getSimpleName());
+	"Should be HydrocycloneMechanicalDesign, not " + md.getClass().getSimpleName());
   }
 
   @Test
   public void testMechanicalDesignCalcDesign() {
     Hydrocyclone hc = createRunHydrocyclone();
     hc.initMechanicalDesign();
-    HydrocycloneMechanicalDesign md =
-        (HydrocycloneMechanicalDesign) hc.getMechanicalDesign();
+    HydrocycloneMechanicalDesign md = (HydrocycloneMechanicalDesign) hc.getMechanicalDesign();
     md.calcDesign();
 
     // Wall thickness must be positive
-    assertTrue(md.getVesselWallThicknessMm() > 0,
-        "Wall thickness should be > 0, got " + md.getVesselWallThicknessMm());
+    assertTrue(md.getVesselWallThicknessMm() > 0, "Wall thickness should be > 0, got " + md.getVesselWallThicknessMm());
 
     // Vessel ID must be positive
-    assertTrue(md.getVesselInnerDiameterM() > 0,
-        "Vessel ID should be > 0, got " + md.getVesselInnerDiameterM());
+    assertTrue(md.getVesselInnerDiameterM() > 0, "Vessel ID should be > 0, got " + md.getVesselInnerDiameterM());
 
     // Vessel length must be >= 1.0 m (minimum)
-    assertTrue(md.getVesselLengthM() >= 1.0,
-        "Vessel length should be >= 1.0 m, got " + md.getVesselLengthM());
+    assertTrue(md.getVesselLengthM() >= 1.0, "Vessel length should be >= 1.0 m, got " + md.getVesselLengthM());
 
     // Head thickness >= wall thickness
-    assertTrue(md.getHeadThicknessMm() >= md.getVesselWallThicknessMm(),
-        "Head thickness should be >= wall thickness");
+    assertTrue(md.getHeadThicknessMm() >= md.getVesselWallThicknessMm(), "Head thickness should be >= wall thickness");
   }
 
   @Test
   public void testDesignPressureAboveOperating() {
     Hydrocyclone hc = createRunHydrocyclone();
     hc.initMechanicalDesign();
-    HydrocycloneMechanicalDesign md =
-        (HydrocycloneMechanicalDesign) hc.getMechanicalDesign();
+    HydrocycloneMechanicalDesign md = (HydrocycloneMechanicalDesign) hc.getMechanicalDesign();
     md.calcDesign();
 
     double opPressure = hc.getLiquidOutStream().getPressure() - 1.01325;
     double desPressure = md.getDesignPressureBarg();
     assertTrue(desPressure > opPressure,
-        "Design pressure (" + desPressure + ") must exceed operating (" + opPressure + ")");
+	"Design pressure (" + desPressure + ") must exceed operating (" + opPressure + ")");
   }
 
   @Test
   public void testNozzleSizesAreStandard() {
     Hydrocyclone hc = createRunHydrocyclone();
     hc.initMechanicalDesign();
-    HydrocycloneMechanicalDesign md =
-        (HydrocycloneMechanicalDesign) hc.getMechanicalDesign();
+    HydrocycloneMechanicalDesign md = (HydrocycloneMechanicalDesign) hc.getMechanicalDesign();
     md.calcDesign();
 
-    double[] stdSizes = {25.0, 40.0, 50.0, 80.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0};
+    double[] stdSizes = { 25.0, 40.0, 50.0, 80.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0 };
 
     assertTrue(isStandardSize(md.getInletNozzleIdMm(), stdSizes),
-        "Inlet nozzle " + md.getInletNozzleIdMm() + " not a standard size");
+	"Inlet nozzle " + md.getInletNozzleIdMm() + " not a standard size");
     assertTrue(isStandardSize(md.getOverflowNozzleIdMm(), stdSizes),
-        "Overflow nozzle " + md.getOverflowNozzleIdMm() + " not a standard size");
+	"Overflow nozzle " + md.getOverflowNozzleIdMm() + " not a standard size");
     assertTrue(isStandardSize(md.getRejectNozzleIdMm(), stdSizes),
-        "Reject nozzle " + md.getRejectNozzleIdMm() + " not a standard size");
+	"Reject nozzle " + md.getRejectNozzleIdMm() + " not a standard size");
   }
 
   private boolean isStandardSize(double value, double[] standards) {
     for (double s : standards) {
       if (Math.abs(value - s) < 0.01) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -582,8 +575,7 @@ public class WaterTreatmentEquipmentTest {
   public void testWeightsArePositive() {
     Hydrocyclone hc = createRunHydrocyclone();
     hc.initMechanicalDesign();
-    HydrocycloneMechanicalDesign md =
-        (HydrocycloneMechanicalDesign) hc.getMechanicalDesign();
+    HydrocycloneMechanicalDesign md = (HydrocycloneMechanicalDesign) hc.getMechanicalDesign();
     md.calcDesign();
 
     assertTrue(md.getWeightTotal() > 0, "Total weight should be > 0");
@@ -597,8 +589,7 @@ public class WaterTreatmentEquipmentTest {
   public void testVesselCount() {
     Hydrocyclone hc = createRunHydrocyclone();
     hc.initMechanicalDesign();
-    HydrocycloneMechanicalDesign md =
-        (HydrocycloneMechanicalDesign) hc.getMechanicalDesign();
+    HydrocycloneMechanicalDesign md = (HydrocycloneMechanicalDesign) hc.getMechanicalDesign();
     md.calcDesign();
 
     // 30 active + 6 spare = 36 liners, 9 per vessel -> 4 vessels
@@ -609,8 +600,7 @@ public class WaterTreatmentEquipmentTest {
   public void testToJsonReturnsValidJson() {
     Hydrocyclone hc = createRunHydrocyclone();
     hc.initMechanicalDesign();
-    HydrocycloneMechanicalDesign md =
-        (HydrocycloneMechanicalDesign) hc.getMechanicalDesign();
+    HydrocycloneMechanicalDesign md = (HydrocycloneMechanicalDesign) hc.getMechanicalDesign();
     md.calcDesign();
 
     String json = md.toJson();
@@ -624,8 +614,7 @@ public class WaterTreatmentEquipmentTest {
   public void testDesignSummaryMap() {
     Hydrocyclone hc = createRunHydrocyclone();
     hc.initMechanicalDesign();
-    HydrocycloneMechanicalDesign md =
-        (HydrocycloneMechanicalDesign) hc.getMechanicalDesign();
+    HydrocycloneMechanicalDesign md = (HydrocycloneMechanicalDesign) hc.getMechanicalDesign();
     md.calcDesign();
 
     Map<String, Object> summary = md.getHydrocycloneDesignSummary();
@@ -640,8 +629,7 @@ public class WaterTreatmentEquipmentTest {
   public void testMaterialGradeChange() {
     Hydrocyclone hc = createRunHydrocyclone();
     hc.initMechanicalDesign();
-    HydrocycloneMechanicalDesign md =
-        (HydrocycloneMechanicalDesign) hc.getMechanicalDesign();
+    HydrocycloneMechanicalDesign md = (HydrocycloneMechanicalDesign) hc.getMechanicalDesign();
 
     // Default is SA-316L (115 MPa)
     assertEquals("SA-316L", md.getMaterialGrade());
@@ -654,8 +642,7 @@ public class WaterTreatmentEquipmentTest {
     md.calcDesign();
 
     // Re-calc with SA-316L for comparison
-    HydrocycloneMechanicalDesign mdSS =
-        (HydrocycloneMechanicalDesign) hc.getMechanicalDesign();
+    HydrocycloneMechanicalDesign mdSS = (HydrocycloneMechanicalDesign) hc.getMechanicalDesign();
     mdSS.calcDesign(); // recalcs with default SA-316L
     // Can't directly compare since mdSS is same object; just verify the calc completes
     assertTrue(md.getVesselWallThicknessMm() > 0);

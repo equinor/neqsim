@@ -7,13 +7,11 @@ import com.google.gson.JsonObject;
  * Describes a single adjustable parameter (a degree of freedom) exposed by a process simulation.
  *
  * <p>
- * An adjustable parameter is an input that an agent or optimizer may change to influence the
- * process. It is sourced either from a writable {@link SimulationVariable} of type
- * {@link SimulationVariable.VariableType#INPUT}, or from an
- * {@link neqsim.process.equipment.util.Adjuster} unit operation. For adjuster-sourced parameters
- * the {@link #getTargetUnitName()} and {@link #getTargetProperty()} fields make explicit what the
- * parameter actually affects, eliminating the guesswork that arises when a handle name does not
- * match the variable it drives.
+ * An adjustable parameter is an input that an agent or optimizer may change to influence the process. It is sourced
+ * either from a writable {@link SimulationVariable} of type {@link SimulationVariable.VariableType#INPUT}, or from an
+ * {@link neqsim.process.equipment.util.Adjuster} unit operation. For adjuster-sourced parameters the
+ * {@link #getTargetUnitName()} and {@link #getTargetProperty()} fields make explicit what the parameter actually
+ * affects, eliminating the guesswork that arises when a handle name does not match the variable it drives.
  * </p>
  *
  * @author NeqSim
@@ -45,21 +43,19 @@ public class AdjustableParameter implements Serializable {
   /**
    * Creates a new adjustable parameter descriptor.
    *
-   * @param name the short, human-readable parameter name
-   * @param address the stable dot-notation address used with
-   *        {@link ProcessAutomation#setVariableValue(String, double, String)}
-   * @param unit the unit of measure for the parameter, e.g. "bara", "C", "kg/hr"
-   * @param lowerBound the lower bound of the parameter, or null if unbounded
-   * @param upperBound the upper bound of the parameter, or null if unbounded
-   * @param targetUnitName the name of the unit operation that the parameter actually affects, or
-   *        null if the parameter affects its own owning unit
-   * @param targetProperty the property the parameter actually drives toward, or null if not
-   *        applicable
-   * @param source where the parameter originates ({@link Source#INPUT_VARIABLE} or
-   *        {@link Source#ADJUSTER})
+   * @param name           the short, human-readable parameter name
+   * @param address        the stable dot-notation address used with
+   *                       {@link ProcessAutomation#setVariableValue(String, double, String)}
+   * @param unit           the unit of measure for the parameter, e.g. "bara", "C", "kg/hr"
+   * @param lowerBound     the lower bound of the parameter, or null if unbounded
+   * @param upperBound     the upper bound of the parameter, or null if unbounded
+   * @param targetUnitName the name of the unit operation that the parameter actually affects, or null if the parameter
+   *                       affects its own owning unit
+   * @param targetProperty the property the parameter actually drives toward, or null if not applicable
+   * @param source         where the parameter originates ({@link Source#INPUT_VARIABLE} or {@link Source#ADJUSTER})
    */
-  public AdjustableParameter(String name, String address, String unit, Double lowerBound,
-      Double upperBound, String targetUnitName, String targetProperty, Source source) {
+  public AdjustableParameter(String name, String address, String unit, Double lowerBound, Double upperBound,
+      String targetUnitName, String targetProperty, Source source) {
     this.name = name;
     this.address = address;
     this.unit = unit;
@@ -119,9 +115,8 @@ public class AdjustableParameter implements Serializable {
    * Returns the name of the unit operation this parameter actually affects.
    *
    * <p>
-   * For an {@link Source#ADJUSTER}-sourced parameter this is the adjusted equipment's name, which
-   * may differ from the parameter name. For an {@link Source#INPUT_VARIABLE} parameter this is the
-   * owning unit's name.
+   * For an {@link Source#ADJUSTER}-sourced parameter this is the adjusted equipment's name, which may differ from the
+   * parameter name. For an {@link Source#INPUT_VARIABLE} parameter this is the owning unit's name.
    * </p>
    *
    * @return the affected unit name, or null if not applicable
@@ -186,7 +181,6 @@ public class AdjustableParameter implements Serializable {
   /** {@inheritDoc} */
   @Override
   public String toString() {
-    return name + " [" + unit + "] -> "
-        + (targetUnitName == null ? "(self)" : targetUnitName + "." + targetProperty);
+    return name + " [" + unit + "] -> " + (targetUnitName == null ? "(self)" : targetUnitName + "." + targetProperty);
   }
 }

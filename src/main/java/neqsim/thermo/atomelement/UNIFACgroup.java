@@ -69,7 +69,8 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
    * Constructor for UNIFACgroup.
    * </p>
    */
-  public UNIFACgroup() {}
+  public UNIFACgroup() {
+  }
 
   /**
    * <p>
@@ -77,21 +78,19 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
    * </p>
    *
    * @param groupNumber a int
-   * @param temp a int
+   * @param temp        a int
    */
   public UNIFACgroup(int groupNumber, int temp) {
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       java.sql.ResultSet dataSet = null;
       try {
-        dataSet = database
-            .getResultSet(("SELECT * FROM unifacgroupparam WHERE Secondary=" + groupNumber + ""));
-        dataSet.next();
-        dataSet.getClob("name");
+	dataSet = database.getResultSet(("SELECT * FROM unifacgroupparam WHERE Secondary=" + groupNumber + ""));
+	dataSet.next();
+	dataSet.getClob("name");
       } catch (Exception ex) {
-        dataSet.close();
-        dataSet = database
-            .getResultSet(("SELECT * FROM unifacgroupparam WHERE Secondary=" + groupNumber + ""));
-        dataSet.next();
+	dataSet.close();
+	dataSet = database.getResultSet(("SELECT * FROM unifacgroupparam WHERE Secondary=" + groupNumber + ""));
+	dataSet.next();
       }
       n = temp;
       R = Double.parseDouble(dataSet.getString("VolumeR"));
@@ -231,9 +230,8 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
     int result = 1;
     result = prime * result + Arrays.hashCode(QMixdN);
     result = prime * result + Arrays.hashCode(lnGammaMixdn);
-    result = prime * result + Objects.hash(Q, QComp, QMix, R, groupIndex, groupName, lnGammaComp,
-        lnGammaCompdT, lnGammaCompdTdT, lnGammaMix, lnGammaMixdT, lnGammaMixdTdT, mainGroup, n,
-        subGroup, xComp);
+    result = prime * result + Objects.hash(Q, QComp, QMix, R, groupIndex, groupName, lnGammaComp, lnGammaCompdT,
+	lnGammaCompdTdT, lnGammaMix, lnGammaMixdT, lnGammaMixdTdT, mainGroup, n, subGroup, xComp);
     return result;
   }
 
@@ -253,20 +251,18 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
     UNIFACgroup other = (UNIFACgroup) obj;
     return subGroup == other.subGroup;
     /*
-     * Double.doubleToLongBits(Q) == Double.doubleToLongBits(other.Q) &&
-     * Double.doubleToLongBits(QComp) == Double.doubleToLongBits(other.QComp) &&
-     * Double.doubleToLongBits(QMix) == Double.doubleToLongBits(other.QMix) && Arrays.equals(QMixdN,
-     * other.QMixdN) && Double.doubleToLongBits(R) == Double.doubleToLongBits(other.R) && groupIndex
-     * == other.groupIndex && Objects.equals(groupName, other.groupName) &&
+     * Double.doubleToLongBits(Q) == Double.doubleToLongBits(other.Q) && Double.doubleToLongBits(QComp) ==
+     * Double.doubleToLongBits(other.QComp) && Double.doubleToLongBits(QMix) == Double.doubleToLongBits(other.QMix) &&
+     * Arrays.equals(QMixdN, other.QMixdN) && Double.doubleToLongBits(R) == Double.doubleToLongBits(other.R) &&
+     * groupIndex == other.groupIndex && Objects.equals(groupName, other.groupName) &&
      * Double.doubleToLongBits(lnGammaComp) == Double .doubleToLongBits(other.lnGammaComp) &&
      * Double.doubleToLongBits(lnGammaCompdT) == Double .doubleToLongBits(other.lnGammaCompdT) &&
-     * Double.doubleToLongBits(lnGammaCompdTdT) == Double .doubleToLongBits(other.lnGammaCompdTdT)
-     * && Double.doubleToLongBits(lnGammaMix) == Double.doubleToLongBits(other.lnGammaMix) &&
+     * Double.doubleToLongBits(lnGammaCompdTdT) == Double .doubleToLongBits(other.lnGammaCompdTdT) &&
+     * Double.doubleToLongBits(lnGammaMix) == Double.doubleToLongBits(other.lnGammaMix) &&
      * Double.doubleToLongBits(lnGammaMixdT) == Double .doubleToLongBits(other.lnGammaMixdT) &&
      * Double.doubleToLongBits(lnGammaMixdTdT) == Double .doubleToLongBits(other.lnGammaMixdTdT) &&
-     * Arrays.equals(lnGammaMixdn, other.lnGammaMixdn) && mainGroup == other.mainGroup && n ==
-     * other.n && subGroup == other.subGroup && Double.doubleToLongBits(xComp) ==
-     * Double.doubleToLongBits(other.xComp);
+     * Arrays.equals(lnGammaMixdn, other.lnGammaMixdn) && mainGroup == other.mainGroup && n == other.n && subGroup ==
+     * other.subGroup && Double.doubleToLongBits(xComp) == Double.doubleToLongBits(other.xComp);
      */
   }
 
@@ -288,12 +284,11 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   /*
    * public double calcXMix(PhaseGEUnifac phase) { double temp = 0.0, temp2 = 0.0, tempVal = 0.0;
    *
-   * for (int j = 0; j < phase.getNumberOfComponents(); j++) { for (int i = 0; i <
-   * ((ComponentGEUnifac) phase.getComponent(j)).getNumberOfUNIFACgroups(); i++) { tempVal =
-   * phase.getComponent(j).getNumberOfMolesInPhase() * ((ComponentGEUnifac)
-   * phase.getComponent(j)).getUnifacGroup(i).getN(); temp += tempVal; if (((ComponentGEUnifac)
-   * phase.getComponent(j)).getUnifacGroup(i).getSubGroup() == subGroup) { temp2 += tempVal; } } }
-   * xMix = temp2 / temp; return xMix; }
+   * for (int j = 0; j < phase.getNumberOfComponents(); j++) { for (int i = 0; i < ((ComponentGEUnifac)
+   * phase.getComponent(j)).getNumberOfUNIFACgroups(); i++) { tempVal = phase.getComponent(j).getNumberOfMolesInPhase()
+   * * ((ComponentGEUnifac) phase.getComponent(j)).getUnifacGroup(i).getN(); temp += tempVal; if (((ComponentGEUnifac)
+   * phase.getComponent(j)).getUnifacGroup(i).getSubGroup() == subGroup) { temp2 += tempVal; } } } xMix = temp2 / temp;
+   * return xMix; }
    */
 
   /**
@@ -338,12 +333,12 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
       numberOfMoles = component.getNumberOfMolesInPhase();
       numberOfGrups = component.getNumberOfUNIFACgroups();
       for (int i = 0; i < numberOfGrups; i++) {
-        unifacGroup = component.getUnifacGroup(i);
-        tempVar = numberOfMoles * unifacGroup.getN() * unifacGroup.getQ();
-        temp += tempVar;
-        if (unifacGroup.getSubGroup() == subGroup) {
-          temp2 += tempVar;
-        }
+	unifacGroup = component.getUnifacGroup(i);
+	tempVar = numberOfMoles * unifacGroup.getN() * unifacGroup.getQ();
+	temp += tempVar;
+	if (unifacGroup.getSubGroup() == subGroup) {
+	  temp2 += tempVar;
+	}
       }
     }
     // System.out.println("xmix " + xMix);
@@ -376,23 +371,23 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
       tempdn = 0.0;
       temp2dn = 0.0;
       for (int j = 0; j < phase.getNumberOfComponents(); j++) {
-        component = ((ComponentGEUnifac) phase.getComponent(j));
-        for (int i = 0; i < component.getNumberOfUNIFACgroups(); i++) {
-          unifacGroup = component.getUnifacGroup(i);
-          tempVar = component.getNumberOfMolesInPhase() * component.getUnifacGroup(i).getN()
-              * component.getUnifacGroup(i).getQ();
-          temp += tempVar;
-          if (k == j) {
-            tempVardn = unifacGroup.getN() * unifacGroup.getQ();
-            tempdn += tempVardn;
-          }
-          if (unifacGroup.getSubGroup() == subGroup) {
-            temp2 += tempVar;
-            if (k == j) {
-              temp2dn += tempVardn;
-            }
-          }
-        }
+	component = ((ComponentGEUnifac) phase.getComponent(j));
+	for (int i = 0; i < component.getNumberOfUNIFACgroups(); i++) {
+	  unifacGroup = component.getUnifacGroup(i);
+	  tempVar = component.getNumberOfMolesInPhase() * component.getUnifacGroup(i).getN()
+	      * component.getUnifacGroup(i).getQ();
+	  temp += tempVar;
+	  if (k == j) {
+	    tempVardn = unifacGroup.getN() * unifacGroup.getQ();
+	    tempdn += tempVardn;
+	  }
+	  if (unifacGroup.getSubGroup() == subGroup) {
+	    temp2 += tempVar;
+	    if (k == j) {
+	      temp2dn += tempVardn;
+	    }
+	  }
+	}
       }
       getQMixdN()[k] = (temp2dn * temp - temp2 * tempdn) / (temp * temp);
     }
@@ -535,7 +530,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
    * </p>
    *
    * @param lnGammaMixdn1 a double
-   * @param compNumb a int
+   * @param compNumb      a int
    */
   public void setLnGammaMixdn(double lnGammaMixdn1, int compNumb) {
     lnGammaMixdn[compNumb] = lnGammaMixdn1;

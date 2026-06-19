@@ -11,10 +11,10 @@ import com.google.gson.JsonObject;
  * Exports process synthesis superstructures for external optimization tools.
  *
  * <p>
- * Native rigorous NeqSim unit models are non-smooth because of phase changes, recycle convergence,
- * and equipment-specific feasibility failures. This exporter therefore produces a transparent
- * reduced superstructure description and a Pyomo/GDP starter script that external MINLP/GDP tools
- * can refine before NeqSim evaluates the selected candidates rigorously.
+ * Native rigorous NeqSim unit models are non-smooth because of phase changes, recycle convergence, and
+ * equipment-specific feasibility failures. This exporter therefore produces a transparent reduced superstructure
+ * description and a Pyomo/GDP starter script that external MINLP/GDP tools can refine before NeqSim evaluates the
+ * selected candidates rigorously.
  * </p>
  *
  * @author NeqSim Development Team
@@ -26,7 +26,8 @@ public class ProcessSuperstructureExporter {
   /**
    * Creates a superstructure exporter.
    */
-  public ProcessSuperstructureExporter() {}
+  public ProcessSuperstructureExporter() {
+  }
 
   /**
    * Exports the synthesis superstructure as JSON.
@@ -73,7 +74,7 @@ public class ProcessSuperstructureExporter {
     }
     for (ProcessResearchSpec.ProductTarget target : spec.getProductTargets()) {
       if (target.getMaterialName() != null && !target.getMaterialName().trim().isEmpty()) {
-        builder.append("    '").append(escape(target.getMaterialName())).append("',\n");
+	builder.append("    '").append(escape(target.getMaterialName())).append("',\n");
       }
     }
     builder.append("]\n");
@@ -117,14 +118,14 @@ public class ProcessSuperstructureExporter {
       JsonObject object = new JsonObject();
       object.addProperty("name", target.getName());
       if (target.getComponentName() != null) {
-        object.addProperty("componentName", target.getComponentName());
+	object.addProperty("componentName", target.getComponentName());
       }
       if (target.getMaterialName() != null) {
-        object.addProperty("materialName", target.getMaterialName());
+	object.addProperty("materialName", target.getMaterialName());
       }
       object.addProperty("streamRole", target.getStreamRole());
       if (target.getStreamReference() != null) {
-        object.addProperty("streamReference", target.getStreamReference());
+	object.addProperty("streamReference", target.getStreamReference());
       }
       object.addProperty("minPurity", target.getMinPurity());
       object.addProperty("minFlowRate_kg_hr", target.getMinFlowRate());
@@ -147,7 +148,7 @@ public class ProcessSuperstructureExporter {
       object.addProperty("name", node.getName());
       object.addProperty("description", node.getDescription());
       if (node.getComponentName() != null) {
-        object.addProperty("componentName", node.getComponentName());
+	object.addProperty("componentName", node.getComponentName());
       }
       array.add(object);
     }
@@ -188,11 +189,11 @@ public class ProcessSuperstructureExporter {
       object.addProperty("reactorType", reaction.getReactorType());
       object.addProperty("energyMode", reaction.getEnergyMode());
       if (reaction.getExpectedProductComponent() != null) {
-        object.addProperty("expectedProductComponent", reaction.getExpectedProductComponent());
+	object.addProperty("expectedProductComponent", reaction.getExpectedProductComponent());
       }
       JsonObject stoich = new JsonObject();
       for (Map.Entry<String, Double> entry : reaction.getStoichiometry().entrySet()) {
-        stoich.addProperty(entry.getKey(), entry.getValue());
+	stoich.addProperty(entry.getKey(), entry.getValue());
       }
       object.add("stoichiometry", stoich);
       array.add(object);
@@ -255,16 +256,16 @@ public class ProcessSuperstructureExporter {
     addFiniteOrNull(object, "maxCapitalCostProxy_USD", constraints.getMaxCapitalCostProxyUSD());
     addFiniteOrNull(object, "maxEmissions_kgCO2e_per_hr", constraints.getMaxEmissionsKgCO2ePerHr());
     addFiniteOrNull(object, "maxAnnualOperatingCostProxy_USD_per_yr",
-        constraints.getMaxAnnualOperatingCostProxyUSDPerYr());
+	constraints.getMaxAnnualOperatingCostProxyUSDPerYr());
     return object;
   }
 
   /**
    * Adds a finite JSON number or JSON null for an unbounded value.
    *
-   * @param object JSON object to update
+   * @param object   JSON object to update
    * @param property property name
-   * @param value numeric value
+   * @param value    numeric value
    */
   private void addFiniteOrNull(JsonObject object, String property, double value) {
     if (Double.isInfinite(value) || Double.isNaN(value)) {
@@ -280,15 +281,14 @@ public class ProcessSuperstructureExporter {
    * @param assumptions economic assumptions
    * @return economic assumption object
    */
-  private JsonObject economicAssumptionsToJson(
-      ProcessResearchSpec.EconomicAssumptions assumptions) {
+  private JsonObject economicAssumptionsToJson(ProcessResearchSpec.EconomicAssumptions assumptions) {
     JsonObject object = new JsonObject();
     object.addProperty("operatingHoursPerYear", assumptions.getOperatingHoursPerYear());
     object.addProperty("electricityCost_USD_per_kWh", assumptions.getElectricityCostUsdPerKWh());
     object.addProperty("hotUtilityCost_USD_per_kWh", assumptions.getHotUtilityCostUsdPerKWh());
     object.addProperty("coldUtilityCost_USD_per_kWh", assumptions.getColdUtilityCostUsdPerKWh());
     object.addProperty("electricityEmissionFactor_kgCO2e_per_kWh",
-        assumptions.getElectricityEmissionFactorKgCO2PerKWh());
+	assumptions.getElectricityEmissionFactorKgCO2PerKWh());
     object.addProperty("carbonPrice_USD_per_tonne", assumptions.getCarbonPriceUsdPerTonne());
     return object;
   }

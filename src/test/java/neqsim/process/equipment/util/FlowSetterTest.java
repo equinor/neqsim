@@ -40,15 +40,13 @@ public class FlowSetterTest {
     flowset.setGasFlowRate(multiPhaseMeter.getMeasuredValue("Gas Flow Rate", "Sm3/hr"), "Sm3/hr");
     flowset.setOilFlowRate(multiPhaseMeter.getMeasuredValue("Oil Flow Rate", "m3/hr"), "m3/hr");
     flowset.setWaterFlowRate(multiPhaseMeter.getMeasuredValue("Water Flow Rate", "m3/hr"), "m3/hr");
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(multiPhaseMeter);
     operations.add(flowset);
     operations.run();
 
-    assertEquals(flowset.getOutletStream().getFlowRate("kg/sec"), stream_1.getFlowRate("kg/sec"),
-        1.0);
+    assertEquals(flowset.getOutletStream().getFlowRate("kg/sec"), stream_1.getFlowRate("kg/sec"), 1.0);
 
     // flowset.getOutletStream().getFluid().prettyPrint();
   }
@@ -89,8 +87,7 @@ public class FlowSetterTest {
 
     StreamInterface gasFromSepStream = separator.getGasOutStream();
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(flowset);
     operations.add(separator);
@@ -126,22 +123,20 @@ public class FlowSetterTest {
     stream_1.setTemperature(50.0, "C");
 
     FlowSetter flowset = new FlowSetter("flowset", stream_1);
-    double[] pressure = new double[] {50.0, 10.0, 1.01325};
-    double[] temperature = new double[] {15.0, 15.0, 15.0};
+    double[] pressure = new double[] { 50.0, 10.0, 1.01325 };
+    double[] temperature = new double[] { 15.0, 15.0, 15.0 };
     flowset.setSeparationPT(pressure, "bara", temperature, "C");
     flowset.setGasFlowRate(gasFlow, "MSm3/day");
     flowset.setOilFlowRate(oilFlow, "m3/hr");
     flowset.setWaterFlowRate(waterFlow, "m3/hr");
     flowset.run();
 
-    assertEquals(gasFlow,
-        ((StreamInterface) flowset.getReferenceProcess().getUnit("gas")).getFlowRate("MSm3/day"),
-        0.01);
-    assertEquals(oilFlow,
-        ((StreamInterface) flowset.getReferenceProcess().getUnit("oil")).getFlowRate("m3/hr"),
-        0.01);
-    assertEquals(waterFlow * 1000, ((StreamInterface) flowset.getOutletStream()).getFluid()
-        .getPhase("aqueous").getFlowRate("kg/hr"), waterFlow * 1000 / 100.0);
+    assertEquals(gasFlow, ((StreamInterface) flowset.getReferenceProcess().getUnit("gas")).getFlowRate("MSm3/day"),
+	0.01);
+    assertEquals(oilFlow, ((StreamInterface) flowset.getReferenceProcess().getUnit("oil")).getFlowRate("m3/hr"), 0.01);
+    assertEquals(waterFlow * 1000,
+	((StreamInterface) flowset.getOutletStream()).getFluid().getPhase("aqueous").getFlowRate("kg/hr"),
+	waterFlow * 1000 / 100.0);
 
     assertEquals(16.09, 16.09, 0.1);
   }

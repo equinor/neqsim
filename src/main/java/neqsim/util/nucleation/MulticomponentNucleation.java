@@ -9,25 +9,22 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * Multicomponent nucleation model for predicting droplet formation from supersaturated
- * multicomponent gas mixtures.
+ * Multicomponent nucleation model for predicting droplet formation from supersaturated multicomponent gas mixtures.
  *
  * <p>
- * This class handles the common case in natural gas processing where multiple heavy hydrocarbon
- * components co-condense simultaneously. Two approaches are supported:
+ * This class handles the common case in natural gas processing where multiple heavy hydrocarbon components co-condense
+ * simultaneously. Two approaches are supported:
  * </p>
  * <ul>
- * <li><b>Pseudocomponent method</b>: Lumps all condensable components into a single effective
- * species with mole-fraction-weighted properties (MW, density, surface tension). This is the
- * default and most robust approach.</li>
- * <li><b>Independent nucleation</b>: Treats each condensable component independently and sums
- * nucleation rates. Less rigorous but useful for identifying the dominant nucleating species.</li>
+ * <li><b>Pseudocomponent method</b>: Lumps all condensable components into a single effective species with
+ * mole-fraction-weighted properties (MW, density, surface tension). This is the default and most robust approach.</li>
+ * <li><b>Independent nucleation</b>: Treats each condensable component independently and sums nucleation rates. Less
+ * rigorous but useful for identifying the dominant nucleating species.</li>
  * </ul>
  *
  * <p>
- * The model requires a flashed and initialized NeqSim thermodynamic system with at least one gas
- * phase and one liquid phase. Components are classified as "condensable" if their liquid mole
- * fraction exceeds a threshold.
+ * The model requires a flashed and initialized NeqSim thermodynamic system with at least one gas phase and one liquid
+ * phase. Components are classified as "condensable" if their liquid mole fraction exceeds a threshold.
  * </p>
  *
  * <p>
@@ -57,12 +54,10 @@ import neqsim.thermo.system.SystemInterface;
  * References:
  * </p>
  * <ul>
- * <li>Reiss, H. (1950). The kinetics of phase transitions in binary systems. J. Chem. Phys. 18,
- * 840-848.</li>
- * <li>Stauffer, D. (1976). Kinetic theory of two-component nucleation. J. Aerosol Sci. 7,
- * 319-333.</li>
- * <li>Wilemski, G. (1984). Composition of the critical nucleus in multicomponent vapor nucleation.
- * J. Chem. Phys. 80, 1370-1372.</li>
+ * <li>Reiss, H. (1950). The kinetics of phase transitions in binary systems. J. Chem. Phys. 18, 840-848.</li>
+ * <li>Stauffer, D. (1976). Kinetic theory of two-component nucleation. J. Aerosol Sci. 7, 319-333.</li>
+ * <li>Wilemski, G. (1984). Composition of the critical nucleus in multicomponent vapor nucleation. J. Chem. Phys. 80,
+ * 1370-1372.</li>
  * </ul>
  *
  * @author esol
@@ -117,8 +112,7 @@ public class MulticomponentNucleation {
   private ClassicalNucleationTheory pseudoCNT;
 
   /** Per-component CNT models (used in INDEPENDENT mode). */
-  private List<ClassicalNucleationTheory> componentCNTs =
-      new ArrayList<ClassicalNucleationTheory>();
+  private List<ClassicalNucleationTheory> componentCNTs = new ArrayList<ClassicalNucleationTheory>();
 
   /** Total nucleation rate in particles/(m3*s). */
   private double totalNucleationRate = 0.0;
@@ -148,9 +142,8 @@ public class MulticomponentNucleation {
    * Creates a multicomponent nucleation model from a NeqSim thermodynamic system.
    *
    * <p>
-   * The system must have been flashed (TPflash) and properties initialized (initProperties) before
-   * calling this constructor. The system should have at least two phases (gas + liquid) for
-   * meaningful nucleation analysis.
+   * The system must have been flashed (TPflash) and properties initialized (initProperties) before calling this
+   * constructor. The system should have at least two phases (gas + liquid) for meaningful nucleation analysis.
    * </p>
    *
    * @param system the NeqSim thermodynamic system
@@ -192,7 +185,7 @@ public class MulticomponentNucleation {
    * Enables or disables heterogeneous nucleation with a specified contact angle.
    *
    * @param isHeterogeneous true to enable heterogeneous nucleation
-   * @param angleDegrees contact angle in degrees (0 to 180)
+   * @param angleDegrees    contact angle in degrees (0 to 180)
    */
   public void setHeterogeneous(boolean isHeterogeneous, double angleDegrees) {
     this.heterogeneous = isHeterogeneous;
@@ -219,8 +212,7 @@ public class MulticomponentNucleation {
    * <ol>
    * <li>Identify condensable components from gas-liquid fugacity comparison</li>
    * <li>Compute per-component supersaturation from fugacity ratio</li>
-   * <li>Either create pseudocomponent (PSEUDOCOMPONENT mode) or per-component CNT models
-   * (INDEPENDENT mode)</li>
+   * <li>Either create pseudocomponent (PSEUDOCOMPONENT mode) or per-component CNT models (INDEPENDENT mode)</li>
    * <li>Run nucleation calculations</li>
    * <li>Determine dominant component and total nucleation rate</li>
    * </ol>
@@ -272,9 +264,9 @@ public class MulticomponentNucleation {
     }
     if (liquidPhaseIndex < 0) {
       try {
-        liquidPhaseIndex = system.getPhaseNumberOfPhase("aqueous");
+	liquidPhaseIndex = system.getPhaseNumberOfPhase("aqueous");
       } catch (Exception e) {
-        return;
+	return;
       }
     }
 
@@ -292,19 +284,19 @@ public class MulticomponentNucleation {
       double xLiq = liquidPhase.getComponent(i).getx();
 
       if (xLiq > condensableThreshold) {
-        // Compute supersaturation from fugacity ratio
-        double fugGas = gasPhase.getFugacity(i);
-        double fugLiq = liquidPhase.getFugacity(i);
+	// Compute supersaturation from fugacity ratio
+	double fugGas = gasPhase.getFugacity(i);
+	double fugLiq = liquidPhase.getFugacity(i);
 
-        double supersaturation = 1.0;
-        if (fugLiq > 0.0 && fugGas > 0.0) {
-          supersaturation = fugGas / fugLiq;
-        }
+	double supersaturation = 1.0;
+	if (fugLiq > 0.0 && fugGas > 0.0) {
+	  supersaturation = fugGas / fugLiq;
+	}
 
-        condensableIndices.add(i);
-        condensableNames.add(gasPhase.getComponent(i).getComponentName());
-        componentSupersaturations.add(supersaturation);
-        totalLiquidFraction += xLiq;
+	condensableIndices.add(i);
+	condensableNames.add(gasPhase.getComponent(i).getComponentName());
+	componentSupersaturations.add(supersaturation);
+	totalLiquidFraction += xLiq;
       }
     }
 
@@ -313,9 +305,9 @@ public class MulticomponentNucleation {
       int i = condensableIndices.get(idx);
       double xLiq = liquidPhase.getComponent(i).getx();
       if (totalLiquidFraction > 0.0) {
-        componentCondensationFractions.add(xLiq / totalLiquidFraction);
+	componentCondensationFractions.add(xLiq / totalLiquidFraction);
       } else {
-        componentCondensationFractions.add(1.0 / condensableIndices.size());
+	componentCondensationFractions.add(1.0 / condensableIndices.size());
       }
     }
   }
@@ -324,8 +316,8 @@ public class MulticomponentNucleation {
    * Calculates nucleation using the pseudocomponent approach.
    *
    * <p>
-   * Creates an effective single component with mole-fraction-weighted properties from all
-   * condensable components, then delegates to ClassicalNucleationTheory.
+   * Creates an effective single component with mole-fraction-weighted properties from all condensable components, then
+   * delegates to ClassicalNucleationTheory.
    * </p>
    */
   private void calculatePseudocomponent() {
@@ -362,7 +354,7 @@ public class MulticomponentNucleation {
       // Weighted supersaturation (geometric mean)
       double si = componentSupersaturations.get(idx);
       if (si > 1.0) {
-        effectiveSupersaturation += w * Math.log(si);
+	effectiveSupersaturation += w * Math.log(si);
       }
       totalWeight += w;
     }
@@ -375,16 +367,15 @@ public class MulticomponentNucleation {
 
     // Get surface tension from system interphase properties
     try {
-      effectiveSurfaceTension = system.getInterphaseProperties()
-          .getSurfaceTension(system.getPhaseNumberOfPhase("gas"), liquidPhaseIndex);
+      effectiveSurfaceTension = system.getInterphaseProperties().getSurfaceTension(system.getPhaseNumberOfPhase("gas"),
+	  liquidPhaseIndex);
     } catch (Exception e) {
       // Estimate from Eotvos
       effectiveSurfaceTension = 0.025; // Typical hydrocarbon value
     }
 
     // Create pseudocomponent CNT
-    pseudoCNT =
-        new ClassicalNucleationTheory(effectiveMW, effectiveDensity, effectiveSurfaceTension);
+    pseudoCNT = new ClassicalNucleationTheory(effectiveMW, effectiveDensity, effectiveSurfaceTension);
     pseudoCNT.setSubstanceName("Pseudocomponent (" + condensableNames.size() + " components)");
     pseudoCNT.setTemperature(system.getTemperature());
     pseudoCNT.setTotalPressure(system.getPressure() * 1e5);
@@ -396,11 +387,11 @@ public class MulticomponentNucleation {
       int gasIdx = system.getPhaseNumberOfPhase("gas");
       double gasVisc = system.getPhase(gasIdx).getViscosity("kg/msec");
       if (gasVisc > 0.0) {
-        pseudoCNT.setGasViscosity(gasVisc);
+	pseudoCNT.setGasViscosity(gasVisc);
       }
       double gasMw = system.getPhase(gasIdx).getMolarMass();
       if (gasMw > 0.0) {
-        pseudoCNT.setCarrierGasMolarMass(gasMw);
+	pseudoCNT.setCarrierGasMolarMass(gasMw);
       }
     } catch (Exception e) {
       // Use defaults
@@ -425,8 +416,8 @@ public class MulticomponentNucleation {
    * Calculates nucleation treating each condensable component independently.
    *
    * <p>
-   * Creates separate CNT models for each condensable component and sums the nucleation rates. The
-   * mean particle diameter is taken from the dominant component.
+   * Creates separate CNT models for each condensable component and sums the nucleation rates. The mean particle
+   * diameter is taken from the dominant component.
    * </p>
    */
   private void calculateIndependent() {
@@ -438,13 +429,12 @@ public class MulticomponentNucleation {
     int maxIdx = 0;
 
     for (int idx = 0; idx < condensableIndices.size(); idx++) {
-      ClassicalNucleationTheory cnt =
-          ClassicalNucleationTheory.fromThermoSystem(system, condensableNames.get(idx));
+      ClassicalNucleationTheory cnt = ClassicalNucleationTheory.fromThermoSystem(system, condensableNames.get(idx));
 
       if (cnt == null) {
-        componentCNTs.add(null);
-        componentNucleationRates.add(0.0);
-        continue;
+	componentCNTs.add(null);
+	componentNucleationRates.add(0.0);
+	continue;
       }
 
       cnt.setResidenceTime(residenceTime);
@@ -452,12 +442,12 @@ public class MulticomponentNucleation {
       // Override supersaturation with component-specific value
       double si = componentSupersaturations.get(idx);
       if (si > 1.0) {
-        cnt.setSupersaturationRatio(si);
+	cnt.setSupersaturationRatio(si);
       }
 
       if (heterogeneous) {
-        cnt.setHeterogeneous(true);
-        cnt.setContactAngle(contactAngleDegrees);
+	cnt.setHeterogeneous(true);
+	cnt.setContactAngle(contactAngleDegrees);
       }
 
       cnt.calculate();
@@ -468,8 +458,8 @@ public class MulticomponentNucleation {
       totalNucleationRate += rate;
 
       if (rate > maxRate) {
-        maxRate = rate;
-        maxIdx = idx;
+	maxRate = rate;
+	maxIdx = idx;
       }
     }
 
@@ -490,8 +480,8 @@ public class MulticomponentNucleation {
     for (int idx = 0; idx < condensableNames.size(); idx++) {
       double si = componentSupersaturations.get(idx);
       if (si > maxS) {
-        maxS = si;
-        dominantComponent = condensableNames.get(idx);
+	maxS = si;
+	dominantComponent = condensableNames.get(idx);
       }
     }
   }
@@ -670,7 +660,7 @@ public class MulticomponentNucleation {
       comp.put("supersaturationRatio", componentSupersaturations.get(idx));
       comp.put("condensationFraction", componentCondensationFractions.get(idx));
       if (idx < componentNucleationRates.size()) {
-        comp.put("nucleationRate_per_m3_s", componentNucleationRates.get(idx));
+	comp.put("nucleationRate_per_m3_s", componentNucleationRates.get(idx));
       }
       compList.add(comp);
     }
@@ -702,8 +692,7 @@ public class MulticomponentNucleation {
    * @return JSON string
    */
   public String toJson() {
-    return new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create()
-        .toJson(toMap());
+    return new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create().toJson(toMap());
   }
 
   /** {@inheritDoc} */
@@ -712,9 +701,7 @@ public class MulticomponentNucleation {
     if (!calculated) {
       return "MulticomponentNucleation [not calculated]";
     }
-    return String.format(
-        "MulticomponentNucleation[%s]: %d condensables, dominant=%s, J=%.2e /m3s, d=%.2f um",
-        mode.name(), condensableIndices.size(), dominantComponent, totalNucleationRate,
-        meanParticleDiameter * 1e6);
+    return String.format("MulticomponentNucleation[%s]: %d condensables, dominant=%s, J=%.2e /m3s, d=%.2f um",
+	mode.name(), condensableIndices.size(), dominantComponent, totalNucleationRate, meanParticleDiameter * 1e6);
   }
 }

@@ -19,7 +19,6 @@ import org.apache.logging.log4j.Logger;
 public class NButaneKijTest {
   private static final Logger logger = LogManager.getLogger(NButaneKijTest.class);
 
-
   /**
    * Check kij parameters between all components.
    */
@@ -48,7 +47,7 @@ public class NButaneKijTest {
     logger.info("Component indices:");
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
       logger.info("  " + i + ": " + fluid.getComponent(i).getName() + " (ionic charge: "
-          + fluid.getComponent(i).getIonicCharge() + ")");
+	  + fluid.getComponent(i).getIonicCharge() + ")");
     }
 
     logger.info("\n=== Binary Interaction Parameters (kij) ===");
@@ -67,22 +66,22 @@ public class NButaneKijTest {
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
       String name = fluid.getComponent(i).getName();
       if (name.equals("n-butane")) {
-        nButaneIdx = i;
+	nButaneIdx = i;
       }
       if (name.equals("Na+")) {
-        naIdx = i;
+	naIdx = i;
       }
       if (name.equals("Cl-")) {
-        clIdx = i;
+	clIdx = i;
       }
       if (name.equals("water")) {
-        waterIdx = i;
+	waterIdx = i;
       }
       if (name.equals("MEG")) {
-        megIdx = i;
+	megIdx = i;
       }
       if (name.equals("methane")) {
-        methaneIdx = i;
+	methaneIdx = i;
       }
     }
 
@@ -112,10 +111,8 @@ public class NButaneKijTest {
 
     // Check specific problematic pairs
     logger.info("\n=== Potentially problematic kij values ===");
-    double kij_nbutane_na =
-        phase.getEosMixingRule().getBinaryInteractionParameter(nButaneIdx, naIdx);
-    double kij_nbutane_cl =
-        phase.getEosMixingRule().getBinaryInteractionParameter(nButaneIdx, clIdx);
+    double kij_nbutane_na = phase.getEosMixingRule().getBinaryInteractionParameter(nButaneIdx, naIdx);
+    double kij_nbutane_cl = phase.getEosMixingRule().getBinaryInteractionParameter(nButaneIdx, clIdx);
     logger.info("kij(n-butane, Na+) = " + kij_nbutane_na);
     logger.info("kij(n-butane, Cl-) = " + kij_nbutane_cl);
 
@@ -162,21 +159,19 @@ public class NButaneKijTest {
       logger.info("\nPhase " + p + ": " + fluid.getPhase(p).getPhaseTypeName());
       logger.info("  n-butane:");
       logger.info("    x = " + fluid.getPhase(p).getComponent("n-butane").getx());
-      logger
-          .info("    phi = " + fluid.getPhase(p).getComponent("n-butane").getFugacityCoefficient());
-      logger.info("    ln(phi) = "
-          + fluid.getPhase(p).getComponent("n-butane").getLogFugacityCoefficient());
+      logger.info("    phi = " + fluid.getPhase(p).getComponent("n-butane").getFugacityCoefficient());
+      logger.info("    ln(phi) = " + fluid.getPhase(p).getComponent("n-butane").getLogFugacityCoefficient());
 
       // Check if fugacity coefficient is unreasonably large or small
       double phi = fluid.getPhase(p).getComponent("n-butane").getFugacityCoefficient();
       if (phi > 1e10) {
-        logger.info("    WARNING: Extremely large fugacity coefficient!");
+	logger.info("    WARNING: Extremely large fugacity coefficient!");
       }
       if (phi < 1e-10 && phi > 0) {
-        logger.info("    WARNING: Extremely small fugacity coefficient!");
+	logger.info("    WARNING: Extremely small fugacity coefficient!");
       }
       if (Double.isNaN(phi) || Double.isInfinite(phi)) {
-        logger.info("    ERROR: Invalid fugacity coefficient (NaN or Inf)!");
+	logger.info("    ERROR: Invalid fugacity coefficient (NaN or Inf)!");
       }
     }
   }
@@ -230,7 +225,7 @@ public class NButaneKijTest {
       double Kna = fluid2.getPhase(0).getComponent("Na+").getK();
       logger.info("  K(Na+) = " + Kna);
       if (Math.abs(Kna) > 1e-30) {
-        logger.info("  WARNING: K(Na+) should be ~0 for ions!");
+	logger.info("  WARNING: K(Na+) should be ~0 for ions!");
       }
     }
 

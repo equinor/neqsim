@@ -17,8 +17,7 @@ public interface TrayInterface extends ProcessEquipmentInterface {
    * addStream.
    * </p>
    *
-   * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *        object
+   * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public void addStream(StreamInterface newStream);
 

@@ -19,14 +19,12 @@ import org.apache.logging.log4j.Logger;
  * Systematically identifies and ranks equipment bottlenecks in a process system.
  *
  * <p>
- * Scans all equipment implementing {@link CapacityConstrainedEquipment}, collects utilization data,
- * ranks equipment by how close they are to design limits, and provides actionable suggestions for
- * debottlenecking.
+ * Scans all equipment implementing {@link CapacityConstrainedEquipment}, collects utilization data, ranks equipment by
+ * how close they are to design limits, and provides actionable suggestions for debottlenecking.
  * </p>
  *
  * <p>
- * Builds on the existing capacity constraint framework in
- * {@code neqsim.process.equipment.capacity}.
+ * Builds on the existing capacity constraint framework in {@code neqsim.process.equipment.capacity}.
  * </p>
  *
  * <p>
@@ -86,17 +84,17 @@ public class DebottleneckAnalyzer implements Serializable {
     /**
      * Creates an equipment status entry.
      *
-     * @param name equipment name
-     * @param type equipment type
-     * @param maxUtil maximum utilization
+     * @param name               equipment name
+     * @param type               equipment type
+     * @param maxUtil            maximum utilization
      * @param limitingConstraint name of limiting constraint
-     * @param currentValue current value
-     * @param designLimit design limit
-     * @param status status string
-     * @param suggestion debottleneck suggestion
+     * @param currentValue       current value
+     * @param designLimit        design limit
+     * @param status             status string
+     * @param suggestion         debottleneck suggestion
      */
-    public EquipmentStatus(String name, String type, double maxUtil, String limitingConstraint,
-        double currentValue, double designLimit, String status, String suggestion) {
+    public EquipmentStatus(String name, String type, double maxUtil, String limitingConstraint, double currentValue,
+	double designLimit, String status, String suggestion) {
       this.name = name;
       this.type = type;
       this.maxUtilization = maxUtil;
@@ -145,42 +143,42 @@ public class DebottleneckAnalyzer implements Serializable {
 
     for (ProcessEquipmentInterface equip : processSystem.getUnitOperations()) {
       if (equip instanceof CapacityConstrainedEquipment) {
-        CapacityConstrainedEquipment constrained = (CapacityConstrainedEquipment) equip;
-        if (!constrained.isCapacityAnalysisEnabled()) {
-          continue;
-        }
+	CapacityConstrainedEquipment constrained = (CapacityConstrainedEquipment) equip;
+	if (!constrained.isCapacityAnalysisEnabled()) {
+	  continue;
+	}
 
-        double maxUtil = constrained.getMaxUtilization();
-        if (Double.isNaN(maxUtil)) {
-          continue;
-        }
+	double maxUtil = constrained.getMaxUtilization();
+	if (Double.isNaN(maxUtil)) {
+	  continue;
+	}
 
-        CapacityConstraint bottleneckConstraint = constrained.getBottleneckConstraint();
-        String constraintName = "N/A";
-        double currentVal = 0.0;
-        double designLim = 0.0;
+	CapacityConstraint bottleneckConstraint = constrained.getBottleneckConstraint();
+	String constraintName = "N/A";
+	double currentVal = 0.0;
+	double designLim = 0.0;
 
-        if (bottleneckConstraint != null) {
-          constraintName = bottleneckConstraint.getName();
-          currentVal = bottleneckConstraint.getCurrentValue();
-          designLim = bottleneckConstraint.getDesignValue();
-        }
+	if (bottleneckConstraint != null) {
+	  constraintName = bottleneckConstraint.getName();
+	  currentVal = bottleneckConstraint.getCurrentValue();
+	  designLim = bottleneckConstraint.getDesignValue();
+	}
 
-        String status;
-        if (maxUtil > 1.0) {
-          status = "OVERLOADED";
-        } else if (maxUtil >= criticalThreshold) {
-          status = "CRITICAL";
-        } else if (maxUtil >= warningThreshold) {
-          status = "WARNING";
-        } else {
-          status = "OK";
-        }
+	String status;
+	if (maxUtil > 1.0) {
+	  status = "OVERLOADED";
+	} else if (maxUtil >= criticalThreshold) {
+	  status = "CRITICAL";
+	} else if (maxUtil >= warningThreshold) {
+	  status = "WARNING";
+	} else {
+	  status = "OK";
+	}
 
-        String suggestion = generateSuggestion(equip, constraintName, maxUtil);
+	String suggestion = generateSuggestion(equip, constraintName, maxUtil);
 
-        rankedEquipment.add(new EquipmentStatus(equip.getName(), equip.getClass().getSimpleName(),
-            maxUtil, constraintName, currentVal, designLim, status, suggestion));
+	rankedEquipment.add(new EquipmentStatus(equip.getName(), equip.getClass().getSimpleName(), maxUtil,
+	    constraintName, currentVal, designLim, status, suggestion));
       }
     }
 
@@ -188,7 +186,7 @@ public class DebottleneckAnalyzer implements Serializable {
     Collections.sort(rankedEquipment, new Comparator<EquipmentStatus>() {
       @Override
       public int compare(EquipmentStatus a, EquipmentStatus b) {
-        return Double.compare(b.maxUtilization, a.maxUtilization);
+	return Double.compare(b.maxUtilization, a.maxUtilization);
       }
     });
 
@@ -198,13 +196,12 @@ public class DebottleneckAnalyzer implements Serializable {
   /**
    * Generates a debottleneck suggestion for the given equipment.
    *
-   * @param equip the equipment
+   * @param equip          the equipment
    * @param constraintName the limiting constraint name
-   * @param utilization current utilization
+   * @param utilization    current utilization
    * @return suggestion text
    */
-  private String generateSuggestion(ProcessEquipmentInterface equip, String constraintName,
-      double utilization) {
+  private String generateSuggestion(ProcessEquipmentInterface equip, String constraintName, double utilization) {
     if (utilization < warningThreshold) {
       return "No action required";
     }
@@ -214,33 +211,32 @@ public class DebottleneckAnalyzer implements Serializable {
 
     if (type.contains("Compressor")) {
       if (lowerConstraint.contains("surge")) {
-        return "Consider anti-surge recycle valve or variable speed drive";
+	return "Consider anti-surge recycle valve or variable speed drive";
       } else if (lowerConstraint.contains("power")) {
-        return "Consider larger driver or parallel compression stage";
+	return "Consider larger driver or parallel compression stage";
       } else if (lowerConstraint.contains("speed")) {
-        return "Evaluate driver upgrade or add parallel train";
+	return "Evaluate driver upgrade or add parallel train";
       }
       return "Evaluate compressor performance map and consider rewheel or parallel unit";
     } else if (type.contains("Separator")) {
       if (lowerConstraint.contains("gas") || lowerConstraint.contains("load")) {
-        return "Consider larger vessel diameter or demisting upgrade";
+	return "Consider larger vessel diameter or demisting upgrade";
       } else if (lowerConstraint.contains("liquid") || lowerConstraint.contains("residence")) {
-        return "Consider longer vessel or additional separation stage";
+	return "Consider longer vessel or additional separation stage";
       }
       return "Evaluate separator internals upgrade or parallel vessel";
-    } else if (type.contains("HeatExchanger") || type.contains("Cooler")
-        || type.contains("Heater")) {
+    } else if (type.contains("HeatExchanger") || type.contains("Cooler") || type.contains("Heater")) {
       if (lowerConstraint.contains("duty")) {
-        return "Consider additional heat transfer area or parallel exchanger";
+	return "Consider additional heat transfer area or parallel exchanger";
       } else if (lowerConstraint.contains("approach")) {
-        return "Increase UA value via tube insert or additional area";
+	return "Increase UA value via tube insert or additional area";
       }
       return "Evaluate tube cleaning, enhanced surfaces, or parallel unit";
     } else if (type.contains("Valve")) {
       return "Consider larger valve Cv or parallel bypass";
     } else if (type.contains("Pump")) {
       if (lowerConstraint.contains("npsh")) {
-        return "Raise suction vessel elevation or reduce line losses";
+	return "Raise suction vessel elevation or reduce line losses";
       }
       return "Consider larger impeller or parallel pump";
     } else if (type.contains("Pipe")) {
@@ -289,7 +285,7 @@ public class DebottleneckAnalyzer implements Serializable {
     List<EquipmentStatus> constrained = new ArrayList<>();
     for (EquipmentStatus es : rankedEquipment) {
       if (es.maxUtilization >= warningThreshold) {
-        constrained.add(es);
+	constrained.add(es);
       }
     }
     return constrained;
@@ -307,7 +303,7 @@ public class DebottleneckAnalyzer implements Serializable {
     int count = 0;
     for (EquipmentStatus es : rankedEquipment) {
       if (es.maxUtilization > 1.0) {
-        count++;
+	count++;
       }
     }
     return count;
@@ -365,7 +361,6 @@ public class DebottleneckAnalyzer implements Serializable {
     }
     result.put("equipment", equipmentList);
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(result);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(result);
   }
 }

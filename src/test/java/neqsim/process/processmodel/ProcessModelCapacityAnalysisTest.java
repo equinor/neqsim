@@ -13,8 +13,8 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Tests the additive whole-plant capacity and bottleneck analysis API on {@link ProcessModel}. Each
- * method aggregates the corresponding {@link ProcessSystem} method across all process areas.
+ * Tests the additive whole-plant capacity and bottleneck analysis API on {@link ProcessModel}. Each method aggregates
+ * the corresponding {@link ProcessSystem} method across all process areas.
  *
  * @author NeqSim Development Team
  * @version 1.0
@@ -22,9 +22,9 @@ import neqsim.thermo.system.SystemSrkEos;
 public class ProcessModelCapacityAnalysisTest {
 
   /**
-   * Builds a two-area plant: a "separation" area (feed -&gt; inlet separator) and a "compression"
-   * area (export compressor -&gt; export cooler), with the compressor fed by the separator gas
-   * outlet shared by object reference across areas.
+   * Builds a two-area plant: a "separation" area (feed -&gt; inlet separator) and a "compression" area (export
+   * compressor -&gt; export cooler), with the compressor fed by the separator gas outlet shared by object reference
+   * across areas.
    *
    * @return the assembled and run multi-area plant
    */
@@ -47,8 +47,7 @@ public class ProcessModelCapacityAnalysisTest {
     separation.add(feed);
     separation.add(inletSeparator);
 
-    Compressor exportCompressor =
-        new Compressor("export compressor", inletSeparator.getGasOutStream());
+    Compressor exportCompressor = new Compressor("export compressor", inletSeparator.getGasOutStream());
     exportCompressor.setOutletPressure(50.0);
     exportCompressor.getMechanicalDesign().setMaxDesignPower(5000.0);
 
@@ -74,8 +73,7 @@ public class ProcessModelCapacityAnalysisTest {
     ProcessModel plant = buildAndRunPlant();
 
     List<CapacityConstrainedEquipment> areaSep = plant.get("separation").getConstrainedEquipment();
-    List<CapacityConstrainedEquipment> areaComp =
-        plant.get("compression").getConstrainedEquipment();
+    List<CapacityConstrainedEquipment> areaComp = plant.get("compression").getConstrainedEquipment();
     List<CapacityConstrainedEquipment> all = plant.getConstrainedEquipment();
 
     Assertions.assertEquals(areaSep.size() + areaComp.size(), all.size());
@@ -98,8 +96,8 @@ public class ProcessModelCapacityAnalysisTest {
   }
 
   /**
-   * Verifies the detailed plant-wide bottleneck result is non-empty and consistent with the simple
-   * bottleneck utilization.
+   * Verifies the detailed plant-wide bottleneck result is non-empty and consistent with the simple bottleneck
+   * utilization.
    */
   @Test
   public void testFindBottleneckReturnsNonEmptyResult() {
@@ -112,8 +110,7 @@ public class ProcessModelCapacityAnalysisTest {
   }
 
   /**
-   * Verifies the capacity utilization summary uses area-qualified keys and matches per-area
-   * entries.
+   * Verifies the capacity utilization summary uses area-qualified keys and matches per-area entries.
    */
   @Test
   public void testCapacityUtilizationSummaryUsesAreaQualifiedKeys() {
@@ -126,13 +123,13 @@ public class ProcessModelCapacityAnalysisTest {
     }
 
     int perAreaTotal = plant.get("separation").getCapacityUtilizationSummary().size()
-        + plant.get("compression").getCapacityUtilizationSummary().size();
+	+ plant.get("compression").getCapacityUtilizationSummary().size();
     Assertions.assertEquals(perAreaTotal, summary.size());
   }
 
   /**
-   * Verifies that disabling then enabling all constraints returns consistent non-negative counts
-   * and toggles the overload/hard-limit detection coherently.
+   * Verifies that disabling then enabling all constraints returns consistent non-negative counts and toggles the
+   * overload/hard-limit detection coherently.
    */
   @Test
   public void testDisableThenEnableAllConstraints() {
@@ -164,8 +161,7 @@ public class ProcessModelCapacityAnalysisTest {
     List<String> nearLimit = plant.getEquipmentNearCapacityLimit();
     Assertions.assertNotNull(nearLimit);
     for (String name : nearLimit) {
-      Assertions.assertTrue(name.contains("::"),
-          "Near-limit names should be area-qualified: " + name);
+      Assertions.assertTrue(name.contains("::"), "Near-limit names should be area-qualified: " + name);
     }
   }
 }

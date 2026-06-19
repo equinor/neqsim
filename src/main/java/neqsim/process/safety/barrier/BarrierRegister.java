@@ -11,10 +11,10 @@ import com.google.gson.GsonBuilder;
  * Register of safety critical elements, barriers, performance standards, and evidence.
  *
  * <p>
- * The register is designed as a stable handoff object between agents that read technical
- * documentation and NeqSim calculations that quantify barrier performance, LOC scenarios, and risk
- * reduction. It deliberately stores both standalone barriers and SCE-linked barriers so early
- * studies can start with incomplete documentation and improve traceability over time.
+ * The register is designed as a stable handoff object between agents that read technical documentation and NeqSim
+ * calculations that quantify barrier performance, LOC scenarios, and risk reduction. It deliberately stores both
+ * standalone barriers and SCE-linked barriers so early studies can start with incomplete documentation and improve
+ * traceability over time.
  * </p>
  *
  * @author ESOL
@@ -25,11 +25,9 @@ public class BarrierRegister implements Serializable {
 
   private final String registerId;
   private String name = "";
-  private final Map<String, SafetyCriticalElement> safetyCriticalElements =
-      new LinkedHashMap<String, SafetyCriticalElement>();
+  private final Map<String, SafetyCriticalElement> safetyCriticalElements = new LinkedHashMap<String, SafetyCriticalElement>();
   private final Map<String, SafetyBarrier> barriers = new LinkedHashMap<String, SafetyBarrier>();
-  private final Map<String, PerformanceStandard> performanceStandards =
-      new LinkedHashMap<String, PerformanceStandard>();
+  private final Map<String, PerformanceStandard> performanceStandards = new LinkedHashMap<String, PerformanceStandard>();
   private final List<DocumentEvidence> evidence = new ArrayList<DocumentEvidence>();
 
   /**
@@ -90,7 +88,7 @@ public class BarrierRegister implements Serializable {
     if (element != null) {
       safetyCriticalElements.put(element.getId(), element);
       for (SafetyBarrier barrier : element.getBarriers()) {
-        barriers.put(barrier.getId(), barrier);
+	barriers.put(barrier.getId(), barrier);
       }
     }
     return this;
@@ -139,7 +137,7 @@ public class BarrierRegister implements Serializable {
    * Links a barrier to an SCE, registering both relationships when found.
    *
    * @param barrierId barrier identifier
-   * @param sceId safety critical element identifier
+   * @param sceId     safety critical element identifier
    * @return true when both records existed and were linked
    */
   public boolean linkBarrierToSafetyCriticalElement(String barrierId, String sceId) {
@@ -220,7 +218,7 @@ public class BarrierRegister implements Serializable {
     List<SafetyBarrier> result = new ArrayList<SafetyBarrier>();
     for (SafetyBarrier barrier : barriers.values()) {
       if (barrier.getLinkedEquipmentTags().contains(normalizedTag)) {
-        result.add(barrier);
+	result.add(barrier);
       }
     }
     return result;
@@ -235,7 +233,7 @@ public class BarrierRegister implements Serializable {
     List<SafetyBarrier> result = new ArrayList<SafetyBarrier>();
     for (SafetyBarrier barrier : barriers.values()) {
       if (!barrier.isAvailable()) {
-        result.add(barrier);
+	result.add(barrier);
       }
     }
     return result;
@@ -257,19 +255,19 @@ public class BarrierRegister implements Serializable {
     for (SafetyCriticalElement element : safetyCriticalElements.values()) {
       List<String> elementFindings = element.validate();
       for (String finding : elementFindings) {
-        findings.add("SCE " + element.getId() + ": " + finding);
+	findings.add("SCE " + element.getId() + ": " + finding);
       }
     }
     for (SafetyBarrier barrier : barriers.values()) {
       boolean foundInSce = false;
       for (SafetyCriticalElement element : safetyCriticalElements.values()) {
-        if (element.getBarrier(barrier.getId()) != null) {
-          foundInSce = true;
-          break;
-        }
+	if (element.getBarrier(barrier.getId()) != null) {
+	  foundInSce = true;
+	  break;
+	}
       }
       if (!foundInSce) {
-        findings.add("Barrier " + barrier.getId() + " is not linked to an SCE.");
+	findings.add("Barrier " + barrier.getId() + " is not linked to an SCE.");
       }
     }
     return findings;
@@ -319,7 +317,6 @@ public class BarrierRegister implements Serializable {
    * @return JSON representation
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 }

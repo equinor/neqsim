@@ -15,10 +15,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Maps hydrate formation risk along a pipeline pressure-temperature profile.
  *
  * <p>
- * Takes a series of (pressure, temperature) points along a pipeline and calculates the hydrate
- * formation temperature at each pressure. The subcooling at each point (actual T minus hydrate T)
- * indicates the risk of hydrate formation. Negative subcooling means the fluid is in the hydrate
- * formation region.
+ * Takes a series of (pressure, temperature) points along a pipeline and calculates the hydrate formation temperature at
+ * each pressure. The subcooling at each point (actual T minus hydrate T) indicates the risk of hydrate formation.
+ * Negative subcooling means the fluid is in the hydrate formation region.
  * </p>
  *
  * <h2>Risk Classification:</h2>
@@ -124,13 +123,12 @@ public class HydrateRiskMapper implements Serializable {
   /**
    * Adds a point along the pipeline profile.
    *
-   * @param distanceKm distance from inlet in kilometers
+   * @param distanceKm   distance from inlet in kilometers
    * @param pressureBara pressure at this point in bara
    * @param temperatureC temperature at this point in degrees Celsius
    * @return this for chaining
    */
-  public HydrateRiskMapper addProfilePoint(double distanceKm, double pressureBara,
-      double temperatureC) {
+  public HydrateRiskMapper addProfilePoint(double distanceKm, double pressureBara, double temperatureC) {
     profilePoints.add(new ProfilePoint(distanceKm, pressureBara, temperatureC));
     return this;
   }
@@ -138,7 +136,7 @@ public class HydrateRiskMapper implements Serializable {
   /**
    * Sets the subcooling thresholds for risk classification.
    *
-   * @param highRiskC subcooling below which risk is HIGH (default 3.0 C)
+   * @param highRiskC   subcooling below which risk is HIGH (default 3.0 C)
    * @param mediumRiskC subcooling below which risk is MEDIUM (default 6.0 C)
    * @return this for chaining
    */
@@ -166,43 +164,42 @@ public class HydrateRiskMapper implements Serializable {
     for (ProfilePoint point : profilePoints) {
       double hydrateTC;
       try {
-        SystemInterface fluid = baseFluid.clone();
-        fluid.setTemperature(point.temperatureC + 273.15);
-        fluid.setPressure(point.pressureBara);
-        ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-        ops.hydrateFormationTemperature();
-        hydrateTC = fluid.getTemperature("C");
+	SystemInterface fluid = baseFluid.clone();
+	fluid.setTemperature(point.temperatureC + 273.15);
+	fluid.setPressure(point.pressureBara);
+	ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+	ops.hydrateFormationTemperature();
+	hydrateTC = fluid.getTemperature("C");
       } catch (Exception e) {
-        logger.warn("Hydrate calculation failed at {} km, {} bara: {}", point.distanceKm,
-            point.pressureBara, e.getMessage());
-        hydrateTC = Double.NaN;
+	logger.warn("Hydrate calculation failed at {} km, {} bara: {}", point.distanceKm, point.pressureBara,
+	    e.getMessage());
+	hydrateTC = Double.NaN;
       }
 
       double subcooling = Double.isNaN(hydrateTC) ? Double.NaN : point.temperatureC - hydrateTC;
 
       RiskLevel risk;
       if (Double.isNaN(subcooling)) {
-        risk = RiskLevel.LOW; // assume safe if calculation failed
+	risk = RiskLevel.LOW; // assume safe if calculation failed
       } else if (subcooling < criticalSubcoolingK) {
-        risk = RiskLevel.CRITICAL;
-        criticalCount++;
+	risk = RiskLevel.CRITICAL;
+	criticalCount++;
       } else if (subcooling < highRiskSubcoolingK) {
-        risk = RiskLevel.HIGH;
+	risk = RiskLevel.HIGH;
       } else if (subcooling < mediumRiskSubcoolingK) {
-        risk = RiskLevel.MEDIUM;
+	risk = RiskLevel.MEDIUM;
       } else {
-        risk = RiskLevel.LOW;
+	risk = RiskLevel.LOW;
       }
 
       if (risk.ordinal() < worstRisk.ordinal()) {
-        worstRisk = risk;
+	worstRisk = risk;
       }
       if (!Double.isNaN(subcooling) && subcooling < minSubcooling) {
-        minSubcooling = subcooling;
+	minSubcooling = subcooling;
       }
 
-      results.add(new RiskPoint(point.distanceKm, point.pressureBara, point.temperatureC, hydrateTC,
-          subcooling, risk));
+      results.add(new RiskPoint(point.distanceKm, point.pressureBara, point.temperatureC, hydrateTC, subcooling, risk));
     }
 
     return new RiskProfile(results, worstRisk, minSubcooling, criticalCount);
@@ -224,7 +221,7 @@ public class HydrateRiskMapper implements Serializable {
     /**
      * Creates a profile point.
      *
-     * @param distanceKm distance from inlet in km
+     * @param distanceKm   distance from inlet in km
      * @param pressureBara pressure in bara
      * @param temperatureC temperature in C
      */
@@ -257,15 +254,15 @@ public class HydrateRiskMapper implements Serializable {
     /**
      * Creates a risk point.
      *
-     * @param distanceKm distance from inlet
-     * @param pressureBara pressure
-     * @param actualTemperatureC actual temperature
+     * @param distanceKm          distance from inlet
+     * @param pressureBara        pressure
+     * @param actualTemperatureC  actual temperature
      * @param hydrateTemperatureC hydrate formation temperature
-     * @param subcoolingC subcooling margin
-     * @param riskLevel risk classification
+     * @param subcoolingC         subcooling margin
+     * @param riskLevel           risk classification
      */
-    RiskPoint(double distanceKm, double pressureBara, double actualTemperatureC,
-        double hydrateTemperatureC, double subcoolingC, RiskLevel riskLevel) {
+    RiskPoint(double distanceKm, double pressureBara, double actualTemperatureC, double hydrateTemperatureC,
+	double subcoolingC, RiskLevel riskLevel) {
       this.distanceKm = distanceKm;
       this.pressureBara = pressureBara;
       this.actualTemperatureC = actualTemperatureC;
@@ -289,13 +286,12 @@ public class HydrateRiskMapper implements Serializable {
     /**
      * Creates a risk profile.
      *
-     * @param points list of risk points along the pipeline
-     * @param overallRisk worst risk level across all points
+     * @param points             list of risk points along the pipeline
+     * @param overallRisk        worst risk level across all points
      * @param minimumSubcoolingC minimum subcooling margin
      * @param criticalPointCount number of points in CRITICAL region
      */
-    RiskProfile(List<RiskPoint> points, RiskLevel overallRisk, double minimumSubcoolingC,
-        int criticalPointCount) {
+    RiskProfile(List<RiskPoint> points, RiskLevel overallRisk, double minimumSubcoolingC, int criticalPointCount) {
       this.points = points;
       this.overallRisk = overallRisk;
       this.minimumSubcoolingC = minimumSubcoolingC;
@@ -352,19 +348,18 @@ public class HydrateRiskMapper implements Serializable {
 
       JsonArray pointsArray = new JsonArray();
       for (RiskPoint rp : points) {
-        JsonObject pj = new JsonObject();
-        pj.addProperty("distance_km", rp.distanceKm);
-        pj.addProperty("pressure_bara", rp.pressureBara);
-        pj.addProperty("actualTemperature_C", rp.actualTemperatureC);
-        pj.addProperty("hydrateTemperature_C", rp.hydrateTemperatureC);
-        pj.addProperty("subcooling_C", rp.subcoolingC);
-        pj.addProperty("riskLevel", rp.riskLevel.name());
-        pointsArray.add(pj);
+	JsonObject pj = new JsonObject();
+	pj.addProperty("distance_km", rp.distanceKm);
+	pj.addProperty("pressure_bara", rp.pressureBara);
+	pj.addProperty("actualTemperature_C", rp.actualTemperatureC);
+	pj.addProperty("hydrateTemperature_C", rp.hydrateTemperatureC);
+	pj.addProperty("subcooling_C", rp.subcoolingC);
+	pj.addProperty("riskLevel", rp.riskLevel.name());
+	pointsArray.add(pj);
       }
       json.add("profile", pointsArray);
 
-      return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-          .toJson(json);
+      return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(json);
     }
 
     /**
@@ -374,15 +369,14 @@ public class HydrateRiskMapper implements Serializable {
      */
     public String toCSV() {
       StringBuilder sb = new StringBuilder();
-      sb.append(
-          "Distance (km),Pressure (bara),Actual T (C),Hydrate T (C),Subcooling (C),Risk Level\n");
+      sb.append("Distance (km),Pressure (bara),Actual T (C),Hydrate T (C),Subcooling (C),Risk Level\n");
       for (RiskPoint rp : points) {
-        sb.append(rp.distanceKm).append(",");
-        sb.append(rp.pressureBara).append(",");
-        sb.append(rp.actualTemperatureC).append(",");
-        sb.append(rp.hydrateTemperatureC).append(",");
-        sb.append(rp.subcoolingC).append(",");
-        sb.append(rp.riskLevel.name()).append("\n");
+	sb.append(rp.distanceKm).append(",");
+	sb.append(rp.pressureBara).append(",");
+	sb.append(rp.actualTemperatureC).append(",");
+	sb.append(rp.hydrateTemperatureC).append(",");
+	sb.append(rp.subcoolingC).append(",");
+	sb.append(rp.riskLevel.name()).append("\n");
       }
       return sb.toString();
     }

@@ -77,7 +77,8 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
    * Constructor for FlowSystem.
    * </p>
    */
-  public FlowSystem() {}
+  public FlowSystem() {
+  }
 
   /**
    * <p>
@@ -92,7 +93,8 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
 
   /** {@inheritDoc} */
   @Override
-  public void init() {}
+  public void init() {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -129,9 +131,9 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
       this.flowLeg[i].setOuterTemperatures(legOuterTemperatures[i], legOuterTemperatures[i + 1]);
       this.flowLeg[i].setLongitudionalCoordinates(legPositions[i], legPositions[i + 1]);
       this.flowLeg[i].setOuterHeatTransferCoefficients(legOuterHeatTransferCoefficients[i],
-          legOuterHeatTransferCoefficients[i + 1]);
+	  legOuterHeatTransferCoefficients[i + 1]);
       this.flowLeg[i].setWallHeatTransferCoefficients(legWallHeatTransferCoefficients[i],
-          legWallHeatTransferCoefficients[i + 1]);
+	  legWallHeatTransferCoefficients[i + 1]);
       this.flowLeg[i].createFlowNodes(flowNode[0]);
     }
 
@@ -150,13 +152,13 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
     int k = 1;
     for (int i = 0; i < numberOfFlowLegs; i++) {
       for (int j = 0; j < getNumberOfNodesInLeg(i); j++) {
-        this.flowNode[k++] = flowLeg[i].getNode(j);
+	this.flowNode[k++] = flowLeg[i].getNode(j);
       }
     }
     flowNode[totalNumberOfNodes - 1] = flowNode[totalNumberOfNodes - 2].getNextNode();
     flowNode[totalNumberOfNodes - 1].setLengthOfNode(systemLength / 1000.0);
     flowNode[totalNumberOfNodes - 1].setDistanceToCenterOfNode(
-        legPositions[numberOfFlowLegs] + flowNode[totalNumberOfNodes - 1].getLengthOfNode() / 2.0);
+	legPositions[numberOfFlowLegs] + flowNode[totalNumberOfNodes - 1].getLengthOfNode() / 2.0);
     flowNode[totalNumberOfNodes - 1].setVerticalPositionOfNode(legHeights[numberOfFlowLegs]);
     if (endPressure != 0) {
       flowNode[totalNumberOfNodes - 1].getBulkSystem().setPressure(endPressure);
@@ -312,26 +314,25 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
   public void print() {
     for (int i = 0; i < getTotalNumberOfNodes() - 1; i++) {
       System.out.println("node " + flowNode[i].getDistanceToCenterOfNode() + " pressure: "
-          + flowNode[i].getBulkSystem().getPhases()[0].getPressure() + " temperature: "
-          + flowNode[i].getBulkSystem().getPhases()[1].getTemperature() + "  flow: "
-          + flowNode[i].getMassFlowRate(0) + " velocity: " + flowNode[i].getVelocity()
-          + " reynolds number " + flowNode[i].getReynoldsNumber() + " friction : "
-          + flowNode[i].getWallFrictionFactor() + " x1 : "
-          + flowNode[i].getBulkSystem().getPhases()[0].getComponent(1).getx());
+	  + flowNode[i].getBulkSystem().getPhases()[0].getPressure() + " temperature: "
+	  + flowNode[i].getBulkSystem().getPhases()[1].getTemperature() + "  flow: " + flowNode[i].getMassFlowRate(0)
+	  + " velocity: " + flowNode[i].getVelocity() + " reynolds number " + flowNode[i].getReynoldsNumber()
+	  + " friction : " + flowNode[i].getWallFrictionFactor() + " x1 : "
+	  + flowNode[i].getBulkSystem().getPhases()[0].getComponent(1).getx());
     }
   }
 
   /** {@inheritDoc} */
   @Override
-  public void calcFluxes() {}
+  public void calcFluxes() {
+  }
 
   /** {@inheritDoc} */
   @Override
   public double getTotalMolarMassTransferRate(int component) {
     double tot = 0.0;
     for (int i = 0; i < getTotalNumberOfNodes() - 1; i++) {
-      tot += flowNode[i].getFluidBoundary().getInterphaseMolarFlux(component)
-          * flowNode[i].getInterphaseContactArea();
+      tot += flowNode[i].getFluidBoundary().getInterphaseMolarFlux(component) * flowNode[i].getInterphaseContactArea();
     }
     return tot;
   }
@@ -341,8 +342,7 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
   public double getTotalMolarMassTransferRate(int component, int lastNode) {
     double tot = 0.0;
     for (int i = 0; i < lastNode; i++) {
-      tot += flowNode[i].getFluidBoundary().getInterphaseMolarFlux(component)
-          * flowNode[i].getInterphaseContactArea();
+      tot += flowNode[i].getFluidBoundary().getInterphaseMolarFlux(component) * flowNode[i].getInterphaseContactArea();
     }
     return tot;
   }
@@ -351,14 +351,13 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
   @Override
   public double getTotalPressureDrop() {
     return flowNode[0].getBulkSystem().getPressure()
-        - flowNode[getTotalNumberOfNodes() - 1].getBulkSystem().getPressure();
+	- flowNode[getTotalNumberOfNodes() - 1].getBulkSystem().getPressure();
   }
 
   /** {@inheritDoc} */
   @Override
   public double getTotalPressureDrop(int lastNode) {
-    return flowNode[0].getBulkSystem().getPressure()
-        - flowNode[lastNode].getBulkSystem().getPressure();
+    return flowNode[0].getBulkSystem().getPressure() - flowNode[lastNode].getBulkSystem().getPressure();
   }
 
   /** {@inheritDoc} */
@@ -382,14 +381,14 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
    * </p>
    *
    * @param startNode a int
-   * @param endNode a int
+   * @param endNode   a int
    */
   public void setEquilibriumMassTransferModel(int startNode, int endNode) {
     for (int i = startNode; i < endNode; i++) {
       if (flowNode[i].getBulkSystem().isChemicalSystem()) {
-        flowNode[i].setInterphaseModelType(0);
+	flowNode[i].setInterphaseModelType(0);
       } else {
-        flowNode[i].setInterphaseModelType(0);
+	flowNode[i].setInterphaseModelType(0);
       }
       flowNode[i].getFluidBoundary().setMassTransferCalc(false);
     }
@@ -401,14 +400,14 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
    * </p>
    *
    * @param startNode a int
-   * @param endNode a int
+   * @param endNode   a int
    */
   public void setNonEquilibriumMassTransferModel(int startNode, int endNode) {
     for (int i = startNode; i < endNode; i++) {
       if (flowNode[i].getBulkSystem().isChemicalSystem()) {
-        flowNode[i].setInterphaseModelType(10);
+	flowNode[i].setInterphaseModelType(10);
       } else {
-        flowNode[i].setInterphaseModelType(1);
+	flowNode[i].setInterphaseModelType(1);
       }
       flowNode[i].getFluidBoundary().setMassTransferCalc(true);
     }
@@ -420,7 +419,7 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
    * </p>
    *
    * @param startNode a int
-   * @param endNode a int
+   * @param endNode   a int
    */
   public void setNonEquilibriumHeatTransferModel(int startNode, int endNode) {
     for (int i = startNode; i < endNode; i++) {
@@ -434,7 +433,7 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
    * </p>
    *
    * @param startNode a int
-   * @param endNode a int
+   * @param endNode   a int
    */
   public void setEquilibriumHeatTransferModel(int startNode, int endNode) {
     for (int i = startNode; i < endNode; i++) {

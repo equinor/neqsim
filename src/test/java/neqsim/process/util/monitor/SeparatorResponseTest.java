@@ -32,8 +32,7 @@ public class SeparatorResponseTest {
     Separator separator = new Separator("two phase separator", inletStream);
     separator.setInternalDiameter(0.05);
 
-    ThreePhaseSeparator separator3phase =
-        new ThreePhaseSeparator("three phase separator", inletStream);
+    ThreePhaseSeparator separator3phase = new ThreePhaseSeparator("three phase separator", inletStream);
     separator3phase.setInternalDiameter(0.05);
 
     HeatExchanger hx1 = new HeatExchanger("E-100", separator3phase.getGasOutStream());
@@ -57,8 +56,8 @@ public class SeparatorResponseTest {
     String hxjson = hx1.toJson();
     String pumpjson = pump1.toJson();
     JsonObject jsonObject = JsonParser.parseString(sep3json).getAsJsonObject();
-    Double reldens = jsonObject.getAsJsonObject("feed").getAsJsonObject("properties")
-        .getAsJsonObject("oil").getAsJsonObject("relative density").get("value").getAsDouble();
+    Double reldens = jsonObject.getAsJsonObject("feed").getAsJsonObject("properties").getAsJsonObject("oil")
+	.getAsJsonObject("relative density").get("value").getAsDouble();
     assertEquals(0.688292615281, reldens, 0.01);
   }
 }

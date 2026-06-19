@@ -15,20 +15,20 @@ import neqsim.process.equipment.stream.StreamInterface;
  * Multi-variable adjuster for simultaneous convergence of coupled process specifications.
  *
  * <p>
- * This class solves the multi-variable analog of the single-variable {@link Adjuster}: given N
- * manipulated (adjusted) variables and N target specifications, it simultaneously drives all
- * targets to their desired values using damped successive substitution.
+ * This class solves the multi-variable analog of the single-variable {@link Adjuster}: given N manipulated (adjusted)
+ * variables and N target specifications, it simultaneously drives all targets to their desired values using damped
+ * successive substitution.
  * </p>
  *
  * <p>
- * The underlying algorithm uses damped successive substitution (x_{n+1} = x_n + alpha * residuals)
- * which provides robust first-order convergence for a wide range of process gains.
+ * The underlying algorithm uses damped successive substitution (x_{n+1} = x_n + alpha * residuals) which provides
+ * robust first-order convergence for a wide range of process gains.
  * </p>
  *
  * <h2>Problem Statement</h2>
  * <p>
- * Given N adjusted variables x_1, ..., x_N and N target specifications y_1, ..., y_N with target
- * values t_1, ..., t_N, find the values of x that satisfy:
+ * Given N adjusted variables x_1, ..., x_N and N target specifications y_1, ..., y_N with target values t_1, ..., t_N,
+ * find the values of x that satisfy:
  * </p>
  *
  * <pre>
@@ -82,8 +82,6 @@ public class MultiVariableAdjuster extends ProcessEquipmentBaseClass {
 
   /** List of target specification definitions. */
   private List<TargetSpecification> targetSpecifications = new ArrayList<TargetSpecification>();
-
-
 
   /** Maximum number of outer iterations. */
   private int maxIterations = 50;
@@ -164,11 +162,10 @@ public class MultiVariableAdjuster extends ProcessEquipmentBaseClass {
    * Add an adjusted (manipulated) variable.
    *
    * @param equipment the equipment whose variable is manipulated
-   * @param variable the variable name (pressure, temperature, flow)
-   * @param unit the unit string (bara, C, kg/hr, etc.)
+   * @param variable  the variable name (pressure, temperature, flow)
+   * @param unit      the unit string (bara, C, kg/hr, etc.)
    */
-  public void addAdjustedVariable(ProcessEquipmentInterface equipment, String variable,
-      String unit) {
+  public void addAdjustedVariable(ProcessEquipmentInterface equipment, String variable, String unit) {
     AdjustedVariable av = new AdjustedVariable();
     av.equipment = equipment;
     av.variable = variable;
@@ -179,13 +176,13 @@ public class MultiVariableAdjuster extends ProcessEquipmentBaseClass {
   /**
    * Add a target specification.
    *
-   * @param equipment the equipment whose variable is observed
-   * @param variable the variable name (pressure, temperature, flow, volume)
+   * @param equipment   the equipment whose variable is observed
+   * @param variable    the variable name (pressure, temperature, flow, volume)
    * @param targetValue the desired target value
-   * @param unit the unit string
+   * @param unit        the unit string
    */
-  public void addTargetSpecification(ProcessEquipmentInterface equipment, String variable,
-      double targetValue, String unit) {
+  public void addTargetSpecification(ProcessEquipmentInterface equipment, String variable, double targetValue,
+      String unit) {
     TargetSpecification ts = new TargetSpecification();
     ts.equipment = equipment;
     ts.variable = variable;
@@ -197,15 +194,15 @@ public class MultiVariableAdjuster extends ProcessEquipmentBaseClass {
   /**
    * Add a target specification with phase and component.
    *
-   * @param equipment the equipment whose variable is observed
-   * @param variable the variable name
+   * @param equipment   the equipment whose variable is observed
+   * @param variable    the variable name
    * @param targetValue the desired target value
-   * @param unit the unit string
-   * @param phase the phase name (gas, oil, aqueous)
-   * @param component the component name
+   * @param unit        the unit string
+   * @param phase       the phase name (gas, oil, aqueous)
+   * @param component   the component name
    */
-  public void addTargetSpecification(ProcessEquipmentInterface equipment, String variable,
-      double targetValue, String unit, String phase, String component) {
+  public void addTargetSpecification(ProcessEquipmentInterface equipment, String variable, double targetValue,
+      String unit, String phase, String component) {
     TargetSpecification ts = new TargetSpecification();
     ts.equipment = equipment;
     ts.variable = variable;
@@ -226,7 +223,7 @@ public class MultiVariableAdjuster extends ProcessEquipmentBaseClass {
   public void setVariableBounds(int index, double lower, double upper) {
     if (index < 0 || index >= adjustedVariables.size()) {
       throw new IndexOutOfBoundsException(
-          "Variable index " + index + " out of range [0, " + adjustedVariables.size() + ")");
+	  "Variable index " + index + " out of range [0, " + adjustedVariables.size() + ")");
     }
     AdjustedVariable av = adjustedVariables.get(index);
     av.lowerBound = lower;
@@ -292,9 +289,9 @@ public class MultiVariableAdjuster extends ProcessEquipmentBaseClass {
    *
    * <p>
    * Unlike an internal iteration loop, this method performs a single damped step per call. The
-   * {@link neqsim.process.processmodel.ProcessSystem} provides the outer iteration loop: it runs
-   * all equipment, calls this method, checks {@link #solved()}, and re-runs the process if needed.
-   * This ensures downstream equipment is re-evaluated between adjustment steps.
+   * {@link neqsim.process.processmodel.ProcessSystem} provides the outer iteration loop: it runs all equipment, calls
+   * this method, checks {@link #solved()}, and re-runs the process if needed. This ensures downstream equipment is
+   * re-evaluated between adjustment steps.
    * </p>
    *
    * @param id calculation identifier for tracking
@@ -308,9 +305,8 @@ public class MultiVariableAdjuster extends ProcessEquipmentBaseClass {
       return;
     }
     if (n != targetSpecifications.size()) {
-      throw new RuntimeException("MultiVariableAdjuster " + getName()
-          + ": number of adjusted variables (" + n
-          + ") must equal number of target specifications (" + targetSpecifications.size() + ")");
+      throw new RuntimeException("MultiVariableAdjuster " + getName() + ": number of adjusted variables (" + n
+	  + ") must equal number of target specifications (" + targetSpecifications.size() + ")");
     }
 
     // Read current adjusted variable values
@@ -356,8 +352,7 @@ public class MultiVariableAdjuster extends ProcessEquipmentBaseClass {
     }
 
     if (logger.isDebugEnabled()) {
-      logger.debug("MultiVariableAdjuster {} step {}: maxResidual = {}", getName(), iterations,
-          maxResidual);
+      logger.debug("MultiVariableAdjuster {} step {}: maxResidual = {}", getName(), iterations, maxResidual);
     }
 
     // converged will be checked on next call after process re-runs
@@ -448,13 +443,11 @@ public class MultiVariableAdjuster extends ProcessEquipmentBaseClass {
       return stream.getThermoSystem().getPressure(ts.unit);
     } else if ("temperature".equals(ts.variable)) {
       return stream.getTemperature(ts.unit);
-    } else if ("flow".equals(ts.variable) || "mass flow".equals(ts.variable)
-        || "gasVolumeFlow".equals(ts.variable)) {
+    } else if ("flow".equals(ts.variable) || "mass flow".equals(ts.variable) || "gasVolumeFlow".equals(ts.variable)) {
       return stream.getThermoSystem().getFlowRate(ts.unit);
     } else if ("volume".equals(ts.variable)) {
       return stream.getThermoSystem().getVolume(ts.unit);
-    } else if ("mass fraction".equals(ts.variable) && !ts.phase.isEmpty()
-        && !ts.component.isEmpty()) {
+    } else if ("mass fraction".equals(ts.variable) && !ts.phase.isEmpty() && !ts.component.isEmpty()) {
       return stream.getThermoSystem().getPhase(ts.phase).getWtFrac(ts.component);
     } else {
       return stream.getThermoSystem().getVolume(ts.unit);
@@ -489,7 +482,7 @@ public class MultiVariableAdjuster extends ProcessEquipmentBaseClass {
     for (double v : arr) {
       double abs = Math.abs(v);
       if (abs > maxVal) {
-        maxVal = abs;
+	maxVal = abs;
       }
     }
     return maxVal;

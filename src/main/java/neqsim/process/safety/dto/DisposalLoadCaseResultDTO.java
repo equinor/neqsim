@@ -18,12 +18,11 @@ public class DisposalLoadCaseResultDTO implements Serializable {
   private final double maxRadiationDistanceM;
   private final List<CapacityAlertDTO> alerts;
 
-  public DisposalLoadCaseResultDTO(String loadCaseName,
-      Map<String, FlarePerformanceDTO> performanceByUnit, double totalHeatDutyMW,
-      double maxRadiationDistanceM, List<CapacityAlertDTO> alerts) {
+  public DisposalLoadCaseResultDTO(String loadCaseName, Map<String, FlarePerformanceDTO> performanceByUnit,
+      double totalHeatDutyMW, double maxRadiationDistanceM, List<CapacityAlertDTO> alerts) {
     this.loadCaseName = loadCaseName;
     this.performanceByUnit = performanceByUnit == null ? Collections.emptyMap()
-        : Collections.unmodifiableMap(performanceByUnit);
+	: Collections.unmodifiableMap(performanceByUnit);
     this.totalHeatDutyMW = totalHeatDutyMW;
     this.maxRadiationDistanceM = maxRadiationDistanceM;
     this.alerts = alerts == null ? Collections.emptyList() : Collections.unmodifiableList(alerts);

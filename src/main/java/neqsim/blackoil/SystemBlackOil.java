@@ -3,8 +3,8 @@ package neqsim.blackoil;
 import java.io.Serializable;
 
 /**
- * Lightweight Black-Oil "system/stream" with standard totals and P/T. Not a full NeqSim
- * SystemInterface (by design, to keep it minimal).
+ * Lightweight Black-Oil "system/stream" with standard totals and P/T. Not a full NeqSim SystemInterface (by design, to
+ * keep it minimal).
  *
  * @author esol
  * @version 1.0
@@ -27,7 +27,7 @@ public class SystemBlackOil implements Serializable {
    * Constructor for SystemBlackOil.
    * </p>
    *
-   * @param pvt a {@link neqsim.blackoil.BlackOilPVTTable} object
+   * @param pvt      a {@link neqsim.blackoil.BlackOilPVTTable} object
    * @param rho_o_sc a double
    * @param rho_g_sc a double
    * @param rho_w_sc a double
@@ -86,7 +86,7 @@ public class SystemBlackOil implements Serializable {
    *
    * @param Otot_std a double
    * @param Gtot_std a double
-   * @param W_std a double
+   * @param W_std    a double
    */
   public void setStdTotals(double Otot_std, double Gtot_std, double W_std) {
     this.Otot_std = Math.max(0.0, Otot_std);

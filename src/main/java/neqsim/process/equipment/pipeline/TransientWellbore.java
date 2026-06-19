@@ -10,14 +10,14 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Transient wellbore model for simulating shutdown cooling and depressurization. Models the thermal
- * equilibration of a wellbore after injection stops, accounting for radial heat conduction to the
- * formation (geothermal gradient) and the resulting phase behaviour changes.
+ * Transient wellbore model for simulating shutdown cooling and depressurization. Models the thermal equilibration of a
+ * wellbore after injection stops, accounting for radial heat conduction to the formation (geothermal gradient) and the
+ * resulting phase behaviour changes.
  *
  * <p>
- * The model divides the wellbore into vertical segments and computes the temperature profile as the
- * fluid cools toward the formation temperature at each depth. During cooling, flash calculations
- * determine if two-phase conditions develop and track impurity enrichment in the gas phase.
+ * The model divides the wellbore into vertical segments and computes the temperature profile as the fluid cools toward
+ * the formation temperature at each depth. During cooling, flash calculations determine if two-phase conditions develop
+ * and track impurity enrichment in the gas phase.
  * </p>
  *
  * <p>
@@ -82,7 +82,7 @@ public class TransientWellbore extends Pipeline {
   /**
    * Constructor for TransientWellbore with inlet stream.
    *
-   * @param name the equipment name
+   * @param name        the equipment name
    * @param inletStream the inlet (feed) stream defining initial fluid conditions
    */
   public TransientWellbore(String name, StreamInterface inletStream) {
@@ -126,10 +126,10 @@ public class TransientWellbore extends Pipeline {
   }
 
   /**
-   * Sets the formation temperature at the wellhead and bottom-hole. A linear geothermal gradient is
-   * assumed between these two points.
+   * Sets the formation temperature at the wellhead and bottom-hole. A linear geothermal gradient is assumed between
+   * these two points.
    *
-   * @param topTempKelvin formation temperature at the wellhead in Kelvin
+   * @param topTempKelvin    formation temperature at the wellhead in Kelvin
    * @param bottomTempKelvin formation temperature at the bottom-hole in Kelvin
    */
   public void setFormationTemperature(double topTempKelvin, double bottomTempKelvin) {
@@ -138,9 +138,8 @@ public class TransientWellbore extends Pipeline {
   }
 
   /**
-   * Sets the exponential cooling time constant. The fluid temperature at each segment evolves as:
-   * T(t) = T_formation + (T_initial - T_formation) * exp(-t / tau). Smaller values mean faster
-   * cooling.
+   * Sets the exponential cooling time constant. The fluid temperature at each segment evolves as: T(t) = T_formation +
+   * (T_initial - T_formation) * exp(-t / tau). Smaller values mean faster cooling.
    *
    * @param timeConstantHours the cooling time constant in hours
    */
@@ -158,8 +157,7 @@ public class TransientWellbore extends Pipeline {
   }
 
   /**
-   * Sets the radial heat transfer coefficient for heat exchange between wellbore fluid and
-   * formation.
+   * Sets the radial heat transfer coefficient for heat exchange between wellbore fluid and formation.
    *
    * @param coefficient the overall heat transfer coefficient in W/(m2.K)
    */
@@ -213,11 +211,11 @@ public class TransientWellbore extends Pipeline {
   }
 
   /**
-   * Runs the shutdown transient simulation. Starting from the initial operating conditions in the
-   * inlet stream, the wellbore cools toward the formation temperature over the specified duration.
+   * Runs the shutdown transient simulation. Starting from the initial operating conditions in the inlet stream, the
+   * wellbore cools toward the formation temperature over the specified duration.
    *
    * @param totalTimeHours the total simulation duration in hours
-   * @param timeStepHours the time step size in hours
+   * @param timeStepHours  the time step size in hours
    */
   public void runShutdownSimulation(double totalTimeHours, double timeStepHours) {
     snapshots.clear();
@@ -263,15 +261,15 @@ public class TransientWellbore extends Pipeline {
       double[] newPressures = new double[numberOfSegments + 1];
 
       for (int i = 0; i <= numberOfSegments; i++) {
-        double depth = depths[i];
-        double formationT = formationTempTop + geothermalGrad * depth;
+	double depth = depths[i];
+	double formationT = formationTempTop + geothermalGrad * depth;
 
-        // Exponential decay toward formation temperature
-        double decayFactor = Math.exp(-timeStepHours / coolingTimeConstant);
-        newTemps[i] = formationT + (currentTemps[i] - formationT) * decayFactor;
+	// Exponential decay toward formation temperature
+	double decayFactor = Math.exp(-timeStepHours / coolingTimeConstant);
+	newTemps[i] = formationT + (currentTemps[i] - formationT) * decayFactor;
 
-        // Hydrostatic pressure at this depth
-        newPressures[i] = currentWHP + density * 9.81 * depth / 1.0e5;
+	// Hydrostatic pressure at this depth
+	newPressures[i] = currentWHP + density * 9.81 * depth / 1.0e5;
       }
 
       // Create snapshot with flash at each segment
@@ -281,18 +279,17 @@ public class TransientWellbore extends Pipeline {
   }
 
   /**
-   * Creates a snapshot of the wellbore state at a given time by performing flash calculations at
-   * each segment.
+   * Creates a snapshot of the wellbore state at a given time by performing flash calculations at each segment.
    *
-   * @param timeHours the simulation time in hours
-   * @param depths the depth array
+   * @param timeHours    the simulation time in hours
+   * @param depths       the depth array
    * @param temperatures the temperature array in Kelvin
-   * @param pressures the pressure array in bara
-   * @param baseFluid the base fluid for cloning
+   * @param pressures    the pressure array in bara
+   * @param baseFluid    the base fluid for cloning
    * @return a TransientSnapshot with all segment data
    */
-  private TransientSnapshot createSnapshot(double timeHours, double[] depths, double[] temperatures,
-      double[] pressures, SystemInterface baseFluid) {
+  private TransientSnapshot createSnapshot(double timeHours, double[] depths, double[] temperatures, double[] pressures,
+      SystemInterface baseFluid) {
     TransientSnapshot snap = new TransientSnapshot(timeHours, numberOfSegments + 1);
 
     for (int i = 0; i <= numberOfSegments; i++) {
@@ -307,25 +304,25 @@ public class TransientWellbore extends Pipeline {
 
       ThermodynamicOperations segOps = new ThermodynamicOperations(segFluid);
       try {
-        segOps.TPflash();
-        segFluid.initProperties();
-        snap.numberOfPhases[i] = segFluid.getNumberOfPhases();
+	segOps.TPflash();
+	segFluid.initProperties();
+	snap.numberOfPhases[i] = segFluid.getNumberOfPhases();
 
-        if (segFluid.hasPhaseType("gas") && segFluid.getNumberOfPhases() > 1) {
-          int gasIdx = segFluid.getPhaseNumberOfPhase("gas");
-          snap.gasFraction[i] = segFluid.getBeta(gasIdx);
-          // Track light impurity composition in gas phase
-          for (int c = 0; c < segFluid.getPhase("gas").getNumberOfComponents(); c++) {
-            String compName = segFluid.getPhase("gas").getComponent(c).getComponentName();
-            double yi = segFluid.getPhase("gas").getComponent(c).getx();
-            snap.addGasComposition(i, compName, yi);
-          }
-        } else {
-          snap.gasFraction[i] = segFluid.hasPhaseType("gas") ? 1.0 : 0.0;
-        }
+	if (segFluid.hasPhaseType("gas") && segFluid.getNumberOfPhases() > 1) {
+	  int gasIdx = segFluid.getPhaseNumberOfPhase("gas");
+	  snap.gasFraction[i] = segFluid.getBeta(gasIdx);
+	  // Track light impurity composition in gas phase
+	  for (int c = 0; c < segFluid.getPhase("gas").getNumberOfComponents(); c++) {
+	    String compName = segFluid.getPhase("gas").getComponent(c).getComponentName();
+	    double yi = segFluid.getPhase("gas").getComponent(c).getx();
+	    snap.addGasComposition(i, compName, yi);
+	  }
+	} else {
+	  snap.gasFraction[i] = segFluid.hasPhaseType("gas") ? 1.0 : 0.0;
+	}
       } catch (Exception e) {
-        snap.numberOfPhases[i] = 1;
-        snap.gasFraction[i] = 0.0;
+	snap.numberOfPhases[i] = 1;
+	snap.gasFraction[i] = 0.0;
       }
     }
     return snap;
@@ -376,13 +373,13 @@ public class TransientWellbore extends Pipeline {
     double maxConc = 0.0;
     for (TransientSnapshot snap : snapshots) {
       for (int i = 0; i <= numberOfSegments; i++) {
-        Map<String, Double> gasComp = snap.gasCompositions.get(i);
-        if (gasComp != null) {
-          Double yi = gasComp.get(componentName);
-          if (yi != null && yi > maxConc) {
-            maxConc = yi;
-          }
-        }
+	Map<String, Double> gasComp = snap.gasCompositions.get(i);
+	if (gasComp != null) {
+	  Double yi = gasComp.get(componentName);
+	  if (yi != null && yi > maxConc) {
+	    maxConc = yi;
+	  }
+	}
       }
     }
     return maxConc;
@@ -409,8 +406,8 @@ public class TransientWellbore extends Pipeline {
   }
 
   /**
-   * A snapshot of the wellbore state at a single time step. Contains depth-dependent profiles of
-   * temperature, pressure, phase state, and gas phase compositions.
+   * A snapshot of the wellbore state at a single time step. Contains depth-dependent profiles of temperature, pressure,
+   * phase state, and gas phase compositions.
    */
   public static class TransientSnapshot implements java.io.Serializable {
     /** Serialization version UID. */
@@ -441,7 +438,7 @@ public class TransientWellbore extends Pipeline {
      * Constructor for TransientSnapshot.
      *
      * @param timeHours the simulation time
-     * @param size the number of depth points
+     * @param size      the number of depth points
      */
     public TransientSnapshot(double timeHours, int size) {
       this.timeHours = timeHours;
@@ -456,15 +453,15 @@ public class TransientWellbore extends Pipeline {
     /**
      * Adds gas phase composition data for a segment.
      *
-     * @param segmentIndex the segment index
+     * @param segmentIndex  the segment index
      * @param componentName the component name
-     * @param moleFraction the mole fraction in the gas phase
+     * @param moleFraction  the mole fraction in the gas phase
      */
     public void addGasComposition(int segmentIndex, String componentName, double moleFraction) {
       Map<String, Double> compMap = gasCompositions.get(segmentIndex);
       if (compMap == null) {
-        compMap = new LinkedHashMap<>();
-        gasCompositions.put(segmentIndex, compMap);
+	compMap = new LinkedHashMap<>();
+	gasCompositions.put(segmentIndex, compMap);
       }
       compMap.put(componentName, moleFraction);
     }

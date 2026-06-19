@@ -83,8 +83,8 @@ public class FreundlichAdsorption extends AbstractAdsorptionModel {
       tempRef = new double[numComp];
       heatOfAdsorption = new double[numComp];
       for (int i = 0; i < numComp; i++) {
-        tempRef[i] = 298.15;
-        nFreundlich[i] = 1.0;
+	tempRef[i] = 298.15;
+	nFreundlich[i] = 1.0;
       }
     }
   }
@@ -103,34 +103,33 @@ public class FreundlichAdsorption extends AbstractAdsorptionModel {
     for (int comp = 0; comp < numComp; comp++) {
       String componentName = system.getPhase(phaseNum).getComponent(comp).getComponentName();
       try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-          java.sql.ResultSet dataSet =
-              database.getResultSet("SELECT * FROM adsorptionparameters WHERE name='"
-                  + componentName + "' AND Solid='" + solidMaterial + "'")) {
+	  java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM adsorptionparameters WHERE name='"
+	      + componentName + "' AND Solid='" + solidMaterial + "'")) {
 
-        if (dataSet.next()) {
-          try {
-            kFreundlich[comp] = Double.parseDouble(dataSet.getString("K_freundlich"));
-            nFreundlich[comp] = Double.parseDouble(dataSet.getString("n_freundlich"));
-            tempRef[comp] = Double.parseDouble(dataSet.getString("TempRef"));
-            heatOfAdsorption[comp] = Double.parseDouble(dataSet.getString("dH_ads"));
-          } catch (Exception ex) {
-            // Estimate from DRA parameters
-            double eps = Double.parseDouble(dataSet.getString("eps"));
-            double z0 = Double.parseDouble(dataSet.getString("z0"));
-            double molarMass = system.getPhase(phaseNum).getComponent(comp).getMolarMass();
-            kFreundlich[comp] = z0 * 1000.0 / molarMass * 0.5;
-            nFreundlich[comp] = 1.0 + eps / 5.0;
-            tempRef[comp] = 298.15;
-            heatOfAdsorption[comp] = -eps * 1000.0;
-          }
-          logger.info("Freundlich parameters loaded for " + componentName + ": KF="
-              + kFreundlich[comp] + ", n=" + nFreundlich[comp]);
-        } else {
-          setDefaultParameters(comp);
-        }
+	if (dataSet.next()) {
+	  try {
+	    kFreundlich[comp] = Double.parseDouble(dataSet.getString("K_freundlich"));
+	    nFreundlich[comp] = Double.parseDouble(dataSet.getString("n_freundlich"));
+	    tempRef[comp] = Double.parseDouble(dataSet.getString("TempRef"));
+	    heatOfAdsorption[comp] = Double.parseDouble(dataSet.getString("dH_ads"));
+	  } catch (Exception ex) {
+	    // Estimate from DRA parameters
+	    double eps = Double.parseDouble(dataSet.getString("eps"));
+	    double z0 = Double.parseDouble(dataSet.getString("z0"));
+	    double molarMass = system.getPhase(phaseNum).getComponent(comp).getMolarMass();
+	    kFreundlich[comp] = z0 * 1000.0 / molarMass * 0.5;
+	    nFreundlich[comp] = 1.0 + eps / 5.0;
+	    tempRef[comp] = 298.15;
+	    heatOfAdsorption[comp] = -eps * 1000.0;
+	  }
+	  logger.info("Freundlich parameters loaded for " + componentName + ": KF=" + kFreundlich[comp] + ", n="
+	      + nFreundlich[comp]);
+	} else {
+	  setDefaultParameters(comp);
+	}
       } catch (Exception ex) {
-        logger.info("Component not found in adsorption DB: " + componentName);
-        setDefaultParameters(comp);
+	logger.info("Component not found in adsorption DB: " + componentName);
+	setDefaultParameters(comp);
       }
     }
   }
@@ -163,13 +162,13 @@ public class FreundlichAdsorption extends AbstractAdsorptionModel {
 
       // Temperature-corrected Freundlich constant
       double kCorr = kFreundlich[comp]
-          * Math.exp(-heatOfAdsorption[comp] / R * (1.0 / temperature - 1.0 / tempRef[comp]));
+	  * Math.exp(-heatOfAdsorption[comp] / R * (1.0 / temperature - 1.0 / tempRef[comp]));
 
       // Freundlich isotherm: q = KF * P^(1/n)
       if (partialPressure > 0 && nFreundlich[comp] > 0) {
-        surfaceExcess[comp] = kCorr * Math.pow(partialPressure, 1.0 / nFreundlich[comp]);
+	surfaceExcess[comp] = kCorr * Math.pow(partialPressure, 1.0 / nFreundlich[comp]);
       } else {
-        surfaceExcess[comp] = 0.0;
+	surfaceExcess[comp] = 0.0;
       }
     }
 
@@ -191,7 +190,7 @@ public class FreundlichAdsorption extends AbstractAdsorptionModel {
    * Set the Freundlich capacity constant for a component.
    *
    * @param component the component index
-   * @param value KF in mol/kg/bar^(1/n)
+   * @param value     KF in mol/kg/bar^(1/n)
    */
   public void setKFreundlich(int component, double value) {
     kFreundlich[component] = value;
@@ -212,7 +211,7 @@ public class FreundlichAdsorption extends AbstractAdsorptionModel {
    * Set the Freundlich intensity parameter for a component.
    *
    * @param component the component index
-   * @param value n (dimensionless, should be &gt; 1 for favorable adsorption)
+   * @param value     n (dimensionless, should be &gt; 1 for favorable adsorption)
    */
   public void setNFreundlich(int component, double value) {
     nFreundlich[component] = value;
@@ -233,7 +232,7 @@ public class FreundlichAdsorption extends AbstractAdsorptionModel {
    * Set the heat of adsorption for a component.
    *
    * @param component the component index
-   * @param value heat of adsorption in J/mol
+   * @param value     heat of adsorption in J/mol
    */
   public void setHeatOfAdsorption(int component, double value) {
     heatOfAdsorption[component] = value;
@@ -254,7 +253,7 @@ public class FreundlichAdsorption extends AbstractAdsorptionModel {
    * Set the reference temperature for parameters.
    *
    * @param component the component index
-   * @param value reference temperature in K
+   * @param value     reference temperature in K
    */
   public void setTempRef(int component, double value) {
     tempRef[component] = value;

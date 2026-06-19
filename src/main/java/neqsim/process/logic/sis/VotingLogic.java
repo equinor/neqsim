@@ -4,8 +4,8 @@ package neqsim.process.logic.sis;
  * Represents a voting logic pattern for Safety Instrumented Systems (SIS).
  *
  * <p>
- * Voting logic determines how multiple redundant sensors or detectors are combined to make a safety
- * decision. Common patterns include:
+ * Voting logic determines how multiple redundant sensors or detectors are combined to make a safety decision. Common
+ * patterns include:
  * <ul>
  * <li>1oo1 (1 out of 1): Single sensor must trip</li>
  * <li>1oo2 (1 out of 2): At least 1 of 2 sensors must trip</li>
@@ -42,8 +42,7 @@ public enum VotingLogic {
   TWO_OUT_OF_TWO("2oo2", 2, 2),
 
   /**
-   * 2 out of 3 - Standard for high reliability applications. Good balance of safety and
-   * availability.
+   * 2 out of 3 - Standard for high reliability applications. Good balance of safety and availability.
    */
   TWO_OUT_OF_THREE("2oo3", 2, 3),
 
@@ -64,9 +63,9 @@ public enum VotingLogic {
   /**
    * Creates a voting logic pattern.
    *
-   * @param notation standard notation (e.g., "2oo3")
+   * @param notation      standard notation (e.g., "2oo3")
    * @param requiredTrips number of sensors that must trip
-   * @param totalSensors total number of sensors
+   * @param totalSensors  total number of sensors
    */
   VotingLogic(String notation, int requiredTrips, int totalSensors) {
     this.notation = notation;

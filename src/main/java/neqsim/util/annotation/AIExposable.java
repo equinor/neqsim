@@ -10,8 +10,8 @@ import java.lang.annotation.Target;
  * Marks a class, method, or field as exposed for AI/ML integration.
  *
  * <p>
- * AI agents can use reflection to discover methods marked with this annotation and understand their
- * purpose, parameters, and expected behavior.
+ * AI agents can use reflection to discover methods marked with this annotation and understand their purpose,
+ * parameters, and expected behavior.
  * </p>
  *
  * <h2>Usage Examples:</h2>
@@ -32,7 +32,7 @@ import java.lang.annotation.Target;
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD})
+@Target({ ElementType.TYPE, ElementType.METHOD, ElementType.FIELD })
 public @interface AIExposable {
   /**
    * Human-readable description of what this element does.

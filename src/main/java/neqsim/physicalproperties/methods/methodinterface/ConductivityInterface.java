@@ -11,8 +11,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public interface ConductivityInterface
-    extends ThermodynamicConstantsInterface, PhysicalPropertyMethodInterface {
+public interface ConductivityInterface extends ThermodynamicConstantsInterface, PhysicalPropertyMethodInterface {
   /**
    * <p>
    * calcConductivity.

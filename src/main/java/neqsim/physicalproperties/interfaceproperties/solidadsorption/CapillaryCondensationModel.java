@@ -20,8 +20,8 @@ import neqsim.thermo.system.SystemInterface;
  * $$r_K = -\frac{2 \gamma V_m \cos\theta}{R T \ln(P/P_0)}$$
  *
  * <p>
- * For mesoporous materials (2-50 nm pores), capillary condensation occurs at pressures below the
- * bulk saturation pressure due to the curved meniscus in the pores.
+ * For mesoporous materials (2-50 nm pores), capillary condensation occurs at pressures below the bulk saturation
+ * pressure due to the curved meniscus in the pores.
  * </p>
  *
  * @author ESOL
@@ -115,7 +115,8 @@ public class CapillaryCondensationModel implements Serializable, ThermodynamicCo
   /**
    * Default constructor.
    */
-  public CapillaryCondensationModel() {}
+  public CapillaryCondensationModel() {
+  }
 
   /**
    * Constructor with thermodynamic system.
@@ -156,8 +157,8 @@ public class CapillaryCondensationModel implements Serializable, ThermodynamicCo
    * Calculate fluid properties needed for Kelvin equation using correlations.
    *
    * <p>
-   * Uses Lee-Kesler for vapor pressure, Rackett for liquid molar volume, and Macleod-Sugden for
-   * surface tension via FluidPropertyEstimator.
+   * Uses Lee-Kesler for vapor pressure, Rackett for liquid molar volume, and Macleod-Sugden for surface tension via
+   * FluidPropertyEstimator.
    * </p>
    *
    * @param phaseNum the phase number
@@ -187,14 +188,14 @@ public class CapillaryCondensationModel implements Serializable, ThermodynamicCo
 
     for (int comp = 0; comp < numComp; comp++) {
       double partialPressure = system.getPhase(phaseNum).getComponent(comp).getx()
-          * system.getPhase(phaseNum).getPressure();
+	  * system.getPhase(phaseNum).getPressure();
 
       double relativePressure = partialPressure / pSat[comp];
 
       if (relativePressure >= 1.0 || relativePressure <= 0) {
-        kelvinRadius[comp] = Double.MAX_VALUE;
-        condensateAmount[comp] = 0.0;
-        continue;
+	kelvinRadius[comp] = Double.MAX_VALUE;
+	condensateAmount[comp] = 0.0;
+	continue;
       }
 
       // Calculate Kelvin radius using modified Kelvin equation
@@ -204,8 +205,7 @@ public class CapillaryCondensationModel implements Serializable, ThermodynamicCo
       double gf = poreType.getGeometryFactor();
 
       // r_k = -gf * gamma * Vm * cos(theta) / (R * T * ln(P/P0))
-      kelvinRadius[comp] =
-          -gf * gamma * vm * cosTheta / (R * temperature * Math.log(relativePressure)) * 1e9;
+      kelvinRadius[comp] = -gf * gamma * vm * cosTheta / (R * temperature * Math.log(relativePressure)) * 1e9;
 
       // Apply correction for adsorbed layer thickness
       double effectiveRadius = kelvinRadius[comp] + adsorbedLayerThickness;
@@ -220,9 +220,9 @@ public class CapillaryCondensationModel implements Serializable, ThermodynamicCo
   /**
    * Integrate condensate volume over pore size distribution.
    *
-   * @param comp the component index
+   * @param comp           the component index
    * @param criticalRadius the critical radius for condensation (nm)
-   * @param phaseNum the phase number
+   * @param phaseNum       the phase number
    * @return condensate amount in mol/kg
    */
   private double integrateOverPoreDistribution(int comp, double criticalRadius, int phaseNum) {
@@ -234,10 +234,10 @@ public class CapillaryCondensationModel implements Serializable, ThermodynamicCo
       double r = minPoreRadius + (i + 0.5) * dr;
 
       if (r < criticalRadius) {
-        // This pore is filled with condensate
-        double poreVolumeFraction = getPoreVolumeFraction(r) * dr;
-        double poreVolumePerGram = totalPoreVolume * poreVolumeFraction;
-        totalCondensate += poreVolumePerGram;
+	// This pore is filled with condensate
+	double poreVolumeFraction = getPoreVolumeFraction(r) * dr;
+	double poreVolumePerGram = totalPoreVolume * poreVolumeFraction;
+	totalCondensate += poreVolumePerGram;
       }
     }
 
@@ -273,8 +273,7 @@ public class CapillaryCondensationModel implements Serializable, ThermodynamicCo
    */
   public double getKelvinRadius(int component) {
     if (!calculated) {
-      throw new IllegalStateException(
-          "Capillary condensation not calculated. Call calcCapillaryCondensation() first.");
+      throw new IllegalStateException("Capillary condensation not calculated. Call calcCapillaryCondensation() first.");
     }
     return kelvinRadius[component];
   }
@@ -298,8 +297,7 @@ public class CapillaryCondensationModel implements Serializable, ThermodynamicCo
    */
   public double getCondensateAmount(int component) {
     if (!calculated) {
-      throw new IllegalStateException(
-          "Capillary condensation not calculated. Call calcCapillaryCondensation() first.");
+      throw new IllegalStateException("Capillary condensation not calculated. Call calcCapillaryCondensation() first.");
     }
     return condensateAmount[component];
   }
@@ -319,8 +317,8 @@ public class CapillaryCondensationModel implements Serializable, ThermodynamicCo
    * Calculate the pressure at which capillary condensation begins in a given pore.
    *
    * @param poreRadius the pore radius (nm)
-   * @param component the component index
-   * @param phaseNum the phase number
+   * @param component  the component index
+   * @param phaseNum   the phase number
    * @return relative pressure P/P0 for condensation
    */
   public double getCondensationPressure(double poreRadius, int component, int phaseNum) {

@@ -7,10 +7,9 @@ import org.apache.logging.log4j.Logger;
  * Inlet vane with downstream mesh pad for enhanced primary separation.
  *
  * <p>
- * Combines the high-momentum tolerance of an inlet vane with the fine droplet capture of a mesh
- * pad. The mesh pad is placed downstream of the inlet vane to capture small droplets that pass
- * through the vane device. This combination provides better separation performance at higher gas
- * loads.
+ * Combines the high-momentum tolerance of an inlet vane with the fine droplet capture of a mesh pad. The mesh pad is
+ * placed downstream of the inlet vane to capture small droplets that pass through the vane device. This combination
+ * provides better separation performance at higher gas loads.
  * </p>
  *
  * <p>
@@ -53,8 +52,8 @@ public class InletVaneWithMeshpad extends PrimarySeparation {
    * {@inheritDoc}
    *
    * <p>
-   * Overrides to provide improved carry-over due to the mesh pad. The mesh pad further reduces
-   * carry-over by capturing fine droplets.
+   * Overrides to provide improved carry-over due to the mesh pad. The mesh pad further reduces carry-over by capturing
+   * fine droplets.
    * </p>
    */
   @Override

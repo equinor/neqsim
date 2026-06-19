@@ -21,16 +21,15 @@ import org.apache.logging.log4j.Logger;
  * Tests for {@link LNGHeatExchanger}.
  *
  * <p>
- * Covers P1-P10 features: rigorous H-T curves, per-stream DP, exergy analysis, adaptive refinement,
- * Manglik-Bergles j/f, Lockhart-Martinelli two-phase DP, dynamic transient, core sizing, freeze-out
- * detection, flow maldistribution, thermal stress, and mercury risk.
+ * Covers P1-P10 features: rigorous H-T curves, per-stream DP, exergy analysis, adaptive refinement, Manglik-Bergles
+ * j/f, Lockhart-Martinelli two-phase DP, dynamic transient, core sizing, freeze-out detection, flow maldistribution,
+ * thermal stress, and mercury risk.
  * </p>
  *
  * @author NeqSim
  */
 class LNGHeatExchangerTest {
   private static final Logger logger = LogManager.getLogger(LNGHeatExchangerTest.class);
-
 
   /** Create a standard hot feed gas stream for reuse in tests. */
   private Stream createHotStream() {
@@ -79,7 +78,7 @@ class LNGHeatExchangerTest {
     Stream coldStream = createColdStream();
 
     LNGHeatExchanger lngHX = new LNGHeatExchanger("MCHE",
-        Arrays.asList((StreamInterface) hotStream, (StreamInterface) coldStream));
+	Arrays.asList((StreamInterface) hotStream, (StreamInterface) coldStream));
 
     lngHX.setNumberOfZones(10);
     assertEquals(10, lngHX.getNumberOfZones());
@@ -113,8 +112,7 @@ class LNGHeatExchangerTest {
     s2.setTemperature(-100.0, "C");
     s2.setPressure(3.0, "bara");
 
-    LNGHeatExchanger hx =
-        new LNGHeatExchanger("test_hx", Arrays.asList((StreamInterface) s1, (StreamInterface) s2));
+    LNGHeatExchanger hx = new LNGHeatExchanger("test_hx", Arrays.asList((StreamInterface) s1, (StreamInterface) s2));
     hx.setNumberOfZones(5);
 
     runHX(hx, s1, s2);
@@ -149,8 +147,7 @@ class LNGHeatExchangerTest {
     assertTrue(mita > 0.0, "MITA should be positive, got: " + mita);
 
     double etaII = lngHX.getSecondLawEfficiency();
-    assertTrue(etaII > 0.0 && etaII <= 1.0,
-        "Second-law efficiency should be in (0,1], got: " + etaII);
+    assertTrue(etaII > 0.0 && etaII <= 1.0, "Second-law efficiency should be in (0,1], got: " + etaII);
 
     double totalEx = lngHX.getTotalExergyDestruction();
     assertTrue(totalEx > 0.0, "Total exergy destruction should be positive, got: " + totalEx);
@@ -158,8 +155,7 @@ class LNGHeatExchangerTest {
     double[] exZones = lngHX.getExergyDestructionPerZone();
     assertEquals(10, exZones.length, "Exergy array should match zone count");
     for (int z = 0; z < exZones.length; z++) {
-      assertTrue(exZones[z] >= 0.0,
-          "Per-zone exergy destruction should be non-negative at zone " + z);
+      assertTrue(exZones[z] >= 0.0, "Per-zone exergy destruction should be non-negative at zone " + z);
     }
 
     int mitaZ = lngHX.getMITAZoneIndex();
@@ -193,8 +189,7 @@ class LNGHeatExchangerTest {
     double[][] hotCurve = hx.getHotCompositeCurve();
     assertNotNull(hotCurve);
     // With adaptive refinement, at least the original 11 points
-    assertTrue(hotCurve.length >= 11,
-        "Adaptive refinement should produce >= 11 points, got: " + hotCurve.length);
+    assertTrue(hotCurve.length >= 11, "Adaptive refinement should produce >= 11 points, got: " + hotCurve.length);
 
     double mita = hx.getMITA();
     assertTrue(mita >= 0.0, "MITA should be non-negative after adaptive refinement");
@@ -218,8 +213,7 @@ class LNGHeatExchangerTest {
     assertEquals(0.003, fin.getStripLength(), 1e-6);
 
     // Test constructor with parameters
-    LNGHeatExchanger.FinGeometry fin2 =
-        new LNGHeatExchanger.FinGeometry(0.008, 0.002, 0.0004, 0.004);
+    LNGHeatExchanger.FinGeometry fin2 = new LNGHeatExchanger.FinGeometry(0.008, 0.002, 0.0004, 0.004);
     assertEquals(0.008, fin2.getFinHeight(), 1e-6);
     assertEquals(0.002, fin2.getFinPitch(), 1e-6);
 
@@ -309,8 +303,7 @@ class LNGHeatExchangerTest {
 
     // Metal temperature should decrease over time
     LNGHeatExchanger.TransientPoint tLast = results.get(results.size() - 1);
-    assertTrue(tLast.metalTempC < 20.0,
-        "Metal temp should decrease during cool-down, got: " + tLast.metalTempC);
+    assertTrue(tLast.metalTempC < 20.0, "Metal temp should decrease during cool-down, got: " + tLast.metalTempC);
   }
 
   // ══════════════════════════════════════════════════════════════════
@@ -342,8 +335,7 @@ class LNGHeatExchangerTest {
     assertTrue(core.getWidth() > 0.0, "Core width should be positive, got: " + core.getWidth());
     assertTrue(core.getHeight() > 0.0, "Core height should be positive, got: " + core.getHeight());
     assertTrue(core.getWeight() > 0.0, "Core weight should be positive, got: " + core.getWeight());
-    assertTrue(core.getNumberOfLayers() >= 1,
-        "Layer count should be >= 1, got: " + core.getNumberOfLayers());
+    assertTrue(core.getNumberOfLayers() >= 1, "Layer count should be >= 1, got: " + core.getNumberOfLayers());
     assertTrue(core.getVolume() > 0.0, "Core volume should be positive, got: " + core.getVolume());
 
     // Reasonable ranges for LNG MCHE (roughly)
@@ -352,7 +344,7 @@ class LNGHeatExchangerTest {
 
     // Core thermal mass should be set after sizing
     assertTrue(hx.getCoreThermalMass() > 0.0,
-        "Thermal mass should be set after sizing, got: " + hx.getCoreThermalMass());
+	"Thermal mass should be set after sizing, got: " + hx.getCoreThermalMass());
   }
 
   // ══════════════════════════════════════════════════════════════════
@@ -440,7 +432,7 @@ class LNGHeatExchangerTest {
 
     // MITA with maldistribution should be tighter (smaller or equal)
     assertTrue(mitaMaldist <= mitaIdeal + 0.01,
-        "Maldistribution should not increase MITA: ideal=" + mitaIdeal + " maldist=" + mitaMaldist);
+	"Maldistribution should not increase MITA: ideal=" + mitaIdeal + " maldist=" + mitaMaldist);
   }
 
   // ══════════════════════════════════════════════════════════════════
@@ -501,8 +493,7 @@ class LNGHeatExchangerTest {
     hx.assessMercuryRisk(15.0);
     assertTrue(hx.isMercuryRiskPresent(), "15 ppb should trigger risk for BAHX");
     assertFalse(hx.getMercuryRiskMessage().isEmpty());
-    assertTrue(hx.getMercuryRiskMessage().contains("CRITICAL"),
-        "Risk message should mention CRITICAL");
+    assertTrue(hx.getMercuryRiskMessage().contains("CRITICAL"), "Risk message should mention CRITICAL");
   }
 
   // ══════════════════════════════════════════════════════════════════
@@ -579,13 +570,11 @@ class LNGHeatExchangerTest {
 
     logger.info("Full integration test passed:");
     logger.info("  MITA = " + String.format("%.2f", hx.getMITA()) + " C");
-    System.out
-        .println("  eta_II = " + String.format("%.1f", hx.getSecondLawEfficiency() * 100) + " %");
-    logger.info("  Core: " + String.format("%.1f x %.1f x %.1f m", sized.getLength(),
-        sized.getWidth(), sized.getHeight()));
+    System.out.println("  eta_II = " + String.format("%.1f", hx.getSecondLawEfficiency() * 100) + " %");
+    logger.info(
+	"  Core: " + String.format("%.1f x %.1f x %.1f m", sized.getLength(), sized.getWidth(), sized.getHeight()));
     logger.info("  Weight: " + String.format("%.0f", sized.getWeight()) + " kg");
-    System.out
-        .println("  Thermal mass: " + String.format("%.0f", hx.getCoreThermalMass()) + " kJ/K");
+    System.out.println("  Thermal mass: " + String.format("%.0f", hx.getCoreThermalMass()) + " kJ/K");
     logger.info("  Cool-down steps: " + transientPts.size());
   }
 
@@ -624,28 +613,24 @@ class LNGHeatExchangerTest {
     mechDesign.calcDesign();
 
     // Wall thicknesses should be positive
-    assertTrue(mechDesign.getRequiredPartingSheetThicknessMm() > 0.0,
-        "Parting sheet thickness should be positive");
-    assertTrue(mechDesign.getRequiredHeaderThicknessMm() > 0.0,
-        "Header thickness should be positive");
-    assertTrue(mechDesign.getRequiredNozzleThicknessMm() > 0.0,
-        "Nozzle thickness should be positive");
+    assertTrue(mechDesign.getRequiredPartingSheetThicknessMm() > 0.0, "Parting sheet thickness should be positive");
+    assertTrue(mechDesign.getRequiredHeaderThicknessMm() > 0.0, "Header thickness should be positive");
+    assertTrue(mechDesign.getRequiredNozzleThicknessMm() > 0.0, "Nozzle thickness should be positive");
 
     // Weights should be positive
     assertTrue(mechDesign.getCoreWeightKg() > 0.0,
-        "Core weight should be positive, got: " + mechDesign.getCoreWeightKg());
+	"Core weight should be positive, got: " + mechDesign.getCoreWeightKg());
     assertTrue(mechDesign.getWeightTotal() > 0.0,
-        "Total weight should be positive, got: " + mechDesign.getWeightTotal());
-    assertTrue(mechDesign.getWeightTotal() > mechDesign.getCoreWeightKg(),
-        "Total weight should exceed core weight");
+	"Total weight should be positive, got: " + mechDesign.getWeightTotal());
+    assertTrue(mechDesign.getWeightTotal() > mechDesign.getCoreWeightKg(), "Total weight should exceed core weight");
 
     // Core dimensions from LNGHeatExchanger
     assertTrue(mechDesign.getCoreLengthM() > 0.0,
-        "Core length should be positive, got: " + mechDesign.getCoreLengthM());
+	"Core length should be positive, got: " + mechDesign.getCoreLengthM());
 
     // Heat transfer area should be positive
     assertTrue(mechDesign.getHeatTransferAreaM2() > 0.0,
-        "HT area should be positive, got: " + mechDesign.getHeatTransferAreaM2());
+	"HT area should be positive, got: " + mechDesign.getHeatTransferAreaM2());
 
     // Material grades
     assertEquals("3003-H14", mechDesign.getCoreMaterialGrade());
@@ -660,8 +645,7 @@ class LNGHeatExchangerTest {
     assertTrue(json.contains("weights"));
 
     logger.info("BAHX Mechanical Design:");
-    logger.info("  Parting sheet: "
-        + String.format("%.2f mm", mechDesign.getRequiredPartingSheetThicknessMm()));
+    logger.info("  Parting sheet: " + String.format("%.2f mm", mechDesign.getRequiredPartingSheetThicknessMm()));
     logger.info("  Header: " + String.format("%.2f mm", mechDesign.getRequiredHeaderThicknessMm()));
     logger.info("  Core weight: " + String.format("%.0f kg", mechDesign.getCoreWeightKg()));
     logger.info("  Total weight: " + String.format("%.0f kg", mechDesign.getWeightTotal()));
@@ -708,13 +692,12 @@ class LNGHeatExchangerTest {
     // Specific cost typical range for BAHX: $200-3000/m2
     double specificCost = costEstimator.getSpecificCostPerM2();
     assertTrue(specificCost > 50.0 && specificCost < 10000.0,
-        "Specific cost should be in reasonable range, got: " + specificCost + " $/m2");
+	"Specific cost should be in reasonable range, got: " + specificCost + " $/m2");
 
     // Annual maintenance
     double maintenance = costEstimator.getAnnualMaintenanceCostUSD();
     assertTrue(maintenance > 0.0, "Maintenance cost should be positive");
-    assertTrue(maintenance < equipmentCost,
-        "Annual maintenance should be less than full equipment cost");
+    assertTrue(maintenance < equipmentCost, "Annual maintenance should be less than full equipment cost");
 
     // Cost breakdown
     Map<String, Object> breakdown = costEstimator.getCostBreakdown();
@@ -768,8 +751,8 @@ class LNGHeatExchangerTest {
     // Verdict
     String verdict = report.getVerdict();
     assertNotNull(verdict, "Verdict should not be null");
-    assertTrue("FEASIBLE".equals(verdict) || "FEASIBLE_WITH_WARNINGS".equals(verdict)
-        || "NOT_FEASIBLE".equals(verdict), "Verdict should be a valid value, got: " + verdict);
+    assertTrue("FEASIBLE".equals(verdict) || "FEASIBLE_WITH_WARNINGS".equals(verdict) || "NOT_FEASIBLE".equals(verdict),
+	"Verdict should be a valid value, got: " + verdict);
 
     // Costs should be computed
     double pec = report.getPurchasedEquipmentCostUSD();
@@ -781,8 +764,7 @@ class LNGHeatExchangerTest {
     // Mechanical design should exist
     MechanicalDesign mechDesign = report.getMechanicalDesign();
     assertNotNull(mechDesign, "Mechanical design should be created");
-    assertTrue(mechDesign instanceof BAHXMechanicalDesign,
-        "Should create BAHXMechanicalDesign for LNG exchanger");
+    assertTrue(mechDesign instanceof BAHXMechanicalDesign, "Should create BAHXMechanicalDesign for LNG exchanger");
 
     // Issues list
     List<HeatExchangerDesignFeasibilityReport.FeasibilityIssue> issues = report.getIssues();
@@ -840,8 +822,7 @@ class LNGHeatExchangerTest {
 
     String verdict = report.getVerdict();
     assertNotNull(verdict);
-    assertTrue(report.getPurchasedEquipmentCostUSD() > 0.0,
-        "Cost should be positive from convenience method");
+    assertTrue(report.getPurchasedEquipmentCostUSD() > 0.0, "Cost should be positive from convenience method");
 
     logger.info("Convenience report verdict: " + verdict);
   }

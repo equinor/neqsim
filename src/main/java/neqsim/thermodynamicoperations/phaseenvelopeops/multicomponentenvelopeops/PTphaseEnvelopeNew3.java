@@ -42,16 +42,16 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
    * Constructor for PTphaseEnvelopeNew3.
    * </p>
    *
-   * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param minPressure a double
-   * @param maxPressure a double
-   * @param minTemp a double
-   * @param maxTemp a double
+   * @param system       a {@link neqsim.thermo.system.SystemInterface} object
+   * @param minPressure  a double
+   * @param maxPressure  a double
+   * @param minTemp      a double
+   * @param maxTemp      a double
    * @param pressureStep a double
-   * @param tempStep a double
+   * @param tempStep     a double
    */
-  public PTphaseEnvelopeNew3(SystemInterface system, double minPressure, double maxPressure,
-      double minTemp, double maxTemp, double pressureStep, double tempStep) {
+  public PTphaseEnvelopeNew3(SystemInterface system, double minPressure, double maxPressure, double minTemp,
+      double maxTemp, double pressureStep, double tempStep) {
     this.system = system;
     this.minPressure = minPressure;
     this.maxPressure = maxPressure;
@@ -80,8 +80,8 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
    * </p>
    */
   public void coarse() {
-    neqsim.thermodynamicoperations.ThermodynamicOperations testOps =
-        new neqsim.thermodynamicoperations.ThermodynamicOperations(system);
+    neqsim.thermodynamicoperations.ThermodynamicOperations testOps = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+	system);
     int nP = (int) Math.round((maxPressure - minPressure) / pressureStep) + 1;
     int nT = (int) Math.round((maxTemp - minTemp) / tempStep) + 1;
     betta = new double[nT][nP];
@@ -96,76 +96,73 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
 
     for (int j = 0; j < nT; j++) {
       for (int i = 0; i < nP; i++) {
-        // System.out.println("Flash calc at i = " + i + ", j = " + j);
-        system.setPressure(pressures[i], "bara");
-        system.setTemperature(temperatures[j], "C");
-        try {
-          testOps.TPflash();
-        } catch (Exception e) {
-          // System.err
-          // .println("Flash failed at P=" + pressures[i] + " bara, T=" + temperatures[j] + " C");
-          betta[j][i] = Double.NaN;
-          continue;
-        }
-        betta[j][i] = system.getBeta();
-        // System.out.println("Calculating phase at P=" + pressures[i] + " bara, T=" +
-        // temperatures[j]
-        // + " C" + " betta=" + betta[j][i]);
+	// System.out.println("Flash calc at i = " + i + ", j = " + j);
+	system.setPressure(pressures[i], "bara");
+	system.setTemperature(temperatures[j], "C");
+	try {
+	  testOps.TPflash();
+	} catch (Exception e) {
+	  // System.err
+	  // .println("Flash failed at P=" + pressures[i] + " bara, T=" + temperatures[j] + " C");
+	  betta[j][i] = Double.NaN;
+	  continue;
+	}
+	betta[j][i] = system.getBeta();
+	// System.out.println("Calculating phase at P=" + pressures[i] + " bara, T=" +
+	// temperatures[j]
+	// + " C" + " betta=" + betta[j][i]);
       }
     }
   }
 
   /**
-   * Scan each pressure for betta transitions, refine with smaller step and bisection, and store all
-   * transition points.
+   * Scan each pressure for betta transitions, refine with smaller step and bisection, and store all transition points.
    */
   public void findBettaTransitionsAndRefine() {
-    neqsim.thermodynamicoperations.ThermodynamicOperations testOps =
-        new neqsim.thermodynamicoperations.ThermodynamicOperations(system);
+    neqsim.thermodynamicoperations.ThermodynamicOperations testOps = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+	system);
     for (int i = 0; i < pressures.length; i++) {
       for (int j = 1; j < temperatures.length; j++) {
-        double bettaPrev = betta[j - 1][i];
-        double bettaCurr = betta[j][i];
-        if (Double.isNaN(bettaPrev) || Double.isNaN(bettaCurr)) {
-          continue;
-        }
-        // Look for transition from >=1 to <1 or <1 to >=1
-        if ((bettaPrev >= 1.0 && bettaCurr < 1.0) || (bettaPrev < 1.0 && bettaCurr >= 1.0)) {
-          double tLow = temperatures[j - 1];
-          double tHigh = temperatures[j];
-          // Expand window ±10%
+	double bettaPrev = betta[j - 1][i];
+	double bettaCurr = betta[j][i];
+	if (Double.isNaN(bettaPrev) || Double.isNaN(bettaCurr)) {
+	  continue;
+	}
+	// Look for transition from >=1 to <1 or <1 to >=1
+	if ((bettaPrev >= 1.0 && bettaCurr < 1.0) || (bettaPrev < 1.0 && bettaCurr >= 1.0)) {
+	  double tLow = temperatures[j - 1];
+	  double tHigh = temperatures[j];
+	  // Expand window ±10%
 
-          double tStart = tLow;
-          double tEnd = tHigh;
-          // Bisection method to find transition temperature at this pressure
-          double p = pressures[i];
-          double tTransition =
-              bisectionBettaTransition(testOps, p, tStart, tEnd, 0.9999999, 1e-8, 5);
-          // System.out.println("Found transition at P=" + p + " bara, T=" + tTransition);
+	  double tStart = tLow;
+	  double tEnd = tHigh;
+	  // Bisection method to find transition temperature at this pressure
+	  double p = pressures[i];
+	  double tTransition = bisectionBettaTransition(testOps, p, tStart, tEnd, 0.9999999, 1e-8, 5);
+	  // System.out.println("Found transition at P=" + p + " bara, T=" + tTransition);
 
-          if (!Double.isNaN(tTransition)) {
-            system.setPressure(p, "bara");
-            system.setTemperature(tTransition, "C");
-            double bettaVal;
-            try {
-              testOps.TPflash();
-              bettaVal = system.getBeta();
-            } catch (Exception e) {
-              bettaVal = Double.NaN;
-            }
-            refinedTransitionPoints.add(new double[] {p, tTransition, bettaVal});
-            pressurePhaseEnvelope.add(p);
-            temperaturePhaseEnvelope.add(tTransition);
-          }
-        }
+	  if (!Double.isNaN(tTransition)) {
+	    system.setPressure(p, "bara");
+	    system.setTemperature(tTransition, "C");
+	    double bettaVal;
+	    try {
+	      testOps.TPflash();
+	      bettaVal = system.getBeta();
+	    } catch (Exception e) {
+	      bettaVal = Double.NaN;
+	    }
+	    refinedTransitionPoints.add(new double[] { p, tTransition, bettaVal });
+	    pressurePhaseEnvelope.add(p);
+	    temperaturePhaseEnvelope.add(tTransition);
+	  }
+	}
       }
     }
   }
 
   // Bisection method to find temperature where betta crosses 1.0 at given pressure
-  private double bisectionBettaTransition(
-      neqsim.thermodynamicoperations.ThermodynamicOperations testOps, double pressure, double tLow,
-      double tHigh, double target, double tol, int maxIter) {
+  private double bisectionBettaTransition(neqsim.thermodynamicoperations.ThermodynamicOperations testOps,
+      double pressure, double tLow, double tHigh, double target, double tol, int maxIter) {
     double fLow = getBettaAt(testOps, pressure, tLow) - target;
     double fHigh = getBettaAt(testOps, pressure, tHigh) - target;
     if (Double.isNaN(fLow) || Double.isNaN(fHigh) || fLow * fHigh > 0) {
@@ -175,25 +172,25 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
       double tMid = 0.5 * (tLow + tHigh);
       double fMid = getBettaAt(testOps, pressure, tMid) - target;
       if (Double.isNaN(fMid)) {
-        return Double.NaN;
+	return Double.NaN;
       }
       if (Math.abs(fMid) < tol) {
-        return tMid;
+	return tMid;
       }
       if (fLow * fMid < 0) {
-        tHigh = tMid;
-        fHigh = fMid;
+	tHigh = tMid;
+	fHigh = fMid;
       } else {
-        tLow = tMid;
-        fLow = fMid;
+	tLow = tMid;
+	fLow = fMid;
       }
     }
     return 0.5 * (tLow + tHigh);
   }
 
   // Helper to get betta at given P, T
-  private double getBettaAt(neqsim.thermodynamicoperations.ThermodynamicOperations testOps,
-      double pressure, double temperature) {
+  private double getBettaAt(neqsim.thermodynamicoperations.ThermodynamicOperations testOps, double pressure,
+      double temperature) {
     system.setPressure(pressure, "bara");
     system.setTemperature(temperature, "C");
     try {

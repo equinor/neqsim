@@ -21,8 +21,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Integration tests for simultaneous modular solving and sensitivity-based tear stream selection
- * using large, realistic process simulations.
+ * Integration tests for simultaneous modular solving and sensitivity-based tear stream selection using large, realistic
+ * process simulations.
  */
 class SimultaneousSolvingIntegrationTest {
   private static final Logger logger = LogManager.getLogger(SimultaneousSolvingIntegrationTest.class);
@@ -86,8 +86,7 @@ class SimultaneousSolvingIntegrationTest {
     process.add(inletCooler);
 
     // Inlet separator
-    ThreePhaseSeparator inletSeparator =
-        new ThreePhaseSeparator("Inlet Separator", inletCooler.getOutletStream());
+    ThreePhaseSeparator inletSeparator = new ThreePhaseSeparator("Inlet Separator", inletCooler.getOutletStream());
     process.add(inletSeparator);
 
     // Gas heater before compression
@@ -112,7 +111,7 @@ class SimultaneousSolvingIntegrationTest {
 
     // Splitter - split some gas for recycle
     Splitter gasSplitter = new Splitter("Gas Splitter", hpSeparator.getGasOutStream());
-    gasSplitter.setSplitFactors(new double[] {0.9, 0.1});
+    gasSplitter.setSplitFactors(new double[] { 0.9, 0.1 });
     process.add(gasSplitter);
 
     // Product gas - use StreamInterface
@@ -165,7 +164,7 @@ class SimultaneousSolvingIntegrationTest {
     double feedFlow = feedGas.getFlowRate("kg/hr");
     double productFlow = productGas.getFlowRate("kg/hr");
     double liquidFlow = inletSeparator.getLiquidOutStream().getFlowRate("kg/hr")
-        + hpSeparator.getLiquidOutStream().getFlowRate("kg/hr");
+	+ hpSeparator.getLiquidOutStream().getFlowRate("kg/hr");
 
     logger.info("\nMass Balance:");
     logger.info("  Feed: " + String.format("%.2f", feedFlow) + " kg/hr");
@@ -250,7 +249,7 @@ class SimultaneousSolvingIntegrationTest {
 
     // Split for recycle 1 (anti-surge first stage)
     Splitter splitter1 = new Splitter("Anti-surge Splitter 1", finalSeparator.getGasOutStream());
-    splitter1.setSplitFactors(new double[] {0.95, 0.05});
+    splitter1.setSplitFactors(new double[] { 0.95, 0.05 });
     process.add(splitter1);
 
     // JT valve for first recycle
@@ -269,7 +268,7 @@ class SimultaneousSolvingIntegrationTest {
 
     // Split for recycle 2 (anti-surge second stage)
     Splitter splitter2 = new Splitter("Anti-surge Splitter 2", splitter1.getSplitStream(0));
-    splitter2.setSplitFactors(new double[] {0.98, 0.02});
+    splitter2.setSplitFactors(new double[] { 0.98, 0.02 });
     process.add(splitter2);
 
     // JT valve for second recycle
@@ -437,10 +436,8 @@ class SimultaneousSolvingIntegrationTest {
     long broydenTime = runCompressionWithMethod(AccelerationMethod.BROYDEN);
     logger.info("Broyden: " + broydenTime + " ms");
 
-    logger.info(
-        "\nSpeedup Wegstein vs DS: " + String.format("%.2fx", (double) dsTime / wegsteinTime));
-    System.out
-        .println("Speedup Broyden vs DS: " + String.format("%.2fx", (double) dsTime / broydenTime));
+    logger.info("\nSpeedup Wegstein vs DS: " + String.format("%.2fx", (double) dsTime / wegsteinTime));
+    System.out.println("Speedup Broyden vs DS: " + String.format("%.2fx", (double) dsTime / broydenTime));
 
     logger.info("=======================================================\n");
   }
@@ -478,7 +475,7 @@ class SimultaneousSolvingIntegrationTest {
     process.add(separator);
 
     Splitter splitter = new Splitter("Splitter", separator.getGasOutStream());
-    splitter.setSplitFactors(new double[] {0.9, 0.1});
+    splitter.setSplitFactors(new double[] { 0.9, 0.1 });
     process.add(splitter);
 
     ThrottlingValve valve = new ThrottlingValve("Valve", splitter.getSplitStream(1));
@@ -496,8 +493,7 @@ class SimultaneousSolvingIntegrationTest {
     process.run();
     long endTime = System.currentTimeMillis();
 
-    logger.info("  " + method + ": " + recycle.getIterations() + " iterations, " + "converged="
-        + recycle.solved());
+    logger.info("  " + method + ": " + recycle.getIterations() + " iterations, " + "converged=" + recycle.solved());
 
     return endTime - startTime;
   }

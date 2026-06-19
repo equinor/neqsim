@@ -6,27 +6,27 @@ import java.util.Map;
 import com.google.gson.GsonBuilder;
 
 /**
- * Predicts multiphase flow regime from pipe flow conditions and generates the corresponding inlet
- * droplet size distribution for separator design.
+ * Predicts multiphase flow regime from pipe flow conditions and generates the corresponding inlet droplet size
+ * distribution for separator design.
  *
  * <p>
- * Flow regime prediction uses the Mandhane-Gregory-Aziz (1974) map for horizontal pipes and the
- * Taitel-Dukler-Barnea (1980) criteria for vertical pipes. The flow regime at the separator inlet
- * fundamentally determines the initial droplet size distribution that the separator must handle.
+ * Flow regime prediction uses the Mandhane-Gregory-Aziz (1974) map for horizontal pipes and the Taitel-Dukler-Barnea
+ * (1980) criteria for vertical pipes. The flow regime at the separator inlet fundamentally determines the initial
+ * droplet size distribution that the separator must handle.
  * </p>
  *
  * <p>
  * <b>Flow regime to DSD mapping</b> (open literature correlations):
  * </p>
  * <ul>
- * <li><b>Stratified / Wavy</b> — Large wave-entrained droplets. d_max from Kelvin-Helmholtz
- * instability, Ishii and Grolmes (1975).</li>
- * <li><b>Annular / Mist</b> — Fine atomized droplets from film stripping. Azzopardi (1997)
- * correlation for d_32 in annular flow.</li>
- * <li><b>Slug</b> — Bimodal distribution: coarse from slug body + fine from gas pocket. Fernandes
- * et al. (1983) slug unit model.</li>
- * <li><b>Bubble / Dispersed Bubble</b> — Hinze (1955) breakup model for bubbles in continuous
- * liquid. Small gas void fraction.</li>
+ * <li><b>Stratified / Wavy</b> — Large wave-entrained droplets. d_max from Kelvin-Helmholtz instability, Ishii and
+ * Grolmes (1975).</li>
+ * <li><b>Annular / Mist</b> — Fine atomized droplets from film stripping. Azzopardi (1997) correlation for d_32 in
+ * annular flow.</li>
+ * <li><b>Slug</b> — Bimodal distribution: coarse from slug body + fine from gas pocket. Fernandes et al. (1983) slug
+ * unit model.</li>
+ * <li><b>Bubble / Dispersed Bubble</b> — Hinze (1955) breakup model for bubbles in continuous liquid. Small gas void
+ * fraction.</li>
  * <li><b>Churn</b> — Intermediate between slug and annular. Uses Ishii-Zuber (1979) model.</li>
  * </ul>
  *
@@ -34,16 +34,15 @@ import com.google.gson.GsonBuilder;
  * <b>References:</b>
  * </p>
  * <ul>
- * <li>Mandhane, J.M., Gregory, G.A., Aziz, K. (1974), "A flow pattern map for gas-liquid flow in
- * horizontal pipes", <i>Int. J. Multiphase Flow</i>, 1, 537-553.</li>
- * <li>Taitel, Y., Bornea, D., Dukler, A.E. (1980), "Modelling flow pattern transitions for steady
- * upward gas-liquid flow in vertical tubes", <i>AIChE J.</i>, 26(3), 345-354.</li>
- * <li>Azzopardi, B.J. (1997), "Drops in annular two-phase flow", <i>Int. J. Multiphase Flow</i>,
- * 23(Suppl.), 1-53.</li>
- * <li>Ishii, M., Grolmes, M.A. (1975), "Inception criteria for droplet entrainment in two-phase
- * concurrent film flow", <i>AIChE J.</i>, 21(2), 308-318.</li>
- * <li>Hinze, J.O. (1955), "Fundamentals of the hydrodynamic mechanism of splitting in dispersion
- * processes", <i>AIChE J.</i>, 1(3), 289-295.</li>
+ * <li>Mandhane, J.M., Gregory, G.A., Aziz, K. (1974), "A flow pattern map for gas-liquid flow in horizontal pipes",
+ * <i>Int. J. Multiphase Flow</i>, 1, 537-553.</li>
+ * <li>Taitel, Y., Bornea, D., Dukler, A.E. (1980), "Modelling flow pattern transitions for steady upward gas-liquid
+ * flow in vertical tubes", <i>AIChE J.</i>, 26(3), 345-354.</li>
+ * <li>Azzopardi, B.J. (1997), "Drops in annular two-phase flow", <i>Int. J. Multiphase Flow</i>, 23(Suppl.), 1-53.</li>
+ * <li>Ishii, M., Grolmes, M.A. (1975), "Inception criteria for droplet entrainment in two-phase concurrent film flow",
+ * <i>AIChE J.</i>, 21(2), 308-318.</li>
+ * <li>Hinze, J.O. (1955), "Fundamentals of the hydrodynamic mechanism of splitting in dispersion processes", <i>AIChE
+ * J.</i>, 1(3), 289-295.</li>
  * </ul>
  *
  * @author NeqSim team
@@ -133,8 +132,8 @@ public class MultiphaseFlowRegime implements Serializable {
    * Predicts the flow regime based on the current input parameters.
    *
    * <p>
-   * Uses the Mandhane-Gregory-Aziz (1974) map for horizontal flow and Taitel-Dukler-Barnea (1980)
-   * criteria for vertical flow.
+   * Uses the Mandhane-Gregory-Aziz (1974) map for horizontal flow and Taitel-Dukler-Barnea (1980) criteria for vertical
+   * flow.
    * </p>
    */
   public void predict() {
@@ -150,8 +149,7 @@ public class MultiphaseFlowRegime implements Serializable {
    * Predicts horizontal flow regime using simplified Mandhane-Gregory-Aziz (1974) boundaries.
    *
    * <p>
-   * The map uses superficial gas and liquid velocities (V_sg, V_sl) with boundaries corrected for
-   * fluid properties.
+   * The map uses superficial gas and liquid velocities (V_sg, V_sl) with boundaries corrected for fluid properties.
    * </p>
    *
    * @return predicted flow regime
@@ -171,17 +169,17 @@ public class MultiphaseFlowRegime implements Serializable {
     if (vsl < 0.01) {
       // Very low liquid rate — stratified
       if (vsg < 3.0) {
-        return FlowRegime.STRATIFIED_SMOOTH;
+	return FlowRegime.STRATIFIED_SMOOTH;
       } else if (vsg < 8.0) {
-        return FlowRegime.STRATIFIED_WAVY;
+	return FlowRegime.STRATIFIED_WAVY;
       } else {
-        return FlowRegime.ANNULAR;
+	return FlowRegime.ANNULAR;
       }
     }
 
     if (vsl > 3.0) {
       if (vsg > 10.0) {
-        return FlowRegime.ANNULAR_MIST;
+	return FlowRegime.ANNULAR_MIST;
       }
       return FlowRegime.DISPERSED_BUBBLE;
     }
@@ -196,7 +194,7 @@ public class MultiphaseFlowRegime implements Serializable {
 
     if (vsg < 15.0) {
       if (vsl < 0.1) {
-        return FlowRegime.STRATIFIED_WAVY;
+	return FlowRegime.STRATIFIED_WAVY;
       }
       return FlowRegime.SLUG;
     }
@@ -234,8 +232,7 @@ public class MultiphaseFlowRegime implements Serializable {
     double vSlugChurn = 1.0 * Math.sqrt(G * pipeDiameter);
 
     // Churn to annular transition (Kutateladze criterion)
-    double kutateladze =
-        3.1 * Math.pow(surfaceTension * G * deltaRho / (gasDensity * gasDensity), 0.25);
+    double kutateladze = 3.1 * Math.pow(surfaceTension * G * deltaRho / (gasDensity * gasDensity), 0.25);
 
     // Dispersed bubble boundary (high liquid rate)
     double reMix = liquidDensity * (vsg + vsl) * pipeDiameter / liquidViscosity;
@@ -268,9 +265,8 @@ public class MultiphaseFlowRegime implements Serializable {
    * Generates the expected inlet droplet size distribution for a given flow regime.
    *
    * <p>
-   * Each flow regime produces a characteristic DSD based on the dominant droplet formation
-   * mechanism. Uses open-literature correlations from Azzopardi (1997), Ishii and Grolmes (1975),
-   * and Hinze (1955).
+   * Each flow regime produces a characteristic DSD based on the dominant droplet formation mechanism. Uses
+   * open-literature correlations from Azzopardi (1997), Ishii and Grolmes (1975), and Hinze (1955).
    * </p>
    *
    * @param regime the predicted flow regime
@@ -282,23 +278,23 @@ public class MultiphaseFlowRegime implements Serializable {
     }
 
     switch (regime) {
-      case STRATIFIED_SMOOTH:
-      case STRATIFIED_WAVY:
-        return generateStratifiedDSD();
-      case ANNULAR:
-      case ANNULAR_MIST:
-        return generateAnnularDSD();
-      case SLUG:
-        return generateSlugDSD();
-      case CHURN:
-        return generateChurnDSD();
-      case PLUG:
-        return generatePlugDSD();
-      case DISPERSED_BUBBLE:
-      case BUBBLE:
-        return generateBubbleDSD();
-      default:
-        return DropletSizeDistribution.rosinRammler(100e-6, 2.6);
+    case STRATIFIED_SMOOTH:
+    case STRATIFIED_WAVY:
+      return generateStratifiedDSD();
+    case ANNULAR:
+    case ANNULAR_MIST:
+      return generateAnnularDSD();
+    case SLUG:
+      return generateSlugDSD();
+    case CHURN:
+      return generateChurnDSD();
+    case PLUG:
+      return generatePlugDSD();
+    case DISPERSED_BUBBLE:
+    case BUBBLE:
+      return generateBubbleDSD();
+    default:
+      return DropletSizeDistribution.rosinRammler(100e-6, 2.6);
     }
   }
 
@@ -306,16 +302,15 @@ public class MultiphaseFlowRegime implements Serializable {
    * Generates DSD for stratified flow — large drops from wave entrainment.
    *
    * <p>
-   * Uses the Ishii-Grolmes (1975) entrainment onset model. Drops are coarse (100-1000 um) with wide
-   * spread. Weber number at the interface determines max droplet size.
+   * Uses the Ishii-Grolmes (1975) entrainment onset model. Drops are coarse (100-1000 um) with wide spread. Weber
+   * number at the interface determines max droplet size.
    * </p>
    *
    * @return DSD for stratified regime
    */
   private DropletSizeDistribution generateStratifiedDSD() {
     // Interface Weber number: We = rho_g * V_g^2 * D / sigma
-    double weberNumber = gasDensity * gasSuperficialVelocity * gasSuperficialVelocity * pipeDiameter
-        / surfaceTension;
+    double weberNumber = gasDensity * gasSuperficialVelocity * gasSuperficialVelocity * pipeDiameter / surfaceTension;
 
     // Ishii-Grolmes: d_max = C * We^(-0.6) * D
     // For stratified flow, use larger constant due to wave entrainment
@@ -337,15 +332,14 @@ public class MultiphaseFlowRegime implements Serializable {
    * $$ \frac{d_{32}}{D} = k \cdot We^{-0.6} \cdot Re_l^{0.1} $$
    *
    * <p>
-   * where k = 0.069, We = rho_g * V_sg^2 * D / sigma, Re_l = rho_l * V_sl * D / mu_l. Azzopardi,
-   * B.J. (1997), <i>Int. J. Multiphase Flow</i>, 23(Suppl.), 1-53.
+   * where k = 0.069, We = rho_g * V_sg^2 * D / sigma, Re_l = rho_l * V_sl * D / mu_l. Azzopardi, B.J. (1997), <i>Int.
+   * J. Multiphase Flow</i>, 23(Suppl.), 1-53.
    * </p>
    *
    * @return DSD for annular regime
    */
   private DropletSizeDistribution generateAnnularDSD() {
-    double weberNumber = gasDensity * gasSuperficialVelocity * gasSuperficialVelocity * pipeDiameter
-        / surfaceTension;
+    double weberNumber = gasDensity * gasSuperficialVelocity * gasSuperficialVelocity * pipeDiameter / surfaceTension;
     double reLiquid = liquidDensity * liquidSuperficialVelocity * pipeDiameter / liquidViscosity;
     reLiquid = Math.max(reLiquid, 100.0); // Avoid zero
 
@@ -364,17 +358,15 @@ public class MultiphaseFlowRegime implements Serializable {
    * Generates DSD for slug flow — bimodal approximated as broad Rosin-Rammler.
    *
    * <p>
-   * Slug flow produces a bimodal DSD: coarse drops from slug front/body breakup and fine drops from
-   * the gas pocket (similar to annular). The combined DSD is approximated by a broad Rosin-Rammler
-   * with lower spread parameter.
+   * Slug flow produces a bimodal DSD: coarse drops from slug front/body breakup and fine drops from the gas pocket
+   * (similar to annular). The combined DSD is approximated by a broad Rosin-Rammler with lower spread parameter.
    * </p>
    *
    * @return DSD for slug regime
    */
   private DropletSizeDistribution generateSlugDSD() {
     // Slug flow: intermediate between stratified and annular
-    double weberNumber = gasDensity * gasSuperficialVelocity * gasSuperficialVelocity * pipeDiameter
-        / surfaceTension;
+    double weberNumber = gasDensity * gasSuperficialVelocity * gasSuperficialVelocity * pipeDiameter / surfaceTension;
 
     double dMax = 0.725 * Math.pow(Math.max(weberNumber, 1.0), -0.6) * pipeDiameter;
     dMax = Math.max(dMax, 30e-6);
@@ -388,15 +380,14 @@ public class MultiphaseFlowRegime implements Serializable {
    * Generates DSD for churn flow — intermediate between slug and annular.
    *
    * <p>
-   * Churn flow is chaotic with intense gas-liquid mixing, producing a DSD intermediate between slug
-   * and annular regimes. Uses the Ishii-Zuber (1979) entrainment model.
+   * Churn flow is chaotic with intense gas-liquid mixing, producing a DSD intermediate between slug and annular
+   * regimes. Uses the Ishii-Zuber (1979) entrainment model.
    * </p>
    *
    * @return DSD for churn regime
    */
   private DropletSizeDistribution generateChurnDSD() {
-    double weberNumber = gasDensity * gasSuperficialVelocity * gasSuperficialVelocity * pipeDiameter
-        / surfaceTension;
+    double weberNumber = gasDensity * gasSuperficialVelocity * gasSuperficialVelocity * pipeDiameter / surfaceTension;
 
     // Intermediate between slug and annular
     double dMax = 0.5 * Math.pow(Math.max(weberNumber, 1.0), -0.6) * pipeDiameter;
@@ -411,8 +402,8 @@ public class MultiphaseFlowRegime implements Serializable {
    * Generates DSD for plug flow — large gas bubbles, minimal entrainment.
    *
    * <p>
-   * Plug flow has elongated gas bubbles surrounded by liquid. Droplet entrainment is minimal. The
-   * "DSD" represents the small number of entrained droplets from bubble cap breakup.
+   * Plug flow has elongated gas bubbles surrounded by liquid. Droplet entrainment is minimal. The "DSD" represents the
+   * small number of entrained droplets from bubble cap breakup.
    * </p>
    *
    * @return DSD for plug regime
@@ -459,8 +450,7 @@ public class MultiphaseFlowRegime implements Serializable {
    * @return entrained liquid fraction [0-1]
    */
   public double calcEntrainedLiquidFraction() {
-    double weberNumber = gasDensity * gasSuperficialVelocity * gasSuperficialVelocity * pipeDiameter
-        / surfaceTension;
+    double weberNumber = gasDensity * gasSuperficialVelocity * gasSuperficialVelocity * pipeDiameter / surfaceTension;
     double reLiquid = liquidDensity * liquidSuperficialVelocity * pipeDiameter / liquidViscosity;
     reLiquid = Math.max(reLiquid, 1.0);
 
@@ -493,8 +483,7 @@ public class MultiphaseFlowRegime implements Serializable {
     }
     result.put("entrainedLiquidFraction", calcEntrainedLiquidFraction());
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(result);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(result);
   }
 
   // ----- Getters and Setters -----

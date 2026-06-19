@@ -9,9 +9,8 @@ import neqsim.process.mechanicaldesign.expander.ExpanderMechanicalDesign;
  * Cost estimation class for turboexpanders.
  *
  * <p>
- * This class provides expander-specific cost estimation methods using chemical engineering cost
- * correlations for radial inflow and axial turboexpanders used in gas processing, cryogenic, and
- * power recovery applications.
+ * This class provides expander-specific cost estimation methods using chemical engineering cost correlations for radial
+ * inflow and axial turboexpanders used in gas processing, cryogenic, and power recovery applications.
  * </p>
  *
  * <p>
@@ -86,7 +85,7 @@ public class ExpanderCostEstimate extends UnitCostEstimateBaseClass {
       ExpanderMechanicalDesign expMecDesign = (ExpanderMechanicalDesign) mechanicalEquipment;
       double power = expMecDesign.getPower();
       if (power > 0) {
-        return power;
+	return power;
       }
     }
     return manualShaftPower;
@@ -190,7 +189,7 @@ public class ExpanderCostEstimate extends UnitCostEstimateBaseClass {
     double power = getShaftPower();
     if (power <= 0) {
       if (mechanicalEquipment != null && mechanicalEquipment.getWeightTotal() > 0) {
-        return mechanicalEquipment.getWeightTotal() * 30.0; // Fallback based on weight
+	return mechanicalEquipment.getWeightTotal() * 30.0; // Fallback based on weight
       }
       return 0.0;
     }
@@ -343,7 +342,7 @@ public class ExpanderCostEstimate extends UnitCostEstimateBaseClass {
       // ~0.5 L/hr per 1000 kW, ~$3/L
       double power = 0.0;
       if (mechanicalEquipment != null) {
-        power = mechanicalEquipment.getPower();
+	power = mechanicalEquipment.getPower();
       }
       double lubeOilCost = power / 1000.0 * 0.5 * operatingHoursPerYear * 3.0;
       maintenanceCost += lubeOilCost;
@@ -356,7 +355,7 @@ public class ExpanderCostEstimate extends UnitCostEstimateBaseClass {
    * Calculate power generation revenue.
    *
    * @param operatingHoursPerYear operating hours per year
-   * @param electricityPrice electricity price in $/kWh
+   * @param electricityPrice      electricity price in $/kWh
    * @return annual revenue in USD
    */
   public double calcPowerGenerationRevenue(int operatingHoursPerYear, double electricityPrice) {

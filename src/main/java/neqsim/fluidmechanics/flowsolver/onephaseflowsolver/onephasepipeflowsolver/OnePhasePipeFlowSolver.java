@@ -19,8 +19,7 @@ import neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem.PipeFl
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class OnePhasePipeFlowSolver
-    extends neqsim.fluidmechanics.flowsolver.onephaseflowsolver.OnePhaseFlowSolver {
+public class OnePhasePipeFlowSolver extends neqsim.fluidmechanics.flowsolver.onephaseflowsolver.OnePhaseFlowSolver {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -43,18 +42,17 @@ public class OnePhasePipeFlowSolver
    * Constructor for OnePhasePipeFlowSolver.
    * </p>
    */
-  public OnePhasePipeFlowSolver() {}
+  public OnePhasePipeFlowSolver() {
+  }
 
   /**
    * <p>
    * Constructor for OnePhasePipeFlowSolver.
    * </p>
    *
-   * @param pipe a
-   *        {@link neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem.PipeFlowSystem}
-   *        object
+   * @param pipe   a {@link neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem.PipeFlowSystem} object
    * @param length a double
-   * @param nodes a int
+   * @param nodes  a int
    */
   public OnePhasePipeFlowSolver(PipeFlowSystem pipe, double length, int nodes) {
     this.pipe = pipe;
@@ -65,8 +63,7 @@ public class OnePhasePipeFlowSolver
     sol2Matrix = new Matrix(PbArray, 1).transpose();
     sol3Matrix = new Matrix(PbArray, 1).transpose();
     sol4Matrix = new Matrix[pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents()];
-    for (int k = 0; k < pipe.getNode(0).getBulkSystem().getPhases()[0]
-        .getNumberOfComponents(); k++) {
+    for (int k = 0; k < pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents(); k++) {
       sol4Matrix[k] = new Matrix(PbArray, 1).transpose();
     }
     a = new double[nodes];

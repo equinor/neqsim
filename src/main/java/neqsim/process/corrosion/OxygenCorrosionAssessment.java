@@ -12,8 +12,8 @@ import com.google.gson.GsonBuilder;
  * Oxygen corrosion assessment for injection water, utility water, and process systems.
  *
  * <p>
- * Evaluates corrosion risk from dissolved oxygen, including pitting potential and general corrosion
- * rate estimation. Provides treatment recommendations for oxygen removal/scavenging.
+ * Evaluates corrosion risk from dissolved oxygen, including pitting potential and general corrosion rate estimation.
+ * Provides treatment recommendations for oxygen removal/scavenging.
  * </p>
  *
  * <h2>Standards</h2>
@@ -108,7 +108,8 @@ public class OxygenCorrosionAssessment implements Serializable {
   /**
    * Default constructor.
    */
-  public OxygenCorrosionAssessment() {}
+  public OxygenCorrosionAssessment() {
+  }
 
   // ─── Setters ────────────────────────────────────────────
 
@@ -346,7 +347,7 @@ public class OxygenCorrosionAssessment implements Serializable {
     StringBuilder sb = new StringBuilder();
     for (int i = 0; i < treatments.size(); i++) {
       if (i > 0) {
-        sb.append("; ");
+	sb.append("; ");
       }
       sb.append(treatments.get(i));
     }
@@ -458,8 +459,7 @@ public class OxygenCorrosionAssessment implements Serializable {
    * @return JSON representation
    */
   public String toJson() {
-    Gson gson =
-        new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+    Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
     return gson.toJson(toMap());
   }
 }

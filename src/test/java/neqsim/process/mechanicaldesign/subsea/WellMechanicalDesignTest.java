@@ -84,8 +84,7 @@ public class WellMechanicalDesignTest {
     design.calcDesign();
 
     // Casing wall thicknesses must be positive
-    assertTrue(design.getProductionCasingWallThickness() > 0,
-        "Production casing wall thickness should be positive");
+    assertTrue(design.getProductionCasingWallThickness() > 0, "Production casing wall thickness should be positive");
     assertTrue(design.getTotalCasingWeight() > 0, "Total casing weight should be positive");
     assertTrue(design.getTotalTubingWeight() > 0, "Total tubing weight should be positive");
     assertTrue(design.getTotalCementVolume() > 0, "Total cement volume should be positive");
@@ -99,11 +98,9 @@ public class WellMechanicalDesignTest {
 
     // Design factors must meet minimum requirements
     assertTrue(design.getProductionCasingBurstDF() >= 1.10,
-        "Production casing burst DF must be >= 1.10 (NORSOK D-010)");
-    assertTrue(design.getProductionCasingCollapseDF() >= 1.00,
-        "Production casing collapse DF must be >= 1.00");
-    assertTrue(design.getProductionCasingTensionDF() >= 1.60,
-        "Production casing tension DF must be >= 1.60");
+	"Production casing burst DF must be >= 1.10 (NORSOK D-010)");
+    assertTrue(design.getProductionCasingCollapseDF() >= 1.00, "Production casing collapse DF must be >= 1.00");
+    assertTrue(design.getProductionCasingTensionDF() >= 1.60, "Production casing tension DF must be >= 1.60");
   }
 
   @Test
@@ -113,8 +110,7 @@ public class WellMechanicalDesignTest {
     design.calcDesign();
 
     // With proper barriers configured, verification should pass
-    assertTrue(design.isBarrierVerificationPassed(),
-        "Barrier verification should pass with proper configuration");
+    assertTrue(design.isBarrierVerificationPassed(), "Barrier verification should pass with proper configuration");
     assertNotNull(design.getBarrierNotes());
     assertTrue(design.getBarrierNotes().size() > 0, "Should have barrier verification notes");
   }
@@ -129,8 +125,7 @@ public class WellMechanicalDesignTest {
     WellMechanicalDesign design = (WellMechanicalDesign) well.getMechanicalDesign();
     design.calcDesign();
 
-    assertTrue(!design.isBarrierVerificationPassed(),
-        "Barrier verification should fail with insufficient barriers");
+    assertTrue(!design.isBarrierVerificationPassed(), "Barrier verification should fail with insufficient barriers");
   }
 
   @Test
@@ -147,7 +142,7 @@ public class WellMechanicalDesignTest {
 
     // Drilling should be the largest component
     assertTrue(design.getDrillingCostUSD() > design.getWellheadCostUSD(),
-        "Drilling cost should be larger than wellhead cost");
+	"Drilling cost should be larger than wellhead cost");
   }
 
   @Test
@@ -172,8 +167,7 @@ public class WellMechanicalDesignTest {
 
     List<Map<String, Object>> bom = design.generateBillOfMaterials();
     assertNotNull(bom);
-    assertTrue(bom.size() >= 5,
-        "BOM should have at least 5 items (casings, tubing, wellhead, DHSV, cement)");
+    assertTrue(bom.size() >= 5, "BOM should have at least 5 items (casings, tubing, wellhead, DHSV, cement)");
 
     // Check BOM item structure
     Map<String, Object> firstItem = bom.get(0);
@@ -240,12 +234,9 @@ public class WellMechanicalDesignTest {
     calc.calculateWeights();
     calc.calculateCementVolumes();
 
-    assertTrue(calc.getProductionCasingWallThickness() > 5.0,
-        "Wall thickness should be realistic (> 5mm)");
-    assertTrue(calc.getProductionCasingWallThickness() < 30.0,
-        "Wall thickness should be realistic (< 30mm)");
-    assertTrue(calc.getTotalCasingWeight() > 10.0,
-        "Casing weight should be > 10 tonnes for a 3800m well");
+    assertTrue(calc.getProductionCasingWallThickness() > 5.0, "Wall thickness should be realistic (> 5mm)");
+    assertTrue(calc.getProductionCasingWallThickness() < 30.0, "Wall thickness should be realistic (< 30mm)");
+    assertTrue(calc.getTotalCasingWeight() > 10.0, "Casing weight should be > 10 tonnes for a 3800m well");
     assertTrue(calc.getTotalCementVolume() > 0, "Cement volume should be positive");
     assertTrue(calc.getTotalCuttingsVolume() > 0, "Cuttings volume should be positive");
   }
@@ -270,8 +261,8 @@ public class WellMechanicalDesignTest {
   @Test
   public void testCostEstimatorOilProducer() {
     WellCostEstimator estimator = new WellCostEstimator();
-    estimator.calculateWellCost("OIL_PRODUCER", "SEMI_SUBMERSIBLE", "CASED_PERFORATED", 3800.0,
-        350.0, 45.0, 25.0, 0.0, true, 4);
+    estimator.calculateWellCost("OIL_PRODUCER", "SEMI_SUBMERSIBLE", "CASED_PERFORATED", 3800.0, 350.0, 45.0, 25.0, 0.0,
+	true, 4);
 
     assertTrue(estimator.getTotalCost() > 0, "Total cost should be positive");
     assertTrue(estimator.getDrillingCost() > 0, "Drilling cost should be positive");
@@ -282,8 +273,8 @@ public class WellMechanicalDesignTest {
   @Test
   public void testCostEstimatorWaterInjector() {
     WellCostEstimator estimator = new WellCostEstimator();
-    estimator.calculateWellCost("WATER_INJECTOR", "SEMI_SUBMERSIBLE", "CASED_PERFORATED", 3500.0,
-        350.0, 35.0, 15.0, 0.0, true, 4);
+    estimator.calculateWellCost("WATER_INJECTOR", "SEMI_SUBMERSIBLE", "CASED_PERFORATED", 3500.0, 350.0, 35.0, 15.0,
+	0.0, true, 4);
 
     assertTrue(estimator.getTotalCost() > 0, "Total cost should be positive");
   }
@@ -291,36 +282,35 @@ public class WellMechanicalDesignTest {
   @Test
   public void testProducerCostsMoreThanInjector() {
     WellCostEstimator producerEst = new WellCostEstimator();
-    producerEst.calculateWellCost("OIL_PRODUCER", "SEMI_SUBMERSIBLE", "CASED_PERFORATED", 3800.0,
-        350.0, 45.0, 25.0, 0.0, true, 4);
+    producerEst.calculateWellCost("OIL_PRODUCER", "SEMI_SUBMERSIBLE", "CASED_PERFORATED", 3800.0, 350.0, 45.0, 25.0,
+	0.0, true, 4);
 
     WellCostEstimator injectorEst = new WellCostEstimator();
-    injectorEst.calculateWellCost("WATER_INJECTOR", "SEMI_SUBMERSIBLE", "CASED_PERFORATED", 3800.0,
-        350.0, 35.0, 15.0, 0.0, true, 4);
+    injectorEst.calculateWellCost("WATER_INJECTOR", "SEMI_SUBMERSIBLE", "CASED_PERFORATED", 3800.0, 350.0, 35.0, 15.0,
+	0.0, true, 4);
 
     assertTrue(producerEst.getTotalCost() > injectorEst.getTotalCost(),
-        "Oil producer should cost more than water injector");
+	"Oil producer should cost more than water injector");
   }
 
   @Test
   public void testRegionalCostVariation() {
     WellCostEstimator norwayEst = new WellCostEstimator(SubseaCostEstimator.Region.NORWAY);
-    norwayEst.calculateWellCost("OIL_PRODUCER", "SEMI_SUBMERSIBLE", "CASED_PERFORATED", 3800.0,
-        350.0, 45.0, 25.0, 0.0, true, 4);
+    norwayEst.calculateWellCost("OIL_PRODUCER", "SEMI_SUBMERSIBLE", "CASED_PERFORATED", 3800.0, 350.0, 45.0, 25.0, 0.0,
+	true, 4);
 
     WellCostEstimator gomEst = new WellCostEstimator(SubseaCostEstimator.Region.GOM);
-    gomEst.calculateWellCost("OIL_PRODUCER", "SEMI_SUBMERSIBLE", "CASED_PERFORATED", 3800.0, 350.0,
-        45.0, 25.0, 0.0, true, 4);
+    gomEst.calculateWellCost("OIL_PRODUCER", "SEMI_SUBMERSIBLE", "CASED_PERFORATED", 3800.0, 350.0, 45.0, 25.0, 0.0,
+	true, 4);
 
-    assertTrue(norwayEst.getTotalCost() > gomEst.getTotalCost(),
-        "Norway wells should cost more than GOM wells");
+    assertTrue(norwayEst.getTotalCost() > gomEst.getTotalCost(), "Norway wells should cost more than GOM wells");
   }
 
   @Test
   public void testCostEstimatorToJson() {
     WellCostEstimator estimator = new WellCostEstimator();
-    estimator.calculateWellCost("OIL_PRODUCER", "SEMI_SUBMERSIBLE", "CASED_PERFORATED", 3800.0,
-        350.0, 45.0, 25.0, 0.0, true, 4);
+    estimator.calculateWellCost("OIL_PRODUCER", "SEMI_SUBMERSIBLE", "CASED_PERFORATED", 3800.0, 350.0, 45.0, 25.0, 0.0,
+	true, 4);
 
     String json = estimator.toJson();
     assertNotNull(json);
@@ -332,15 +322,15 @@ public class WellMechanicalDesignTest {
   @Test
   public void testCompletionTypeFactor() {
     WellCostEstimator simpleEst = new WellCostEstimator();
-    simpleEst.calculateWellCost("OIL_PRODUCER", "SEMI_SUBMERSIBLE", "OPEN_HOLE", 3800.0, 350.0,
-        45.0, 25.0, 0.0, true, 4);
+    simpleEst.calculateWellCost("OIL_PRODUCER", "SEMI_SUBMERSIBLE", "OPEN_HOLE", 3800.0, 350.0, 45.0, 25.0, 0.0, true,
+	4);
 
     WellCostEstimator complexEst = new WellCostEstimator();
-    complexEst.calculateWellCost("OIL_PRODUCER", "SEMI_SUBMERSIBLE", "MULTI_ZONE", 3800.0, 350.0,
-        45.0, 25.0, 0.0, true, 4);
+    complexEst.calculateWellCost("OIL_PRODUCER", "SEMI_SUBMERSIBLE", "MULTI_ZONE", 3800.0, 350.0, 45.0, 25.0, 0.0, true,
+	4);
 
     assertTrue(complexEst.getCompletionCost() > simpleEst.getCompletionCost(),
-        "Multi-zone completion should cost more than open hole");
+	"Multi-zone completion should cost more than open hole");
   }
 
   // ============ Integration Test ============
@@ -412,9 +402,8 @@ public class WellMechanicalDesignTest {
     design.calcDesign();
 
     assertTrue(design.getProductionCasingVME_DF() >= 1.25,
-        "Production casing VME DF must be >= 1.25 (NORSOK D-010 Table 18)");
-    assertTrue(design.getProductionCasingVME_DF() < 99.0,
-        "VME DF should be calculated (not default 99)");
+	"Production casing VME DF must be >= 1.25 (NORSOK D-010 Table 18)");
+    assertTrue(design.getProductionCasingVME_DF() < 99.0, "VME DF should be calculated (not default 99)");
   }
 
   @Test
@@ -427,9 +416,8 @@ public class WellMechanicalDesignTest {
     design.calcDesign();
 
     assertTrue(design.getTemperatureDeratingFactor() < 1.0,
-        "Temperature derating should reduce SMYS at 120 degC per API 5CT");
-    assertTrue(design.getTemperatureDeratingFactor() > 0.9,
-        "At 120 degC, derating factor should be > 0.9");
+	"Temperature derating should reduce SMYS at 120 degC per API 5CT");
+    assertTrue(design.getTemperatureDeratingFactor() > 0.9, "At 120 degC, derating factor should be > 0.9");
   }
 
   @Test
@@ -441,7 +429,7 @@ public class WellMechanicalDesignTest {
     design.calcDesign();
 
     assertEquals(1.0, design.getTemperatureDeratingFactor(), 0.001,
-        "No temperature derating below 100 degC per API 5CT");
+	"No temperature derating below 100 degC per API 5CT");
   }
 
   @Test
@@ -453,12 +441,10 @@ public class WellMechanicalDesignTest {
     design.calcDesign();
 
     assertTrue(design.getTemperatureDeratingFactor() <= 0.87,
-        "At 250 degC, derating factor should be <= 0.87 per API TR 5C3");
-    assertTrue(design.getTemperatureDeratingFactor() >= 0.80,
-        "At 250 degC, derating factor should be >= 0.80");
+	"At 250 degC, derating factor should be <= 0.87 per API TR 5C3");
+    assertTrue(design.getTemperatureDeratingFactor() >= 0.80, "At 250 degC, derating factor should be >= 0.80");
     // VME DF should still be calculated
-    assertTrue(design.getProductionCasingVME_DF() > 0,
-        "VME DF should be positive even with temperature derating");
+    assertTrue(design.getProductionCasingVME_DF() > 0, "VME DF should be positive even with temperature derating");
   }
 
   @Test
@@ -470,7 +456,6 @@ public class WellMechanicalDesignTest {
 
     String json = design.toJson();
     assertTrue(json.contains("productionCasingVME_DF"), "JSON should include VME design factor");
-    assertTrue(json.contains("temperatureDeratingFactor"),
-        "JSON should include temperature derating factor");
+    assertTrue(json.contains("temperatureDeratingFactor"), "JSON should include temperature derating factor");
   }
 }

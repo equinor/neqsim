@@ -4,16 +4,16 @@ package neqsim.process.fielddevelopment.integrated;
  * A well branch in an integrated production network.
  *
  * <p>
- * A well branch connects a fixed-pressure reservoir node to a downstream node (typically a wellhead
- * or a manifold). Its deliverability is represented by a {@link WellDeliverabilityCurve} (a reduced
- * IPR + VLP surrogate). The branch is reservoir-pressure aware: the curve is built at a reference
- * reservoir pressure and the delivered rate scales with the actual reservoir node pressure, so the
- * same branch can be reused as the reservoir depletes during a production-profile run.
+ * A well branch connects a fixed-pressure reservoir node to a downstream node (typically a wellhead or a manifold). Its
+ * deliverability is represented by a {@link WellDeliverabilityCurve} (a reduced IPR + VLP surrogate). The branch is
+ * reservoir-pressure aware: the curve is built at a reference reservoir pressure and the delivered rate scales with the
+ * actual reservoir node pressure, so the same branch can be reused as the reservoir depletes during a
+ * production-profile run.
  * </p>
  *
  * <p>
- * An optional choke factor (0..1) and a gas-lift uplift factor (&ge; 1) multiply the
- * deliverability, allowing chokes and gas lift to participate directly in the network equilibrium.
+ * An optional choke factor (0..1) and a gas-lift uplift factor (&ge; 1) multiply the deliverability, allowing chokes
+ * and gas lift to participate directly in the network equilibrium.
  * </p>
  *
  * @author NeqSim
@@ -36,14 +36,14 @@ public class WellBranch implements NetworkBranch {
   /**
    * Creates a well branch.
    *
-   * @param name unique branch name
-   * @param reservoirNode upstream reservoir node name
-   * @param downstreamNode downstream node name (wellhead/manifold)
-   * @param curve well deliverability curve
+   * @param name                           unique branch name
+   * @param reservoirNode                  upstream reservoir node name
+   * @param downstreamNode                 downstream node name (wellhead/manifold)
+   * @param curve                          well deliverability curve
    * @param referenceReservoirPressureBara reservoir pressure at which the curve was built, in bara
    */
-  public WellBranch(String name, String reservoirNode, String downstreamNode,
-      WellDeliverabilityCurve curve, double referenceReservoirPressureBara) {
+  public WellBranch(String name, String reservoirNode, String downstreamNode, WellDeliverabilityCurve curve,
+      double referenceReservoirPressureBara) {
     this.name = name;
     this.fromNode = reservoirNode;
     this.toNode = downstreamNode;
@@ -77,8 +77,7 @@ public class WellBranch implements NetworkBranch {
       return 0.0;
     }
     double base = curve.rateAt(downstreamPressureBara);
-    double scale =
-        referenceReservoirPressure > 0.0 ? reservoirPressureBara / referenceReservoirPressure : 1.0;
+    double scale = referenceReservoirPressure > 0.0 ? reservoirPressureBara / referenceReservoirPressure : 1.0;
     double q = base * scale * chokeFactor * liftFactor;
     lastRate = Math.max(0.0, q);
     return lastRate;

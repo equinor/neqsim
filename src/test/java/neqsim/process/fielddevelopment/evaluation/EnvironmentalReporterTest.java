@@ -56,21 +56,18 @@ public class EnvironmentalReporterTest {
 
   @Test
   void testProcessSystemAnalysis() {
-    neqsim.process.processmodel.ProcessSystem system =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem system = new neqsim.process.processmodel.ProcessSystem();
 
-    neqsim.thermo.system.SystemInterface fluid =
-        new neqsim.thermo.system.SystemSrkEos(288.15, 50.0);
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(288.15, 50.0);
     fluid.addComponent("methane", 0.90);
     fluid.addComponent("propane", 0.10);
     fluid.setMixingRule("classic");
 
-    neqsim.process.equipment.stream.Stream feed =
-        new neqsim.process.equipment.stream.Stream("Feed", fluid);
+    neqsim.process.equipment.stream.Stream feed = new neqsim.process.equipment.stream.Stream("Feed", fluid);
     feed.setFlowRate(10000, "kg/hr");
 
-    neqsim.process.equipment.compressor.Compressor comp =
-        new neqsim.process.equipment.compressor.Compressor("Compressor", feed);
+    neqsim.process.equipment.compressor.Compressor comp = new neqsim.process.equipment.compressor.Compressor(
+	"Compressor", feed);
     comp.setOutletPressure(100.0);
 
     system.add(feed);
@@ -83,17 +80,14 @@ public class EnvironmentalReporterTest {
 
   @Test
   void testReportGeneration() {
-    neqsim.process.processmodel.ProcessSystem system =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem system = new neqsim.process.processmodel.ProcessSystem();
 
-    neqsim.thermo.system.SystemInterface fluid =
-        new neqsim.thermo.system.SystemSrkEos(288.15, 30.0);
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(288.15, 30.0);
     fluid.addComponent("methane", 0.95);
     fluid.addComponent("ethane", 0.05);
     fluid.setMixingRule("classic");
 
-    neqsim.process.equipment.stream.Stream feed =
-        new neqsim.process.equipment.stream.Stream("Feed", fluid);
+    neqsim.process.equipment.stream.Stream feed = new neqsim.process.equipment.stream.Stream("Feed", fluid);
     feed.setFlowRate(5000, "kg/hr");
     system.add(feed);
     system.run();

@@ -32,8 +32,7 @@ public class ReservesClassificationTest {
   @Test
   public void testReservesNonCommercialRaisesWatch() {
     ReservesClassification model = new ReservesClassification();
-    ReservesClassification.Result result =
-        model.classify("approved-for-development", Boolean.FALSE);
+    ReservesClassification.Result result = model.classify("approved-for-development", Boolean.FALSE);
     assertEquals(ResourceCategory.RESERVES, result.getResourceCategory());
     assertEquals("watch", result.getMaturityWarning());
   }
@@ -82,7 +81,7 @@ public class ReservesClassificationTest {
     assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {
       @Override
       public void execute() {
-        model.classify("   ");
+	model.classify("   ");
       }
     });
   }

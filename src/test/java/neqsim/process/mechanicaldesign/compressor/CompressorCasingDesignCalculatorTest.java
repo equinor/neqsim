@@ -53,20 +53,16 @@ public class CompressorCasingDesignCalculatorTest {
 
     // Wall thickness must be positive and above API 617 minimum of 12.7 mm
     assertTrue(calc.getSelectedWallThicknessMm() >= 12.7,
-        "Wall thickness should be >= API 617 min 12.7 mm, got: "
-            + calc.getSelectedWallThicknessMm());
-    assertTrue(calc.getRequiredWallThicknessMm() > 0,
-        "Required wall thickness should be positive");
+	"Wall thickness should be >= API 617 min 12.7 mm, got: " + calc.getSelectedWallThicknessMm());
+    assertTrue(calc.getRequiredWallThicknessMm() > 0, "Required wall thickness should be positive");
     assertTrue(calc.getMinimumWallThicknessMm() > calc.getRequiredWallThicknessMm(),
-        "Min thickness should include corrosion allowance");
+	"Min thickness should include corrosion allowance");
 
     // Verify MAWP is >= design pressure
-    assertTrue(calc.getMawpMPa() >= 5.0,
-        "MAWP should be >= design pressure, got: " + calc.getMawpMPa());
+    assertTrue(calc.getMawpMPa() >= 5.0, "MAWP should be >= design pressure, got: " + calc.getMawpMPa());
 
     // Stress ratio must be <= 1.0
-    assertTrue(calc.getStressRatio() <= 1.0,
-        "Stress ratio should be <= 1.0, got: " + calc.getStressRatio());
+    assertTrue(calc.getStressRatio() <= 1.0, "Stress ratio should be <= 1.0, got: " + calc.getStressRatio());
   }
 
   /**
@@ -149,17 +145,14 @@ public class CompressorCasingDesignCalculatorTest {
     calc.calculate();
 
     // Allowable forces must be positive
-    assertTrue(calc.getSuctionNozzleAllowableForceN() > 0,
-        "Suction nozzle allowable force should be positive");
-    assertTrue(calc.getDischargeNozzleAllowableForceN() > 0,
-        "Discharge nozzle allowable force should be positive");
+    assertTrue(calc.getSuctionNozzleAllowableForceN() > 0, "Suction nozzle allowable force should be positive");
+    assertTrue(calc.getDischargeNozzleAllowableForceN() > 0, "Discharge nozzle allowable force should be positive");
 
     // Larger nozzle should have larger allowable loads
     assertTrue(calc.getSuctionNozzleAllowableForceN() > calc.getDischargeNozzleAllowableForceN(),
-        "Larger suction nozzle should have larger allowable force");
-    assertTrue(
-        calc.getSuctionNozzleAllowableMomentNm() > calc.getDischargeNozzleAllowableMomentNm(),
-        "Larger suction nozzle should have larger allowable moment");
+	"Larger suction nozzle should have larger allowable force");
+    assertTrue(calc.getSuctionNozzleAllowableMomentNm() > calc.getDischargeNozzleAllowableMomentNm(),
+	"Larger suction nozzle should have larger allowable moment");
   }
 
   /**
@@ -177,7 +170,7 @@ public class CompressorCasingDesignCalculatorTest {
     calcLow.calculate();
 
     assertTrue(calcLow.getFlangeClass() <= 300,
-        "Low pressure should use Class 150 or 300, got: " + calcLow.getFlangeClass());
+	"Low pressure should use Class 150 or 300, got: " + calcLow.getFlangeClass());
     assertTrue(calcLow.isFlangeRatingAdequate(), "Flange should be adequate for low pressure");
 
     // High pressure - should select higher class
@@ -190,7 +183,7 @@ public class CompressorCasingDesignCalculatorTest {
     calcHigh.calculate();
 
     assertTrue(calcHigh.getFlangeClass() >= 600,
-        "High pressure should use Class 600+, got: " + calcHigh.getFlangeClass());
+	"High pressure should use Class 600+, got: " + calcHigh.getFlangeClass());
   }
 
   /**
@@ -209,10 +202,8 @@ public class CompressorCasingDesignCalculatorTest {
     calc.calculate();
 
     // Hydro test should be >= 1.3 * MAWP or >= 1.5 * design pressure
-    assertTrue(calc.getHydroTestPressureMPa() >= 1.3 * calc.getMawpMPa(),
-        "Hydro test should be >= 1.3 * MAWP");
-    assertTrue(calc.getHydroTestPressureMPa() >= 1.5 * 5.0,
-        "Hydro test should be >= 1.5 * design pressure");
+    assertTrue(calc.getHydroTestPressureMPa() >= 1.3 * calc.getMawpMPa(), "Hydro test should be >= 1.3 * MAWP");
+    assertTrue(calc.getHydroTestPressureMPa() >= 1.5 * 5.0, "Hydro test should be >= 1.5 * design pressure");
     assertTrue(calc.isHydroTestAcceptable(), "Hydro test should be acceptable");
   }
 
@@ -235,8 +226,7 @@ public class CompressorCasingDesignCalculatorTest {
     double minThk = calc.getMinimumWallThicknessMm();
 
     // Minimum thickness includes corrosion allowance
-    assertTrue(minThk >= requiredThk + 3.0,
-        "Min thickness should include 3mm corrosion allowance");
+    assertTrue(minThk >= requiredThk + 3.0, "Min thickness should include 3mm corrosion allowance");
   }
 
   /**
@@ -257,10 +247,8 @@ public class CompressorCasingDesignCalculatorTest {
     calc.setCasingType(CompressorMechanicalDesign.CasingType.BARREL);
     calc.calculate();
 
-    assertFalse("COMPLIANT".equals(calc.getNaceComplianceStatus()),
-        "SA-516-70 should not be fully NACE compliant");
-    assertTrue(calc.getNaceIssues().size() > 0,
-        "Should have NACE issues for carbon steel in sour service");
+    assertFalse("COMPLIANT".equals(calc.getNaceComplianceStatus()), "SA-516-70 should not be fully NACE compliant");
+    assertTrue(calc.getNaceIssues().size() > 0, "Should have NACE issues for carbon steel in sour service");
 
     // NACE compliant material
     CompressorCasingDesignCalculator calcNACE = new CompressorCasingDesignCalculator();
@@ -274,8 +262,7 @@ public class CompressorCasingDesignCalculatorTest {
     calcNACE.setCasingType(CompressorMechanicalDesign.CasingType.BARREL);
     calcNACE.calculate();
 
-    assertEquals("COMPLIANT", calcNACE.getNaceComplianceStatus(),
-        "F316L should be NACE compliant");
+    assertEquals("COMPLIANT", calcNACE.getNaceComplianceStatus(), "F316L should be NACE compliant");
   }
 
   /**
@@ -314,12 +301,10 @@ public class CompressorCasingDesignCalculatorTest {
     calc.calculate();
 
     // Thermal growth must be positive for hot operation
-    assertTrue(calc.getCasingAxialGrowthMm() > 0,
-        "Casing axial growth should be positive for elevated temp");
+    assertTrue(calc.getCasingAxialGrowthMm() > 0, "Casing axial growth should be positive for elevated temp");
 
     // Differential expansion should be reasonable (< 3 mm for most)
-    assertTrue(Math.abs(calc.getDifferentialExpansionMm()) < 5.0,
-        "Differential expansion should be reasonable");
+    assertTrue(Math.abs(calc.getDifferentialExpansionMm()) < 5.0, "Differential expansion should be reasonable");
   }
 
   /**
@@ -338,9 +323,9 @@ public class CompressorCasingDesignCalculatorTest {
 
     // Split-line bolts should be calculated
     assertTrue(calc.getSplitLineBoltCount() >= 8,
-        "Should have at least 8 split-line bolts, got: " + calc.getSplitLineBoltCount());
+	"Should have at least 8 split-line bolts, got: " + calc.getSplitLineBoltCount());
     assertTrue(calc.getSplitLineBoltDiameterMm() >= 16.0,
-        "Bolt diameter should be >= M16, got: " + calc.getSplitLineBoltDiameterMm());
+	"Bolt diameter should be >= M16, got: " + calc.getSplitLineBoltDiameterMm());
     assertTrue(calc.isSplitLineBoltsAdequate(), "Bolt design should be adequate");
   }
 
@@ -360,16 +345,15 @@ public class CompressorCasingDesignCalculatorTest {
     calc.calculate();
 
     // Barrel OD should be > ID
-    assertTrue(calc.getBarrelOuterODMm() > 500.0,
-        "Barrel OD should be > casing ID, got: " + calc.getBarrelOuterODMm());
+    assertTrue(calc.getBarrelOuterODMm() > 500.0, "Barrel OD should be > casing ID, got: " + calc.getBarrelOuterODMm());
 
     // End cover should have reasonable thickness
     assertTrue(calc.getBarrelEndCoverThicknessMm() >= 25.0,
-        "End cover should be >= 25mm, got: " + calc.getBarrelEndCoverThicknessMm());
+	"End cover should be >= 25mm, got: " + calc.getBarrelEndCoverThicknessMm());
 
     // End cover bolts
     assertTrue(calc.getBarrelEndCoverBoltCount() >= 12,
-        "Should have >= 12 end cover bolts, got: " + calc.getBarrelEndCoverBoltCount());
+	"Should have >= 12 end cover bolts, got: " + calc.getBarrelEndCoverBoltCount());
   }
 
   /**
@@ -460,10 +444,8 @@ public class CompressorCasingDesignCalculatorTest {
     assertTrue(map.containsKey("flangeRating"));
     assertTrue(map.containsKey("nozzleLoads"));
     assertTrue(map.containsKey("thermalGrowth"));
-    assertTrue(map.containsKey("barrelCasing"),
-        "Barrel casing section should be present for barrel type");
-    assertFalse(map.containsKey("splitLineBolts"),
-        "Split-line bolts should NOT be present for barrel type");
+    assertTrue(map.containsKey("barrelCasing"), "Barrel casing section should be present for barrel type");
+    assertFalse(map.containsKey("splitLineBolts"), "Split-line bolts should NOT be present for barrel type");
   }
 
   /**
@@ -498,8 +480,7 @@ public class CompressorCasingDesignCalculatorTest {
     // Casing design calculator should be populated
     CompressorCasingDesignCalculator casingCalc = design.getCasingDesignCalculator();
     assertNotNull(casingCalc, "Casing design calculator should be created after calcDesign()");
-    assertTrue(casingCalc.getSelectedWallThicknessMm() > 0,
-        "Wall thickness should be calculated");
+    assertTrue(casingCalc.getSelectedWallThicknessMm() > 0, "Wall thickness should be calculated");
     assertTrue(casingCalc.getMawpMPa() > 0, "MAWP should be calculated");
     assertTrue(casingCalc.getFlangeClass() >= 150, "Flange class should be selected");
     assertTrue(casingCalc.isHydroTestAcceptable(), "Hydro test should pass");
@@ -573,8 +554,7 @@ public class CompressorCasingDesignCalculatorTest {
 
     CompressorCasingDesignCalculator casingCalc = design.getCasingDesignCalculator();
     assertNotNull(casingCalc);
-    assertEquals("COMPLIANT", casingCalc.getNaceComplianceStatus(),
-        "F316L should be NACE compliant");
+    assertEquals("COMPLIANT", casingCalc.getNaceComplianceStatus(), "F316L should be NACE compliant");
   }
 
   /**
@@ -602,7 +582,6 @@ public class CompressorCasingDesignCalculatorTest {
     calcHigh.calculate();
     double allowableHigh = calcHigh.getAllowableStressMPa();
 
-    assertTrue(allowableHigh < allowableLow,
-        "Allowable stress should be reduced at high temperature");
+    assertTrue(allowableHigh < allowableLow, "Allowable stress should be reduced at high temperature");
   }
 }

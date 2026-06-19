@@ -20,7 +20,7 @@ public class DewPointCurve {
   private static final Logger logger = LogManager.getLogger(DewPointCurve.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.
@@ -84,14 +84,13 @@ public class DewPointCurve {
     // testSystem.dewPointCondensationRate()
     /*
      * logger.info("temp " + (testSystem.getTemperature() - 273.15)); for (int i = 0; i <
-     * testSystem.getPhase(0).getNumberOfComponents(); i++) {
-     * logger.info("unsymetric activity coeff " + testSystem.getPhase(1).getComponent(i).getName() +
-     * " " + testSystem.getPhase(1).getActivityCoefficientUnSymetric(i)); } for (int i = 0; i <
-     * testSystem.getPhase(0).getNumberOfComponents(); i++) { logger.info("symetric activity coeff "
-     * + testSystem.getPhase(1).getComponent(i).getName() + " " +
+     * testSystem.getPhase(0).getNumberOfComponents(); i++) { logger.info("unsymetric activity coeff " +
+     * testSystem.getPhase(1).getComponent(i).getName() + " " +
+     * testSystem.getPhase(1).getActivityCoefficientUnSymetric(i)); } for (int i = 0; i <
+     * testSystem.getPhase(0).getNumberOfComponents(); i++) { logger.info("symetric activity coeff " +
+     * testSystem.getPhase(1).getComponent(i).getName() + " " +
      * testSystem.getPhase(1).getActivityCoefficientSymetric(i)); } logger.info("activity coeff " +
-     * testSystem.getPhase(1).getComponent(1).getName() + " " +
-     * testSystem.getPhase(1).getActivityCoefficient(1, 0));
+     * testSystem.getPhase(1).getComponent(1).getName() + " " + testSystem.getPhase(1).getActivityCoefficient(1, 0));
      */
   }
 }

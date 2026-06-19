@@ -20,9 +20,9 @@ import neqsim.thermo.system.SystemSrkEos;
  * Pre-built biorefinery module for biomass gasification and Fischer-Tropsch synthesis.
  *
  * <p>
- * Composes a {@link BiomassGasifier}, syngas cleanup (tar removal, cooling), and a simplified
- * Fischer-Tropsch (FT) reactor into a complete biomass-to-liquids process. The module takes a
- * biomass feed stream and produces a synthetic liquid product and tail gas.
+ * Composes a {@link BiomassGasifier}, syngas cleanup (tar removal, cooling), and a simplified Fischer-Tropsch (FT)
+ * reactor into a complete biomass-to-liquids process. The module takes a biomass feed stream and produces a synthetic
+ * liquid product and tail gas.
  * </p>
  *
  * <p>
@@ -90,7 +90,7 @@ public class GasificationSynthesisModule extends ProcessModule {
   /**
    * Sets the biomass feedstock and feed rate.
    *
-   * @param biomassChar the biomass characterization
+   * @param biomassChar     the biomass characterization
    * @param feedRateKgPerHr dry biomass feed rate in kg/hr
    */
   public void setBiomass(BiomassCharacterization biomassChar, double feedRateKgPerHr) {
@@ -287,11 +287,11 @@ public class GasificationSynthesisModule extends ProcessModule {
       coConverted = coMoles * ftConversion;
       double h2Required = coConverted * 2.0;
       if (h2Required > h2Moles) {
-        // H2-limited
-        h2Converted = h2Moles;
-        coConverted = h2Moles / 2.0;
+	// H2-limited
+	h2Converted = h2Moles;
+	coConverted = h2Moles / 2.0;
       } else {
-        h2Converted = h2Required;
+	h2Converted = h2Required;
       }
     }
 
@@ -302,8 +302,7 @@ public class GasificationSynthesisModule extends ProcessModule {
     ftLiquidFlowKgPerHr = ftLiquidKg;
 
     // Build FT liquid output stream
-    SystemSrkEos ftLiquidFluid =
-        new SystemSrkEos(273.15 + ftReactorTemperatureC, ftReactorPressureBara);
+    SystemSrkEos ftLiquidFluid = new SystemSrkEos(273.15 + ftReactorTemperatureC, ftReactorPressureBara);
     ftLiquidFluid.addComponent("nC10", molesC10 > 0 ? molesC10 : 1.0e-10);
     ftLiquidFluid.addComponent("water", waterMoles > 0 ? waterMoles * 0.01 : 1.0e-10);
     ftLiquidFluid.setMixingRule("classic");
@@ -329,8 +328,7 @@ public class GasificationSynthesisModule extends ProcessModule {
       // no CH4
     }
 
-    SystemSrkEos tailGasFluid =
-        new SystemSrkEos(273.15 + ftReactorTemperatureC, ftReactorPressureBara);
+    SystemSrkEos tailGasFluid = new SystemSrkEos(273.15 + ftReactorTemperatureC, ftReactorPressureBara);
     tailGasFluid.addComponent("hydrogen", remainH2 > 0 ? remainH2 : 1.0e-10);
     tailGasFluid.addComponent("CO", remainCO > 0 ? remainCO : 1.0e-10);
     tailGasFluid.addComponent("CO2", co2Moles > 0 ? co2Moles : 1.0e-10);
@@ -383,7 +381,6 @@ public class GasificationSynthesisModule extends ProcessModule {
    * @return JSON string
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(getResults());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(getResults());
   }
 }

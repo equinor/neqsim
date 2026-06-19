@@ -42,16 +42,14 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface}
-   *        object
+   * @param pipe   a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public TwoPhaseTrayTowerFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
     super(system, pipe);
     this.flowNodeType = "stratified";
     this.interphaseTransportCoefficient = new InterphaseStratifiedFlow(this);
-    this.fluidBoundary =
-        new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
-            this);
+    this.fluidBoundary = new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
+	this);
   }
 
   /**
@@ -59,19 +57,17 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
    * Constructor for TwoPhaseTrayTowerFlowNode.
    * </p>
    *
-   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   * @param system           a {@link neqsim.thermo.system.SystemInterface} object
    * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface}
-   *        object
+   * @param pipe             a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public TwoPhaseTrayTowerFlowNode(SystemInterface system, SystemInterface interphaseSystem,
       GeometryDefinitionInterface pipe) {
     super(system, pipe);
     this.flowNodeType = "stratified";
     this.interphaseTransportCoefficient = new InterphaseStratifiedFlow(this);
-    this.fluidBoundary =
-        new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
-            this);
+    this.fluidBoundary = new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
+	this);
   }
 
   /** {@inheritDoc} */
@@ -98,9 +94,8 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
   /** {@inheritDoc} */
   @Override
   public double calcContactLength() {
-    double phaseAngel =
-        pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
-            + Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
+    double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
+	+ Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
 
     wallContactLength[1] = phaseAngel * pipe.getDiameter();
     wallContactLength[0] = pi * pipe.getDiameter() - wallContactLength[1];
@@ -140,13 +135,12 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
      * ThermodynamicConstantsInterface.referencePressure); ThermodynamicOperations testOps = new
      * ThermodynamicOperations(testSystem); PipeData pipe1 = new PipeData(10.0, 0.025);
      *
-     * testSystem.addComponent("methane", 0.011152181, 0); testSystem.addComponent("ethane",
-     * 0.00011152181, 0); testSystem.addComponent("water", 0.00462204876, 1);
-     * testSystem.addComponent("methane", 0.061152181, 0); testSystem.addComponent("water",
-     * 0.00862204876, 1);
+     * testSystem.addComponent("methane", 0.011152181, 0); testSystem.addComponent("ethane", 0.00011152181, 0);
+     * testSystem.addComponent("water", 0.00462204876, 1); testSystem.addComponent("methane", 0.061152181, 0);
+     * testSystem.addComponent("water", 0.00862204876, 1);
      */
-    SystemInterface testSystem =
-        new SystemFurstElectrolyteEos(275.3, ThermodynamicConstantsInterface.referencePressure);
+    SystemInterface testSystem = new SystemFurstElectrolyteEos(275.3,
+	ThermodynamicConstantsInterface.referencePressure);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     PipeData pipe1 = new PipeData(10.0, 0.025);
 

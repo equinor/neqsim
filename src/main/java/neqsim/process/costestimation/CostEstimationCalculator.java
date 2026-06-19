@@ -10,13 +10,12 @@ import com.google.gson.GsonBuilder;
  * Cost estimation calculator for process equipment.
  *
  * <p>
- * This class provides standardized cost estimation methods based on chemical engineering cost
- * correlations from standard references including:
+ * This class provides standardized cost estimation methods based on chemical engineering cost correlations from
+ * standard references including:
  * </p>
  * <ul>
  * <li>Peters, Timmerhaus &amp; West - Plant Design and Economics for Chemical Engineers</li>
- * <li>Turton, Bailie, Whiting &amp; Shaeiwitz - Analysis, Synthesis and Design of Chemical
- * Processes</li>
+ * <li>Turton, Bailie, Whiting &amp; Shaeiwitz - Analysis, Synthesis and Design of Chemical Processes</li>
  * <li>Ulrich &amp; Vasudevan - Chemical Engineering Process Design and Economics</li>
  * <li>Seider, Seader &amp; Lewin - Product and Process Design Principles</li>
  * </ul>
@@ -260,8 +259,8 @@ public class CostEstimationCalculator implements java.io.Serializable {
    * Calculate purchased equipment cost for vertical pressure vessel.
    *
    * <p>
-   * Based on Turton et al. correlation (2018): log10(Cp) = K1 + K2*log10(W) + K3*(log10(W))^2 where
-   * W is shell weight in kg. For vertical vessels: K1 = 3.4974, K2 = 0.4485, K3 = 0.1074
+   * Based on Turton et al. correlation (2018): log10(Cp) = K1 + K2*log10(W) + K3*(log10(W))^2 where W is shell weight
+   * in kg. For vertical vessels: K1 = 3.4974, K2 = 0.4485, K3 = 0.1074
    * </p>
    *
    * @param shellWeight vessel shell weight in kg
@@ -387,7 +386,7 @@ public class CostEstimationCalculator implements java.io.Serializable {
   /**
    * Calculate purchased equipment cost for sieve trays.
    *
-   * @param diameter column diameter in meters
+   * @param diameter      column diameter in meters
    * @param numberOfTrays number of trays
    * @return purchased equipment cost in USD (current CEPCI basis)
    */
@@ -407,7 +406,7 @@ public class CostEstimationCalculator implements java.io.Serializable {
   /**
    * Calculate purchased equipment cost for valve trays.
    *
-   * @param diameter column diameter in meters
+   * @param diameter      column diameter in meters
    * @param numberOfTrays number of trays
    * @return purchased equipment cost in USD (current CEPCI basis)
    */
@@ -419,7 +418,7 @@ public class CostEstimationCalculator implements java.io.Serializable {
   /**
    * Calculate purchased equipment cost for bubble cap trays.
    *
-   * @param diameter column diameter in meters
+   * @param diameter      column diameter in meters
    * @param numberOfTrays number of trays
    * @return purchased equipment cost in USD (current CEPCI basis)
    */
@@ -431,7 +430,7 @@ public class CostEstimationCalculator implements java.io.Serializable {
   /**
    * Calculate purchased equipment cost for structured packing.
    *
-   * @param volume packing volume in m3
+   * @param volume      packing volume in m3
    * @param packingType type of packing ("metal", "plastic", "ceramic")
    * @return purchased equipment cost in USD (current CEPCI basis)
    */
@@ -530,7 +529,7 @@ public class CostEstimationCalculator implements java.io.Serializable {
    * Calculate cost for piping.
    *
    * @param diameter pipe diameter in meters
-   * @param length pipe length in meters
+   * @param length   pipe length in meters
    * @param schedule pipe schedule (40, 80, 160)
    * @return cost in USD (current CEPCI basis)
    */
@@ -551,8 +550,7 @@ public class CostEstimationCalculator implements java.io.Serializable {
       scheduleFactor = 2.5;
     }
 
-    return baseCostPerMeter * length * scheduleFactor * materialFactor
-        * (currentCepci / referenceCepci);
+    return baseCostPerMeter * length * scheduleFactor * materialFactor * (currentCepci / referenceCepci);
   }
 
   /**
@@ -578,8 +576,8 @@ public class CostEstimationCalculator implements java.io.Serializable {
    * Calculate bare module cost from purchased equipment cost.
    *
    * @param purchasedCost purchased equipment cost
-   * @param fpFactor pressure factor
-   * @param fmFactor material factor
+   * @param fpFactor      pressure factor
+   * @param fmFactor      material factor
    * @return bare module cost
    */
   public double calcBareModuleCost(double purchasedCost, double fpFactor, double fmFactor) {
@@ -594,7 +592,7 @@ public class CostEstimationCalculator implements java.io.Serializable {
   /**
    * Calculate bare module cost with default factors.
    *
-   * @param purchasedCost purchased equipment cost
+   * @param purchasedCost  purchased equipment cost
    * @param designPressure design pressure in barg
    * @return bare module cost
    */
@@ -633,7 +631,7 @@ public class CostEstimationCalculator implements java.io.Serializable {
    * Calculate installation labor man-hours for equipment.
    *
    * @param equipmentWeight equipment weight in kg
-   * @param equipmentType equipment type ("vessel", "exchanger", "pump", "compressor")
+   * @param equipmentType   equipment type ("vessel", "exchanger", "pump", "compressor")
    * @return labor man-hours
    */
   public double calcInstallationManHours(double equipmentWeight, String equipmentType) {
@@ -676,14 +674,14 @@ public class CostEstimationCalculator implements java.io.Serializable {
   /**
    * Generate bill of materials for vessel.
    *
-   * @param shellWeight shell weight in kg
-   * @param headsWeight heads weight in kg
-   * @param nozzleCount number of nozzles
+   * @param shellWeight     shell weight in kg
+   * @param headsWeight     heads weight in kg
+   * @param nozzleCount     number of nozzles
    * @param internalsWeight internals weight in kg
    * @return list of BOM items as maps
    */
-  public List<Map<String, Object>> generateVesselBOM(double shellWeight, double headsWeight,
-      int nozzleCount, double internalsWeight) {
+  public List<Map<String, Object>> generateVesselBOM(double shellWeight, double headsWeight, int nozzleCount,
+      double internalsWeight) {
     List<Map<String, Object>> bom = new ArrayList<Map<String, Object>>();
 
     if (shellWeight > 0) {
@@ -731,10 +729,10 @@ public class CostEstimationCalculator implements java.io.Serializable {
   /**
    * Calculate complete cost estimate for equipment.
    *
-   * @param purchasedCost purchased equipment cost
+   * @param purchasedCost  purchased equipment cost
    * @param designPressure design pressure in barg
-   * @param weightKg equipment weight in kg
-   * @param equipmentType equipment type
+   * @param weightKg       equipment weight in kg
+   * @param equipmentType  equipment type
    */
   public void calculateCostEstimate(double purchasedCost, double designPressure, double weightKg,
       String equipmentType) {
@@ -789,8 +787,7 @@ public class CostEstimationCalculator implements java.io.Serializable {
    * @return JSON string
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   // ============================================================================
@@ -1083,17 +1080,16 @@ public class CostEstimationCalculator implements java.io.Serializable {
     } else if (regionLower.contains("west coast") || regionLower.contains("california")) {
       this.locationFactor = LOC_US_WEST_COAST;
     } else if (regionLower.contains("north sea") || regionLower.contains("norway")
-        || regionLower.contains("norwegian")) {
+	|| regionLower.contains("norwegian")) {
       this.locationFactor = LOC_NORTH_SEA;
     } else if (regionLower.contains("western europe") || regionLower.contains("uk")
-        || regionLower.contains("netherlands") || regionLower.contains("germany")) {
+	|| regionLower.contains("netherlands") || regionLower.contains("germany")) {
       this.locationFactor = LOC_WESTERN_EUROPE;
-    } else if (regionLower.contains("middle east") || regionLower.contains("qatar")
-        || regionLower.contains("saudi") || regionLower.contains("uae")
-        || regionLower.contains("abu dhabi")) {
+    } else if (regionLower.contains("middle east") || regionLower.contains("qatar") || regionLower.contains("saudi")
+	|| regionLower.contains("uae") || regionLower.contains("abu dhabi")) {
       this.locationFactor = LOC_MIDDLE_EAST;
     } else if (regionLower.contains("southeast asia") || regionLower.contains("singapore")
-        || regionLower.contains("malaysia") || regionLower.contains("indonesia")) {
+	|| regionLower.contains("malaysia") || regionLower.contains("indonesia")) {
       this.locationFactor = LOC_SOUTHEAST_ASIA;
     } else if (regionLower.contains("china")) {
       this.locationFactor = LOC_CHINA;
@@ -1102,7 +1098,7 @@ public class CostEstimationCalculator implements java.io.Serializable {
     } else if (regionLower.contains("brazil")) {
       this.locationFactor = LOC_BRAZIL;
     } else if (regionLower.contains("west africa") || regionLower.contains("nigeria")
-        || regionLower.contains("angola")) {
+	|| regionLower.contains("angola")) {
       this.locationFactor = LOC_WEST_AFRICA;
     } else {
       this.locationFactor = LOC_US_GULF_COAST; // Default

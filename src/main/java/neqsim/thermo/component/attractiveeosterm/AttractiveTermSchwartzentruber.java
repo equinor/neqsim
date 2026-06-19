@@ -27,7 +27,7 @@ public class AttractiveTermSchwartzentruber extends AttractiveTermBaseClass {
   public AttractiveTermSchwartzentruber(ComponentEosInterface component) {
     super(component);
     m = (0.48508 + 1.55191 * component.getAcentricFactor()
-        - 0.15613 * component.getAcentricFactor() * component.getAcentricFactor());
+	- 0.15613 * component.getAcentricFactor() * component.getAcentricFactor());
   }
 
   /**
@@ -36,7 +36,7 @@ public class AttractiveTermSchwartzentruber extends AttractiveTermBaseClass {
    * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
-   * @param params an array of type double
+   * @param params    an array of type double
    */
   public AttractiveTermSchwartzentruber(ComponentEosInterface component, double[] params) {
     this(component);
@@ -62,7 +62,7 @@ public class AttractiveTermSchwartzentruber extends AttractiveTermBaseClass {
   @Override
   public void init() {
     m = (0.48508 + 1.55191 * getComponent().getAcentricFactor()
-        - 0.15613 * getComponent().getAcentricFactor() * getComponent().getAcentricFactor());
+	- 0.15613 * getComponent().getAcentricFactor() * getComponent().getAcentricFactor());
   }
 
   /** {@inheritDoc} */
@@ -73,13 +73,11 @@ public class AttractiveTermSchwartzentruber extends AttractiveTermBaseClass {
     // parameters[0]*(1.0-temperature/component.getTC()) *
     // (1.0+parameters[1]*temperature/component.getTC()+parameters[2] *
     // Math.pow(temperature/component.getTC(),2.0)),2.0));
-    return Math
-        .pow(
-            1.0 + m * (1.0 - Math.sqrt(temperature / getComponent().getTC()))
-                - parameters[0] * (1.0 - temperature / getComponent().getTC())
-                    * (1.0 + parameters[1] * temperature / getComponent().getTC()
-                        + parameters[2] * Math.pow(temperature / getComponent().getTC(), 2.0)),
-            2.0);
+    return Math.pow(1.0 + m * (1.0 - Math.sqrt(temperature / getComponent().getTC()))
+	- parameters[0] * (1.0 - temperature / getComponent().getTC())
+	    * (1.0 + parameters[1] * temperature / getComponent().getTC()
+		+ parameters[2] * Math.pow(temperature / getComponent().getTC(), 2.0)),
+	2.0);
   }
 
   /**
@@ -89,8 +87,7 @@ public class AttractiveTermSchwartzentruber extends AttractiveTermBaseClass {
   private double alphaCrit(double temperature) {
     d = 1.0 + m / 2.0 - parameters[0] * (1.0 + parameters[1] + parameters[2]);
     c = 1.0 - 1.0 / d;
-    return Math.pow(Math.exp(c * (1.0 - Math.pow(temperature / getComponent().getTC(), 1.0 * d))),
-        2.0);
+    return Math.pow(Math.exp(c * (1.0 - Math.pow(temperature / getComponent().getTC(), 1.0 * d))), 2.0);
   }
 
   /**
@@ -100,9 +97,8 @@ public class AttractiveTermSchwartzentruber extends AttractiveTermBaseClass {
   private double diffalphaCritT(double temperature) {
     d = 1.0 + m / 2.0 - parameters[0] * (1.0 + parameters[1] + parameters[2]);
     c = 1.0 - 1.0 / d;
-    return -2.0 * Math
-        .pow(Math.exp(c * (1.0 - Math.pow(temperature / getComponent().getTC(), 1.0 * d))), 2.0) * c
-        * Math.pow(temperature / getComponent().getTC(), 1.0 * d) * d / temperature;
+    return -2.0 * Math.pow(Math.exp(c * (1.0 - Math.pow(temperature / getComponent().getTC(), 1.0 * d))), 2.0) * c
+	* Math.pow(temperature / getComponent().getTC(), 1.0 * d) * d / temperature;
   }
 
   /**
@@ -114,11 +110,11 @@ public class AttractiveTermSchwartzentruber extends AttractiveTermBaseClass {
     c = 1.0 - 1.0 / d;
     double TC = getComponent().getTC();
     return 4.0 * Math.pow(Math.exp(c * (1.0 - Math.pow(temperature / TC, 1.0 * d))), 2.0) * c * c
-        * Math.pow(Math.pow(temperature / TC, 1.0 * d), 2.0) * d * d / (temperature * temperature)
-        - 2.0 * Math.pow(Math.exp(c * (1.0 - Math.pow(temperature / TC, 1.0 * d))), 2.0) * c
-            * Math.pow(temperature / TC, 1.0 * d) * d * d / (temperature * temperature)
-        + 2.0 * Math.pow(Math.exp(c * (1.0 - Math.pow(temperature / TC, 1.0 * d))), 2.0) * c
-            * Math.pow(temperature / TC, 1.0 * d) * d / (temperature * temperature);
+	* Math.pow(Math.pow(temperature / TC, 1.0 * d), 2.0) * d * d / (temperature * temperature)
+	- 2.0 * Math.pow(Math.exp(c * (1.0 - Math.pow(temperature / TC, 1.0 * d))), 2.0) * c
+	    * Math.pow(temperature / TC, 1.0 * d) * d * d / (temperature * temperature)
+	+ 2.0 * Math.pow(Math.exp(c * (1.0 - Math.pow(temperature / TC, 1.0 * d))), 2.0) * c
+	    * Math.pow(temperature / TC, 1.0 * d) * d / (temperature * temperature);
   }
 
   /** {@inheritDoc} */
@@ -135,49 +131,46 @@ public class AttractiveTermSchwartzentruber extends AttractiveTermBaseClass {
   @Override
   public double diffalphaT(double temperature) {
     return 2.0
-        * (1.0 + m * (1.0 - Math.sqrt(temperature / getComponent().getTC()))
-            - parameters[0] * (1.0 - temperature / getComponent().getTC())
-                * (1.0 + parameters[1] * temperature / getComponent().getTC()
-                    + parameters[2] * temperature * temperature
-                        / (getComponent().getTC() * getComponent().getTC())))
-        * (-m / Math.sqrt(temperature / getComponent().getTC()) / getComponent().getTC() / 2.0
-            + parameters[0] / getComponent().getTC()
-                * (1.0 + parameters[1] * temperature / getComponent().getTC()
-                    + parameters[2] * temperature * temperature
-                        / (getComponent().getTC() * getComponent().getTC()))
-            - parameters[0] * (1.0 - temperature / getComponent().getTC())
-                * (parameters[1] / getComponent().getTC() + 2.0 * parameters[2] * temperature
-                    / (getComponent().getTC() * getComponent().getTC())));
+	* (1.0 + m * (1.0 - Math.sqrt(temperature / getComponent().getTC()))
+	    - parameters[0] * (1.0 - temperature / getComponent().getTC())
+		* (1.0 + parameters[1] * temperature / getComponent().getTC()
+		    + parameters[2] * temperature * temperature / (getComponent().getTC() * getComponent().getTC())))
+	* (-m / Math.sqrt(temperature / getComponent().getTC()) / getComponent().getTC() / 2.0
+	    + parameters[0] / getComponent().getTC()
+		* (1.0 + parameters[1] * temperature / getComponent().getTC()
+		    + parameters[2] * temperature * temperature / (getComponent().getTC() * getComponent().getTC()))
+	    - parameters[0] * (1.0 - temperature / getComponent().getTC()) * (parameters[1] / getComponent().getTC()
+		+ 2.0 * parameters[2] * temperature / (getComponent().getTC() * getComponent().getTC())));
   }
 
   /** {@inheritDoc} */
   @Override
   public double diffdiffalphaT(double temperature) {
     return 2.0
-        * Math
-            .pow(-m / Math.sqrt(temperature / getComponent().getTC()) / getComponent().getTC() / 2.0
-                + parameters[0] / getComponent().getTC()
-                    * (1.0 + parameters[1] * temperature / getComponent().getTC()
-                        + parameters[2] * temperature * temperature
-                            / (getComponent().getTC() * getComponent().getTC()))
-                - parameters[0] * (1.0 - temperature / getComponent().getTC())
-                    * (parameters[1] / getComponent().getTC() + 2.0 * parameters[2] * temperature
-                        / (getComponent().getTC() * getComponent().getTC())),
-                2.0)
-        + 2.0
-            * (1.0 + m * (1.0 - Math.sqrt(temperature / getComponent().getTC())) - parameters[0]
-                * (1.0 - temperature / getComponent().getTC())
-                * (1.0 + parameters[1] * temperature / getComponent().getTC()
-                    + parameters[2] * temperature * temperature
-                        / (getComponent().getTC() * getComponent().getTC())))
-            * (m / Math.sqrt(temperature * temperature * temperature
-                / (getComponent().getTC() * getComponent().getTC() * getComponent().getTC()))
-                / (getComponent().getTC() * getComponent().getTC()) / 4.0
-                + 2.0 * parameters[0] / getComponent().getTC()
-                    * (parameters[1] / getComponent().getTC() + 2.0 * parameters[2] * temperature
-                        / (getComponent().getTC() * getComponent().getTC()))
-                - 2.0 * parameters[0] * (1.0 - temperature / getComponent().getTC()) * parameters[2]
-                    / (getComponent().getTC() * getComponent().getTC()));
+	* Math
+	    .pow(
+		-m / Math.sqrt(temperature / getComponent().getTC()) / getComponent().getTC() / 2.0
+		    + parameters[0] / getComponent().getTC()
+			* (1.0 + parameters[1] * temperature / getComponent().getTC()
+			    + parameters[2] * temperature * temperature
+				/ (getComponent().getTC() * getComponent().getTC()))
+		    - parameters[0] * (1.0 - temperature / getComponent().getTC())
+			* (parameters[1] / getComponent().getTC()
+			    + 2.0 * parameters[2] * temperature / (getComponent().getTC() * getComponent().getTC())),
+		2.0)
+	+ 2.0
+	    * (1.0 + m * (1.0 - Math.sqrt(temperature / getComponent().getTC())) - parameters[0]
+		* (1.0 - temperature / getComponent().getTC())
+		* (1.0 + parameters[1] * temperature / getComponent().getTC()
+		    + parameters[2] * temperature * temperature / (getComponent().getTC() * getComponent().getTC())))
+	    * (m / Math.sqrt(temperature * temperature * temperature
+		/ (getComponent().getTC() * getComponent().getTC() * getComponent().getTC()))
+		/ (getComponent().getTC() * getComponent().getTC()) / 4.0
+		+ 2.0 * parameters[0] / getComponent().getTC()
+		    * (parameters[1] / getComponent().getTC()
+			+ 2.0 * parameters[2] * temperature / (getComponent().getTC() * getComponent().getTC()))
+		- 2.0 * parameters[0] * (1.0 - temperature / getComponent().getTC()) * parameters[2]
+		    / (getComponent().getTC() * getComponent().getTC()));
   }
 
   /** {@inheritDoc} */

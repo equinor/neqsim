@@ -42,8 +42,7 @@ class ThermodynamicCouplingTest {
     ThermoProperties propsLowP = coupling.flashPT(10e5, 300.0);
     ThermoProperties propsHighP = coupling.flashPT(50e5, 300.0);
 
-    assertTrue(propsHighP.gasDensity > propsLowP.gasDensity,
-        "Gas density should increase with pressure");
+    assertTrue(propsHighP.gasDensity > propsLowP.gasDensity, "Gas density should increase with pressure");
   }
 
   @Test
@@ -78,7 +77,7 @@ class ThermodynamicCouplingTest {
     // Liquid viscosity typically higher than gas viscosity
     if (props.liquidViscosity > 0 && props.gasViscosity > 0) {
       assertTrue(props.liquidViscosity > props.gasViscosity,
-          "Liquid viscosity should typically be higher than gas viscosity");
+	  "Liquid viscosity should typically be higher than gas viscosity");
     }
   }
 
@@ -88,8 +87,7 @@ class ThermodynamicCouplingTest {
 
     // Liquid density should be higher than gas density
     if (props.liquidDensity > 0 && props.gasDensity > 0) {
-      assertTrue(props.liquidDensity > props.gasDensity,
-          "Liquid density should be higher than gas density");
+      assertTrue(props.liquidDensity > props.gasDensity, "Liquid density should be higher than gas density");
     }
   }
 
@@ -119,6 +117,6 @@ class ThermodynamicCouplingTest {
 
     // Vapor fraction should typically increase with temperature
     assertTrue(propsHighT.gasVaporFraction >= propsLowT.gasVaporFraction,
-        "Vapor fraction should generally increase with temperature");
+	"Vapor fraction should generally increase with temperature");
   }
 }

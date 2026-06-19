@@ -8,8 +8,8 @@ import java.util.List;
  * Tracks liquid accumulation in low points and riser bases.
  *
  * <p>
- * Models liquid pooling at low points, terrain-induced slugging, and riser-base accumulation
- * phenomena. Handles drainage, filling, and surge-out events.
+ * Models liquid pooling at low points, terrain-induced slugging, and riser-base accumulation phenomena. Handles
+ * drainage, filling, and surge-out events.
  * </p>
  *
  * @author Even Solbraa
@@ -82,40 +82,40 @@ public class LiquidAccumulationTracker implements Serializable {
 
       // Check for local minimum (low point)
       if (elev_curr < elev_prev && elev_curr <= elev_next) {
-        sections[i].setLowPoint(true);
+	sections[i].setLowPoint(true);
 
-        // Create accumulation zone centered on low point
-        AccumulationZone zone = new AccumulationZone();
-        zone.sectionIndices.add(i);
+	// Create accumulation zone centered on low point
+	AccumulationZone zone = new AccumulationZone();
+	zone.sectionIndices.add(i);
 
-        // Extend zone to adjacent downward sections
-        int startIdx = i;
-        while (startIdx > 0 && sections[startIdx - 1].getInclination() < 0) {
-          startIdx--;
-          zone.sectionIndices.add(0, startIdx);
-        }
+	// Extend zone to adjacent downward sections
+	int startIdx = i;
+	while (startIdx > 0 && sections[startIdx - 1].getInclination() < 0) {
+	  startIdx--;
+	  zone.sectionIndices.add(0, startIdx);
+	}
 
-        int endIdx = i;
-        while (endIdx < sections.length - 1 && sections[endIdx + 1].getInclination() > 0) {
-          endIdx++;
-          zone.sectionIndices.add(endIdx);
-        }
+	int endIdx = i;
+	while (endIdx < sections.length - 1 && sections[endIdx + 1].getInclination() > 0) {
+	  endIdx++;
+	  zone.sectionIndices.add(endIdx);
+	}
 
-        zone.startPosition = sections[startIdx].getPosition();
-        zone.endPosition = sections[endIdx].getPosition() + sections[endIdx].getLength();
+	zone.startPosition = sections[startIdx].getPosition();
+	zone.endPosition = sections[endIdx].getPosition() + sections[endIdx].getLength();
 
-        // Calculate max volume (pipe volume in the zone)
-        zone.maxVolume = 0;
-        for (int idx : zone.sectionIndices) {
-          zone.maxVolume += sections[idx].getArea() * sections[idx].getLength();
-        }
+	// Calculate max volume (pipe volume in the zone)
+	zone.maxVolume = 0;
+	for (int idx : zone.sectionIndices) {
+	  zone.maxVolume += sections[idx].getArea() * sections[idx].getLength();
+	}
 
-        zone.isActive = true;
-        accumulationZones.add(zone);
+	zone.isActive = true;
+	accumulationZones.add(zone);
 
       } else if (elev_curr > elev_prev && elev_curr >= elev_next) {
-        // High point
-        sections[i].setHighPoint(true);
+	// High point
+	sections[i].setHighPoint(true);
       }
     }
 
@@ -126,16 +126,16 @@ public class LiquidAccumulationTracker implements Serializable {
 
       // Transition to significant upward inclination
       if (incl_prev < Math.toRadians(5) && incl_curr > Math.toRadians(30)) {
-        // This is a riser base - mark for accumulation tracking
-        AccumulationZone riserBase = new AccumulationZone();
-        riserBase.sectionIndices.add(i - 1);
-        riserBase.sectionIndices.add(i);
-        riserBase.startPosition = sections[i - 1].getPosition();
-        riserBase.endPosition = sections[i].getPosition() + sections[i].getLength();
-        riserBase.maxVolume = (sections[i - 1].getArea() * sections[i - 1].getLength()
-            + sections[i].getArea() * sections[i].getLength()) * 0.5;
-        riserBase.isActive = true;
-        accumulationZones.add(riserBase);
+	// This is a riser base - mark for accumulation tracking
+	AccumulationZone riserBase = new AccumulationZone();
+	riserBase.sectionIndices.add(i - 1);
+	riserBase.sectionIndices.add(i);
+	riserBase.startPosition = sections[i - 1].getPosition();
+	riserBase.endPosition = sections[i].getPosition() + sections[i].getLength();
+	riserBase.maxVolume = (sections[i - 1].getArea() * sections[i - 1].getLength()
+	    + sections[i].getArea() * sections[i].getLength()) * 0.5;
+	riserBase.isActive = true;
+	accumulationZones.add(riserBase);
       }
     }
   }
@@ -144,7 +144,7 @@ public class LiquidAccumulationTracker implements Serializable {
    * Update liquid accumulation for all zones.
    *
    * @param sections Pipe sections
-   * @param dt Time step (s)
+   * @param dt       Time step (s)
    */
   public void updateAccumulation(PipeSection[] sections, double dt) {
     for (AccumulationZone zone : accumulationZones) {
@@ -163,9 +163,9 @@ public class LiquidAccumulationTracker implements Serializable {
    * <li>Gas-liquid slip causes liquid to settle in stratified regions</li>
    * </ul>
    *
-   * @param zone the accumulation zone to update
+   * @param zone     the accumulation zone to update
    * @param sections array of pipe sections
-   * @param dt time step [s]
+   * @param dt       time step [s]
    */
   private void updateZone(AccumulationZone zone, PipeSection[] sections, double dt) {
     if (!zone.isActive || zone.sectionIndices.isEmpty()) {
@@ -196,16 +196,16 @@ public class LiquidAccumulationTracker implements Serializable {
       // and slower on uphill (creating a dam effect)
       // Rate = (rho_L - rho_G) * g * sin(theta) * holdup * A * settling_factor
       double settlingFactor = 0.01; // Empirical factor for accumulation rate
-      double gravitySettling = -rho_diff * GRAVITY * Math.sin(inclination) * holdup * gasHoldup * A
-          * settlingFactor / Math.max(rho_L, 100.0);
+      double gravitySettling = -rho_diff * GRAVITY * Math.sin(inclination) * holdup * gasHoldup * A * settlingFactor
+	  / Math.max(rho_L, 100.0);
 
       // Positive settling = liquid accumulates (downhill sections or stagnant uphill)
       if (inclination < 0) {
-        // Downhill: liquid flows in faster
-        accumulationRate += Math.abs(gravitySettling);
+	// Downhill: liquid flows in faster
+	accumulationRate += Math.abs(gravitySettling);
       } else if (inclination > 0 && slipVelocity > 0.1) {
-        // Uphill with significant slip: liquid held back
-        accumulationRate += Math.abs(gravitySettling) * 0.3;
+	// Uphill with significant slip: liquid held back
+	accumulationRate += Math.abs(gravitySettling) * 0.3;
       }
     }
 
@@ -219,8 +219,7 @@ public class LiquidAccumulationTracker implements Serializable {
       double A = upstream.getArea();
 
       double liquidIn = upstream.getLiquidHoldup() * Math.max(upstream.getLiquidVelocity(), 0) * A;
-      double liquidOut =
-          downstream.getLiquidHoldup() * Math.max(downstream.getLiquidVelocity(), 0) * A;
+      double liquidOut = downstream.getLiquidHoldup() * Math.max(downstream.getLiquidVelocity(), 0) * A;
 
       zone.netInflowRate = liquidIn - liquidOut;
       accumulationRate += Math.max(0, zone.netInflowRate); // Only accumulate, don't drain this way
@@ -267,11 +266,11 @@ public class LiquidAccumulationTracker implements Serializable {
    * Distribute accumulated liquid among sections in the zone.
    *
    * <p>
-   * This method now ACTUALLY updates the section holdups, not just a separate tracking variable.
-   * This is critical for terrain-induced slug formation.
+   * This method now ACTUALLY updates the section holdups, not just a separate tracking variable. This is critical for
+   * terrain-induced slug formation.
    * </p>
    *
-   * @param zone the accumulation zone to process
+   * @param zone     the accumulation zone to process
    * @param sections the pipe sections array
    */
   private void distributeAccumulatedLiquid(AccumulationZone zone, PipeSection[] sections) {
@@ -318,8 +317,7 @@ public class LiquidAccumulationTracker implements Serializable {
       section.setGasHoldup(1.0 - newHoldup);
 
       // Store for tracking
-      section
-          .setAccumulatedLiquidVolume(additionalHoldup * section.getArea() * section.getLength());
+      section.setAccumulatedLiquidVolume(additionalHoldup * section.getArea() * section.getLength());
 
       // Reduce liquid velocity in accumulation zones (liquid is pooling)
       double velocityReduction = 1.0 - 0.5 * (additionalHoldup / 0.5);
@@ -342,7 +340,7 @@ public class LiquidAccumulationTracker implements Serializable {
    * <li>Previous slug has cleared the zone exit (prevents immediate merging)</li>
    * </ul>
    *
-   * @param zone Accumulation zone
+   * @param zone     Accumulation zone
    * @param sections Pipe sections
    * @return Slug characteristics if slug released, null otherwise
    */
@@ -372,7 +370,7 @@ public class LiquidAccumulationTracker implements Serializable {
       // BUG FIX: Don't release a new slug if the downstream section is still in a slug body
       // This prevents immediate merging when a previous slug hasn't cleared the zone
       if (downstreamSection.isInSlugBody()) {
-        return null;
+	return null;
       }
     }
 
@@ -435,13 +433,12 @@ public class LiquidAccumulationTracker implements Serializable {
   /**
    * Calculate drainage rate from a zone.
    *
-   * @param zone Accumulation zone
-   * @param sections Pipe sections
+   * @param zone         Accumulation zone
+   * @param sections     Pipe sections
    * @param pressureDrop Pressure drop across zone (Pa)
    * @return Drainage rate (m³/s)
    */
-  public double calculateDrainageRate(AccumulationZone zone, PipeSection[] sections,
-      double pressureDrop) {
+  public double calculateDrainageRate(AccumulationZone zone, PipeSection[] sections, double pressureDrop) {
     if (zone.liquidVolume <= 0 || zone.sectionIndices.isEmpty()) {
       return 0;
     }
@@ -495,7 +492,7 @@ public class LiquidAccumulationTracker implements Serializable {
     List<AccumulationZone> overflowing = new ArrayList<>();
     for (AccumulationZone zone : accumulationZones) {
       if (zone.isOverflowing) {
-        overflowing.add(zone);
+	overflowing.add(zone);
       }
     }
     return overflowing;
@@ -550,8 +547,8 @@ public class LiquidAccumulationTracker implements Serializable {
 
     @Override
     public String toString() {
-      return String.format("Slug[front=%.1fm, length=%.1fm, vel=%.2fm/s, vol=%.3fm³]",
-          frontPosition, length, velocity, volume);
+      return String.format("Slug[front=%.1fm, length=%.1fm, vel=%.2fm/s, vol=%.3fm³]", frontPosition, length, velocity,
+	  volume);
     }
   }
 }

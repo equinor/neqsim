@@ -23,8 +23,8 @@ public class Expander extends Compressor implements ExpanderInterface {
   private ExpanderMechanicalDesign expanderMechanicalDesign;
 
   /**
-   * Rated recovered shaft power of the expander in kW. A value of {@code 0} (the default) means no
-   * recovered-power capacity limit is defined, so no {@code recoveredPower} constraint is created.
+   * Rated recovered shaft power of the expander in kW. A value of {@code 0} (the default) means no recovered-power
+   * capacity limit is defined, so no {@code recoveredPower} constraint is created.
    */
   private double ratedRecoveredPower = 0.0;
 
@@ -43,7 +43,7 @@ public class Expander extends Compressor implements ExpanderInterface {
    * Constructor for Expander.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name        a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public Expander(String name, StreamInterface inletStream) {
@@ -77,15 +77,14 @@ public class Expander extends Compressor implements ExpanderInterface {
   }
 
   /**
-   * Sets the rated recovered shaft power of the expander and rebuilds the capacity constraints so
-   * the {@code recoveredPower} utilization reflects the new rating.
+   * Sets the rated recovered shaft power of the expander and rebuilds the capacity constraints so the
+   * {@code recoveredPower} utilization reflects the new rating.
    *
    * <p>
-   * The recovered power of an expander is mechanical work extracted from the gas, so
-   * {@link #getPower()} returns a negative value. The {@code recoveredPower} constraint compares
-   * the magnitude of the extracted power against this rating, giving a meaningful 0&ndash;100+%
-   * utilization for the turbo-expander. When the rating is {@code 0} no recovered-power constraint
-   * is created.
+   * The recovered power of an expander is mechanical work extracted from the gas, so {@link #getPower()} returns a
+   * negative value. The {@code recoveredPower} constraint compares the magnitude of the extracted power against this
+   * rating, giving a meaningful 0&ndash;100+% utilization for the turbo-expander. When the rating is {@code 0} no
+   * recovered-power constraint is created.
    * </p>
    *
    * @param ratedRecoveredPowerKW rated recovered power in kW; must be &ge; 0
@@ -99,11 +98,11 @@ public class Expander extends Compressor implements ExpanderInterface {
    * {@inheritDoc}
    *
    * <p>
-   * Builds the inherited compressor capacity constraints, then adapts them for expander operation.
-   * The consumed-power constraints ({@code power} and {@code ratedPower}) read {@link #getPower()},
-   * which is negative for an expander and therefore always reports zero utilization, so they are
-   * removed. When a rated recovered power has been set, a {@code recoveredPower} constraint is
-   * added that tracks the magnitude of the extracted shaft power against the rating.
+   * Builds the inherited compressor capacity constraints, then adapts them for expander operation. The consumed-power
+   * constraints ({@code power} and {@code ratedPower}) read {@link #getPower()}, which is negative for an expander and
+   * therefore always reports zero utilization, so they are removed. When a rated recovered power has been set, a
+   * {@code recoveredPower} constraint is added that tracks the magnitude of the extracted shaft power against the
+   * rating.
    * </p>
    */
   @Override
@@ -114,20 +113,19 @@ public class Expander extends Compressor implements ExpanderInterface {
     removeCapacityConstraint("ratedPower");
     if (ratedRecoveredPower > 0.0) {
       final double ratedKW = ratedRecoveredPower;
-      addCapacityConstraint(
-          new CapacityConstraint("recoveredPower", "kW", CapacityConstraint.ConstraintType.HARD)
-              .setDesignValue(ratedKW).setMaxValue(ratedKW * 1.1).setWarningThreshold(0.9)
-              .setDescription("Recovered shaft power vs rated recovered power")
-              .setDataSource("equipment").setValueSupplier(() -> {
-                if (getThermoSystem() == null) {
-                  return 0.0;
-                }
-                double recoveredKW = Math.abs(this.getPower("kW"));
-                if (Double.isNaN(recoveredKW)) {
-                  return 0.0;
-                }
-                return recoveredKW;
-              }));
+      addCapacityConstraint(new CapacityConstraint("recoveredPower", "kW", CapacityConstraint.ConstraintType.HARD)
+	  .setDesignValue(ratedKW).setMaxValue(ratedKW * 1.1).setWarningThreshold(0.9)
+	  .setDescription("Recovered shaft power vs rated recovered power").setDataSource("equipment")
+	  .setValueSupplier(() -> {
+	    if (getThermoSystem() == null) {
+	      return 0.0;
+	    }
+	    double recoveredKW = Math.abs(this.getPower("kW"));
+	    if (Double.isNaN(recoveredKW)) {
+	      return 0.0;
+	    }
+	    return recoveredKW;
+	  }));
     }
   }
 
@@ -135,11 +133,10 @@ public class Expander extends Compressor implements ExpanderInterface {
    * {@inheritDoc}
    *
    * <p>
-   * Validates that the expander simulation produced physically reasonable results. Unlike a
-   * compressor, an expander extracts work from the gas, so it is valid for the shaft power to be
-   * negative, the polytropic head to be negative, and the gas to cool across the machine. This
-   * override checks only for non-NaN key values and that the outlet gas is not hotter than the
-   * inlet (within a small numerical tolerance). Using the compressor validity rules here would
+   * Validates that the expander simulation produced physically reasonable results. Unlike a compressor, an expander
+   * extracts work from the gas, so it is valid for the shaft power to be negative, the polytropic head to be negative,
+   * and the gas to cool across the machine. This override checks only for non-NaN key values and that the outlet gas is
+   * not hotter than the inlet (within a small numerical tolerance). Using the compressor validity rules here would
    * incorrectly flag every expander as invalid and trigger a spurious 150% utilization fallback.
    * </p>
    */
@@ -180,29 +177,26 @@ public class Expander extends Compressor implements ExpanderInterface {
       double dp = (pressure - getThermoSystem().getPressure()) / (1.0 * numbersteps);
 
       for (int i = 0; i < numbersteps; i++) {
-        entropy = getThermoSystem().getEntropy();
-        double hinn_loc = getThermoSystem().getEnthalpy();
-        getThermoSystem().setPressure(getThermoSystem().getPressure() + dp);
-        thermoOps.PSflash(entropy);
-        hout = hinn_loc + (getThermoSystem().getEnthalpy() - hinn_loc) * polytropicEfficiency;
-        thermoOps.PHflash(hout, 0);
+	entropy = getThermoSystem().getEntropy();
+	double hinn_loc = getThermoSystem().getEnthalpy();
+	getThermoSystem().setPressure(getThermoSystem().getPressure() + dp);
+	thermoOps.PSflash(entropy);
+	hout = hinn_loc + (getThermoSystem().getEnthalpy() - hinn_loc) * polytropicEfficiency;
+	thermoOps.PHflash(hout, 0);
       }
 
       dH = hout - hinn;
       /*
        * HYSYS method double oldPolyt = 10.5; int iter = 0; do {
        *
-       * iter++; double n = Math.log(thermoSystem.getPressure() / presinn) /
-       * Math.log(thermoSystem.getDensity() / densInn); double k =
-       * Math.log(thermoSystem.getPressure() / presinn) / Math.log(densOutIdeal / densInn); double
-       * factor = ((Math.pow(thermoSystem.getPressure() / presinn, (n - 1.0) / n) - 1.0) * (n / (n -
-       * 1.0)) * (k - 1) / k) / (Math.pow(thermoSystem.getPressure() / presinn, (k - 1.0) / k) -
-       * 1.0); oldPolyt = polytropicEfficiency; polytropicEfficiency = factor *
-       * isentropicEfficiency; dH = thermoSystem.getEnthalpy() - hinn; hout = hinn + dH /
-       * polytropicEfficiency; thermoOps.PHflash(hout, 0); System.out.println(" factor " + factor +
-       * " n " + n + " k " + k + " polytropic effici " + polytropicEfficiency + " iter " + iter); }
-       * while (Math.abs((oldPolyt - polytropicEfficiency) / oldPolyt) > 1e-5 && iter < 500); //
-       * polytropicEfficiency = isentropicEfficiency * ();
+       * iter++; double n = Math.log(thermoSystem.getPressure() / presinn) / Math.log(thermoSystem.getDensity() /
+       * densInn); double k = Math.log(thermoSystem.getPressure() / presinn) / Math.log(densOutIdeal / densInn); double
+       * factor = ((Math.pow(thermoSystem.getPressure() / presinn, (n - 1.0) / n) - 1.0) * (n / (n - 1.0)) * (k - 1) /
+       * k) / (Math.pow(thermoSystem.getPressure() / presinn, (k - 1.0) / k) - 1.0); oldPolyt = polytropicEfficiency;
+       * polytropicEfficiency = factor * isentropicEfficiency; dH = thermoSystem.getEnthalpy() - hinn; hout = hinn + dH
+       * / polytropicEfficiency; thermoOps.PHflash(hout, 0); System.out.println(" factor " + factor + " n " + n + " k "
+       * + k + " polytropic effici " + polytropicEfficiency + " iter " + iter); } while (Math.abs((oldPolyt -
+       * polytropicEfficiency) / oldPolyt) > 1e-5 && iter < 500); // polytropicEfficiency = isentropicEfficiency * ();
        */
     } else {
       getThermoSystem().setPressure(pressure);
@@ -211,7 +205,7 @@ public class Expander extends Compressor implements ExpanderInterface {
       thermoOps.PSflash(entropy);
       // double densOutIdeal = getThermoSystem().getDensity();
       if (!powerSet) {
-        dH = (getThermoSystem().getEnthalpy() - hinn) * isentropicEfficiency;
+	dH = (getThermoSystem().getEnthalpy() - hinn) * isentropicEfficiency;
       }
       hout = hinn + dH;
       isentropicEfficiency = dH / (getThermoSystem().getEnthalpy() - hinn);

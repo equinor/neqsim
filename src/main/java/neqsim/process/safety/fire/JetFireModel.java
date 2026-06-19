@@ -17,8 +17,8 @@ import java.io.Serializable;
  * <b>References:</b>
  * <ul>
  * <li>API STD 521, §4.6 Flares — Radiation</li>
- * <li>Chamberlain D. (1987) — Developments in design methods for predicting thermal radiation
- * from flares. Chem. Eng. Res. Des. 65, 299–309</li>
+ * <li>Chamberlain D. (1987) — Developments in design methods for predicting thermal radiation from flares. Chem. Eng.
+ * Res. Des. 65, 299–309</li>
  * <li>CCPS Yellow Book — Thermal radiation models</li>
  * </ul>
  *
@@ -36,13 +36,11 @@ public class JetFireModel implements Serializable {
   /**
    * Construct a jet fire radiation model.
    *
-   * @param massFlowKgPerS release rate burning at the jet, kg/s
+   * @param massFlowKgPerS         release rate burning at the jet, kg/s
    * @param heatOfCombustionJPerKg lower heating value of fuel, J/kg
-   * @param radiativeFraction fraction of combustion heat radiated (0.10 – 0.40 typical;
-   *        natural gas ≈ 0.20)
+   * @param radiativeFraction      fraction of combustion heat radiated (0.10 – 0.40 typical; natural gas ≈ 0.20)
    */
-  public JetFireModel(double massFlowKgPerS, double heatOfCombustionJPerKg,
-      double radiativeFraction) {
+  public JetFireModel(double massFlowKgPerS, double heatOfCombustionJPerKg, double radiativeFraction) {
     if (massFlowKgPerS < 0.0 || heatOfCombustionJPerKg <= 0.0) {
       throw new IllegalArgumentException("massFlow >= 0 and heatOfCombustion > 0 required");
     }
@@ -83,8 +81,7 @@ public class JetFireModel implements Serializable {
   public double transmissivity(double distanceM) {
     double pw = humidityRH * 1700.0; // partial pressure water (Pa) at 20°C, sat ≈ 2340
     double xpw = pw * Math.max(distanceM, 1.0);
-    double tau = 1.006 - 0.01171 * Math.log10(xpw)
-        - 0.02368 * Math.pow(Math.log10(xpw), 2);
+    double tau = 1.006 - 0.01171 * Math.log10(xpw) - 0.02368 * Math.pow(Math.log10(xpw), 2);
     if (tau < 0.0) {
       tau = 0.0;
     }
@@ -126,8 +123,8 @@ public class JetFireModel implements Serializable {
       double tau = transmissivity(r);
       double rNew = Math.sqrt(q * tau / (4.0 * Math.PI * targetFluxWperM2));
       if (Math.abs(rNew - r) < 0.01) {
-        r = rNew;
-        break;
+	r = rNew;
+	break;
       }
       r = rNew;
     }

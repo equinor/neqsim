@@ -39,9 +39,8 @@ public class SeparatorTestTest {
     tempSystem.setMixingRule(2);
 
     SeparatorTest sepSim = new SeparatorTest(tempSystem);
-    double[] temps = {313.15, 313.15, 313.15, 313.15, 313.15, 313.15, 313.15};
-    double[] pres =
-        {500, 400, 200, 100, 50.0, 5.0, ThermodynamicConstantsInterface.referencePressure};
+    double[] temps = { 313.15, 313.15, 313.15, 313.15, 313.15, 313.15, 313.15 };
+    double[] pres = { 500, 400, 200, 100, 50.0, 5.0, ThermodynamicConstantsInterface.referencePressure };
     sepSim.setSeparatorConditions(temps, pres);
     sepSim.runCalc();
 

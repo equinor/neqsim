@@ -7,9 +7,9 @@ import neqsim.process.equipment.adsorber.PSACascade;
 import neqsim.process.equipment.adsorber.PressureSwingAdsorptionBed;
 
 /**
- * Unit tests for {@link PSACostEstimate}. Validates the per-bed reference cost, sorbent inventory
- * cost, balance-of-plant toggle, and the bed-volume scale-exponent correlation against published
- * industrial PSA cost benchmarks.
+ * Unit tests for {@link PSACostEstimate}. Validates the per-bed reference cost, sorbent inventory cost,
+ * balance-of-plant toggle, and the bed-volume scale-exponent correlation against published industrial PSA cost
+ * benchmarks.
  */
 class PSACostEstimateTest {
 
@@ -20,7 +20,7 @@ class PSACostEstimateTest {
     est.setSorbentMassPerBedKg(20000.0);
     est.calculateCostEstimate();
     assertTrue(est.getPurchasedEquipmentCost() > 0.0,
-        "Default PSA cost must be positive, got " + est.getPurchasedEquipmentCost());
+	"Default PSA cost must be positive, got " + est.getPurchasedEquipmentCost());
   }
 
   @Test
@@ -36,8 +36,8 @@ class PSACostEstimateTest {
     twelve.calculateCostEstimate();
 
     assertTrue(twelve.getPurchasedEquipmentCost() > four.getPurchasedEquipmentCost(),
-        "12-bed cascade must cost more than 4-bed: 12=" + twelve.getPurchasedEquipmentCost()
-            + ", 4=" + four.getPurchasedEquipmentCost());
+	"12-bed cascade must cost more than 4-bed: 12=" + twelve.getPurchasedEquipmentCost() + ", 4="
+	    + four.getPurchasedEquipmentCost());
   }
 
   @Test
@@ -55,7 +55,7 @@ class PSACostEstimateTest {
     zeo.calculateCostEstimate();
 
     assertTrue(zeo.getPurchasedEquipmentCost() > ac.getPurchasedEquipmentCost(),
-        "Zeolite 13X (~10 USD/kg) must exceed AC (~4 USD/kg) on equal sorbent mass");
+	"Zeolite 13X (~10 USD/kg) must exceed AC (~4 USD/kg) on equal sorbent mass");
   }
 
   @Test
@@ -73,11 +73,10 @@ class PSACostEstimateTest {
     noBop.calculateCostEstimate();
 
     assertTrue(noBop.getPurchasedEquipmentCost() < withBop.getPurchasedEquipmentCost(),
-        "BoP=false should give a lower CAPEX, got with=" + withBop.getPurchasedEquipmentCost()
-            + ", no=" + noBop.getPurchasedEquipmentCost());
+	"BoP=false should give a lower CAPEX, got with=" + withBop.getPurchasedEquipmentCost() + ", no="
+	    + noBop.getPurchasedEquipmentCost());
     double ratio = noBop.getPurchasedEquipmentCost() / withBop.getPurchasedEquipmentCost();
-    assertTrue(ratio > 0.70 && ratio < 0.80,
-        "BoP strip should reduce CAPEX by ~25%, ratio=" + ratio);
+    assertTrue(ratio > 0.70 && ratio < 0.80, "BoP strip should reduce CAPEX by ~25%, ratio=" + ratio);
   }
 
   @Test
@@ -93,10 +92,8 @@ class PSACostEstimateTest {
     est.setIncludeBalanceOfPlant(false);
     double noBopCost = est.getPurchasedEquipmentCost();
 
-    assertTrue(moreBedsCost > initialCost,
-        "Changing bed count after reading cost must trigger recalculation");
-    assertTrue(noBopCost < moreBedsCost,
-        "Changing BoP flag after reading cost must trigger recalculation");
+    assertTrue(moreBedsCost > initialCost, "Changing bed count after reading cost must trigger recalculation");
+    assertTrue(noBopCost < moreBedsCost, "Changing BoP flag after reading cost must trigger recalculation");
   }
 
   @Test
@@ -107,10 +104,8 @@ class PSACostEstimateTest {
 
     PSACostEstimate est = new PSACostEstimate(cascade);
     org.junit.jupiter.api.Assertions.assertEquals(6, est.getNumberOfBeds());
-    org.junit.jupiter.api.Assertions
-        .assertEquals(PressureSwingAdsorptionBed.SorbentType.ZEOLITE_13X, est.getSorbent());
-    assertTrue(est.getSorbentMassPerBedKg() > 0.0,
-        "Sorbent mass should be derived from bed volume × bulk density");
+    org.junit.jupiter.api.Assertions.assertEquals(PressureSwingAdsorptionBed.SorbentType.ZEOLITE_13X, est.getSorbent());
+    assertTrue(est.getSorbentMassPerBedKg() > 0.0, "Sorbent mass should be derived from bed volume × bulk density");
   }
 
   @Test
@@ -123,8 +118,7 @@ class PSACostEstimateTest {
     est.setSorbent(PressureSwingAdsorptionBed.SorbentType.ACTIVATED_CARBON);
     est.calculateCostEstimate();
     double cost = est.getPurchasedEquipmentCost();
-    assertTrue(cost > 1.0e6 && cost < 1.0e7,
-        "4-bed PSA with 20 t AC/bed should be USD 1-10 M, got " + cost);
+    assertTrue(cost > 1.0e6 && cost < 1.0e7, "4-bed PSA with 20 t AC/bed should be USD 1-10 M, got " + cost);
   }
 
   @Test

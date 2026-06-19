@@ -19,15 +19,14 @@ public class FireSafetyCalculationsTest {
 
   @Test
   public void testStefanBoltzmannHeatFlux() {
-    double heatFlux =
-        FireHeatLoadCalculator.generalizedStefanBoltzmannHeatFlux(0.35, 0.8, 1200.0, 350.0);
+    double heatFlux = FireHeatLoadCalculator.generalizedStefanBoltzmannHeatFlux(0.35, 0.8, 1200.0, 350.0);
     assertEquals(3.268e4, heatFlux, 50.0);
   }
 
   @Test
   public void testWallTemperaturesForWettedZone() {
-    SurfaceTemperatureResult result = FireHeatTransferCalculator.calculateWallTemperatures(300.0,
-        1200.0, 0.02, 45.0, 1500.0, 30.0);
+    SurfaceTemperatureResult result = FireHeatTransferCalculator.calculateWallTemperatures(300.0, 1200.0, 0.02, 45.0,
+	1500.0, 30.0);
     assertEquals(2.6129e4, result.heatFlux(), 100.0);
     assertEquals(317.4, result.innerWallTemperatureK(), 0.2);
     assertEquals(329.0, result.outerWallTemperatureK(), 0.2);

@@ -15,8 +15,7 @@ public class NeqSimLoggingTest {
     neqsim.util.NeqSimLogging.setGlobalLogging("DEBUG");
     logger.info("This logging should be seen.....Testing global logging at DEBUG level...");
 
-    assertEquals("DEBUG", logger.getLevel().toString(),
-        "neqsim logger should be set to DEBUG level.");
+    assertEquals("DEBUG", logger.getLevel().toString(), "neqsim logger should be set to DEBUG level.");
 
     neqsim.util.NeqSimLogging.setGlobalLogging("INFO");
     logger.info("This logging should be seen.....Testing global logging at INFO level...");
@@ -25,6 +24,6 @@ public class NeqSimLoggingTest {
     neqsim.util.NeqSimLogging.setGlobalLogging("OFF");
     // Verify that the neqsim logger is set to OFF
     assertEquals("OFF", logger.getLevel().toString(),
-        "This logging should not be seen.....neqsim logger should be set to OFF.");
+	"This logging should not be seen.....neqsim logger should be set to OFF.");
   }
 }

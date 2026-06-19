@@ -6,13 +6,12 @@ import com.google.gson.GsonBuilder;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * General-purpose Classical Nucleation Theory (CNT) model for predicting particle formation from
- * supersaturated vapors.
+ * General-purpose Classical Nucleation Theory (CNT) model for predicting particle formation from supersaturated vapors.
  *
  * <p>
- * This class implements homogeneous nucleation theory to predict critical nucleus size, nucleation
- * rate, particle growth by condensation, and coagulation loss. It is applicable to any substance
- * undergoing vapor-to-solid or vapor-to-liquid phase transition including:
+ * This class implements homogeneous nucleation theory to predict critical nucleus size, nucleation rate, particle
+ * growth by condensation, and coagulation loss. It is applicable to any substance undergoing vapor-to-solid or
+ * vapor-to-liquid phase transition including:
  * </p>
  * <ul>
  * <li>Elemental sulfur (S8) deposition in natural gas systems</li>
@@ -104,8 +103,8 @@ public class ClassicalNucleationTheory {
   private double molecularMass;
 
   /**
-   * Sticking (accommodation) coefficient for vapor molecules hitting the nucleus surface. Default
-   * 1.0 (every collision sticks). Typical range 0.01 to 1.0.
+   * Sticking (accommodation) coefficient for vapor molecules hitting the nucleus surface. Default 1.0 (every collision
+   * sticks). Typical range 0.01 to 1.0.
    */
   private double stickingCoefficient = 1.0;
 
@@ -117,15 +116,14 @@ public class ClassicalNucleationTheory {
   private boolean heterogeneous = false;
 
   /**
-   * Contact angle in degrees between the condensed phase and the substrate surface. Only used when
-   * heterogeneous = true. Range 0 to 180 degrees. 0 = complete wetting (no barrier), 180 =
-   * non-wetting (same as homogeneous).
+   * Contact angle in degrees between the condensed phase and the substrate surface. Only used when heterogeneous =
+   * true. Range 0 to 180 degrees. 0 = complete wetting (no barrier), 180 = non-wetting (same as homogeneous).
    */
   private double contactAngleDegrees = 90.0;
 
   /**
-   * Fletcher shape factor f(theta) that multiplies the homogeneous barrier. f(theta) = (2 -
-   * 3*cos(theta) + cos^3(theta)) / 4. Range: 0 (complete wetting) to 1 (non-wetting).
+   * Fletcher shape factor f(theta) that multiplies the homogeneous barrier. f(theta) = (2 - 3*cos(theta) +
+   * cos^3(theta)) / 4. Range: 0 (complete wetting) to 1 (non-wetting).
    */
   private double contactAngleFactor = 0.5;
 
@@ -143,8 +141,7 @@ public class ClassicalNucleationTheory {
   private double saturationPressure = 0.0;
 
   /**
-   * Supersaturation ratio S = p_actual / p_sat. Can be set directly instead of setting both
-   * pressures.
+   * Supersaturation ratio S = p_actual / p_sat. Can be set directly instead of setting both pressures.
    */
   private double supersaturationRatio = 1.0;
 
@@ -232,7 +229,7 @@ public class ClassicalNucleationTheory {
    *
    * @param molecularWeight_kg_mol molecular weight of the condensing species in kg/mol
    * @param condensedDensity_kg_m3 density of the condensed (solid or liquid) phase in kg/m3
-   * @param surfaceTension_N_m surface tension of the condensed phase in N/m
+   * @param surfaceTension_N_m     surface tension of the condensed phase in N/m
    */
   public ClassicalNucleationTheory(double molecularWeight_kg_mol, double condensedDensity_kg_m3,
       double surfaceTension_N_m) {
@@ -329,19 +326,17 @@ public class ClassicalNucleationTheory {
    * The system should have been flashed (TPflash + initProperties) before calling this method.
    * </p>
    *
-   * @param system the NeqSim thermodynamic system (should be flashed and initialized)
+   * @param system        the NeqSim thermodynamic system (should be flashed and initialized)
    * @param componentName the name of the condensable component (e.g., "n-heptane", "water")
-   * @return ClassicalNucleationTheory model populated from the EOS, or null if the component is not
-   *         found
+   * @return ClassicalNucleationTheory model populated from the EOS, or null if the component is not found
    */
-  public static ClassicalNucleationTheory fromThermoSystem(SystemInterface system,
-      String componentName) {
+  public static ClassicalNucleationTheory fromThermoSystem(SystemInterface system, String componentName) {
     // Find the component index
     int compIndex = -1;
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       if (system.getPhase(0).getComponent(i).getComponentName().equalsIgnoreCase(componentName)) {
-        compIndex = i;
-        break;
+	compIndex = i;
+	break;
       }
     }
     if (compIndex < 0) {
@@ -361,9 +356,9 @@ public class ClassicalNucleationTheory {
     double sigma;
     if (system.getNumberOfPhases() >= 2) {
       try {
-        sigma = system.getInterphaseProperties().getSurfaceTension(0, 1);
+	sigma = system.getInterphaseProperties().getSurfaceTension(0, 1);
       } catch (Exception e) {
-        sigma = estimateSurfaceTension(tc, pc, system.getTemperature());
+	sigma = estimateSurfaceTension(tc, pc, system.getTemperature());
       }
     } else {
       sigma = estimateSurfaceTension(tc, pc, system.getTemperature());
@@ -378,58 +373,56 @@ public class ClassicalNucleationTheory {
     // Set gas-phase transport properties if available
     if (system.getNumberOfPhases() >= 1 && system.hasPhaseType("gas")) {
       try {
-        int gasPhaseIndex = system.getPhaseNumberOfPhase("gas");
-        double gasVisc = system.getPhase(gasPhaseIndex).getViscosity("kg/msec");
-        if (gasVisc > 0.0) {
-          cnt.setGasViscosity(gasVisc);
-        }
+	int gasPhaseIndex = system.getPhaseNumberOfPhase("gas");
+	double gasVisc = system.getPhase(gasPhaseIndex).getViscosity("kg/msec");
+	if (gasVisc > 0.0) {
+	  cnt.setGasViscosity(gasVisc);
+	}
       } catch (Exception e) {
-        // Use default viscosity
+	// Use default viscosity
       }
     }
 
     // Estimate supersaturation from fugacity ratio if two phases present
     if (system.getNumberOfPhases() >= 2) {
       try {
-        int gasPhaseIndex = system.getPhaseNumberOfPhase("gas");
-        int liquidPhaseIndex = system.getPhaseNumberOfPhase("oil");
-        if (liquidPhaseIndex < 0) {
-          liquidPhaseIndex = system.getPhaseNumberOfPhase("aqueous");
-        }
+	int gasPhaseIndex = system.getPhaseNumberOfPhase("gas");
+	int liquidPhaseIndex = system.getPhaseNumberOfPhase("oil");
+	if (liquidPhaseIndex < 0) {
+	  liquidPhaseIndex = system.getPhaseNumberOfPhase("aqueous");
+	}
 
-        if (gasPhaseIndex >= 0 && liquidPhaseIndex >= 0) {
-          // Fugacity = x_i * P * phi_i
-          double xGas = system.getPhase(gasPhaseIndex).getComponent(compIndex).getx();
-          double phiGas =
-              system.getPhase(gasPhaseIndex).getComponent(compIndex).getFugacityCoefficient();
-          double xLiq = system.getPhase(liquidPhaseIndex).getComponent(compIndex).getx();
-          double phiLiq =
-              system.getPhase(liquidPhaseIndex).getComponent(compIndex).getFugacityCoefficient();
-          double pressure = system.getPressure() * 1e5; // bara to Pa
-          double fugGas = xGas * pressure * phiGas;
-          double fugLiq = xLiq * pressure * phiLiq;
-          if (fugLiq > 0.0 && fugGas > 0.0) {
-            double s = fugGas / fugLiq;
-            if (s > 1.0) {
-              cnt.setSupersaturationRatio(s);
-            }
-          }
-        }
+	if (gasPhaseIndex >= 0 && liquidPhaseIndex >= 0) {
+	  // Fugacity = x_i * P * phi_i
+	  double xGas = system.getPhase(gasPhaseIndex).getComponent(compIndex).getx();
+	  double phiGas = system.getPhase(gasPhaseIndex).getComponent(compIndex).getFugacityCoefficient();
+	  double xLiq = system.getPhase(liquidPhaseIndex).getComponent(compIndex).getx();
+	  double phiLiq = system.getPhase(liquidPhaseIndex).getComponent(compIndex).getFugacityCoefficient();
+	  double pressure = system.getPressure() * 1e5; // bara to Pa
+	  double fugGas = xGas * pressure * phiGas;
+	  double fugLiq = xLiq * pressure * phiLiq;
+	  if (fugLiq > 0.0 && fugGas > 0.0) {
+	    double s = fugGas / fugLiq;
+	    if (s > 1.0) {
+	      cnt.setSupersaturationRatio(s);
+	    }
+	  }
+	}
       } catch (Exception e) {
-        // Supersaturation remains at default
+	// Supersaturation remains at default
       }
     }
 
     // Set carrier gas molar mass (approximate from overall gas composition)
     if (system.hasPhaseType("gas")) {
       try {
-        int gasPhaseIndex = system.getPhaseNumberOfPhase("gas");
-        double gasMw = system.getPhase(gasPhaseIndex).getMolarMass();
-        if (gasMw > 0.0) {
-          cnt.setCarrierGasMolarMass(gasMw);
-        }
+	int gasPhaseIndex = system.getPhaseNumberOfPhase("gas");
+	double gasMw = system.getPhase(gasPhaseIndex).getMolarMass();
+	if (gasMw > 0.0) {
+	  cnt.setCarrierGasMolarMass(gasMw);
+	}
       } catch (Exception e) {
-        // Use default
+	// Use default
       }
     }
 
@@ -439,14 +432,13 @@ public class ClassicalNucleationTheory {
   /**
    * Estimates condensed phase density from critical properties using a simplified Rackett equation.
    *
-   * @param mw molecular weight in kg/mol
-   * @param tc critical temperature in K
-   * @param pc critical pressure in Pa
+   * @param mw          molecular weight in kg/mol
+   * @param tc          critical temperature in K
+   * @param pc          critical pressure in Pa
    * @param temperature actual temperature in K
    * @return estimated liquid density in kg/m3
    */
-  private static double estimateCondensedDensity(double mw, double tc, double pc,
-      double temperature) {
+  private static double estimateCondensedDensity(double mw, double tc, double pc, double temperature) {
     // Simplified: rho_L ~ pc * mw / (R * tc) * (1 + 0.85*(1 - T/Tc))
     double rhoC = pc * mw / (R_GAS * tc);
     double tr = Math.min(temperature / tc, 0.99);
@@ -456,8 +448,8 @@ public class ClassicalNucleationTheory {
   /**
    * Estimates surface tension from critical properties using the Eotvos correlation.
    *
-   * @param tc critical temperature in K
-   * @param pc critical pressure in Pa
+   * @param tc          critical temperature in K
+   * @param pc          critical pressure in Pa
    * @param temperature actual temperature in K
    * @return estimated surface tension in N/m
    */
@@ -506,8 +498,8 @@ public class ClassicalNucleationTheory {
   }
 
   /**
-   * Sets the supersaturation ratio directly. If both partial pressure and saturation pressure are
-   * also set, this value takes precedence.
+   * Sets the supersaturation ratio directly. If both partial pressure and saturation pressure are also set, this value
+   * takes precedence.
    *
    * @param ratio supersaturation ratio S = p_actual / p_sat (must be &gt; 1 for nucleation)
    */
@@ -537,8 +529,7 @@ public class ClassicalNucleationTheory {
   }
 
   /**
-   * Sets the mean free path of gas molecules directly. If not set, it is estimated from gas
-   * viscosity and conditions.
+   * Sets the mean free path of gas molecules directly. If not set, it is estimated from gas viscosity and conditions.
    *
    * @param lambda mean free path in m (typical 5-100 nm at process conditions)
    */
@@ -607,10 +598,9 @@ public class ClassicalNucleationTheory {
   }
 
   /**
-   * Sets whether to use heterogeneous nucleation. When true, the free energy barrier is multiplied
-   * by the contact angle factor f(theta), which reduces the barrier and increases the nucleation
-   * rate. This models nucleation on surfaces such as pipe walls, particulate impurities, or
-   * pre-existing droplets.
+   * Sets whether to use heterogeneous nucleation. When true, the free energy barrier is multiplied by the contact angle
+   * factor f(theta), which reduces the barrier and increases the nucleation rate. This models nucleation on surfaces
+   * such as pipe walls, particulate impurities, or pre-existing droplets.
    *
    * @param isHeterogeneous true to enable heterogeneous nucleation
    */
@@ -629,15 +619,15 @@ public class ClassicalNucleationTheory {
   }
 
   /**
-   * Sets the contact angle for heterogeneous nucleation. The contact angle determines how much the
-   * free energy barrier is reduced relative to homogeneous nucleation.
+   * Sets the contact angle for heterogeneous nucleation. The contact angle determines how much the free energy barrier
+   * is reduced relative to homogeneous nucleation.
    *
    * <p>
    * Also automatically enables heterogeneous mode if not already set.
    * </p>
    *
-   * @param angleDegrees contact angle in degrees (0 to 180). 0 = complete wetting (no barrier), 90
-   *        = partial wetting (half barrier), 180 = non-wetting (same as homogeneous).
+   * @param angleDegrees contact angle in degrees (0 to 180). 0 = complete wetting (no barrier), 90 = partial wetting
+   *                     (half barrier), 180 = non-wetting (same as homogeneous).
    */
   public void setContactAngle(double angleDegrees) {
     this.contactAngleDegrees = Math.max(0.0, Math.min(180.0, angleDegrees));
@@ -655,8 +645,8 @@ public class ClassicalNucleationTheory {
   }
 
   /**
-   * Returns the contact angle factor f(theta). This multiplies the homogeneous barrier to give the
-   * heterogeneous barrier.
+   * Returns the contact angle factor f(theta). This multiplies the homogeneous barrier to give the heterogeneous
+   * barrier.
    *
    * @return contact angle factor (0 to 1)
    */
@@ -672,8 +662,7 @@ public class ClassicalNucleationTheory {
    * </p>
    *
    * <p>
-   * This factor reduces the nucleation barrier when a substrate surface is present. Physical
-   * meaning:
+   * This factor reduces the nucleation barrier when a substrate surface is present. Physical meaning:
    * </p>
    * <ul>
    * <li>f(0) = 0: complete wetting, no barrier, barrierless nucleation</li>
@@ -732,13 +721,12 @@ public class ClassicalNucleationTheory {
 
     // 3. Number of molecules in critical nucleus
     // n* = (4/3) * pi * r*^3 / v_m
-    criticalNucleusMolecules =
-        (4.0 * Math.PI / 3.0) * Math.pow(criticalRadius, 3) / molecularVolume;
+    criticalNucleusMolecules = (4.0 * Math.PI / 3.0) * Math.pow(criticalRadius, 3) / molecularVolume;
 
     // 4. Free energy barrier
     // DeltaG* = (16*pi/3) * gamma^3 * v_m^2 / (kT * ln(S))^2
-    double homogeneousBarrier = (16.0 * Math.PI / 3.0) * Math.pow(surfaceTension, 3)
-        * Math.pow(molecularVolume, 2) / Math.pow(kT * lnS, 2);
+    double homogeneousBarrier = (16.0 * Math.PI / 3.0) * Math.pow(surfaceTension, 3) * Math.pow(molecularVolume, 2)
+	/ Math.pow(kT * lnS, 2);
 
     // Apply heterogeneous nucleation correction if enabled
     // DeltaG*_het = f(theta) * DeltaG*_hom
@@ -753,8 +741,8 @@ public class ClassicalNucleationTheory {
     // 5. Zeldovich non-equilibrium factor
     // Z = sqrt(DeltaG* / (3*pi*kT*n*^2))
     if (criticalNucleusMolecules > 0.0) {
-      zeldovichFactor = Math.sqrt(freeEnergyBarrier
-          / (3.0 * Math.PI * kT * criticalNucleusMolecules * criticalNucleusMolecules));
+      zeldovichFactor = Math
+	  .sqrt(freeEnergyBarrier / (3.0 * Math.PI * kT * criticalNucleusMolecules * criticalNucleusMolecules));
     } else {
       zeldovichFactor = 0.01;
     }
@@ -772,16 +760,16 @@ public class ClassicalNucleationTheory {
     }
 
     // Collision rate constant: k = alpha * sqrt(kT / (2*pi*m)) * 4*pi*r*^2
-    double collisionRateConstant =
-        stickingCoefficient * Math.sqrt(K_BOLTZMANN * temperature / (2.0 * Math.PI * molecularMass))
-            * 4.0 * Math.PI * Math.pow(criticalRadius, 2);
+    double collisionRateConstant = stickingCoefficient
+	* Math.sqrt(K_BOLTZMANN * temperature / (2.0 * Math.PI * molecularMass)) * 4.0 * Math.PI
+	* Math.pow(criticalRadius, 2);
 
     double exponent = -dimensionlessFreeEnergyBarrier;
     if (exponent < -700.0) {
       nucleationRate = 0.0;
     } else {
-      nucleationRate = zeldovichFactor * collisionRateConstant * vaporConcentration
-          * vaporConcentration * Math.exp(exponent);
+      nucleationRate = zeldovichFactor * collisionRateConstant * vaporConcentration * vaporConcentration
+	  * Math.exp(exponent);
     }
 
     // Cap nucleation rate at physically reasonable maximum
@@ -819,14 +807,13 @@ public class ClassicalNucleationTheory {
     // lambda = kT / (sqrt(2) * pi * d_gas^2 * P)
     // For methane-like gas, effective diameter ~ 3.8 Angstrom = 3.8e-10 m
     double dGas = 3.8e-10;
-    double lambda =
-        K_BOLTZMANN * temperature / (Math.sqrt(2.0) * Math.PI * dGas * dGas * totalPressure);
+    double lambda = K_BOLTZMANN * temperature / (Math.sqrt(2.0) * Math.PI * dGas * dGas * totalPressure);
     return lambda;
   }
 
   /**
-   * Calculates condensation growth rates in free-molecular and continuum regimes, with Fuchs
-   * interpolation for the transition regime.
+   * Calculates condensation growth rates in free-molecular and continuum regimes, with Fuchs interpolation for the
+   * transition regime.
    */
   private void calculateGrowthRates() {
     double kT = K_BOLTZMANN * temperature;
@@ -836,19 +823,19 @@ public class ClassicalNucleationTheory {
     } else {
       excessPressure = saturationPressure * (supersaturationRatio - 1.0);
       if (excessPressure <= 0) {
-        excessPressure = 1e-5;
+	excessPressure = 1e-5;
       }
     }
 
     // Free molecular regime: dr/dt = alpha * v_m * deltaP / sqrt(2*pi*m*kT)
     growthRateFreeM = stickingCoefficient * molecularVolume * excessPressure
-        / Math.sqrt(2.0 * Math.PI * molecularMass * kT);
+	/ Math.sqrt(2.0 * Math.PI * molecularMass * kT);
 
     // Continuum (diffusion-limited) regime: dr/dt = D * M * deltaP / (rho_p * R * T * r)
     // At r = criticalRadius
     if (criticalRadius > 0.0) {
       growthRateContinuum = gasDiffusivity * molecularWeight * excessPressure
-          / (condensedPhaseDensity * R_GAS * temperature * criticalRadius);
+	  / (condensedPhaseDensity * R_GAS * temperature * criticalRadius);
     } else {
       growthRateContinuum = growthRateFreeM;
     }
@@ -876,8 +863,8 @@ public class ClassicalNucleationTheory {
    * Calculates the Fuchs-Sutugin transition regime correction factor.
    *
    * <p>
-   * The correction smoothly interpolates between free-molecular (Kn much greater than 1) and
-   * continuum (Kn much less than 1) regimes.
+   * The correction smoothly interpolates between free-molecular (Kn much greater than 1) and continuum (Kn much less
+   * than 1) regimes.
    * </p>
    *
    * @param kn Knudsen number (mean free path / particle radius)
@@ -900,8 +887,7 @@ public class ClassicalNucleationTheory {
   }
 
   /**
-   * Calculates particle size evolution over the residence time, including condensation growth and
-   * coagulation.
+   * Calculates particle size evolution over the residence time, including condensation growth and coagulation.
    */
   private void calculateParticleEvolution() {
     // Initial number of particles formed per m3
@@ -949,7 +935,7 @@ public class ClassicalNucleationTheory {
     if (coagulationKernel > 0.0 && n0 > 1.0) {
       nt = n0 / (1.0 + coagulationKernel * n0 * growthTime / 2.0);
       if (nt < 1.0) {
-        nt = 1.0;
+	nt = 1.0;
       }
       // Volume conservation: total volume = N0*v0 = Nt*vt
       // vt/v0 = N0/Nt => r_coag = r * (N0/Nt)^(1/3)
@@ -1002,10 +988,10 @@ public class ClassicalNucleationTheory {
   // ============================================================================
 
   /**
-   * Calculates the mean particle diameter for a given supersaturation and residence time. This is a
-   * convenience method that sets both parameters and runs the calculation.
+   * Calculates the mean particle diameter for a given supersaturation and residence time. This is a convenience method
+   * that sets both parameters and runs the calculation.
    *
-   * @param supersaturation supersaturation ratio (S &gt; 1)
+   * @param supersaturation  supersaturation ratio (S &gt; 1)
    * @param residenceTimeSec residence time in seconds
    * @return mean particle diameter in m
    */
@@ -1035,8 +1021,7 @@ public class ClassicalNucleationTheory {
   }
 
   /**
-   * Returns particle sizes at the 10th, 50th, and 90th percentiles of the estimated lognormal size
-   * distribution.
+   * Returns particle sizes at the 10th, 50th, and 90th percentiles of the estimated lognormal size distribution.
    *
    * @return array [d10, d50, d90] in m
    */
@@ -1045,12 +1030,11 @@ public class ClassicalNucleationTheory {
     double lnSigma = Math.log(geometricStdDev);
     double d10 = d50 * Math.exp(-1.282 * lnSigma);
     double d90 = d50 * Math.exp(1.282 * lnSigma);
-    return new double[] {d10, d50, d90};
+    return new double[] { d10, d50, d90 };
   }
 
   /**
-   * Returns the fraction of particles smaller than a given diameter, assuming lognormal
-   * distribution.
+   * Returns the fraction of particles smaller than a given diameter, assuming lognormal distribution.
    *
    * @param diameterM threshold diameter in m
    * @return fraction (0 to 1) of particles smaller than the threshold
@@ -1064,8 +1048,8 @@ public class ClassicalNucleationTheory {
   }
 
   /**
-   * Returns the fraction of particles larger than the filter rating. This indicates what fraction
-   * would be captured by a filter with the given rating.
+   * Returns the fraction of particles larger than the filter rating. This indicates what fraction would be captured by
+   * a filter with the given rating.
    *
    * @param filterRatingM filter rating in m (e.g., 10e-6 for 10 um)
    * @return capture fraction (0 to 1)
@@ -1084,8 +1068,7 @@ public class ClassicalNucleationTheory {
     double sign = x < 0 ? -1.0 : 1.0;
     x = Math.abs(x);
     double t = 1.0 / (1.0 + 0.3275911 * x);
-    double poly = t * (0.254829592
-        + t * (-0.284496736 + t * (1.421413741 + t * (-1.453152027 + t * 1.061405429))));
+    double poly = t * (0.254829592 + t * (-0.284496736 + t * (1.421413741 + t * (-1.453152027 + t * 1.061405429))));
     return sign * (1.0 - poly * Math.exp(-x * x));
   }
 
@@ -1324,8 +1307,7 @@ public class ClassicalNucleationTheory {
    * @return JSON string
    */
   public String toJson() {
-    return new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create()
-        .toJson(toMap());
+    return new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create().toJson(toMap());
   }
 
   /** {@inheritDoc} */
@@ -1334,8 +1316,7 @@ public class ClassicalNucleationTheory {
     if (!calculated) {
       return "ClassicalNucleationTheory [not calculated]";
     }
-    return String.format("CNT[%s]: S=%.1f, r*=%.1f nm, d_mean=%.2f um, J=%.2e /m3s, N=%.2e /m3",
-        substanceName, supersaturationRatio, criticalRadius * 1e9, meanParticleDiameter * 1e6,
-        nucleationRate, particleNumberDensity);
+    return String.format("CNT[%s]: S=%.1f, r*=%.1f nm, d_mean=%.2f um, J=%.2e /m3s, N=%.2e /m3", substanceName,
+	supersaturationRatio, criticalRadius * 1e9, meanParticleDiameter * 1e6, nucleationRate, particleNumberDensity);
   }
 }

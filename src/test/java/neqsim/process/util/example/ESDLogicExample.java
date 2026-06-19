@@ -21,8 +21,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Example demonstrating ESD Logic Framework - coordinated shutdown sequence.
  *
  * <p>
- * This example shows how to use the new ProcessLogic framework to implement a coordinated ESD
- * sequence that:
+ * This example shows how to use the new ProcessLogic framework to implement a coordinated ESD sequence that:
  * <ul>
  * <li>Closes inlet ESD valve (trip)</li>
  * <li>Opens blowdown valve (activate)</li>
@@ -94,7 +93,7 @@ public class ESDLogicExample {
 
     // Splitter
     Splitter gasSplitter = new Splitter("Gas Splitter", separatorGasOut, 2);
-    gasSplitter.setSplitFactors(new double[] {1.0, 0.0}); // Initially all to process
+    gasSplitter.setSplitFactors(new double[] { 1.0, 0.0 }); // Initially all to process
 
     Stream processStream = new Stream("To Process", gasSplitter.getSplitStream(0));
     Stream blowdownStream = new Stream("To Blowdown", gasSplitter.getSplitStream(1));
@@ -117,7 +116,7 @@ public class ESDLogicExample {
     esdLogic.addAction(new ActivateBlowdownAction(bdValve), 0.5);
 
     // Step 3: Redirect flow to blowdown (simultaneous with BD valve)
-    esdLogic.addAction(new SetSplitterAction(gasSplitter, new double[] {0.0, 1.0}), 0.0);
+    esdLogic.addAction(new SetSplitterAction(gasSplitter, new double[] { 0.0, 1.0 }), 0.0);
 
     // Create ESD push button and link to logic
     PushButton esdButton = new PushButton("ESD-PB-101");
@@ -138,7 +137,6 @@ public class ESDLogicExample {
     logger.info("  3. Redirect splitter to blowdown (0.0s delay)");
     logger.info("  Total actions: " + esdLogic.getActionCount());
 
-
     // Run initial steady state
     logger.info("═══ NORMAL OPERATION ═══");
     feedStream.run();
@@ -154,17 +152,14 @@ public class ESDLogicExample {
     bdValve.run();
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "ESD valve: %s, %.1f%% open%n",
-        esdInletValve.isEnergized() ? "ENERGIZED" : "DE-ENERGIZED",
-        esdInletValve.getPercentValveOpening());
+	esdInletValve.isEnergized() ? "ENERGIZED" : "DE-ENERGIZED", esdInletValve.getPercentValveOpening());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Process flow: %.1f kg/hr%n",
-        processStream.getFlowRate("kg/hr"));
+	processStream.getFlowRate("kg/hr"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Blowdown flow: %.1f kg/hr%n",
-        blowdownStream.getFlowRate("kg/hr"));
+	blowdownStream.getFlowRate("kg/hr"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "BD valve: %s%n",
-        bdValve.isActivated() ? "ACTIVATED" : "NOT ACTIVATED");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "ESD Logic: %s%n",
-        esdLogic.getStatusDescription());
-
+	bdValve.isActivated() ? "ACTIVATED" : "NOT ACTIVATED");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "ESD Logic: %s%n", esdLogic.getStatusDescription());
 
     // Trigger ESD
     logger.info("═══ ESD TRIGGERED ═══");
@@ -176,17 +171,13 @@ public class ESDLogicExample {
     separator.setCalculateSteadyState(false);
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "Button state: %s%n",
-        esdButton.isPushed() ? "PUSHED" : "NOT PUSHED");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "ESD Logic: %s%n",
-        esdLogic.getStatusDescription());
-
+	esdButton.isPushed() ? "PUSHED" : "NOT PUSHED");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "ESD Logic: %s%n", esdLogic.getStatusDescription());
 
     // Simulate with logic execution
     logger.info("═══ ESD SEQUENCE EXECUTION ═══");
-    logger.info(
-        "Time (s) | Logic Status                    | ESD Valve (%) | BD Valve (%) | Process Flow | BD Flow");
-    logger.info(
-        "---------|--------------------------------|---------------|--------------|--------------|----------");
+    logger.info("Time (s) | Logic Status                    | ESD Valve (%) | BD Valve (%) | Process Flow | BD Flow");
+    logger.info("---------|--------------------------------|---------------|--------------|--------------|----------");
 
     double timeStep = 0.5;
     double totalTime = 10.0;
@@ -199,19 +190,19 @@ public class ESDLogicExample {
       esdInletValve.runTransient(timeStep, java.util.UUID.randomUUID());
 
       if (esdInletValve.getPercentValveOpening() < 1.0) {
-        separatorInlet.getThermoSystem().setTotalFlowRate(0.1, "kg/hr");
+	separatorInlet.getThermoSystem().setTotalFlowRate(0.1, "kg/hr");
       } else {
-        feedStream.run();
-        controlValve.run();
-        afterControlValve.run();
-        esdInletValve.run();
-        separatorInlet.run();
+	feedStream.run();
+	controlValve.run();
+	afterControlValve.run();
+	esdInletValve.run();
+	separatorInlet.run();
       }
 
       if (separator.getCalculateSteadyState()) {
-        separator.run();
+	separator.run();
       } else {
-        separator.runTransient(timeStep, java.util.UUID.randomUUID());
+	separator.runTransient(timeStep, java.util.UUID.randomUUID());
       }
 
       separatorGasOut.run();
@@ -222,29 +213,24 @@ public class ESDLogicExample {
 
       // Print status (abbreviated for readability)
       String logicStatus = esdLogic.isComplete() ? "COMPLETED"
-          : "Step " + (esdLogic.getCurrentActionIndex() + 1) + "/" + esdLogic.getActionCount();
+	  : "Step " + (esdLogic.getCurrentActionIndex() + 1) + "/" + esdLogic.getActionCount();
 
-      logger.printf(org.apache.logging.log4j.Level.INFO,
-          "%8.1f | %-30s | %13.1f | %12.1f | %12.1f | %8.1f%n", time, logicStatus,
-          esdInletValve.getPercentValveOpening(), bdValve.getPercentValveOpening(),
-          processStream.getFlowRate("kg/hr"), blowdownStream.getFlowRate("kg/hr"));
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%8.1f | %-30s | %13.1f | %12.1f | %12.1f | %8.1f%n", time,
+	  logicStatus, esdInletValve.getPercentValveOpening(), bdValve.getPercentValveOpening(),
+	  processStream.getFlowRate("kg/hr"), blowdownStream.getFlowRate("kg/hr"));
     }
-
 
     logger.info("═══ FINAL STATUS ═══");
     logger.info(esdButton.toString());
-    logger.printf(org.apache.logging.log4j.Level.INFO, "ESD Logic: %s%n",
-        esdLogic.getStatusDescription());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "ESD Logic: %s%n", esdLogic.getStatusDescription());
     logger.printf(org.apache.logging.log4j.Level.INFO, "ESD valve: %.1f%% open (%s)%n",
-        esdInletValve.getPercentValveOpening(),
-        esdInletValve.hasTripCompleted() ? "TRIP COMPLETED" : "CLOSING");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "BD valve: %.1f%% open (%s)%n",
-        bdValve.getPercentValveOpening(), bdValve.isActivated() ? "ACTIVATED" : "NOT ACTIVATED");
+	esdInletValve.getPercentValveOpening(), esdInletValve.hasTripCompleted() ? "TRIP COMPLETED" : "CLOSING");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "BD valve: %.1f%% open (%s)%n", bdValve.getPercentValveOpening(),
+	bdValve.isActivated() ? "ACTIVATED" : "NOT ACTIVATED");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Process flow: %.1f kg/hr%n",
-        processStream.getFlowRate("kg/hr"));
+	processStream.getFlowRate("kg/hr"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Blowdown flow: %.1f kg/hr%n",
-        blowdownStream.getFlowRate("kg/hr"));
-
+	blowdownStream.getFlowRate("kg/hr"));
 
     // Verification
     logger.info("═══ VERIFICATION ═══");
@@ -265,7 +251,6 @@ public class ESDLogicExample {
     if (blowdownStream.getFlowRate("kg/hr") > processStream.getFlowRate("kg/hr")) {
       logger.info("✓ Flow redirected to blowdown system");
     }
-
 
     logger.info("╔════════════════════════════════════════════════════════════════╗");
     logger.info("║         ESD LOGIC FRAMEWORK DEMONSTRATION COMPLETED            ║");

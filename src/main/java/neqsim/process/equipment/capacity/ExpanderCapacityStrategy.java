@@ -49,7 +49,8 @@ public class ExpanderCapacityStrategy implements EquipmentCapacityStrategy {
   /**
    * Default constructor.
    */
-  public ExpanderCapacityStrategy() {}
+  public ExpanderCapacityStrategy() {
+  }
 
   /**
    * Constructor with custom constraints.
@@ -58,8 +59,7 @@ public class ExpanderCapacityStrategy implements EquipmentCapacityStrategy {
    * @param minSpeedRatio minimum speed ratio
    * @param maxSpeedRatio maximum speed ratio
    */
-  public ExpanderCapacityStrategy(double maxPowerRatio, double minSpeedRatio,
-      double maxSpeedRatio) {
+  public ExpanderCapacityStrategy(double maxPowerRatio, double minSpeedRatio, double maxSpeedRatio) {
     this.maxPowerRatio = maxPowerRatio;
     this.minSpeedRatio = minSpeedRatio;
     this.maxSpeedRatio = maxSpeedRatio;
@@ -69,7 +69,7 @@ public class ExpanderCapacityStrategy implements EquipmentCapacityStrategy {
   @Override
   public boolean supports(ProcessEquipmentInterface equipment) {
     return equipment instanceof Expander || equipment instanceof ExpanderInterface
-        || equipment instanceof TurboExpanderCompressor;
+	|| equipment instanceof TurboExpanderCompressor;
   }
 
   /** {@inheritDoc} */
@@ -145,11 +145,9 @@ public class ExpanderCapacityStrategy implements EquipmentCapacityStrategy {
     // Power constraint
     double maxPower = expander.getCapacityMax();
     if (maxPower > 0) {
-      CapacityConstraint powerConstraint =
-          new CapacityConstraint("power", "kW", CapacityConstraint.ConstraintType.SOFT)
-              .setDesignValue(maxPower).setMaxValue(maxPower * maxPowerRatio)
-              .setDescription("Power generation")
-              .setValueSupplier(() -> Math.abs(expander.getPower("kW")));
+      CapacityConstraint powerConstraint = new CapacityConstraint("power", "kW", CapacityConstraint.ConstraintType.SOFT)
+	  .setDesignValue(maxPower).setMaxValue(maxPower * maxPowerRatio).setDescription("Power generation")
+	  .setValueSupplier(() -> Math.abs(expander.getPower("kW")));
       constraints.put("power", powerConstraint);
     }
 
@@ -158,35 +156,32 @@ public class ExpanderCapacityStrategy implements EquipmentCapacityStrategy {
     double minSpeed = expander.getMinimumSpeed();
     double designSpeed = maxSpeed > 0 ? maxSpeed : DEFAULT_DESIGN_SPEED;
     if (designSpeed > 0) {
-      CapacityConstraint speedConstraint =
-          new CapacityConstraint("speed", "RPM", CapacityConstraint.ConstraintType.HARD)
-              .setDesignValue(designSpeed).setMaxValue(designSpeed * maxSpeedRatio)
-              .setMinValue(minSpeed > 0 ? minSpeed : designSpeed * minSpeedRatio)
-              .setDescription("Expander speed").setValueSupplier(() -> expander.getSpeed());
+      CapacityConstraint speedConstraint = new CapacityConstraint("speed", "RPM",
+	  CapacityConstraint.ConstraintType.HARD).setDesignValue(designSpeed).setMaxValue(designSpeed * maxSpeedRatio)
+	  .setMinValue(minSpeed > 0 ? minSpeed : designSpeed * minSpeedRatio).setDescription("Expander speed")
+	  .setValueSupplier(() -> expander.getSpeed());
       constraints.put("speed", speedConstraint);
     }
 
     // Pressure ratio constraint
     if (expander.getInletStream() != null && expander.getOutletStream() != null) {
-      CapacityConstraint pressureRatioConstraint =
-          new CapacityConstraint("pressureRatio", "ratio", CapacityConstraint.ConstraintType.SOFT)
-              .setDesignValue(DEFAULT_MAX_PRESSURE_RATIO * 0.8)
-              .setMaxValue(DEFAULT_MAX_PRESSURE_RATIO)
-              .setDescription("Pressure ratio (inlet/outlet)").setValueSupplier(() -> {
-                double inletP = expander.getInletStream().getPressure("bara");
-                double outletP = expander.getOutletStream().getPressure("bara");
-                return outletP > 0 ? inletP / outletP : 0.0;
-              });
+      CapacityConstraint pressureRatioConstraint = new CapacityConstraint("pressureRatio", "ratio",
+	  CapacityConstraint.ConstraintType.SOFT).setDesignValue(DEFAULT_MAX_PRESSURE_RATIO * 0.8)
+	  .setMaxValue(DEFAULT_MAX_PRESSURE_RATIO).setDescription("Pressure ratio (inlet/outlet)")
+	  .setValueSupplier(() -> {
+	    double inletP = expander.getInletStream().getPressure("bara");
+	    double outletP = expander.getOutletStream().getPressure("bara");
+	    return outletP > 0 ? inletP / outletP : 0.0;
+	  });
       constraints.put("pressureRatio", pressureRatioConstraint);
     }
 
     // Flow rate constraint
     if (expander.getInletStream() != null) {
       double maxFlow = maxPower > 0 ? maxPower * 100 : 100000;
-      CapacityConstraint flowConstraint =
-          new CapacityConstraint("flowRate", "kg/hr", CapacityConstraint.ConstraintType.SOFT)
-              .setDesignValue(maxFlow * 0.9).setMaxValue(maxFlow).setDescription("Mass flow rate")
-              .setValueSupplier(() -> expander.getInletStream().getFlowRate("kg/hr"));
+      CapacityConstraint flowConstraint = new CapacityConstraint("flowRate", "kg/hr",
+	  CapacityConstraint.ConstraintType.SOFT).setDesignValue(maxFlow * 0.9).setMaxValue(maxFlow)
+	  .setDescription("Mass flow rate").setValueSupplier(() -> expander.getInletStream().getFlowRate("kg/hr"));
       constraints.put("flowRate", flowConstraint);
     }
 
@@ -201,7 +196,7 @@ public class ExpanderCapacityStrategy implements EquipmentCapacityStrategy {
 
     for (CapacityConstraint c : constraints.values()) {
       if (c.isViolated()) {
-        violations.add(c);
+	violations.add(c);
       }
     }
     return violations;
@@ -218,8 +213,8 @@ public class ExpanderCapacityStrategy implements EquipmentCapacityStrategy {
     for (CapacityConstraint c : constraints.values()) {
       double util = c.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
-        maxUtil = util;
-        bottleneck = c;
+	maxUtil = util;
+	bottleneck = c;
       }
     }
 
@@ -232,7 +227,7 @@ public class ExpanderCapacityStrategy implements EquipmentCapacityStrategy {
     Map<String, CapacityConstraint> constraints = getConstraints(equipment);
     for (CapacityConstraint c : constraints.values()) {
       if (c.getType() == CapacityConstraint.ConstraintType.HARD && c.isViolated()) {
-        return false;
+	return false;
       }
     }
     return true;
@@ -244,7 +239,7 @@ public class ExpanderCapacityStrategy implements EquipmentCapacityStrategy {
     Map<String, CapacityConstraint> constraints = getConstraints(equipment);
     for (CapacityConstraint c : constraints.values()) {
       if (c.getUtilization() > 1.0) {
-        return false;
+	return false;
       }
     }
     return true;

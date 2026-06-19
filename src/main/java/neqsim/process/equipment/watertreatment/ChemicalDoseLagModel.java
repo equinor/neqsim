@@ -10,10 +10,9 @@ import com.google.gson.GsonBuilder;
  * First-order inventory model for chemical accumulation and lag after demulsifier setpoint changes.
  *
  * <p>
- * The model treats the separator or upstream produced-water volume as a well-mixed hold-up. A dose
- * setpoint enters with the water flow, chemical leaves with the water flow, and optional
- * first-order deactivation represents adsorption, degradation, or loss to oil. The outlet
- * concentration is the effective dose seen by the separation process.
+ * The model treats the separator or upstream produced-water volume as a well-mixed hold-up. A dose setpoint enters with
+ * the water flow, chemical leaves with the water flow, and optional first-order deactivation represents adsorption,
+ * degradation, or loss to oil. The outlet concentration is the effective dose seen by the separation process.
  * </p>
  *
  * @author ESOL
@@ -49,14 +48,15 @@ public class ChemicalDoseLagModel implements Serializable {
   /**
    * Creates a lag model with default produced-water hold-up assumptions.
    */
-  public ChemicalDoseLagModel() {}
+  public ChemicalDoseLagModel() {
+  }
 
   /**
    * Advances the chemical inventory over one time step.
    *
    * @param setpointDosePpm injected chemical dose in ppm by produced-water mass
-   * @param waterRateM3h produced-water flow rate in m3/h
-   * @param timeStepHours time step in hours
+   * @param waterRateM3h    produced-water flow rate in m3/h
+   * @param timeStepHours   time step in hours
    * @return effective outlet dose in ppm
    */
   public double step(double setpointDosePpm, double waterRateM3h, double timeStepHours) {
@@ -92,7 +92,7 @@ public class ChemicalDoseLagModel implements Serializable {
    * Resets the model to steady state at a specified setpoint and water rate.
    *
    * @param setpointDosePpm injected chemical dose in ppm
-   * @param waterRateM3h produced-water flow rate in m3/h
+   * @param waterRateM3h    produced-water flow rate in m3/h
    */
   public void resetToSteadyState(double setpointDosePpm, double waterRateM3h) {
     if (waterRateM3h <= 0.0) {
@@ -106,8 +106,7 @@ public class ChemicalDoseLagModel implements Serializable {
     double inputMassFlowKgH = Math.max(0.0, setpointDosePpm) * waterMassFlowKgH / 1.0e6;
     chemicalMassKg = totalRate > 0.0 ? inputMassFlowKgH / totalRate : 0.0;
     lastOutletMassFlowKgH = chemicalMassKg * outletRate;
-    effectiveDosePpm =
-        waterMassFlowKgH > 0.0 ? lastOutletMassFlowKgH * 1.0e6 / waterMassFlowKgH : 0.0;
+    effectiveDosePpm = waterMassFlowKgH > 0.0 ? lastOutletMassFlowKgH * 1.0e6 / waterMassFlowKgH : 0.0;
   }
 
   /**
@@ -156,8 +155,7 @@ public class ChemicalDoseLagModel implements Serializable {
     data.put("lastInputMassFlowKgH", lastInputMassFlowKgH);
     data.put("lastOutletMassFlowKgH", lastOutletMassFlowKgH);
     data.put("lastTimeStepHours", lastTimeStepHours);
-    Gson gson =
-        new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+    Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
     return gson.toJson(data);
   }
 
@@ -228,8 +226,7 @@ public class ChemicalDoseLagModel implements Serializable {
    * @param decayHalfLifeHours half-life in hours, or positive infinity for no decay
    */
   public void setDecayHalfLifeHours(double decayHalfLifeHours) {
-    this.decayHalfLifeHours =
-        decayHalfLifeHours <= 0.0 ? Double.POSITIVE_INFINITY : decayHalfLifeHours;
+    this.decayHalfLifeHours = decayHalfLifeHours <= 0.0 ? Double.POSITIVE_INFINITY : decayHalfLifeHours;
   }
 
   /**

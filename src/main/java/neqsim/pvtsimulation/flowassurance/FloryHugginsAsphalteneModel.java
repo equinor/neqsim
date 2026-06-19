@@ -11,10 +11,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Flory-Huggins regular solution model for asphaltene precipitation prediction.
  *
  * <p>
- * This class implements the Flory-Huggins polymer solution theory applied to asphaltene
- * precipitation, a widely-used approach in the petroleum industry. The model treats the oil as a
- * solvent and asphaltenes as a dissolved polymer, using the mismatch in solubility parameters to
- * predict precipitation.
+ * This class implements the Flory-Huggins polymer solution theory applied to asphaltene precipitation, a widely-used
+ * approach in the petroleum industry. The model treats the oil as a solvent and asphaltenes as a dissolved polymer,
+ * using the mismatch in solubility parameters to predict precipitation.
  * </p>
  *
  * <h2>Theoretical Background</h2>
@@ -23,8 +22,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  *
  * <pre>
- * ln(x_a * gamma_a) = ln(phi_a) + (1 - V_a / V_L) * (1 - phi_a) + (V_a / RT) * (delta_a - delta_L)
- *     ^ 2 * (1 - phi_a) ^ 2
+ * ln(x_a * gamma_a) = ln(phi_a) + (1 - V_a / V_L) * (1 - phi_a) + (V_a / RT) * (delta_a - delta_L) ^ 2 * (1 - phi_a)
+ *     ^ 2
  * </pre>
  *
  * <p>
@@ -39,8 +38,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </ul>
  *
  * <p>
- * Onset occurs when delta_L drops below a critical value (typically when light ends evolve near
- * bubble point).
+ * Onset occurs when delta_L drops below a critical value (typically when light ends evolve near bubble point).
  * </p>
  *
  * <h2>Key Correlations</h2>
@@ -88,14 +86,12 @@ public class FloryHugginsAsphalteneModel {
   private double asphalteneWeightFraction = 0.05;
 
   /**
-   * Coefficient A in delta_L = A * rho + B correlation. Default from Lian et al. (1994): 17.347e-3
-   * MPa^0.5/(kg/m3).
+   * Coefficient A in delta_L = A * rho + B correlation. Default from Lian et al. (1994): 17.347e-3 MPa^0.5/(kg/m3).
    */
   private double deltaRhoCoeffA = 17.347e-3;
 
   /**
-   * Coefficient B in delta_L = A * rho + B correlation. Default from Lian et al. (1994): 2.904
-   * MPa^0.5.
+   * Coefficient B in delta_L = A * rho + B correlation. Default from Lian et al. (1994): 2.904 MPa^0.5.
    */
   private double deltaRhoCoeffB = 2.904;
 
@@ -117,12 +113,13 @@ public class FloryHugginsAsphalteneModel {
   /**
    * Default constructor.
    */
-  public FloryHugginsAsphalteneModel() {}
+  public FloryHugginsAsphalteneModel() {
+  }
 
   /**
    * Constructor with thermodynamic system.
    *
-   * @param system the thermodynamic system
+   * @param system               the thermodynamic system
    * @param reservoirTemperature reservoir temperature (K)
    */
   public FloryHugginsAsphalteneModel(SystemInterface system, double reservoirTemperature) {
@@ -134,10 +131,9 @@ public class FloryHugginsAsphalteneModel {
    * Configures asphaltene properties based on API gravity.
    *
    * <p>
-   * Uses correlations from Akbarzadeh et al. (2005) and Andersen and Speight (1999) to estimate
-   * asphaltene molecular weight, density, and solubility parameter from API gravity. This is
-   * critical for matching diverse oil types as asphaltene properties vary significantly across the
-   * API range.
+   * Uses correlations from Akbarzadeh et al. (2005) and Andersen and Speight (1999) to estimate asphaltene molecular
+   * weight, density, and solubility parameter from API gravity. This is critical for matching diverse oil types as
+   * asphaltene properties vary significantly across the API range.
    * </p>
    *
    * <ul>
@@ -172,18 +168,18 @@ public class FloryHugginsAsphalteneModel {
 
     configuredFromAPI = true;
 
-    logger.info("Configured FH asphaltene for API={}: MW={}, delta={}, Vm={}", apiGravity,
-        asphalteneMW, asphalteneSolubilityParameter, asphaltMolarVolume);
+    logger.info("Configured FH asphaltene for API={}: MW={}, delta={}, Vm={}", apiGravity, asphalteneMW,
+	asphalteneSolubilityParameter, asphaltMolarVolume);
   }
 
   /**
    * Calibrates the delta_L correlation coefficient A to the current thermodynamic system.
    *
    * <p>
-   * The default Lian et al. (1994) correlation (A=0.017347) systematically underestimates the
-   * solubility parameter of live oils at reservoir conditions compared to EOS-computed values
-   * (Hirschberg, 1984). This method performs a TP flash to determine the actual oil density and
-   * molar volume, then calibrates A using the Flory-Huggins critical condition so that:
+   * The default Lian et al. (1994) correlation (A=0.017347) systematically underestimates the solubility parameter of
+   * live oils at reservoir conditions compared to EOS-computed values (Hirschberg, 1984). This method performs a TP
+   * flash to determine the actual oil density and molar volume, then calibrates A using the Flory-Huggins critical
+   * condition so that:
    * </p>
    * <ul>
    * <li>The oil is stable at reservoir pressure (chi &lt; chi_critical)</li>
@@ -191,9 +187,9 @@ public class FloryHugginsAsphalteneModel {
    * </ul>
    *
    * <p>
-   * The critical chi is computed from the Flory-Huggins phase separation criterion: chi_c = r * (1
-   * + 1/sqrt(r))^2 / 2, where r = V_asphaltene / V_liquid. A stability buffer (default 0.35
-   * MPa^0.5) keeps the system just below the critical threshold at reservoir conditions.
+   * The critical chi is computed from the Flory-Huggins phase separation criterion: chi_c = r * (1 + 1/sqrt(r))^2 / 2,
+   * where r = V_asphaltene / V_liquid. A stability buffer (default 0.35 MPa^0.5) keeps the system just below the
+   * critical threshold at reservoir conditions.
    * </p>
    *
    * @param temperature reservoir temperature (K). Used for flash and chi calculation.
@@ -260,11 +256,10 @@ public class FloryHugginsAsphalteneModel {
     // Sanity check: A must be positive and within physically meaningful range
     if (calibratedA > 0.005 && calibratedA < 0.10) {
       deltaRhoCoeffA = calibratedA;
-      logger.info("FH calibrated: A={}, oilDensity={}, criticalGap={}, targetGap={}",
-          deltaRhoCoeffA, oilDensity, criticalDeltaGap, targetGap);
+      logger.info("FH calibrated: A={}, oilDensity={}, criticalGap={}, targetGap={}", deltaRhoCoeffA, oilDensity,
+	  criticalDeltaGap, targetGap);
     } else {
-      logger.warn("Calibrated A={} outside valid range [0.005, 0.10], keeping default",
-          calibratedA);
+      logger.warn("Calibrated A={} outside valid range [0.005, 0.10], keeping default", calibratedA);
     }
   }
 
@@ -272,18 +267,17 @@ public class FloryHugginsAsphalteneModel {
    * Configures asphaltene properties from SARA fractions.
    *
    * <p>
-   * Uses the asphaltene content and resin/asphaltene ratio to refine the solubility parameter.
-   * Higher R/A ratios indicate better peptization, which effectively lowers the apparent asphaltene
-   * solubility parameter (they act more dissolved).
+   * Uses the asphaltene content and resin/asphaltene ratio to refine the solubility parameter. Higher R/A ratios
+   * indicate better peptization, which effectively lowers the apparent asphaltene solubility parameter (they act more
+   * dissolved).
    * </p>
    *
-   * @param saturates weight fraction of saturates
-   * @param aromatics weight fraction of aromatics
-   * @param resins weight fraction of resins
+   * @param saturates   weight fraction of saturates
+   * @param aromatics   weight fraction of aromatics
+   * @param resins      weight fraction of resins
    * @param asphaltenes weight fraction of asphaltenes
    */
-  public void configureFromSARA(double saturates, double aromatics, double resins,
-      double asphaltenes) {
+  public void configureFromSARA(double saturates, double aromatics, double resins, double asphaltenes) {
     this.asphalteneWeightFraction = asphaltenes;
 
     // Resin/asphaltene ratio affects effective solubility parameter.
@@ -331,8 +325,7 @@ public class FloryHugginsAsphalteneModel {
    * Calculates the solubility parameter of the liquid phase from density.
    *
    * <p>
-   * Uses the empirical correlation: delta_L = A * rho + B, where rho is in kg/m3 and delta_L is in
-   * MPa^0.5.
+   * Uses the empirical correlation: delta_L = A * rho + B, where rho is in kg/m3 and delta_L is in MPa^0.5.
    * </p>
    *
    * @param liquidDensity liquid phase density (kg/m3)
@@ -376,34 +369,32 @@ public class FloryHugginsAsphalteneModel {
    * Solved iteratively for phi_a (maximum asphaltene that can remain dissolved).
    * </p>
    *
-   * @param deltaLiquid solubility parameter of liquid phase (MPa^0.5)
+   * @param deltaLiquid       solubility parameter of liquid phase (MPa^0.5)
    * @param liquidMolarVolume molar volume of liquid phase (cm3/mol)
-   * @param temperature temperature (K)
+   * @param temperature       temperature (K)
    * @return maximum dissolved asphaltene volume fraction
    */
-  public double calculateMaxDissolvedFraction(double deltaLiquid, double liquidMolarVolume,
-      double temperature) {
+  public double calculateMaxDissolvedFraction(double deltaLiquid, double liquidMolarVolume, double temperature) {
     double chi = calculateChiParameter(deltaLiquid, temperature);
     double molarVolumeRatio = asphaltMolarVolume / liquidMolarVolume;
 
     // Iteratively solve for phi_a using Newton-Raphson
     double phiA = 0.01; // Initial guess
     for (int iter = 0; iter < 50; iter++) {
-      double f = Math.log(phiA) + (1.0 - molarVolumeRatio) * (1.0 - phiA)
-          + chi * (1.0 - phiA) * (1.0 - phiA);
+      double f = Math.log(phiA) + (1.0 - molarVolumeRatio) * (1.0 - phiA) + chi * (1.0 - phiA) * (1.0 - phiA);
       double dfdphi = 1.0 / phiA - (1.0 - molarVolumeRatio) - 2.0 * chi * (1.0 - phiA);
 
       double delta = f / dfdphi;
       phiA = phiA - delta;
 
       if (phiA <= 0) {
-        phiA = 1e-20;
+	phiA = 1e-20;
       }
       if (phiA > 1.0) {
-        phiA = 0.99;
+	phiA = 0.99;
       }
       if (Math.abs(delta) < 1e-10) {
-        break;
+	break;
       }
     }
 
@@ -413,7 +404,7 @@ public class FloryHugginsAsphalteneModel {
   /**
    * Calculates weight fraction of precipitated asphaltene at given conditions.
    *
-   * @param pressure pressure (bara)
+   * @param pressure    pressure (bara)
    * @param temperature temperature (K)
    * @return weight fraction of precipitated asphaltene (0 = none, 1 = all)
    */
@@ -461,7 +452,7 @@ public class FloryHugginsAsphalteneModel {
 
     // Convert from volume fraction to weight fraction
     double maxDissolvedMass = maxDissolved * asphalteneDensity
-        / (maxDissolved * asphalteneDensity + (1.0 - maxDissolved) * oilDensity);
+	/ (maxDissolved * asphalteneDensity + (1.0 - maxDissolved) * oilDensity);
 
     if (asphalteneWeightFraction > maxDissolvedMass) {
       return asphalteneWeightFraction - maxDissolvedMass;
@@ -473,8 +464,8 @@ public class FloryHugginsAsphalteneModel {
    * Calculates the asphaltene onset pressure using solubility parameter approach.
    *
    * <p>
-   * Scans pressure from high to low, finding where the oil's solubility parameter drops below the
-   * critical value needed to keep asphaltenes dissolved.
+   * Scans pressure from high to low, finding where the oil's solubility parameter drops below the critical value needed
+   * to keep asphaltenes dissolved.
    * </p>
    *
    * @param temperature temperature (K)
@@ -501,40 +492,40 @@ public class FloryHugginsAsphalteneModel {
 
       ThermodynamicOperations ops = new ThermodynamicOperations(workSystem);
       try {
-        ops.TPflash();
-        workSystem.initProperties();
+	ops.TPflash();
+	workSystem.initProperties();
       } catch (Exception e) {
-        continue;
+	continue;
       }
 
       double oilDensity;
       if (workSystem.hasPhaseType("oil")) {
-        oilDensity = workSystem.getPhase("oil").getDensity("kg/m3");
+	oilDensity = workSystem.getPhase("oil").getDensity("kg/m3");
       } else if (workSystem.getNumberOfPhases() > 0) {
-        oilDensity = workSystem.getPhase(0).getDensity("kg/m3");
+	oilDensity = workSystem.getPhase(0).getDensity("kg/m3");
       } else {
-        continue;
+	continue;
       }
 
       double deltaL = calculateLiquidSolubilityParameter(oilDensity);
       double precip = calculatePrecipitatedFraction(p, temperature);
 
       if (precip > 0.001 && !foundOnset) {
-        foundOnset = true;
-        // Refine by bisection
-        double high = previousP;
-        double low = p;
-        for (int i = 0; i < 15; i++) {
-          double mid = (high + low) / 2.0;
-          double midPrecip = calculatePrecipitatedFraction(mid, temperature);
-          if (midPrecip > 0.001) {
-            low = mid;
-          } else {
-            high = mid;
-          }
-        }
-        onsetP = (high + low) / 2.0;
-        break;
+	foundOnset = true;
+	// Refine by bisection
+	double high = previousP;
+	double low = p;
+	for (int i = 0; i < 15; i++) {
+	  double mid = (high + low) / 2.0;
+	  double midPrecip = calculatePrecipitatedFraction(mid, temperature);
+	  if (midPrecip > 0.001) {
+	    low = mid;
+	  } else {
+	    high = mid;
+	  }
+	}
+	onsetP = (high + low) / 2.0;
+	break;
       }
 
       previousDelta = deltaL;
@@ -544,8 +535,7 @@ public class FloryHugginsAsphalteneModel {
     // Validate: onset must be above approximate bubble point.
     // If onset is found near the minimum search pressure, it's likely a numerical artifact.
     if (!Double.isNaN(onsetP) && onsetP < minP + 2 * pressureSearchStep) {
-      logger.info("FH onset at {:.1f} bar is near minimum search pressure - treating as no onset",
-          onsetP);
+      logger.info("FH onset at {:.1f} bar is near minimum search pressure - treating as no onset", onsetP);
       return Double.NaN;
     }
 
@@ -558,11 +548,11 @@ public class FloryHugginsAsphalteneModel {
    * @param temperature temperature (K)
    * @param maxPressure maximum pressure (bara)
    * @param minPressure minimum pressure (bara)
-   * @param numPoints number of calculation points
+   * @param numPoints   number of calculation points
    * @return 2D array: [0]=pressures (bara), [1]=wt% precipitated
    */
-  public double[][] generatePrecipitationCurve(double temperature, double maxPressure,
-      double minPressure, int numPoints) {
+  public double[][] generatePrecipitationCurve(double temperature, double maxPressure, double minPressure,
+      int numPoints) {
     double[][] results = new double[2][numPoints];
     double step = (maxPressure - minPressure) / (numPoints - 1);
 
@@ -582,11 +572,11 @@ public class FloryHugginsAsphalteneModel {
    * @param temperature temperature (K)
    * @param maxPressure maximum pressure (bara)
    * @param minPressure minimum pressure (bara)
-   * @param numPoints number of calculation points
+   * @param numPoints   number of calculation points
    * @return 2D array: [0]=pressures, [1]=delta_L (MPa^0.5), [2]=delta_asphaltene
    */
-  public double[][] generateSolubilityParameterProfile(double temperature, double maxPressure,
-      double minPressure, int numPoints) {
+  public double[][] generateSolubilityParameterProfile(double temperature, double maxPressure, double minPressure,
+      int numPoints) {
     double[][] results = new double[3][numPoints];
     double step = (maxPressure - minPressure) / (numPoints - 1);
 
@@ -596,28 +586,28 @@ public class FloryHugginsAsphalteneModel {
       results[2][i] = asphalteneSolubilityParameter;
 
       if (system != null) {
-        SystemInterface workSystem = system.clone();
-        workSystem.setPressure(p);
-        workSystem.setTemperature(temperature);
+	SystemInterface workSystem = system.clone();
+	workSystem.setPressure(p);
+	workSystem.setTemperature(temperature);
 
-        ThermodynamicOperations ops = new ThermodynamicOperations(workSystem);
-        try {
-          ops.TPflash();
-          workSystem.initProperties();
+	ThermodynamicOperations ops = new ThermodynamicOperations(workSystem);
+	try {
+	  ops.TPflash();
+	  workSystem.initProperties();
 
-          double oilDensity;
-          if (workSystem.hasPhaseType("oil")) {
-            oilDensity = workSystem.getPhase("oil").getDensity("kg/m3");
-          } else if (workSystem.getNumberOfPhases() > 0) {
-            oilDensity = workSystem.getPhase(0).getDensity("kg/m3");
-          } else {
-            results[1][i] = Double.NaN;
-            continue;
-          }
-          results[1][i] = calculateLiquidSolubilityParameter(oilDensity);
-        } catch (Exception e) {
-          results[1][i] = Double.NaN;
-        }
+	  double oilDensity;
+	  if (workSystem.hasPhaseType("oil")) {
+	    oilDensity = workSystem.getPhase("oil").getDensity("kg/m3");
+	  } else if (workSystem.getNumberOfPhases() > 0) {
+	    oilDensity = workSystem.getPhase(0).getDensity("kg/m3");
+	  } else {
+	    results[1][i] = Double.NaN;
+	    continue;
+	  }
+	  results[1][i] = calculateLiquidSolubilityParameter(oilDensity);
+	} catch (Exception e) {
+	  results[1][i] = Double.NaN;
+	}
       }
     }
 
@@ -632,8 +622,7 @@ public class FloryHugginsAsphalteneModel {
    * @param minPressure minimum pressure for curves (bara)
    * @return map containing all model results
    */
-  public Map<String, Object> getResultsMap(double temperature, double maxPressure,
-      double minPressure) {
+  public Map<String, Object> getResultsMap(double temperature, double maxPressure, double minPressure) {
     Map<String, Object> results = new LinkedHashMap<String, Object>();
     results.put("model", "Flory-Huggins Regular Solution");
     results.put("asphaltene_MW_gmol", asphalteneMW);

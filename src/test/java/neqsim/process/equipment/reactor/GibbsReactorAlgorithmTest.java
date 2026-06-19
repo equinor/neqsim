@@ -10,12 +10,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Tests for the enhanced Gibbs reactor algorithmic features: Armijo backtracking line search,
- * Tikhonov regularization, and convergence diagnostics.
+ * Tests for the enhanced Gibbs reactor algorithmic features: Armijo backtracking line search, Tikhonov regularization,
+ * and convergence diagnostics.
  *
  * <p>
- * These tests validate the algorithmic improvements described in the paper: "Robust Gibbs Free
- * Energy Minimization for Chemical Equilibrium with Equation of State Models".
+ * These tests validate the algorithmic improvements described in the paper: "Robust Gibbs Free Energy Minimization for
+ * Chemical Equilibrium with Equation of State Models".
  * </p>
  *
  * @author Even Solbraa
@@ -24,10 +24,9 @@ import org.apache.logging.log4j.Logger;
 public class GibbsReactorAlgorithmTest {
   private static final Logger logger = LogManager.getLogger(GibbsReactorAlgorithmTest.class);
 
-
   /**
-   * Test Armijo backtracking line search on methane combustion. Verifies that the line search
-   * converges to the same equilibrium as fixed damping when using the same base damping.
+   * Test Armijo backtracking line search on methane combustion. Verifies that the line search converges to the same
+   * equilibrium as fixed damping when using the same base damping.
    */
   @Test
   public void testArmijoLineSearchConvergence() {
@@ -71,21 +70,20 @@ public class GibbsReactorAlgorithmTest {
     double zCO2_armijo = outArmijo.getComponent("CO2").getz();
     double zCO2_fixed = outFixed.getComponent("CO2").getz();
     Assertions.assertEquals(zCO2_fixed, zCO2_armijo, 0.01,
-        "CO2 mole fraction should match between Armijo and fixed damping");
+	"CO2 mole fraction should match between Armijo and fixed damping");
 
     double zH2O_armijo = outArmijo.getComponent("water").getz();
     double zH2O_fixed = outFixed.getComponent("water").getz();
     Assertions.assertEquals(zH2O_fixed, zH2O_armijo, 0.01,
-        "Water mole fraction should match between Armijo and fixed damping");
+	"Water mole fraction should match between Armijo and fixed damping");
 
     // Mass balance should be conserved for both
-    Assertions.assertTrue(reactorArmijo.getMassBalanceConverged(),
-        "Armijo reactor mass balance should converge");
+    Assertions.assertTrue(reactorArmijo.getMassBalanceConverged(), "Armijo reactor mass balance should converge");
   }
 
   /**
-   * Test Armijo line search with adaptive step sizing combined. This is the recommended
-   * configuration for robust convergence.
+   * Test Armijo line search with adaptive step sizing combined. This is the recommended configuration for robust
+   * convergence.
    */
   @Test
   public void testArmijoWithAdaptiveStepSize() {
@@ -120,8 +118,8 @@ public class GibbsReactorAlgorithmTest {
   }
 
   /**
-   * Test Tikhonov regularization on a system with multiple components. Verifies that regularization
-   * does not break convergence and condition number history is tracked.
+   * Test Tikhonov regularization on a system with multiple components. Verifies that regularization does not break
+   * convergence and condition number history is tracked.
    */
   @Test
   public void testTikhonovRegularization() {
@@ -186,8 +184,7 @@ public class GibbsReactorAlgorithmTest {
 
     // Element balance error history should be populated
     List<Double> elementHistory = reactor.getElementBalanceErrorHistory();
-    Assertions.assertFalse(elementHistory.isEmpty(),
-        "Element balance error history should be populated");
+    Assertions.assertFalse(elementHistory.isEmpty(), "Element balance error history should be populated");
 
     // Step size history should be populated
     List<Double> stepHistory = reactor.getStepSizeHistory();
@@ -195,8 +192,8 @@ public class GibbsReactorAlgorithmTest {
   }
 
   /**
-   * Test Armijo line search on Claus process (sulfur formation). This is a chemically complex
-   * system with multiple equilibria. Uses same parameters as existing sulfur test.
+   * Test Armijo line search on Claus process (sulfur formation). This is a chemically complex system with multiple
+   * equilibria. Uses same parameters as existing sulfur test.
    */
   @Test
   public void testArmijoClausProcess() {
@@ -232,8 +229,8 @@ public class GibbsReactorAlgorithmTest {
   }
 
   /**
-   * Test that enhanced features produce fewer iterations than fixed damping for the same
-   * convergence tolerance on a standard combustion problem.
+   * Test that enhanced features produce fewer iterations than fixed damping for the same convergence tolerance on a
+   * standard combustion problem.
    */
   @Test
   public void testEnhancedVsBaselineIterationCount() {
@@ -281,7 +278,6 @@ public class GibbsReactorAlgorithmTest {
     // Both should reach the same equilibrium
     double co2Baseline = baseline.getOutletStream().getThermoSystem().getComponent("CO2").getz();
     double co2Enhanced = enhanced.getOutletStream().getThermoSystem().getComponent("CO2").getz();
-    Assertions.assertEquals(co2Baseline, co2Enhanced, 0.01,
-        "Both algorithms should reach the same equilibrium");
+    Assertions.assertEquals(co2Baseline, co2Enhanced, 0.01, "Both algorithms should reach the same equilibrium");
   }
 }

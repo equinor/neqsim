@@ -6,10 +6,10 @@ import neqsim.process.ProcessElementInterface;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 
 /**
- * General contract for feedback controllers operating on measurement devices in NeqSim.
- * Implementations typically provide proportional-integral-derivative (PID) control but the API is
- * prepared for other regulators. The interface exposes unit-aware set points and measurements,
- * tuning parameters, auto tuning hooks, gain scheduling and performance logging features.
+ * General contract for feedback controllers operating on measurement devices in NeqSim. Implementations typically
+ * provide proportional-integral-derivative (PID) control but the API is prepared for other regulators. The interface
+ * exposes unit-aware set points and measurements, tuning parameters, auto tuning hooks, gain scheduling and performance
+ * logging features.
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -51,7 +51,7 @@ public interface ControllerDeviceInterface extends ProcessElementInterface {
    * </p>
    *
    * @param signal a double
-   * @param unit a {@link java.lang.String} object
+   * @param unit   a {@link java.lang.String} object
    */
   public default void setControllerSetPoint(double signal, String unit) {
     setUnit(unit);
@@ -101,7 +101,7 @@ public interface ControllerDeviceInterface extends ProcessElementInterface {
    * Calculates controller output. Sets calc identifier UUID.
    *
    * @param initResponse Init value for response calculation
-   * @param dt Delta time [s]
+   * @param dt           Delta time [s]
    */
   public default void runTransient(double initResponse, double dt) {
     runTransient(initResponse, dt, UUID.randomUUID());
@@ -114,8 +114,8 @@ public interface ControllerDeviceInterface extends ProcessElementInterface {
    * Calculates controller output. Sets calc identifier UUID.
    *
    * @param initResponse Init value for response calculation
-   * @param dt Delta time [s]
-   * @param id Calculation identifier
+   * @param dt           Delta time [s]
+   * @param id           Calculation identifier
    */
   public void runTransient(double initResponse, double dt, UUID id);
 
@@ -165,7 +165,8 @@ public interface ControllerDeviceInterface extends ProcessElementInterface {
    * @param min Minimum controller response
    * @param max Maximum controller response
    */
-  public default void setOutputLimits(double min, double max) {}
+  public default void setOutputLimits(double min, double max) {
+  }
 
   /**
    * <p>
@@ -174,25 +175,26 @@ public interface ControllerDeviceInterface extends ProcessElementInterface {
    *
    * @param timeConstant Filter time constant in seconds
    */
-  public default void setDerivativeFilterTime(double timeConstant) {}
+  public default void setDerivativeFilterTime(double timeConstant) {
+  }
 
   /**
    * <p>
    * Auto tune controller using ultimate gain and period from a closed-loop test.
    * </p>
    *
-   * @param ultimateGain Ultimate gain where oscillations start
+   * @param ultimateGain   Ultimate gain where oscillations start
    * @param ultimatePeriod Ultimate period of sustained oscillations [s]
    */
-  public default void autoTune(double ultimateGain, double ultimatePeriod) {}
+  public default void autoTune(double ultimateGain, double ultimatePeriod) {
+  }
 
   /**
    * <p>
-   * Auto tune controller using ultimate gain and period from a closed-loop test with optional
-   * derivative tuning.
+   * Auto tune controller using ultimate gain and period from a closed-loop test with optional derivative tuning.
    * </p>
    *
-   * @param ultimateGain Ultimate gain where oscillations start
+   * @param ultimateGain   Ultimate gain where oscillations start
    * @param ultimatePeriod Ultimate period of sustained oscillations [s]
    * @param tuneDerivative true to tune derivative action, false to tune PI only
    */
@@ -201,8 +203,8 @@ public interface ControllerDeviceInterface extends ProcessElementInterface {
   }
 
   /**
-   * Operating modes for a feedback controller. These mirror the standard modes found in commercial
-   * DCS and simulator products (AUTO, MANUAL, CASCADE).
+   * Operating modes for a feedback controller. These mirror the standard modes found in commercial DCS and simulator
+   * products (AUTO, MANUAL, CASCADE).
    */
   public static enum ControllerMode {
     /** Controller output is computed by the PID algorithm. */
@@ -210,8 +212,7 @@ public interface ControllerDeviceInterface extends ProcessElementInterface {
     /** Controller output is set manually by the operator; PID computation is bypassed. */
     MANUAL,
     /**
-     * Controller receives its set-point from an upstream (primary) controller rather than from a
-     * fixed value.
+     * Controller receives its set-point from an upstream (primary) controller rather than from a fixed value.
      */
     CASCADE
   }
@@ -226,22 +227,23 @@ public interface ControllerDeviceInterface extends ProcessElementInterface {
   }
 
   /**
-   * Switch the controller to a new operating mode. Implementations should perform bumpless transfer
-   * when transitioning between modes so that the controller output does not jump.
+   * Switch the controller to a new operating mode. Implementations should perform bumpless transfer when transitioning
+   * between modes so that the controller output does not jump.
    *
    * @param mode the desired controller mode
    */
-  public default void setMode(ControllerMode mode) {}
+  public default void setMode(ControllerMode mode) {
+  }
 
   /**
-   * Set the 2-DOF PID setpoint weight for the proportional term. A value of 1.0 gives standard PID
-   * (setpoint changes cause full proportional kick). A value of 0.0 removes setpoint from the
-   * proportional term entirely (derivative-on-measurement behaviour). Typical values are 0.0 to
-   * 1.0.
+   * Set the 2-DOF PID setpoint weight for the proportional term. A value of 1.0 gives standard PID (setpoint changes
+   * cause full proportional kick). A value of 0.0 removes setpoint from the proportional term entirely
+   * (derivative-on-measurement behaviour). Typical values are 0.0 to 1.0.
    *
    * @param b the setpoint weight (0.0 to 1.0, default 1.0)
    */
-  public default void setSetpointWeight(double b) {}
+  public default void setSetpointWeight(double b) {
+  }
 
   /**
    * Get the 2-DOF PID setpoint weight for the proportional term.
@@ -262,12 +264,12 @@ public interface ControllerDeviceInterface extends ProcessElementInterface {
   }
 
   /**
-   * Set the manual output value. This value is used as the controller response when the controller
-   * is in MANUAL mode.
+   * Set the manual output value. This value is used as the controller response when the controller is in MANUAL mode.
    *
    * @param output the desired manual output in engineering units
    */
-  public default void setManualOutput(double output) {}
+  public default void setManualOutput(double output) {
+  }
 
   /** Available tuning rules for step-response based auto-tuning. */
   public static enum StepResponseTuningMethod {
@@ -279,13 +281,13 @@ public interface ControllerDeviceInterface extends ProcessElementInterface {
 
   /**
    * <p>
-   * Select the tuning correlations that should be used when calling one of the step response
-   * auto-tuning helpers.
+   * Select the tuning correlations that should be used when calling one of the step response auto-tuning helpers.
    * </p>
    *
    * @param method tuning rule to use
    */
-  public default void setStepResponseTuningMethod(StepResponseTuningMethod method) {}
+  public default void setStepResponseTuningMethod(StepResponseTuningMethod method) {
+  }
 
   /**
    * <p>
@@ -300,26 +302,25 @@ public interface ControllerDeviceInterface extends ProcessElementInterface {
 
   /**
    * <p>
-   * Auto tune controller from an open-loop step response using process gain, time constant and dead
-   * time.
+   * Auto tune controller from an open-loop step response using process gain, time constant and dead time.
    * </p>
    *
-   * @param processGain Process gain from step response
+   * @param processGain  Process gain from step response
    * @param timeConstant Process time constant [s]
-   * @param deadTime Process dead time [s]
+   * @param deadTime     Process dead time [s]
    */
-  public default void autoTuneStepResponse(double processGain, double timeConstant,
-      double deadTime) {}
+  public default void autoTuneStepResponse(double processGain, double timeConstant, double deadTime) {
+  }
 
   /**
    * <p>
-   * Auto tune controller from an open-loop step response using process gain, time constant and dead
-   * time with optional derivative tuning.
+   * Auto tune controller from an open-loop step response using process gain, time constant and dead time with optional
+   * derivative tuning.
    * </p>
    *
-   * @param processGain Process gain from step response
-   * @param timeConstant Process time constant [s]
-   * @param deadTime Process dead time [s]
+   * @param processGain    Process gain from step response
+   * @param timeConstant   Process time constant [s]
+   * @param deadTime       Process dead time [s]
    * @param tuneDerivative true to tune derivative action, false to tune PI only
    */
   public default void autoTuneStepResponse(double processGain, double timeConstant, double deadTime,
@@ -329,9 +330,8 @@ public interface ControllerDeviceInterface extends ProcessElementInterface {
 
   /**
    * <p>
-   * Automatically tune the controller parameters using the recorded controller event log. The
-   * implementation typically analyses a previously executed step test and estimates the process
-   * dynamics before calculating PID settings.
+   * Automatically tune the controller parameters using the recorded controller event log. The implementation typically
+   * analyses a previously executed step test and estimates the process dynamics before calculating PID settings.
    * </p>
    *
    * @return {@code true} if tuning succeeded, otherwise {@code false}
@@ -342,8 +342,8 @@ public interface ControllerDeviceInterface extends ProcessElementInterface {
 
   /**
    * <p>
-   * Automatically tune the controller parameters using the recorded controller event log with the
-   * option to omit derivative tuning.
+   * Automatically tune the controller parameters using the recorded controller event log with the option to omit
+   * derivative tuning.
    * </p>
    *
    * @param tuneDerivative true to tune derivative action, false to tune PI only
@@ -355,16 +355,17 @@ public interface ControllerDeviceInterface extends ProcessElementInterface {
 
   /**
    * <p>
-   * Add a gain schedule point that switches controller parameters when the measured value exceeds
-   * the specified threshold.
+   * Add a gain schedule point that switches controller parameters when the measured value exceeds the specified
+   * threshold.
    * </p>
    *
    * @param processValue Measurement threshold for parameter set
-   * @param Kp Proportional gain at this operating point
-   * @param Ti Integral time [s] at this operating point
-   * @param Td Derivative time [s] at this operating point
+   * @param Kp           Proportional gain at this operating point
+   * @param Ti           Integral time [s] at this operating point
+   * @param Td           Derivative time [s] at this operating point
    */
-  public default void addGainSchedulePoint(double processValue, double Kp, double Ti, double Td) {}
+  public default void addGainSchedulePoint(double processValue, double Kp, double Ti, double Td) {
+  }
 
   /**
    * <p>
@@ -382,7 +383,8 @@ public interface ControllerDeviceInterface extends ProcessElementInterface {
    * Reset the controller event log.
    * </p>
    */
-  public default void resetEventLog() {}
+  public default void resetEventLog() {
+  }
 
   /**
    * <p>
@@ -411,7 +413,8 @@ public interface ControllerDeviceInterface extends ProcessElementInterface {
    * Reset accumulated performance metrics.
    * </p>
    */
-  public default void resetPerformanceMetrics() {}
+  public default void resetPerformanceMetrics() {
+  }
 
   /** {@inheritDoc} */
   @Override

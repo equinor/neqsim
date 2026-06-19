@@ -40,9 +40,9 @@ public interface PhysicalPropertyMethodInterface extends Cloneable, java.io.Seri
    * tuneModel.
    * </p>
    *
-   * @param val a double
+   * @param val         a double
    * @param temperature a double
-   * @param pressure a double
+   * @param pressure    a double
    */
   public void tuneModel(double val, double temperature, double pressure);
 }

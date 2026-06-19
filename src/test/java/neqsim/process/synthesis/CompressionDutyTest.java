@@ -12,8 +12,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Tests for {@link CompressionDuty} and
- * {@link FlowsheetSynthesisEngine#proposeAndBuildCompression(CompressionDuty)}.
+ * Tests for {@link CompressionDuty} and {@link FlowsheetSynthesisEngine#proposeAndBuildCompression(CompressionDuty)}.
  */
 class CompressionDutyTest {
 
@@ -37,20 +36,20 @@ class CompressionDutyTest {
     assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {
       @Override
       public void execute() {
-        new CompressionDuty(null, feed, 100.0);
+	new CompressionDuty(null, feed, 100.0);
       }
     });
     assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {
       @Override
       public void execute() {
-        new CompressionDuty("X", null, 100.0);
+	new CompressionDuty("X", null, 100.0);
       }
     });
     // Discharge below feed pressure rejected.
     assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {
       @Override
       public void execute() {
-        new CompressionDuty("X", feed, 5.0);
+	new CompressionDuty("X", feed, 5.0);
       }
     });
   }
@@ -90,15 +89,13 @@ class CompressionDutyTest {
     CompressionDuty duty = new CompressionDuty("Inj", feed, 200.0);
     CompressionProposal p = new FlowsheetSynthesisEngine().proposeAndBuildCompression(duty);
     p.getProcessSystem().run();
-    Compressor lastStage =
-        (Compressor) p.getProcessSystem().getUnit("Inj-K" + p.getStages());
+    Compressor lastStage = (Compressor) p.getProcessSystem().getUnit("Inj-K" + p.getStages());
     double pout = lastStage.getOutletStream().getPressure("bara");
     assertEquals(200.0, pout, 1.0e-3, "last stage discharge should equal duty target");
     // After-cooler should bring temperature near 35 C.
     Cooler ac = (Cooler) p.getProcessSystem().getUnit("Inj-AC");
     double tOut = ac.getOutletStream().getTemperature("C");
-    assertEquals(duty.getFinalCoolerTemperatureC(), tOut, 0.5,
-        "after-cooler outlet T should equal duty spec");
+    assertEquals(duty.getFinalCoolerTemperatureC(), tOut, 0.5, "after-cooler outlet T should equal duty spec");
   }
 
   @Test
@@ -115,14 +112,13 @@ class CompressionDutyTest {
   @Test
   void afterCoolerCanBeDisabled() {
     Stream feed = gasFeed(10.0, 25.0, 5000.0);
-    CompressionDuty duty = new CompressionDuty("Inj", feed, 50.0)
-        .setAfterCooler(false, 40.0);
+    CompressionDuty duty = new CompressionDuty("Inj", feed, 50.0).setAfterCooler(false, 40.0);
     CompressionProposal p = new FlowsheetSynthesisEngine().proposeAndBuildCompression(duty);
     org.junit.jupiter.api.Assertions.assertNull(p.getProcessSystem().getUnit("Inj-AC"),
-        "after-cooler must not be built when disabled");
+	"after-cooler must not be built when disabled");
     for (String n : p.getStageNames()) {
       org.junit.jupiter.api.Assertions.assertFalse(n.endsWith("-AC"),
-          "stage name list must not include after-cooler when disabled");
+	  "stage name list must not include after-cooler when disabled");
     }
   }
 }

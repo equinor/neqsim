@@ -20,8 +20,7 @@ class ProcessSimulationSessionTest {
 
   private static final String SIMPLE_JSON = "{\"fluid\":{\"model\":\"srk\",\"temperature\":298.15,"
       + "\"pressure\":30.0,\"components\":{\"methane\":0.9,\"ethane\":0.1}},"
-      + "\"process\":[{\"type\":\"Stream\",\"name\":\"feed\","
-      + "\"properties\":{\"flowRate\":1000.0}}]}";
+      + "\"process\":[{\"type\":\"Stream\",\"name\":\"feed\"," + "\"properties\":{\"flowRate\":1000.0}}]}";
 
   private ProcessSimulationSession session;
 

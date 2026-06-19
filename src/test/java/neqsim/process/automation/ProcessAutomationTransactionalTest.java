@@ -61,14 +61,12 @@ class ProcessAutomationTransactionalTest {
   @Test
   void defaultRegistryIsPresent() {
     assertNotNull(automation.getWriteValidatorRegistry());
-    assertTrue(automation.getWriteValidatorRegistry().getRegisteredClasses()
-        .containsKey(Compressor.class));
+    assertTrue(automation.getWriteValidatorRegistry().getRegisteredClasses().containsKey(Compressor.class));
   }
 
   @Test
   void validatedWriteAcceptsGoodValue() {
-    WriteValidationResult r =
-        automation.setVariableValueValidated("K-101.outletPressure", 130.0, "bara");
+    WriteValidationResult r = automation.setVariableValueValidated("K-101.outletPressure", 130.0, "bara");
     assertTrue(r.isAllowed());
     assertTrue(automation.isDirty());
   }
@@ -129,8 +127,7 @@ class ProcessAutomationTransactionalTest {
     TransactionalBatchResult r = automation.setValuesTransactional(updates, "bara");
 
     assertTrue(r.isRolledBack());
-    assertEquals(TransactionalBatchResult.RollbackCategory.VALIDATION_FAILED,
-        r.getRollbackCategory());
+    assertEquals(TransactionalBatchResult.RollbackCategory.VALIDATION_FAILED, r.getRollbackCategory());
     assertNotNull(r.getRollbackReason());
     assertTrue(r.getRollbackReason().contains("OUTLET_PRESSURE_ABOVE_INLET"));
 
@@ -139,8 +136,7 @@ class ProcessAutomationTransactionalTest {
       assertFalse(wo.isApplied(), "no writes should be applied on validation failure");
     }
     double pAfter = automation.getVariableValue("K-101.outletPressure", "bara");
-    assertEquals(pBefore, pAfter, 0.5,
-        "K-101.outletPressure must be untouched after validation rollback");
+    assertEquals(pBefore, pAfter, 0.5, "K-101.outletPressure must be untouched after validation rollback");
   }
 
   @Test

@@ -62,61 +62,57 @@ public class ConstraintManager implements Serializable {
   /**
    * Add a hard upper-bound constraint.
    *
-   * @param name constraint name
+   * @param name         constraint name
    * @param variableName variable to constrain
-   * @param maxValue maximum allowed value
-   * @param unit physical unit
+   * @param maxValue     maximum allowed value
+   * @param unit         physical unit
    * @return this ConstraintManager for chaining
    */
-  public ConstraintManager addHardUpperBound(String name, String variableName, double maxValue,
-      String unit) {
+  public ConstraintManager addHardUpperBound(String name, String variableName, double maxValue, String unit) {
     return add(Constraint.upperBound(name, variableName, maxValue, unit, Constraint.Type.HARD));
   }
 
   /**
    * Add a hard lower-bound constraint.
    *
-   * @param name constraint name
+   * @param name         constraint name
    * @param variableName variable to constrain
-   * @param minValue minimum allowed value
-   * @param unit physical unit
+   * @param minValue     minimum allowed value
+   * @param unit         physical unit
    * @return this ConstraintManager for chaining
    */
-  public ConstraintManager addHardLowerBound(String name, String variableName, double minValue,
-      String unit) {
+  public ConstraintManager addHardLowerBound(String name, String variableName, double minValue, String unit) {
     return add(Constraint.lowerBound(name, variableName, minValue, unit, Constraint.Type.HARD));
   }
 
   /**
    * Add a hard range constraint.
    *
-   * @param name constraint name
+   * @param name         constraint name
    * @param variableName variable to constrain
-   * @param minValue minimum allowed value
-   * @param maxValue maximum allowed value
-   * @param unit physical unit
+   * @param minValue     minimum allowed value
+   * @param maxValue     maximum allowed value
+   * @param unit         physical unit
    * @return this ConstraintManager for chaining
    */
-  public ConstraintManager addHardRange(String name, String variableName, double minValue,
-      double maxValue, String unit) {
-    return add(
-        Constraint.range(name, variableName, minValue, maxValue, unit, Constraint.Type.HARD));
+  public ConstraintManager addHardRange(String name, String variableName, double minValue, double maxValue,
+      String unit) {
+    return add(Constraint.range(name, variableName, minValue, maxValue, unit, Constraint.Type.HARD));
   }
 
   /**
    * Add a soft range constraint.
    *
-   * @param name constraint name
+   * @param name         constraint name
    * @param variableName variable to constrain
-   * @param minValue minimum preferred value
-   * @param maxValue maximum preferred value
-   * @param unit physical unit
+   * @param minValue     minimum preferred value
+   * @param maxValue     maximum preferred value
+   * @param unit         physical unit
    * @return this ConstraintManager for chaining
    */
-  public ConstraintManager addSoftRange(String name, String variableName, double minValue,
-      double maxValue, String unit) {
-    return add(
-        Constraint.range(name, variableName, minValue, maxValue, unit, Constraint.Type.SOFT));
+  public ConstraintManager addSoftRange(String name, String variableName, double minValue, double maxValue,
+      String unit) {
+    return add(Constraint.range(name, variableName, minValue, maxValue, unit, Constraint.Type.SOFT));
   }
 
   /**
@@ -142,10 +138,10 @@ public class ConstraintManager implements Serializable {
       c.evaluate(value);
 
       if (c.isViolated()) {
-        violations.add(c);
-        for (ConstraintViolationListener listener : listeners) {
-          listener.onViolation(c);
-        }
+	violations.add(c);
+	for (ConstraintViolationListener listener : listeners) {
+	  listener.onViolation(c);
+	}
       }
     }
 
@@ -171,9 +167,9 @@ public class ConstraintManager implements Serializable {
     for (Constraint c : constraints.values()) {
       double violation = c.getNormalizedViolation();
       if (c.isHard()) {
-        penalty += 10.0 * violation; // Hard constraints penalized more
+	penalty += 10.0 * violation; // Hard constraints penalized more
       } else {
-        penalty += violation;
+	penalty += violation;
       }
     }
     return penalty;
@@ -185,8 +181,8 @@ public class ConstraintManager implements Serializable {
    * @return smallest margin (negative if violated)
    */
   public double getMinHardMargin() {
-    return constraints.values().stream().filter(Constraint::isHard)
-        .mapToDouble(Constraint::getMargin).min().orElse(Double.POSITIVE_INFINITY);
+    return constraints.values().stream().filter(Constraint::isHard).mapToDouble(Constraint::getMargin).min()
+	.orElse(Double.POSITIVE_INFINITY);
   }
 
   /**
@@ -195,8 +191,7 @@ public class ConstraintManager implements Serializable {
    * @return list of currently violated constraints
    */
   public List<Constraint> getViolations() {
-    return constraints.values().stream().filter(Constraint::isViolated)
-        .collect(Collectors.toList());
+    return constraints.values().stream().filter(Constraint::isViolated).collect(Collectors.toList());
   }
 
   /**
@@ -207,7 +202,7 @@ public class ConstraintManager implements Serializable {
    */
   public List<Constraint> getViolationsByCategory(Constraint.Category category) {
     return constraints.values().stream().filter(c -> c.isViolated() && c.getCategory() == category)
-        .collect(Collectors.toList());
+	.collect(Collectors.toList());
   }
 
   /**
@@ -230,9 +225,9 @@ public class ConstraintManager implements Serializable {
       sb.append(String.format("%.2f %s", c.getCurrentValue(), c.getUnit()));
 
       if (c.getCurrentValue() < c.getLowerBound()) {
-        sb.append(String.format(" < min %.2f", c.getLowerBound()));
+	sb.append(String.format(" < min %.2f", c.getLowerBound()));
       } else {
-        sb.append(String.format(" > max %.2f", c.getUpperBound()));
+	sb.append(String.format(" > max %.2f", c.getUpperBound()));
       }
 
       sb.append(" [").append(c.getType()).append("]\n");

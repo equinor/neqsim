@@ -2,9 +2,9 @@
  * Typed model classes for NeqSim MCP (Model Context Protocol) integration.
  *
  * <p>
- * This package provides Java POJOs for request and response models used by the MCP runner layer.
- * These complement the string-based {@code run(String json)} interface with typed alternatives for
- * direct Java consumers, and enable auto-generation of JSON schemas for MCP tool declarations.
+ * This package provides Java POJOs for request and response models used by the MCP runner layer. These complement the
+ * string-based {@code run(String json)} interface with typed alternatives for direct Java consumers, and enable
+ * auto-generation of JSON schemas for MCP tool declarations.
  * </p>
  *
  * <h2>Core types:</h2>

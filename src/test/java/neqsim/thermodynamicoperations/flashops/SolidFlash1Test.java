@@ -17,6 +17,6 @@ public class SolidFlash1Test {
     fluid1.setMultiPhaseCheck(true);
     ThermodynamicOperations flashOps = new ThermodynamicOperations(fluid1);
     flashOps.TPSolidflash();
-    assertEquals("gas",fluid1.getPhase(0).getType().getDesc());
+    assertEquals("gas", fluid1.getPhase(0).getType().getDesc());
   }
 }

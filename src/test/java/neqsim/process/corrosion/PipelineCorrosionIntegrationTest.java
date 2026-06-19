@@ -14,9 +14,9 @@ import neqsim.thermo.system.SystemSrkEos;
  * Integration tests for pipeline corrosion analysis.
  *
  * <p>
- * Tests the full workflow of creating a pipeline with CO2-containing gas, running the process
- * simulation, and then running NORSOK M-506/M-001 corrosion analysis through the pipeline
- * convenience methods and via PipelineMechanicalDesign.
+ * Tests the full workflow of creating a pipeline with CO2-containing gas, running the process simulation, and then
+ * running NORSOK M-506/M-001 corrosion analysis through the pipeline convenience methods and via
+ * PipelineMechanicalDesign.
  * </p>
  *
  * @author ESOL
@@ -123,8 +123,7 @@ class PipelineCorrosionIntegrationTest {
 
     // Corrosion rate should be reduced by inhibitor
     double corrosionRate = mechDesign.getCorrosionRate();
-    assertTrue(corrosionRate > 0.0,
-        "Corrosion rate should be positive, got " + corrosionRate);
+    assertTrue(corrosionRate > 0.0, "Corrosion rate should be positive, got " + corrosionRate);
 
     // Run same pipe without inhibitor for comparison
     SystemSrkEos fluid2 = new SystemSrkEos(273.15 + 60.0, 80.0);
@@ -153,8 +152,7 @@ class PipelineCorrosionIntegrationTest {
 
     double uninhibitedRate = pipe2.getCorrosionRate();
     // With inhibitor should give lower corrosion rate
-    assertTrue(corrosionRate < uninhibitedRate,
-        "Inhibited corrosion rate should be lower than uninhibited");
+    assertTrue(corrosionRate < uninhibitedRate, "Inhibited corrosion rate should be lower than uninhibited");
   }
 
   /**
@@ -191,10 +189,8 @@ class PipelineCorrosionIntegrationTest {
 
     String json = mechDesign.toJson();
     assertNotNull(json, "JSON should not be null");
-    assertTrue(json.contains("corrosionAnalysis_NORSOK_M506"),
-        "JSON should contain corrosion analysis section");
-    assertTrue(json.contains("materialSelection_NORSOK_M001"),
-        "JSON should contain material selection section");
+    assertTrue(json.contains("corrosionAnalysis_NORSOK_M506"), "JSON should contain corrosion analysis section");
+    assertTrue(json.contains("materialSelection_NORSOK_M001"), "JSON should contain material selection section");
   }
 
   /**
@@ -215,7 +211,6 @@ class PipelineCorrosionIntegrationTest {
     // which is well above the 0.003 bar sour service threshold
     NorsokM506CorrosionRate corrosionModel = mechDesign.getCorrosionModel();
     assertNotNull(corrosionModel, "Corrosion model should be initialized");
-    assertTrue(corrosionModel.isSourService(),
-        "Should be classified as sour service with 0.2% H2S at 80 bar");
+    assertTrue(corrosionModel.isSourService(), "Should be classified as sour service with 0.2% H2S at 80 bar");
   }
 }

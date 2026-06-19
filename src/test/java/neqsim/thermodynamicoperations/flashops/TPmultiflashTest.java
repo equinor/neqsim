@@ -26,10 +26,8 @@ class TPmultiflashTest {
 
     testSystem.setMixingRule("classic");
 
-    ((EosMixingRulesInterface) testSystem.getPhase(0).getMixingRule())
-        .setBinaryInteractionParameter(0, 1, kij);
-    ((EosMixingRulesInterface) testSystem.getPhase(1).getMixingRule())
-        .setBinaryInteractionParameter(0, 1, kij);
+    ((EosMixingRulesInterface) testSystem.getPhase(0).getMixingRule()).setBinaryInteractionParameter(0, 1, kij);
+    ((EosMixingRulesInterface) testSystem.getPhase(1).getMixingRule()).setBinaryInteractionParameter(0, 1, kij);
 
     testSystem.setMultiPhaseCheck(true);
 
@@ -42,9 +40,9 @@ class TPmultiflashTest {
       logger.info("Pressure: " + p + " bara");
       testSystem.prettyPrint();
       if (testSystem.getNumberOfPhases() == 1) {
-        logger.info("Single phase detected at pressure: " + p + " bara");
+	logger.info("Single phase detected at pressure: " + p + " bara");
       } else {
-        logger.info("Multiple phases detected at pressure: " + p + " bara");
+	logger.info("Multiple phases detected at pressure: " + p + " bara");
       }
     }
   }
@@ -58,10 +56,8 @@ class TPmultiflashTest {
 
     testSystem.setMixingRule("classic");
 
-    ((EosMixingRulesInterface) testSystem.getPhase(0).getMixingRule())
-        .setBinaryInteractionParameter(0, 1, kij);
-    ((EosMixingRulesInterface) testSystem.getPhase(1).getMixingRule())
-        .setBinaryInteractionParameter(0, 1, kij);
+    ((EosMixingRulesInterface) testSystem.getPhase(0).getMixingRule()).setBinaryInteractionParameter(0, 1, kij);
+    ((EosMixingRulesInterface) testSystem.getPhase(1).getMixingRule()).setBinaryInteractionParameter(0, 1, kij);
 
     testSystem.setMultiPhaseCheck(true);
 
@@ -70,8 +66,7 @@ class TPmultiflashTest {
     testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
     testSystem.initProperties();
-    assert (testSystem.getNumberOfPhases() == 2) : "Expected 2 phases, got "
-        + testSystem.getNumberOfPhases();
+    assert (testSystem.getNumberOfPhases() == 2) : "Expected 2 phases, got " + testSystem.getNumberOfPhases();
   }
 
   /**
@@ -80,36 +75,30 @@ class TPmultiflashTest {
   @Test
   void testEnhancedHydrocarbonBinaryMatchesOrdinaryMultiphaseCheck() {
     final double binaryInteractionParameter = 0.05;
-    double[][] conditions =
-        new double[][] {{110.0, 264.0}, {112.5, 276.0}, {70.0, 458.0}, {120.0, 200.0}};
+    double[][] conditions = new double[][] { { 110.0, 264.0 }, { 112.5, 276.0 }, { 70.0, 458.0 }, { 120.0, 200.0 } };
 
     for (double[] condition : conditions) {
-      SystemInterface ordinarySystem =
-          createMethaneHeptanePrSystem(binaryInteractionParameter, false);
+      SystemInterface ordinarySystem = createMethaneHeptanePrSystem(binaryInteractionParameter, false);
       ordinarySystem.setPressure(condition[0], "bara");
       ordinarySystem.setTemperature(condition[1], "K");
       new ThermodynamicOperations(ordinarySystem).TPflash();
       ordinarySystem.initProperties();
 
-      SystemInterface enhancedSystem =
-          createMethaneHeptanePrSystem(binaryInteractionParameter, true);
+      SystemInterface enhancedSystem = createMethaneHeptanePrSystem(binaryInteractionParameter, true);
       enhancedSystem.setPressure(condition[0], "bara");
       enhancedSystem.setTemperature(condition[1], "K");
       new ThermodynamicOperations(enhancedSystem).TPflash();
       enhancedSystem.initProperties();
 
       assertEquals(ordinarySystem.getNumberOfPhases(), enhancedSystem.getNumberOfPhases(),
-          "Enhanced flash should not change phase count at P=" + condition[0] + " bara, T="
-              + condition[1] + " K");
+	  "Enhanced flash should not change phase count at P=" + condition[0] + " bara, T=" + condition[1] + " K");
       assertEquals(ordinarySystem.hasPhaseType("gas"), enhancedSystem.hasPhaseType("gas"));
       assertEquals(ordinarySystem.hasPhaseType("oil"), enhancedSystem.hasPhaseType("oil"));
       assertEquals(ordinarySystem.hasPhaseType("aqueous"), enhancedSystem.hasPhaseType("aqueous"));
 
       for (int phaseNumber = 0; phaseNumber < ordinarySystem.getNumberOfPhases(); phaseNumber++) {
-        assertEquals(ordinarySystem.getPhase(phaseNumber).getType(),
-            enhancedSystem.getPhase(phaseNumber).getType());
-        assertEquals(ordinarySystem.getBeta(phaseNumber), enhancedSystem.getBeta(phaseNumber),
-            1.0e-10);
+	assertEquals(ordinarySystem.getPhase(phaseNumber).getType(), enhancedSystem.getPhase(phaseNumber).getType());
+	assertEquals(ordinarySystem.getBeta(phaseNumber), enhancedSystem.getBeta(phaseNumber), 1.0e-10);
       }
     }
   }
@@ -118,20 +107,19 @@ class TPmultiflashTest {
    * Creates the methane/n-heptane PR system used in binary hydrocarbon flash regression tests.
    *
    * @param binaryInteractionParameter methane/n-heptane binary interaction parameter
-   * @param enhancedCheck true to enable enhanced multiphase checks
+   * @param enhancedCheck              true to enable enhanced multiphase checks
    * @return configured methane/n-heptane PR thermodynamic system
    */
-  private SystemInterface createMethaneHeptanePrSystem(double binaryInteractionParameter,
-      boolean enhancedCheck) {
+  private SystemInterface createMethaneHeptanePrSystem(double binaryInteractionParameter, boolean enhancedCheck) {
     SystemInterface methaneHeptaneSystem = new neqsim.thermo.system.SystemPrEos();
     methaneHeptaneSystem.addComponent("methane", 70.0);
     methaneHeptaneSystem.addComponent("n-heptane", 30.0);
 
     methaneHeptaneSystem.setMixingRule("classic");
-    ((EosMixingRulesInterface) methaneHeptaneSystem.getPhase(0).getMixingRule())
-        .setBinaryInteractionParameter(0, 1, binaryInteractionParameter);
-    ((EosMixingRulesInterface) methaneHeptaneSystem.getPhase(1).getMixingRule())
-        .setBinaryInteractionParameter(0, 1, binaryInteractionParameter);
+    ((EosMixingRulesInterface) methaneHeptaneSystem.getPhase(0).getMixingRule()).setBinaryInteractionParameter(0, 1,
+	binaryInteractionParameter);
+    ((EosMixingRulesInterface) methaneHeptaneSystem.getPhase(1).getMixingRule()).setBinaryInteractionParameter(0, 1,
+	binaryInteractionParameter);
 
     methaneHeptaneSystem.setMultiPhaseCheck(true);
     if (enhancedCheck) {
@@ -141,9 +129,9 @@ class TPmultiflashTest {
   }
 
   /**
-   * Test three-phase vapor-liquid-liquid equilibrium for sour gas system (methane/CO2/H2S). At low
-   * temperatures and moderate pressures, this mixture can exhibit three-phase behavior with a vapor
-   * phase, a CO2-rich liquid, and an H2S-rich liquid.
+   * Test three-phase vapor-liquid-liquid equilibrium for sour gas system (methane/CO2/H2S). At low temperatures and
+   * moderate pressures, this mixture can exhibit three-phase behavior with a vapor phase, a CO2-rich liquid, and an
+   * H2S-rich liquid.
    */
   @Test
   void testSourGasThreePhaseEquilibrium() {
@@ -165,21 +153,19 @@ class TPmultiflashTest {
     // At these conditions, we expect at least 2 phases (vapor + liquid)
     // The new sour gas seeding should help find additional phases if they exist
     assertTrue(sourGas.getNumberOfPhases() >= 2,
-        "Expected at least 2 phases for sour gas at low T, got " + sourGas.getNumberOfPhases());
+	"Expected at least 2 phases for sour gas at low T, got " + sourGas.getNumberOfPhases());
 
     // Print phase information for debugging
-    logger.info("Sour gas flash at T=" + sourGas.getTemperature("C") + " C, P="
-        + sourGas.getPressure("bara") + " bar");
+    logger.info("Sour gas flash at T=" + sourGas.getTemperature("C") + " C, P=" + sourGas.getPressure("bara") + " bar");
     logger.info("Number of phases: " + sourGas.getNumberOfPhases());
     for (int i = 0; i < sourGas.getNumberOfPhases(); i++) {
-      logger.info(
-          "  Phase " + i + ": " + sourGas.getPhase(i).getType() + ", beta=" + sourGas.getBeta(i));
+      logger.info("  Phase " + i + ": " + sourGas.getPhase(i).getType() + ", beta=" + sourGas.getBeta(i));
     }
   }
 
   /**
-   * Test that scans temperature/pressure range for three-phase region in sour gas. This helps
-   * verify the stability analysis can find three-phase regions.
+   * Test that scans temperature/pressure range for three-phase region in sour gas. This helps verify the stability
+   * analysis can find three-phase regions.
    */
   @Test
   void testSourGasThreePhaseRegionScan() {
@@ -202,24 +188,24 @@ class TPmultiflashTest {
     // Pressure range: 20 to 100 bar
     for (double tempK = 180.0; tempK <= 230.0; tempK += 0.1) {
       for (double presBar = 30.0; presBar <= 80.0; presBar += 1.0) {
-        sourGas.setTemperature(tempK);
-        sourGas.setPressure(presBar);
+	sourGas.setTemperature(tempK);
+	sourGas.setPressure(presBar);
 
-        try {
-          ops.TPflash();
-          sourGas.initProperties();
+	try {
+	  ops.TPflash();
+	  sourGas.initProperties();
 
-          if (sourGas.getNumberOfPhases() == 3) {
-            threePhaseCount++;
-            if (presBar > maxPressureThreePhase) {
-              maxPressureThreePhase = presBar;
-            }
-            // logger.info(
-            // "Three phases found at T=" + (tempK - 273.15) + " C, P=" + presBar + " bar");
-          }
-        } catch (Exception e) {
-          // Some conditions may fail near critical or unstable regions
-        }
+	  if (sourGas.getNumberOfPhases() == 3) {
+	    threePhaseCount++;
+	    if (presBar > maxPressureThreePhase) {
+	      maxPressureThreePhase = presBar;
+	    }
+	    // logger.info(
+	    // "Three phases found at T=" + (tempK - 273.15) + " C, P=" + presBar + " bar");
+	  }
+	} catch (Exception e) {
+	  // Some conditions may fail near critical or unstable regions
+	}
       }
     }
 

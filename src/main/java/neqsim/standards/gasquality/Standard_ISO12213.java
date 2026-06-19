@@ -18,10 +18,10 @@ import neqsim.thermo.util.gerg.NeqSimAGA8Detail;
  * </ul>
  *
  * <p>
- * This implementation primarily wraps the AGA 8 Detail method (ISO 12213-3) which is already
- * implemented in NeqSim via {@link neqsim.thermo.util.gerg.NeqSimAGA8Detail}. It provides the
- * standard ISO interface for computing compression factor (Z), molar density, and mass density of
- * natural gas from detailed composition at specified temperature and pressure.
+ * This implementation primarily wraps the AGA 8 Detail method (ISO 12213-3) which is already implemented in NeqSim via
+ * {@link neqsim.thermo.util.gerg.NeqSimAGA8Detail}. It provides the standard ISO interface for computing compression
+ * factor (Z), molar density, and mass density of natural gas from detailed composition at specified temperature and
+ * pressure.
  * </p>
  *
  * @author ESOL
@@ -60,8 +60,7 @@ public class Standard_ISO12213 extends neqsim.standards.Standard {
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
   public Standard_ISO12213(SystemInterface thermoSystem) {
-    super("Standard_ISO12213", "Natural gas - Calculation of compression factor (ISO 12213)",
-        thermoSystem);
+    super("Standard_ISO12213", "Natural gas - Calculation of compression factor (ISO 12213)", thermoSystem);
     this.calculationTemperature = thermoSystem.getTemperature();
     this.calculationPressure = thermoSystem.getPressure() * 0.1; // bara to MPa
   }
@@ -108,10 +107,10 @@ public class Standard_ISO12213 extends neqsim.standards.Standard {
       tempSystem.init(1);
 
       if ("AGA8".equals(calculationMethod)) {
-        calculateAGA8(tempSystem);
+	calculateAGA8(tempSystem);
       } else {
-        // SGERG-88 simplified method - use GERG-2008 as best available
-        calculateAGA8(tempSystem);
+	// SGERG-88 simplified method - use GERG-2008 as best available
+	calculateAGA8(tempSystem);
       }
     } catch (Exception ex) {
       logger.error("ISO 12213 calculation failed", ex);
@@ -130,10 +129,9 @@ public class Standard_ISO12213 extends neqsim.standards.Standard {
       molarMass = system.getPhase(0).getMolarMass() * 1000.0; // kg/mol to g/mol
 
       if (molarMass > 0.0 && massDensity > 0.0) {
-        molarDensity = massDensity / (molarMass / 1000.0); // mol/m3
-        double R = 8.314510; // J/(mol*K)
-        compressionFactor =
-            (calculationPressure * 1.0e6) / (molarDensity * R * calculationTemperature);
+	molarDensity = massDensity / (molarMass / 1000.0); // mol/m3
+	double R = 8.314510; // J/(mol*K)
+	compressionFactor = (calculationPressure * 1.0e6) / (molarDensity * R * calculationTemperature);
       }
     } catch (Exception ex) {
       logger.error("AGA8 calculation failed", ex);

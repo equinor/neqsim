@@ -8,8 +8,8 @@ import java.util.Map;
  * Simple stoichiometric simulator for acid stimulation / cleaning treatments.
  *
  * <p>
- * Models the reaction of mineral and organic acids with carbonate/sulphate scale and the resulting
- * spent acid composition. Used for screening:
+ * Models the reaction of mineral and organic acids with carbonate/sulphate scale and the resulting spent acid
+ * composition. Used for screening:
  * </p>
  * <ul>
  * <li>How much scale a given acid volume can dissolve.</li>
@@ -33,8 +33,8 @@ import java.util.Map;
  * </pre>
  *
  * <p>
- * Limitations: kinetics are not modelled. The simulator assumes complete reaction subject to
- * stoichiometric availability of reactants. Use vendor lab data for live-acid kinetic studies.
+ * Limitations: kinetics are not modelled. The simulator assumes complete reaction subject to stoichiometric
+ * availability of reactants. Use vendor lab data for live-acid kinetic studies.
  * </p>
  *
  * @author ESOL
@@ -217,7 +217,7 @@ public class AcidTreatmentSimulator implements Serializable {
     molAvail -= 3.0 * molFeDissolved;
 
     scaleDissolvedKg = molCaDissolved * M_CACO3 / 1000.0 + molMgDissolved * M_MGCO3 / 1000.0
-        + molFeDissolved * M_FEOH3 / 1000.0;
+	+ molFeDissolved * M_FEOH3 / 1000.0;
 
     double scaleTotal = scaleMassKgCaCO3 + scaleMassKgMgCO3 + scaleMassKgFeOH3;
     dissolvableScaleKg = scaleTotal;
@@ -234,8 +234,7 @@ public class AcidTreatmentSimulator implements Serializable {
     double caMolL = (molCaDissolved + molMgDissolved) / Math.max(1.0, waterVolumeL);
 
     spentCalciumMgL = caMolL * M_CA * 1000.0;
-    residualAcidWtPct =
-        residualMolH * acidMolarMass() / 1000.0 / Math.max(1e-6, acidMassKg) * 100.0;
+    residualAcidWtPct = residualMolH * acidMolarMass() / 1000.0 / Math.max(1e-6, acidMassKg) * 100.0;
 
     if (residualHPerL > 1e-6) {
       spentAcidPH = -Math.log10(residualHPerL);
@@ -250,27 +249,25 @@ public class AcidTreatmentSimulator implements Serializable {
 
     // Warnings
     if (acidType == AcidType.HCL && acidStrengthWtPct > 5.0 && tubularMaterial != null
-        && tubularMaterial.toLowerCase().contains("carbon") && temperatureC > 60.0
-        && !inhibitorPresent) {
+	&& tubularMaterial.toLowerCase().contains("carbon") && temperatureC > 60.0 && !inhibitorPresent) {
       warnings.put("severe_corrosion",
-          "HCl above 5 wt% on carbon steel above 60 C without inhibitor: severe corrosion expected");
+	  "HCl above 5 wt% on carbon steel above 60 C without inhibitor: severe corrosion expected");
     }
     if (acidType == AcidType.HF) {
       warnings.put("hf_handling",
-          "HF requires special handling and CRA tubulars; iron fluoride scale may form on flowback");
+	  "HF requires special handling and CRA tubulars; iron fluoride scale may form on flowback");
     }
     if (co2GeneratedKg > 50.0) {
-      warnings.put("co2_evolution", "Significant CO2 release (" + Math.round(co2GeneratedKg)
-          + " kg); ensure venting/return capacity");
+      warnings.put("co2_evolution",
+	  "Significant CO2 release (" + Math.round(co2GeneratedKg) + " kg); ensure venting/return capacity");
     }
     if (residualAcidWtPct > 1.0) {
-      warnings.put("excess_acid",
-          "Spent acid still contains " + String.format("%.1f", residualAcidWtPct)
-              + " wt% live acid; neutralise before disposal");
+      warnings.put("excess_acid", "Spent acid still contains " + String.format("%.1f", residualAcidWtPct)
+	  + " wt% live acid; neutralise before disposal");
     }
     if (acidType == AcidType.HCL && temperatureC > 120.0) {
       warnings.put("acid_temperature",
-          "HCl above 120 C: even inhibited acid corrodes carbon steel rapidly; use organic acid");
+	  "HCl above 120 C: even inhibited acid corrodes carbon steel rapidly; use organic acid");
     }
     evaluated = true;
   }
@@ -282,16 +279,16 @@ public class AcidTreatmentSimulator implements Serializable {
    */
   private double acidMolarMass() {
     switch (acidType) {
-      case HCL:
-        return M_HCL;
-      case HF:
-        return M_HF;
-      case ACETIC:
-        return M_HOAC;
-      case FORMIC:
-        return M_HCOOH;
-      default:
-        return M_HCL;
+    case HCL:
+      return M_HCL;
+    case HF:
+      return M_HF;
+    case ACETIC:
+      return M_HOAC;
+    case FORMIC:
+      return M_HCOOH;
+    default:
+      return M_HCL;
     }
   }
 
@@ -418,7 +415,7 @@ public class AcidTreatmentSimulator implements Serializable {
    */
   public java.util.List<java.util.Map<String, Object>> getStandardsApplied() {
     return neqsim.process.chemistry.util.StandardsRegistry.toMapList(
-        neqsim.process.chemistry.util.StandardsRegistry.API_RP87,
-        neqsim.process.chemistry.util.StandardsRegistry.NACE_MR0175);
+	neqsim.process.chemistry.util.StandardsRegistry.API_RP87,
+	neqsim.process.chemistry.util.StandardsRegistry.NACE_MR0175);
   }
 }

@@ -11,9 +11,9 @@ import neqsim.process.measurementdevice.MeasurementDeviceInterface;
  * High Integrity Pressure Protection System (HIPPS) Valve.
  *
  * <p>
- * HIPPS is a Safety Instrumented System (SIS) designed to prevent overpressure by shutting down the
- * source of pressure rather than relieving it. It provides an alternative or complement to
- * traditional pressure relief devices (PSVs/rupture disks).
+ * HIPPS is a Safety Instrumented System (SIS) designed to prevent overpressure by shutting down the source of pressure
+ * rather than relieving it. It provides an alternative or complement to traditional pressure relief devices
+ * (PSVs/rupture disks).
  *
  * <p>
  * <b>Key Features:</b>
@@ -83,8 +83,7 @@ import neqsim.process.measurementdevice.MeasurementDeviceInterface;
  * <li><b>1oo1</b> (1 out of 1): Single transmitter trips (simple, lower SIL)</li>
  * <li><b>1oo2</b> (1 out of 2): Any one of two transmitters trips (high availability)</li>
  * <li><b>2oo2</b> (2 out of 2): Both transmitters must trip (low spurious trips)</li>
- * <li><b>2oo3</b> (2 out of 3): Any two of three transmitters trip (balanced, common for SIL
- * 3)</li>
+ * <li><b>2oo3</b> (2 out of 3): Any two of three transmitters trip (balanced, common for SIL 3)</li>
  * </ul>
  *
  * <p>
@@ -97,7 +96,7 @@ import neqsim.process.measurementdevice.MeasurementDeviceInterface;
  * PressureTransmitter PT3 = new PressureTransmitter("PT-101C", upstreamStream);
  *
  * AlarmConfig alarmConfig = AlarmConfig.builder().highHighLimit(90.0) // HIPPS trip at 90 bara
- *                                                                     // (below 100 bara MAWP)
+ * 								    // (below 100 bara MAWP)
  *     .deadband(2.0).delay(0.5).unit("bara").build();
  *
  * PT1.setAlarmConfig(alarmConfig);
@@ -231,7 +230,7 @@ public class HIPPSValve extends ThrottlingValve {
   /**
    * Constructor for HIPPSValve.
    *
-   * @param name name of HIPPS valve
+   * @param name        name of HIPPS valve
    * @param inletStream inlet stream to valve
    */
   public HIPPSValve(String name, StreamInterface inletStream) {
@@ -374,8 +373,7 @@ public class HIPPSValve extends ThrottlingValve {
    * </ul>
    *
    * <p>
-   * The valve will not automatically reopen after reset - it must be manually opened via
-   * setPercentValveOpening().
+   * The valve will not automatically reopen after reset - it must be manually opened via setPercentValveOpening().
    */
   public void reset() {
     hasTripped = false;
@@ -446,8 +444,8 @@ public class HIPPSValve extends ThrottlingValve {
    * Initiates a partial stroke test (required for SIL validation).
    *
    * <p>
-   * Partial stroke testing verifies valve operation without full closure, allowing testing during
-   * operation. Typical test strokes: 10-20% of full travel.
+   * Partial stroke testing verifies valve operation without full closure, allowing testing during operation. Typical
+   * test strokes: 10-20% of full travel.
    *
    * @param strokeFraction fraction of full stroke to test (0.0-0.9, e.g., 0.15 for 15%)
    */
@@ -478,10 +476,10 @@ public class HIPPSValve extends ThrottlingValve {
     int count = 0;
     for (MeasurementDeviceInterface transmitter : pressureTransmitters) {
       if (transmitter.getAlarmState() != null && transmitter.getAlarmState().isActive()) {
-        AlarmLevel activeLevel = transmitter.getAlarmState().getActiveLevel();
-        if (activeLevel == AlarmLevel.HIHI) {
-          count++;
-        }
+	AlarmLevel activeLevel = transmitter.getAlarmState().getActiveLevel();
+	if (activeLevel == AlarmLevel.HIHI) {
+	  count++;
+	}
       }
     }
     return count;
@@ -502,18 +500,18 @@ public class HIPPSValve extends ThrottlingValve {
     }
 
     switch (votingLogic) {
-      case ONE_OUT_OF_ONE:
-        return totalCount >= 1 && activeCount >= 1;
-      case ONE_OUT_OF_TWO:
-        return totalCount >= 2 && activeCount >= 1;
-      case TWO_OUT_OF_TWO:
-        return totalCount >= 2 && activeCount >= 2;
-      case TWO_OUT_OF_THREE:
-        return totalCount >= 3 && activeCount >= 2;
-      case TWO_OUT_OF_FOUR:
-        return totalCount >= 4 && activeCount >= 2;
-      default:
-        return false;
+    case ONE_OUT_OF_ONE:
+      return totalCount >= 1 && activeCount >= 1;
+    case ONE_OUT_OF_TWO:
+      return totalCount >= 2 && activeCount >= 1;
+    case TWO_OUT_OF_TWO:
+      return totalCount >= 2 && activeCount >= 2;
+    case TWO_OUT_OF_THREE:
+      return totalCount >= 3 && activeCount >= 2;
+    case TWO_OUT_OF_FOUR:
+      return totalCount >= 4 && activeCount >= 2;
+    default:
+      return false;
     }
   }
 
@@ -544,24 +542,24 @@ public class HIPPSValve extends ThrottlingValve {
       double testElapsedTime = cumulativeTime - partialStrokeTestStartTime;
 
       if (testElapsedTime < partialStrokeTestDuration / 2.0) {
-        // First half: close to test position
-        setPercentValveOpening(partialStrokeTestTarget);
+	// First half: close to test position
+	setPercentValveOpening(partialStrokeTestTarget);
       } else if (testElapsedTime < partialStrokeTestDuration) {
-        // Second half: return to full open
-        setPercentValveOpening(100.0);
+	// Second half: return to full open
+	setPercentValveOpening(100.0);
       } else {
-        // Test complete
-        partialStrokeTestActive = false;
-        setPercentValveOpening(100.0);
+	// Test complete
+	partialStrokeTestActive = false;
+	setPercentValveOpening(100.0);
       }
     } else if (tripEnabled && !hasTripped) {
       // Normal operation: check voting logic for trip condition
       if (evaluateVotingLogic()) {
-        // Trip condition met - initiate shutdown
-        hasTripped = true;
-        lastTripTime = cumulativeTime;
-        // Command valve to close
-        setPercentValveOpening(0.0);
+	// Trip condition met - initiate shutdown
+	hasTripped = true;
+	lastTripTime = cumulativeTime;
+	// Command valve to close
+	setPercentValveOpening(0.0);
       }
     }
 
@@ -578,8 +576,8 @@ public class HIPPSValve extends ThrottlingValve {
    * Overrides setPercentValveOpening to prevent opening when tripped.
    *
    * <p>
-   * If HIPPS has tripped, it cannot be opened until reset() is called. This prevents inadvertent
-   * reopening during an alarm condition.
+   * If HIPPS has tripped, it cannot be opened until reset() is called. This prevents inadvertent reopening during an
+   * alarm condition.
    *
    * @param opening desired valve opening percentage (0-100)
    */
@@ -608,12 +606,12 @@ public class HIPPSValve extends ThrottlingValve {
     sb.append("  SIL Rating: ").append(silRating).append("\n");
     sb.append("  Voting Logic: ").append(votingLogic.getNotation()).append("\n");
     sb.append("  Transmitters: ").append(getActiveTransmitterCount()).append(" active / ")
-        .append(pressureTransmitters.size()).append(" total\n");
+	.append(pressureTransmitters.size()).append(" total\n");
     sb.append("  Closure Time: ").append(String.format("%.1f", closureTime)).append(" s\n");
     sb.append("  Spurious Trips: ").append(spuriousTripCount).append("\n");
     sb.append("  Proof Test Due: ").append(isProofTestDue() ? "YES" : "NO").append(" (")
-        .append(String.format("%.1f", timeSinceProofTest)).append("/")
-        .append(String.format("%.1f", proofTestInterval)).append(" hrs)\n");
+	.append(String.format("%.1f", timeSinceProofTest)).append("/").append(String.format("%.1f", proofTestInterval))
+	.append(" hrs)\n");
     if (partialStrokeTestActive) {
       sb.append("  PARTIAL STROKE TEST IN PROGRESS\n");
     }
@@ -636,21 +634,18 @@ public class HIPPSValve extends ThrottlingValve {
     for (int i = 0; i < pressureTransmitters.size(); i++) {
       MeasurementDeviceInterface pt = pressureTransmitters.get(i);
       boolean inAlarm = pt.getAlarmState() != null && pt.getAlarmState().isActive()
-          && pt.getAlarmState().getActiveLevel() == AlarmLevel.HIHI;
+	  && pt.getAlarmState().getActiveLevel() == AlarmLevel.HIHI;
       sb.append("  PT-").append(i + 1).append(": ").append(inAlarm ? "ALARM" : "OK").append(" (")
-          .append(String.format("%.2f", pt.getMeasuredValue("bara"))).append(" bara)\n");
+	  .append(String.format("%.2f", pt.getMeasuredValue("bara"))).append(" bara)\n");
     }
     sb.append("\nOperational History:\n");
     sb.append("  Total Trips: ").append(hasTripped ? 1 : 0).append("\n");
     sb.append("  Spurious Trips: ").append(spuriousTripCount).append("\n");
-    sb.append("  Last Trip: ")
-        .append(lastTripTime > 0 ? String.format("%.1f s", lastTripTime) : "Never").append("\n");
+    sb.append("  Last Trip: ").append(lastTripTime > 0 ? String.format("%.1f s", lastTripTime) : "Never").append("\n");
     sb.append("  Runtime: ").append(String.format("%.1f", cumulativeTime)).append(" s\n");
     sb.append("\nMaintenance:\n");
-    sb.append("  Proof Test Interval: ").append(String.format("%.0f", proofTestInterval))
-        .append(" hrs\n");
-    sb.append("  Time Since Proof Test: ").append(String.format("%.1f", timeSinceProofTest))
-        .append(" hrs\n");
+    sb.append("  Proof Test Interval: ").append(String.format("%.0f", proofTestInterval)).append(" hrs\n");
+    sb.append("  Time Since Proof Test: ").append(String.format("%.1f", timeSinceProofTest)).append(" hrs\n");
     sb.append("  Status: ").append(isProofTestDue() ? "OVERDUE" : "OK").append("\n");
     return sb.toString();
   }

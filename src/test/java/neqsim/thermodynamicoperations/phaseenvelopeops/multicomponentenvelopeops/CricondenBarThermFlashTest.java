@@ -10,19 +10,19 @@ import neqsim.thermo.system.SystemUMRPRUMCEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Tests for the direct cricondenbar (CricondenBarFlash) and cricondentherm (CricondenThermFlash)
- * calculation algorithms.
+ * Tests for the direct cricondenbar (CricondenBarFlash) and cricondentherm (CricondenThermFlash) calculation
+ * algorithms.
  *
  * <p>
- * These tests verify that the direct Newton refinement produces results consistent with the
- * incremental tracking from phase envelope tracing (which serves as ground truth).
+ * These tests verify that the direct Newton refinement produces results consistent with the incremental tracking from
+ * phase envelope tracing (which serves as ground truth).
  * </p>
  */
 public class CricondenBarThermFlashTest {
 
   /**
-   * Test cricondenbar for a simple lean natural gas with SRK EOS. The envelope tracing should
-   * produce a cricondenbar around 47 bar for this methane-dominated mixture.
+   * Test cricondenbar for a simple lean natural gas with SRK EOS. The envelope tracing should produce a cricondenbar
+   * around 47 bar for this methane-dominated mixture.
    */
   @Test
   void testCricondenBarSimpleGas() {
@@ -38,15 +38,13 @@ public class CricondenBarThermFlashTest {
     double[] cricondenbar = ops.get("cricondenbar");
     assertNotNull(cricondenbar, "cricondenbar should not be null");
     assertTrue(cricondenbar[1] > 40.0,
-        "Cricondenbar pressure should be > 40 bar for methane-dominated gas, got: "
-            + cricondenbar[1]);
-    assertTrue(cricondenbar[0] > 150.0,
-        "Cricondenbar temperature should be > 150 K, got: " + cricondenbar[0]);
+	"Cricondenbar pressure should be > 40 bar for methane-dominated gas, got: " + cricondenbar[1]);
+    assertTrue(cricondenbar[0] > 150.0, "Cricondenbar temperature should be > 150 K, got: " + cricondenbar[0]);
   }
 
   /**
-   * Test cricondenbar and cricondentherm for a rich natural gas with SRK EOS. The mixture contains
-   * significant C2+ fractions, giving a well-defined phase envelope.
+   * Test cricondenbar and cricondentherm for a rich natural gas with SRK EOS. The mixture contains significant C2+
+   * fractions, giving a well-defined phase envelope.
    */
   @Test
   void testCricondenBarThermRichGas() {
@@ -74,25 +72,23 @@ public class CricondenBarThermFlashTest {
     assertNotNull(cricondentherm, "cricondentherm should not be null");
 
     // Rich gas cricondenbar should be > 80 bar
-    assertTrue(cricondenbar[1] > 80.0,
-        "Cricondenbar pressure should be > 80 bar, got: " + cricondenbar[1]);
+    assertTrue(cricondenbar[1] > 80.0, "Cricondenbar pressure should be > 80 bar, got: " + cricondenbar[1]);
 
     // Cricondentherm should be > 270 K (close to 0 C) for this composition
-    assertTrue(cricondentherm[0] > 250.0,
-        "Cricondentherm temperature should be > 250 K, got: " + cricondentherm[0]);
+    assertTrue(cricondentherm[0] > 250.0, "Cricondentherm temperature should be > 250 K, got: " + cricondentherm[0]);
 
     // Cricondentherm temperature > cricondenbar temperature (therm is the max T)
-    assertTrue(cricondentherm[0] >= cricondenbar[0], "Cricondentherm T (" + cricondentherm[0]
-        + ") should be >= cricondenbar T (" + cricondenbar[0] + ")");
+    assertTrue(cricondentherm[0] >= cricondenbar[0],
+	"Cricondentherm T (" + cricondentherm[0] + ") should be >= cricondenbar T (" + cricondenbar[0] + ")");
 
     // Cricondenbar pressure > cricondentherm pressure (bar is the max P)
-    assertTrue(cricondenbar[1] >= cricondentherm[1], "Cricondenbar P (" + cricondenbar[1]
-        + ") should be >= cricondentherm P (" + cricondentherm[1] + ")");
+    assertTrue(cricondenbar[1] >= cricondentherm[1],
+	"Cricondenbar P (" + cricondenbar[1] + ") should be >= cricondentherm P (" + cricondentherm[1] + ")");
   }
 
   /**
-   * Test cricondenbar refinement via calcCricoP. First compute the phase envelope to get estimates,
-   * then run the direct cricondenbar flash and verify it refines to a similar or better result.
+   * Test cricondenbar refinement via calcCricoP. First compute the phase envelope to get estimates, then run the direct
+   * cricondenbar flash and verify it refines to a similar or better result.
    */
   @Test
   void testCalcCricoPRefinement() {
@@ -118,7 +114,7 @@ public class CricondenBarThermFlashTest {
     assertTrue(envelopeP > 50.0, "Envelope cricondenbar should be > 50 bar, got: " + envelopeP);
 
     // Now refine with direct cricondenbar flash
-    double[] cricoInput = new double[] {envelopeT, envelopeP, 0.0};
+    double[] cricoInput = new double[] { envelopeT, envelopeP, 0.0 };
     ops.calcCricoP(cricoInput, cricondenbarX, cricondenbarY);
 
     // The refined result should be close to the envelope estimate (within 5%)
@@ -128,17 +124,16 @@ public class CricondenBarThermFlashTest {
     if (refinedT > 0 && refinedP > 0) {
       // If converged, should be close to envelope estimate
       assertEquals(envelopeT, refinedT, envelopeT * 0.05,
-          "Refined cricondenbar T should be within 5% of envelope estimate");
+	  "Refined cricondenbar T should be within 5% of envelope estimate");
       assertEquals(envelopeP, refinedP, envelopeP * 0.05,
-          "Refined cricondenbar P should be within 5% of envelope estimate");
+	  "Refined cricondenbar P should be within 5% of envelope estimate");
     }
     // If not converged (T=-1, P=-1), the algorithm falls back to envelope estimate
   }
 
   /**
-   * Test cricondentherm refinement via calcCricoT. First compute the phase envelope to get
-   * estimates, then run the direct cricondentherm flash and verify it refines to a similar or
-   * better result.
+   * Test cricondentherm refinement via calcCricoT. First compute the phase envelope to get estimates, then run the
+   * direct cricondentherm flash and verify it refines to a similar or better result.
    */
   @Test
   void testCalcCricoTRefinement() {
@@ -163,7 +158,7 @@ public class CricondenBarThermFlashTest {
     assertTrue(envelopeT > 200.0, "Envelope cricondentherm T should be > 200 K, got: " + envelopeT);
 
     // Now refine with direct cricondentherm flash
-    double[] cricoInput = new double[] {envelopeT, envelopeP, 0.0};
+    double[] cricoInput = new double[] { envelopeT, envelopeP, 0.0 };
     ops.calcCricoT(cricoInput, cricondenthermX, cricondenthermY);
 
     double refinedT = cricoInput[0];
@@ -171,15 +166,15 @@ public class CricondenBarThermFlashTest {
 
     if (refinedT > 0 && refinedP > 0) {
       assertEquals(envelopeT, refinedT, envelopeT * 0.05,
-          "Refined cricondentherm T should be within 5% of envelope estimate");
+	  "Refined cricondentherm T should be within 5% of envelope estimate");
       assertEquals(envelopeP, refinedP, envelopeP * 0.05,
-          "Refined cricondentherm P should be within 5% of envelope estimate");
+	  "Refined cricondentherm P should be within 5% of envelope estimate");
     }
   }
 
   /**
-   * Test with the NJA 24-component natural gas composition using UMRPRU EOS. This is the
-   * challenging case from the integration tests with cricondenbar around 107-110 bar.
+   * Test with the NJA 24-component natural gas composition using UMRPRU EOS. This is the challenging case from the
+   * integration tests with cricondenbar around 107-110 bar.
    */
   @Test
   void testCricondenBarNJAFluid() {
@@ -217,17 +212,15 @@ public class CricondenBarThermFlashTest {
     double[] cricondentherm = ops.get("cricondentherm");
 
     assertNotNull(cricondenbar, "cricondenbar should not be null for NJA fluid");
-    assertTrue(cricondenbar[1] > 100.0,
-        "NJA fluid cricondenbar should be > 100 bar, got: " + cricondenbar[1]);
+    assertTrue(cricondenbar[1] > 100.0, "NJA fluid cricondenbar should be > 100 bar, got: " + cricondenbar[1]);
 
     assertNotNull(cricondentherm, "cricondentherm should not be null for NJA fluid");
-    assertTrue(cricondentherm[0] > 250.0,
-        "NJA fluid cricondentherm T should be > 250 K, got: " + cricondentherm[0]);
+    assertTrue(cricondentherm[0] > 250.0, "NJA fluid cricondentherm T should be > 250 K, got: " + cricondentherm[0]);
   }
 
   /**
-   * Test that cricondenbar pressure is indeed the maximum dew-point pressure. Compare the
-   * cricondenbar value against all dew-point pressures from the envelope.
+   * Test that cricondenbar pressure is indeed the maximum dew-point pressure. Compare the cricondenbar value against
+   * all dew-point pressures from the envelope.
    */
   @Test
   void testCricondenBarIsMaxDewPressure() {
@@ -253,7 +246,7 @@ public class CricondenBarThermFlashTest {
     double maxDewP = Double.NEGATIVE_INFINITY;
     for (double p : dewP) {
       if (p > maxDewP) {
-        maxDewP = p;
+	maxDewP = p;
       }
     }
 
@@ -261,9 +254,9 @@ public class CricondenBarThermFlashTest {
     double maxBubP = Double.NEGATIVE_INFINITY;
     if (bubP != null) {
       for (double p : bubP) {
-        if (p > maxBubP) {
-          maxBubP = p;
-        }
+	if (p > maxBubP) {
+	  maxBubP = p;
+	}
       }
     }
 
@@ -271,12 +264,12 @@ public class CricondenBarThermFlashTest {
 
     // Cricondenbar should be close to the maximum envelope pressure
     assertEquals(maxEnvelopeP, cricondenbar[1], maxEnvelopeP * 0.02,
-        "Cricondenbar pressure should match max envelope pressure within 2%");
+	"Cricondenbar pressure should match max envelope pressure within 2%");
   }
 
   /**
-   * Test that cricondentherm temperature is indeed the maximum dew-point temperature. Compare the
-   * cricondentherm value against all dew-point temperatures from the envelope.
+   * Test that cricondentherm temperature is indeed the maximum dew-point temperature. Compare the cricondentherm value
+   * against all dew-point temperatures from the envelope.
    */
   @Test
   void testCricondenThermIsMaxDewTemperature() {
@@ -302,16 +295,16 @@ public class CricondenBarThermFlashTest {
     double maxDewT = Double.NEGATIVE_INFINITY;
     for (double t : dewT) {
       if (t > maxDewT) {
-        maxDewT = t;
+	maxDewT = t;
       }
     }
 
     double maxBubT = Double.NEGATIVE_INFINITY;
     if (bubT != null) {
       for (double t : bubT) {
-        if (t > maxBubT) {
-          maxBubT = t;
-        }
+	if (t > maxBubT) {
+	  maxBubT = t;
+	}
       }
     }
 
@@ -319,6 +312,6 @@ public class CricondenBarThermFlashTest {
 
     // Cricondentherm should be close to the maximum envelope temperature
     assertEquals(maxEnvelopeT, cricondentherm[0], maxEnvelopeT * 0.02,
-        "Cricondentherm temperature should match max envelope temperature within 2%");
+	"Cricondentherm temperature should match max envelope temperature within 2%");
   }
 }

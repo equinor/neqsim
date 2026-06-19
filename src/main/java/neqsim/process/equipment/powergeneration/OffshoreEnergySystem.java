@@ -36,8 +36,8 @@ import neqsim.process.equipment.battery.BatteryStorage;
  *
  * <h2>CO2 Emissions Tracking</h2>
  * <p>
- * Tracks CO2 emissions from gas turbine usage vs. wind power, enabling comparison
- * of power supply scenarios for offshore platforms.
+ * Tracks CO2 emissions from gas turbine usage vs. wind power, enabling comparison of power supply scenarios for
+ * offshore platforms.
  * </p>
  *
  * <h2>Usage Example</h2>
@@ -51,7 +51,7 @@ import neqsim.process.equipment.battery.BatteryStorage;
  * energy.setWindFarm(wind);
  *
  * // Configure gas turbine backup
- * energy.setGasTurbineCapacity(50.0e6);    // 50 MW
+ * energy.setGasTurbineCapacity(50.0e6); // 50 MW
  * energy.setGasTurbineEfficiency(0.35);
  *
  * // Configure battery storage
@@ -59,7 +59,7 @@ import neqsim.process.equipment.battery.BatteryStorage;
  * energy.setBatteryStorage(battery);
  *
  * // Set power demand
- * energy.setTotalPowerDemand(200.0e6);     // 200 MW
+ * energy.setTotalPowerDemand(200.0e6); // 200 MW
  *
  * energy.run();
  * double windFraction = energy.getWindPowerFraction();
@@ -185,8 +185,7 @@ public class OffshoreEnergySystem extends ProcessEquipmentBaseClass {
 
     // 4b. Discharge battery if available
     batteryPowerDelivered = 0.0;
-    if (remainingDemand > 0.0 && batteryStorage != null
-        && batteryStorage.getStateOfCharge() > 0.0) {
+    if (remainingDemand > 0.0 && batteryStorage != null && batteryStorage.getStateOfCharge() > 0.0) {
       batteryPowerDelivered = batteryStorage.discharge(remainingDemand, timeStepHours);
       remainingDemand -= batteryPowerDelivered;
     }
@@ -198,7 +197,7 @@ public class OffshoreEnergySystem extends ProcessEquipmentBaseClass {
       // Enforce minimum load
       double minLoad = gasTurbineCapacity * gasTurbineMinLoad;
       if (gtLoad < minLoad && remainingDemand > 0.0) {
-        gtLoad = minLoad;
+	gtLoad = minLoad;
       }
       gasTurbinePowerDelivered = Math.min(gtLoad, gasTurbineCapacity);
       remainingDemand -= gasTurbinePowerDelivered;
@@ -211,9 +210,9 @@ public class OffshoreEnergySystem extends ProcessEquipmentBaseClass {
     if (excessRenewable > 0.0 && batteryStorage != null) {
       double chargeCapacity = batteryStorage.getCapacity() - batteryStorage.getStateOfCharge();
       if (chargeCapacity > 0.0) {
-        windPowerToCharge = Math.min(excessRenewable, chargeCapacity / timeStepHours);
-        batteryStorage.charge(windPowerToCharge, timeStepHours);
-        excessRenewable -= windPowerToCharge;
+	windPowerToCharge = Math.min(excessRenewable, chargeCapacity / timeStepHours);
+	batteryStorage.charge(windPowerToCharge, timeStepHours);
+	excessRenewable -= windPowerToCharge;
       }
     }
     windPowerCurtailed = excessRenewable;
@@ -261,7 +260,7 @@ public class OffshoreEnergySystem extends ProcessEquipmentBaseClass {
     timeStepHours = 1.0;
     for (int i = 0; i < windSpeeds.length; i++) {
       if (windFarm != null) {
-        windFarm.setWindSpeed(windSpeeds[i]);
+	windFarm.setWindSpeed(windSpeeds[i]);
       }
       run();
     }
@@ -273,8 +272,7 @@ public class OffshoreEnergySystem extends ProcessEquipmentBaseClass {
    * @return wind power fraction [0-1]
    */
   public double getWindPowerFraction() {
-    double totalSupply = windPowerDelivered + gasTurbinePowerDelivered
-        + batteryPowerDelivered + solarPowerDelivered;
+    double totalSupply = windPowerDelivered + gasTurbinePowerDelivered + batteryPowerDelivered + solarPowerDelivered;
     return totalSupply > 0 ? windPowerDelivered / totalSupply : 0.0;
   }
 
@@ -320,8 +318,7 @@ public class OffshoreEnergySystem extends ProcessEquipmentBaseClass {
    * @return total power delivered
    */
   public double getTotalPowerDelivered() {
-    return windPowerDelivered + gasTurbinePowerDelivered
-        + batteryPowerDelivered + solarPowerDelivered;
+    return windPowerDelivered + gasTurbinePowerDelivered + batteryPowerDelivered + solarPowerDelivered;
   }
 
   /**

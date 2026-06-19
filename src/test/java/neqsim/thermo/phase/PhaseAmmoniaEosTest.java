@@ -39,8 +39,7 @@ class PhaseAmmoniaEosTest {
 
   @Test
   void testGasPropertiesAt1atm30C() {
-    SystemInterface system =
-        new SystemAmmoniaEos(303.15, ThermodynamicConstantsInterface.referencePressure);
+    SystemInterface system = new SystemAmmoniaEos(303.15, ThermodynamicConstantsInterface.referencePressure);
     system.setNumberOfPhases(1);
     system.setMaxNumberOfPhases(1);
     system.setForcePhaseTypes(true);
@@ -76,4 +75,3 @@ class PhaseAmmoniaEosTest {
     assertEquals(6.55e-5, liq.getViscosity(), 1.0e-7);
   }
 }
-

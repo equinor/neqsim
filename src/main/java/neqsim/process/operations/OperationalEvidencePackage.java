@@ -20,14 +20,13 @@ import neqsim.process.measurementdevice.InstrumentTagRole;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
- * Builds an operational evidence package from document-derived tags, field data, scenarios, and
- * NeqSim bottleneck analysis.
+ * Builds an operational evidence package from document-derived tags, field data, scenarios, and NeqSim bottleneck
+ * analysis.
  *
  * <p>
- * The class intentionally orchestrates existing NeqSim features rather than replacing them:
- * {@link OperationalTagMap} applies and reads logical plant tags, {@link OperationalScenarioRunner}
- * executes what-if actions, and {@link ProcessSystem#findBottleneck()} plus the registered capacity
- * strategies identify limiting equipment.
+ * The class intentionally orchestrates existing NeqSim features rather than replacing them: {@link OperationalTagMap}
+ * applies and reads logical plant tags, {@link OperationalScenarioRunner} executes what-if actions, and
+ * {@link ProcessSystem#findBottleneck()} plus the registered capacity strategies identify limiting equipment.
  * </p>
  *
  * @author ESOL
@@ -35,8 +34,7 @@ import neqsim.process.processmodel.ProcessSystem;
  */
 public final class OperationalEvidencePackage {
   /** JSON serializer used for embedded operational result objects. */
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   /** Default tolerance used when comparing benchmark tags. */
   public static final double DEFAULT_BENCHMARK_TOLERANCE_FRACTION = 0.05;
@@ -44,31 +42,29 @@ public final class OperationalEvidencePackage {
   /**
    * Private constructor for utility class.
    */
-  private OperationalEvidencePackage() {}
+  private OperationalEvidencePackage() {
+  }
 
   /**
    * Builds a complete operational evidence package report.
    *
-   * @param studyName name of the study or operating case
-   * @param process process system already built from NeqSim JSON
-   * @param tagMap logical operational tag map, may be empty
-   * @param fieldData field data keyed by logical tag or historian tag, may be empty
-   * @param scenarios scenario list to run on copied base cases, may be empty
-   * @param benchmarkToleranceFraction allowed relative deviation for benchmark tags; use a value
-   *        from 0.0 to 1.0 where 0.05 means five percent
-   * @return JSON object containing base evidence, benchmark comparison, bottlenecks, scenarios, and
-   *         quality gates
+   * @param studyName                  name of the study or operating case
+   * @param process                    process system already built from NeqSim JSON
+   * @param tagMap                     logical operational tag map, may be empty
+   * @param fieldData                  field data keyed by logical tag or historian tag, may be empty
+   * @param scenarios                  scenario list to run on copied base cases, may be empty
+   * @param benchmarkToleranceFraction allowed relative deviation for benchmark tags; use a value from 0.0 to 1.0 where
+   *                                   0.05 means five percent
+   * @return JSON object containing base evidence, benchmark comparison, bottlenecks, scenarios, and quality gates
    */
-  public static JsonObject buildReport(String studyName, ProcessSystem process,
-      OperationalTagMap tagMap, Map<String, Double> fieldData, List<OperationalScenario> scenarios,
-      double benchmarkToleranceFraction) {
+  public static JsonObject buildReport(String studyName, ProcessSystem process, OperationalTagMap tagMap,
+      Map<String, Double> fieldData, List<OperationalScenario> scenarios, double benchmarkToleranceFraction) {
     requireProcess(process);
     OperationalTagMap effectiveTagMap = tagMap == null ? new OperationalTagMap() : tagMap;
     Map<String, Double> effectiveFieldData = fieldData == null ? new LinkedHashMap<String, Double>()
-        : new LinkedHashMap<String, Double>(fieldData);
-    List<OperationalScenario> effectiveScenarios =
-        scenarios == null ? new ArrayList<OperationalScenario>()
-            : new ArrayList<OperationalScenario>(scenarios);
+	: new LinkedHashMap<String, Double>(fieldData);
+    List<OperationalScenario> effectiveScenarios = scenarios == null ? new ArrayList<OperationalScenario>()
+	: new ArrayList<OperationalScenario>(scenarios);
     double tolerance = normalizeTolerance(benchmarkToleranceFraction);
 
     Map<String, Double> applied = new LinkedHashMap<String, Double>();
@@ -78,12 +74,12 @@ public final class OperationalEvidencePackage {
     }
 
     Map<String, Double> modelValues = effectiveTagMap.readValues(process);
-    JsonObject benchmarkComparison =
-        buildBenchmarkComparison(effectiveTagMap, effectiveFieldData, modelValues, tolerance);
+    JsonObject benchmarkComparison = buildBenchmarkComparison(effectiveTagMap, effectiveFieldData, modelValues,
+	tolerance);
     JsonObject baseCapacity = buildCapacityReport(process);
     JsonArray scenarioReports = buildScenarioReports(process, effectiveScenarios);
     JsonObject qualityGates = buildQualityGates(baseCapacity, benchmarkComparison, scenarioReports,
-        !effectiveTagMap.getBindings().isEmpty());
+	!effectiveTagMap.getBindings().isEmpty());
 
     JsonObject report = new JsonObject();
     report.addProperty("studyName", cleanStudyName(studyName));
@@ -101,8 +97,7 @@ public final class OperationalEvidencePackage {
    * Builds a capacity and bottleneck report for a process system.
    *
    * @param process process system to inspect
-   * @return JSON object with bottleneck, utilization summary, near-limit equipment, and constraint
-   *         details
+   * @return JSON object with bottleneck, utilization summary, near-limit equipment, and constraint details
    */
   public static JsonObject buildCapacityReport(ProcessSystem process) {
     requireProcess(process);
@@ -115,10 +110,8 @@ public final class OperationalEvidencePackage {
     }
 
     JsonArray equipmentDetails = buildEquipmentCapacityDetails(process);
-    boolean hardLimitExceeded =
-        process.isAnyHardLimitExceeded() || hasStrategyHardLimitExceeded(equipmentDetails);
-    boolean equipmentOverloaded =
-        process.isAnyEquipmentOverloaded() || hasStrategyCapacityExceeded(equipmentDetails);
+    boolean hardLimitExceeded = process.isAnyHardLimitExceeded() || hasStrategyHardLimitExceeded(equipmentDetails);
+    boolean equipmentOverloaded = process.isAnyEquipmentOverloaded() || hasStrategyCapacityExceeded(equipmentDetails);
     JsonArray nearCapacityEquipment = buildNearCapacityEquipment(process, equipmentDetails);
 
     JsonObject report = new JsonObject();
@@ -134,28 +127,28 @@ public final class OperationalEvidencePackage {
   /**
    * Builds benchmark comparisons for tags marked as BENCHMARK.
    *
-   * @param tagMap operational tag map
-   * @param fieldData field data keyed by logical or historian tag
-   * @param modelValues current model values keyed by logical tag
+   * @param tagMap            operational tag map
+   * @param fieldData         field data keyed by logical or historian tag
+   * @param modelValues       current model values keyed by logical tag
    * @param toleranceFraction allowed relative deviation
    * @return JSON benchmark comparison block
    */
-  private static JsonObject buildBenchmarkComparison(OperationalTagMap tagMap,
-      Map<String, Double> fieldData, Map<String, Double> modelValues, double toleranceFraction) {
+  private static JsonObject buildBenchmarkComparison(OperationalTagMap tagMap, Map<String, Double> fieldData,
+      Map<String, Double> modelValues, double toleranceFraction) {
     JsonArray comparisons = new JsonArray();
     int benchmarkCount = 0;
     int withinToleranceCount = 0;
 
     for (OperationalTagBinding binding : tagMap.getBindings()) {
       if (binding.getRole() != InstrumentTagRole.BENCHMARK) {
-        continue;
+	continue;
       }
       benchmarkCount++;
       Double fieldValue = findFieldValue(binding, fieldData);
       Double modelValue = modelValues.get(binding.getLogicalTag());
       JsonObject entry = buildBenchmarkEntry(binding, fieldValue, modelValue, toleranceFraction);
       if (entry.get("withinTolerance").getAsBoolean()) {
-        withinToleranceCount++;
+	withinToleranceCount++;
       }
       comparisons.add(entry);
     }
@@ -171,14 +164,14 @@ public final class OperationalEvidencePackage {
   /**
    * Builds one benchmark comparison entry.
    *
-   * @param binding operational tag binding
-   * @param fieldValue field value, or null when missing
-   * @param modelValue model value, or null when missing
+   * @param binding           operational tag binding
+   * @param fieldValue        field value, or null when missing
+   * @param modelValue        model value, or null when missing
    * @param toleranceFraction allowed relative deviation
    * @return JSON benchmark entry
    */
-  private static JsonObject buildBenchmarkEntry(OperationalTagBinding binding, Double fieldValue,
-      Double modelValue, double toleranceFraction) {
+  private static JsonObject buildBenchmarkEntry(OperationalTagBinding binding, Double fieldValue, Double modelValue,
+      double toleranceFraction) {
     JsonObject entry = new JsonObject();
     entry.addProperty("logicalTag", binding.getLogicalTag());
     entry.addProperty("historianTag", binding.getHistorianTag());
@@ -204,12 +197,11 @@ public final class OperationalEvidencePackage {
   /**
    * Finds a field value for a binding from logical or historian keys.
    *
-   * @param binding operational tag binding
+   * @param binding   operational tag binding
    * @param fieldData source field data
    * @return matched field value, or null when no value is present
    */
-  private static Double findFieldValue(OperationalTagBinding binding,
-      Map<String, Double> fieldData) {
+  private static Double findFieldValue(OperationalTagBinding binding, Map<String, Double> fieldData) {
     if (fieldData.containsKey(binding.getLogicalTag())) {
       return fieldData.get(binding.getLogicalTag());
     }
@@ -223,16 +215,14 @@ public final class OperationalEvidencePackage {
    * Runs all configured scenarios on copied base cases.
    *
    * @param baseProcess base process after field data application
-   * @param scenarios scenarios to run
+   * @param scenarios   scenarios to run
    * @return JSON array of scenario evidence blocks
    */
-  private static JsonArray buildScenarioReports(ProcessSystem baseProcess,
-      List<OperationalScenario> scenarios) {
+  private static JsonArray buildScenarioReports(ProcessSystem baseProcess, List<OperationalScenario> scenarios) {
     JsonArray reports = new JsonArray();
     for (OperationalScenario scenario : scenarios) {
       ProcessSystem scenarioProcess = baseProcess.copy();
-      OperationalScenarioResult scenarioResult =
-          OperationalScenarioRunner.run(scenarioProcess, scenario);
+      OperationalScenarioResult scenarioResult = OperationalScenarioRunner.run(scenarioProcess, scenario);
       JsonObject scenarioReport = new JsonObject();
       scenarioReport.addProperty("scenarioName", scenario.getName());
       scenarioReport.addProperty("successful", scenarioResult.isSuccessful());
@@ -246,16 +236,15 @@ public final class OperationalEvidencePackage {
   /**
    * Builds quality gates for the operational evidence package.
    *
-   * @param baseCapacity base capacity report
+   * @param baseCapacity        base capacity report
    * @param benchmarkComparison benchmark comparison block
-   * @param scenarioReports scenario reports
-   * @param hasTagBindings true when tag bindings were supplied
+   * @param scenarioReports     scenario reports
+   * @param hasTagBindings      true when tag bindings were supplied
    * @return JSON object with gate status values
    */
-  private static JsonObject buildQualityGates(JsonObject baseCapacity,
-      JsonObject benchmarkComparison, JsonArray scenarioReports, boolean hasTagBindings) {
-    boolean benchmarksWithinTolerance =
-        benchmarkComparison.get("allWithinTolerance").getAsBoolean();
+  private static JsonObject buildQualityGates(JsonObject baseCapacity, JsonObject benchmarkComparison,
+      JsonArray scenarioReports, boolean hasTagBindings) {
+    boolean benchmarksWithinTolerance = benchmarkComparison.get("allWithinTolerance").getAsBoolean();
     boolean noHardLimitExceeded = !baseCapacity.get("hardLimitExceeded").getAsBoolean();
     boolean noEquipmentOverloaded = !baseCapacity.get("equipmentOverloaded").getAsBoolean();
     boolean scenariosSuccessful = areScenariosSuccessful(scenarioReports);
@@ -266,8 +255,8 @@ public final class OperationalEvidencePackage {
     gates.addProperty("hardLimitsSatisfied", noHardLimitExceeded);
     gates.addProperty("capacityWithinDesign", noEquipmentOverloaded);
     gates.addProperty("scenariosSuccessful", scenariosSuccessful);
-    gates.addProperty("acceptableForOperationScreening", benchmarksWithinTolerance
-        && noHardLimitExceeded && noEquipmentOverloaded && scenariosSuccessful);
+    gates.addProperty("acceptableForOperationScreening",
+	benchmarksWithinTolerance && noHardLimitExceeded && noEquipmentOverloaded && scenariosSuccessful);
     return gates;
   }
 
@@ -280,7 +269,7 @@ public final class OperationalEvidencePackage {
   private static boolean areScenariosSuccessful(JsonArray scenarioReports) {
     for (int i = 0; i < scenarioReports.size(); i++) {
       if (!scenarioReports.get(i).getAsJsonObject().get("successful").getAsBoolean()) {
-        return false;
+	return false;
       }
     }
     return true;
@@ -301,18 +290,17 @@ public final class OperationalEvidencePackage {
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       EquipmentCapacityStrategy strategy = registry.findStrategy(unit);
       if (strategy == null) {
-        continue;
+	continue;
       }
       CapacityConstraint constraint = strategy.getBottleneckConstraint(unit);
       if (constraint == null || !constraint.isEnabled()) {
-        continue;
+	continue;
       }
       double utilization = constraint.getUtilization();
-      if (!Double.isNaN(utilization) && !Double.isInfinite(utilization)
-          && utilization > maxUtilization) {
-        maxUtilization = utilization;
-        bottleneckEquipment = unit;
-        limitingConstraint = constraint;
+      if (!Double.isNaN(utilization) && !Double.isInfinite(utilization) && utilization > maxUtilization) {
+	maxUtilization = utilization;
+	bottleneckEquipment = unit;
+	limitingConstraint = constraint;
       }
     }
 
@@ -326,7 +314,7 @@ public final class OperationalEvidencePackage {
    * Converts a bottleneck result to JSON.
    *
    * @param bottleneck bottleneck result
-   * @param source source used to detect the bottleneck
+   * @param source     source used to detect the bottleneck
    * @return JSON object
    */
   private static JsonObject bottleneckToJson(BottleneckResult bottleneck, String source) {
@@ -363,11 +351,11 @@ public final class OperationalEvidencePackage {
       String source = "ProcessEquipmentInterface";
       EquipmentCapacityStrategy strategy = registry.findStrategy(unit);
       if ((constraints == null || constraints.isEmpty()) && strategy != null) {
-        constraints = strategy.getConstraints(unit);
-        source = strategy.getName();
+	constraints = strategy.getConstraints(unit);
+	source = strategy.getName();
       }
       if (constraints == null || constraints.isEmpty()) {
-        continue;
+	continue;
       }
 
       JsonArray constraintArray = new JsonArray();
@@ -376,18 +364,18 @@ public final class OperationalEvidencePackage {
       boolean hardLimitExceeded = false;
       boolean nearLimit = false;
       for (CapacityConstraint constraint : constraints.values()) {
-        if (!constraint.isEnabled()) {
-          continue;
-        }
-        double utilization = constraint.getUtilization();
-        maxUtilization = Math.max(maxUtilization, utilization);
-        exceeded = exceeded || constraint.isViolated();
-        hardLimitExceeded = hardLimitExceeded || constraint.isHardLimitExceeded();
-        nearLimit = nearLimit || constraint.isNearLimit();
-        constraintArray.add(constraintToJson(constraint));
+	if (!constraint.isEnabled()) {
+	  continue;
+	}
+	double utilization = constraint.getUtilization();
+	maxUtilization = Math.max(maxUtilization, utilization);
+	exceeded = exceeded || constraint.isViolated();
+	hardLimitExceeded = hardLimitExceeded || constraint.isHardLimitExceeded();
+	nearLimit = nearLimit || constraint.isNearLimit();
+	constraintArray.add(constraintToJson(constraint));
       }
       if (constraintArray.size() == 0) {
-        continue;
+	continue;
       }
 
       JsonObject equipment = new JsonObject();
@@ -444,7 +432,7 @@ public final class OperationalEvidencePackage {
   private static boolean hasStrategyHardLimitExceeded(JsonArray equipmentDetails) {
     for (int i = 0; i < equipmentDetails.size(); i++) {
       if (equipmentDetails.get(i).getAsJsonObject().get("hardLimitExceeded").getAsBoolean()) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -459,7 +447,7 @@ public final class OperationalEvidencePackage {
   private static boolean hasStrategyCapacityExceeded(JsonArray equipmentDetails) {
     for (int i = 0; i < equipmentDetails.size(); i++) {
       if (equipmentDetails.get(i).getAsJsonObject().get("capacityExceeded").getAsBoolean()) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -468,17 +456,16 @@ public final class OperationalEvidencePackage {
   /**
    * Builds the near-capacity equipment array from direct and strategy-derived sources.
    *
-   * @param process process system
+   * @param process          process system
    * @param equipmentDetails equipment details array
    * @return JSON array of equipment names
    */
-  private static JsonArray buildNearCapacityEquipment(ProcessSystem process,
-      JsonArray equipmentDetails) {
+  private static JsonArray buildNearCapacityEquipment(ProcessSystem process, JsonArray equipmentDetails) {
     Set<String> names = new LinkedHashSet<String>(process.getEquipmentNearCapacityLimit());
     for (int i = 0; i < equipmentDetails.size(); i++) {
       JsonObject detail = equipmentDetails.get(i).getAsJsonObject();
       if (detail.get("nearLimit").getAsBoolean()) {
-        names.add(detail.get("equipmentName").getAsString());
+	names.add(detail.get("equipmentName").getAsString());
       }
     }
     JsonArray array = new JsonArray();
@@ -506,8 +493,8 @@ public final class OperationalEvidencePackage {
    * Adds a nullable number to a JSON object.
    *
    * @param object target object
-   * @param name property name
-   * @param value number value, or null
+   * @param name   property name
+   * @param value  number value, or null
    */
   private static void addNullableNumber(JsonObject object, String name, Double value) {
     if (value == null) {

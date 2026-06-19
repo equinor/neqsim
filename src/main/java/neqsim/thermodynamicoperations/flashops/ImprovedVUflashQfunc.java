@@ -15,8 +15,8 @@ import neqsim.thermo.system.SystemInterface;
  * ImprovedVUflashQfunc class with enhanced numerical stability.
  * </p>
  *
- * Improvements: - Bounds checking for pressure and temperature - Better damping and convergence
- * criteria - Validation of inputs and outputs - Fallback mechanisms for problematic cases
+ * Improvements: - Bounds checking for pressure and temperature - Better damping and convergence criteria - Validation
+ * of inputs and outputs - Fallback mechanisms for problematic cases
  *
  * @author GitHub Copilot
  * @version $Id: $Id
@@ -44,8 +44,8 @@ public class ImprovedVUflashQfunc extends Flash {
    * Constructor for ImprovedVUflashQfunc.
    *
    * @param system thermodynamic system to flash
-   * @param Vspec specified volume
-   * @param Uspec specified internal energy
+   * @param Vspec  specified volume
+   * @param Uspec  specified internal energy
    */
   public ImprovedVUflashQfunc(SystemInterface system, double Vspec, double Uspec) {
     this.system = system;
@@ -74,13 +74,13 @@ public class ImprovedVUflashQfunc extends Flash {
   /**
    * Validates pressure and temperature bounds.
    *
-   * @param pressure pressure in bar
+   * @param pressure    pressure in bar
    * @param temperature temperature in Kelvin
    * @return {@code true} when both values fall within the configured solver bounds
    */
   private boolean isWithinBounds(double pressure, double temperature) {
     return pressure >= MIN_PRESSURE && pressure <= MAX_PRESSURE && temperature >= MIN_TEMPERATURE
-        && temperature <= MAX_TEMPERATURE;
+	&& temperature <= MAX_TEMPERATURE;
   }
 
   /**
@@ -91,9 +91,8 @@ public class ImprovedVUflashQfunc extends Flash {
   public double calcdQdPP() {
     double dVdP = system.getdVdPtn();
     double dQdVV = (system.getVolume() - Vspec)
-        / (neqsim.thermo.ThermodynamicConstantsInterface.R * system.getTemperature())
-        + system.getPressure() * dVdP
-            / (neqsim.thermo.ThermodynamicConstantsInterface.R * system.getTemperature());
+	/ (neqsim.thermo.ThermodynamicConstantsInterface.R * system.getTemperature())
+	+ system.getPressure() * dVdP / (neqsim.thermo.ThermodynamicConstantsInterface.R * system.getTemperature());
 
     // Ensure derivative is not too small
     if (Math.abs(dQdVV) < DERIVATIVE_THRESHOLD) {
@@ -109,9 +108,8 @@ public class ImprovedVUflashQfunc extends Flash {
    */
   public double calcdQdTT() {
     double dQdT_val = calcdQdT();
-    double dQdTT = -system.getCp()
-        / (system.getTemperature() * neqsim.thermo.ThermodynamicConstantsInterface.R)
-        - dQdT_val / system.getTemperature();
+    double dQdTT = -system.getCp() / (system.getTemperature() * neqsim.thermo.ThermodynamicConstantsInterface.R)
+	- dQdT_val / system.getTemperature();
 
     // Ensure derivative is not too small
     if (Math.abs(dQdTT) < DERIVATIVE_THRESHOLD) {
@@ -127,7 +125,7 @@ public class ImprovedVUflashQfunc extends Flash {
    */
   public double calcdQdT() {
     double dQdT = (Uspec + system.getPressure() * Vspec - system.getEnthalpy())
-        / (system.getTemperature() * neqsim.thermo.ThermodynamicConstantsInterface.R);
+	/ (system.getTemperature() * neqsim.thermo.ThermodynamicConstantsInterface.R);
     return dQdT;
   }
 
@@ -138,7 +136,7 @@ public class ImprovedVUflashQfunc extends Flash {
    */
   public double calcdQdP() {
     double dQdP = system.getPressure() * (system.getVolume() - Vspec)
-        / (neqsim.thermo.ThermodynamicConstantsInterface.R * system.getTemperature());
+	/ (neqsim.thermo.ThermodynamicConstantsInterface.R * system.getTemperature());
     return dQdP;
   }
 
@@ -176,68 +174,68 @@ public class ImprovedVUflashQfunc extends Flash {
       oldTemp = nyTemp;
 
       try {
-        system.init(3);
+	system.init(3);
 
-        // Calculate updates with bounds checking on derivatives
-        double dQdP = calcdQdP();
-        double dQdT = calcdQdT();
-        double dQdPP = calcdQdPP();
-        double dQdTT = calcdQdTT();
+	// Calculate updates with bounds checking on derivatives
+	double dQdP = calcdQdP();
+	double dQdT = calcdQdT();
+	double dQdPP = calcdQdPP();
+	double dQdTT = calcdQdTT();
 
-        // Calculate proposed changes
-        double deltaPres = -damping * dQdP / dQdPP;
-        double deltaTemp = -damping * dQdT / dQdTT;
+	// Calculate proposed changes
+	double deltaPres = -damping * dQdP / dQdPP;
+	double deltaTemp = -damping * dQdT / dQdTT;
 
-        // Limit step sizes to prevent wild changes
-        double maxPresChange = 0.2 * oldPres; // Max 20% change per step
-        double maxTempChange = 50.0; // Max 50K change per step
+	// Limit step sizes to prevent wild changes
+	double maxPresChange = 0.2 * oldPres; // Max 20% change per step
+	double maxTempChange = 50.0; // Max 50K change per step
 
-        deltaPres = Math.max(-maxPresChange, Math.min(maxPresChange, deltaPres));
-        deltaTemp = Math.max(-maxTempChange, Math.min(maxTempChange, deltaTemp));
+	deltaPres = Math.max(-maxPresChange, Math.min(maxPresChange, deltaPres));
+	deltaTemp = Math.max(-maxTempChange, Math.min(maxTempChange, deltaTemp));
 
-        nyPres = oldPres + deltaPres;
-        nyTemp = oldTemp + deltaTemp;
+	nyPres = oldPres + deltaPres;
+	nyTemp = oldTemp + deltaTemp;
 
-        // Enforce bounds
-        nyPres = Math.max(MIN_PRESSURE, Math.min(MAX_PRESSURE, nyPres));
-        nyTemp = Math.max(MIN_TEMPERATURE, Math.min(MAX_TEMPERATURE, nyTemp));
+	// Enforce bounds
+	nyPres = Math.max(MIN_PRESSURE, Math.min(MAX_PRESSURE, nyPres));
+	nyTemp = Math.max(MIN_TEMPERATURE, Math.min(MAX_TEMPERATURE, nyTemp));
 
-        // Check if within bounds
-        if (!isWithinBounds(nyPres, nyTemp)) {
-          logger.warn("VU flash exceeded bounds, reverting to initial state");
-          system.setPressure(initialPres);
-          system.setTemperature(initialTemp);
-          return initialPres;
-        }
+	// Check if within bounds
+	if (!isWithinBounds(nyPres, nyTemp)) {
+	  logger.warn("VU flash exceeded bounds, reverting to initial state");
+	  system.setPressure(initialPres);
+	  system.setTemperature(initialTemp);
+	  return initialPres;
+	}
 
-        system.setPressure(nyPres);
-        system.setTemperature(nyTemp);
-        tpFlash.run();
+	system.setPressure(nyPres);
+	system.setTemperature(nyTemp);
+	tpFlash.run();
 
-        // Check convergence
-        double presError = Math.abs((nyPres - oldPres) / nyPres);
-        double tempError = Math.abs((nyTemp - oldTemp) / nyTemp);
-        double totalError = presError + tempError;
+	// Check convergence
+	double presError = Math.abs((nyPres - oldPres) / nyPres);
+	double tempError = Math.abs((nyTemp - oldTemp) / nyTemp);
+	double totalError = presError + tempError;
 
-        // Adaptive damping
-        if (totalError > 0.1) {
-          damping = Math.max(MIN_DAMPING, damping * 0.8); // Reduce damping if not converging
-        } else {
-          damping = Math.min(MAX_DAMPING, damping * 1.1); // Increase damping if converging well
-        }
+	// Adaptive damping
+	if (totalError > 0.1) {
+	  damping = Math.max(MIN_DAMPING, damping * 0.8); // Reduce damping if not converging
+	} else {
+	  damping = Math.min(MAX_DAMPING, damping * 1.1); // Increase damping if converging well
+	}
 
-        logger.debug("Iteration " + iterations + ": P=" + nyPres + ", T=" + nyTemp + ", Error="
-            + totalError + ", Damping=" + damping);
+	logger.debug("Iteration " + iterations + ": P=" + nyPres + ", T=" + nyTemp + ", Error=" + totalError
+	    + ", Damping=" + damping);
 
-        if (totalError < tolerance) {
-          break;
-        }
+	if (totalError < tolerance) {
+	  break;
+	}
       } catch (Exception e) {
-        logger.warn("Exception in VU flash iteration " + iterations + ": " + e.getMessage());
-        // Revert to initial state on exception
-        system.setPressure(initialPres);
-        system.setTemperature(initialTemp);
-        return initialPres;
+	logger.warn("Exception in VU flash iteration " + iterations + ": " + e.getMessage());
+	// Revert to initial state on exception
+	system.setPressure(initialPres);
+	system.setTemperature(initialTemp);
+	return initialPres;
       }
     } while (iterations < maxIterations);
 

@@ -54,7 +54,7 @@ public interface FlowSystemInterface {
    * </p>
    *
    * @param type a int
-   * @param id Calculation identifier
+   * @param id   Calculation identifier
    */
   public void solveTransient(int type, UUID id);
 
@@ -218,8 +218,8 @@ public interface FlowSystemInterface {
    * setEquipmentGeometry.
    * </p>
    *
-   * @param equipmentGeometry an array of
-   *        {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} objects
+   * @param equipmentGeometry an array of {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface}
+   *                          objects
    */
   public void setEquipmentGeometry(GeometryDefinitionInterface[] equipmentGeometry);
 
@@ -262,8 +262,7 @@ public interface FlowSystemInterface {
    * solveSteadyState.
    * </p>
    *
-   * @param type a int 1: just mass, 2: mass and energy, 3: mass, energy and energy impulse and
-   *        components
+   * @param type a int 1: just mass, 2: mass and energy, 3: mass, energy and energy impulse and components
    */
   public default void solveSteadyState(int type) {
     solveSteadyState(type, UUID.randomUUID());
@@ -274,9 +273,8 @@ public interface FlowSystemInterface {
    * solveSteadyState.
    * </p>
    *
-   * @param type a int 1: just mass, 2: mass and energy, 3: mass, energy and energy impulse and
-   *        components
-   * @param id Calculation identifier
+   * @param type a int 1: just mass, 2: mass and energy, 3: mass, energy and energy impulse and components
+   * @param id   Calculation identifier
    */
   public void solveSteadyState(int type, UUID id);
 
@@ -321,7 +319,7 @@ public interface FlowSystemInterface {
    * </p>
    *
    * @param component a int
-   * @param lastNode a int
+   * @param lastNode  a int
    * @return a double
    */
   public double getTotalMolarMassTransferRate(int component, int lastNode);
@@ -387,9 +385,9 @@ public interface FlowSystemInterface {
    * </p>
    *
    * <p>
-   * Different schemes offer trade-offs between accuracy and stability. Higher-order schemes reduce
-   * numerical dispersion but may require smaller time steps. TVD schemes provide a good balance by
-   * using flux limiters to prevent oscillations.
+   * Different schemes offer trade-offs between accuracy and stability. Higher-order schemes reduce numerical dispersion
+   * but may require smaller time steps. TVD schemes provide a good balance by using flux limiters to prevent
+   * oscillations.
    * </p>
    *
    * @param scheme the advection scheme to use

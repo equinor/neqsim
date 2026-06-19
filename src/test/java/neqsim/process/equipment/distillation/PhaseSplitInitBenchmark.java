@@ -10,15 +10,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Temporary warm-JVM A/B benchmark for the phase-split out-stream init level change. NOT part of
- * the committed test suite - used only to compare branch vs master locally.
+ * Temporary warm-JVM A/B benchmark for the phase-split out-stream init level change. NOT part of the committed test
+ * suite - used only to compare branch vs master locally.
  *
  * @author esol
  * @version 1.0
  */
 public class PhaseSplitInitBenchmark {
   private static final Logger logger = LogManager.getLogger(PhaseSplitInitBenchmark.class);
-
 
   /**
    * Build the deethanizer feed used by the benchmark cases.
@@ -45,7 +44,7 @@ public class PhaseSplitInitBenchmark {
   /**
    * Build a fresh deethanizer column for one timed run.
    *
-   * @param trayCount number of trays
+   * @param trayCount  number of trays
    * @param solverType solver type
    * @return configured column ready to run
    */
@@ -62,7 +61,7 @@ public class PhaseSplitInitBenchmark {
     column.setMaxNumberOfIterations(trayCount <= 5 ? 50 : 80);
     column.setSolverType(solverType);
     if (solverType == DistillationColumn.SolverType.INSIDE_OUT
-        || solverType == DistillationColumn.SolverType.MATRIX_INSIDE_OUT) {
+	|| solverType == DistillationColumn.SolverType.MATRIX_INSIDE_OUT) {
       column.setInnerLoopSteps(2);
     }
     return column;
@@ -71,14 +70,13 @@ public class PhaseSplitInitBenchmark {
   /**
    * Time one case with warm-up and report distribution statistics.
    *
-   * @param label case label
-   * @param trayCount number of trays
+   * @param label      case label
+   * @param trayCount  number of trays
    * @param solverType solver type
-   * @param warmup warm-up iterations (discarded)
-   * @param reps measured iterations
+   * @param warmup     warm-up iterations (discarded)
+   * @param reps       measured iterations
    */
-  private void timeCase(String label, int trayCount, DistillationColumn.SolverType solverType,
-      int warmup, int reps) {
+  private void timeCase(String label, int trayCount, DistillationColumn.SolverType solverType, int warmup, int reps) {
     for (int i = 0; i < warmup; i++) {
       buildColumn(trayCount, solverType).run();
     }
@@ -103,8 +101,8 @@ public class PhaseSplitInitBenchmark {
     }
     double sd = Math.sqrt(variance / reps);
     logger.info(String.format(Locale.ROOT,
-        "BENCH %-16s trays=%2d reps=%d  mean=%8.2f ms  median=%8.2f ms  min=%8.2f ms  sd=%7.2f ms",
-        label, trayCount, reps, mean, median, min, sd));
+	"BENCH %-16s trays=%2d reps=%d  mean=%8.2f ms  median=%8.2f ms  min=%8.2f ms  sd=%7.2f ms", label, trayCount,
+	reps, mean, median, min, sd));
   }
 
   /**

@@ -27,8 +27,7 @@ public class TestMechanicalDesign {
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 20.0), 66.00);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 20.0), 66.00);
     testSystem.addComponent("methane", 5e6, "Sm3/day");
     testSystem.addComponent("water", 3000, "kg/hr");
 
@@ -37,8 +36,7 @@ public class TestMechanicalDesign {
 
     Stream stream_1 = new Stream("Stream1", testSystem);
     /*
-     * AdiabaticPipe pipel = new AdiabaticPipe(stream_1); pipel.setDiameter(1.0);
-     * pipel.setLength(100);
+     * AdiabaticPipe pipel = new AdiabaticPipe(stream_1); pipel.setDiameter(1.0); pipel.setLength(100);
      */
 
     Separator sep = new Separator("sep", stream_1);
@@ -52,20 +50,17 @@ public class TestMechanicalDesign {
 
     /*
      * sep.setInternalDiameter(3.750); sep.setSeparatorLength(4.0);
-     * sep.getMechanicalDesign().setMaxOperationPressure(70.0);
-     * sep.addSeparatorSection("bottom manway", "manway"); sep.addSeparatorSection("dp nozzle 1",
-     * "nozzle"); sep.getSeparatorSection("dp nozzle 1").getMechanicalDesign().
+     * sep.getMechanicalDesign().setMaxOperationPressure(70.0); sep.addSeparatorSection("bottom manway", "manway");
+     * sep.addSeparatorSection("dp nozzle 1", "nozzle"); sep.getSeparatorSection("dp nozzle 1").getMechanicalDesign().
      * setNominalSize("DN 100"); sep.addSeparatorSection("dp nozzle 2", "nozzle");
      * sep.getSeparatorSection("dp nozzle 2").getMechanicalDesign(). setNominalSize("DN 100");
-     * sep.addSeparatorSection("inlet vane", "vane");
-     * sep.getSeparatorSection("inlet vane").setCalcEfficiency(true);
-     * sep.addSeparatorSection("top mesh", "meshpad");
-     * sep.getSeparatorSection(1).setCalcEfficiency(true); sep.addSeparatorSection("top manway",
-     * "manway"); sep.getSeparatorSection("top manway").getMechanicalDesign().setANSIclass(300) ;
+     * sep.addSeparatorSection("inlet vane", "vane"); sep.getSeparatorSection("inlet vane").setCalcEfficiency(true);
+     * sep.addSeparatorSection("top mesh", "meshpad"); sep.getSeparatorSection(1).setCalcEfficiency(true);
+     * sep.addSeparatorSection("top manway", "manway");
+     * sep.getSeparatorSection("top manway").getMechanicalDesign().setANSIclass(300) ;
      * sep.getSeparatorSection("top manway").getMechanicalDesign(). setNominalSize("DN 500");
      */
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(sep);
     operations.run();

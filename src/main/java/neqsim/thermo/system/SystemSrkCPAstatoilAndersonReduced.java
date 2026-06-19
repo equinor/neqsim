@@ -8,11 +8,10 @@ import neqsim.thermo.phase.PhaseSrkCPAandersonReduced;
  * Thermodynamic system using the Anderson-accelerated nested CPA-EOS with site symmetry reduction.
  *
  * <p>
- * Combines Anderson acceleration (mixing depth m=3) for the inner site fraction loop with site type
- * grouping that reduces the loop dimension from n_s to p, where p is the number of unique site
- * types. This is a nested-family solver that avoids the coupled-family equilibrium sensitivity. The
- * {@code initCPAMatrix(1)} volume derivative computation also uses the reduced p-dimensional
- * Hessian.
+ * Combines Anderson acceleration (mixing depth m=3) for the inner site fraction loop with site type grouping that
+ * reduces the loop dimension from n_s to p, where p is the number of unique site types. This is a nested-family solver
+ * that avoids the coupled-family equilibrium sensitivity. The {@code initCPAMatrix(1)} volume derivative computation
+ * also uses the reduced p-dimensional Hessian.
  * </p>
  *
  * @author Even Solbraa
@@ -42,8 +41,8 @@ public class SystemSrkCPAstatoilAndersonReduced extends SystemSrkCPAstatoil {
   /**
    * Constructor of a fluid object using the Anderson-reduced CPA-EoS.
    *
-   * @param T The temperature in unit Kelvin
-   * @param P The pressure in unit bara (absolute pressure)
+   * @param T              The temperature in unit Kelvin
+   * @param P              The pressure in unit bara (absolute pressure)
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public SystemSrkCPAstatoilAndersonReduced(double T, double P, boolean checkForSolids) {

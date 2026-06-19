@@ -3,13 +3,11 @@ package neqsim.process.equipment.powergeneration.gasturbine;
 import java.io.Serializable;
 
 /**
- * Immutable catalog entry describing a gas turbine package at ISO conditions (15 °C, 1.013 bara, 60
- * % RH, sea level).
+ * Immutable catalog entry describing a gas turbine package at ISO conditions (15 °C, 1.013 bara, 60 % RH, sea level).
  *
  * <p>
- * All data in this class is sourced from publicly available OEM datasheets and trade press. Values
- * are typical and intended for screening / right-sizing studies, not for guaranteed performance
- * calculations.
+ * All data in this class is sourced from publicly available OEM datasheets and trade press. Values are typical and
+ * intended for screening / right-sizing studies, not for guaranteed performance calculations.
  * </p>
  *
  * @author neqsim
@@ -40,19 +38,18 @@ public final class GasTurbineSpec implements Serializable {
   /**
    * Full constructor.
    *
-   * @param model engine model identifier
-   * @param type aero-derivative or industrial
-   * @param ratedPowerW ISO rated shaft power [W]
-   * @param heatRateKJPerKWh ISO heat rate (LHV basis) [kJ/kWh]
-   * @param exhaustFlowKgPerS ISO exhaust mass flow [kg/s]
+   * @param model               engine model identifier
+   * @param type                aero-derivative or industrial
+   * @param ratedPowerW         ISO rated shaft power [W]
+   * @param heatRateKJPerKWh    ISO heat rate (LHV basis) [kJ/kWh]
+   * @param exhaustFlowKgPerS   ISO exhaust mass flow [kg/s]
    * @param exhaustTemperatureK ISO exhaust temperature [K]
-   * @param noxPpmDLE NOx emission with dry low-emission combustor [ppmv @ 15 % O2]
-   * @param massTonnes package dry mass [t]
-   * @param description short text description
+   * @param noxPpmDLE           NOx emission with dry low-emission combustor [ppmv @ 15 % O2]
+   * @param massTonnes          package dry mass [t]
+   * @param description         short text description
    */
   public GasTurbineSpec(String model, TurbineType type, double ratedPowerW, double heatRateKJPerKWh,
-      double exhaustFlowKgPerS, double exhaustTemperatureK, double noxPpmDLE, double massTonnes,
-      String description) {
+      double exhaustFlowKgPerS, double exhaustTemperatureK, double noxPpmDLE, double massTonnes, String description) {
     this.model = model;
     this.type = type;
     this.ratedPowerW = ratedPowerW;
@@ -169,7 +166,7 @@ public final class GasTurbineSpec implements Serializable {
   /** {@inheritDoc} */
   @Override
   public String toString() {
-    return String.format("GasTurbineSpec[%s, %.1f MW, %.0f kJ/kWh, eta=%.1f%%]", model,
-        getRatedPowerMW(), heatRateKJPerKWh, getIsoEfficiency() * 100.0);
+    return String.format("GasTurbineSpec[%s, %.1f MW, %.0f kJ/kWh, eta=%.1f%%]", model, getRatedPowerMW(),
+	heatRateKJPerKWh, getIsoEfficiency() * 100.0);
   }
 }

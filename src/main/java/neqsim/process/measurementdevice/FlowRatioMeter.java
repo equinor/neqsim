@@ -4,14 +4,12 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * Flow-ratio meter that reports the ratio of two stream flows (mass or mole basis). Useful for
- * fuel:air ratio control, reflux ratio monitoring, recycle:fresh-feed ratio surveillance, and
- * combustion-air trim.
+ * Flow-ratio meter that reports the ratio of two stream flows (mass or mole basis). Useful for fuel:air ratio control,
+ * reflux ratio monitoring, recycle:fresh-feed ratio surveillance, and combustion-air trim.
  *
  * <p>
- * The measurement is dimensionless (numerator / denominator). When the denominator flow is zero or
- * negative the reading is reported as NaN (rather than +∞) to keep downstream controllers
- * well-behaved.
+ * The measurement is dimensionless (numerator / denominator). When the denominator flow is zero or negative the reading
+ * is reported as NaN (rather than +∞) to keep downstream controllers well-behaved.
  * </p>
  *
  * @author Even Solbraa
@@ -38,25 +36,24 @@ public class FlowRatioMeter extends MeasurementDeviceBaseClass {
   /**
    * Constructor with default name.
    *
-   * @param numeratorStream stream whose flow forms the numerator
+   * @param numeratorStream   stream whose flow forms the numerator
    * @param denominatorStream stream whose flow forms the denominator
-   * @param flowBasis basis on which the ratio is computed
+   * @param flowBasis         basis on which the ratio is computed
    */
-  public FlowRatioMeter(StreamInterface numeratorStream, StreamInterface denominatorStream,
-      FlowBasis flowBasis) {
+  public FlowRatioMeter(StreamInterface numeratorStream, StreamInterface denominatorStream, FlowBasis flowBasis) {
     this("Flow Ratio Meter", numeratorStream, denominatorStream, flowBasis);
   }
 
   /**
    * Constructor.
    *
-   * @param name device tag
-   * @param numeratorStream non-null numerator stream
+   * @param name              device tag
+   * @param numeratorStream   non-null numerator stream
    * @param denominatorStream non-null denominator stream
-   * @param flowBasis MASS, MOLE, or VOLUME (non-null)
+   * @param flowBasis         MASS, MOLE, or VOLUME (non-null)
    */
-  public FlowRatioMeter(String name, StreamInterface numeratorStream,
-      StreamInterface denominatorStream, FlowBasis flowBasis) {
+  public FlowRatioMeter(String name, StreamInterface numeratorStream, StreamInterface denominatorStream,
+      FlowBasis flowBasis) {
     super(name, "");
     if (numeratorStream == null || denominatorStream == null) {
       throw new IllegalArgumentException("both streams must be non-null");
@@ -104,14 +101,14 @@ public class FlowRatioMeter extends MeasurementDeviceBaseClass {
    */
   private double flowOf(StreamInterface stream) {
     switch (flowBasis) {
-      case MASS:
-        return stream.getFlowRate("kg/hr");
-      case MOLE:
-        return stream.getFlowRate("mole/sec");
-      case VOLUME:
-        return stream.getFlowRate("m3/hr");
-      default:
-        return Double.NaN;
+    case MASS:
+      return stream.getFlowRate("kg/hr");
+    case MOLE:
+      return stream.getFlowRate("mole/sec");
+    case VOLUME:
+      return stream.getFlowRate("m3/hr");
+    default:
+      return Double.NaN;
     }
   }
 

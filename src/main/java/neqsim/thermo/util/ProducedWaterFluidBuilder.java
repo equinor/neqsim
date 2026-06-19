@@ -57,7 +57,8 @@ public class ProducedWaterFluidBuilder {
   /**
    * Private constructor to prevent instantiation.
    */
-  private ProducedWaterFluidBuilder() {}
+  private ProducedWaterFluidBuilder() {
+  }
 
   /**
    * Creates a produced water system from total dissolved solids (TDS) concentration.
@@ -67,9 +68,9 @@ public class ProducedWaterFluidBuilder {
    * {@link #createFromIons(double, double, Map)} instead.
    * </p>
    *
-   * @param temperatureK temperature in Kelvin
-   * @param pressureBara pressure in bara
-   * @param tds total dissolved solids in mg/L
+   * @param temperatureK      temperature in Kelvin
+   * @param pressureBara      pressure in bara
+   * @param tds               total dissolved solids in mg/L
    * @param waterMoleFraction water mole fraction in the overall system (0 to 1)
    * @return configured SystemInterface with electrolyte CPA and chemical reactions initialized
    */
@@ -85,8 +86,7 @@ public class ProducedWaterFluidBuilder {
     double clMoleFrac = naclMolesPerLiter / totalMoles;
     double waterMoleFracInAq = waterMolesPerLiter / totalMoles;
 
-    SystemElectrolyteCPAstatoil system =
-        new SystemElectrolyteCPAstatoil(temperatureK, pressureBara);
+    SystemElectrolyteCPAstatoil system = new SystemElectrolyteCPAstatoil(temperatureK, pressureBara);
     system.addComponent("water", waterMoleFraction * waterMoleFracInAq);
     system.addComponent("Na+", waterMoleFraction * naMoleFrac);
     system.addComponent("Cl-", waterMoleFraction * clMoleFrac);
@@ -137,21 +137,18 @@ public class ProducedWaterFluidBuilder {
    *
    * @param temperatureK temperature in Kelvin
    * @param pressureBara pressure in bara
-   * @param waterType one of "condensed_water", "brackish", "seawater", "formation_low",
-   *        "formation_high"
+   * @param waterType    one of "condensed_water", "brackish", "seawater", "formation_low", "formation_high"
    * @return configured SystemInterface with electrolyte CPA and chemical reactions initialized
    * @throws IllegalArgumentException if waterType is not recognized
    */
-  public static SystemInterface createFromType(double temperatureK, double pressureBara,
-      String waterType) {
+  public static SystemInterface createFromType(double temperatureK, double pressureBara, String waterType) {
     Map<String, Double> ions = getPresetComposition(waterType);
 
-    SystemElectrolyteCPAstatoil system =
-        new SystemElectrolyteCPAstatoil(temperatureK, pressureBara);
+    SystemElectrolyteCPAstatoil system = new SystemElectrolyteCPAstatoil(temperatureK, pressureBara);
 
     for (Map.Entry<String, Double> entry : ions.entrySet()) {
       if (entry.getValue() > 0.0) {
-        system.addComponent(entry.getKey(), entry.getValue());
+	system.addComponent(entry.getKey(), entry.getValue());
       }
     }
 
@@ -163,14 +160,14 @@ public class ProducedWaterFluidBuilder {
    * Creates a produced water system from explicit ionic composition in mg/L.
    *
    * <p>
-   * The method converts mg/L concentrations to mole fractions and creates an Electrolyte-CPA
-   * system. Supported ions: Na+, Cl-, Ca++, Mg++, HCO3-, SO4--.
+   * The method converts mg/L concentrations to mole fractions and creates an Electrolyte-CPA system. Supported ions:
+   * Na+, Cl-, Ca++, Mg++, HCO3-, SO4--.
    * </p>
    *
-   * @param temperatureK temperature in Kelvin
-   * @param pressureBara pressure in bara
-   * @param ionConcentrations map of ion name to concentration in mg/L. Supported keys: "Na+",
-   *        "Cl-", "Ca++", "Mg++", "HCO3-", "SO4--"
+   * @param temperatureK      temperature in Kelvin
+   * @param pressureBara      pressure in bara
+   * @param ionConcentrations map of ion name to concentration in mg/L. Supported keys: "Na+", "Cl-", "Ca++", "Mg++",
+   *                          "HCO3-", "SO4--"
    * @return configured SystemInterface with electrolyte CPA and chemical reactions initialized
    */
   public static SystemInterface createFromIons(double temperatureK, double pressureBara,
@@ -194,11 +191,10 @@ public class ProducedWaterFluidBuilder {
       moleFractions.put(entry.getKey(), entry.getValue() / totalMoles);
     }
 
-    SystemElectrolyteCPAstatoil system =
-        new SystemElectrolyteCPAstatoil(temperatureK, pressureBara);
+    SystemElectrolyteCPAstatoil system = new SystemElectrolyteCPAstatoil(temperatureK, pressureBara);
     for (Map.Entry<String, Double> entry : moleFractions.entrySet()) {
       if (entry.getValue() > 0.0) {
-        system.addComponent(entry.getKey(), entry.getValue());
+	system.addComponent(entry.getKey(), entry.getValue());
       }
     }
 
@@ -210,19 +206,18 @@ public class ProducedWaterFluidBuilder {
    * Adds gas components to an existing produced water system.
    *
    * <p>
-   * This method adds gas components (methane, CO2, H2S, etc.) to a system that was previously
-   * configured with {@link #createFromTDS}, {@link #createFromType}, or
-   * {@link #createFromIons}. The gas composition is specified as mole fractions that are
-   * normalized to fit the requested gas-to-water ratio.
+   * This method adds gas components (methane, CO2, H2S, etc.) to a system that was previously configured with
+   * {@link #createFromTDS}, {@link #createFromType}, or {@link #createFromIons}. The gas composition is specified as
+   * mole fractions that are normalized to fit the requested gas-to-water ratio.
    * </p>
    *
-   * @param system existing electrolyte CPA system
-   * @param gasComposition map of component name to mole fraction (will be normalized)
+   * @param system              existing electrolyte CPA system
+   * @param gasComposition      map of component name to mole fraction (will be normalized)
    * @param gasToWaterMoleRatio ratio of total gas moles to total water-phase moles
    * @return the same system with gas components added
    */
-  public static SystemInterface addGasToWater(SystemInterface system,
-      Map<String, Double> gasComposition, double gasToWaterMoleRatio) {
+  public static SystemInterface addGasToWater(SystemInterface system, Map<String, Double> gasComposition,
+      double gasToWaterMoleRatio) {
     // Normalize gas composition
     double gasSum = 0.0;
     for (Double val : gasComposition.values()) {
@@ -282,8 +277,7 @@ public class ProducedWaterFluidBuilder {
       double caMoles = 0.412 / MW_CA;
       double so4Moles = 2.710 / MW_SO4;
       double hco3Moles = 0.142 / MW_HCO3;
-      double total =
-          waterMoles + naMoles + clMoles + mgMoles + caMoles + so4Moles + hco3Moles;
+      double total = waterMoles + naMoles + clMoles + mgMoles + caMoles + so4Moles + hco3Moles;
 
       comp.put("water", waterMoles / total);
       comp.put("Na+", naMoles / total);
@@ -309,9 +303,8 @@ public class ProducedWaterFluidBuilder {
       comp.put("Na+", naclMoles / total);
       comp.put("Cl-", naclMoles / total);
     } else {
-      throw new IllegalArgumentException(
-          "Unknown water type: " + waterType
-              + ". Valid types: condensed_water, brackish, seawater, formation_low, formation_high");
+      throw new IllegalArgumentException("Unknown water type: " + waterType
+	  + ". Valid types: condensed_water, brackish, seawater, formation_low, formation_high");
     }
     return comp;
   }
@@ -354,7 +347,7 @@ public class ProducedWaterFluidBuilder {
     if ("Fe++".equals(ionName)) {
       return 55.845;
     }
-    throw new IllegalArgumentException("Unknown ion: " + ionName
-        + ". Supported: Na+, Cl-, Ca++, Mg++, HCO3-, SO4--, K+, Sr++, Ba++, Fe++");
+    throw new IllegalArgumentException(
+	"Unknown ion: " + ionName + ". Supported: Na+, Cl-, Ca++, Mg++, HCO3-, SO4--, K+, Sr++, Ba++, Fe++");
   }
 }

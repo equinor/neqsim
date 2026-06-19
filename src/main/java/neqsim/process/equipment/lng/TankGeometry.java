@@ -6,9 +6,9 @@ import java.io.Serializable;
  * Defines the physical geometry of an LNG cargo tank.
  *
  * <p>
- * Tank geometry determines the heat transfer zones, liquid surface area, wetted wall area at a
- * given fill level, and how liquid height relates to volume. Commercial LNG simulators (Cargo
- * Expert, LNGMAP) use detailed geometric models for each containment type.
+ * Tank geometry determines the heat transfer zones, liquid surface area, wetted wall area at a given fill level, and
+ * how liquid height relates to volume. Commercial LNG simulators (Cargo Expert, LNGMAP) use detailed geometric models
+ * for each containment type.
  * </p>
  *
  * <p>
@@ -69,12 +69,13 @@ public class TankGeometry implements Serializable {
   /**
    * Default constructor. Creates a typical 140,000 m3 membrane tank.
    */
-  public TankGeometry() {}
+  public TankGeometry() {
+  }
 
   /**
    * Constructor with containment type.
    *
-   * @param type containment type
+   * @param type        containment type
    * @param totalVolume total tank volume (m3)
    */
   public TankGeometry(ContainmentType type, double totalVolume) {
@@ -86,61 +87,61 @@ public class TankGeometry implements Serializable {
   /**
    * Set default dimensions based on containment type and total volume.
    *
-   * @param type containment type
+   * @param type   containment type
    * @param volume total volume (m3)
    */
   private void setDefaultDimensionsForType(ContainmentType type, double volume) {
     switch (type) {
-      case MEMBRANE:
-        // Typical membrane tank: L x W x H with chamfered corners
-        // Net volume ~ 0.92 * L * W * H (chamfer factor)
-        double chamferFactor = 0.92;
-        double aspectLW = 1.1; // L/W ratio
-        double aspectHW = 0.6; // H/W ratio
-        width = Math.pow(volume / (chamferFactor * aspectLW * aspectHW), 1.0 / 3.0);
-        length = width * aspectLW;
-        height = width * aspectHW;
-        insulationThickness = 0.27;
-        insulationConductivity = 0.04;
-        break;
+    case MEMBRANE:
+      // Typical membrane tank: L x W x H with chamfered corners
+      // Net volume ~ 0.92 * L * W * H (chamfer factor)
+      double chamferFactor = 0.92;
+      double aspectLW = 1.1; // L/W ratio
+      double aspectHW = 0.6; // H/W ratio
+      width = Math.pow(volume / (chamferFactor * aspectLW * aspectHW), 1.0 / 3.0);
+      length = width * aspectLW;
+      height = width * aspectHW;
+      insulationThickness = 0.27;
+      insulationConductivity = 0.04;
+      break;
 
-      case MOSS:
-        // Spherical tank: V = (4/3) * pi * r^3
-        double radius = Math.pow(3.0 * volume / (4.0 * Math.PI), 1.0 / 3.0);
-        innerDiameter = 2.0 * radius;
-        length = innerDiameter;
-        width = innerDiameter;
-        height = innerDiameter;
-        insulationThickness = 0.30;
-        insulationConductivity = 0.04;
-        break;
+    case MOSS:
+      // Spherical tank: V = (4/3) * pi * r^3
+      double radius = Math.pow(3.0 * volume / (4.0 * Math.PI), 1.0 / 3.0);
+      innerDiameter = 2.0 * radius;
+      length = innerDiameter;
+      width = innerDiameter;
+      height = innerDiameter;
+      insulationThickness = 0.30;
+      insulationConductivity = 0.04;
+      break;
 
-      case TYPE_C:
-        // Horizontal cylinder: V = pi * r^2 * L, typical L/D = 4
-        double ldRatio = 4.0;
-        double d = Math.pow(4.0 * volume / (Math.PI * ldRatio), 1.0 / 3.0);
-        innerDiameter = d;
-        length = d * ldRatio;
-        width = d;
-        height = d;
-        insulationThickness = 0.20;
-        insulationConductivity = 0.045;
-        break;
+    case TYPE_C:
+      // Horizontal cylinder: V = pi * r^2 * L, typical L/D = 4
+      double ldRatio = 4.0;
+      double d = Math.pow(4.0 * volume / (Math.PI * ldRatio), 1.0 / 3.0);
+      innerDiameter = d;
+      length = d * ldRatio;
+      width = d;
+      height = d;
+      insulationThickness = 0.20;
+      insulationConductivity = 0.045;
+      break;
 
-      case SPB:
-        // Similar to membrane but self-supporting
-        double spbFactor = 0.95;
-        double spbAspectLW = 1.2;
-        double spbAspectHW = 0.55;
-        width = Math.pow(volume / (spbFactor * spbAspectLW * spbAspectHW), 1.0 / 3.0);
-        length = width * spbAspectLW;
-        height = width * spbAspectHW;
-        insulationThickness = 0.25;
-        insulationConductivity = 0.042;
-        break;
+    case SPB:
+      // Similar to membrane but self-supporting
+      double spbFactor = 0.95;
+      double spbAspectLW = 1.2;
+      double spbAspectHW = 0.55;
+      width = Math.pow(volume / (spbFactor * spbAspectLW * spbAspectHW), 1.0 / 3.0);
+      length = width * spbAspectLW;
+      height = width * spbAspectHW;
+      insulationThickness = 0.25;
+      insulationConductivity = 0.042;
+      break;
 
-      default:
-        break;
+    default:
+      break;
     }
   }
 
@@ -151,17 +152,17 @@ public class TankGeometry implements Serializable {
    */
   public double getBottomArea() {
     switch (containmentType) {
-      case MEMBRANE:
-      case SPB:
-        return length * width;
-      case MOSS:
-        // Sphere bottom contact ~ pi * r^2 (great circle)
-        return Math.PI * Math.pow(innerDiameter / 2.0, 2);
-      case TYPE_C:
-        // Saddle contact area ~ 0.4 * pi * D * L
-        return 0.4 * Math.PI * innerDiameter * length;
-      default:
-        return length * width;
+    case MEMBRANE:
+    case SPB:
+      return length * width;
+    case MOSS:
+      // Sphere bottom contact ~ pi * r^2 (great circle)
+      return Math.PI * Math.pow(innerDiameter / 2.0, 2);
+    case TYPE_C:
+      // Saddle contact area ~ 0.4 * pi * D * L
+      return 0.4 * Math.PI * innerDiameter * length;
+    default:
+      return length * width;
     }
   }
 
@@ -172,17 +173,17 @@ public class TankGeometry implements Serializable {
    */
   public double getRoofArea() {
     switch (containmentType) {
-      case MEMBRANE:
-      case SPB:
-        return length * width;
-      case MOSS:
-        // Upper hemisphere ~ 2 * pi * r^2
-        return 2.0 * Math.PI * Math.pow(innerDiameter / 2.0, 2);
-      case TYPE_C:
-        // Top half of cylinder ~ pi * D/2 * L
-        return Math.PI * (innerDiameter / 2.0) * length;
-      default:
-        return length * width;
+    case MEMBRANE:
+    case SPB:
+      return length * width;
+    case MOSS:
+      // Upper hemisphere ~ 2 * pi * r^2
+      return 2.0 * Math.PI * Math.pow(innerDiameter / 2.0, 2);
+    case TYPE_C:
+      // Top half of cylinder ~ pi * D/2 * L
+      return Math.PI * (innerDiameter / 2.0) * length;
+    default:
+      return length * width;
     }
   }
 
@@ -193,17 +194,17 @@ public class TankGeometry implements Serializable {
    */
   public double getSidewallArea() {
     switch (containmentType) {
-      case MEMBRANE:
-      case SPB:
-        return 2.0 * (length * height + width * height);
-      case MOSS:
-        // Equatorial band area
-        return Math.PI * innerDiameter * innerDiameter;
-      case TYPE_C:
-        // Cylindrical shell + end caps
-        return Math.PI * innerDiameter * length + 2.0 * Math.PI * Math.pow(innerDiameter / 2.0, 2);
-      default:
-        return 2.0 * (length * height + width * height);
+    case MEMBRANE:
+    case SPB:
+      return 2.0 * (length * height + width * height);
+    case MOSS:
+      // Equatorial band area
+      return Math.PI * innerDiameter * innerDiameter;
+    case TYPE_C:
+      // Cylindrical shell + end caps
+      return Math.PI * innerDiameter * length + 2.0 * Math.PI * Math.pow(innerDiameter / 2.0, 2);
+    default:
+      return 2.0 * (length * height + width * height);
     }
   }
 
@@ -229,24 +230,24 @@ public class TankGeometry implements Serializable {
   public double getWettedWallArea(double fillFraction) {
     fillFraction = Math.max(0.0, Math.min(1.0, fillFraction));
     switch (containmentType) {
-      case MEMBRANE:
-      case SPB:
-        // Bottom always wetted, plus sidewalls up to liquid height
-        double liquidHeight = fillFraction * height;
-        return getBottomArea() + 2.0 * (length + width) * liquidHeight;
-      case MOSS:
-        // Spherical cap area = 2 * pi * R * h
-        double r = innerDiameter / 2.0;
-        double h = fillFraction * innerDiameter;
-        return 2.0 * Math.PI * r * h;
-      case TYPE_C:
-        // Wetted perimeter of circular cross-section * length
-        double rC = innerDiameter / 2.0;
-        double halfAngle = Math.acos(1.0 - 2.0 * fillFraction);
-        double wettedPerimeter = 2.0 * rC * halfAngle;
-        return wettedPerimeter * length;
-      default:
-        return getBottomArea() + 2.0 * (length + width) * fillFraction * height;
+    case MEMBRANE:
+    case SPB:
+      // Bottom always wetted, plus sidewalls up to liquid height
+      double liquidHeight = fillFraction * height;
+      return getBottomArea() + 2.0 * (length + width) * liquidHeight;
+    case MOSS:
+      // Spherical cap area = 2 * pi * R * h
+      double r = innerDiameter / 2.0;
+      double h = fillFraction * innerDiameter;
+      return 2.0 * Math.PI * r * h;
+    case TYPE_C:
+      // Wetted perimeter of circular cross-section * length
+      double rC = innerDiameter / 2.0;
+      double halfAngle = Math.acos(1.0 - 2.0 * fillFraction);
+      double wettedPerimeter = 2.0 * rC * halfAngle;
+      return wettedPerimeter * length;
+    default:
+      return getBottomArea() + 2.0 * (length + width) * fillFraction * height;
     }
   }
 
@@ -261,18 +262,18 @@ public class TankGeometry implements Serializable {
     fillFraction = Math.max(0.0, Math.min(1.0, fillFraction));
 
     switch (containmentType) {
-      case MEMBRANE:
-      case SPB:
-        return fillFraction * height;
-      case MOSS:
-        // Spherical cap: V = pi*h^2*(3R - h)/3
-        // Approximate with fill fraction * diameter
-        return fillFraction * innerDiameter;
-      case TYPE_C:
-        // Horizontal cylinder segment
-        return fillFraction * innerDiameter;
-      default:
-        return fillFraction * height;
+    case MEMBRANE:
+    case SPB:
+      return fillFraction * height;
+    case MOSS:
+      // Spherical cap: V = pi*h^2*(3R - h)/3
+      // Approximate with fill fraction * diameter
+      return fillFraction * innerDiameter;
+    case TYPE_C:
+      // Horizontal cylinder segment
+      return fillFraction * innerDiameter;
+    default:
+      return fillFraction * height;
     }
   }
 
@@ -285,23 +286,23 @@ public class TankGeometry implements Serializable {
   public double getLiquidSurfaceArea(double fillFraction) {
     fillFraction = Math.max(0.0, Math.min(1.0, fillFraction));
     switch (containmentType) {
-      case MEMBRANE:
-      case SPB:
-        return length * width; // Constant for prismatic
-      case MOSS:
-        // Circular cross-section at height h
-        double r = innerDiameter / 2.0;
-        double h = fillFraction * innerDiameter;
-        double chordR = Math.sqrt(Math.max(0, 2.0 * r * h - h * h));
-        return Math.PI * chordR * chordR; // Approximate as circle
-      case TYPE_C:
-        // Rectangular surface: chord width * length
-        double rC = innerDiameter / 2.0;
-        double hC = fillFraction * innerDiameter;
-        double chordW = 2.0 * Math.sqrt(Math.max(0, 2.0 * rC * hC - hC * hC));
-        return chordW * length;
-      default:
-        return length * width;
+    case MEMBRANE:
+    case SPB:
+      return length * width; // Constant for prismatic
+    case MOSS:
+      // Circular cross-section at height h
+      double r = innerDiameter / 2.0;
+      double h = fillFraction * innerDiameter;
+      double chordR = Math.sqrt(Math.max(0, 2.0 * r * h - h * h));
+      return Math.PI * chordR * chordR; // Approximate as circle
+    case TYPE_C:
+      // Rectangular surface: chord width * length
+      double rC = innerDiameter / 2.0;
+      double hC = fillFraction * innerDiameter;
+      double chordW = 2.0 * Math.sqrt(Math.max(0, 2.0 * rC * hC - hC * hC));
+      return chordW * length;
+    default:
+      return length * width;
     }
   }
 

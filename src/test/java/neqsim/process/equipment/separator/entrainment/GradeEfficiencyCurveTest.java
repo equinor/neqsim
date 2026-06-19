@@ -75,8 +75,8 @@ class GradeEfficiencyCurveTest {
 
   @Test
   void testCustomCurve() {
-    double[] diameters = {1e-6, 5e-6, 10e-6, 20e-6, 50e-6};
-    double[] efficiencies = {0.0, 0.1, 0.5, 0.9, 0.99};
+    double[] diameters = { 1e-6, 5e-6, 10e-6, 20e-6, 50e-6 };
+    double[] efficiencies = { 0.0, 0.1, 0.5, 0.9, 0.99 };
 
     GradeEfficiencyCurve curve = GradeEfficiencyCurve.custom(diameters, efficiencies);
 
@@ -100,8 +100,7 @@ class GradeEfficiencyCurveTest {
     double overallEta = curve.calcOverallEfficiency(dsd);
 
     // With 100 um characteristic diameter vs 5 um d_50 mesh, most droplets should be captured
-    assertTrue(overallEta > 0.99,
-        "Wire mesh should capture >99% of coarse spray. Got: " + overallEta);
+    assertTrue(overallEta > 0.99, "Wire mesh should capture >99% of coarse spray. Got: " + overallEta);
   }
 
   @Test
@@ -113,8 +112,7 @@ class GradeEfficiencyCurveTest {
     double overallEta = curve.calcOverallEfficiency(dsd);
 
     // Very fine mist (3 um) against 5 um d_50 mesh — significant penetration
-    assertTrue(overallEta < 0.9,
-        "Fine mist should have significant penetration. Got: " + overallEta);
+    assertTrue(overallEta < 0.9, "Fine mist should have significant penetration. Got: " + overallEta);
     assertTrue(overallEta > 0.05, "Should still capture some. Got: " + overallEta);
   }
 

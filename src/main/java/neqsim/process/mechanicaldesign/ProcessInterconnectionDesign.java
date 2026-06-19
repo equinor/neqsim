@@ -27,8 +27,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * </p>
  * <ul>
  * <li>ASME B31.3 - Process Piping</li>
- * <li>API RP 14E - Recommended Practice for Design and Installation of Offshore Production
- * Piping</li>
+ * <li>API RP 14E - Recommended Practice for Design and Installation of Offshore Production Piping</li>
  * </ul>
  *
  * @author NeqSim Development Team
@@ -64,12 +63,12 @@ public class ProcessInterconnectionDesign implements java.io.Serializable {
   private static final double CORROSION_ALLOWANCE = 3.0;
 
   /** Standard pipe sizes in inches (NPS). */
-  private static final double[] STANDARD_PIPE_SIZES = {0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0, 8.0,
-      10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 24.0, 30.0, 36.0, 42.0, 48.0};
+  private static final double[] STANDARD_PIPE_SIZES = { 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0,
+      16.0, 18.0, 20.0, 24.0, 30.0, 36.0, 42.0, 48.0 };
 
   /** Pipe outside diameters in mm corresponding to NPS. */
-  private static final double[] PIPE_OD_MM = {21.3, 26.7, 33.4, 48.3, 60.3, 88.9, 114.3, 168.3,
-      219.1, 273.1, 323.9, 355.6, 406.4, 457.2, 508.0, 609.6, 762.0, 914.4, 1066.8, 1219.2};
+  private static final double[] PIPE_OD_MM = { 21.3, 26.7, 33.4, 48.3, 60.3, 88.9, 114.3, 168.3, 219.1, 273.1, 323.9,
+      355.6, 406.4, 457.2, 508.0, 609.6, 762.0, 914.4, 1066.8, 1219.2 };
 
   // ============================================================================
   // Process System Reference
@@ -377,8 +376,8 @@ public class ProcessInterconnectionDesign implements java.io.Serializable {
 
     @Override
     public String toString() {
-      return String.format("%s -> %s: %.0f\" x %.1fmm x %.1fm = %.0fkg", fromEquipment, toEquipment,
-          nominalSizeInch, wallThicknessMm, lengthM, weightKg);
+      return String.format("%s -> %s: %.0f\" x %.1fmm x %.1fm = %.0fkg", fromEquipment, toEquipment, nominalSizeInch,
+	  wallThicknessMm, lengthM, weightKg);
     }
   }
 
@@ -422,7 +421,7 @@ public class ProcessInterconnectionDesign implements java.io.Serializable {
     for (String name : names) {
       ProcessEquipmentInterface equipment = processSystem.getUnit(name);
       if (equipment == null) {
-        continue;
+	continue;
       }
 
       // Check if this equipment has output streams that connect to other equipment
@@ -445,16 +444,15 @@ public class ProcessInterconnectionDesign implements java.io.Serializable {
     try {
       // Check if equipment has an outlet stream
       if (equipment instanceof neqsim.process.equipment.TwoPortEquipment) {
-        neqsim.process.equipment.TwoPortEquipment twoPort =
-            (neqsim.process.equipment.TwoPortEquipment) equipment;
-        StreamInterface outStream = twoPort.getOutletStream();
-        if (outStream != null && outStream.getThermoSystem() != null) {
-          PipeSegment segment = createPipeSegment(equipment.getName(), "Downstream", outStream);
-          if (segment != null) {
-            pipeSegments.add(segment);
-            accumulateSegment(segment);
-          }
-        }
+	neqsim.process.equipment.TwoPortEquipment twoPort = (neqsim.process.equipment.TwoPortEquipment) equipment;
+	StreamInterface outStream = twoPort.getOutletStream();
+	if (outStream != null && outStream.getThermoSystem() != null) {
+	  PipeSegment segment = createPipeSegment(equipment.getName(), "Downstream", outStream);
+	  if (segment != null) {
+	    pipeSegments.add(segment);
+	    accumulateSegment(segment);
+	  }
+	}
       }
     } catch (Exception e) {
       // Ignore equipment that doesn't have proper connections
@@ -465,14 +463,14 @@ public class ProcessInterconnectionDesign implements java.io.Serializable {
    * Create a pipe segment from stream properties.
    *
    * @param fromEquip from equipment name
-   * @param toEquip to equipment name
-   * @param stream the stream
+   * @param toEquip   to equipment name
+   * @param stream    the stream
    * @return pipe segment or null if unable to create
    */
   private PipeSegment createPipeSegment(String fromEquip, String toEquip, StreamInterface stream) {
     try {
       if (stream.getThermoSystem() == null) {
-        return null;
+	return null;
       }
 
       double pressure = stream.getPressure("bara");
@@ -480,23 +478,23 @@ public class ProcessInterconnectionDesign implements java.io.Serializable {
       double volumeFlow = stream.getFlowRate("m3/hr");
 
       if (volumeFlow <= 0) {
-        return null;
+	return null;
       }
 
       // Determine if gas or liquid service
       boolean isGas = stream.getThermoSystem().hasPhaseType("gas");
       boolean isLiquid = stream.getThermoSystem().hasPhaseType("oil")
-          || stream.getThermoSystem().hasPhaseType("aqueous");
+	  || stream.getThermoSystem().hasPhaseType("aqueous");
       boolean isTwoPhase = isGas && isLiquid;
 
       // Select velocity limit
       double maxVelocity;
       if (isTwoPhase) {
-        maxVelocity = MAX_TWOPHASE_VELOCITY;
+	maxVelocity = MAX_TWOPHASE_VELOCITY;
       } else if (isGas) {
-        maxVelocity = MAX_GAS_VELOCITY;
+	maxVelocity = MAX_GAS_VELOCITY;
       } else {
-        maxVelocity = MAX_LIQUID_VELOCITY;
+	maxVelocity = MAX_LIQUID_VELOCITY;
       }
 
       // Calculate required pipe ID
@@ -508,17 +506,17 @@ public class ProcessInterconnectionDesign implements java.io.Serializable {
       double nominalSize = 0.0;
       double outsideDiameter = 0.0;
       for (int i = 0; i < STANDARD_PIPE_SIZES.length; i++) {
-        // Approximate ID = OD - 2 * wall (assume schedule 40)
-        double approxId = PIPE_OD_MM[i] * 0.85;
-        if (approxId >= requiredIdMm) {
-          nominalSize = STANDARD_PIPE_SIZES[i];
-          outsideDiameter = PIPE_OD_MM[i];
-          break;
-        }
+	// Approximate ID = OD - 2 * wall (assume schedule 40)
+	double approxId = PIPE_OD_MM[i] * 0.85;
+	if (approxId >= requiredIdMm) {
+	  nominalSize = STANDARD_PIPE_SIZES[i];
+	  outsideDiameter = PIPE_OD_MM[i];
+	  break;
+	}
       }
       if (nominalSize == 0.0) {
-        nominalSize = STANDARD_PIPE_SIZES[STANDARD_PIPE_SIZES.length - 1];
-        outsideDiameter = PIPE_OD_MM[PIPE_OD_MM.length - 1];
+	nominalSize = STANDARD_PIPE_SIZES[STANDARD_PIPE_SIZES.length - 1];
+	outsideDiameter = PIPE_OD_MM[PIPE_OD_MM.length - 1];
       }
 
       // Calculate wall thickness per ASME B31.3
@@ -531,8 +529,7 @@ public class ProcessInterconnectionDesign implements java.io.Serializable {
 
       // Calculate weight
       double idMm = outsideDiameter - 2.0 * wallThickness;
-      double pipeAreaM2 =
-          Math.PI / 4.0 * (Math.pow(outsideDiameter / 1000.0, 2) - Math.pow(idMm / 1000.0, 2));
+      double pipeAreaM2 = Math.PI / 4.0 * (Math.pow(outsideDiameter / 1000.0, 2) - Math.pow(idMm / 1000.0, 2));
       double weight = pipeAreaM2 * estimatedLength * STEEL_DENSITY;
 
       // Create segment
@@ -561,7 +558,7 @@ public class ProcessInterconnectionDesign implements java.io.Serializable {
   /**
    * Calculate wall thickness per ASME B31.3.
    *
-   * @param outsideDiameterMm outside diameter in mm
+   * @param outsideDiameterMm  outside diameter in mm
    * @param designPressureBara design pressure in bara
    * @return wall thickness in mm
    */
@@ -569,7 +566,7 @@ public class ProcessInterconnectionDesign implements java.io.Serializable {
     // t = P * D / (2 * S * E + 0.8 * P)
     double pressureMPa = designPressureBara * 0.1;
     double thickness = (pressureMPa * outsideDiameterMm)
-        / (2.0 * ALLOWABLE_STRESS * JOINT_EFFICIENCY + 0.8 * pressureMPa);
+	/ (2.0 * ALLOWABLE_STRESS * JOINT_EFFICIENCY + 0.8 * pressureMPa);
 
     // Add corrosion allowance
     thickness += CORROSION_ALLOWANCE;
@@ -781,7 +778,7 @@ public class ProcessInterconnectionDesign implements java.io.Serializable {
     sb.append("SUMMARY\n");
     sb.append(subSeparator).append("\n");
     sb.append(String.format("Total Piping Weight:       %.0f kg (%.1f tonnes)\n", totalPipingWeight,
-        totalPipingWeight / 1000.0));
+	totalPipingWeight / 1000.0));
     sb.append(String.format("Total Piping Length:       %.0f m\n", totalPipingLength));
     sb.append(String.format("Number of Pipe Segments:   %d\n", pipeSegments.size()));
     sb.append(String.format("Number of Valves:          %d\n", totalValveCount));
@@ -794,15 +791,14 @@ public class ProcessInterconnectionDesign implements java.io.Serializable {
     sb.append(subSeparator).append("\n");
     sb.append(String.format("%-10s %15s %15s\n", "Size", "Length (m)", "Weight (kg)"));
     for (String size : weightBySize.keySet()) {
-      sb.append(String.format("%-10s %15.0f %15.0f\n", size, lengthBySize.get(size),
-          weightBySize.get(size)));
+      sb.append(String.format("%-10s %15.0f %15.0f\n", size, lengthBySize.get(size), weightBySize.get(size)));
     }
     sb.append("\n");
 
     sb.append("COMPONENT WEIGHTS\n");
     sb.append(subSeparator).append("\n");
     sb.append(String.format("Pipe:                      %.0f kg\n",
-        totalPipingWeight - valveWeight - flangeWeight - fittingWeight));
+	totalPipingWeight - valveWeight - flangeWeight - fittingWeight));
     sb.append(String.format("Valves:                    %.0f kg\n", valveWeight));
     sb.append(String.format("Flanges:                   %.0f kg\n", flangeWeight));
     sb.append(String.format("Fittings (Elbows/Tees):    %.0f kg\n", fittingWeight));
@@ -816,7 +812,7 @@ public class ProcessInterconnectionDesign implements java.io.Serializable {
   /**
    * Repeat a string n times (Java 8 compatible).
    *
-   * @param str string to repeat
+   * @param str   string to repeat
    * @param count number of times
    * @return repeated string
    */

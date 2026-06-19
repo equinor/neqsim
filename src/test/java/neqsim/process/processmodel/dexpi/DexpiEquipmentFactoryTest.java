@@ -55,8 +55,7 @@ public class DexpiEquipmentFactoryTest extends NeqSimTest {
   @Test
   public void testCreateSeparator() {
     Stream feed = createTestStream();
-    DexpiProcessUnit unit =
-        new DexpiProcessUnit("HP-Sep", "Separator", EquipmentEnum.Separator, null, null);
+    DexpiProcessUnit unit = new DexpiProcessUnit("HP-Sep", "Separator", EquipmentEnum.Separator, null, null);
     unit.setSizingAttribute(DexpiMetadata.INSIDE_DIAMETER, "2.5");
     unit.setSizingAttribute(DexpiMetadata.TANGENT_TO_TANGENT_LENGTH, "8.0");
     unit.setSizingAttribute(DexpiMetadata.ORIENTATION, "Vertical");
@@ -74,8 +73,8 @@ public class DexpiEquipmentFactoryTest extends NeqSimTest {
   @Test
   public void testCreateThreePhaseSeparator() {
     Stream feed = createTestStream();
-    DexpiProcessUnit unit = new DexpiProcessUnit("3P-Sep", "ThreePhaseSeparator",
-        EquipmentEnum.ThreePhaseSeparator, null, null);
+    DexpiProcessUnit unit = new DexpiProcessUnit("3P-Sep", "ThreePhaseSeparator", EquipmentEnum.ThreePhaseSeparator,
+	null, null);
 
     ProcessEquipmentInterface result = DexpiEquipmentFactory.create(unit, feed);
 
@@ -89,8 +88,8 @@ public class DexpiEquipmentFactoryTest extends NeqSimTest {
   @Test
   public void testCreateCompressor() {
     Stream feed = createTestStream();
-    DexpiProcessUnit unit = new DexpiProcessUnit("Comp-1", "CentrifugalCompressor",
-        EquipmentEnum.Compressor, null, null);
+    DexpiProcessUnit unit = new DexpiProcessUnit("Comp-1", "CentrifugalCompressor", EquipmentEnum.Compressor, null,
+	null);
     unit.setSizingAttribute(DexpiMetadata.DESIGN_PRESSURE, "100.0");
 
     ProcessEquipmentInterface result = DexpiEquipmentFactory.create(unit, feed);
@@ -105,8 +104,7 @@ public class DexpiEquipmentFactoryTest extends NeqSimTest {
   @Test
   public void testCreatePump() {
     Stream feed = createTestStream();
-    DexpiProcessUnit unit =
-        new DexpiProcessUnit("Pump-1", "CentrifugalPump", EquipmentEnum.Pump, null, null);
+    DexpiProcessUnit unit = new DexpiProcessUnit("Pump-1", "CentrifugalPump", EquipmentEnum.Pump, null, null);
 
     ProcessEquipmentInterface result = DexpiEquipmentFactory.create(unit, feed);
 
@@ -120,8 +118,8 @@ public class DexpiEquipmentFactoryTest extends NeqSimTest {
   @Test
   public void testCreateHeatExchanger() {
     Stream feed = createTestStream();
-    DexpiProcessUnit unit = new DexpiProcessUnit("HX-1", "ShellAndTubeHeatExchanger",
-        EquipmentEnum.HeatExchanger, null, null);
+    DexpiProcessUnit unit = new DexpiProcessUnit("HX-1", "ShellAndTubeHeatExchanger", EquipmentEnum.HeatExchanger, null,
+	null);
 
     ProcessEquipmentInterface result = DexpiEquipmentFactory.create(unit, feed);
 
@@ -135,8 +133,7 @@ public class DexpiEquipmentFactoryTest extends NeqSimTest {
   @Test
   public void testCreateHeater() {
     Stream feed = createTestStream();
-    DexpiProcessUnit unit =
-        new DexpiProcessUnit("Heater-1", "FiredHeater", EquipmentEnum.Heater, null, null);
+    DexpiProcessUnit unit = new DexpiProcessUnit("Heater-1", "FiredHeater", EquipmentEnum.Heater, null, null);
 
     ProcessEquipmentInterface result = DexpiEquipmentFactory.create(unit, feed);
 
@@ -150,8 +147,7 @@ public class DexpiEquipmentFactoryTest extends NeqSimTest {
   @Test
   public void testCreateCooler() {
     Stream feed = createTestStream();
-    DexpiProcessUnit unit =
-        new DexpiProcessUnit("Cooler-1", "Cooler", EquipmentEnum.Cooler, null, null);
+    DexpiProcessUnit unit = new DexpiProcessUnit("Cooler-1", "Cooler", EquipmentEnum.Cooler, null, null);
 
     ProcessEquipmentInterface result = DexpiEquipmentFactory.create(unit, feed);
 
@@ -165,8 +161,7 @@ public class DexpiEquipmentFactoryTest extends NeqSimTest {
   @Test
   public void testCreateValve() {
     Stream feed = createTestStream();
-    DexpiProcessUnit unit =
-        new DexpiProcessUnit("CV-101", "ControlValve", EquipmentEnum.ThrottlingValve, null, null);
+    DexpiProcessUnit unit = new DexpiProcessUnit("CV-101", "ControlValve", EquipmentEnum.ThrottlingValve, null, null);
     unit.setSizingAttribute(DexpiMetadata.VALVE_CV, "35.0");
 
     ProcessEquipmentInterface result = DexpiEquipmentFactory.create(unit, feed);
@@ -181,8 +176,7 @@ public class DexpiEquipmentFactoryTest extends NeqSimTest {
   @Test
   public void testCreateMixer() {
     Stream feed = createTestStream();
-    DexpiProcessUnit unit =
-        new DexpiProcessUnit("Mixer-1", "Agitator", EquipmentEnum.Mixer, null, null);
+    DexpiProcessUnit unit = new DexpiProcessUnit("Mixer-1", "Agitator", EquipmentEnum.Mixer, null, null);
 
     ProcessEquipmentInterface result = DexpiEquipmentFactory.create(unit, feed);
 
@@ -196,8 +190,7 @@ public class DexpiEquipmentFactoryTest extends NeqSimTest {
   @Test
   public void testCreateSplitter() {
     Stream feed = createTestStream();
-    DexpiProcessUnit unit =
-        new DexpiProcessUnit("Tee-1", "PipeTee", EquipmentEnum.Splitter, null, null);
+    DexpiProcessUnit unit = new DexpiProcessUnit("Tee-1", "PipeTee", EquipmentEnum.Splitter, null, null);
 
     ProcessEquipmentInterface result = DexpiEquipmentFactory.create(unit, feed);
 
@@ -211,8 +204,7 @@ public class DexpiEquipmentFactoryTest extends NeqSimTest {
   @Test
   public void testUnsupportedEquipmentCreatesPassThrough() {
     Stream feed = createTestStream();
-    DexpiProcessUnit unit =
-        new DexpiProcessUnit("Reactor-1", "StirredTankReactor", EquipmentEnum.Reactor, null, null);
+    DexpiProcessUnit unit = new DexpiProcessUnit("Reactor-1", "StirredTankReactor", EquipmentEnum.Reactor, null, null);
 
     ProcessEquipmentInterface result = DexpiEquipmentFactory.create(unit, feed);
 
@@ -226,8 +218,7 @@ public class DexpiEquipmentFactoryTest extends NeqSimTest {
   @Test
   public void testCreateColumnDefault() {
     Stream feed = createTestStream();
-    DexpiProcessUnit unit =
-        new DexpiProcessUnit("Column-1", "DistillationColumn", EquipmentEnum.Column, null, null);
+    DexpiProcessUnit unit = new DexpiProcessUnit("Column-1", "DistillationColumn", EquipmentEnum.Column, null, null);
 
     ProcessEquipmentInterface result = DexpiEquipmentFactory.create(unit, feed);
 
@@ -242,8 +233,7 @@ public class DexpiEquipmentFactoryTest extends NeqSimTest {
   @Test
   public void testCreateColumnWithTrays() {
     Stream feed = createTestStream();
-    DexpiProcessUnit unit =
-        new DexpiProcessUnit("Column-2", "DistillationColumn", EquipmentEnum.Column, null, null);
+    DexpiProcessUnit unit = new DexpiProcessUnit("Column-2", "DistillationColumn", EquipmentEnum.Column, null, null);
     unit.setSizingAttribute(DexpiMetadata.NUMBER_OF_TRAYS, "10");
     unit.setSizingAttribute(DexpiMetadata.FEED_TRAY, "5");
 

@@ -9,8 +9,8 @@ import java.util.Map;
  * Dashboard for comparing KPIs across multiple scenarios.
  *
  * <p>
- * Provides visual comparison of scenario performance metrics, rankings, and recommendations for
- * process safety system optimization.
+ * Provides visual comparison of scenario performance metrics, rankings, and recommendations for process safety system
+ * optimization.
  * </p>
  *
  * @author ESOL
@@ -24,7 +24,7 @@ public class KPIDashboard {
    * Adds a scenario with its KPIs to the dashboard.
    *
    * @param scenarioName name of the scenario
-   * @param kpi KPI metrics for the scenario
+   * @param kpi          KPI metrics for the scenario
    */
   public void addScenario(String scenarioName, ScenarioKPI kpi) {
     scenarios.put(scenarioName, kpi);
@@ -74,9 +74,9 @@ public class KPIDashboard {
     for (String scenario : scenarioOrder) {
       ScenarioKPI kpi = scenarios.get(scenario);
       if (kpi.getPeakPressure() > 0) {
-        System.out.printf(" %10.2f   │", kpi.getPeakPressure());
+	System.out.printf(" %10.2f   │", kpi.getPeakPressure());
       } else {
-        System.out.print("     N/A      │");
+	System.out.print("     N/A      │");
       }
     }
     System.out.println();
@@ -86,9 +86,9 @@ public class KPIDashboard {
     for (String scenario : scenarioOrder) {
       ScenarioKPI kpi = scenarios.get(scenario);
       if (kpi.getTimeToESDActivation() >= 0) {
-        System.out.printf(" %10.2f   │", kpi.getTimeToESDActivation());
+	System.out.printf(" %10.2f   │", kpi.getTimeToESDActivation());
       } else {
-        System.out.print("  Not Active  │");
+	System.out.print("  Not Active  │");
       }
     }
     System.out.println();
@@ -98,9 +98,9 @@ public class KPIDashboard {
     for (String scenario : scenarioOrder) {
       ScenarioKPI kpi = scenarios.get(scenario);
       if (kpi.getSafetyMarginToMAWP() > 0) {
-        System.out.printf(" %10.2f   │", kpi.getSafetyMarginToMAWP());
+	System.out.printf(" %10.2f   │", kpi.getSafetyMarginToMAWP());
       } else {
-        System.out.print("     N/A      │");
+	System.out.print("     N/A      │");
       }
     }
     System.out.println();
@@ -145,9 +145,9 @@ public class KPIDashboard {
     for (String scenario : scenarioOrder) {
       ScenarioKPI kpi = scenarios.get(scenario);
       if (kpi.getProductionLoss() > 0) {
-        System.out.printf(" %10.2f   │", kpi.getProductionLoss());
+	System.out.printf(" %10.2f   │", kpi.getProductionLoss());
       } else {
-        System.out.print("      0.00    │");
+	System.out.print("      0.00    │");
       }
     }
     System.out.println();
@@ -157,9 +157,9 @@ public class KPIDashboard {
     for (String scenario : scenarioOrder) {
       ScenarioKPI kpi = scenarios.get(scenario);
       if (kpi.getRecoveryTime() > 0) {
-        System.out.printf(" %10.2f   │", kpi.getRecoveryTime());
+	System.out.printf(" %10.2f   │", kpi.getRecoveryTime());
       } else {
-        System.out.print("     N/A      │");
+	System.out.print("     N/A      │");
       }
     }
     System.out.println();
@@ -169,9 +169,9 @@ public class KPIDashboard {
     for (String scenario : scenarioOrder) {
       ScenarioKPI kpi = scenarios.get(scenario);
       if (kpi.getAverageFlowRate() > 0) {
-        System.out.printf(" %10.2f   │", kpi.getAverageFlowRate());
+	System.out.printf(" %10.2f   │", kpi.getAverageFlowRate());
       } else {
-        System.out.print("     N/A      │");
+	System.out.print("     N/A      │");
       }
     }
     System.out.println();
@@ -208,9 +208,9 @@ public class KPIDashboard {
     for (String scenario : scenarioOrder) {
       ScenarioKPI kpi = scenarios.get(scenario);
       if (kpi.getFlareGasVolume() > 0) {
-        System.out.printf(" %10.2f   │", kpi.getFlareGasVolume());
+	System.out.printf(" %10.2f   │", kpi.getFlareGasVolume());
       } else {
-        System.out.print("      0.00    │");
+	System.out.print("      0.00    │");
       }
     }
     System.out.println();
@@ -220,9 +220,9 @@ public class KPIDashboard {
     for (String scenario : scenarioOrder) {
       ScenarioKPI kpi = scenarios.get(scenario);
       if (kpi.getCo2Emissions() > 0) {
-        System.out.printf(" %10.2f   │", kpi.getCo2Emissions());
+	System.out.printf(" %10.2f   │", kpi.getCo2Emissions());
       } else {
-        System.out.print("      0.00    │");
+	System.out.print("      0.00    │");
       }
     }
     System.out.println();
@@ -232,9 +232,9 @@ public class KPIDashboard {
     for (String scenario : scenarioOrder) {
       ScenarioKPI kpi = scenarios.get(scenario);
       if (kpi.getFlaringDuration() > 0) {
-        System.out.printf(" %10.2f   │", kpi.getFlaringDuration());
+	System.out.printf(" %10.2f   │", kpi.getFlaringDuration());
       } else {
-        System.out.print("      0.00    │");
+	System.out.print("      0.00    │");
       }
     }
     System.out.println();
@@ -244,9 +244,9 @@ public class KPIDashboard {
     for (String scenario : scenarioOrder) {
       ScenarioKPI kpi = scenarios.get(scenario);
       if (kpi.getVentedMass() > 0) {
-        System.out.printf(" %10.2f   │", kpi.getVentedMass());
+	System.out.printf(" %10.2f   │", kpi.getVentedMass());
       } else {
-        System.out.print("      0.00    │");
+	System.out.print("      0.00    │");
       }
     }
     System.out.println();
@@ -339,23 +339,23 @@ public class KPIDashboard {
       List<String> issues = new ArrayList<>();
 
       if (kpi.calculateSafetyScore() < 70.0) {
-        issues.add("Safety score below 70");
+	issues.add("Safety score below 70");
       }
       if (kpi.isPsvActivated()) {
-        issues.add("PSV activated (consider HIPPS tuning)");
+	issues.add("PSV activated (consider HIPPS tuning)");
       }
       if (kpi.getFlareGasVolume() > 100.0) {
-        issues.add("High flare emissions");
+	issues.add("High flare emissions");
       }
       if (kpi.getErrorCount() > 10) {
-        issues.add("Many simulation errors");
+	issues.add("Many simulation errors");
       }
 
       if (!issues.isEmpty()) {
-        System.out.println("  ⚠ " + scenario + ":");
-        for (String issue : issues) {
-          System.out.println("      - " + issue);
-        }
+	System.out.println("  ⚠ " + scenario + ":");
+	for (String issue : issues) {
+	  System.out.println("      - " + issue);
+	}
       }
     }
 
@@ -369,8 +369,7 @@ public class KPIDashboard {
     }
 
     // Check for high flaring
-    double totalFlaring =
-        scenarios.values().stream().mapToDouble(ScenarioKPI::getFlareGasVolume).sum();
+    double totalFlaring = scenarios.values().stream().mapToDouble(ScenarioKPI::getFlareGasVolume).sum();
     if (totalFlaring > 200.0) {
       System.out.println("  2. Consider optimizing ESD sequences to minimize flaring");
     }
@@ -397,8 +396,8 @@ public class KPIDashboard {
     for (String scenario : scenarioOrder) {
       double score = scoreFunction.apply(scenarios.get(scenario));
       if (score > bestScore) {
-        bestScore = score;
-        best = scenario;
+	bestScore = score;
+	best = scenario;
       }
     }
 
@@ -425,7 +424,7 @@ public class KPIDashboard {
   /**
    * Truncates a string to specified length.
    *
-   * @param str the string to truncate
+   * @param str    the string to truncate
    * @param length the maximum length
    * @return the truncated string
    */

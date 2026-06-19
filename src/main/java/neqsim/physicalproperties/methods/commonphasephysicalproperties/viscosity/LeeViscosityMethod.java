@@ -6,8 +6,8 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * Lee-Gonzalez-Eakin gas viscosity correlation (1966).
  *
  * <p>
- * This is a simple correlation for estimating natural gas viscosity, suitable for first-order
- * estimates when more sophisticated methods are not required.
+ * This is a simple correlation for estimating natural gas viscosity, suitable for first-order estimates when more
+ * sophisticated methods are not required.
  * </p>
  *
  * <p>
@@ -26,14 +26,13 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * </ul>
  *
  * <p>
- * Reference: Lee, A.L., Gonzalez, M.H., and Eakin, B.E., "The Viscosity of Natural Gases", Journal
- * of Petroleum Technology, paper SPE-1340-PA, 1966.
+ * Reference: Lee, A.L., Gonzalez, M.H., and Eakin, B.E., "The Viscosity of Natural Gases", Journal of Petroleum
+ * Technology, paper SPE-1340-PA, 1966.
  * </p>
  *
  * <p>
- * As noted in the Whitson wiki (https://wiki.whitson.com/bopvt/visc_correlations/#lee-correlation),
- * this correlation is not widely used in industry anymore but provides simple first-order
- * estimates.
+ * As noted in the Whitson wiki (https://wiki.whitson.com/bopvt/visc_correlations/#lee-correlation), this correlation is
+ * not widely used in industry anymore but provides simple first-order estimates.
  * </p>
  *
  * @author ESOL
@@ -73,8 +72,7 @@ public class LeeViscosityMethod extends Viscosity {
     double densityGCm3 = densityKgM3 / 1000.0; // kg/m³ to g/cm³
 
     // Calculate correlation parameters
-    double K = (9.4 + 0.02 * molarMass) * Math.pow(temperatureR, 1.5)
-        / (209.0 + 19.0 * molarMass + temperatureR);
+    double K = (9.4 + 0.02 * molarMass) * Math.pow(temperatureR, 1.5) / (209.0 + 19.0 * molarMass + temperatureR);
 
     double X = 3.5 + 986.0 / temperatureR + 0.01 * molarMass;
 
@@ -94,13 +92,12 @@ public class LeeViscosityMethod extends Viscosity {
    * This static method can be used independently without creating a phase object.
    * </p>
    *
-   * @param temperatureK temperature in Kelvin
-   * @param densityKgM3 density in kg/m³
+   * @param temperatureK   temperature in Kelvin
+   * @param densityKgM3    density in kg/m³
    * @param molarMassKgMol molar mass in kg/mol
    * @return viscosity in Pa·s
    */
-  public static double calcViscosity(double temperatureK, double densityKgM3,
-      double molarMassKgMol) {
+  public static double calcViscosity(double temperatureK, double densityKgM3, double molarMassKgMol) {
     // Convert units
     double molarMassGMol = molarMassKgMol * 1000.0; // kg/mol to g/mol
     double temperatureR = temperatureK * 9.0 / 5.0; // Kelvin to Rankine
@@ -108,7 +105,7 @@ public class LeeViscosityMethod extends Viscosity {
 
     // Calculate correlation parameters
     double K = (9.4 + 0.02 * molarMassGMol) * Math.pow(temperatureR, 1.5)
-        / (209.0 + 19.0 * molarMassGMol + temperatureR);
+	/ (209.0 + 19.0 * molarMassGMol + temperatureR);
 
     double X = 3.5 + 986.0 / temperatureR + 0.01 * molarMassGMol;
 
@@ -125,11 +122,11 @@ public class LeeViscosityMethod extends Viscosity {
    * Calculate low-pressure gas viscosity using the Lee correlation.
    *
    * <p>
-   * At low pressures (near atmospheric), the density term becomes negligible and the correlation
-   * simplifies to: μ ≈ K * 1e-4
+   * At low pressures (near atmospheric), the density term becomes negligible and the correlation simplifies to: μ ≈ K *
+   * 1e-4
    * </p>
    *
-   * @param temperatureK temperature in Kelvin
+   * @param temperatureK   temperature in Kelvin
    * @param molarMassKgMol molar mass in kg/mol
    * @return low-pressure viscosity in Pa·s
    */
@@ -138,7 +135,7 @@ public class LeeViscosityMethod extends Viscosity {
     double temperatureR = temperatureK * 9.0 / 5.0;
 
     double K = (9.4 + 0.02 * molarMassGMol) * Math.pow(temperatureR, 1.5)
-        / (209.0 + 19.0 * molarMassGMol + temperatureR);
+	/ (209.0 + 19.0 * molarMassGMol + temperatureR);
 
     // Low pressure: exp(X * ρ^Y) ≈ 1 when ρ → 0
     double viscosityCp = K * 1e-4;

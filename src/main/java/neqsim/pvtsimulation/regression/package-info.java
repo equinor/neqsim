@@ -3,8 +3,8 @@
  *
  * <h2>Overview</h2>
  * <p>
- * This package provides a comprehensive framework for regressing EOS model parameters against
- * experimental PVT data. The framework supports:
+ * This package provides a comprehensive framework for regressing EOS model parameters against experimental PVT data.
+ * The framework supports:
  * </p>
  * <ul>
  * <li>Constant Composition Expansion (CCE/CME) data</li>
@@ -58,8 +58,8 @@
  * PVTRegression regression = new PVTRegression(fluid);
  *
  * // Add experimental data
- * double[] pressures = {300.0, 250.0, 200.0, 150.0, 100.0};
- * double[] relativeVolumes = {0.98, 1.00, 1.08, 1.25, 1.55};
+ * double[] pressures = { 300.0, 250.0, 200.0, 150.0, 100.0 };
+ * double[] relativeVolumes = { 0.98, 1.00, 1.08, 1.25, 1.55 };
  * regression.addCCEData(pressures, relativeVolumes, 373.15);
  *
  * // Add regression parameters
@@ -75,8 +75,7 @@
  *
  * <h2>References</h2>
  * <ul>
- * <li>Pedersen, K.S., Christensen, P.L., "Phase Behavior of Petroleum Reservoir Fluids", CRC Press,
- * 2007</li>
+ * <li>Pedersen, K.S., Christensen, P.L., "Phase Behavior of Petroleum Reservoir Fluids", CRC Press, 2007</li>
  * <li>Whitson, C.H., Brulé, M.R., "Phase Behavior", SPE Monograph, 2000</li>
  * </ul>
  *

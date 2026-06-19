@@ -90,8 +90,7 @@ class NetworkOptimizerTest {
   void testOptimizeProductionNLPConvenience() {
     NetworkOptimizer.OptimizationResult result = network.optimizeProductionNLP();
     assertNotNull(result, "NLP result should not be null");
-    assertTrue(result.converged || result.message != null,
-        "Should converge or return status message");
+    assertTrue(result.converged || result.message != null, "Should converge or return status message");
   }
 
   @Test

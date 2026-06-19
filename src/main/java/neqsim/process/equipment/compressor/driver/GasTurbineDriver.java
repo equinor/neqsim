@@ -17,17 +17,16 @@ package neqsim.process.equipment.compressor.driver;
  * <strong>Temperature Derating</strong>
  * </p>
  * <p>
- * Gas turbines experience reduced power output at higher ambient temperatures due to reduced air
- * density and compressor work increase. The typical derating is approximately 0.7% per °C above the
- * ISO reference temperature of 15°C.
+ * Gas turbines experience reduced power output at higher ambient temperatures due to reduced air density and compressor
+ * work increase. The typical derating is approximately 0.7% per °C above the ISO reference temperature of 15°C.
  * </p>
  *
  * <p>
  * <strong>Altitude Derating</strong>
  * </p>
  * <p>
- * At higher altitudes, reduced air density decreases mass flow through the turbine, reducing power
- * output. Typical derating is about 3.5% per 305m (1000 ft) of elevation.
+ * At higher altitudes, reduced air density decreases mass flow through the turbine, reducing power output. Typical
+ * derating is about 3.5% per 305m (1000 ft) of elevation.
  * </p>
  *
  * <p>
@@ -73,7 +72,7 @@ public class GasTurbineDriver extends DriverCurveBase {
   private double speedTurndown = 0.7;
 
   /** Part-load efficiency curve coefficients. */
-  private double[] efficiencyCoeffs = {0.1, 0.6, 0.3}; // a + b*x + c*x^2
+  private double[] efficiencyCoeffs = { 0.1, 0.6, 0.3 }; // a + b*x + c*x^2
 
   /**
    * Default constructor.
@@ -85,7 +84,7 @@ public class GasTurbineDriver extends DriverCurveBase {
   /**
    * Constructor with rated power and efficiency.
    *
-   * @param ratedPowerKW rated power in kW at ISO conditions
+   * @param ratedPowerKW     rated power in kW at ISO conditions
    * @param designEfficiency design efficiency at rated conditions (0-1)
    */
   public GasTurbineDriver(double ratedPowerKW, double designEfficiency) {
@@ -97,8 +96,8 @@ public class GasTurbineDriver extends DriverCurveBase {
   /**
    * Constructor with full parameters.
    *
-   * @param ratedPowerKW rated power in kW at ISO conditions
-   * @param ratedSpeedRPM rated speed in RPM
+   * @param ratedPowerKW     rated power in kW at ISO conditions
+   * @param ratedSpeedRPM    rated speed in RPM
    * @param designEfficiency design efficiency at rated conditions (0-1)
    */
   public GasTurbineDriver(double ratedPowerKW, double ratedSpeedRPM, double designEfficiency) {
@@ -107,7 +106,8 @@ public class GasTurbineDriver extends DriverCurveBase {
     this.minSpeed = ratedSpeed * speedTurndown;
   }
 
-  private void setDriverType() {}
+  private void setDriverType() {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -203,7 +203,7 @@ public class GasTurbineDriver extends DriverCurveBase {
   /**
    * Gets the heat rate at the specified operating point.
    *
-   * @param speed operating speed in RPM
+   * @param speed        operating speed in RPM
    * @param loadFraction load as fraction of available power
    * @return heat rate in kJ/kWh
    */
@@ -327,8 +327,8 @@ public class GasTurbineDriver extends DriverCurveBase {
    * Sets the part-load efficiency curve coefficients.
    *
    * <p>
-   * The efficiency at part load is calculated as: design_eff * (a + b*load + c*load^2) where load
-   * is the load fraction (0-1).
+   * The efficiency at part load is calculated as: design_eff * (a + b*load + c*load^2) where load is the load fraction
+   * (0-1).
    * </p>
    *
    * @param a constant term
@@ -336,6 +336,6 @@ public class GasTurbineDriver extends DriverCurveBase {
    * @param c quadratic term
    */
   public void setEfficiencyCurve(double a, double b, double c) {
-    this.efficiencyCoeffs = new double[] {a, b, c};
+    this.efficiencyCoeffs = new double[] { a, b, c };
   }
 }

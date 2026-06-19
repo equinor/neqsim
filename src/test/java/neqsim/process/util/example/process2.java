@@ -28,8 +28,7 @@ public class process2 {
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 20.00);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 20.00);
     testSystem.addComponent("CO2", 1200.00);
     testSystem.addComponent("water", 1200.0);
     testSystem.createDatabase(true);
@@ -57,8 +56,7 @@ public class process2 {
 
     mixer.addStream(stream_5);
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(heater);
     operations.add(mixer);

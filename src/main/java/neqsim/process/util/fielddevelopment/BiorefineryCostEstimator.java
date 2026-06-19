@@ -9,9 +9,8 @@ import com.google.gson.GsonBuilder;
  * Techno-economic analysis (TEA) cost estimator for biorefinery plants.
  *
  * <p>
- * Provides CAPEX and OPEX estimation for biorefinery equipment using capacity-based scaling
- * correlations (six-tenths rule) and technology-specific installation factors. Integrates with
- * {@link DCFCalculator} for full NPV/IRR analysis.
+ * Provides CAPEX and OPEX estimation for biorefinery equipment using capacity-based scaling correlations (six-tenths
+ * rule) and technology-specific installation factors. Integrates with {@link DCFCalculator} for full NPV/IRR analysis.
  * </p>
  *
  * <h2>Supported Equipment</h2>
@@ -124,15 +123,15 @@ public class BiorefineryCostEstimator implements Serializable {
     /**
      * Creates a biorefinery equipment constant.
      *
-     * @param name display name
+     * @param name         display name
      * @param baseCapacity base capacity value
-     * @param unit capacity unit
-     * @param baseCost base cost in USD
-     * @param exponent scaling exponent
-     * @param instFactor installation factor
+     * @param unit         capacity unit
+     * @param baseCost     base cost in USD
+     * @param exponent     scaling exponent
+     * @param instFactor   installation factor
      */
-    BiorefineryEquipment(String name, double baseCapacity, String unit, double baseCost,
-        double exponent, double instFactor) {
+    BiorefineryEquipment(String name, double baseCapacity, String unit, double baseCost, double exponent,
+	double instFactor) {
       this.displayName = name;
       this.baseCapacity = baseCapacity;
       this.capacityUnit = unit;
@@ -275,7 +274,7 @@ public class BiorefineryCostEstimator implements Serializable {
   /**
    * Adds an equipment item with its actual capacity.
    *
-   * @param equipment the equipment type
+   * @param equipment      the equipment type
    * @param actualCapacity the actual capacity in the equipment's native units
    */
   public void addEquipment(BiorefineryEquipment equipment, double actualCapacity) {
@@ -320,9 +319,9 @@ public class BiorefineryCostEstimator implements Serializable {
   /**
    * Sets the product price and annual production for revenue calculation.
    *
-   * @param price product price per unit
+   * @param price      product price per unit
    * @param annualProd annual production in product units
-   * @param unit product unit description (e.g. "Nm3", "kg", "MWh")
+   * @param unit       product unit description (e.g. "Nm3", "kg", "MWh")
    */
   public void setProduct(double price, double annualProd, String unit) {
     this.productPrice = price;
@@ -386,7 +385,7 @@ public class BiorefineryCostEstimator implements Serializable {
    * Sets the utility cost parameters.
    *
    * @param pricePerKWh utility price in USD/kWh
-   * @param annualKWh annual utility consumption in kWh
+   * @param annualKWh   annual utility consumption in kWh
    */
   public void setUtilityCost(double pricePerKWh, double annualKWh) {
     this.utilityCostUSDPerKWh = pricePerKWh;
@@ -431,7 +430,7 @@ public class BiorefineryCostEstimator implements Serializable {
    * Uses the power-law scaling correlation: Cost = BaseCost * (Capacity / BaseCapacity)^n
    * </p>
    *
-   * @param equipment the equipment type
+   * @param equipment      the equipment type
    * @param actualCapacity actual capacity
    * @return purchased equipment cost in USD
    */
@@ -440,8 +439,7 @@ public class BiorefineryCostEstimator implements Serializable {
       return 0.0;
     }
     double ratio = actualCapacity / equipment.getBaseCapacity();
-    double scaledCost =
-        equipment.getBaseCostUSD() * Math.pow(ratio, equipment.getScalingExponent());
+    double scaledCost = equipment.getBaseCostUSD() * Math.pow(ratio, equipment.getScalingExponent());
     return scaledCost * locationFactor * costEscalationIndex;
   }
 
@@ -466,8 +464,8 @@ public class BiorefineryCostEstimator implements Serializable {
     annualUtilityCostUSD = annualUtilityConsumptionKWh * utilityCostUSDPerKWh;
     double insuranceCostUSD = totalCapexUSD * insuranceFraction;
 
-    annualOpexUSD = annualFeedstockCostUSD + annualLabourCostUSD + annualMaintenanceCostUSD
-        + annualUtilityCostUSD + insuranceCostUSD;
+    annualOpexUSD = annualFeedstockCostUSD + annualLabourCostUSD + annualMaintenanceCostUSD + annualUtilityCostUSD
+	+ insuranceCostUSD;
 
     // ── Revenue ──
     annualRevenueUSD = annualProduction * productPrice;
@@ -486,7 +484,7 @@ public class BiorefineryCostEstimator implements Serializable {
    * Creates a configured DCFCalculator from this cost estimate for full NPV/IRR analysis.
    *
    * @param projectLifeYears project life in years
-   * @param discountRate discount rate (e.g. 0.08)
+   * @param discountRate     discount rate (e.g. 0.08)
    * @return configured DCFCalculator ready to calculate
    */
   public DCFCalculator toDCFCalculator(int projectLifeYears, double discountRate) {
@@ -646,8 +644,7 @@ public class BiorefineryCostEstimator implements Serializable {
    * @return JSON string
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(getResults());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(getResults());
   }
 
   /** {@inheritDoc} */
@@ -659,8 +656,7 @@ public class BiorefineryCostEstimator implements Serializable {
     StringBuilder sb = new StringBuilder();
     sb.append("BiorefineryCostEstimator\n");
     sb.append(String.format("  Equipment items: %d%n", equipmentCount));
-    sb.append(
-        String.format("  Purchased equipment cost: $%,.0f%n", totalPurchasedEquipmentCostUSD));
+    sb.append(String.format("  Purchased equipment cost: $%,.0f%n", totalPurchasedEquipmentCostUSD));
     sb.append(String.format("  Total installed cost:     $%,.0f%n", totalInstalledCostUSD));
     sb.append(String.format("  Total CAPEX:              $%,.0f%n", totalCapexUSD));
     sb.append(String.format("  Annual OPEX:              $%,.0f%n", annualOpexUSD));

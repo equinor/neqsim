@@ -31,8 +31,7 @@ import neqsim.thermo.system.SystemSrkEos;
  *
  * <pre>
  * // Import DEXPI and create diagram
- * ProcessDiagramExporter exporter =
- *     DexpiDiagramBridge.importAndCreateExporter(Paths.get("plant.xml"), templateStream);
+ * ProcessDiagramExporter exporter = DexpiDiagramBridge.importAndCreateExporter(Paths.get("plant.xml"), templateStream);
  * exporter.exportAsDOT(Paths.get("diagram.dot"));
  *
  * // Create exporter optimized for DEXPI content
@@ -69,7 +68,7 @@ public final class DexpiDiagramBridge implements Serializable {
    */
   public static ProcessDiagramExporter createExporter(ProcessSystem processSystem) {
     return new ProcessDiagramExporter(processSystem).setShowDexpiMetadata(true)
-        .setDetailLevel(DiagramDetailLevel.ENGINEERING).setShowLegend(true);
+	.setDetailLevel(DiagramDetailLevel.ENGINEERING).setShowLegend(true);
   }
 
   /**
@@ -83,8 +82,8 @@ public final class DexpiDiagramBridge implements Serializable {
    * @return configured diagram exporter with detailed labels
    */
   public static ProcessDiagramExporter createDetailedExporter(ProcessSystem processSystem) {
-    return new ProcessDiagramExporter(processSystem).setShowDexpiMetadata(true)
-        .setDetailLevel(DiagramDetailLevel.DEBUG).setShowLegend(true).setShowStreamValues(true);
+    return new ProcessDiagramExporter(processSystem).setShowDexpiMetadata(true).setDetailLevel(DiagramDetailLevel.DEBUG)
+	.setShowLegend(true).setShowStreamValues(true);
   }
 
   /**
@@ -96,7 +95,7 @@ public final class DexpiDiagramBridge implements Serializable {
    *
    * @param dexpiXmlFile path to the DEXPI XML file
    * @return diagram exporter for the imported process
-   * @throws IOException if the file cannot be read
+   * @throws IOException             if the file cannot be read
    * @throws DexpiXmlReaderException if the XML is invalid
    */
   public static ProcessDiagramExporter importAndCreateExporter(Path dexpiXmlFile)
@@ -109,14 +108,14 @@ public final class DexpiDiagramBridge implements Serializable {
   /**
    * Imports a DEXPI XML file with a custom template stream and creates a diagram exporter.
    *
-   * @param dexpiXmlFile path to the DEXPI XML file
+   * @param dexpiXmlFile   path to the DEXPI XML file
    * @param templateStream stream template for thermodynamic properties
    * @return diagram exporter for the imported process
-   * @throws IOException if the file cannot be read
+   * @throws IOException             if the file cannot be read
    * @throws DexpiXmlReaderException if the XML is invalid
    */
-  public static ProcessDiagramExporter importAndCreateExporter(Path dexpiXmlFile,
-      Stream templateStream) throws IOException, DexpiXmlReaderException {
+  public static ProcessDiagramExporter importAndCreateExporter(Path dexpiXmlFile, Stream templateStream)
+      throws IOException, DexpiXmlReaderException {
     ProcessSystem system = DexpiXmlReader.read(dexpiXmlFile.toFile(), templateStream);
     return createExporter(system);
   }
@@ -130,11 +129,10 @@ public final class DexpiDiagramBridge implements Serializable {
    *
    * @param dexpiXmlFile path to the DEXPI XML file
    * @return the imported process system
-   * @throws IOException if the file cannot be read
+   * @throws IOException             if the file cannot be read
    * @throws DexpiXmlReaderException if the XML is invalid
    */
-  public static ProcessSystem importDexpi(Path dexpiXmlFile)
-      throws IOException, DexpiXmlReaderException {
+  public static ProcessSystem importDexpi(Path dexpiXmlFile) throws IOException, DexpiXmlReaderException {
     Stream template = createDefaultTemplate();
     return DexpiXmlReader.read(dexpiXmlFile.toFile(), template);
   }
@@ -142,10 +140,10 @@ public final class DexpiDiagramBridge implements Serializable {
   /**
    * Imports a DEXPI XML file into a ProcessSystem with a custom template.
    *
-   * @param dexpiXmlFile path to the DEXPI XML file
+   * @param dexpiXmlFile   path to the DEXPI XML file
    * @param templateStream stream template for thermodynamic properties
    * @return the imported process system
-   * @throws IOException if the file cannot be read
+   * @throws IOException             if the file cannot be read
    * @throws DexpiXmlReaderException if the XML is invalid
    */
   public static ProcessSystem importDexpi(Path dexpiXmlFile, Stream templateStream)
@@ -157,16 +155,15 @@ public final class DexpiDiagramBridge implements Serializable {
    * Exports a ProcessSystem to DEXPI XML format.
    *
    * <p>
-   * The exported XML preserves DEXPI metadata (tag names, line numbers, fluid codes) and includes
-   * operating conditions (pressure, temperature, flow) as generic attributes.
+   * The exported XML preserves DEXPI metadata (tag names, line numbers, fluid codes) and includes operating conditions
+   * (pressure, temperature, flow) as generic attributes.
    * </p>
    *
    * @param processSystem the process system to export
-   * @param outputFile the output file path
+   * @param outputFile    the output file path
    * @throws IOException if the file cannot be written
    */
-  public static void exportToDexpi(ProcessSystem processSystem, Path outputFile)
-      throws IOException {
+  public static void exportToDexpi(ProcessSystem processSystem, Path outputFile) throws IOException {
     DexpiXmlWriter.write(processSystem, outputFile.toFile());
   }
 
@@ -174,18 +171,16 @@ public final class DexpiDiagramBridge implements Serializable {
    * Exports a ProcessSystem to a pyDEXPI-friendly DEXPI XML file.
    *
    * <p>
-   * This variant omits the default XML namespace ({@code xmlns="http://sandbox.dexpi.org/xml"}) so
-   * that the pyDEXPI / Proteus parser — which performs unqualified tag look-ups — can read the file
-   * directly without a separate namespace-stripping step. The content is otherwise identical to
-   * {@link #exportToDexpi(ProcessSystem, Path)}.
+   * This variant omits the default XML namespace ({@code xmlns="http://sandbox.dexpi.org/xml"}) so that the pyDEXPI /
+   * Proteus parser — which performs unqualified tag look-ups — can read the file directly without a separate
+   * namespace-stripping step. The content is otherwise identical to {@link #exportToDexpi(ProcessSystem, Path)}.
    * </p>
    *
    * @param processSystem the process system to export
-   * @param outputFile the output file path
+   * @param outputFile    the output file path
    * @throws IOException if the file cannot be written
    */
-  public static void exportForPyDexpi(ProcessSystem processSystem, Path outputFile)
-      throws IOException {
+  public static void exportForPyDexpi(ProcessSystem processSystem, Path outputFile) throws IOException {
     DexpiXmlWriter.writeForPyDexpi(processSystem, outputFile.toFile());
   }
 
@@ -201,11 +196,11 @@ public final class DexpiDiagramBridge implements Serializable {
    * <li>Enriching DEXPI files with simulation results</li>
    * </ul>
    *
-   * @param inputDexpi path to input DEXPI XML file
-   * @param outputDot path for output DOT diagram file
+   * @param inputDexpi  path to input DEXPI XML file
+   * @param outputDot   path for output DOT diagram file
    * @param outputDexpi path for re-exported DEXPI XML file
    * @return the processed system
-   * @throws IOException if file operations fail
+   * @throws IOException             if file operations fail
    * @throws DexpiXmlReaderException if the input XML is invalid
    */
   public static ProcessSystem roundTrip(Path inputDexpi, Path outputDot, Path outputDexpi)

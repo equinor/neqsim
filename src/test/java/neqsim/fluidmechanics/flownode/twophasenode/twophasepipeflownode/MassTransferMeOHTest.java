@@ -12,8 +12,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Test class demonstrating mass transfer calculations between gas and liquid phases in a pipeline.
  *
  * <p>
- * Based on the example notebook: masstransferMeOH.ipynb This demonstrates mass transfer calculation
- * using NeqSim, based on Solbraa (2002): https://ntnuopen.ntnu.no/ntnu-xmlui/handle/11250/231326
+ * Based on the example notebook: masstransferMeOH.ipynb This demonstrates mass transfer calculation using NeqSim, based
+ * on Solbraa (2002): https://ntnuopen.ntnu.no/ntnu-xmlui/handle/11250/231326
  * </p>
  *
  * <p>
@@ -63,8 +63,8 @@ public class MassTransferMeOHTest {
    * Test basic mass transfer calculation between gas and liquid TEG.
    *
    * <p>
-   * This test verifies that mass transfer occurs between phases and that the interphase temperature
-   * calculation works correctly.
+   * This test verifies that mass transfer occurs between phases and that the interphase temperature calculation works
+   * correctly.
    * </p>
    */
   @Test
@@ -103,8 +103,8 @@ public class MassTransferMeOHTest {
    * Test mass transfer evolution over multiple steps.
    *
    * <p>
-   * Simulates the mass transfer process over multiple iterations to verify that the system evolves
-   * correctly towards equilibrium.
+   * Simulates the mass transfer process over multiple iterations to verify that the system evolves correctly towards
+   * equilibrium.
    * </p>
    */
   @Test
@@ -133,9 +133,8 @@ public class MassTransferMeOHTest {
     // Verify all temperatures are finite
     for (int i = 0; i < 10; i++) {
       assertTrue(Double.isFinite(interphaseTempHistory[i]),
-          "Interphase temperature at step " + i + " should be finite");
-      assertTrue(Double.isFinite(gasTempHistory[i]),
-          "Gas temperature at step " + i + " should be finite");
+	  "Interphase temperature at step " + i + " should be finite");
+      assertTrue(Double.isFinite(gasTempHistory[i]), "Gas temperature at step " + i + " should be finite");
     }
   }
 
@@ -155,17 +154,16 @@ public class MassTransferMeOHTest {
 
     // Get diffusion coefficients
     double diffTEGinMethane = node.getBulkSystem().getPhase(0).getPhysicalProperties()
-        .getDiffusionCoefficient("methane", "TEG");
+	.getDiffusionCoefficient("methane", "TEG");
     double diffWaterInMethane = node.getBulkSystem().getPhase(0).getPhysicalProperties()
-        .getDiffusionCoefficient("methane", "water");
+	.getDiffusionCoefficient("methane", "water");
 
     // Verify diffusion coefficients are positive and reasonable
     assertTrue(diffTEGinMethane > 0, "TEG diffusion coefficient should be positive");
     assertTrue(diffWaterInMethane > 0, "Water diffusion coefficient should be positive");
 
     // Water should diffuse faster than TEG (smaller molecule)
-    assertTrue(diffWaterInMethane > diffTEGinMethane,
-        "Water should have higher diffusion coefficient than TEG");
+    assertTrue(diffWaterInMethane > diffTEGinMethane, "Water should have higher diffusion coefficient than TEG");
   }
 
   /**
@@ -203,7 +201,7 @@ public class MassTransferMeOHTest {
    */
   @Test
   void testMassTransferWithDifferentLengths() {
-    double[] lengths = {0.001, 0.01, 0.1};
+    double[] lengths = { 0.001, 0.01, 0.1 };
     double[] tegInGasAtLength = new double[lengths.length];
 
     for (int i = 0; i < lengths.length; i++) {
@@ -226,7 +224,7 @@ public class MassTransferMeOHTest {
     // Verify TEG mole fractions are all valid
     for (int i = 0; i < lengths.length; i++) {
       assertTrue(Double.isFinite(tegInGasAtLength[i]),
-          "TEG mole fraction at length " + lengths[i] + " should be finite");
+	  "TEG mole fraction at length " + lengths[i] + " should be finite");
     }
   }
 
@@ -289,8 +287,7 @@ public class MassTransferMeOHTest {
     int numComponents = node.getBulkSystem().getPhase(0).getNumberOfComponents();
     for (int i = 0; i < numComponents; i++) {
       double flux = node.getFluidBoundary().getInterphaseMolarFlux(i);
-      assertTrue(Double.isFinite(flux),
-          "Interphase molar flux for component " + i + " should be finite, got: " + flux);
+      assertTrue(Double.isFinite(flux), "Interphase molar flux for component " + i + " should be finite, got: " + flux);
     }
   }
 
@@ -374,8 +371,7 @@ public class MassTransferMeOHTest {
     // Verify system still works with finite flux correction
     assertTrue(node.getInterphaseSystem() != null, "Interphase system should exist");
     double interphaseTemp = node.getInterphaseSystem().getTemperature() - 273.15;
-    assertTrue(Double.isFinite(interphaseTemp),
-        "Interphase temperature should be finite with finite flux correction");
+    assertTrue(Double.isFinite(interphaseTemp), "Interphase temperature should be finite with finite flux correction");
   }
 
   /**

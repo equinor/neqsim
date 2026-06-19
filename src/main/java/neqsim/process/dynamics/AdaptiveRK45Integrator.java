@@ -1,24 +1,22 @@
 package neqsim.process.dynamics;
 
 /**
- * Adaptive Runge–Kutta–Fehlberg (Cash–Karp) integrator producing a 5th-order solution with an
- * embedded 4th-order error estimate. Step size is internally subdivided until the estimated local
- * error meets the configured tolerance, then the high-order solution is returned.
+ * Adaptive Runge–Kutta–Fehlberg (Cash–Karp) integrator producing a 5th-order solution with an embedded 4th-order error
+ * estimate. Step size is internally subdivided until the estimated local error meets the configured tolerance, then the
+ * high-order solution is returned.
  *
  * <p>
- * The integrator preserves the {@link IntegratorStrategy} contract: callers ask for a single step
- * of size {@code dt} and get back the next state. Internally the requested {@code dt} may be split
- * into one or more sub-steps to keep the per-step error below
- * {@code absTol + relTol · max(|state|, |next|)}. The number of sub-steps actually taken on the
- * most recent call is exposed via {@link #getLastSubSteps()}, which is useful for diagnostics and
- * for choosing better outer step sizes.
+ * The integrator preserves the {@link IntegratorStrategy} contract: callers ask for a single step of size {@code dt}
+ * and get back the next state. Internally the requested {@code dt} may be split into one or more sub-steps to keep the
+ * per-step error below {@code absTol + relTol · max(|state|, |next|)}. The number of sub-steps actually taken on the
+ * most recent call is exposed via {@link #getLastSubSteps()}, which is useful for diagnostics and for choosing better
+ * outer step sizes.
  * </p>
  *
  * <p>
- * This integrator is well suited for stiff-but-not-fully-stiff dynamic studies where local
- * behaviour varies sharply (compressor surge transient, fast valve closure, depressurization with
- * choked-to-subsonic transition). For deeply stiff thermal/inventory dynamics prefer
- * {@link BDFIntegrator}.
+ * This integrator is well suited for stiff-but-not-fully-stiff dynamic studies where local behaviour varies sharply
+ * (compressor surge transient, fast valve closure, depressurization with choked-to-subsonic transition). For deeply
+ * stiff thermal/inventory dynamics prefer {@link BDFIntegrator}.
  * </p>
  *
  * @author Even Solbraa
@@ -80,8 +78,8 @@ public class AdaptiveRK45Integrator implements IntegratorStrategy {
   /**
    * Constructor with custom tolerances.
    *
-   * @param absTol absolute tolerance on local error (must be {@code > 0})
-   * @param relTol relative tolerance on local error (must be {@code > 0})
+   * @param absTol      absolute tolerance on local error (must be {@code > 0})
+   * @param relTol      relative tolerance on local error (must be {@code > 0})
    * @param maxSubSteps maximum number of internal sub-steps per outer step (must be {@code >= 1})
    */
   public AdaptiveRK45Integrator(double absTol, double relTol, int maxSubSteps) {
@@ -179,8 +177,7 @@ public class AdaptiveRK45Integrator implements IntegratorStrategy {
   }
 
   /**
-   * Sets the maximum number of internal sub-steps the adaptive controller may take inside one
-   * outer {@link #step} call.
+   * Sets the maximum number of internal sub-steps the adaptive controller may take inside one outer {@link #step} call.
    *
    * @param value must be {@code >= 1}
    * @return this integrator for chaining
@@ -209,40 +206,37 @@ public class AdaptiveRK45Integrator implements IntegratorStrategy {
     double h = dt;
     for (int iter = 0; iter < maxSubSteps; iter++) {
       if (t >= tEnd) {
-        return x;
+	return x;
       }
       if (t + h > tEnd) {
-        h = tEnd - t;
+	h = tEnd - t;
       }
       double k1 = slope.dxdt(t, x);
       double k2 = slope.dxdt(t + A2 * h, x + h * (B21 * k1));
       double k3 = slope.dxdt(t + A3 * h, x + h * (B31 * k1 + B32 * k2));
       double k4 = slope.dxdt(t + A4 * h, x + h * (B41 * k1 + B42 * k2 + B43 * k3));
       double k5 = slope.dxdt(t + A5 * h, x + h * (B51 * k1 + B52 * k2 + B53 * k3 + B54 * k4));
-      double k6 =
-          slope.dxdt(t + A6 * h, x + h * (B61 * k1 + B62 * k2 + B63 * k3 + B64 * k4 + B65 * k5));
+      double k6 = slope.dxdt(t + A6 * h, x + h * (B61 * k1 + B62 * k2 + B63 * k3 + B64 * k4 + B65 * k5));
 
       double xNew = x + h * (C1 * k1 + C3 * k3 + C4 * k4 + C6 * k6);
-      double errEst =
-          h * (DC1 * k1 + DC3 * k3 + DC4 * k4 + DC5 * k5 + DC6 * k6);
+      double errEst = h * (DC1 * k1 + DC3 * k3 + DC4 * k4 + DC5 * k5 + DC6 * k6);
       double scale = absTol + relTol * Math.max(Math.abs(x), Math.abs(xNew));
       double errNorm = Math.abs(errEst) / scale;
 
       if (errNorm <= 1.0 || h <= 1.0e-12 * dt) {
-        // accept
-        t += h;
-        x = xNew;
-        lastSubSteps++;
-        double factor = (errNorm <= 1.0e-12) ? maxScale
-            : Math.min(maxScale, safety * Math.pow(errNorm, -0.2));
-        h *= factor;
+	// accept
+	t += h;
+	x = xNew;
+	lastSubSteps++;
+	double factor = (errNorm <= 1.0e-12) ? maxScale : Math.min(maxScale, safety * Math.pow(errNorm, -0.2));
+	h *= factor;
       } else {
-        // reject, shrink
-        double factor = Math.max(minScale, safety * Math.pow(errNorm, -0.25));
-        h *= factor;
+	// reject, shrink
+	double factor = Math.max(minScale, safety * Math.pow(errNorm, -0.25));
+	h *= factor;
       }
     }
-    throw new RuntimeException("AdaptiveRK45Integrator exceeded maxSubSteps=" + maxSubSteps
-        + " for outer dt=" + dt + " starting at t=" + time);
+    throw new RuntimeException("AdaptiveRK45Integrator exceeded maxSubSteps=" + maxSubSteps + " for outer dt=" + dt
+	+ " starting at t=" + time);
   }
 }

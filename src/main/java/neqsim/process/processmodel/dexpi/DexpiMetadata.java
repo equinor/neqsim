@@ -9,7 +9,8 @@ import java.util.Set;
  * Shared constants describing the recommended DEXPI metadata handled by the reader and writer.
  */
 public final class DexpiMetadata {
-  private DexpiMetadata() {}
+  private DexpiMetadata() {
+  }
 
   /** Generic attribute containing the tag name of an equipment item. */
   public static final String TAG_NAME = "TagNameAssignmentClass";
@@ -46,26 +47,21 @@ public final class DexpiMetadata {
   /**
    * Generic attribute for the ISA-5.1 category letter (e.g. "P" for pressure, "L" for level).
    */
-  public static final String INSTRUMENTATION_CATEGORY =
-      "ProcessInstrumentationFunctionCategoryAssignmentClass";
+  public static final String INSTRUMENTATION_CATEGORY = "ProcessInstrumentationFunctionCategoryAssignmentClass";
 
   /**
-   * Generic attribute for the ISA-5.1 function letters (e.g. "IC" for indicating controller, "T"
-   * for transmitter).
+   * Generic attribute for the ISA-5.1 function letters (e.g. "IC" for indicating controller, "T" for transmitter).
    */
-  public static final String INSTRUMENTATION_FUNCTIONS =
-      "ProcessInstrumentationFunctionsAssignmentClass";
+  public static final String INSTRUMENTATION_FUNCTIONS = "ProcessInstrumentationFunctionsAssignmentClass";
 
   /** Generic attribute for the instrumentation function number (e.g. "4712.02"). */
-  public static final String INSTRUMENTATION_NUMBER =
-      "ProcessInstrumentationFunctionNumberAssignmentClass";
+  public static final String INSTRUMENTATION_NUMBER = "ProcessInstrumentationFunctionNumberAssignmentClass";
 
   /** Generic attribute for the instrumentation loop number. */
   public static final String LOOP_NUMBER = "InstrumentationLoopFunctionNumberAssignmentClass";
 
   /** Generic attribute for a process signal generating function number (sensor tag). */
-  public static final String SIGNAL_GENERATING_NUMBER =
-      "ProcessSignalGeneratingFunctionNumberAssignmentClass";
+  public static final String SIGNAL_GENERATING_NUMBER = "ProcessSignalGeneratingFunctionNumberAssignmentClass";
 
   /** Generic attribute for an actuating function number (e.g. "PV4712.02"). */
   public static final String ACTUATING_FUNCTION_NUMBER = "ActuatingFunctionNumberAssignmentClass";
@@ -132,20 +128,17 @@ public final class DexpiMetadata {
   /** Default volumetric flow unit written to DEXPI documents. */
   public static final String DEFAULT_FLOW_UNIT = "MSm3/day";
 
-  private static final Set<String> RECOMMENDED_STREAM_ATTRIBUTES = Collections
-      .unmodifiableSet(new LinkedHashSet<>(Arrays.asList(LINE_NUMBER, FLUID_CODE, SEGMENT_NUMBER,
-          OPERATING_PRESSURE_VALUE, OPERATING_PRESSURE_UNIT, OPERATING_TEMPERATURE_VALUE,
-          OPERATING_TEMPERATURE_UNIT, OPERATING_FLOW_VALUE, OPERATING_FLOW_UNIT)));
+  private static final Set<String> RECOMMENDED_STREAM_ATTRIBUTES = Collections.unmodifiableSet(new LinkedHashSet<>(
+      Arrays.asList(LINE_NUMBER, FLUID_CODE, SEGMENT_NUMBER, OPERATING_PRESSURE_VALUE, OPERATING_PRESSURE_UNIT,
+	  OPERATING_TEMPERATURE_VALUE, OPERATING_TEMPERATURE_UNIT, OPERATING_FLOW_VALUE, OPERATING_FLOW_UNIT)));
 
-  private static final Set<String> RECOMMENDED_EQUIPMENT_ATTRIBUTES =
-      Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(TAG_NAME, LINE_NUMBER,
-          FLUID_CODE, INSIDE_DIAMETER, NOMINAL_DIAMETER, TANGENT_TO_TANGENT_LENGTH, DESIGN_PRESSURE,
-          DESIGN_TEMPERATURE, ORIENTATION, VALVE_CV, WALL_THICKNESS, WEIGHT)));
+  private static final Set<String> RECOMMENDED_EQUIPMENT_ATTRIBUTES = Collections.unmodifiableSet(new LinkedHashSet<>(
+      Arrays.asList(TAG_NAME, LINE_NUMBER, FLUID_CODE, INSIDE_DIAMETER, NOMINAL_DIAMETER, TANGENT_TO_TANGENT_LENGTH,
+	  DESIGN_PRESSURE, DESIGN_TEMPERATURE, ORIENTATION, VALVE_CV, WALL_THICKNESS, WEIGHT)));
 
-  private static final Set<String> SIZING_ATTRIBUTES = Collections
-      .unmodifiableSet(new LinkedHashSet<>(Arrays.asList(INSIDE_DIAMETER, NOMINAL_DIAMETER,
-          TANGENT_TO_TANGENT_LENGTH, DESIGN_PRESSURE, DESIGN_TEMPERATURE, ORIENTATION, VALVE_CV,
-          WALL_THICKNESS, WEIGHT, PIPING_CLASS_CODE, NUMBER_OF_TRAYS, FEED_TRAY)));
+  private static final Set<String> SIZING_ATTRIBUTES = Collections.unmodifiableSet(new LinkedHashSet<>(
+      Arrays.asList(INSIDE_DIAMETER, NOMINAL_DIAMETER, TANGENT_TO_TANGENT_LENGTH, DESIGN_PRESSURE, DESIGN_TEMPERATURE,
+	  ORIENTATION, VALVE_CV, WALL_THICKNESS, WEIGHT, PIPING_CLASS_CODE, NUMBER_OF_TRAYS, FEED_TRAY)));
 
   /**
    * Returns the recommended generic attributes that should accompany DEXPI piping segments.
@@ -166,8 +159,8 @@ public final class DexpiMetadata {
   }
 
   /**
-   * Returns the set of sizing-related generic attributes that the reader should extract from DEXPI
-   * equipment and piping component elements.
+   * Returns the set of sizing-related generic attributes that the reader should extract from DEXPI equipment and piping
+   * component elements.
    *
    * @return immutable set of sizing attribute names
    */

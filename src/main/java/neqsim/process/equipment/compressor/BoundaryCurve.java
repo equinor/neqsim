@@ -27,7 +27,8 @@ public abstract class BoundaryCurve implements BoundaryCurveInterface {
    * Constructor for BoundaryCurve.
    * </p>
    */
-  protected BoundaryCurve() {}
+  protected BoundaryCurve() {
+  }
 
   /**
    * <p>
@@ -118,8 +119,7 @@ public abstract class BoundaryCurve implements BoundaryCurveInterface {
     }
     BoundaryCurve other = (BoundaryCurve) obj;
     return Arrays.equals(chartConditions, other.chartConditions) && Arrays.equals(flow, other.flow)
-        && Arrays.equals(head, other.head) && Objects.equals(flowFitterFunc, other.flowFitterFunc)
-        && isActive == other.isActive;
+	&& Arrays.equals(head, other.head) && Objects.equals(flowFitterFunc, other.flowFitterFunc)
+	&& isActive == other.isActive;
   }
 }
-

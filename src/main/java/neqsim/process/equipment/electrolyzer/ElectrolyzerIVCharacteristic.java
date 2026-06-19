@@ -8,21 +8,20 @@ package neqsim.process.equipment.electrolyzer;
  * </p>
  *
  * <ul>
- * <li><b>Reversible voltage</b> from the Nernst equation, temperature-corrected from 1.229 V at
- * 25&nbsp;&deg;C using d{@code E_rev}/d{@code T} = -0.85 mV/K (Larminie &amp; Dicks, Fuel Cell
- * Systems Explained, 2nd ed., 2003, Ch. 2).</li>
- * <li><b>Activation overpotential</b> from a Tafel form {@code A &middot; ln(j / j0)} with
- * technology-specific Tafel slope {@code A} and exchange current density {@code j0}.</li>
- * <li><b>Ohmic + diffusion losses</b> from an effective area-specific resistance {@code R}
- * multiplied by current density.</li>
+ * <li><b>Reversible voltage</b> from the Nernst equation, temperature-corrected from 1.229 V at 25&nbsp;&deg;C using
+ * d{@code E_rev}/d{@code T} = -0.85 mV/K (Larminie &amp; Dicks, Fuel Cell Systems Explained, 2nd ed., 2003, Ch.
+ * 2).</li>
+ * <li><b>Activation overpotential</b> from a Tafel form {@code A &middot; ln(j / j0)} with technology-specific Tafel
+ * slope {@code A} and exchange current density {@code j0}.</li>
+ * <li><b>Ohmic + diffusion losses</b> from an effective area-specific resistance {@code R} multiplied by current
+ * density.</li>
  * </ul>
  *
  * <p>
- * For a textbook PEM stack at 80&nbsp;&deg;C and 2&nbsp;A/cm&sup2; this yields about 1.85 V (Carmo
- * et al., Int. J. Hydrogen Energy 38 (2013) 4901-4934). For alkaline at 80&nbsp;&deg;C and
- * 0.4&nbsp;A/cm&sup2; it yields about 1.85 V (Ursua et al., Proc. IEEE 100 (2012) 410-426). The
- * model is deliberately a coarse engineering correlation, not a CFD-resolved electrochemistry
- * model.
+ * For a textbook PEM stack at 80&nbsp;&deg;C and 2&nbsp;A/cm&sup2; this yields about 1.85 V (Carmo et al., Int. J.
+ * Hydrogen Energy 38 (2013) 4901-4934). For alkaline at 80&nbsp;&deg;C and 0.4&nbsp;A/cm&sup2; it yields about 1.85 V
+ * (Ursua et al., Proc. IEEE 100 (2012) 410-426). The model is deliberately a coarse engineering correlation, not a
+ * CFD-resolved electrochemistry model.
  * </p>
  *
  * @author NeqSim contributors
@@ -53,9 +52,9 @@ public class ElectrolyzerIVCharacteristic implements java.io.Serializable {
    * Create an I-V characteristic with technology-specific defaults.
    *
    * <p>
-   * Default coefficients (Tafel slope, exchange current density, area-specific resistance) are
-   * picked to reproduce the cell voltage in {@link ElectrolyzerTechnology} at the technology's
-   * nominal current density and temperature within ~3%.
+   * Default coefficients (Tafel slope, exchange current density, area-specific resistance) are picked to reproduce the
+   * cell voltage in {@link ElectrolyzerTechnology} at the technology's nominal current density and temperature within
+   * ~3%.
    * </p>
    *
    * @param technology electrolyzer technology
@@ -66,30 +65,30 @@ public class ElectrolyzerIVCharacteristic implements java.io.Serializable {
     }
     this.technology = technology;
     switch (technology) {
-      case PEM:
-        // Tafel slope 0.060 V/decade, j0 = 1e-3 A/cm2, R = 0.18 ohm*cm2.
-        tafelSlope = 0.060;
-        exchangeCurrentDensity = 1.0e-3;
-        areaSpecificResistance = 0.18;
-        break;
-      case ALKALINE:
-        // Lower j0, higher slope and resistance.
-        tafelSlope = 0.090;
-        exchangeCurrentDensity = 1.0e-4;
-        areaSpecificResistance = 0.50;
-        break;
-      case SOEC:
-        // High temperature reduces both the reversible voltage and the kinetic loss.
-        tafelSlope = 0.040;
-        exchangeCurrentDensity = 1.0e-2;
-        areaSpecificResistance = 0.20;
-        break;
-      case AEM:
-      default:
-        tafelSlope = 0.075;
-        exchangeCurrentDensity = 5.0e-4;
-        areaSpecificResistance = 0.40;
-        break;
+    case PEM:
+      // Tafel slope 0.060 V/decade, j0 = 1e-3 A/cm2, R = 0.18 ohm*cm2.
+      tafelSlope = 0.060;
+      exchangeCurrentDensity = 1.0e-3;
+      areaSpecificResistance = 0.18;
+      break;
+    case ALKALINE:
+      // Lower j0, higher slope and resistance.
+      tafelSlope = 0.090;
+      exchangeCurrentDensity = 1.0e-4;
+      areaSpecificResistance = 0.50;
+      break;
+    case SOEC:
+      // High temperature reduces both the reversible voltage and the kinetic loss.
+      tafelSlope = 0.040;
+      exchangeCurrentDensity = 1.0e-2;
+      areaSpecificResistance = 0.20;
+      break;
+    case AEM:
+    default:
+      tafelSlope = 0.075;
+      exchangeCurrentDensity = 5.0e-4;
+      areaSpecificResistance = 0.40;
+      break;
     }
   }
 
@@ -186,12 +185,12 @@ public class ElectrolyzerIVCharacteristic implements java.io.Serializable {
    * </p>
    *
    * <p>
-   * Returns the reversible voltage if {@code currentDensity} is at or below {@code j0} (the cell is
-   * operating below the activation threshold).
+   * Returns the reversible voltage if {@code currentDensity} is at or below {@code j0} (the cell is operating below the
+   * activation threshold).
    * </p>
    *
    * @param currentDensity current density (A/cm2), must be non-negative
-   * @param temperatureK stack temperature (Kelvin), must be positive
+   * @param temperatureK   stack temperature (Kelvin), must be positive
    * @return cell voltage (V)
    */
   public double getCellVoltage(double currentDensity, double temperatureK) {

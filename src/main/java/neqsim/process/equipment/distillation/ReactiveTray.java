@@ -9,21 +9,19 @@ import neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphaseP
 import neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphaseTPflash;
 
 /**
- * A distillation tray that performs reactive equilibrium (simultaneous chemical equilibrium + phase
- * equilibrium) instead of standard VLE. Uses the Modified RAND method via
- * {@link ReactiveMultiphasePHflash} for enthalpy-specified trays and
- * {@link ReactiveMultiphaseTPflash} for temperature-specified trays.
+ * A distillation tray that performs reactive equilibrium (simultaneous chemical equilibrium + phase equilibrium)
+ * instead of standard VLE. Uses the Modified RAND method via {@link ReactiveMultiphasePHflash} for enthalpy-specified
+ * trays and {@link ReactiveMultiphaseTPflash} for temperature-specified trays.
  *
  * <p>
- * This enables reactive distillation, where chemical reactions occur simultaneously with separation
- * on each tray. The non-stoichiometric approach automatically discovers reactions from the
- * elemental composition — no explicit reaction specification is needed.
+ * This enables reactive distillation, where chemical reactions occur simultaneously with separation on each tray. The
+ * non-stoichiometric approach automatically discovers reactions from the elemental composition — no explicit reaction
+ * specification is needed.
  * </p>
  *
  * <p>
- * Usage: Set reactive trays on a {@link DistillationColumn} via
- * {@code column.setReactive(true, startTray, endTray)} to enable reactions on a range of trays (the
- * reactive section), while keeping the rest as standard VLE trays.
+ * Usage: Set reactive trays on a {@link DistillationColumn} via {@code column.setReactive(true, startTray, endTray)} to
+ * enable reactions on a range of trays (the reactive section), while keeping the rest as standard VLE trays.
  * </p>
  *
  * @author copilot
@@ -51,9 +49,9 @@ public class ReactiveTray extends SimpleTray {
    * {@inheritDoc}
    *
    * <p>
-   * Overrides the standard tray flash to use reactive equilibrium. The method follows the same
-   * structure as {@link SimpleTray#run(UUID)} but replaces {@code PHflash} with
-   * {@link ReactiveMultiphasePHflash} and {@code TPflash} with {@link ReactiveMultiphaseTPflash}.
+   * Overrides the standard tray flash to use reactive equilibrium. The method follows the same structure as
+   * {@link SimpleTray#run(UUID)} but replaces {@code PHflash} with {@link ReactiveMultiphasePHflash} and
+   * {@code TPflash} with {@link ReactiveMultiphaseTPflash}.
    * </p>
    */
   @Override
@@ -81,45 +79,45 @@ public class ReactiveTray extends SimpleTray {
 
       mixStream();
       if (trayPressure > 0) {
-        mixedStream.setPressure(trayPressure, "bara");
+	mixedStream.setPressure(trayPressure, "bara");
       }
       enthalpy = calcMixStreamEnthalpy();
 
       if (isSetOutTemperature()) {
-        mixedStream.setTemperature(getOutTemperature(), "K");
+	mixedStream.setTemperature(getOutTemperature(), "K");
       }
     }
 
     if (isSetOutTemperature()) {
       // Temperature-specified tray: use reactive TP flash
       if (!Double.isNaN(getOutTemperature())) {
-        mixedStream.getThermoSystem().setTemperature(getOutTemperature());
+	mixedStream.getThermoSystem().setTemperature(getOutTemperature());
       }
       runReactiveTPflash(thermoSystem2);
     } else {
       // Standard tray: use reactive PH flash (enthalpy-specified)
       try {
-        runReactivePHflash(thermoSystem2, enthalpy);
+	runReactivePHflash(thermoSystem2, enthalpy);
       } catch (Exception ex) {
-        logger.warn("ReactivePHflash failed on tray " + getName()
-            + ", falling back to reactive TP flash: " + ex.getMessage());
-        try {
-          if (!Double.isNaN(getOutTemperature())) {
-            mixedStream.getThermoSystem().setTemperature(getOutTemperature());
-          }
-          runReactiveTPflash(thermoSystem2);
-        } catch (Exception ex2) {
-          logger.warn("Reactive TPflash fallback also failed on tray " + getName(), ex2);
-          // Last resort: standard non-reactive TP flash
-          ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem2);
-          testOps.TPflash();
-        }
+	logger.warn(
+	    "ReactivePHflash failed on tray " + getName() + ", falling back to reactive TP flash: " + ex.getMessage());
+	try {
+	  if (!Double.isNaN(getOutTemperature())) {
+	    mixedStream.getThermoSystem().setTemperature(getOutTemperature());
+	  }
+	  runReactiveTPflash(thermoSystem2);
+	} catch (Exception ex2) {
+	  logger.warn("Reactive TPflash fallback also failed on tray " + getName(), ex2);
+	  // Last resort: standard non-reactive TP flash
+	  ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem2);
+	  testOps.TPflash();
+	}
       }
     }
 
     if (Double.isNaN(mixedStream.getTemperature())) {
       if (!Double.isNaN(getOutTemperature())) {
-        mixedStream.setTemperature(getOutTemperature());
+	mixedStream.setTemperature(getOutTemperature());
       }
     }
 
@@ -147,7 +145,7 @@ public class ReactiveTray extends SimpleTray {
   /**
    * Run a reactive PH flash on the tray fluid.
    *
-   * @param system the thermodynamic system
+   * @param system       the thermodynamic system
    * @param enthalpySpec the target enthalpy in J
    */
   private void runReactivePHflash(SystemInterface system, double enthalpySpec) {
@@ -156,8 +154,8 @@ public class ReactiveTray extends SimpleTray {
     phFlash.run();
 
     if (!phFlash.isConverged()) {
-      logger.warn("Reactive PH flash did not converge on tray " + getName() + " after "
-          + phFlash.getOuterIterations() + " iterations");
+      logger.warn("Reactive PH flash did not converge on tray " + getName() + " after " + phFlash.getOuterIterations()
+	  + " iterations");
     }
   }
 

@@ -4,12 +4,12 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * Online composition analyzer (gas chromatograph surrogate). Reports the mole fraction of a
- * specified component in a chosen phase of the attached stream.
+ * Online composition analyzer (gas chromatograph surrogate). Reports the mole fraction of a specified component in a
+ * chosen phase of the attached stream.
  *
  * <p>
- * The analyzer is read-only: it does not modify the stream and does not implement
- * {@code applyFieldValue}. The measurement unit is dimensionless ("mole/mole").
+ * The analyzer is read-only: it does not modify the stream and does not implement {@code applyFieldValue}. The
+ * measurement unit is dimensionless ("mole/mole").
  * </p>
  *
  * @author Even Solbraa
@@ -35,25 +35,23 @@ public class CompositionAnalyzer extends StreamMeasurementDeviceBaseClass {
   /**
    * Constructor with default name derived from component.
    *
-   * @param stream the stream to monitor
+   * @param stream        the stream to monitor
    * @param componentName the component to track
    * @param analyzerPhase the phase to sample
    */
-  public CompositionAnalyzer(StreamInterface stream, String componentName,
-      AnalyzerPhase analyzerPhase) {
+  public CompositionAnalyzer(StreamInterface stream, String componentName, AnalyzerPhase analyzerPhase) {
     this("Composition Analyzer " + componentName, stream, componentName, analyzerPhase);
   }
 
   /**
    * Constructor.
    *
-   * @param name device tag
-   * @param stream the stream to monitor
+   * @param name          device tag
+   * @param stream        the stream to monitor
    * @param componentName the component to track (must match a component in the stream)
    * @param analyzerPhase the phase to sample
    */
-  public CompositionAnalyzer(String name, StreamInterface stream, String componentName,
-      AnalyzerPhase analyzerPhase) {
+  public CompositionAnalyzer(String name, StreamInterface stream, String componentName, AnalyzerPhase analyzerPhase) {
     super(name, "mole/mole", stream);
     if (componentName == null || componentName.trim().isEmpty()) {
       throw new IllegalArgumentException("componentName must be non-blank");
@@ -92,8 +90,8 @@ public class CompositionAnalyzer extends StreamMeasurementDeviceBaseClass {
     int idx = -1;
     for (int i = 0; i < stream.getThermoSystem().getNumberOfComponents(); i++) {
       if (stream.getThermoSystem().getComponent(i).getName().equals(componentName)) {
-        idx = i;
-        break;
+	idx = i;
+	break;
       }
     }
     if (idx < 0) {
@@ -101,23 +99,23 @@ public class CompositionAnalyzer extends StreamMeasurementDeviceBaseClass {
     }
     double value;
     switch (analyzerPhase) {
-      case OVERALL:
-        value = stream.getThermoSystem().getComponent(idx).getz();
-        break;
-      case GAS:
-        if (stream.getThermoSystem().getNumberOfPhases() < 1) {
-          return Double.NaN;
-        }
-        value = stream.getThermoSystem().getPhase(0).getComponent(idx).getx();
-        break;
-      case LIQUID:
-        if (stream.getThermoSystem().getNumberOfPhases() < 2) {
-          return Double.NaN;
-        }
-        value = stream.getThermoSystem().getPhase(1).getComponent(idx).getx();
-        break;
-      default:
-        return Double.NaN;
+    case OVERALL:
+      value = stream.getThermoSystem().getComponent(idx).getz();
+      break;
+    case GAS:
+      if (stream.getThermoSystem().getNumberOfPhases() < 1) {
+	return Double.NaN;
+      }
+      value = stream.getThermoSystem().getPhase(0).getComponent(idx).getx();
+      break;
+    case LIQUID:
+      if (stream.getThermoSystem().getNumberOfPhases() < 2) {
+	return Double.NaN;
+      }
+      value = stream.getThermoSystem().getPhase(1).getComponent(idx).getx();
+      break;
+    default:
+      return Double.NaN;
     }
     return applySignalModifiers(value);
   }
@@ -126,7 +124,6 @@ public class CompositionAnalyzer extends StreamMeasurementDeviceBaseClass {
   @Override
   @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
-    System.out.println(getName() + " " + componentName + " [" + analyzerPhase + "] = "
-        + getMeasuredValue("mole/mole"));
+    System.out.println(getName() + " " + componentName + " [" + analyzerPhase + "] = " + getMeasuredValue("mole/mole"));
   }
 }

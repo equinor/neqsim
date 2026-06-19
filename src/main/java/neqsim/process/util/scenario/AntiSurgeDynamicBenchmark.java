@@ -13,30 +13,27 @@ import neqsim.thermo.system.SystemSrkEos;
  * Reproducible dynamic benchmark for the {@link AntiSurgeController} recycle-valve loop.
  *
  * <p>
- * HYSYS/UniSim Dynamics are the industrial reference for compressor trip and anti-surge tuning
- * because they couple proven valve/actuator dynamics to the gas-path mass-storage. NeqSim's
- * {@link AntiSurgeController} is a tested PI anti-surge law; what was missing was a documented,
- * repeatable transient case in which the controller is exercised against a moving surge margin so
- * its dynamic response (proportional kick, integral action, anti-windup, valve actuation) can be
- * verified and tuned before field commissioning.
+ * HYSYS/UniSim Dynamics are the industrial reference for compressor trip and anti-surge tuning because they couple
+ * proven valve/actuator dynamics to the gas-path mass-storage. NeqSim's {@link AntiSurgeController} is a tested PI
+ * anti-surge law; what was missing was a documented, repeatable transient case in which the controller is exercised
+ * against a moving surge margin so its dynamic response (proportional kick, integral action, anti-windup, valve
+ * actuation) can be verified and tuned before field commissioning.
  * </p>
  *
  * <p>
- * This benchmark provides exactly that. It drives a real {@link AntiSurgeController} and a real
- * {@link ThrottlingValve} against a transparent first-order gas-path surrogate: a flow-reduction
- * (trip-like) disturbance steadily erodes the compressor distance to surge, while opening the
- * recycle valve restores it. The plant model is
+ * This benchmark provides exactly that. It drives a real {@link AntiSurgeController} and a real {@link ThrottlingValve}
+ * against a transparent first-order gas-path surrogate: a flow-reduction (trip-like) disturbance steadily erodes the
+ * compressor distance to surge, while opening the recycle valve restores it. The plant model is
  * </p>
  *
  * $$ m_{k+1} = m_k - \dot d\,\Delta t + a\,\frac{u_k}{100}\,\Delta t $$
  *
  * <p>
- * where \(m\) is the distance to surge, \(\dot d\) is the disturbance rate (per second), \(a\) is
- * the recycle authority (per second at fully open valve) and \(u\) is the valve opening in percent.
- * This is the same class of lumped surrogate used to tune anti-surge controllers ahead of a full
- * dynamic study; it is <em>not</em> validated field data and is not a substitute for a vendor
- * dynamic model, but it gives a deterministic, inspectable benchmark with an analytically known
- * expected behaviour (the closed loop must hold the margin near the set point; the open loop must
+ * where \(m\) is the distance to surge, \(\dot d\) is the disturbance rate (per second), \(a\) is the recycle authority
+ * (per second at fully open valve) and \(u\) is the valve opening in percent. This is the same class of lumped
+ * surrogate used to tune anti-surge controllers ahead of a full dynamic study; it is <em>not</em> validated field data
+ * and is not a substitute for a vendor dynamic model, but it gives a deterministic, inspectable benchmark with an
+ * analytically known expected behaviour (the closed loop must hold the margin near the set point; the open loop must
  * surge).
  * </p>
  *
@@ -111,8 +108,8 @@ public class AntiSurgeDynamicBenchmark {
   /**
    * Runs the transient and records the surge-margin and valve-opening histories.
    *
-   * @param controllerActive whether the anti-surge controller is allowed to act; when {@code false}
-   *        the recycle valve stays closed (open-loop reference case)
+   * @param controllerActive whether the anti-surge controller is allowed to act; when {@code false} the recycle valve
+   *                         stays closed (open-loop reference case)
    */
   public void run(boolean controllerActive) {
     controller.setActive(controllerActive);
@@ -131,26 +128,25 @@ public class AntiSurgeDynamicBenchmark {
     for (int k = 1; k <= numberOfSteps; k++) {
       double opening = controllerActive ? controller.getValveOpening() : 0.0;
       // first-order gas-path surrogate: disturbance erodes the margin, recycle restores it
-      margin =
-          margin - disturbanceRate * timeStep + recycleAuthority * (opening / 100.0) * timeStep;
+      margin = margin - disturbanceRate * timeStep + recycleAuthority * (opening / 100.0) * timeStep;
       compressor.setDistanceToSurge(margin);
 
       if (controllerActive) {
-        controller.runTransient(controller.getValveOpening(), timeStep, UUID.randomUUID());
+	controller.runTransient(controller.getValveOpening(), timeStep, UUID.randomUUID());
       }
 
       double appliedOpening = controllerActive ? recycleValve.getPercentValveOpening() : 0.0;
       surgeMarginTrace[k] = margin;
       valveOpeningTrace[k] = appliedOpening;
       if (margin < minimumSurgeMargin) {
-        minimumSurgeMargin = margin;
+	minimumSurgeMargin = margin;
       }
       if (appliedOpening > maximumValveOpening) {
-        maximumValveOpening = appliedOpening;
+	maximumValveOpening = appliedOpening;
       }
     }
-    logger.debug("AntiSurgeDynamicBenchmark finished: minMargin={}, maxOpening={}",
-        minimumSurgeMargin, maximumValveOpening);
+    logger.debug("AntiSurgeDynamicBenchmark finished: minMargin={}, maxOpening={}", minimumSurgeMargin,
+	maximumValveOpening);
   }
 
   /**
@@ -186,8 +182,7 @@ public class AntiSurgeDynamicBenchmark {
    * @return a copy of the surge-margin trace, or {@code null} if no run has executed
    */
   public double[] getSurgeMarginTrace() {
-    return surgeMarginTrace == null ? null
-        : java.util.Arrays.copyOf(surgeMarginTrace, surgeMarginTrace.length);
+    return surgeMarginTrace == null ? null : java.util.Arrays.copyOf(surgeMarginTrace, surgeMarginTrace.length);
   }
 
   /**
@@ -196,8 +191,7 @@ public class AntiSurgeDynamicBenchmark {
    * @return a copy of the valve-opening trace in percent, or {@code null} if no run has executed
    */
   public double[] getValveOpeningTrace() {
-    return valveOpeningTrace == null ? null
-        : java.util.Arrays.copyOf(valveOpeningTrace, valveOpeningTrace.length);
+    return valveOpeningTrace == null ? null : java.util.Arrays.copyOf(valveOpeningTrace, valveOpeningTrace.length);
   }
 
   /**
@@ -271,9 +265,9 @@ public class AntiSurgeDynamicBenchmark {
   }
 
   /**
-   * Minimal {@link Compressor} subclass that exposes a directly settable distance to surge so the
-   * benchmark can impose a transparent gas-path surrogate while still driving the production
-   * {@link AntiSurgeController} through its real surge-margin interface.
+   * Minimal {@link Compressor} subclass that exposes a directly settable distance to surge so the benchmark can impose
+   * a transparent gas-path surrogate while still driving the production {@link AntiSurgeController} through its real
+   * surge-margin interface.
    *
    * @author NeqSim
    * @version 1.0
@@ -288,7 +282,7 @@ public class AntiSurgeDynamicBenchmark {
     /**
      * Constructs a benchmark compressor with an initial distance to surge.
      *
-     * @param name the equipment name
+     * @param name          the equipment name
      * @param initialMargin the initial distance to surge
      */
     private BenchmarkCompressor(String name, double initialMargin) {

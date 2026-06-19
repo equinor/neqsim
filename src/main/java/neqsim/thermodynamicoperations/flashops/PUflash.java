@@ -22,7 +22,8 @@ public class PUflash extends Flash {
    * Constructor for PUflash.
    * </p>
    */
-  public PUflash() {}
+  public PUflash() {
+  }
 
   /**
    * <p>
@@ -30,7 +31,7 @@ public class PUflash extends Flash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param Uspec a double
+   * @param Uspec  a double
    */
   public PUflash(SystemInterface system, double Uspec) {
     this.system = system;
@@ -78,9 +79,9 @@ public class PUflash extends Flash {
     double factor = 0.8;
     do {
       if (error > errorOld) {
-        factor /= 2.0;
+	factor /= 2.0;
       } else if (error < errorOld && factor < 0.8) {
-        factor *= 1.1;
+	factor *= 1.1;
       }
       iterations++;
       oldTemp = nyTemp;
@@ -89,7 +90,7 @@ public class PUflash extends Flash {
       // f(Math.abs(1.0/nyTemp-1.0/oldTemp)>5.0) nyTemp = 1.0/(1.0/oldTemp +
       // Math.signum(1.0/nyTemp-1.0/oldTemp)*5.0);
       if (Double.isNaN(nyTemp)) {
-        nyTemp = oldTemp + 1.0;
+	nyTemp = oldTemp + 1.0;
       }
       system.setTemperature(1.0 / nyTemp);
       tpFlash.run();

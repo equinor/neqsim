@@ -68,9 +68,8 @@ class SystemElectrolyteCPAAdvancedTest {
 
     // Check derivative
     double dwdT = IonParametersAdvanced.calcWdT("Na+", 298.15);
-    double dwdT_numerical =
-        (IonParametersAdvanced.calcW("Na+", 298.16) - IonParametersAdvanced.calcW("Na+", 298.14))
-            / 0.02;
+    double dwdT_numerical = (IonParametersAdvanced.calcW("Na+", 298.16) - IonParametersAdvanced.calcW("Na+", 298.14))
+	/ 0.02;
     assertEquals(dwdT, dwdT_numerical, 1e-12, "Analytical and numerical dW/dT should match");
   }
 
@@ -78,8 +77,7 @@ class SystemElectrolyteCPAAdvancedTest {
   void testBornRadiusTemperatureDependence() {
     double rB_25 = IonParametersAdvanced.calcBornRadius("Na+", 298.15);
     double rB_100 = IonParametersAdvanced.calcBornRadius("Na+", 373.15);
-    assertTrue(rB_100 > rB_25,
-        "Born radius should increase with temperature (thermal expansion of cavity)");
+    assertTrue(rB_100 > rB_25, "Born radius should increase with temperature (thermal expansion of cavity)");
     assertTrue(rB_25 > 1.0, "Born radius should be > 1 Angstrom");
     assertTrue(rB_25 < 4.0, "Born radius should be < 4 Angstrom");
   }
@@ -98,13 +96,12 @@ class SystemElectrolyteCPAAdvancedTest {
 
     // Single-phase aqueous system (no gas component), so phase 0 is the aqueous phase
     double density = system.getPhase(0).getDensity("kg/m3");
-    assertTrue(density > 900.0 && density < 1200.0,
-        "Aqueous phase density should be 900-1200 kg/m3, got " + density);
+    assertTrue(density > 900.0 && density < 1200.0, "Aqueous phase density should be 900-1200 kg/m3, got " + density);
 
     // Check fugacity coefficients are reasonable
     double fugCoeffWater = system.getPhase(0).getComponent("water").getFugacityCoefficient();
     assertTrue(fugCoeffWater > 0.0 && fugCoeffWater < 100.0,
-        "Water fugacity coefficient should be reasonable, got " + fugCoeffWater);
+	"Water fugacity coefficient should be reasonable, got " + fugCoeffWater);
   }
 
   @Test
@@ -127,8 +124,7 @@ class SystemElectrolyteCPAAdvancedTest {
     // Aqueous phase density should be reasonable
     if (system.hasPhaseType("aqueous")) {
       double density = system.getPhase("aqueous").getDensity("kg/m3");
-      assertTrue(density > 950.0 && density < 1200.0,
-          "Brine density should be reasonable, got " + density);
+      assertTrue(density > 950.0 && density < 1200.0, "Brine density should be reasonable, got " + density);
     }
   }
 
@@ -146,8 +142,7 @@ class SystemElectrolyteCPAAdvancedTest {
 
     // Single-phase aqueous system, use phase 0
     double density = system.getPhase(0).getDensity("kg/m3");
-    assertTrue(density > 950.0 && density < 1300.0,
-        "CaCl2 brine density should be reasonable, got " + density);
+    assertTrue(density > 950.0 && density < 1300.0, "CaCl2 brine density should be reasonable, got " + density);
   }
 
   @Test
@@ -160,8 +155,7 @@ class SystemElectrolyteCPAAdvancedTest {
 
     SystemInterface clone = system.clone();
     assertNotNull(clone, "Cloned system should not be null");
-    assertEquals(system.getNumberOfComponents(), clone.getNumberOfComponents(),
-        "Component count should match");
+    assertEquals(system.getNumberOfComponents(), clone.getNumberOfComponents(), "Component count should match");
   }
 
   @Test
@@ -230,20 +224,16 @@ class SystemElectrolyteCPAAdvancedTest {
     IonParametersAdvanced.AdvancedIonData k = IonParametersAdvanced.getIonData("K+");
 
     // Li+ has more negative dGhyd than Na+ -> should have smaller Born radius
-    assertTrue(li.rBorn0 < na.rBorn0,
-        "Li+ Born radius should be smaller than Na+ (stronger hydration)");
-    assertTrue(na.rBorn0 < k.rBorn0,
-        "Na+ Born radius should be smaller than K+ (stronger hydration)");
+    assertTrue(li.rBorn0 < na.rBorn0, "Li+ Born radius should be smaller than Na+ (stronger hydration)");
+    assertTrue(na.rBorn0 < k.rBorn0, "Na+ Born radius should be smaller than K+ (stronger hydration)");
 
     // Same for anions
     IonParametersAdvanced.AdvancedIonData f = IonParametersAdvanced.getIonData("F-");
     IonParametersAdvanced.AdvancedIonData cl = IonParametersAdvanced.getIonData("Cl-");
     IonParametersAdvanced.AdvancedIonData br = IonParametersAdvanced.getIonData("Br-");
 
-    assertTrue(f.rBorn0 < cl.rBorn0,
-        "F- Born radius should be smaller than Cl- (stronger hydration)");
-    assertTrue(cl.rBorn0 < br.rBorn0,
-        "Cl- Born radius should be smaller than Br- (stronger hydration)");
+    assertTrue(f.rBorn0 < cl.rBorn0, "F- Born radius should be smaller than Cl- (stronger hydration)");
+    assertTrue(cl.rBorn0 < br.rBorn0, "Cl- Born radius should be smaller than Br- (stronger hydration)");
   }
 
   @Test
@@ -273,7 +263,6 @@ class SystemElectrolyteCPAAdvancedTest {
     double rho80 = system80.getPhase(0).getDensity("kg/m3");
 
     // Density should decrease with temperature
-    assertTrue(rho80 < rho25,
-        "Brine density at 80C (" + rho80 + ") should be less than at 25C (" + rho25 + ")");
+    assertTrue(rho80 < rho25, "Brine density at 80C (" + rho80 + ") should be less than at 25C (" + rho25 + ")");
   }
 }

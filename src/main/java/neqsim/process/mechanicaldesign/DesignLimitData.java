@@ -65,7 +65,8 @@ public final class DesignLimitData implements Serializable {
     private double corrosionAllowance = Double.NaN;
     private double jointEfficiency = Double.NaN;
 
-    private Builder() {}
+    private Builder() {
+    }
 
     public Builder maxPressure(double value) {
       this.maxPressure = value;
@@ -104,8 +105,7 @@ public final class DesignLimitData implements Serializable {
 
   @Override
   public int hashCode() {
-    return Objects.hash(maxPressure, minPressure, maxTemperature, minTemperature, corrosionAllowance,
-        jointEfficiency);
+    return Objects.hash(maxPressure, minPressure, maxTemperature, minTemperature, corrosionAllowance, jointEfficiency);
   }
 
   @Override
@@ -118,18 +118,17 @@ public final class DesignLimitData implements Serializable {
     }
     DesignLimitData other = (DesignLimitData) obj;
     return Double.doubleToLongBits(maxPressure) == Double.doubleToLongBits(other.maxPressure)
-        && Double.doubleToLongBits(minPressure) == Double.doubleToLongBits(other.minPressure)
-        && Double.doubleToLongBits(maxTemperature) == Double.doubleToLongBits(other.maxTemperature)
-        && Double.doubleToLongBits(minTemperature) == Double.doubleToLongBits(other.minTemperature)
-        && Double.doubleToLongBits(corrosionAllowance) == Double.doubleToLongBits(other.corrosionAllowance)
-        && Double.doubleToLongBits(jointEfficiency) == Double.doubleToLongBits(other.jointEfficiency);
+	&& Double.doubleToLongBits(minPressure) == Double.doubleToLongBits(other.minPressure)
+	&& Double.doubleToLongBits(maxTemperature) == Double.doubleToLongBits(other.maxTemperature)
+	&& Double.doubleToLongBits(minTemperature) == Double.doubleToLongBits(other.minTemperature)
+	&& Double.doubleToLongBits(corrosionAllowance) == Double.doubleToLongBits(other.corrosionAllowance)
+	&& Double.doubleToLongBits(jointEfficiency) == Double.doubleToLongBits(other.jointEfficiency);
   }
 
   @Override
   public String toString() {
-    return "DesignLimitData{" + "maxPressure=" + maxPressure + ", minPressure=" + minPressure
-        + ", maxTemperature=" + maxTemperature + ", minTemperature=" + minTemperature
-        + ", corrosionAllowance=" + corrosionAllowance + ", jointEfficiency=" + jointEfficiency
-        + '}';
+    return "DesignLimitData{" + "maxPressure=" + maxPressure + ", minPressure=" + minPressure + ", maxTemperature="
+	+ maxTemperature + ", minTemperature=" + minTemperature + ", corrosionAllowance=" + corrosionAllowance
+	+ ", jointEfficiency=" + jointEfficiency + '}';
   }
 }

@@ -32,8 +32,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * </ul>
  *
  * <p>
- * The process is based on realistic offshore oil/gas processing with integrated condensate
- * recovery.
+ * The process is based on realistic offshore oil/gas processing with integrated condensate recovery.
  * </p>
  *
  * @author NeqSim
@@ -41,11 +40,10 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 public class OilStabilizationDiagramTest {
   /*
-   * Test generating a full oil stabilization process diagram with HYSYS style.**<p>* Creates a
-   * comprehensive process including:*</p>*<ul>*<li>HP well stream at 62 bara</li>*<li>LP well
-   * stream at 20 bara</li>*<li>4- stage separation train</li>*<li>3- stage gas
-   * compression</li>*<li> Dew point control unit</li>*<li>Turbo-expander</li>*<li>3 recycle loops
-   * for condensate recovery</li>*</ul>
+   * Test generating a full oil stabilization process diagram with HYSYS style.**<p>* Creates a comprehensive process
+   * including:*</p>*<ul>*<li>HP well stream at 62 bara</li>*<li>LP well stream at 20 bara</li>*<li>4- stage separation
+   * train</li>*<li>3- stage gas compression</li>*<li> Dew point control unit</li>*<li>Turbo-expander</li>*<li>3 recycle
+   * loops for condensate recovery</li>*</ul>
    */
 
   @Test
@@ -96,12 +94,10 @@ public class OilStabilizationDiagramTest {
     // =========================================================================
     // First Stage Separation (62 bara)
     // =========================================================================
-    ThreePhaseSeparator firstStageSeparator =
-        new ThreePhaseSeparator("1st Stage Separator", wellStreamHP);
+    ThreePhaseSeparator firstStageSeparator = new ThreePhaseSeparator("1st Stage Separator", wellStreamHP);
     operations.add(firstStageSeparator);
 
-    ThrottlingValve oilValve1 =
-        new ThrottlingValve("Oil Letdown V-101", firstStageSeparator.getOilOutStream());
+    ThrottlingValve oilValve1 = new ThrottlingValve("Oil Letdown V-101", firstStageSeparator.getOilOutStream());
     oilValve1.setOutletPressure(20.0, "bara");
     operations.add(oilValve1);
 
@@ -125,13 +121,12 @@ public class OilStabilizationDiagramTest {
     oilHeater1.setOutTemperature(80.0, "C");
     operations.add(oilHeater1);
 
-    ThreePhaseSeparator secondStageSeparator =
-        new ThreePhaseSeparator("2nd Stage Separator", oilHeater1.getOutletStream());
+    ThreePhaseSeparator secondStageSeparator = new ThreePhaseSeparator("2nd Stage Separator",
+	oilHeater1.getOutletStream());
     secondStageSeparator.addStream(lpWellStream);
     operations.add(secondStageSeparator);
 
-    ThrottlingValve oilValve2 =
-        new ThrottlingValve("Oil Letdown V-102", secondStageSeparator.getOilOutStream());
+    ThrottlingValve oilValve2 = new ThrottlingValve("Oil Letdown V-102", secondStageSeparator.getOilOutStream());
     oilValve2.setOutletPressure(7.0, "bara");
     operations.add(oilValve2);
 
@@ -151,12 +146,11 @@ public class OilStabilizationDiagramTest {
     // =========================================================================
     // Third Stage Separation (7 bara)
     // =========================================================================
-    ThreePhaseSeparator thirdStageSeparator =
-        new ThreePhaseSeparator("3rd Stage Separator", secondStageMixer.getOutletStream());
+    ThreePhaseSeparator thirdStageSeparator = new ThreePhaseSeparator("3rd Stage Separator",
+	secondStageMixer.getOutletStream());
     operations.add(thirdStageSeparator);
 
-    ThrottlingValve oilValve3 =
-        new ThrottlingValve("Oil Letdown V-103", thirdStageSeparator.getOilOutStream());
+    ThrottlingValve oilValve3 = new ThrottlingValve("Oil Letdown V-103", thirdStageSeparator.getOilOutStream());
     oilValve3.setOutletPressure(3.0, "bara");
     operations.add(oilValve3);
 
@@ -176,8 +170,7 @@ public class OilStabilizationDiagramTest {
     // =========================================================================
     // Fourth Stage Separation / Stabilizer (3 bara)
     // =========================================================================
-    ThreePhaseSeparator fourthStageSeparator =
-        new ThreePhaseSeparator("Stabilizer", thirdStageMixer.getOutletStream());
+    ThreePhaseSeparator fourthStageSeparator = new ThreePhaseSeparator("Stabilizer", thirdStageMixer.getOutletStream());
     operations.add(fourthStageSeparator);
 
     // =========================================================================
@@ -253,19 +246,16 @@ public class OilStabilizationDiagramTest {
     dewPointCooler1.setOutTemperature(29.0, "C");
     operations.add(dewPointCooler1);
 
-    Separator dewPointScrubber1 =
-        new Separator("Dew Point Scrubber 1", dewPointCooler1.getOutletStream());
+    Separator dewPointScrubber1 = new Separator("Dew Point Scrubber 1", dewPointCooler1.getOutletStream());
     operations.add(dewPointScrubber1);
 
     // Chilling for deeper dew point control
-    Cooler dewPointCooler2 =
-        new Cooler("Dew Point Chiller E-302", dewPointScrubber1.getGasOutStream());
+    Cooler dewPointCooler2 = new Cooler("Dew Point Chiller E-302", dewPointScrubber1.getGasOutStream());
     dewPointCooler2.setOutTemperature(-15.0, "C");
     dewPointCooler2.setOutPressure(60.0, "bara");
     operations.add(dewPointCooler2);
 
-    Separator dewPointScrubber2 =
-        new Separator("Dew Point Scrubber 2", dewPointCooler2.getOutletStream());
+    Separator dewPointScrubber2 = new Separator("Dew Point Scrubber 2", dewPointCooler2.getOutletStream());
     operations.add(dewPointScrubber2);
 
     // =========================================================================
@@ -404,8 +394,7 @@ public class OilStabilizationDiagramTest {
     process.add(oilHeater);
 
     // MP Separator
-    ThreePhaseSeparator mpSep =
-        new ThreePhaseSeparator("MP Separator", oilHeater.getOutletStream());
+    ThreePhaseSeparator mpSep = new ThreePhaseSeparator("MP Separator", oilHeater.getOutletStream());
     process.add(mpSep);
 
     // LP letdown valve

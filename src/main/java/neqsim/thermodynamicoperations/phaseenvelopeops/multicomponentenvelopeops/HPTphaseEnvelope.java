@@ -74,16 +74,16 @@ public class HPTphaseEnvelope extends BaseOperation {
     for (int i = 0; i < 10; i++) {
       system.setPressure(i * 0.5 + startPressure);
       for (int j = 0; j < 10; j++) {
-        np++;
-        if (np % 2 == 0) {
-          monitor.setValue(np);
-          monitor.setString("Calculated points: " + np);
-        }
+	np++;
+	if (np % 2 == 0) {
+	  monitor.setValue(np);
+	  monitor.setString("Calculated points: " + np);
+	}
 
-        system.setTemperature(startTemperature + j);
-        testOps.TPflash();
-        system.init(3);
-        points[i][j] = system.getEnthalpy();
+	system.setTemperature(startTemperature + j);
+	testOps.TPflash();
+	system.init(3);
+	points[i][j] = system.getEnthalpy();
       }
     }
   }
@@ -93,16 +93,16 @@ public class HPTphaseEnvelope extends BaseOperation {
   @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     /*
-     * try { mainFrame.setVisible(false); visAd3DPlot plot = new visAd3DPlot("pressure[bar]",
-     * "temperature[K]", "enthalpy[J/mol]"); plot.setXYvals(150, 160, 10, 10, 20, 10);
-     * plot.setZvals(points); plot.init(); } catch (Exception ex) { logger.error("plotting failed");
-     * }
+     * try { mainFrame.setVisible(false); visAd3DPlot plot = new visAd3DPlot("pressure[bar]", "temperature[K]",
+     * "enthalpy[J/mol]"); plot.setXYvals(150, 160, 10, 10, 20, 10); plot.setZvals(points); plot.init(); } catch
+     * (Exception ex) { logger.error("plotting failed"); }
      */
   }
 
   /** {@inheritDoc} */
   @Override
-  public void printToFile(String name) {}
+  public void printToFile(String name) {
+  }
 
   /** {@inheritDoc} */
   @Override

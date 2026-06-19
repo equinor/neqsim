@@ -38,7 +38,7 @@ public class SteamHeater extends Heater {
    * Constructor for SteamHeater.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name     a {@link java.lang.String} object
    * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public SteamHeater(String name, StreamInterface inStream) {
@@ -50,7 +50,7 @@ public class SteamHeater extends Heater {
    * Set inlet steam temperature.
    *
    * @param temperature the steam inlet temperature
-   * @param unit the unit of temperature
+   * @param unit        the unit of temperature
    */
   public void setSteamInletTemperature(double temperature, String unit) {
     steamInletTemperature = new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
@@ -60,7 +60,7 @@ public class SteamHeater extends Heater {
    * Set outlet condensate temperature.
    *
    * @param temperature the steam outlet temperature
-   * @param unit the unit of temperature
+   * @param unit        the unit of temperature
    */
   public void setSteamOutletTemperature(double temperature, String unit) {
     steamOutletTemperature = new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
@@ -70,7 +70,7 @@ public class SteamHeater extends Heater {
    * Set steam pressure.
    *
    * @param pressure the steam pressure
-   * @param unit the unit of pressure
+   * @param unit     the unit of pressure
    */
   public void setSteamPressure(double pressure, String unit) {
     steamPressure = new neqsim.util.unit.PressureUnit(pressure, unit).getValue("bara");
@@ -114,8 +114,8 @@ public class SteamHeater extends Heater {
     double hin = Iapws_if97.h_pt(pinMPa, steamInletTemperature);
     double hout = Iapws_if97.h_pt(pinMPa, steamOutletTemperature);
     double deltaH = hin - hout; // kJ/kg released per kg steam
-    logger.debug("DEBUG SteamHeater: getEnergyInput()=" + getEnergyInput() + ", hin=" + hin
-        + ", hout=" + hout + ", deltaH=" + deltaH);
+    logger.debug("DEBUG SteamHeater: getEnergyInput()=" + getEnergyInput() + ", hin=" + hin + ", hout=" + hout
+	+ ", deltaH=" + deltaH);
     if (Math.abs(deltaH) < 1e-6) {
       steamFlowRate = 0.0;
       return;

@@ -9,9 +9,9 @@ import neqsim.process.processmodel.ProcessSystem;
  * Builder for a steam-methane-reforming hydrogen plant template.
  *
  * <p>
- * The template wires a methane/steam feed, fired reformer furnace, and optional PSA purification
- * cascade. It is intended for repeatable screening studies where users need a complete baseline SMR
- * route before adding water-gas shift, heat recovery, or CO2 capture details.
+ * The template wires a methane/steam feed, fired reformer furnace, and optional PSA purification cascade. It is
+ * intended for repeatable screening studies where users need a complete baseline SMR route before adding water-gas
+ * shift, heat recovery, or CO2 capture details.
  * </p>
  *
  * @author NeqSim contributors
@@ -151,8 +151,7 @@ public class SMRHydrogenPlantBuilder extends HydrogenPlantBuilderBase {
    * @param configuration cascade configuration
    * @return this builder
    */
-  public SMRHydrogenPlantBuilder setPsaConfiguration(
-      PSACascade.CascadeConfiguration configuration) {
+  public SMRHydrogenPlantBuilder setPsaConfiguration(PSACascade.CascadeConfiguration configuration) {
     if (configuration == null) {
       throw new IllegalArgumentException("configuration cannot be null");
     }
@@ -167,10 +166,8 @@ public class SMRHydrogenPlantBuilder extends HydrogenPlantBuilderBase {
    * @return this builder
    */
   public SMRHydrogenPlantBuilder setPsaPerBedRecoveryTarget(double psaPerBedRecoveryTarget) {
-    if (!Double.isFinite(psaPerBedRecoveryTarget) || psaPerBedRecoveryTarget <= 0.0
-        || psaPerBedRecoveryTarget > 1.0) {
-      throw new IllegalArgumentException(
-          "psaPerBedRecoveryTarget must be finite and in the interval (0,1]");
+    if (!Double.isFinite(psaPerBedRecoveryTarget) || psaPerBedRecoveryTarget <= 0.0 || psaPerBedRecoveryTarget > 1.0) {
+      throw new IllegalArgumentException("psaPerBedRecoveryTarget must be finite and in the interval (0,1]");
     }
     this.psaPerBedRecoveryTarget = psaPerBedRecoveryTarget;
     return this;
@@ -273,12 +270,12 @@ public class SMRHydrogenPlantBuilder extends HydrogenPlantBuilderBase {
    */
   public ProcessSystem build() {
     ProcessSystem process = new ProcessSystem();
-    Stream feed = createMethaneSteamFeed(name + " feed", methaneFeedMolePerSec, steamToCarbonRatio,
-        feedTemperatureK, pressureBara);
-    Stream fuel = createMethaneFuel(name + " furnace fuel",
-        methaneFeedMolePerSec * fuelToFeedMethaneRatio, 298.15, pressureBara);
-    Stream air = createAir(name + " combustion air",
-        2.0 * methaneFeedMolePerSec * fuelToFeedMethaneRatio, 298.15, pressureBara);
+    Stream feed = createMethaneSteamFeed(name + " feed", methaneFeedMolePerSec, steamToCarbonRatio, feedTemperatureK,
+	pressureBara);
+    Stream fuel = createMethaneFuel(name + " furnace fuel", methaneFeedMolePerSec * fuelToFeedMethaneRatio, 298.15,
+	pressureBara);
+    Stream air = createAir(name + " combustion air", 2.0 * methaneFeedMolePerSec * fuelToFeedMethaneRatio, 298.15,
+	pressureBara);
 
     ReformerFurnace furnace = new ReformerFurnace(name + " reformer furnace", feed);
     furnace.setFuelInletStream(fuel);
@@ -306,7 +303,7 @@ public class SMRHydrogenPlantBuilder extends HydrogenPlantBuilderBase {
   /**
    * Validates positive finite values.
    *
-   * @param value value to validate
+   * @param value         value to validate
    * @param parameterName parameter name for exception text
    */
   private void validatePositive(double value, String parameterName) {

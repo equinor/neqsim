@@ -6,9 +6,8 @@ import java.io.Serializable;
  * Represents a droplet (or bubble) size distribution for separator internals calculations.
  *
  * <p>
- * Supports Rosin-Rammler and log-normal distributions, which are the two most widely used
- * representations in the open literature for liquid droplet and bubble size distributions in
- * gas-liquid and liquid-liquid separation.
+ * Supports Rosin-Rammler and log-normal distributions, which are the two most widely used representations in the open
+ * literature for liquid droplet and bubble size distributions in gas-liquid and liquid-liquid separation.
  * </p>
  *
  * <p>
@@ -18,9 +17,9 @@ import java.io.Serializable;
  * $$ F(d) = 1 - \exp\left(-\left(\frac{d}{d_{63.2}}\right)^q\right) $$
  *
  * <p>
- * where $d_{63.2}$ is the characteristic diameter (63.2% undersize) and $q$ is the spread
- * parameter. Typical values: $q = 2.0$–$4.0$ for pipe-flow atomization, $q = 2.5$–$3.5$ for
- * nozzle-generated sprays. See Lefebvre and McDonell (2017), <i>Atomization and Sprays</i>.
+ * where $d_{63.2}$ is the characteristic diameter (63.2% undersize) and $q$ is the spread parameter. Typical values: $q
+ * = 2.0$–$4.0$ for pipe-flow atomization, $q = 2.5$–$3.5$ for nozzle-generated sprays. See Lefebvre and McDonell
+ * (2017), <i>Atomization and Sprays</i>.
  * </p>
  *
  * <p>
@@ -30,8 +29,8 @@ import java.io.Serializable;
  * $$ F(d) = \Phi\left(\frac{\ln(d) - \mu}{\sigma}\right) $$
  *
  * <p>
- * where $\mu = \ln(d_{50})$ and $\sigma$ is the geometric standard deviation. Typical values:
- * $\sigma = 0.5$–$1.5$. See Azzopardi (2011), <i>Gas-Liquid Two-Phase Flow</i>, Springer.
+ * where $\mu = \ln(d_{50})$ and $\sigma$ is the geometric standard deviation. Typical values: $\sigma = 0.5$–$1.5$. See
+ * Azzopardi (2011), <i>Gas-Liquid Two-Phase Flow</i>, Springer.
  * </p>
  *
  * @author NeqSim team
@@ -55,14 +54,14 @@ public class DropletSizeDistribution implements Serializable {
   private DistributionType type;
 
   /**
-   * Characteristic diameter [m]. For Rosin-Rammler: d_63.2 (63.2% cumulative undersize), for
-   * log-normal: d_50 (mass-median diameter).
+   * Characteristic diameter [m]. For Rosin-Rammler: d_63.2 (63.2% cumulative undersize), for log-normal: d_50
+   * (mass-median diameter).
    */
   private double characteristicDiameter;
 
   /**
-   * Spread parameter. For Rosin-Rammler: q (shape parameter, typically 2.0-4.0). For log-normal:
-   * sigma (geometric standard deviation, typically 0.5-1.5).
+   * Spread parameter. For Rosin-Rammler: q (shape parameter, typically 2.0-4.0). For log-normal: sigma (geometric
+   * standard deviation, typically 0.5-1.5).
    */
   private double spreadParameter;
 
@@ -73,11 +72,10 @@ public class DropletSizeDistribution implements Serializable {
    * Creates a Rosin-Rammler droplet size distribution.
    *
    * @param characteristicDiameter d_63.2 characteristic diameter [m]
-   * @param spreadParameter q shape parameter (typically 2.0-4.0)
+   * @param spreadParameter        q shape parameter (typically 2.0-4.0)
    * @return a new DropletSizeDistribution
    */
-  public static DropletSizeDistribution rosinRammler(double characteristicDiameter,
-      double spreadParameter) {
+  public static DropletSizeDistribution rosinRammler(double characteristicDiameter, double spreadParameter) {
     DropletSizeDistribution dsd = new DropletSizeDistribution();
     dsd.type = DistributionType.ROSIN_RAMMLER;
     dsd.characteristicDiameter = characteristicDiameter;
@@ -88,7 +86,7 @@ public class DropletSizeDistribution implements Serializable {
   /**
    * Creates a log-normal droplet size distribution.
    *
-   * @param medianDiameter d_50 mass-median diameter [m]
+   * @param medianDiameter  d_50 mass-median diameter [m]
    * @param geometricStdDev sigma geometric standard deviation (typically 0.5-1.5)
    * @return a new DropletSizeDistribution
    */
@@ -101,8 +99,8 @@ public class DropletSizeDistribution implements Serializable {
   }
 
   /**
-   * Creates a Rosin-Rammler distribution estimated from maximum stable droplet diameter using the
-   * Hinze (1955) correlation for turbulent breakup.
+   * Creates a Rosin-Rammler distribution estimated from maximum stable droplet diameter using the Hinze (1955)
+   * correlation for turbulent breakup.
    *
    * <p>
    * The maximum stable droplet diameter in a turbulent pipe flow is estimated as:
@@ -111,20 +109,19 @@ public class DropletSizeDistribution implements Serializable {
    * $$ d_{max} = C \cdot We^{-3/5} \cdot D $$
    *
    * <p>
-   * where $We = \rho_c V^2 D / \sigma$ is the Weber number, $D$ is the pipe diameter, and $C
-   * \approx 0.725$ (Hinze, 1955). The d_63.2 is estimated as $d_{max} / 3$ based on typical
-   * pipe-flow data (Azzopardi, 2011).
+   * where $We = \rho_c V^2 D / \sigma$ is the Weber number, $D$ is the pipe diameter, and $C \approx 0.725$ (Hinze,
+   * 1955). The d_63.2 is estimated as $d_{max} / 3$ based on typical pipe-flow data (Azzopardi, 2011).
    * </p>
    *
    * @param continuousDensity density of continuous phase [kg/m3]
-   * @param velocity mixture velocity [m/s]
-   * @param pipeDiameter pipe internal diameter [m]
-   * @param surfaceTension interfacial tension [N/m]
-   * @param spreadParameter q (Rosin-Rammler spread, default 2.6 if &lt;= 0)
+   * @param velocity          mixture velocity [m/s]
+   * @param pipeDiameter      pipe internal diameter [m]
+   * @param surfaceTension    interfacial tension [N/m]
+   * @param spreadParameter   q (Rosin-Rammler spread, default 2.6 if &lt;= 0)
    * @return a new DropletSizeDistribution
    */
-  public static DropletSizeDistribution fromHinzeCorrelation(double continuousDensity,
-      double velocity, double pipeDiameter, double surfaceTension, double spreadParameter) {
+  public static DropletSizeDistribution fromHinzeCorrelation(double continuousDensity, double velocity,
+      double pipeDiameter, double surfaceTension, double spreadParameter) {
     double effectiveSpread = (spreadParameter <= 0) ? 2.6 : spreadParameter;
     double weberNumber = continuousDensity * velocity * velocity * pipeDiameter / surfaceTension;
     double hinzeConstant = 0.725;
@@ -166,7 +163,7 @@ public class DropletSizeDistribution implements Serializable {
     if (type == DistributionType.ROSIN_RAMMLER) {
       double ratio = d / characteristicDiameter;
       return (spreadParameter / characteristicDiameter) * Math.pow(ratio, spreadParameter - 1.0)
-          * Math.exp(-Math.pow(ratio, spreadParameter));
+	  * Math.exp(-Math.pow(ratio, spreadParameter));
     } else {
       double z = (Math.log(d) - Math.log(characteristicDiameter)) / spreadParameter;
       return 1.0 / (d * spreadParameter * Math.sqrt(2.0 * Math.PI)) * Math.exp(-0.5 * z * z);
@@ -177,8 +174,8 @@ public class DropletSizeDistribution implements Serializable {
    * Returns discrete size classes for numerical integration of grade efficiency.
    *
    * <p>
-   * Each element is a double[3] containing {lowerBound, midpoint, volumeFraction}. The size range
-   * spans from d_min to d_max chosen to cover 0.1% to 99.9% of the distribution.
+   * Each element is a double[3] containing {lowerBound, midpoint, volumeFraction}. The size range spans from d_min to
+   * d_max chosen to cover 0.1% to 99.9% of the distribution.
    * </p>
    *
    * @return array of size class descriptors
@@ -265,8 +262,7 @@ public class DropletSizeDistribution implements Serializable {
     boolean negative = (x < 0);
     double absX = Math.abs(x);
     double t = 1.0 / (1.0 + 0.3275911 * absX);
-    double poly = t * (0.254829592
-        + t * (-0.284496736 + t * (1.421413741 + t * (-1.453152027 + t * 1.061405429))));
+    double poly = t * (0.254829592 + t * (-0.284496736 + t * (1.421413741 + t * (-1.453152027 + t * 1.061405429))));
     double result = 1.0 - poly * Math.exp(-absX * absX);
     return negative ? -result : result;
   }

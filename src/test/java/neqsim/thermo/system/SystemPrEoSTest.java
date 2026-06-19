@@ -39,8 +39,7 @@ public class SystemPrEoSTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("test molarVolume calculation as well as unit conerters")
   public void testMolarVolume() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemPrEos(298.0, 1.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemPrEos(298.0, 1.0);
     testSystem.addComponent("nitrogen", 0.01);
     testSystem.addComponent("CO2", 0.01);
     testSystem.addComponent("methane", 0.68);
@@ -51,7 +50,7 @@ public class SystemPrEoSTest extends neqsim.NeqSimTest {
     testOps.TPflash();
     testSystem.initProperties();
     assertEquals(testSystem.getMolarVolume("m3/mol"),
-        testSystem.getMolarMass("kg/mol") / testSystem.getDensity("kg/m3"));
+	testSystem.getMolarMass("kg/mol") / testSystem.getDensity("kg/m3"));
   }
 
   /**
@@ -154,8 +153,7 @@ public class SystemPrEoSTest extends neqsim.NeqSimTest {
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
     testSystem.initProperties();
-    assertEquals(-165.60627184389855, testSystem.getEnthalpy("kJ/kg"),
-        Math.abs(-165.60627184389855 / 1000.0));
+    assertEquals(-165.60627184389855, testSystem.getEnthalpy("kJ/kg"), Math.abs(-165.60627184389855 / 1000.0));
   }
 
   /**

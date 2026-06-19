@@ -8,16 +8,16 @@ import java.util.Map;
  * Represents a production chemical used in oil and gas operations.
  *
  * <p>
- * A production chemical is characterised by its type (function), active ingredient family
- * (chemistry), concentration of the active ingredient, ionic nature, pH, and a temperature
- * stability range. These properties drive compatibility evaluation against other chemicals and the
- * produced fluid (water, oil, gas, solids) by {@link ChemicalCompatibilityAssessor}.
+ * A production chemical is characterised by its type (function), active ingredient family (chemistry), concentration of
+ * the active ingredient, ionic nature, pH, and a temperature stability range. These properties drive compatibility
+ * evaluation against other chemicals and the produced fluid (water, oil, gas, solids) by
+ * {@link ChemicalCompatibilityAssessor}.
  * </p>
  *
  * <p>
  * Use the static factory methods (e.g. {@link #scaleInhibitor(String, double)},
- * {@link #corrosionInhibitor(String, double)}) for typical defaults. The instance can be tuned with
- * the setters before evaluation.
+ * {@link #corrosionInhibitor(String, double)}) for typical defaults. The instance can be tuned with the setters before
+ * evaluation.
  * </p>
  *
  * @author ESOL
@@ -67,8 +67,8 @@ public class ProductionChemical implements Serializable {
   }
 
   /**
-   * Ionic nature of the active ingredient. Used by interaction rules to flag known
-   * incompatibilities (e.g. cationic CI + anionic SI co-injection precipitation).
+   * Ionic nature of the active ingredient. Used by interaction rules to flag known incompatibilities (e.g. cationic CI
+   * + anionic SI co-injection precipitation).
    */
   public enum IonicNature {
     /** Cationic active ingredient (positively charged in solution). */
@@ -126,7 +126,8 @@ public class ProductionChemical implements Serializable {
   /**
    * Default constructor.
    */
-  public ProductionChemical() {}
+  public ProductionChemical() {
+  }
 
   /**
    * Constructor with name and type.
@@ -144,7 +145,7 @@ public class ProductionChemical implements Serializable {
   /**
    * Creates a phosphonate-based scale inhibitor with default properties.
    *
-   * @param name commercial name
+   * @param name      commercial name
    * @param dosagePpm dose in ppm
    * @return configured ProductionChemical
    */
@@ -163,7 +164,7 @@ public class ProductionChemical implements Serializable {
   /**
    * Creates an imidazoline-based corrosion inhibitor with default properties.
    *
-   * @param name commercial name
+   * @param name      commercial name
    * @param dosagePpm dose in ppm
    * @return configured ProductionChemical
    */
@@ -183,14 +184,13 @@ public class ProductionChemical implements Serializable {
   /**
    * Creates a thermodynamic hydrate inhibitor (MEG by default).
    *
-   * @param name commercial name
-   * @param dosagePpm dose in ppm (for trace) — for bulk MEG injection use dosagePpm = 0 and set the
-   *        actual mass flow on the injection stream
+   * @param name      commercial name
+   * @param dosagePpm dose in ppm (for trace) — for bulk MEG injection use dosagePpm = 0 and set the actual mass flow on
+   *                  the injection stream
    * @return configured ProductionChemical
    */
   public static ProductionChemical thermodynamicHydrateInhibitor(String name, double dosagePpm) {
-    ProductionChemical c =
-        new ProductionChemical(name, ChemicalType.HYDRATE_INHIBITOR_THERMODYNAMIC);
+    ProductionChemical c = new ProductionChemical(name, ChemicalType.HYDRATE_INHIBITOR_THERMODYNAMIC);
     c.activeIngredient = "MEG";
     c.activeWtPct = 90.0;
     c.dosagePpm = dosagePpm;
@@ -204,7 +204,7 @@ public class ProductionChemical implements Serializable {
   /**
    * Creates a triazine-based H2S scavenger.
    *
-   * @param name commercial name
+   * @param name      commercial name
    * @param dosagePpm dose in ppm
    * @return configured ProductionChemical
    */
@@ -223,7 +223,7 @@ public class ProductionChemical implements Serializable {
   /**
    * Creates a mineral acid for stimulation / cleaning (HCl by default).
    *
-   * @param name commercial name
+   * @param name        commercial name
    * @param activeWtPct acid concentration in wt%
    * @return configured ProductionChemical
    */

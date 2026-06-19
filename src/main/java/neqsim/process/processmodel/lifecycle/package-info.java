@@ -2,8 +2,8 @@
  * Lifecycle management for ProcessSystem models (Digital Twins).
  *
  * <p>
- * This package provides infrastructure for managing process models throughout their entire
- * lifecycle, from concept design through operation to decommissioning. Key capabilities:
+ * This package provides infrastructure for managing process models throughout their entire lifecycle, from concept
+ * design through operation to decommissioning. Key capabilities:
  * </p>
  *
  * <ul>
@@ -44,8 +44,7 @@
  * state.saveToFile("models/platform_a_train1_v2.1.0.json");
  *
  * // Later: load and restore
- * ProcessSystemState loaded =
- *     ProcessSystemState.loadFromFile("models/platform_a_train1_v2.1.0.json");
+ * ProcessSystemState loaded = ProcessSystemState.loadFromFile("models/platform_a_train1_v2.1.0.json");
  * System.out.println("Model last validated: " + loaded.getMetadata().getLastValidated());
  * </pre>
  *

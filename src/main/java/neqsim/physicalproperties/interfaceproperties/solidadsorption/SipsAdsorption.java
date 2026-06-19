@@ -90,8 +90,8 @@ public class SipsAdsorption extends AbstractAdsorptionModel {
       tempRef = new double[numComp];
       heatOfAdsorption = new double[numComp];
       for (int i = 0; i < numComp; i++) {
-        tempRef[i] = 298.15;
-        nSips[i] = 1.0;
+	tempRef[i] = 298.15;
+	nSips[i] = 1.0;
       }
     }
   }
@@ -110,36 +110,35 @@ public class SipsAdsorption extends AbstractAdsorptionModel {
     for (int comp = 0; comp < numComp; comp++) {
       String componentName = system.getPhase(phaseNum).getComponent(comp).getComponentName();
       try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-          java.sql.ResultSet dataSet =
-              database.getResultSet("SELECT * FROM adsorptionparameters WHERE name='"
-                  + componentName + "' AND Solid='" + solidMaterial + "'")) {
+	  java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM adsorptionparameters WHERE name='"
+	      + componentName + "' AND Solid='" + solidMaterial + "'")) {
 
-        if (dataSet.next()) {
-          try {
-            qmax[comp] = Double.parseDouble(dataSet.getString("qmax"));
-            kSips[comp] = Double.parseDouble(dataSet.getString("K_sips"));
-            nSips[comp] = Double.parseDouble(dataSet.getString("n_sips"));
-            tempRef[comp] = Double.parseDouble(dataSet.getString("TempRef"));
-            heatOfAdsorption[comp] = Double.parseDouble(dataSet.getString("dH_ads"));
-          } catch (Exception ex) {
-            // Estimate from DRA parameters
-            double eps = Double.parseDouble(dataSet.getString("eps"));
-            double z0 = Double.parseDouble(dataSet.getString("z0"));
-            double molarMass = system.getPhase(phaseNum).getComponent(comp).getMolarMass();
-            qmax[comp] = z0 * 1000.0 / molarMass;
-            kSips[comp] = Math.exp(eps / (R * 298.15));
-            nSips[comp] = 1.2;
-            tempRef[comp] = 298.15;
-            heatOfAdsorption[comp] = -eps * 1000.0;
-          }
-          logger.info("Sips parameters loaded for " + componentName + ": qmax=" + qmax[comp]
-              + ", Ks=" + kSips[comp] + ", n=" + nSips[comp]);
-        } else {
-          setDefaultParameters(comp);
-        }
+	if (dataSet.next()) {
+	  try {
+	    qmax[comp] = Double.parseDouble(dataSet.getString("qmax"));
+	    kSips[comp] = Double.parseDouble(dataSet.getString("K_sips"));
+	    nSips[comp] = Double.parseDouble(dataSet.getString("n_sips"));
+	    tempRef[comp] = Double.parseDouble(dataSet.getString("TempRef"));
+	    heatOfAdsorption[comp] = Double.parseDouble(dataSet.getString("dH_ads"));
+	  } catch (Exception ex) {
+	    // Estimate from DRA parameters
+	    double eps = Double.parseDouble(dataSet.getString("eps"));
+	    double z0 = Double.parseDouble(dataSet.getString("z0"));
+	    double molarMass = system.getPhase(phaseNum).getComponent(comp).getMolarMass();
+	    qmax[comp] = z0 * 1000.0 / molarMass;
+	    kSips[comp] = Math.exp(eps / (R * 298.15));
+	    nSips[comp] = 1.2;
+	    tempRef[comp] = 298.15;
+	    heatOfAdsorption[comp] = -eps * 1000.0;
+	  }
+	  logger.info("Sips parameters loaded for " + componentName + ": qmax=" + qmax[comp] + ", Ks=" + kSips[comp]
+	      + ", n=" + nSips[comp]);
+	} else {
+	  setDefaultParameters(comp);
+	}
       } catch (Exception ex) {
-        logger.info("Component not found in adsorption DB: " + componentName);
-        setDefaultParameters(comp);
+	logger.info("Component not found in adsorption DB: " + componentName);
+	setDefaultParameters(comp);
       }
     }
   }
@@ -174,15 +173,14 @@ public class SipsAdsorption extends AbstractAdsorptionModel {
       double partialPressure = getPartialPressure(phaseNum, comp);
 
       // Temperature-corrected Sips constant
-      double kCorr = kSips[comp]
-          * Math.exp(-heatOfAdsorption[comp] / R * (1.0 / temperature - 1.0 / tempRef[comp]));
+      double kCorr = kSips[comp] * Math.exp(-heatOfAdsorption[comp] / R * (1.0 / temperature - 1.0 / tempRef[comp]));
 
       // Sips isotherm: q = qm * (Ks*P)^(1/n) / (1 + (Ks*P)^(1/n))
       if (partialPressure > 0 && nSips[comp] > 0) {
-        double kpn = Math.pow(kCorr * partialPressure, 1.0 / nSips[comp]);
-        surfaceExcess[comp] = qmax[comp] * kpn / (1.0 + kpn);
+	double kpn = Math.pow(kCorr * partialPressure, 1.0 / nSips[comp]);
+	surfaceExcess[comp] = qmax[comp] * kpn / (1.0 + kpn);
       } else {
-        surfaceExcess[comp] = 0.0;
+	surfaceExcess[comp] = 0.0;
       }
     }
 
@@ -196,8 +194,7 @@ public class SipsAdsorption extends AbstractAdsorptionModel {
    * <p>
    * Extended Sips equation for competitive adsorption:
    * </p>
-   * $$q_i = q_{m,i} \cdot \frac{(K_{S,i} \cdot P_i)^{1/n_i}}{1 + \sum_j (K_{S,j} \cdot
-   * P_j)^{1/n_j}}$$
+   * $$q_i = q_{m,i} \cdot \frac{(K_{S,i} \cdot P_i)^{1/n_i}}{1 + \sum_j (K_{S,j} \cdot P_j)^{1/n_j}}$$
    *
    * @param phaseNum the phase number
    */
@@ -218,12 +215,11 @@ public class SipsAdsorption extends AbstractAdsorptionModel {
 
     for (int comp = 0; comp < numComp; comp++) {
       double partialPressure = getPartialPressure(phaseNum, comp);
-      kCorr[comp] = kSips[comp]
-          * Math.exp(-heatOfAdsorption[comp] / R * (1.0 / temperature - 1.0 / tempRef[comp]));
+      kCorr[comp] = kSips[comp] * Math.exp(-heatOfAdsorption[comp] / R * (1.0 / temperature - 1.0 / tempRef[comp]));
 
       if (partialPressure > 0 && nSips[comp] > 0) {
-        kpn[comp] = Math.pow(kCorr[comp] * partialPressure, 1.0 / nSips[comp]);
-        denomSum += kpn[comp];
+	kpn[comp] = Math.pow(kCorr[comp] * partialPressure, 1.0 / nSips[comp]);
+	denomSum += kpn[comp];
       }
     }
 
@@ -249,7 +245,7 @@ public class SipsAdsorption extends AbstractAdsorptionModel {
    * Set the maximum adsorption capacity for a component.
    *
    * @param component the component index
-   * @param value qmax in mol/kg
+   * @param value     qmax in mol/kg
    */
   public void setQmax(int component, double value) {
     qmax[component] = value;
@@ -271,7 +267,7 @@ public class SipsAdsorption extends AbstractAdsorptionModel {
    * Set the Sips affinity constant for a component.
    *
    * @param component the component index
-   * @param value Ks in 1/bar
+   * @param value     Ks in 1/bar
    */
   public void setKSips(int component, double value) {
     kSips[component] = value;
@@ -293,7 +289,7 @@ public class SipsAdsorption extends AbstractAdsorptionModel {
    * Set the heterogeneity parameter for a component.
    *
    * @param component the component index
-   * @param value n (dimensionless)
+   * @param value     n (dimensionless)
    */
   public void setNSips(int component, double value) {
     nSips[component] = value;
@@ -315,7 +311,7 @@ public class SipsAdsorption extends AbstractAdsorptionModel {
    * Set the heat of adsorption for a component.
    *
    * @param component the component index
-   * @param value heat of adsorption in J/mol
+   * @param value     heat of adsorption in J/mol
    */
   public void setHeatOfAdsorption(int component, double value) {
     heatOfAdsorption[component] = value;

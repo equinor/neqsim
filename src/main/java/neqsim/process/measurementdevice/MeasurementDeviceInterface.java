@@ -179,8 +179,8 @@ public interface MeasurementDeviceInterface extends ProcessElementInterface {
    * Evaluates the alarm state using the supplied measurement value.
    *
    * @param measuredValue measured value
-   * @param dt simulation time step
-   * @param time current simulation time
+   * @param dt            simulation time step
+   * @param time          current simulation time
    * @return events generated during the evaluation
    */
   public List<AlarmEvent> evaluateAlarm(double measuredValue, double dt, double time);
@@ -194,8 +194,8 @@ public interface MeasurementDeviceInterface extends ProcessElementInterface {
   public AlarmEvent acknowledgeAlarm(double time);
 
   /**
-   * Returns the instrument tag identifier used for field data integration. The tag maps this
-   * instrument to a signal in the plant historian or data source (e.g. "PT-101", "TT-201").
+   * Returns the instrument tag identifier used for field data integration. The tag maps this instrument to a signal in
+   * the plant historian or data source (e.g. "PT-101", "TT-201").
    *
    * @return tag string, or empty string if not set
    */
@@ -246,8 +246,7 @@ public interface MeasurementDeviceInterface extends ProcessElementInterface {
 
   /**
    * Returns the deviation between the model-calculated value and the field value. Computed as
-   * {@code getMeasuredValue() - getFieldValue()}. Useful for {@link InstrumentTagRole#BENCHMARK}
-   * instruments.
+   * {@code getMeasuredValue() - getFieldValue()}. Useful for {@link InstrumentTagRole#BENCHMARK} instruments.
    *
    * @return deviation (model minus field), or {@code Double.NaN} if no field value is set
    */
@@ -262,8 +261,7 @@ public interface MeasurementDeviceInterface extends ProcessElementInterface {
    * Returns the relative deviation between model and field as a percentage. Computed as
    * {@code (getMeasuredValue() - getFieldValue()) / getFieldValue() * 100.0}.
    *
-   * @return relative deviation in percent, or {@code Double.NaN} if no field value is set or field
-   *         value is zero
+   * @return relative deviation in percent, or {@code Double.NaN} if no field value is set or field value is zero
    */
   public default double getRelativeDeviation() {
     if (!hasFieldValue() || getFieldValue() == 0.0) {
@@ -273,9 +271,9 @@ public interface MeasurementDeviceInterface extends ProcessElementInterface {
   }
 
   /**
-   * Applies the field value to the connected stream or equipment. Only effective for instruments
-   * with role {@link InstrumentTagRole#INPUT}. Subclasses override to push the field value into
-   * their specific model property (pressure, temperature, flow, etc.).
+   * Applies the field value to the connected stream or equipment. Only effective for instruments with role
+   * {@link InstrumentTagRole#INPUT}. Subclasses override to push the field value into their specific model property
+   * (pressure, temperature, flow, etc.).
    */
   public default void applyFieldValue() {
     // No-op by default; stream-based subclasses override

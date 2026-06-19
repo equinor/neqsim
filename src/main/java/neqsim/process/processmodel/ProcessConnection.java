@@ -4,9 +4,9 @@ import java.io.Serializable;
 import java.util.Objects;
 
 /**
- * Represents an explicit connection between two process elements identified by name and port. This
- * allows users and interchange formats (DEXPI) to declare connections independently of stream
- * objects, enabling topology-first model construction.
+ * Represents an explicit connection between two process elements identified by name and port. This allows users and
+ * interchange formats (DEXPI) to declare connections independently of stream objects, enabling topology-first model
+ * construction.
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -38,13 +38,13 @@ public class ProcessConnection implements Serializable {
    * Creates a new process connection.
    *
    * @param sourceEquipment name of the upstream equipment
-   * @param sourcePort port name on the source equipment (e.g. "gasOut", "outlet")
+   * @param sourcePort      port name on the source equipment (e.g. "gasOut", "outlet")
    * @param targetEquipment name of the downstream equipment
-   * @param targetPort port name on the target equipment (e.g. "inlet")
-   * @param type connection type
+   * @param targetPort      port name on the target equipment (e.g. "inlet")
+   * @param type            connection type
    */
-  public ProcessConnection(String sourceEquipment, String sourcePort, String targetEquipment,
-      String targetPort, ConnectionType type) {
+  public ProcessConnection(String sourceEquipment, String sourcePort, String targetEquipment, String targetPort,
+      ConnectionType type) {
     this.sourceEquipment = Objects.requireNonNull(sourceEquipment);
     this.sourcePort = sourcePort != null ? sourcePort : "outlet";
     this.targetEquipment = Objects.requireNonNull(targetEquipment);
@@ -159,16 +159,14 @@ public class ProcessConnection implements Serializable {
       return false;
     }
     ProcessConnection other = (ProcessConnection) obj;
-    return Objects.equals(sourceEquipment, other.sourceEquipment)
-        && Objects.equals(sourcePort, other.sourcePort)
-        && Objects.equals(targetEquipment, other.targetEquipment)
-        && Objects.equals(targetPort, other.targetPort) && type == other.type;
+    return Objects.equals(sourceEquipment, other.sourceEquipment) && Objects.equals(sourcePort, other.sourcePort)
+	&& Objects.equals(targetEquipment, other.targetEquipment) && Objects.equals(targetPort, other.targetPort)
+	&& type == other.type;
   }
 
   /** {@inheritDoc} */
   @Override
   public String toString() {
-    return sourceEquipment + "." + sourcePort + " -> " + targetEquipment + "." + targetPort + " ["
-        + type + "]";
+    return sourceEquipment + "." + sourcePort + " -> " + targetEquipment + "." + targetPort + " [" + type + "]";
   }
 }

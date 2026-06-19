@@ -8,13 +8,12 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 /**
- * Unit tests for the integrated production-modelling stack (reservoir, wells, flowlines, network
- * solve, gas-lift allocation, well-test matching, and reservoir-to-market optimisation).
+ * Unit tests for the integrated production-modelling stack (reservoir, wells, flowlines, network solve, gas-lift
+ * allocation, well-test matching, and reservoir-to-market optimisation).
  *
  * <p>
- * The tests use analytic / data-driven deliverability curves ({@code fromVogel} /
- * {@code fromArrays}) rather than {@code fromWellSystem} so they are fast, deterministic, and do
- * not run a full thermodynamic flash.
+ * The tests use analytic / data-driven deliverability curves ({@code fromVogel} / {@code fromArrays}) rather than
+ * {@code fromWellSystem} so they are fast, deterministic, and do not run a full thermodynamic flash.
  * </p>
  *
  * @author NeqSim
@@ -26,8 +25,7 @@ class IntegratedProductionTest {
   private static final double RATE_TOL = 1.0e-6;
 
   /**
-   * A Vogel deliverability curve must be strictly decreasing in back pressure and reach zero at the
-   * shut-in pressure.
+   * A Vogel deliverability curve must be strictly decreasing in back pressure and reach zero at the shut-in pressure.
    */
   @Test
   void testDeliverabilityCurveMonotonic() {
@@ -50,16 +48,16 @@ class IntegratedProductionTest {
    */
   @Test
   void testDeliverabilityCurveInterpolation() {
-    WellDeliverabilityCurve curve = WellDeliverabilityCurve
-        .fromArrays(new double[] {40.0, 90.0, 140.0}, new double[] {3000.0, 1500.0, 0.0});
+    WellDeliverabilityCurve curve = WellDeliverabilityCurve.fromArrays(new double[] { 40.0, 90.0, 140.0 },
+	new double[] { 3000.0, 1500.0, 0.0 });
     assertEquals(2250.0, curve.rateAt(65.0), 1.0e-6);
     assertEquals(750.0, curve.rateAt(115.0), 1.0e-6);
     assertEquals(0.0, curve.rateAt(140.0), RATE_TOL);
   }
 
   /**
-   * A single well tied to an export sink must converge and produce a positive rate between the
-   * reservoir and export pressures.
+   * A single well tied to an export sink must converge and produce a positive rate between the reservoir and export
+   * pressures.
    */
   @Test
   void testNetworkSolveSingleWell() {
@@ -119,13 +117,12 @@ class IntegratedProductionTest {
     OilTankDrive drive = new OilTankDrive(220.0, 8.0e6, 120.0, 90.0);
     assertEquals(220.0, drive.getReservoirPressure(), 1.0e-9);
     drive.produce(8.0e6, 3650.0);
-    assertTrue(drive.getReservoirPressure() >= 90.0 - 1.0e-6,
-        "pressure must respect abandonment floor");
+    assertTrue(drive.getReservoirPressure() >= 90.0 - 1.0e-6, "pressure must respect abandonment floor");
   }
 
   /**
-   * Gas-lift allocation must honour the gas budget and apply the equal-slope (Lagrangian)
-   * optimality condition across wells.
+   * Gas-lift allocation must honour the gas budget and apply the equal-slope (Lagrangian) optimality condition across
+   * wells.
    */
   @Test
   void testGasLiftAllocationHonoursBudget() {
@@ -149,13 +146,12 @@ class IntegratedProductionTest {
     GasLiftNetworkOptimizer opt = new GasLiftNetworkOptimizer();
     opt.addWell("A", curve);
     GasLiftNetworkOptimizer.AllocationResult result = opt.allocate(1.0e9);
-    assertEquals(curve.optimalLiftRate(), result.getLiftRates().get("A"),
-        curve.optimalLiftRate() * 0.05);
+    assertEquals(curve.optimalLiftRate(), result.getLiftRates().get("A"), curve.optimalLiftRate() * 0.05);
   }
 
   /**
-   * A Vogel well-test match must recover the reservoir pressure and reproduce the measured rates
-   * with a small RMS error.
+   * A Vogel well-test match must recover the reservoir pressure and reproduce the measured rates with a small RMS
+   * error.
    */
   @Test
   void testWellTestMatcherVogelRoundTrip() {
@@ -164,7 +160,7 @@ class IntegratedProductionTest {
     double aofp = 3000.0;
     WellDeliverabilityCurve truth = WellDeliverabilityCurve.fromVogel(aofp, pr);
     WellTestMatcher matcher = new WellTestMatcher();
-    double[] testP = new double[] {160.0, 120.0, 80.0};
+    double[] testP = new double[] { 160.0, 120.0, 80.0 };
     for (int i = 0; i < testP.length; i++) {
       matcher.addTestPoint(truth.rateAt(testP[i]), testP[i]);
     }
@@ -191,8 +187,8 @@ class IntegratedProductionTest {
   }
 
   /**
-   * The integrated model must solve a balanced two-well field and expose per-well rates, revenue,
-   * energy, and emissions.
+   * The integrated model must solve a balanced two-well field and expose per-well rates, revenue, energy, and
+   * emissions.
    */
   @Test
   void testIntegratedModelSolve() {
@@ -202,9 +198,9 @@ class IntegratedProductionTest {
     model.setEnergyIntensity(0.05);
     model.setEmissionIntensity(0.18);
     model.addWell("GAS-1", new MaterialBalanceGasDrive(250.0, 5.0e9, 0.90),
-        WellDeliverabilityCurve.fromVogel(2.0e6, 250.0));
+	WellDeliverabilityCurve.fromVogel(2.0e6, 250.0));
     model.addWell("OIL-1", new OilTankDrive(220.0, 8.0e6, 120.0, 90.0),
-        WellDeliverabilityCurve.fromVogel(4000.0, 220.0));
+	WellDeliverabilityCurve.fromVogel(4000.0, 220.0));
     IntegratedSolveResult res = model.solve();
     assertTrue(res.isConverged(), "model must converge, method=" + res.getMethod());
     assertTrue(res.getFieldRate() > 0.0);
@@ -222,7 +218,7 @@ class IntegratedProductionTest {
     IntegratedProductionModel model = new IntegratedProductionModel("Field");
     model.setExportPressure(40.0).setHydrocarbonPrice(0.5);
     model.addWell("GAS-1", new MaterialBalanceGasDrive(250.0, 2.0e9, 0.90),
-        WellDeliverabilityCurve.fromVogel(2.0e6, 250.0));
+	WellDeliverabilityCurve.fromVogel(2.0e6, 250.0));
     ProductionProfile profile = model.runProfile(8.0, 1.0);
     assertNotNull(profile);
     assertTrue(profile.getPoints().size() >= 8);
@@ -241,13 +237,13 @@ class IntegratedProductionTest {
     IntegratedProductionModel model = new IntegratedProductionModel("Field");
     model.setExportPressure(40.0).setHydrocarbonPrice(0.5);
     model.addWell("GAS-1", new MaterialBalanceGasDrive(250.0, 5.0e9, 0.90),
-        WellDeliverabilityCurve.fromVogel(2.0e6, 250.0));
+	WellDeliverabilityCurve.fromVogel(2.0e6, 250.0));
     model.addWell("OIL-1", new OilTankDrive(220.0, 8.0e6, 120.0, 90.0),
-        WellDeliverabilityCurve.fromVogel(4000.0, 220.0));
+	WellDeliverabilityCurve.fromVogel(4000.0, 220.0));
     // Capacity well below the unconstrained field rate.
     double capacity = 500000.0;
     ReservoirToMarketOptimizer optimizer = new ReservoirToMarketOptimizer(model)
-        .setObjective(ReservoirToMarketOptimizer.Objective.REVENUE).setFacilityCapacity(capacity);
+	.setObjective(ReservoirToMarketOptimizer.Objective.REVENUE).setFacilityCapacity(capacity);
     ReservoirToMarketOptimizer.OptimizationResult opt = optimizer.optimize();
     assertNotNull(opt);
     assertTrue(opt.getFieldRate() <= capacity * 1.01, "field rate must respect capacity");

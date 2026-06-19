@@ -36,21 +36,21 @@ public class PhaseGENRTL extends PhaseGE {
    * Constructor for PhaseGENRTL.
    * </p>
    */
-  public PhaseGENRTL() {}
+  public PhaseGENRTL() {
+  }
 
   /**
    * <p>
    * Constructor for PhaseGENRTL.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param alpha an array of type double
-   * @param Dij an array of type double
-   * @param mixRule an array of {@link java.lang.String} objects
+   * @param phase    a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param alpha    an array of type double
+   * @param Dij      an array of type double
+   * @param mixRule  an array of {@link java.lang.String} objects
    * @param intparam an array of type double
    */
-  public PhaseGENRTL(PhaseInterface phase, double[][] alpha, double[][] Dij, String[][] mixRule,
-      double[][] intparam) {
+  public PhaseGENRTL(PhaseInterface phase, double[][] alpha, double[][] Dij, String[][] mixRule, double[][] intparam) {
     componentArray = new ComponentGeNRTL[alpha[0].length];
     this.mixRuleString = mixRule;
     this.alpha = alpha;
@@ -58,9 +58,8 @@ public class PhaseGENRTL extends PhaseGE {
     this.intparam = intparam;
     for (int i = 0; i < alpha[0].length; i++) {
       numberOfComponents++;
-      componentArray[i] = new ComponentGeNRTL(phase.getComponent(i).getName(),
-          phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
-          phase.getComponent(i).getComponentNumber());
+      componentArray[i] = new ComponentGeNRTL(phase.getComponent(i).getName(), phase.getComponent(i).getNumberOfmoles(),
+	  phase.getComponent(i).getNumberOfMolesInPhase(), phase.getComponent(i).getComponentNumber());
     }
     setMixingRule(EosMixingRuleType.CLASSIC);
   }
@@ -114,13 +113,12 @@ public class PhaseGENRTL extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, PhaseType pt) {
+  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+      PhaseType pt) {
     GE = 0;
     for (int i = 0; i < numberOfComponents; i++) {
-      GE += phase.getComponent(i).getx()
-          * Math.log(((ComponentGEInterface) componentArray[i]).getGamma(phase, numberOfComponents,
-              temperature, pressure, pt, alpha, Dij, intparam, mixRuleString));
+      GE += phase.getComponent(i).getx() * Math.log(((ComponentGEInterface) componentArray[i]).getGamma(phase,
+	  numberOfComponents, temperature, pressure, pt, alpha, Dij, intparam, mixRuleString));
     }
 
     return R * temperature * numberOfMolesInPhase * GE;

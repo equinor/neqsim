@@ -11,9 +11,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Fermenter / bioreactor for biological conversion processes.
  *
  * <p>
- * Extends {@link StirredTankReactor} with bio-process specific features such as aeration, oxygen
- * transfer, pH control, and cell growth tracking. Supports aerobic and anaerobic fermentation
- * modes.
+ * Extends {@link StirredTankReactor} with bio-process specific features such as aeration, oxygen transfer, pH control,
+ * and cell growth tracking. Supports aerobic and anaerobic fermentation modes.
  * </p>
  *
  * <p>
@@ -80,7 +79,7 @@ public class Fermenter extends StirredTankReactor {
   /**
    * Constructor for Fermenter with inlet stream.
    *
-   * @param name name of the fermenter
+   * @param name        name of the fermenter
    * @param inletStream inlet feed stream
    */
   public Fermenter(String name, StreamInterface inletStream) {
@@ -228,8 +227,8 @@ public class Fermenter extends StirredTankReactor {
    * Calculate the estimated aeration compressor power.
    *
    * <p>
-   * Uses a simplified model: Power = Q * rho * g * H, where Q is volumetric air flow rate, rho is
-   * air density, g is gravity, H is liquid height.
+   * Uses a simplified model: Power = Q * rho * g * H, where Q is volumetric air flow rate, rho is air density, g is
+   * gravity, H is liquid height.
    * </p>
    *
    * @return estimated aeration power in kW
@@ -254,17 +253,15 @@ public class Fermenter extends StirredTankReactor {
     // Apply all reactions to the system
     for (StoichiometricReaction rxn : getReactions()) {
       try {
-        rxn.react(system);
+	rxn.react(system);
       } catch (Exception ex) {
-        logger.warn("Reaction '{}' failed in fermenter '{}': {}", rxn.getName(), getName(),
-            ex.getMessage());
+	logger.warn("Reaction '{}' failed in fermenter '{}': {}", rxn.getName(), getName(), ex.getMessage());
       }
     }
 
     // Set outlet conditions
-    double outPressure =
-        Double.isNaN(getReactorPressure()) ? system.getPressure() - getPressureDrop()
-            : getReactorPressure();
+    double outPressure = Double.isNaN(getReactorPressure()) ? system.getPressure() - getPressureDrop()
+	: getReactorPressure();
     system.setPressure(outPressure);
 
     if (isIsothermal() && !Double.isNaN(getReactorTemperature())) {
@@ -275,9 +272,9 @@ public class Fermenter extends StirredTankReactor {
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
     try {
       if (isIsothermal()) {
-        ops.TPflash();
+	ops.TPflash();
       } else {
-        ops.PHflash(inletEnthalpy, 0);
+	ops.PHflash(inletEnthalpy, 0);
       }
     } catch (Exception ex) {
       logger.error("Flash calculation failed in fermenter '{}': {}", getName(), ex.getMessage());

@@ -10,9 +10,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * Test class for bio-processing reactor equipment: StoichiometricReaction, StirredTankReactor,
- * Fermenter, and EnzymeTreatment. Uses COMP_EXT database for bio-relevant components such as
- * glucose, ethanol, lactic acid, succinic acid, and glycerol.
+ * Test class for bio-processing reactor equipment: StoichiometricReaction, StirredTankReactor, Fermenter, and
+ * EnzymeTreatment. Uses COMP_EXT database for bio-relevant components such as glucose, ethanol, lactic acid, succinic
+ * acid, and glycerol.
  *
  * @author NeqSim team
  * @version 1.0
@@ -134,8 +134,7 @@ public class BioProcessingReactorTest {
     Assertions.assertEquals(305.15, outTemp, 0.1, "Outlet temperature should be 305.15 K");
 
     // Check agitator power
-    Assertions.assertEquals(75.0, reactor.getAgitatorPower(), 1e-6,
-        "Agitator power should be 1.5 * 50 = 75 kW");
+    Assertions.assertEquals(75.0, reactor.getAgitatorPower(), 1e-6, "Agitator power should be 1.5 * 50 = 75 kW");
   }
 
   /**
@@ -276,8 +275,7 @@ public class BioProcessingReactorTest {
 
     // With default sensitivity 0.02 and 10 degree offset: 1.0 - 0.02 * 10 = 0.8
     double activity = treatment.getRelativeActivity();
-    Assertions.assertEquals(0.8, activity, 1e-6,
-        "Activity should be 0.8 at 10 degrees from optimal");
+    Assertions.assertEquals(0.8, activity, 1e-6, "Activity should be 0.8 at 10 degrees from optimal");
   }
 
   /**
@@ -330,7 +328,6 @@ public class BioProcessingReactorTest {
     reactor.run();
 
     // Adiabatic: heat duty should be 0
-    Assertions.assertEquals(0.0, reactor.getHeatDuty(), 1e-6,
-        "Adiabatic reactor should have zero heat duty");
+    Assertions.assertEquals(0.0, reactor.getHeatDuty(), 1e-6, "Adiabatic reactor should have zero heat duty");
   }
 }

@@ -303,11 +303,10 @@ public class ProcessCostEstimate implements java.io.Serializable {
   /**
    * Constructor with process system and mechanical design.
    *
-   * @param processSystem the process system
+   * @param processSystem          the process system
    * @param systemMechanicalDesign the system mechanical design
    */
-  public ProcessCostEstimate(ProcessSystem processSystem,
-      SystemMechanicalDesign systemMechanicalDesign) {
+  public ProcessCostEstimate(ProcessSystem processSystem, SystemMechanicalDesign systemMechanicalDesign) {
     this.processSystem = processSystem;
     this.systemMechanicalDesign = systemMechanicalDesign;
     this.costCalculator = new CostEstimationCalculator();
@@ -321,8 +320,8 @@ public class ProcessCostEstimate implements java.io.Serializable {
    * Calculate cost estimates for all equipment in the process.
    *
    * <p>
-   * This method iterates through all equipment, initializes mechanical designs if needed,
-   * calculates cost estimates, and aggregates the totals.
+   * This method iterates through all equipment, initializes mechanical designs if needed, calculates cost estimates,
+   * and aggregates the totals.
    * </p>
    */
   public void calculateAllCosts() {
@@ -341,7 +340,7 @@ public class ProcessCostEstimate implements java.io.Serializable {
     // Process each equipment
     for (ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
       if (equipment == null) {
-        continue;
+	continue;
       }
 
       // Initialize mechanical design if needed
@@ -349,7 +348,7 @@ public class ProcessCostEstimate implements java.io.Serializable {
       MechanicalDesign mecDesign = equipment.getMechanicalDesign();
 
       if (mecDesign == null) {
-        continue;
+	continue;
       }
 
       // Run mechanical design calculation
@@ -360,7 +359,7 @@ public class ProcessCostEstimate implements java.io.Serializable {
       UnitCostEstimateBaseClass costEst = mecDesign.getCostEstimate();
 
       if (costEst == null) {
-        continue;
+	continue;
       }
 
       // Create equipment summary
@@ -428,15 +427,13 @@ public class ProcessCostEstimate implements java.io.Serializable {
       return "Pumps";
     } else if (className.contains("Expander")) {
       return "Expanders";
-    } else if (className.contains("HeatExchanger") || className.contains("Cooler")
-        || className.contains("Heater")) {
+    } else if (className.contains("HeatExchanger") || className.contains("Cooler") || className.contains("Heater")) {
       return "Heat Exchangers";
     } else if (className.contains("Valve")) {
       return "Valves";
     } else if (className.contains("Tank")) {
       return "Tanks";
-    } else if (className.contains("Column") || className.contains("Distillation")
-        || className.contains("Absorber")) {
+    } else if (className.contains("Column") || className.contains("Distillation") || className.contains("Absorber")) {
       return "Columns";
     } else if (className.contains("Mixer") || className.contains("Splitter")) {
       return "Piping";
@@ -477,12 +474,9 @@ public class ProcessCostEstimate implements java.io.Serializable {
 
     costByDiscipline.put("Process Equipment", totalPurchasedEquipmentCost);
     costByDiscipline.put("Piping & Valves", totalBareModuleCost * pipingFactor / equipmentFactor);
-    costByDiscipline.put("Electrical & Instrumentation",
-        totalBareModuleCost * eiAndFactor / equipmentFactor);
-    costByDiscipline.put("Civil & Structural",
-        totalBareModuleCost * civilStructuralFactor / equipmentFactor);
-    costByDiscipline.put("Other (HVAC, Paint, Insulation)",
-        totalBareModuleCost * otherFactor / equipmentFactor);
+    costByDiscipline.put("Electrical & Instrumentation", totalBareModuleCost * eiAndFactor / equipmentFactor);
+    costByDiscipline.put("Civil & Structural", totalBareModuleCost * civilStructuralFactor / equipmentFactor);
+    costByDiscipline.put("Other (HVAC, Paint, Insulation)", totalBareModuleCost * otherFactor / equipmentFactor);
   }
 
   // ============================================================================
@@ -654,31 +648,23 @@ public class ProcessCostEstimate implements java.io.Serializable {
 
     sb.append("CAPITAL COST SUMMARY\n");
     sb.append("----------------------------------------------------------------------\n");
-    sb.append(String.format(Locale.US, "Purchased Equipment Cost (PEC):    $%,.0f%n",
-      totalPurchasedEquipmentCost));
-    sb.append(String.format(Locale.US, "Bare Module Cost (BMC):            $%,.0f%n",
-      totalBareModuleCost));
-    sb.append(String.format(Locale.US, "Total Module Cost (TMC):           $%,.0f%n",
-      totalModuleCost));
-    sb.append(String.format(Locale.US, "Grass Roots Cost:                  $%,.0f%n",
-      totalGrassRootsCost));
+    sb.append(String.format(Locale.US, "Purchased Equipment Cost (PEC):    $%,.0f%n", totalPurchasedEquipmentCost));
+    sb.append(String.format(Locale.US, "Bare Module Cost (BMC):            $%,.0f%n", totalBareModuleCost));
+    sb.append(String.format(Locale.US, "Total Module Cost (TMC):           $%,.0f%n", totalModuleCost));
+    sb.append(String.format(Locale.US, "Grass Roots Cost:                  $%,.0f%n", totalGrassRootsCost));
     sb.append("\n");
 
     sb.append("INSTALLATION\n");
     sb.append("----------------------------------------------------------------------\n");
-    sb.append(String.format(Locale.US, "Total Installation Man-Hours:      %,.0f%n",
-      totalInstallationManHours));
+    sb.append(String.format(Locale.US, "Total Installation Man-Hours:      %,.0f%n", totalInstallationManHours));
     sb.append("\n");
 
     sb.append("COST BY EQUIPMENT TYPE\n");
     sb.append("----------------------------------------------------------------------\n");
     sb.append(String.format(Locale.US, "%-25s %15s %10s%n", "Type", "Cost (USD)", "% of PEC"));
     for (Map.Entry<String, Double> entry : costByEquipmentType.entrySet()) {
-      double pct =
-          (totalPurchasedEquipmentCost > 0) ? (entry.getValue() / totalPurchasedEquipmentCost * 100)
-              : 0;
-        sb.append(String.format(Locale.US, "%-25s $%,14.0f %9.1f%%%n", entry.getKey(),
-          entry.getValue(), pct));
+      double pct = (totalPurchasedEquipmentCost > 0) ? (entry.getValue() / totalPurchasedEquipmentCost * 100) : 0;
+      sb.append(String.format(Locale.US, "%-25s $%,14.0f %9.1f%%%n", entry.getKey(), entry.getValue(), pct));
     }
     sb.append("\n");
 
@@ -690,8 +676,7 @@ public class ProcessCostEstimate implements java.io.Serializable {
     }
     for (Map.Entry<String, Double> entry : costByDiscipline.entrySet()) {
       double pct = (totalDiscipline > 0) ? (entry.getValue() / totalDiscipline * 100) : 0;
-        sb.append(String.format(Locale.US, "%-35s $%,14.0f %9.1f%%%n", entry.getKey(),
-          entry.getValue(), pct));
+      sb.append(String.format(Locale.US, "%-35s $%,14.0f %9.1f%%%n", entry.getKey(), entry.getValue(), pct));
     }
     sb.append("\n");
 
@@ -718,16 +703,15 @@ public class ProcessCostEstimate implements java.io.Serializable {
     sb.append("======================================================================\n");
     sb.append("EQUIPMENT COST LIST\n");
     sb.append("======================================================================\n\n");
-    sb.append(String.format(Locale.US, "%-20s %-15s %15s %15s %12s%n", "Name", "Type", "PEC (USD)",
-        "TMC (USD)", "Man-Hours"));
-    sb.append(String.format(Locale.US, "%-20s %-15s %15s %15s %12s%n", "--------------------",
-        "---------------", "---------------", "---------------", "------------"));
+    sb.append(String.format(Locale.US, "%-20s %-15s %15s %15s %12s%n", "Name", "Type", "PEC (USD)", "TMC (USD)",
+	"Man-Hours"));
+    sb.append(String.format(Locale.US, "%-20s %-15s %15s %15s %12s%n", "--------------------", "---------------",
+	"---------------", "---------------", "------------"));
 
     for (EquipmentCostSummary eq : equipmentCosts) {
-        sb.append(String.format(Locale.US, "%-20s %-15s $%,14.0f $%,14.0f %,11.0f%n",
-          truncate(eq.getName(), 20),
-          truncate(eq.getType(), 15), eq.getPurchasedEquipmentCost(), eq.getTotalModuleCost(),
-          eq.getInstallationManHours()));
+      sb.append(String.format(Locale.US, "%-20s %-15s $%,14.0f $%,14.0f %,11.0f%n", truncate(eq.getName(), 20),
+	  truncate(eq.getType(), 15), eq.getPurchasedEquipmentCost(), eq.getTotalModuleCost(),
+	  eq.getInstallationManHours()));
     }
 
     sb.append("\n======================================================================\n");
@@ -737,7 +721,7 @@ public class ProcessCostEstimate implements java.io.Serializable {
   /**
    * Truncate string to max length.
    *
-   * @param str the string to truncate
+   * @param str    the string to truncate
    * @param maxLen maximum length
    * @return truncated string
    */
@@ -804,8 +788,7 @@ public class ProcessCostEstimate implements java.io.Serializable {
     }
     result.put("equipment", equipList);
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(result);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(result);
   }
 
   /**
@@ -845,9 +828,9 @@ public class ProcessCostEstimate implements java.io.Serializable {
    *
    * @param operatingHoursPerYear annual operating hours (typically 8000-8760)
    * @param electricityCostPerKWh electricity cost in $/kWh
-   * @param steamCostPerTonne steam cost in $/tonne
+   * @param steamCostPerTonne     steam cost in $/tonne
    * @param coolingWaterCostPerM3 cooling water cost in $/m3
-   * @param laborCostPerHour labor cost in $/hr
+   * @param laborCostPerHour      labor cost in $/hr
    * @return total annual operating cost in USD
    */
   public double calculateOperatingCost(int operatingHoursPerYear, double electricityCostPerKWh,
@@ -861,61 +844,60 @@ public class ProcessCostEstimate implements java.io.Serializable {
 
     if (processSystem != null) {
       for (ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
-        if (equipment == null) {
-          continue;
-        }
+	if (equipment == null) {
+	  continue;
+	}
 
-        String className = equipment.getClass().getSimpleName();
+	String className = equipment.getClass().getSimpleName();
 
-        // Estimate power consumption for rotating equipment
-        if (className.contains("Compressor") || className.contains("Pump")) {
-          double power = 0.0;
-          try {
-            java.lang.reflect.Method getPower =
-                equipment.getClass().getMethod("getPower", String.class);
-            Object result = getPower.invoke(equipment, "kW");
-            if (result instanceof Number) {
-              power = ((Number) result).doubleValue();
-            }
-          } catch (Exception e) {
-            // Ignore if method doesn't exist
-          }
-          electricityCost += power * operatingHoursPerYear * electricityCostPerKWh;
-        }
+	// Estimate power consumption for rotating equipment
+	if (className.contains("Compressor") || className.contains("Pump")) {
+	  double power = 0.0;
+	  try {
+	    java.lang.reflect.Method getPower = equipment.getClass().getMethod("getPower", String.class);
+	    Object result = getPower.invoke(equipment, "kW");
+	    if (result instanceof Number) {
+	      power = ((Number) result).doubleValue();
+	    }
+	  } catch (Exception e) {
+	    // Ignore if method doesn't exist
+	  }
+	  electricityCost += power * operatingHoursPerYear * electricityCostPerKWh;
+	}
 
-        // Estimate steam for reboilers and heaters
-        if (className.contains("Heater") || className.contains("Reboiler")) {
-          double duty = 0.0;
-          try {
-            java.lang.reflect.Method getDuty = equipment.getClass().getMethod("getDuty");
-            Object result = getDuty.invoke(equipment);
-            if (result instanceof Number) {
-              duty = Math.abs(((Number) result).doubleValue()); // kW
-            }
-          } catch (Exception e) {
-            // Ignore if method doesn't exist
-          }
-          // Steam at 2200 kJ/kg latent heat
-          double steamFlow = duty * 3.6 / 2200.0; // kg/hr
-          steamCost += steamFlow * operatingHoursPerYear * steamCostPerTonne / 1000.0;
-        }
+	// Estimate steam for reboilers and heaters
+	if (className.contains("Heater") || className.contains("Reboiler")) {
+	  double duty = 0.0;
+	  try {
+	    java.lang.reflect.Method getDuty = equipment.getClass().getMethod("getDuty");
+	    Object result = getDuty.invoke(equipment);
+	    if (result instanceof Number) {
+	      duty = Math.abs(((Number) result).doubleValue()); // kW
+	    }
+	  } catch (Exception e) {
+	    // Ignore if method doesn't exist
+	  }
+	  // Steam at 2200 kJ/kg latent heat
+	  double steamFlow = duty * 3.6 / 2200.0; // kg/hr
+	  steamCost += steamFlow * operatingHoursPerYear * steamCostPerTonne / 1000.0;
+	}
 
-        // Estimate cooling water for coolers and condensers
-        if (className.contains("Cooler") || className.contains("Condenser")) {
-          double duty = 0.0;
-          try {
-            java.lang.reflect.Method getDuty = equipment.getClass().getMethod("getDuty");
-            Object result = getDuty.invoke(equipment);
-            if (result instanceof Number) {
-              duty = Math.abs(((Number) result).doubleValue()); // kW
-            }
-          } catch (Exception e) {
-            // Ignore if method doesn't exist
-          }
-          // Cooling water at 10°C rise, 4.18 kJ/kg·K
-          double cwFlow = duty * 3.6 / (4.18 * 10) / 1000.0; // m3/hr
-          coolingWaterCost += cwFlow * operatingHoursPerYear * coolingWaterCostPerM3;
-        }
+	// Estimate cooling water for coolers and condensers
+	if (className.contains("Cooler") || className.contains("Condenser")) {
+	  double duty = 0.0;
+	  try {
+	    java.lang.reflect.Method getDuty = equipment.getClass().getMethod("getDuty");
+	    Object result = getDuty.invoke(equipment);
+	    if (result instanceof Number) {
+	      duty = Math.abs(((Number) result).doubleValue()); // kW
+	    }
+	  } catch (Exception e) {
+	    // Ignore if method doesn't exist
+	  }
+	  // Cooling water at 10°C rise, 4.18 kJ/kg·K
+	  double cwFlow = duty * 3.6 / (4.18 * 10) / 1000.0; // m3/hr
+	  coolingWaterCost += cwFlow * operatingHoursPerYear * coolingWaterCostPerM3;
+	}
       }
     }
 
@@ -927,8 +909,7 @@ public class ProcessCostEstimate implements java.io.Serializable {
     int majorEquipmentCount = Math.max(1, equipmentCosts.size());
     int operatorsPerShift = Math.max(2, majorEquipmentCount / 5);
     int shiftsPerDay = 3;
-    double laborCost =
-        operatorsPerShift * shiftsPerDay * operatingHoursPerYear / 3 * laborCostPerHour;
+    double laborCost = operatorsPerShift * shiftsPerDay * operatingHoursPerYear / 3 * laborCostPerHour;
 
     // Supervision (15-20% of labor)
     double supervisionCost = laborCost * 0.18;
@@ -954,8 +935,8 @@ public class ProcessCostEstimate implements java.io.Serializable {
     operatingCostBreakdown.put("Overhead", overheadCost);
 
     // Total
-    totalAnnualOperatingCost = electricityCost + steamCost + coolingWaterCost + maintenanceCost
-        + laborCost + supervisionCost + suppliesCost + laboratoryCost + overheadCost;
+    totalAnnualOperatingCost = electricityCost + steamCost + coolingWaterCost + maintenanceCost + laborCost
+	+ supervisionCost + suppliesCost + laboratoryCost + overheadCost;
 
     return totalAnnualOperatingCost;
   }
@@ -1029,8 +1010,8 @@ public class ProcessCostEstimate implements java.io.Serializable {
   /**
    * Calculate net present value (NPV).
    *
-   * @param annualRevenue annual revenue in USD
-   * @param discountRate annual discount rate (e.g., 0.10 for 10%)
+   * @param annualRevenue    annual revenue in USD
+   * @param discountRate     annual discount rate (e.g., 0.10 for 10%)
    * @param projectLifeYears project life in years
    * @return NPV in USD
    */

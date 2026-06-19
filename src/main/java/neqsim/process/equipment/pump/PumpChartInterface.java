@@ -12,9 +12,9 @@ public interface PumpChartInterface extends Cloneable {
   /**
    * This method is used add a curve to the CompressorChart object.
    *
-   * @param speed a double
-   * @param flow an array of type double
-   * @param head an array of type double
+   * @param speed      a double
+   * @param flow       an array of type double
+   * @param head       an array of type double
    * @param efficiency an array of type double
    */
   public void addCurve(double speed, double[] flow, double[] head, double[] efficiency);
@@ -23,18 +23,17 @@ public interface PumpChartInterface extends Cloneable {
    * This method is used add a set of curves to the CompressorChart object.
    *
    * @param chartConditions an array of type double
-   * @param speed an array of type double
-   * @param flow an array of type double
-   * @param head an array of type double
-   * @param polyEff an array of type double
+   * @param speed           an array of type double
+   * @param flow            an array of type double
+   * @param head            an array of type double
+   * @param polyEff         an array of type double
    */
-  public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
-      double[][] polyEff);
+  public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head, double[][] polyEff);
 
   /**
    * Get method for polytropic head from reference curves.
    *
-   * @param flow [m3/h], speed in [rpm].
+   * @param flow  [m3/h], speed in [rpm].
    * @param speed a double
    * @return polytropic head in unit [getHeadUnit]
    */
@@ -43,7 +42,7 @@ public interface PumpChartInterface extends Cloneable {
   /**
    * Get method for efficiency from reference curves.
    *
-   * @param flow [m3/h], speed in [rpm].
+   * @param flow  [m3/h], speed in [rpm].
    * @param speed a double
    * @return efficiency [%].
    */
@@ -52,17 +51,15 @@ public interface PumpChartInterface extends Cloneable {
   /**
    * Set method for the reference conditions of the compressor chart.
    *
-   * @param refMW a double
+   * @param refMW          a double
    * @param refTemperature a double
-   * @param refPressure a double
-   * @param refZ a double
+   * @param refPressure    a double
+   * @param refZ           a double
    */
-  public void setReferenceConditions(double refMW, double refTemperature, double refPressure,
-      double refZ);
+  public void setReferenceConditions(double refMW, double refTemperature, double refPressure, double refZ);
 
   /**
-   * Checks if set to use compressor chart for compressor calculations (chart is set for
-   * compressor).
+   * Checks if set to use compressor chart for compressor calculations (chart is set for compressor).
    *
    * @return a boolean
    */
@@ -138,7 +135,7 @@ public interface PumpChartInterface extends Cloneable {
   /**
    * Check operating status at given flow and speed.
    *
-   * @param flow flow rate in m³/hr
+   * @param flow  flow rate in m³/hr
    * @param speed pump speed in rpm
    * @return operating status string
    */
@@ -154,7 +151,7 @@ public interface PumpChartInterface extends Cloneable {
   /**
    * Get NPSH required at specified flow and speed.
    *
-   * @param flow flow rate in m³/hr
+   * @param flow  flow rate in m³/hr
    * @param speed pump speed in rpm
    * @return NPSH required in meters
    */
@@ -178,8 +175,8 @@ public interface PumpChartInterface extends Cloneable {
    * Set the reference density for density correction.
    *
    * <p>
-   * Pump curves are typically measured with water (~998 kg/m³). When pumping fluids with different
-   * densities, the head must be corrected: H_actual = H_chart × (ρ_chart / ρ_actual)
+   * Pump curves are typically measured with water (~998 kg/m³). When pumping fluids with different densities, the head
+   * must be corrected: H_actual = H_chart × (ρ_chart / ρ_actual)
    * </p>
    *
    * @param referenceDensity reference fluid density in kg/m³ (use -1.0 to disable correction)
@@ -196,8 +193,8 @@ public interface PumpChartInterface extends Cloneable {
   /**
    * Get density-corrected head for a given flow, speed, and actual fluid density.
    *
-   * @param flow flow rate in m³/hr
-   * @param speed pump speed in rpm
+   * @param flow          flow rate in m³/hr
+   * @param speed         pump speed in rpm
    * @param actualDensity actual fluid density in kg/m³
    * @return corrected head in the unit specified by getHeadUnit()
    */
@@ -209,30 +206,28 @@ public interface PumpChartInterface extends Cloneable {
    * Calculate viscosity correction factors using the Hydraulic Institute (HI) method.
    *
    * @param viscosity kinematic viscosity in cSt (centistokes)
-   * @param flowBEP flow at best efficiency point in m³/hr
-   * @param headBEP head at best efficiency point in meters
-   * @param speed pump speed in rpm
+   * @param flowBEP   flow at best efficiency point in m³/hr
+   * @param headBEP   head at best efficiency point in meters
+   * @param speed     pump speed in rpm
    */
-  public void calculateViscosityCorrection(double viscosity, double flowBEP, double headBEP,
-      double speed);
+  public void calculateViscosityCorrection(double viscosity, double flowBEP, double headBEP, double speed);
 
   /**
    * Get head with both viscosity and density corrections applied.
    *
-   * @param flow flow rate in m³/hr
-   * @param speed pump speed in rpm
-   * @param actualDensity actual fluid density in kg/m³
+   * @param flow            flow rate in m³/hr
+   * @param speed           pump speed in rpm
+   * @param actualDensity   actual fluid density in kg/m³
    * @param actualViscosity actual kinematic viscosity in cSt
    * @return fully corrected head
    */
-  public double getFullyCorrectedHead(double flow, double speed, double actualDensity,
-      double actualViscosity);
+  public double getFullyCorrectedHead(double flow, double speed, double actualDensity, double actualViscosity);
 
   /**
    * Get efficiency with viscosity correction applied.
    *
-   * @param flow flow rate in m³/hr
-   * @param speed pump speed in rpm
+   * @param flow            flow rate in m³/hr
+   * @param speed           pump speed in rpm
    * @param actualViscosity actual kinematic viscosity in cSt
    * @return corrected efficiency in percent
    */

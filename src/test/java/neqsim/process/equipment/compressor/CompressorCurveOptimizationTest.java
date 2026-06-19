@@ -15,8 +15,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Test class demonstrating compressor curve generation with surge/stonewall lines and optimization
- * based on capacity constraints.
+ * Test class demonstrating compressor curve generation with surge/stonewall lines and optimization based on capacity
+ * constraints.
  *
  * <p>
  * This test shows:
@@ -81,26 +81,23 @@ public class CompressorCurveOptimizationTest {
   public void testGenerateCompressorCurvesWithSurgeAndStonewall() {
     // First verify initial compressor calculations are reasonable
     logger.info("\n=== Initial Compressor Verification ===");
-    logger.info("Inlet: " + feedStream.getFlowRate("kg/hr") + " kg/hr at "
-        + feedStream.getPressure("bara") + " bara, " + feedStream.getTemperature("C") + " °C");
+    logger.info("Inlet: " + feedStream.getFlowRate("kg/hr") + " kg/hr at " + feedStream.getPressure("bara") + " bara, "
+	+ feedStream.getTemperature("C") + " °C");
     logger.info("Outlet: " + compressor.getOutletPressure() + " bara, "
-        + compressor.getOutletStream().getTemperature("C") + " °C");
-    logger.info("Pressure ratio: "
-        + String.format("%.2f", compressor.getOutletPressure() / feedStream.getPressure("bara")));
-    logger.info("Volumetric flow (inlet): "
-        + String.format("%.1f", compressor.getInletStream().getFlowRate("m3/hr")) + " m³/hr");
+	+ compressor.getOutletStream().getTemperature("C") + " °C");
+    logger.info(
+	"Pressure ratio: " + String.format("%.2f", compressor.getOutletPressure() / feedStream.getPressure("bara")));
+    logger.info("Volumetric flow (inlet): " + String.format("%.1f", compressor.getInletStream().getFlowRate("m3/hr"))
+	+ " m³/hr");
     logger.info("Power: " + String.format("%.1f", compressor.getPower("kW")) + " kW");
-    logger.info("Polytropic head: " + String.format("%.2f", compressor.getPolytropicFluidHead())
-        + " kJ/kg");
-    logger.info("Polytropic efficiency: "
-        + String.format("%.1f", compressor.getPolytropicEfficiency() * 100) + "%");
+    logger.info("Polytropic head: " + String.format("%.2f", compressor.getPolytropicFluidHead()) + " kJ/kg");
+    logger.info("Polytropic efficiency: " + String.format("%.1f", compressor.getPolytropicEfficiency() * 100) + "%");
 
     // Verify power calculation is reasonable
     // Expected: Power = mass_flow * head / efficiency
     double massFlowKgS = feedStream.getFlowRate("kg/hr") / 3600.0;
     double expectedPowerKW = massFlowKgS * compressor.getPolytropicFluidHead() / 0.75;
-    System.out
-        .println("Expected power (approx): " + String.format("%.1f", expectedPowerKW) + " kW");
+    System.out.println("Expected power (approx): " + String.format("%.1f", expectedPowerKW) + " kW");
 
     // Generate compressor chart with 5 speed curves
     CompressorChartGenerator generator = new CompressorChartGenerator(compressor);
@@ -116,8 +113,7 @@ public class CompressorCurveOptimizationTest {
     process.run();
 
     // Verify chart is active and has curves
-    assertTrue(compressor.getCompressorChart().isUseCompressorChart(),
-        "Compressor chart should be active");
+    assertTrue(compressor.getCompressorChart().isUseCompressorChart(), "Compressor chart should be active");
     assertTrue(chart.getSpeeds().length >= 1, "Should have at least one speed curve");
 
     // Check that surge curve is generated
@@ -134,31 +130,21 @@ public class CompressorCurveOptimizationTest {
     double currentFlow = compressor.getInletStream().getFlowRate("m3/hr");
     double surgeFlowAtSpeed = chart.getSurgeFlowAtSpeed(compressor.getSpeed());
     double stoneWallFlowAtSpeed = chart.getStoneWallFlowAtSpeed(compressor.getSpeed());
-    double surgeFlowFromCurve =
-        chart.getSurgeCurve().getSurgeFlow(compressor.getPolytropicFluidHead());
-    double stoneWallFlowFromCurve =
-        chart.getStoneWallCurve().getStoneWallFlow(compressor.getPolytropicFluidHead());
+    double surgeFlowFromCurve = chart.getSurgeCurve().getSurgeFlow(compressor.getPolytropicFluidHead());
+    double stoneWallFlowFromCurve = chart.getStoneWallCurve().getStoneWallFlow(compressor.getPolytropicFluidHead());
     logger.info("Current flow: " + String.format("%.2f", currentFlow) + " m³/hr");
-    logger.info(
-        "Current head: " + String.format("%.2f", compressor.getPolytropicFluidHead()) + " kJ/kg");
-    System.out
-        .println("Surge flow at speed: " + String.format("%.2f", surgeFlowAtSpeed) + " m³/hr");
-    logger.info(
-        "Surge flow from curve (at head): " + String.format("%.2f", surgeFlowFromCurve) + " m³/hr");
-    logger
-        .info("Stonewall flow at speed: " + String.format("%.2f", stoneWallFlowAtSpeed) + " m³/hr");
-    logger.info("Stonewall flow from curve (at head): "
-        + String.format("%.2f", stoneWallFlowFromCurve) + " m³/hr");
+    logger.info("Current head: " + String.format("%.2f", compressor.getPolytropicFluidHead()) + " kJ/kg");
+    System.out.println("Surge flow at speed: " + String.format("%.2f", surgeFlowAtSpeed) + " m³/hr");
+    logger.info("Surge flow from curve (at head): " + String.format("%.2f", surgeFlowFromCurve) + " m³/hr");
+    logger.info("Stonewall flow at speed: " + String.format("%.2f", stoneWallFlowAtSpeed) + " m³/hr");
+    logger.info("Stonewall flow from curve (at head): " + String.format("%.2f", stoneWallFlowFromCurve) + " m³/hr");
     logger.info("Surge curve active: " + chart.getSurgeCurve().isActive());
     logger.info("Stonewall curve active: " + chart.getStoneWallCurve().isActive());
-    logger.info("Operating range: "
-        + String.format("%.2f", (stoneWallFlowAtSpeed - surgeFlowAtSpeed)) + " m³/hr");
-    logger.info("Surge margin: "
-        + String.format("%.1f", (currentFlow - surgeFlowAtSpeed) / currentFlow * 100)
-        + "% of flow");
-    logger.info("Stonewall margin: "
-        + String.format("%.1f", (stoneWallFlowAtSpeed - currentFlow) / currentFlow * 100)
-        + "% of flow");
+    logger.info("Operating range: " + String.format("%.2f", (stoneWallFlowAtSpeed - surgeFlowAtSpeed)) + " m³/hr");
+    logger.info(
+	"Surge margin: " + String.format("%.1f", (currentFlow - surgeFlowAtSpeed) / currentFlow * 100) + "% of flow");
+    logger.info("Stonewall margin: " + String.format("%.1f", (stoneWallFlowAtSpeed - currentFlow) / currentFlow * 100)
+	+ "% of flow");
 
     // Verify chart min/max speeds
     double minSpeed = chart.getMinSpeedCurve();
@@ -195,8 +181,8 @@ public class CompressorCurveOptimizationTest {
     for (java.util.Map.Entry<String, CapacityConstraint> entry : constraints.entrySet()) {
       CapacityConstraint c = entry.getValue();
       logger.printf(org.apache.logging.log4j.Level.INFO,
-          "%s: current=%.2f, design=%.2f, max=%.2f, utilization=%.1f%%%n", c.getName(),
-          c.getCurrentValue(), c.getDesignValue(), c.getMaxValue(), c.getUtilization() * 100);
+	  "%s: current=%.2f, design=%.2f, max=%.2f, utilization=%.1f%%%n", c.getName(), c.getCurrentValue(),
+	  c.getDesignValue(), c.getMaxValue(), c.getUtilization() * 100);
     }
 
     // Check speed constraint uses curve limits
@@ -237,8 +223,7 @@ public class CompressorCurveOptimizationTest {
     }
 
     // Check if any limits are exceeded
-    assertFalse(compressor.isHardLimitExceeded(),
-        "No hard limits should be exceeded at normal operation");
+    assertFalse(compressor.isHardLimitExceeded(), "No hard limits should be exceeded at normal operation");
 
     // Now increase speed to approach limits
     compressor.setSpeed(compressor.getCompressorChart().getMaxSpeedCurve() * 0.98);
@@ -247,7 +232,7 @@ public class CompressorCurveOptimizationTest {
     bottleneck = compressor.getBottleneckConstraint();
     assertNotNull(bottleneck, "Should have a bottleneck near max speed");
     logger.info("\nAt 98% max speed - Bottleneck: " + bottleneck.getName() + " at "
-        + String.format("%.1f", bottleneck.getUtilization() * 100) + "% utilization");
+	+ String.format("%.1f", bottleneck.getUtilization() * 100) + "% utilization");
   }
 
   /**
@@ -281,16 +266,14 @@ public class CompressorCurveOptimizationTest {
     // Check surge flow at current speed
     double surgeFlow = chart.getSurgeFlowAtSpeed(currentSpeed);
     if (!Double.isNaN(surgeFlow)) {
-      System.out
-          .println("Surge flow at current speed: " + String.format("%.2f", surgeFlow) + " m³/hr");
+      System.out.println("Surge flow at current speed: " + String.format("%.2f", surgeFlow) + " m³/hr");
       assertTrue(currentFlow > surgeFlow, "Current flow should be above surge flow");
     }
 
     // Check stonewall flow at current speed
     double stonewallFlow = chart.getStoneWallFlowAtSpeed(currentSpeed);
     if (!Double.isNaN(stonewallFlow)) {
-      logger.info(
-          "Stonewall flow at current speed: " + String.format("%.2f", stonewallFlow) + " m³/hr");
+      logger.info("Stonewall flow at current speed: " + String.format("%.2f", stonewallFlow) + " m³/hr");
       assertTrue(currentFlow < stonewallFlow, "Current flow should be below stonewall flow");
     }
 
@@ -338,15 +321,14 @@ public class CompressorCurveOptimizationTest {
       boolean surgeOk = surgeMargin >= minSurgeMargin;
 
       if (speedOk && surgeOk) {
-        maxAchievableFlow = feedStream.getFlowRate("kg/hr");
-        logger.printf(org.apache.logging.log4j.Level.INFO,
-            "Flow factor %.1f: %.0f kg/hr - OK (surge margin: %.1f%%)%n", flowFactor,
-            maxAchievableFlow, surgeMargin);
+	maxAchievableFlow = feedStream.getFlowRate("kg/hr");
+	logger.printf(org.apache.logging.log4j.Level.INFO, "Flow factor %.1f: %.0f kg/hr - OK (surge margin: %.1f%%)%n",
+	    flowFactor, maxAchievableFlow, surgeMargin);
       } else {
-        logger.printf(org.apache.logging.log4j.Level.INFO,
-            "Flow factor %.1f: %.0f kg/hr - LIMIT (speed OK: %b, surge OK: %b, margin: %.1f%%)%n",
-            flowFactor, feedStream.getFlowRate("kg/hr"), speedOk, surgeOk, surgeMargin);
-        break;
+	logger.printf(org.apache.logging.log4j.Level.INFO,
+	    "Flow factor %.1f: %.0f kg/hr - LIMIT (speed OK: %b, surge OK: %b, margin: %.1f%%)%n", flowFactor,
+	    feedStream.getFlowRate("kg/hr"), speedOk, surgeOk, surgeMargin);
+	break;
       }
     }
 
@@ -377,7 +359,7 @@ public class CompressorCurveOptimizationTest {
     logger.info("Target pressure: " + targetPressure + " bara");
 
     // Test with different flow rates
-    double[] flowRates = {12000, 15000, 18000, 20000};
+    double[] flowRates = { 12000, 15000, 18000, 20000 };
     for (double flow : flowRates) {
       feedStream.setFlowRate(flow, "kg/hr");
       process.run();
@@ -388,8 +370,8 @@ public class CompressorCurveOptimizationTest {
       double surgeMargin = compressor.getDistanceToSurge();
 
       logger.printf(org.apache.logging.log4j.Level.INFO,
-          "Flow %.0f kg/hr: Speed=%.0f RPM, P=%.1f bara, " + "withinCurve=%b, surgeMargin=%.1f%%%n",
-          flow, solvedSpeed, actualPressure, withinCurve, surgeMargin);
+	  "Flow %.0f kg/hr: Speed=%.0f RPM, P=%.1f bara, " + "withinCurve=%b, surgeMargin=%.1f%%%n", flow, solvedSpeed,
+	  actualPressure, withinCurve, surgeMargin);
 
       // Verify pressure is achieved
       assertEquals(targetPressure, actualPressure, 1.0, "Should achieve target pressure");
@@ -423,8 +405,7 @@ public class CompressorCurveOptimizationTest {
 
     // Verify chart works
     assertTrue(chart.getSpeeds().length == 5, "Should have 5 speed curves");
-    assertFalse(Double.isNaN(compressor.getDistanceToSurge()),
-        "Surge distance should be calculated");
+    assertFalse(Double.isNaN(compressor.getDistanceToSurge()), "Surge distance should be calculated");
   }
 
   /**
@@ -445,19 +426,15 @@ public class CompressorCurveOptimizationTest {
 
     logger.info("\n=== Capacity Constraint Report ===");
     logger.info("Equipment: " + compressor.getName());
-    logger.info("Overall utilization: "
-        + String.format("%.1f", compressor.getMaxUtilization() * 100) + "%");
+    logger.info("Overall utilization: " + String.format("%.1f", compressor.getMaxUtilization() * 100) + "%");
     logger.info("Hard limit exceeded: " + compressor.isHardLimitExceeded());
 
     CapacityConstraint bottleneck = compressor.getBottleneckConstraint();
     if (bottleneck != null) {
       logger.info("Bottleneck: " + bottleneck.getName() + " (" + bottleneck.getType() + ")");
-      logger.info("  Current: " + String.format("%.2f", bottleneck.getCurrentValue()) + " "
-          + bottleneck.getUnit());
-      logger.info("  Design: " + String.format("%.2f", bottleneck.getDesignValue()) + " "
-          + bottleneck.getUnit());
-      logger.info(
-          "  Max: " + String.format("%.2f", bottleneck.getMaxValue()) + " " + bottleneck.getUnit());
+      logger.info("  Current: " + String.format("%.2f", bottleneck.getCurrentValue()) + " " + bottleneck.getUnit());
+      logger.info("  Design: " + String.format("%.2f", bottleneck.getDesignValue()) + " " + bottleneck.getUnit());
+      logger.info("  Max: " + String.format("%.2f", bottleneck.getMaxValue()) + " " + bottleneck.getUnit());
     }
 
     // Print all constraints
@@ -465,7 +442,7 @@ public class CompressorCurveOptimizationTest {
     for (CapacityConstraint c : compressor.getCapacityConstraints().values()) {
       String status = c.isViolated() ? "VIOLATED" : (c.isNearLimit() ? "WARNING" : "OK");
       logger.printf(org.apache.logging.log4j.Level.INFO, "  %-20s: %6.1f%% [%s]%n", c.getName(),
-          c.getUtilization() * 100, status);
+	  c.getUtilization() * 100, status);
     }
   }
 }

@@ -20,8 +20,8 @@ import neqsim.util.database.NeqSimProcessDesignDataBase;
  * Shell and tube heat exchanger design calculator per TEMA standards.
  *
  * <p>
- * This calculator performs detailed mechanical design for shell and tube heat exchangers following
- * TEMA (Tubular Exchanger Manufacturers Association) standards. It calculates:
+ * This calculator performs detailed mechanical design for shell and tube heat exchangers following TEMA (Tubular
+ * Exchanger Manufacturers Association) standards. It calculates:
  * <ul>
  * <li>Tube bundle geometry (tube count, length, passes)</li>
  * <li>Shell dimensions and type selection</li>
@@ -170,8 +170,7 @@ public class ShellAndTubeDesignCalculator {
   private double foulingShell = 0.000176;
 
   // Shell-side method
-  private ThermalDesignCalculator.ShellSideMethod shellSideMethod =
-      ThermalDesignCalculator.ShellSideMethod.KERN;
+  private ThermalDesignCalculator.ShellSideMethod shellSideMethod = ThermalDesignCalculator.ShellSideMethod.KERN;
 
   // Vibration screening results
   private VibrationAnalysis.VibrationResult vibrationResult;
@@ -193,8 +192,8 @@ public class ShellAndTubeDesignCalculator {
       HeatExchanger hx = (HeatExchanger) equipment;
       // Extract process conditions
       if (hx.getOutletStream() != null) {
-        this.tubeSidePressure = hx.getOutletStream().getPressure();
-        this.designTemperature = hx.getOutletStream().getTemperature() - 273.15;
+	this.tubeSidePressure = hx.getOutletStream().getPressure();
+	this.designTemperature = hx.getOutletStream().getTemperature() - 273.15;
       }
     }
   }
@@ -206,8 +205,8 @@ public class ShellAndTubeDesignCalculator {
     // Get TEMA configuration
     TEMAConfiguration config = TEMAStandard.getConfiguration(temaDesignation);
     if (config == null) {
-      config = TEMAStandard.createConfiguration(temaDesignation.charAt(0),
-          temaDesignation.charAt(1), temaDesignation.charAt(2));
+      config = TEMAStandard.createConfiguration(temaDesignation.charAt(0), temaDesignation.charAt(1),
+	  temaDesignation.charAt(2));
     }
 
     // Load material properties from database
@@ -323,7 +322,7 @@ public class ShellAndTubeDesignCalculator {
     // Circumferential stress formula: t = P*R / (S*E - 0.6*P)
     double shellRadius = shellInsideDiameter / 2.0;
     shellWallThickness = (designPressure * 0.1 * shellRadius)
-        / (allowableStress * jointEfficiency - 0.6 * designPressure * 0.1);
+	/ (allowableStress * jointEfficiency - 0.6 * designPressure * 0.1);
     shellWallThickness += corrosionAllowanceShell;
 
     // Minimum wall thickness per TEMA
@@ -343,8 +342,7 @@ public class ShellAndTubeDesignCalculator {
     // Baffle spacing limits
     double minSpacing = TEMAStandard.getMinBaffleSpacing(shellInsideDiameter, temaClass);
     double maxSpacing = TEMAStandard.getMaxBaffleSpacing(shellInsideDiameter);
-    double maxTubeSpan =
-        TEMAStandard.getMaxUnsupportedSpan(tubeSize.getOuterDiameterMm(), tubeMaterial);
+    double maxTubeSpan = TEMAStandard.getMaxUnsupportedSpan(tubeSize.getOuterDiameterMm(), tubeMaterial);
 
     // Target spacing (balance heat transfer vs pressure drop)
     // Typically 0.3-0.5 of shell diameter
@@ -370,35 +368,32 @@ public class ShellAndTubeDesignCalculator {
 
     // Shell weight
     double shellVolume = Math.PI / 4.0
-        * (Math.pow(shellOutsideDiameter / 1000.0, 2) - Math.pow(shellInsideDiameter / 1000.0, 2))
-        * tubeLength / 1000.0;
+	* (Math.pow(shellOutsideDiameter / 1000.0, 2) - Math.pow(shellInsideDiameter / 1000.0, 2)) * tubeLength
+	/ 1000.0;
     shellWeight = shellVolume * steelDensity;
 
     // Tube weight
     double tubeOD = tubeSize.getOuterDiameterMm();
     double tubeID = tubeOD - 2.0 * tubeWallThickness;
-    double tubeVolume = Math.PI / 4.0
-        * (Math.pow(tubeOD / 1000.0, 2) - Math.pow(tubeID / 1000.0, 2)) * tubeLength / 1000.0;
+    double tubeVolume = Math.PI / 4.0 * (Math.pow(tubeOD / 1000.0, 2) - Math.pow(tubeID / 1000.0, 2)) * tubeLength
+	/ 1000.0;
     tubeWeight = tubeCount * tubeVolume * steelDensity;
 
     // Tubesheet weight (2 for fixed, 1 for U-tube)
     double tubesheetThickness = estimateTubesheetThickness();
-    double tubesheetVolume =
-        Math.PI / 4.0 * Math.pow(shellOutsideDiameter / 1000.0, 2) * tubesheetThickness / 1000.0;
+    double tubesheetVolume = Math.PI / 4.0 * Math.pow(shellOutsideDiameter / 1000.0, 2) * tubesheetThickness / 1000.0;
     int tubesheetCount = (config.getRearHead() == RearHeadType.U) ? 1 : 2;
     tubesheetWeight = tubesheetCount * tubesheetVolume * steelDensity;
 
     // Head weight (approximate as hemispherical)
     double headThickness = shellWallThickness * 0.5; // Hemispherical is thinner
-    double headVolume =
-        2.0 * Math.PI / 3.0 * (Math.pow((shellOutsideDiameter / 2.0 + headThickness) / 1000.0, 3)
-            - Math.pow(shellOutsideDiameter / 2.0 / 1000.0, 3));
+    double headVolume = 2.0 * Math.PI / 3.0 * (Math.pow((shellOutsideDiameter / 2.0 + headThickness) / 1000.0, 3)
+	- Math.pow(shellOutsideDiameter / 2.0 / 1000.0, 3));
     headWeight = 2 * headVolume * steelDensity;
 
     // Baffle weight
     double baffleThickness = 6.35; // 1/4" typical
-    double baffleArea =
-        Math.PI / 4.0 * Math.pow(shellInsideDiameter / 1000.0, 2) * (1.0 - baffleCut);
+    double baffleArea = Math.PI / 4.0 * Math.pow(shellInsideDiameter / 1000.0, 2) * (1.0 - baffleCut);
     double baffleVolume = baffleArea * baffleThickness / 1000.0;
     baffleWeight = baffleCount * baffleVolume * steelDensity;
 
@@ -407,11 +402,9 @@ public class ShellAndTubeDesignCalculator {
 
     // Operating weight (add water as approximation)
     double waterDensity = 1000.0; // kg/m3
-    double shellSideVolume =
-        Math.PI / 4.0 * Math.pow(shellInsideDiameter / 1000.0, 2) * tubeLength / 1000.0
-            - tubeCount * Math.PI / 4.0 * Math.pow(tubeOD / 1000.0, 2) * tubeLength / 1000.0;
-    double tubeSideVolume =
-        tubeCount * Math.PI / 4.0 * Math.pow(tubeID / 1000.0, 2) * tubeLength / 1000.0;
+    double shellSideVolume = Math.PI / 4.0 * Math.pow(shellInsideDiameter / 1000.0, 2) * tubeLength / 1000.0
+	- tubeCount * Math.PI / 4.0 * Math.pow(tubeOD / 1000.0, 2) * tubeLength / 1000.0;
+    double tubeSideVolume = tubeCount * Math.PI / 4.0 * Math.pow(tubeID / 1000.0, 2) * tubeLength / 1000.0;
     operatingWeight = totalDryWeight + (shellSideVolume + tubeSideVolume) * waterDensity;
   }
 
@@ -468,7 +461,7 @@ public class ShellAndTubeDesignCalculator {
 
     // Material cost
     materialCost = shellWeight * shellMaterialPrice + tubeWeight * tubeMaterialPrice
-        + (tubesheetWeight + headWeight + baffleWeight) * shellMaterialPrice;
+	+ (tubesheetWeight + headWeight + baffleWeight) * shellMaterialPrice;
 
     // Fabrication cost (typically 2-4x material cost for heat exchangers)
     double fabFactor = 2.5 * config.getCostFactor() * temaClass.getCostFactor();
@@ -479,10 +472,10 @@ public class ShellAndTubeDesignCalculator {
   }
 
   /**
-   * Gets allowable stress for material at temperature. Uses database value if loaded, otherwise
-   * falls back to simplified ASME Section II tables.
+   * Gets allowable stress for material at temperature. Uses database value if loaded, otherwise falls back to
+   * simplified ASME Section II tables.
    *
-   * @param material material name
+   * @param material    material name
    * @param temperature temperature in degrees C
    * @return allowable stress in MPa
    */
@@ -520,32 +513,31 @@ public class ShellAndTubeDesignCalculator {
    * Loads a single material's properties from the database.
    *
    * @param materialGrade the material grade to look up
-   * @param isShell true if this is a shell material, false for tube
+   * @param isShell       true if this is a shell material, false for tube
    */
   private void loadMaterialFromDB(String materialGrade, boolean isShell) {
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
-        ResultSet rs =
-            database.getResultSet("SELECT * FROM HeatExchangerTubeMaterials WHERE MaterialGrade='"
-                + materialGrade + "'")) {
+	ResultSet rs = database
+	    .getResultSet("SELECT * FROM HeatExchangerTubeMaterials WHERE MaterialGrade='" + materialGrade + "'")) {
       if (rs.next()) {
-        double allowable = rs.getDouble("AllowableStress_MPa");
-        double smys = rs.getDouble("SMYS_MPa");
-        double thermalCond = rs.getDouble("ThermalConductivity_WpmK");
-        String naceComp = rs.getString("NACECompliant");
-        boolean nace = "Yes".equalsIgnoreCase(naceComp);
+	double allowable = rs.getDouble("AllowableStress_MPa");
+	double smys = rs.getDouble("SMYS_MPa");
+	double thermalCond = rs.getDouble("ThermalConductivity_WpmK");
+	String naceComp = rs.getString("NACECompliant");
+	boolean nace = "Yes".equalsIgnoreCase(naceComp);
 
-        if (isShell) {
-          shellAllowableStress = allowable;
-          shellSmys = smys;
-          shellNACECompliant = nace;
-          shellMaterial = rs.getString("Specification") + " " + materialGrade;
-        } else {
-          tubeAllowableStress = allowable;
-          tubeSmys = smys;
-          tubeThermalConductivity = thermalCond;
-          tubeNACECompliant = nace;
-          tubeMaterial = rs.getString("Specification") + " " + materialGrade;
-        }
+	if (isShell) {
+	  shellAllowableStress = allowable;
+	  shellSmys = smys;
+	  shellNACECompliant = nace;
+	  shellMaterial = rs.getString("Specification") + " " + materialGrade;
+	} else {
+	  tubeAllowableStress = allowable;
+	  tubeSmys = smys;
+	  tubeThermalConductivity = thermalCond;
+	  tubeNACECompliant = nace;
+	  tubeMaterial = rs.getString("Specification") + " " + materialGrade;
+	}
       }
     } catch (Exception ex) {
       // Use default values if database lookup fails
@@ -647,8 +639,7 @@ public class ShellAndTubeDesignCalculator {
     double stressRatio = 1.0;
     if (designTemperature > 100) {
       // Allowable stress at ambient is typically higher
-      stressRatio = getAllowableStress(shellMaterial, 20.0)
-          / getAllowableStress(shellMaterial, designTemperature);
+      stressRatio = getAllowableStress(shellMaterial, 20.0) / getAllowableStress(shellMaterial, designTemperature);
     }
 
     hydroTestPressureShell = 1.3 * mawpShellSide * stressRatio;
@@ -674,14 +665,12 @@ public class ShellAndTubeDesignCalculator {
 
     // Check shell material NACE compliance
     if (!shellNACECompliant) {
-      naceIssues.add("Shell material " + shellMaterialGrade
-          + " is not NACE MR0175 compliant for sour service");
+      naceIssues.add("Shell material " + shellMaterialGrade + " is not NACE MR0175 compliant for sour service");
     }
 
     // Check tube material NACE compliance
     if (!tubeNACECompliant) {
-      naceIssues.add(
-          "Tube material " + tubeMaterialGrade + " is not NACE MR0175 compliant for sour service");
+      naceIssues.add("Tube material " + tubeMaterialGrade + " is not NACE MR0175 compliant for sour service");
     }
 
     // Hardness limits per NORSOK M-001 / NACE MR0175
@@ -706,14 +695,13 @@ public class ShellAndTubeDesignCalculator {
    */
   private double roundToStandardShellSize(double diameter) {
     // Standard pipe sizes in mm (NPS converted)
-    double[] standardSizes = {168.3, 219.1, 273.0, 323.9, 355.6, 406.4, 457.2, 508.0, 558.8, 609.6,
-        660.4, 711.2, 762.0, 812.8, 863.6, 914.4, 965.2, 1016.0, 1066.8, 1117.6, 1168.4, 1219.2,
-        1270.0, 1320.8, 1371.6, 1422.4, 1473.2, 1524.0, 1574.8, 1625.6, 1676.4, 1727.2, 1778.0,
-        1828.8, 1879.6, 1930.4, 1981.2, 2032.0};
+    double[] standardSizes = { 168.3, 219.1, 273.0, 323.9, 355.6, 406.4, 457.2, 508.0, 558.8, 609.6, 660.4, 711.2,
+	762.0, 812.8, 863.6, 914.4, 965.2, 1016.0, 1066.8, 1117.6, 1168.4, 1219.2, 1270.0, 1320.8, 1371.6, 1422.4,
+	1473.2, 1524.0, 1574.8, 1625.6, 1676.4, 1727.2, 1778.0, 1828.8, 1879.6, 1930.4, 1981.2, 2032.0 };
 
     for (double size : standardSizes) {
       if (size >= diameter) {
-        return size;
+	return size;
       }
     }
     return standardSizes[standardSizes.length - 1];
@@ -726,20 +714,20 @@ public class ShellAndTubeDesignCalculator {
    * @return standard thickness
    */
   private double roundToStandardPlateThickness(double thickness) {
-    double[] standardThicknesses = {3.175, 4.763, 6.35, 7.938, 9.525, 12.7, 15.875, 19.05, 22.225,
-        25.4, 31.75, 38.1, 44.45, 50.8};
+    double[] standardThicknesses = { 3.175, 4.763, 6.35, 7.938, 9.525, 12.7, 15.875, 19.05, 22.225, 25.4, 31.75, 38.1,
+	44.45, 50.8 };
 
     for (double t : standardThicknesses) {
       if (t >= thickness) {
-        return t;
+	return t;
       }
     }
     return standardThicknesses[standardThicknesses.length - 1];
   }
 
   /**
-   * Performs thermal-hydraulic calculations using the ThermalDesignCalculator. Requires fluid
-   * properties to have been set via setTubeSideFluidProperties and setShellSideFluidProperties.
+   * Performs thermal-hydraulic calculations using the ThermalDesignCalculator. Requires fluid properties to have been
+   * set via setTubeSideFluidProperties and setShellSideFluidProperties.
    */
   private void calculateThermalHydraulic() {
     thermalCalculator = new ThermalDesignCalculator();
@@ -753,8 +741,8 @@ public class ShellAndTubeDesignCalculator {
     thermalCalculator.setTubeCount(tubeCount);
     thermalCalculator.setTubePasses(tubePasses);
     thermalCalculator.setTubePitchm(tubePitch / 1000.0);
-    thermalCalculator.setTriangularPitch(pitchPattern == TubePitchPattern.TRIANGULAR_30
-        || pitchPattern == TubePitchPattern.TRIANGULAR_60);
+    thermalCalculator.setTriangularPitch(
+	pitchPattern == TubePitchPattern.TRIANGULAR_30 || pitchPattern == TubePitchPattern.TRIANGULAR_60);
     thermalCalculator.setShellIDm(shellInsideDiameter / 1000.0);
     thermalCalculator.setBaffleSpacingm(baffleSpacing / 1000.0);
     thermalCalculator.setBaffleCount(baffleCount);
@@ -762,10 +750,10 @@ public class ShellAndTubeDesignCalculator {
     thermalCalculator.setTubeWallConductivity(tubeThermalConductivity);
 
     // Transfer fluid properties
-    thermalCalculator.setTubeSideFluid(tubeSideDensity, tubeSideViscosity, tubeSideCp,
-        tubeSideConductivity, tubeSideMassFlowRate, tubeSideHeating);
-    thermalCalculator.setShellSideFluid(shellSideDensity, shellSideViscosity, shellSideCp,
-        shellSideConductivity, shellSideMassFlowRate);
+    thermalCalculator.setTubeSideFluid(tubeSideDensity, tubeSideViscosity, tubeSideCp, tubeSideConductivity,
+	tubeSideMassFlowRate, tubeSideHeating);
+    thermalCalculator.setShellSideFluid(shellSideDensity, shellSideViscosity, shellSideCp, shellSideConductivity,
+	shellSideMassFlowRate);
 
     // Transfer fouling
     thermalCalculator.setFoulingTube(foulingTube);
@@ -803,10 +791,9 @@ public class ShellAndTubeDesignCalculator {
     double tubeMaterialDensity = 7850.0; // kg/m3
 
     // Estimate crossflow velocity
-    double crossflowArea = BellDelawareMethod.calcCrossflowArea(shellInsideDiameter / 1000.0,
-        baffleSpacing / 1000.0, tubeOD, tubePitch / 1000.0);
-    double crossflowVelocity =
-        (crossflowArea > 0) ? shellSideMassFlowRate / (shellSideDensity * crossflowArea) : 0.0;
+    double crossflowArea = BellDelawareMethod.calcCrossflowArea(shellInsideDiameter / 1000.0, baffleSpacing / 1000.0,
+	tubeOD, tubePitch / 1000.0);
+    double crossflowVelocity = (crossflowArea > 0) ? shellSideMassFlowRate / (shellSideDensity * crossflowArea) : 0.0;
 
     // Estimate sonic velocity (rough estimate for natural gas / steam)
     double sonicVelocity = Math.sqrt(1.4 * 8314.0 * 300.0 / 29.0); // ~ 347 m/s for air-like gas
@@ -814,11 +801,10 @@ public class ShellAndTubeDesignCalculator {
     // Damping ratio: higher in liquid, lower in gas
     double dampingRatio = (shellSideDensity > 100) ? 0.03 : 0.01;
 
-    vibrationResult = VibrationAnalysis.performScreening(tubeOD, tubeID, span, tubePitch / 1000.0,
-        youngsModulus, tubeMaterialDensity, crossflowVelocity, shellSideDensity, tubeSideDensity,
-        shellInsideDiameter / 1000.0, sonicVelocity, dampingRatio,
-        pitchPattern == TubePitchPattern.TRIANGULAR_30
-            || pitchPattern == TubePitchPattern.TRIANGULAR_60);
+    vibrationResult = VibrationAnalysis.performScreening(tubeOD, tubeID, span, tubePitch / 1000.0, youngsModulus,
+	tubeMaterialDensity, crossflowVelocity, shellSideDensity, tubeSideDensity, shellInsideDiameter / 1000.0,
+	sonicVelocity, dampingRatio,
+	pitchPattern == TubePitchPattern.TRIANGULAR_30 || pitchPattern == TubePitchPattern.TRIANGULAR_60);
 
     if (vibrationResult != null && !vibrationResult.passed) {
       appliedStandards.add("TEMA RCB-4.6 (Vibration Screening - FAIL)");
@@ -834,15 +820,15 @@ public class ShellAndTubeDesignCalculator {
   /**
    * Sets tube-side fluid properties for thermal-hydraulic calculations.
    *
-   * @param density density (kg/m3)
-   * @param viscosity dynamic viscosity (Pa*s)
-   * @param cp heat capacity (J/(kg*K))
+   * @param density      density (kg/m3)
+   * @param viscosity    dynamic viscosity (Pa*s)
+   * @param cp           heat capacity (J/(kg*K))
    * @param conductivity thermal conductivity (W/(m*K))
    * @param massFlowRate mass flow rate (kg/s)
-   * @param heating true if fluid is being heated
+   * @param heating      true if fluid is being heated
    */
-  public void setTubeSideFluidProperties(double density, double viscosity, double cp,
-      double conductivity, double massFlowRate, boolean heating) {
+  public void setTubeSideFluidProperties(double density, double viscosity, double cp, double conductivity,
+      double massFlowRate, boolean heating) {
     this.tubeSideDensity = density;
     this.tubeSideViscosity = viscosity;
     this.tubeSideCp = cp;
@@ -855,14 +841,14 @@ public class ShellAndTubeDesignCalculator {
   /**
    * Sets shell-side fluid properties for thermal-hydraulic calculations.
    *
-   * @param density density (kg/m3)
-   * @param viscosity dynamic viscosity (Pa*s)
-   * @param cp heat capacity (J/(kg*K))
+   * @param density      density (kg/m3)
+   * @param viscosity    dynamic viscosity (Pa*s)
+   * @param cp           heat capacity (J/(kg*K))
    * @param conductivity thermal conductivity (W/(m*K))
    * @param massFlowRate mass flow rate (kg/s)
    */
-  public void setShellSideFluidProperties(double density, double viscosity, double cp,
-      double conductivity, double massFlowRate) {
+  public void setShellSideFluidProperties(double density, double viscosity, double cp, double conductivity,
+      double massFlowRate) {
     this.shellSideDensity = density;
     this.shellSideViscosity = viscosity;
     this.shellSideCp = cp;
@@ -1257,8 +1243,7 @@ public class ShellAndTubeDesignCalculator {
    * @return JSON string
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   // ============================================================================

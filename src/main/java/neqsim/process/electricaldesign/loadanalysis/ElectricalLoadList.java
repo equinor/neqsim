@@ -10,9 +10,9 @@ import java.util.Map;
  * Electrical load list aggregation for a process system.
  *
  * <p>
- * Collects all electrical loads from equipment in a process system and provides summary
- * calculations: total connected load, maximum demand, power generation sizing, and transformer
- * sizing. Follows typical electrical load list format per IEC 61936.
+ * Collects all electrical loads from equipment in a process system and provides summary calculations: total connected
+ * load, maximum demand, power generation sizing, and transformer sizing. Follows typical electrical load list format
+ * per IEC 61936.
  * </p>
  *
  * @author Even Solbraa
@@ -41,7 +41,8 @@ public class ElectricalLoadList implements java.io.Serializable {
   /**
    * Default constructor.
    */
-  public ElectricalLoadList() {}
+  public ElectricalLoadList() {
+  }
 
   /**
    * Constructor with project name.
@@ -90,8 +91,8 @@ public class ElectricalLoadList implements java.io.Serializable {
 
       // Reactive power
       if (item.getPowerFactor() > 0 && item.getPowerFactor() < 1.0) {
-        double phi = Math.acos(item.getPowerFactor());
-        totalReactivePowerKVAR += item.getMaxDemandKW() * Math.tan(phi);
+	double phi = Math.acos(item.getPowerFactor());
+	totalReactivePowerKVAR += item.getMaxDemandKW() * Math.tan(phi);
       }
     }
 
@@ -121,8 +122,7 @@ public class ElectricalLoadList implements java.io.Serializable {
    */
   public String toJson() {
     Map<String, Object> map = toMap();
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(map);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(map);
   }
 
   /**

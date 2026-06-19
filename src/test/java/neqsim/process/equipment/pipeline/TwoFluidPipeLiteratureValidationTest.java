@@ -29,8 +29,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class TwoFluidPipeLiteratureValidationTest {
-  private static final Logger logger =
-      LogManager.getLogger(TwoFluidPipeLiteratureValidationTest.class);
+  private static final Logger logger = LogManager.getLogger(TwoFluidPipeLiteratureValidationTest.class);
 
   private static SystemInterface gasOilFluid;
   private static SystemInterface leanGasFluid;
@@ -66,9 +65,8 @@ public class TwoFluidPipeLiteratureValidationTest {
    * Test Beggs-Brill holdup correlation validation.
    *
    * <p>
-   * Validates holdup calculation against published Beggs-Brill correlation values for horizontal
-   * pipe. Reference: Beggs, H.D., Brill, J.P. (1973). "A Study of Two-Phase Flow in Inclined
-   * Pipes", JPT.
+   * Validates holdup calculation against published Beggs-Brill correlation values for horizontal pipe. Reference:
+   * Beggs, H.D., Brill, J.P. (1973). "A Study of Two-Phase Flow in Inclined Pipes", JPT.
    * </p>
    *
    * <p>
@@ -124,8 +122,7 @@ public class TwoFluidPipeLiteratureValidationTest {
 
     // Beggs-Brill predicts H_L = 0.15-0.25 for these conditions
     // Allow 50% tolerance for model differences
-    assertTrue(holdup1 >= 0.0 && holdup1 <= 1.0,
-        "Holdup should be between 0 and 1, got: " + holdup1);
+    assertTrue(holdup1 >= 0.0 && holdup1 <= 1.0, "Holdup should be between 0 and 1, got: " + holdup1);
 
     logger.info("=== Beggs-Brill Validation Case 1 ===");
     logger.info("Average liquid holdup: " + String.format("%.4f", holdup1));
@@ -136,9 +133,9 @@ public class TwoFluidPipeLiteratureValidationTest {
    * Test Taitel-Dukler flow regime transition.
    *
    * <p>
-   * Validates flow regime detection against Taitel-Dukler (1976) flow pattern map for horizontal
-   * pipes. Reference: Taitel, Y., Dukler, A.E. (1976). "A Model for Predicting Flow Regime
-   * Transitions in Horizontal and Near Horizontal Gas-Liquid Flow", AIChE J.
+   * Validates flow regime detection against Taitel-Dukler (1976) flow pattern map for horizontal pipes. Reference:
+   * Taitel, Y., Dukler, A.E. (1976). "A Model for Predicting Flow Regime Transitions in Horizontal and Near Horizontal
+   * Gas-Liquid Flow", AIChE J.
    * </p>
    */
   @Test
@@ -174,8 +171,8 @@ public class TwoFluidPipeLiteratureValidationTest {
    * Test Mandhane flow pattern map validation.
    *
    * <p>
-   * Reference: Mandhane, J.M., Gregory, G.A., Aziz, K. (1974). "A Flow Pattern Map for Gas-Liquid
-   * Flow in Horizontal Pipes", Int. J. Multiphase Flow.
+   * Reference: Mandhane, J.M., Gregory, G.A., Aziz, K. (1974). "A Flow Pattern Map for Gas-Liquid Flow in Horizontal
+   * Pipes", Int. J. Multiphase Flow.
    * </p>
    *
    * <p>
@@ -259,8 +256,7 @@ public class TwoFluidPipeLiteratureValidationTest {
     logger.info(String.format("Erosional velocity (model): %.2f m/s", vE));
     logger.info(String.format("Erosional velocity (manual): %.2f m/s", vEManual));
     logger.info(String.format("Maximum velocity: %.2f m/s", vMax));
-    logger
-        .info(String.format("Margin (V_max/V_e): %.3f", pipe.getErosionalVelocityMargin(cFactor)));
+    logger.info(String.format("Margin (V_max/V_e): %.3f", pipe.getErosionalVelocityMargin(cFactor)));
     logger.info("Exceeds limit: " + pipe.isVelocityAboveErosionalLimit(cFactor));
 
     // Verify calculation matches manual
@@ -275,8 +271,8 @@ public class TwoFluidPipeLiteratureValidationTest {
    * Test pressure gradient validation against Mukherjee-Brill correlation.
    *
    * <p>
-   * Reference: Mukherjee, H., Brill, J.P. (1985). "Pressure Drop Correlations for Inclined
-   * Two-Phase Flow", J. Energy Resources Technology.
+   * Reference: Mukherjee, H., Brill, J.P. (1985). "Pressure Drop Correlations for Inclined Two-Phase Flow", J. Energy
+   * Resources Technology.
    * </p>
    */
   @Test
@@ -320,8 +316,8 @@ public class TwoFluidPipeLiteratureValidationTest {
    * Test inclined pipe validation against Beggs-Brill inclination correction.
    *
    * <p>
-   * Reference: Beggs-Brill (1973) includes inclination factor C (psi correction). For upward flow,
-   * holdup increases. For downward flow, holdup decreases.
+   * Reference: Beggs-Brill (1973) includes inclination factor C (psi correction). For upward flow, holdup increases.
+   * For downward flow, holdup decreases.
    * </p>
    */
   @Test
@@ -426,8 +422,7 @@ public class TwoFluidPipeLiteratureValidationTest {
     String summary = pipe.getFlowAnalysisSummary();
     logger.info(summary);
 
-    assertTrue(summary != null && summary.length() > 100,
-        "Flow analysis summary should contain meaningful data");
+    assertTrue(summary != null && summary.length() > 100, "Flow analysis summary should contain meaningful data");
     assertTrue(summary.contains("Froude"), "Should contain Froude number");
     assertTrue(summary.contains("Reynolds"), "Should contain Reynolds number");
   }
@@ -454,8 +449,7 @@ public class TwoFluidPipeLiteratureValidationTest {
     String assessment = pipe.getErosionRiskAssessment(122.0);
     logger.info(assessment);
 
-    assertTrue(assessment != null && assessment.length() > 50,
-        "Risk assessment should contain meaningful data");
+    assertTrue(assessment != null && assessment.length() > 50, "Risk assessment should contain meaningful data");
     assertTrue(assessment.contains("API 14E"), "Should reference API 14E");
     assertTrue(assessment.contains("Status:"), "Should contain status");
   }

@@ -23,14 +23,15 @@ public class MaterialPipeDesignStandard extends DesignStandard {
    * Constructor for MaterialPipeDesignStandard.
    * </p>
    */
-  public MaterialPipeDesignStandard() {}
+  public MaterialPipeDesignStandard() {
+  }
 
   /**
    * <p>
    * Constructor for MaterialPipeDesignStandard.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name         a {@link java.lang.String} object
    * @param equipmentInn a {@link neqsim.process.mechanicaldesign.MechanicalDesign} object
    */
   public MaterialPipeDesignStandard(String name, MechanicalDesign equipmentInn) {
@@ -140,26 +141,25 @@ public class MaterialPipeDesignStandard extends DesignStandard {
    * </p>
    *
    * @param specNo a {@link java.lang.String} object
-   * @param grade a {@link java.lang.String} object
+   * @param grade  a {@link java.lang.String} object
    */
   public void readMaterialDesignStandard(String specNo, String grade) {
     this.grade = grade;
     specificationNumber = specNo;
 
-    try (neqsim.util.database.NeqSimProcessDesignDataBase database =
-        new neqsim.util.database.NeqSimProcessDesignDataBase()) {
-      try (java.sql.ResultSet dataSet =
-          database.getResultSet(("SELECT * FROM materialpipeproperties WHERE specificationNumber='"
-              + specificationNumber + "' AND grade='" + grade + "'"))) {
-        while (dataSet.next()) {
-          minimumYeildStrength =
-              (Double.parseDouble(dataSet.getString("minimumYeildStrength"))) * 0.00689475729;
-          // design factor table has to be developed
-          // Efactor table has to be implemented
-          // temperatureDeratingFactor has to be implemented
-        }
+    try (
+	neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase()) {
+      try (java.sql.ResultSet dataSet = database
+	  .getResultSet(("SELECT * FROM materialpipeproperties WHERE specificationNumber='" + specificationNumber
+	      + "' AND grade='" + grade + "'"))) {
+	while (dataSet.next()) {
+	  minimumYeildStrength = (Double.parseDouble(dataSet.getString("minimumYeildStrength"))) * 0.00689475729;
+	  // design factor table has to be developed
+	  // Efactor table has to be implemented
+	  // temperatureDeratingFactor has to be implemented
+	}
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+	logger.error(ex.getMessage(), ex);
       }
       // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
     } catch (Exception e) {

@@ -23,7 +23,7 @@ public class TestFlash {
   private static final Logger logger = LogManager.getLogger(TestFlash.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.
@@ -39,8 +39,8 @@ public class TestFlash {
     Double[][] fluidProperties;
     int fluidNumber = 1;
     int flashMode = 1;
-    Double[] spec1 = {1.0, 23.2, 24.23, 25.98, 25.23, 26.1, 27.3, 28.7, 23.5, 1.0};
-    Double[] spec2 = {288.15, 290.1, 295.1, 301.2, 299.3, 310.2, 315.3, 310.0, 305.2, 312.7}; // Temperatures
+    Double[] spec1 = { 1.0, 23.2, 24.23, 25.98, 25.23, 26.1, 27.3, 28.7, 23.5, 1.0 };
+    Double[] spec2 = { 288.15, 290.1, 295.1, 301.2, 299.3, 310.2, 315.3, 310.0, 305.2, 312.7 }; // Temperatures
     // double[]
     // spec2={-470.0,-480.0,-475.0,-471.0,-474.0,-450.0,-480.0,-473.0,-471.0,-477.0};
     // // Enthalpies
@@ -48,8 +48,8 @@ public class TestFlash {
     // // Entropies
 
     // Fractions for use with fluid number 1
-    double[] fractions = {0.01, 0.02, 0.03, 0.01, 0.80, 0.04, 0.03, 0.02, 0.01, 0.01, 0.01, 0.01, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    double[] fractions = { 0.01, 0.02, 0.03, 0.01, 0.80, 0.04, 0.03, 0.02, 0.01, 0.01, 0.01, 0.01, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0 };
     // double[] fractions={0.01, 0.02, +.03, 0.01, 0.70, 0.14, 0.03, 0.02, 0.01,
     // 0.01, 0.01, 0.01};
     // Normalize fractions sum fractions = 1
@@ -76,8 +76,8 @@ public class TestFlash {
       fluid.useVolumeCorrection(true);
       fluid.setMultiPhaseCheck(true);
     } else if (fluidNumber == 2) { // example to show property calc for pure phase
-                                   // (without
-                                   // flash)
+				   // (without
+				   // flash)
       // Fluid air
       fluid.addComponent("nitrogen", 0.79);
       fluid.addComponent("oxygen", 0.21);
@@ -212,8 +212,7 @@ public class TestFlash {
 
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(fluid);
 
-    CalculationResult s =
-        thermoOps.propertyFlash(Arrays.asList(spec1), Arrays.asList(spec2), 3, null, null);
+    CalculationResult s = thermoOps.propertyFlash(Arrays.asList(spec1), Arrays.asList(spec2), 3, null, null);
     fluidProperties = s.fluidProperties;
 
     logger.info("Time taken for 10 flash calcs [ms] = " + (System.currentTimeMillis() - time));

@@ -34,7 +34,7 @@ class MixerTest {
     testSystem.setMultiPhaseCheck(true);
 
     waterSystem = testSystem.clone();
-    waterSystem.setMolarComposition(new double[] {1.0, 0.0, 0.0, 0.0, 0.0});
+    waterSystem.setMolarComposition(new double[] { 1.0, 0.0, 0.0, 0.0, 0.0 });
 
     gasStream = new Stream("turbine stream", testSystem);
     gasStream.setFlowRate(1.0, "MSm3/day");
@@ -58,8 +58,7 @@ class MixerTest {
     testMixer.addStream(waterStream);
     testMixer.run();
     // Enthalpy after getMassBalance fix to match calcMixStreamEnthalpy negligible flow filtering
-    assertEquals(testMixer.getOutletStream().getFluid().getEnthalpy("kJ/kg"), -105.52297413351504,
-        1e-1);
+    assertEquals(testMixer.getOutletStream().getFluid().getEnthalpy("kJ/kg"), -105.52297413351504, 1e-1);
   }
 
   /**
@@ -122,8 +121,7 @@ class MixerTest {
     // Mass balance should be approximately zero (outlet flow - inlet flow)
     // getMassBalance() now only counts streams with flow > minimumFlow()
     double massBalance = testMixer.getMassBalance("kg/hr");
-    assertEquals(0.0, massBalance, 1e-6,
-        "Mixer mass balance error: outlet flow should equal sum of inlet flows");
+    assertEquals(0.0, massBalance, 1e-6, "Mixer mass balance error: outlet flow should equal sum of inlet flows");
   }
 
   @Test

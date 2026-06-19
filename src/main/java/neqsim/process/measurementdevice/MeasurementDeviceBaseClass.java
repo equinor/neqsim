@@ -13,15 +13,14 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.NamedBaseClass;
 
 /**
- * Base implementation for measurement devices supplying values to controllers and process
- * equipment. The class offers unit handling as well as configurable Gaussian noise and discrete
- * sample delay to mimic realistic transmitter behaviour.
+ * Base implementation for measurement devices supplying values to controllers and process equipment. The class offers
+ * unit handling as well as configurable Gaussian noise and discrete sample delay to mimic realistic transmitter
+ * behaviour.
  *
  * @author ESOL
  * @version $Id: $Id
  */
-public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
-    implements MeasurementDeviceInterface {
+public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implements MeasurementDeviceInterface {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
@@ -102,7 +101,7 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
    * </p>
    *
    * @param isOnlineSignal the isOnlineSignal to set
-   * @param plantName a {@link java.lang.String} object
+   * @param plantName      a {@link java.lang.String} object
    * @param transmitterame a {@link java.lang.String} object
    */
   public void setIsOnlineSignal(boolean isOnlineSignal, String plantName, String transmitterame) {
@@ -205,8 +204,8 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
   }
 
   /**
-   * Shelves (suppresses) the alarm on this measurement point indefinitely. While shelved, alarm
-   * evaluations continue to track the value but no events are generated.
+   * Shelves (suppresses) the alarm on this measurement point indefinitely. While shelved, alarm evaluations continue to
+   * track the value but no events are generated.
    *
    * @param reason operator-provided reason for shelving
    */
@@ -217,7 +216,7 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
   /**
    * Shelves (suppresses) the alarm on this measurement point until the given simulation time.
    *
-   * @param reason operator-provided reason for shelving
+   * @param reason     operator-provided reason for shelving
    * @param expiryTime simulation time when shelving expires
    */
   public void shelveAlarm(String reason, double expiryTime) {
@@ -258,7 +257,7 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
     // First-order exponential filter: y(k) = alpha * x(k) + (1-alpha) * y(k-1)
     if (firstOrderTimeConstant > 0.0) {
       if (Double.isNaN(filteredPreviousValue)) {
-        filteredPreviousValue = noisyValue;
+	filteredPreviousValue = noisyValue;
       }
       // Use a default dt of 1.0 second for per-sample filtering
       double alpha = 1.0 - Math.exp(-1.0 / firstOrderTimeConstant);
@@ -292,8 +291,8 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
   }
 
   /**
-   * Sets the first-order filter time constant for smoothing measurement readings. A value of 0 (the
-   * default) disables the filter. Typical transmitter time constants range from 0.5 to 10 seconds.
+   * Sets the first-order filter time constant for smoothing measurement readings. A value of 0 (the default) disables
+   * the filter. Typical transmitter time constants range from 0.5 to 10 seconds.
    *
    * @param timeConstant time constant in seconds (0 = disabled)
    */
@@ -333,8 +332,7 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
   }
 
   /**
-   * Set the random seed used for noise generation to achieve deterministic measurements when
-   * required.
+   * Set the random seed used for noise generation to achieve deterministic measurements when required.
    *
    * @param seed random seed
    */
@@ -398,7 +396,7 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
    * </p>
    *
    * @param value a double
-   * @param unit a {@link java.lang.String} object
+   * @param unit  a {@link java.lang.String} object
    */
   public void setOnlineMeasurementValue(double value, String unit) {
     onlineMeasurementValue = value;
@@ -428,45 +426,45 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
   }
 
   /**
-   * Apply a sensor fault to the raw measurement value. The fault transformation depends on the
-   * currently configured {@link SensorFaultType}.
+   * Apply a sensor fault to the raw measurement value. The fault transformation depends on the currently configured
+   * {@link SensorFaultType}.
    *
    * @param rawValue true process measurement before fault injection
    * @return measurement value after fault transformation
    */
   private double applyFault(double rawValue) {
     switch (faultType) {
-      case STUCK_AT_VALUE:
-        return faultParameter;
-      case LINEAR_DRIFT:
-        faultAccumulator += faultParameter;
-        return rawValue + faultAccumulator;
-      case BIAS:
-        return rawValue + faultParameter;
-      case NOISE_BURST:
-        Random r = random;
-        if (r == null) {
-          r = new Random();
-          random = r;
-        }
-        return rawValue + r.nextGaussian() * faultParameter;
-      case SATURATION:
-        if (faultParameter >= 0) {
-          return Math.min(rawValue, faultParameter);
-        } else {
-          return Math.max(rawValue, faultParameter);
-        }
-      case NONE:
-      default:
-        return rawValue;
+    case STUCK_AT_VALUE:
+      return faultParameter;
+    case LINEAR_DRIFT:
+      faultAccumulator += faultParameter;
+      return rawValue + faultAccumulator;
+    case BIAS:
+      return rawValue + faultParameter;
+    case NOISE_BURST:
+      Random r = random;
+      if (r == null) {
+	r = new Random();
+	random = r;
+      }
+      return rawValue + r.nextGaussian() * faultParameter;
+    case SATURATION:
+      if (faultParameter >= 0) {
+	return Math.min(rawValue, faultParameter);
+      } else {
+	return Math.max(rawValue, faultParameter);
+      }
+    case NONE:
+    default:
+      return rawValue;
     }
   }
 
   /**
-   * Inject a sensor fault into this measurement device. While a fault is active, the measured value
-   * will be transformed according to the specified fault type and parameter.
+   * Inject a sensor fault into this measurement device. While a fault is active, the measured value will be transformed
+   * according to the specified fault type and parameter.
    *
-   * @param type the type of sensor fault to inject
+   * @param type      the type of sensor fault to inject
    * @param parameter fault-specific parameter (e.g. stuck value, drift rate, bias)
    */
   public void setFault(SensorFaultType type, double parameter) {
@@ -519,8 +517,8 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
    * </p>
    */
   public void runConditionAnalysis() {
-    if (Math.abs(getMeasuredValue(onlineMeasurementValueUnit)
-        - onlineMeasurementValue) < getConditionAnalysisMaxDeviation()) {
+    if (Math.abs(
+	getMeasuredValue(onlineMeasurementValueUnit) - onlineMeasurementValue) < getConditionAnalysisMaxDeviation()) {
       conditionAnalysisMessage = "ok";
     } else {
       conditionAnalysisMessage = "fail";

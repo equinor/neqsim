@@ -64,12 +64,9 @@ public class ProductionAllocatorTest {
   @Test
   void testMeteringTypeUncertainties() {
     // Verify metering uncertainties
-    assertEquals(0.005, MeteringType.ULTRASONIC.getUncertainty(), 0.001,
-        "Ultrasonic uncertainty should be 0.5%");
-    assertEquals(0.001, MeteringType.CORIOLIS.getUncertainty(), 0.0001,
-        "Coriolis uncertainty should be 0.1%");
-    assertEquals(0.03, MeteringType.MULTIPHASE.getUncertainty(), 0.001,
-        "Multiphase uncertainty should be 3%");
+    assertEquals(0.005, MeteringType.ULTRASONIC.getUncertainty(), 0.001, "Ultrasonic uncertainty should be 0.5%");
+    assertEquals(0.001, MeteringType.CORIOLIS.getUncertainty(), 0.0001, "Coriolis uncertainty should be 0.1%");
+    assertEquals(0.03, MeteringType.MULTIPHASE.getUncertainty(), 0.001, "Multiphase uncertainty should be 3%");
   }
 
   @Test
@@ -93,12 +90,9 @@ public class ProductionAllocatorTest {
 
     Map<String, Double> allocation = allocator.allocateByMass();
 
-    assertEquals(10000.0 / 30000.0, allocation.get("Well-A"), 0.01,
-        "Well-A should have 33.3% allocation");
-    assertEquals(15000.0 / 30000.0, allocation.get("Well-B"), 0.01,
-        "Well-B should have 50% allocation");
-    assertEquals(5000.0 / 30000.0, allocation.get("Well-C"), 0.01,
-        "Well-C should have 16.7% allocation");
+    assertEquals(10000.0 / 30000.0, allocation.get("Well-A"), 0.01, "Well-A should have 33.3% allocation");
+    assertEquals(15000.0 / 30000.0, allocation.get("Well-B"), 0.01, "Well-B should have 50% allocation");
+    assertEquals(5000.0 / 30000.0, allocation.get("Well-C"), 0.01, "Well-C should have 16.7% allocation");
   }
 
   @Test
@@ -141,10 +135,8 @@ public class ProductionAllocatorTest {
     allocator.addSource("Well-A", wellA, MeteringType.CORIOLIS);
     allocator.addSource("Well-B", wellB, MeteringType.MULTIPHASE);
 
-    assertEquals(0.001, allocator.getSourceUncertainty("Well-A"), 0.0001,
-        "Well-A uncertainty should be Coriolis 0.1%");
-    assertEquals(0.03, allocator.getSourceUncertainty("Well-B"), 0.001,
-        "Well-B uncertainty should be Multiphase 3%");
+    assertEquals(0.001, allocator.getSourceUncertainty("Well-A"), 0.0001, "Well-A uncertainty should be Coriolis 0.1%");
+    assertEquals(0.03, allocator.getSourceUncertainty("Well-B"), 0.001, "Well-B uncertainty should be Multiphase 3%");
   }
 
   @Test
@@ -226,8 +218,7 @@ public class ProductionAllocatorTest {
     Map<String, Double> allocation = allocator.allocateByMass();
 
     assertTrue(allocation.isEmpty(), "Empty allocator should return empty map");
-    assertEquals(0.0, allocator.getOverallUncertainty(), 0.001,
-        "Empty allocator should have 0 uncertainty");
+    assertEquals(0.0, allocator.getOverallUncertainty(), 0.001, "Empty allocator should have 0 uncertainty");
   }
 
   @Test
@@ -249,11 +240,8 @@ public class ProductionAllocatorTest {
     Map<String, Double> volumes = allocator.getAllocatedOilVolumes(exportOil);
 
     // Allocations based on oil fractions, allow wider tolerance for thermodynamic variations
-    assertTrue(volumes.get("Well-A") > 8000 && volumes.get("Well-A") < 12000,
-        "Well-A allocated volume");
-    assertTrue(volumes.get("Well-B") > 12000 && volumes.get("Well-B") < 18000,
-        "Well-B allocated volume");
-    assertTrue(volumes.get("Well-C") > 3000 && volumes.get("Well-C") < 7000,
-        "Well-C allocated volume");
+    assertTrue(volumes.get("Well-A") > 8000 && volumes.get("Well-A") < 12000, "Well-A allocated volume");
+    assertTrue(volumes.get("Well-B") > 12000 && volumes.get("Well-B") < 18000, "Well-B allocated volume");
+    assertTrue(volumes.get("Well-C") > 3000 && volumes.get("Well-C") < 7000, "Well-C allocated volume");
   }
 }

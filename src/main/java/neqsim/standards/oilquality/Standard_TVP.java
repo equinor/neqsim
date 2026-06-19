@@ -9,23 +9,22 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * True Vapor Pressure (TVP) - API MPMS Chapter 19 / GPA TP-15.
  *
  * <p>
- * The True Vapor Pressure is the equilibrium (bubble-point) pressure of a liquid at a specified
- * reference temperature. Unlike the Reid Vapor Pressure (ASTM D323/D6377, see
- * {@link Standard_ASTM_D6377}), which is measured at a fixed 4:1 vapor-to-liquid ratio and 37.8
- * &deg;C, the TVP is the thermodynamic bubble-point pressure of the bulk liquid and can be reported
- * at any storage or transport temperature.
+ * The True Vapor Pressure is the equilibrium (bubble-point) pressure of a liquid at a specified reference temperature.
+ * Unlike the Reid Vapor Pressure (ASTM D323/D6377, see {@link Standard_ASTM_D6377}), which is measured at a fixed 4:1
+ * vapor-to-liquid ratio and 37.8 &deg;C, the TVP is the thermodynamic bubble-point pressure of the bulk liquid and can
+ * be reported at any storage or transport temperature.
  * </p>
  *
  * <p>
- * TVP is the controlling parameter for storage-tank breathing losses, low-pressure separator and
- * stabiliser design, crude custody-transfer vapour-pressure limits, and the safe set point of
- * pressure/vacuum relief on atmospheric and low-pressure tanks (e.g. a common crude sales limit is
- * a TVP at or below atmospheric pressure at the maximum storage temperature).
+ * TVP is the controlling parameter for storage-tank breathing losses, low-pressure separator and stabiliser design,
+ * crude custody-transfer vapour-pressure limits, and the safe set point of pressure/vacuum relief on atmospheric and
+ * low-pressure tanks (e.g. a common crude sales limit is a TVP at or below atmospheric pressure at the maximum storage
+ * temperature).
  * </p>
  *
  * <p>
- * The TVP is computed directly from the equation of state with a bubble-point pressure flash at the
- * reference temperature, so it requires no empirical correlation.
+ * The TVP is computed directly from the equation of state with a bubble-point pressure flash at the reference
+ * temperature, so it requires no empirical correlation.
  * </p>
  *
  * <p>
@@ -97,7 +96,7 @@ public class Standard_TVP extends neqsim.standards.Standard {
   public double getValue(String returnParameter, String returnUnit) {
     if ("TVP".equalsIgnoreCase(returnParameter)) {
       if (Double.isNaN(tvp)) {
-        return Double.NaN;
+	return Double.NaN;
       }
       neqsim.util.unit.PressureUnit presConversion = new neqsim.util.unit.PressureUnit(tvp, "bara");
       return presConversion.getValue(returnUnit);
@@ -142,7 +141,7 @@ public class Standard_TVP extends neqsim.standards.Standard {
   /**
    * Sets the reference temperature at which the TVP is evaluated.
    *
-   * @param refTemp reference temperature value, must be a finite number
+   * @param refTemp     reference temperature value, must be a finite number
    * @param refTempUnit temperature unit, one of {@code "C"}, {@code "K"}, {@code "F"}, {@code "R"}
    */
   public void setReferenceTemperature(double refTemp, String refTempUnit) {
@@ -162,13 +161,11 @@ public class Standard_TVP extends neqsim.standards.Standard {
   /**
    * Sets an optional maximum TVP specification limit used by {@link #isOnSpec()}.
    *
-   * @param maxTvp maximum allowed TVP value, must be a finite positive number
-   * @param maxTvpUnit pressure unit of {@code maxTvp} (e.g. {@code "bara"}, {@code "psia"},
-   *        {@code "kPa"})
+   * @param maxTvp     maximum allowed TVP value, must be a finite positive number
+   * @param maxTvpUnit pressure unit of {@code maxTvp} (e.g. {@code "bara"}, {@code "psia"}, {@code "kPa"})
    */
   public void setMaxTvpSpec(double maxTvp, String maxTvpUnit) {
-    neqsim.util.unit.PressureUnit presConversion =
-        new neqsim.util.unit.PressureUnit(maxTvp, maxTvpUnit);
+    neqsim.util.unit.PressureUnit presConversion = new neqsim.util.unit.PressureUnit(maxTvp, maxTvpUnit);
     this.maxTvpSpecBara = presConversion.getValue("bara");
   }
 

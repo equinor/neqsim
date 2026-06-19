@@ -67,7 +67,7 @@ public class PumpMechanicalDesignTest {
     double shaftDiam = mechDesign.getShaftDiameter();
     assertTrue(shaftDiam > 0, "Shaft diameter should be positive");
     assertTrue(shaftDiam < impellerDiameterUpperBound(mechDesign.getImpellerDiameter()),
-        "Shaft diameter should be smaller than impeller");
+	"Shaft diameter should be smaller than impeller");
     logger.info("Shaft diameter: " + shaftDiam + " mm");
   }
 
@@ -109,8 +109,7 @@ public class PumpMechanicalDesignTest {
 
   @Test
   public void testWeight() {
-    double weight = mechDesign.getCasingWeight() + mechDesign.getMotorWeight()
-        + mechDesign.getBaseplateWeight();
+    double weight = mechDesign.getCasingWeight() + mechDesign.getMotorWeight() + mechDesign.getBaseplateWeight();
     assertTrue(weight > 0, "Total weight should be positive");
     logger.info("Total weight: " + weight + " kg");
   }
@@ -134,8 +133,7 @@ public class PumpMechanicalDesignTest {
   public void testDesignTemperature() {
     double designTemp = mechDesign.getDesignTemperature();
     double operatingTemp = 25.0; // C from setup
-    assertTrue(designTemp >= operatingTemp,
-        "Design temperature should be >= operating temperature");
+    assertTrue(designTemp >= operatingTemp, "Design temperature should be >= operating temperature");
     logger.info("Design temperature: " + designTemp + " C");
   }
 
@@ -210,8 +208,7 @@ public class PumpMechanicalDesignTest {
 
     // Test with inadequate NPSH margin
     boolean result2 = mechDesign.validateNpshMargin(5.0, 5.0);
-    assertTrue(!result2 || mechDesign.getNpshMarginFactor() <= 1.0,
-        "Should fail when NPSH margin is not met");
+    assertTrue(!result2 || mechDesign.getNpshMarginFactor() <= 1.0, "Should fail when NPSH margin is not met");
   }
 
   @Test
@@ -259,7 +256,7 @@ public class PumpMechanicalDesignTest {
     logger.info("Validation valid: " + result.isValid());
     if (!result.isValid()) {
       for (String issue : result.getIssues()) {
-        logger.info("  Issue: " + issue);
+	logger.info("  Issue: " + issue);
       }
     }
   }

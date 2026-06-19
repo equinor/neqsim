@@ -87,8 +87,7 @@ public class CompressorCasingDesignCalculator implements Serializable {
   private double jointEfficiency = 0.85;
 
   /** Casing type. */
-  private CompressorMechanicalDesign.CasingType casingType =
-      CompressorMechanicalDesign.CasingType.HORIZONTALLY_SPLIT;
+  private CompressorMechanicalDesign.CasingType casingType = CompressorMechanicalDesign.CasingType.HORIZONTALLY_SPLIT;
 
   /** Whether H2S sour service (NACE MR0175). */
   private boolean sourService = false;
@@ -379,8 +378,8 @@ public class CompressorCasingDesignCalculator implements Serializable {
    * Update material properties from grade lookup using built-in data tables.
    *
    * <p>
-   * Looks up SMYS, SMTS, allowable stress, density, thermal expansion, and elastic modulus for the
-   * specified material grade from ASME II Part D data.
+   * Looks up SMYS, SMTS, allowable stress, density, thermal expansion, and elastic modulus for the specified material
+   * grade from ASME II Part D data.
    * </p>
    */
   private void updateMaterialProperties() {
@@ -507,7 +506,7 @@ public class CompressorCasingDesignCalculator implements Serializable {
     double denominator = allowableS * efficiency - 0.6 * pressureMPa;
     if (denominator <= 0) {
       designIssues.add("BLOCKER: Pressure exceeds material capability. "
-          + "Select higher strength material or reduce design pressure.");
+	  + "Select higher strength material or reduce design pressure.");
       requiredWallThicknessMm = casingInnerDiameterMm; // Flag as impossible
       return;
     }
@@ -527,15 +526,14 @@ public class CompressorCasingDesignCalculator implements Serializable {
     // Calculate actual hoop stress at selected thickness
     double effectiveThickness = selectedWallThicknessMm - corrosionAllowanceMm;
     if (effectiveThickness > 0) {
-      hoopStressMPa = pressureMPa * (innerRadiusMm + 0.6 * effectiveThickness)
-          / (efficiency * effectiveThickness);
+      hoopStressMPa = pressureMPa * (innerRadiusMm + 0.6 * effectiveThickness) / (efficiency * effectiveThickness);
     }
 
     stressRatio = hoopStressMPa / allowableStressMPa;
 
     if (stressRatio > 1.0) {
       designIssues.add("WARNING: Hoop stress ratio " + String.format("%.2f", stressRatio)
-          + " exceeds 1.0. Increase wall thickness or select stronger material.");
+	  + " exceeds 1.0. Increase wall thickness or select stronger material.");
     }
   }
 
@@ -547,13 +545,12 @@ public class CompressorCasingDesignCalculator implements Serializable {
    */
   private double roundUpToStandardThickness(double thicknessMm) {
     // Standard plate thicknesses in mm (metric preferred series)
-    double[] standardThicknesses =
-        {6.0, 8.0, 10.0, 12.0, 12.7, 14.0, 16.0, 18.0, 20.0, 22.0, 25.0, 28.0, 30.0, 32.0, 35.0,
-            38.0, 40.0, 45.0, 50.0, 55.0, 60.0, 65.0, 70.0, 75.0, 80.0, 90.0, 100.0};
+    double[] standardThicknesses = { 6.0, 8.0, 10.0, 12.0, 12.7, 14.0, 16.0, 18.0, 20.0, 22.0, 25.0, 28.0, 30.0, 32.0,
+	35.0, 38.0, 40.0, 45.0, 50.0, 55.0, 60.0, 65.0, 70.0, 75.0, 80.0, 90.0, 100.0 };
 
     for (double stdThk : standardThicknesses) {
       if (stdThk >= thicknessMm) {
-        return stdThk;
+	return stdThk;
       }
     }
     // If beyond standard range, round up to nearest 5mm
@@ -581,8 +578,7 @@ public class CompressorCasingDesignCalculator implements Serializable {
     }
 
     // Inverse of UG-27: P = S*E*t / (R + 0.6*t)
-    mawpMPa = (allowableStressMPa * jointEfficiency * effectiveThickness)
-        / (innerRadiusMm + 0.6 * effectiveThickness);
+    mawpMPa = (allowableStressMPa * jointEfficiency * effectiveThickness) / (innerRadiusMm + 0.6 * effectiveThickness);
   }
 
   // ============================================================================
@@ -593,8 +589,7 @@ public class CompressorCasingDesignCalculator implements Serializable {
    * Calculate hydrostatic test pressure per ASME VIII UG-99.
    *
    * <p>
-   * For Div. 1: Test pressure = 1.3 x MAWP x (stress ratio at test temp / stress ratio at design
-   * temp).
+   * For Div. 1: Test pressure = 1.3 x MAWP x (stress ratio at test temp / stress ratio at design temp).
    * </p>
    * <p>
    * For API 617 compressors, minimum 1.5 x design pressure is typical.
@@ -623,16 +618,15 @@ public class CompressorCasingDesignCalculator implements Serializable {
     double innerRadiusMm = casingInnerDiameterMm / 2.0;
     if (effectiveThickness > 0) {
       hydroTestStressMPa = hydroTestPressureMPa * (innerRadiusMm + 0.6 * effectiveThickness)
-          / (jointEfficiency * effectiveThickness);
+	  / (jointEfficiency * effectiveThickness);
     }
 
     double maxHydroStress = 0.90 * smysMPa;
     hydroTestAcceptable = hydroTestStressMPa <= maxHydroStress;
 
     if (!hydroTestAcceptable) {
-      designIssues
-          .add("WARNING: Hydrostatic test stress " + String.format("%.1f", hydroTestStressMPa)
-              + " MPa exceeds 90% SMYS (" + String.format("%.1f", maxHydroStress) + " MPa).");
+      designIssues.add("WARNING: Hydrostatic test stress " + String.format("%.1f", hydroTestStressMPa)
+	  + " MPa exceeds 90% SMYS (" + String.format("%.1f", maxHydroStress) + " MPa).");
     }
 
     appliedStandards.add("ASME VIII UG-99 - Hydrostatic Test");
@@ -646,8 +640,8 @@ public class CompressorCasingDesignCalculator implements Serializable {
    * Select and verify flange rating per ASME B16.5 (NPS 1/2-24) or B16.47 (NPS 26-60).
    *
    * <p>
-   * Selects the minimum flange class that exceeds the design pressure at the design temperature.
-   * Temperature derating is applied per the ASME B16.5 pressure-temperature tables.
+   * Selects the minimum flange class that exceeds the design pressure at the design temperature. Temperature derating
+   * is applied per the ASME B16.5 pressure-temperature tables.
    * </p>
    */
   private void selectFlangeRating() {
@@ -659,8 +653,8 @@ public class CompressorCasingDesignCalculator implements Serializable {
 
     // ASME B16.5 pressure-temperature ratings at ambient (carbon steel group 1.1)
     // Classes and their ambient pressure ratings [barg]
-    int[] classes = {150, 300, 600, 900, 1500, 2500};
-    double[] ratingsAtAmbientBarg = {19.6, 51.1, 102.1, 153.0, 255.0, 425.0};
+    int[] classes = { 150, 300, 600, 900, 1500, 2500 };
+    double[] ratingsAtAmbientBarg = { 19.6, 51.1, 102.1, 153.0, 255.0, 425.0 };
 
     // Temperature derating factor (approximate Group 1.1 materials)
     double tempDeratingFactor = 1.0;
@@ -676,17 +670,17 @@ public class CompressorCasingDesignCalculator implements Serializable {
     for (int i = 0; i < classes.length; i++) {
       double derated = ratingsAtAmbientBarg[i] * tempDeratingFactor;
       if (derated >= designPressureBarg) {
-        flangeClass = classes[i];
-        flangeRatingBarg = derated;
-        flangeRatingAdequate = true;
-        break;
+	flangeClass = classes[i];
+	flangeRatingBarg = derated;
+	flangeRatingAdequate = true;
+	break;
       }
     }
 
     if (!flangeRatingAdequate) {
-      designIssues.add("BLOCKER: No standard flange class adequate for design pressure "
-          + String.format("%.1f", designPressureBarg) + " barg at "
-          + String.format("%.0f", designTemperatureC) + " C.");
+      designIssues.add(
+	  "BLOCKER: No standard flange class adequate for design pressure " + String.format("%.1f", designPressureBarg)
+	      + " barg at " + String.format("%.0f", designTemperatureC) + " C.");
       flangeClass = 2500;
       flangeRatingBarg = ratingsAtAmbientBarg[5] * tempDeratingFactor;
     }
@@ -702,8 +696,8 @@ public class CompressorCasingDesignCalculator implements Serializable {
    * Calculate allowable nozzle forces and moments per API 617 Table 3.
    *
    * <p>
-   * API 617 specifies allowable nozzle loads as a function of nozzle size. For centrifugal
-   * compressors, forces are specified for each nozzle connection (suction, discharge, sidestream).
+   * API 617 specifies allowable nozzle loads as a function of nozzle size. For centrifugal compressors, forces are
+   * specified for each nozzle connection (suction, discharge, sidestream).
    * </p>
    *
    * <p>
@@ -748,9 +742,9 @@ public class CompressorCasingDesignCalculator implements Serializable {
    * Calculate thermal growth and differential expansion between casing and rotor.
    *
    * <p>
-   * Thermal growth is critical for compressor alignment. The casing grows from the anchor point
-   * (typically drive end bearing), and the rotor grows from its thrust collar. Differential
-   * expansion affects internal clearances and must be within acceptable limits.
+   * Thermal growth is critical for compressor alignment. The casing grows from the anchor point (typically drive end
+   * bearing), and the rotor grows from its thrust collar. Differential expansion affects internal clearances and must
+   * be within acceptable limits.
    * </p>
    *
    * <p>
@@ -778,9 +772,8 @@ public class CompressorCasingDesignCalculator implements Serializable {
     thermalGrowthAcceptable = Math.abs(differentialExpansionMm) < maxDifferentialMm;
 
     if (!thermalGrowthAcceptable) {
-      designIssues.add("WARNING: Differential expansion "
-          + String.format("%.2f", Math.abs(differentialExpansionMm)) + " mm exceeds "
-          + String.format("%.1f", maxDifferentialMm) + " mm limit. Review seal clearance design.");
+      designIssues.add("WARNING: Differential expansion " + String.format("%.2f", Math.abs(differentialExpansionMm))
+	  + " mm exceeds " + String.format("%.1f", maxDifferentialMm) + " mm limit. Review seal clearance design.");
     }
   }
 
@@ -792,25 +785,23 @@ public class CompressorCasingDesignCalculator implements Serializable {
    * Calculate split-line bolting for horizontally-split casings.
    *
    * <p>
-   * The horizontal joint must resist the internal pressure force tending to separate the casing
-   * halves. The bolt load must overcome both the hydrostatic end force and the gasket seating load.
+   * The horizontal joint must resist the internal pressure force tending to separate the casing halves. The bolt load
+   * must overcome both the hydrostatic end force and the gasket seating load.
    * </p>
    *
    * <p>
-   * The required bolt area is calculated as: $A_{bolt} = \frac{F_{pressure} + F_{gasket}}{S_{bolt}
-   * \times N}$
+   * The required bolt area is calculated as: $A_{bolt} = \frac{F_{pressure} + F_{gasket}}{S_{bolt} \times N}$
    * </p>
    *
    * <p>
-   * where $F_{pressure} = P \times D \times L$ (force on split-line), $F_{gasket}$ = gasket seating
-   * force, $S_{bolt}$ = allowable bolt stress, N = number of bolts.
+   * where $F_{pressure} = P \times D \times L$ (force on split-line), $F_{gasket}$ = gasket seating force, $S_{bolt}$ =
+   * allowable bolt stress, N = number of bolts.
    * </p>
    */
   private void calculateSplitLineBolts() {
     // Pressure force on split line: F = P * projected_area
     // Projected area = casing ID * casing length
-    double pressureForceN =
-        designPressureMPa * (casingInnerDiameterMm / 1000.0) * (casingLengthMm / 1000.0) * 1e6;
+    double pressureForceN = designPressureMPa * (casingInnerDiameterMm / 1000.0) * (casingLengthMm / 1000.0) * 1e6;
 
     // Gasket seating force (spiral wound, ~30% of pressure force as rule of thumb)
     totalGasketLoadN = pressureForceN * 0.30;
@@ -829,7 +820,7 @@ public class CompressorCasingDesignCalculator implements Serializable {
 
     // Determine bolt size and count
     // Start with M24 (24mm) and iterate if needed
-    double[] standardBoltSizes = {16.0, 20.0, 24.0, 30.0, 36.0, 42.0, 48.0};
+    double[] standardBoltSizes = { 16.0, 20.0, 24.0, 30.0, 36.0, 42.0, 48.0 };
 
     // Bolt pitch should be 2.5-4 x bolt diameter per API 617
     double minPitchFactor = 2.5;
@@ -857,22 +848,21 @@ public class CompressorCasingDesignCalculator implements Serializable {
       double requiredStress = totalBoltLoadN / (totalBoltArea * 1e-6) / 1e6; // MPa
 
       if (requiredStress <= boltAllowableStressMPa) {
-        splitLineBoltDiameterMm = boltSize;
-        splitLineBoltCount = numBolts;
-        splitLineBoltPitchMm = boltPitchMm;
-        boltTensileStressMPa = requiredStress;
-        boltPreloadForceN = totalBoltLoadN / numBolts;
-        splitLineBoltsAdequate = true;
-        found = true;
-        break;
+	splitLineBoltDiameterMm = boltSize;
+	splitLineBoltCount = numBolts;
+	splitLineBoltPitchMm = boltPitchMm;
+	boltTensileStressMPa = requiredStress;
+	boltPreloadForceN = totalBoltLoadN / numBolts;
+	splitLineBoltsAdequate = true;
+	found = true;
+	break;
       }
     }
 
     if (!found) {
       splitLineBoltDiameterMm = 48.0;
       splitLineBoltsAdequate = false;
-      designIssues
-          .add("WARNING: Split-line bolt design may be inadequate. Consider barrel casing.");
+      designIssues.add("WARNING: Split-line bolt design may be inadequate. Consider barrel casing.");
     }
 
     appliedStandards.add("API 617 - Split-Line Bolting");
@@ -886,9 +876,9 @@ public class CompressorCasingDesignCalculator implements Serializable {
    * Calculate barrel casing outer/inner barrel sizing.
    *
    * <p>
-   * Barrel casings consist of an outer pressure-containing barrel and an inner bundle (cartridge)
-   * that slides out for maintenance. The outer barrel is typically a forged cylinder (SA-266) that
-   * avoids the split-line sealing issue at high pressures.
+   * Barrel casings consist of an outer pressure-containing barrel and an inner bundle (cartridge) that slides out for
+   * maintenance. The outer barrel is typically a forged cylinder (SA-266) that avoids the split-line sealing issue at
+   * high pressures.
    * </p>
    */
   private void calculateBarrelCasing() {
@@ -909,7 +899,7 @@ public class CompressorCasingDesignCalculator implements Serializable {
     // C = 0.33 for bolted flat head
     double coverC = 0.33;
     barrelEndCoverThicknessMm = barrelOuterIDMm
-        * Math.sqrt(coverC * designPressureMPa / (allowableStressMPa * jointEfficiency));
+	* Math.sqrt(coverC * designPressureMPa / (allowableStressMPa * jointEfficiency));
     barrelEndCoverThicknessMm = Math.max(barrelEndCoverThicknessMm, 25.0); // Min 25mm
 
     // Round up to standard thickness
@@ -917,8 +907,7 @@ public class CompressorCasingDesignCalculator implements Serializable {
 
     // End cover bolting
     // Force on end cover = P * A_cover
-    double endCoverForceN =
-        designPressureMPa * Math.PI * Math.pow(barrelOuterIDMm / 2.0 / 1000.0, 2.0) * 1e6;
+    double endCoverForceN = designPressureMPa * Math.PI * Math.pow(barrelOuterIDMm / 2.0 / 1000.0, 2.0) * 1e6;
 
     // Select bolt size (typically M30-M48 for barrel covers)
     double boltSize = 36.0; // M36 default
@@ -944,8 +933,7 @@ public class CompressorCasingDesignCalculator implements Serializable {
 
     if (boltStress > boltAllowableStressMPa) {
       designIssues.add("WARNING: Barrel end-cover bolt stress " + String.format("%.0f", boltStress)
-          + " MPa exceeds allowable " + String.format("%.0f", boltAllowableStressMPa)
-          + " MPa. Increase bolt size.");
+	  + " MPa exceeds allowable " + String.format("%.0f", boltAllowableStressMPa) + " MPa. Increase bolt size.");
     }
 
     appliedStandards.add("ASME VIII UG-34 - Flat Head (Barrel End Cover)");
@@ -1003,35 +991,33 @@ public class CompressorCasingDesignCalculator implements Serializable {
     } else {
       // Carbon steels: check hardness and strength limits
       if (materialType.contains("CarbonSteel") || materialType.contains("LowAlloy")) {
-        naceMaxHardnessHRC = 22.0;
-        if (smysMPa > 360.0) {
-          naceIssues.add("Material SMYS " + String.format("%.0f", smysMPa)
-              + " MPa exceeds NACE limit of 360 MPa for carbon steel in sour service.");
-          naceComplianceStatus = "NON_COMPLIANT";
-        } else {
-          naceComplianceStatus = "CONDITIONALLY_COMPLIANT";
-          naceIssues.add("Carbon steel acceptable if hardness <= 22 HRC "
-              + "and proper PWHT applied per NACE MR0175.");
-        }
+	naceMaxHardnessHRC = 22.0;
+	if (smysMPa > 360.0) {
+	  naceIssues.add("Material SMYS " + String.format("%.0f", smysMPa)
+	      + " MPa exceeds NACE limit of 360 MPa for carbon steel in sour service.");
+	  naceComplianceStatus = "NON_COMPLIANT";
+	} else {
+	  naceComplianceStatus = "CONDITIONALLY_COMPLIANT";
+	  naceIssues.add("Carbon steel acceptable if hardness <= 22 HRC " + "and proper PWHT applied per NACE MR0175.");
+	}
       } else if (materialType.contains("CrMo")) {
-        naceMaxHardnessHRC = 22.0;
-        if (smysMPa > 520.0) {
-          naceComplianceStatus = "NON_COMPLIANT";
-          naceIssues.add("CrMo steel SMYS exceeds NACE limit for sour service.");
-        } else {
-          naceComplianceStatus = "CONDITIONALLY_COMPLIANT";
-          naceIssues.add("CrMo acceptable with PWHT and hardness <= 22 HRC.");
-        }
+	naceMaxHardnessHRC = 22.0;
+	if (smysMPa > 520.0) {
+	  naceComplianceStatus = "NON_COMPLIANT";
+	  naceIssues.add("CrMo steel SMYS exceeds NACE limit for sour service.");
+	} else {
+	  naceComplianceStatus = "CONDITIONALLY_COMPLIANT";
+	  naceIssues.add("CrMo acceptable with PWHT and hardness <= 22 HRC.");
+	}
       } else {
-        naceComplianceStatus = "NON_COMPLIANT";
-        naceIssues.add("Material " + materialGrade + " not listed as NACE compliant.");
+	naceComplianceStatus = "NON_COMPLIANT";
+	naceIssues.add("Material " + materialGrade + " not listed as NACE compliant.");
       }
     }
 
     if ("NON_COMPLIANT".equals(naceComplianceStatus)) {
-      designIssues.add(
-          "BLOCKER: Material " + materialGrade + " is not NACE MR0175 compliant for sour service. "
-              + "Consider SA-182-F316L, SA-182-F304L, or Inconel-718.");
+      designIssues.add("BLOCKER: Material " + materialGrade + " is not NACE MR0175 compliant for sour service. "
+	  + "Consider SA-182-F316L, SA-182-F304L, or Inconel-718.");
     }
   }
 
@@ -1058,7 +1044,7 @@ public class CompressorCasingDesignCalculator implements Serializable {
   public String recommendMaterial() {
     if (sourService || h2sPartialPressureKPa > 0.3) {
       if (designTemperatureC > 200.0) {
-        return "Inconel-718";
+	return "Inconel-718";
       }
       return "SA-182-F316L";
     }
@@ -1077,7 +1063,7 @@ public class CompressorCasingDesignCalculator implements Serializable {
     if (designPressureMPa > 10.0) {
       // High pressure - use forging grade
       if (casingType == CompressorMechanicalDesign.CasingType.BARREL) {
-        return "SA-266-Gr4";
+	return "SA-266-Gr4";
       }
       return "SA-266-Gr2";
     }
@@ -1225,8 +1211,7 @@ public class CompressorCasingDesignCalculator implements Serializable {
    * @return JSON string with all design results
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   // ============================================================================

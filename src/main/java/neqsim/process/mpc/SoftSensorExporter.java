@@ -15,13 +15,11 @@ import com.google.gson.GsonBuilder;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
- * Exports soft-sensor and estimator configurations for integration with external calculation
- * engines.
+ * Exports soft-sensor and estimator configurations for integration with external calculation engines.
  *
  * <p>
- * This class provides export capabilities for soft-sensors (calculated values derived from
- * thermodynamic models) that can be used by external control and optimization systems. Common
- * soft-sensors include:
+ * This class provides export capabilities for soft-sensors (calculated values derived from thermodynamic models) that
+ * can be used by external control and optimization systems. Common soft-sensors include:
  * </p>
  * <ul>
  * <li>Composition estimators based on pressure, temperature, and flow measurements</li>
@@ -31,8 +29,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * </ul>
  *
  * <p>
- * The exports include input/output mappings, calculation parameters, and model coefficients that
- * can be loaded into external calculation engines for real-time estimation.
+ * The exports include input/output mappings, calculation parameters, and model coefficients that can be loaded into
+ * external calculation engines for real-time estimation.
  * </p>
  *
  * <p>
@@ -110,9 +108,9 @@ public class SoftSensorExporter implements Serializable {
   /**
    * Add a density soft-sensor.
    *
-   * @param name sensor name
+   * @param name          sensor name
    * @param equipmentName equipment to monitor
-   * @param unit output unit (kg/m3, lb/ft3, etc.)
+   * @param unit          output unit (kg/m3, lb/ft3, etc.)
    * @return this exporter for method chaining
    */
   public SoftSensorExporter addDensitySensor(String name, String equipmentName, String unit) {
@@ -128,9 +126,9 @@ public class SoftSensorExporter implements Serializable {
   /**
    * Add a viscosity soft-sensor.
    *
-   * @param name sensor name
+   * @param name          sensor name
    * @param equipmentName equipment to monitor
-   * @param unit output unit (cP, Pa.s, etc.)
+   * @param unit          output unit (cP, Pa.s, etc.)
    * @return this exporter for method chaining
    */
   public SoftSensorExporter addViscositySensor(String name, String equipmentName, String unit) {
@@ -146,7 +144,7 @@ public class SoftSensorExporter implements Serializable {
   /**
    * Add a phase fraction soft-sensor.
    *
-   * @param name sensor name
+   * @param name          sensor name
    * @param equipmentName equipment to monitor
    * @return this exporter for method chaining
    */
@@ -164,13 +162,12 @@ public class SoftSensorExporter implements Serializable {
   /**
    * Add a composition estimator soft-sensor.
    *
-   * @param name sensor name
+   * @param name          sensor name
    * @param equipmentName equipment to monitor
    * @param componentName component to estimate
    * @return this exporter for method chaining
    */
-  public SoftSensorExporter addCompositionEstimator(String name, String equipmentName,
-      String componentName) {
+  public SoftSensorExporter addCompositionEstimator(String name, String equipmentName, String componentName) {
     SoftSensorDefinition sensor = new SoftSensorDefinition(name, SensorType.COMPOSITION);
     sensor.setEquipmentName(equipmentName);
     sensor.setComponentName(componentName);
@@ -184,7 +181,7 @@ public class SoftSensorExporter implements Serializable {
   /**
    * Add a molecular weight estimator soft-sensor.
    *
-   * @param name sensor name
+   * @param name          sensor name
    * @param equipmentName equipment to monitor
    * @return this exporter for method chaining
    */
@@ -201,7 +198,7 @@ public class SoftSensorExporter implements Serializable {
   /**
    * Add a compressibility factor (Z) soft-sensor.
    *
-   * @param name sensor name
+   * @param name          sensor name
    * @param equipmentName equipment to monitor
    * @return this exporter for method chaining
    */
@@ -218,9 +215,9 @@ public class SoftSensorExporter implements Serializable {
   /**
    * Add a heat capacity soft-sensor.
    *
-   * @param name sensor name
+   * @param name          sensor name
    * @param equipmentName equipment to monitor
-   * @param unit output unit (J/mol.K, kJ/kg.K, etc.)
+   * @param unit          output unit (J/mol.K, kJ/kg.K, etc.)
    * @return this exporter for method chaining
    */
   public SoftSensorExporter addHeatCapacitySensor(String name, String equipmentName, String unit) {
@@ -236,14 +233,14 @@ public class SoftSensorExporter implements Serializable {
   /**
    * Add a custom soft-sensor with specified inputs and calculation type.
    *
-   * @param name sensor name
+   * @param name          sensor name
    * @param equipmentName equipment to monitor
-   * @param sensorType the type of sensor
-   * @param outputUnit the output unit
+   * @param sensorType    the type of sensor
+   * @param outputUnit    the output unit
    * @return the created sensor definition for further configuration
    */
-  public SoftSensorDefinition addCustomSensor(String name, String equipmentName,
-      SensorType sensorType, String outputUnit) {
+  public SoftSensorDefinition addCustomSensor(String name, String equipmentName, SensorType sensorType,
+      String outputUnit) {
     SoftSensorDefinition sensor = new SoftSensorDefinition(name, sensorType);
     sensor.setEquipmentName(equipmentName);
     sensor.setOutputUnit(outputUnit);
@@ -287,8 +284,8 @@ public class SoftSensorExporter implements Serializable {
    * Export soft-sensor configurations as CVT (Calculated Value Table) format.
    *
    * <p>
-   * CVT format is a tabular format commonly used by industrial control systems for defining
-   * calculated values and their update schedules.
+   * CVT format is a tabular format commonly used by industrial control systems for defining calculated values and their
+   * update schedules.
    * </p>
    *
    * @param filename the output filename
@@ -302,26 +299,25 @@ public class SoftSensorExporter implements Serializable {
 
       // Data rows
       for (SoftSensorDefinition sensor : sensors) {
-        writer.write(sensor.getName());
-        writer.write("," + tagPrefix + sensor.getName());
-        writer.write("," + sensor.getSensorType().name());
-        writer.write("," + sensor.getEquipmentName());
+	writer.write(sensor.getName());
+	writer.write("," + tagPrefix + sensor.getName());
+	writer.write("," + sensor.getSensorType().name());
+	writer.write("," + sensor.getEquipmentName());
 
-        // Inputs as semicolon-separated list
-        StringBuilder inputs = new StringBuilder();
-        for (Map.Entry<String, String> input : sensor.getInputs().entrySet()) {
-          if (inputs.length() > 0) {
-            inputs.append(";");
-          }
-          inputs.append(input.getKey()).append("[").append(input.getValue()).append("]");
-        }
-        writer.write(",\"" + inputs.toString() + "\"");
+	// Inputs as semicolon-separated list
+	StringBuilder inputs = new StringBuilder();
+	for (Map.Entry<String, String> input : sensor.getInputs().entrySet()) {
+	  if (inputs.length() > 0) {
+	    inputs.append(";");
+	  }
+	  inputs.append(input.getKey()).append("[").append(input.getValue()).append("]");
+	}
+	writer.write(",\"" + inputs.toString() + "\"");
 
-        writer.write("," + sensor.getOutputUnit());
-        writer.write("," + sensor.getUpdateRateSeconds());
-        writer
-            .write(",\"" + (sensor.getDescription() != null ? sensor.getDescription() : "") + "\"");
-        writer.newLine();
+	writer.write("," + sensor.getOutputUnit());
+	writer.write("," + sensor.getUpdateRateSeconds());
+	writer.write(",\"" + (sensor.getDescription() != null ? sensor.getDescription() : "") + "\"");
+	writer.newLine();
       }
     }
   }
@@ -390,7 +386,7 @@ public class SoftSensorExporter implements Serializable {
     /**
      * Construct a soft-sensor definition.
      *
-     * @param name the sensor name
+     * @param name       the sensor name
      * @param sensorType the sensor type
      */
     public SoftSensorDefinition(String name, SensorType sensorType) {
@@ -514,7 +510,7 @@ public class SoftSensorExporter implements Serializable {
      * Add an input to this sensor.
      *
      * @param inputName the input name
-     * @param unit the input unit
+     * @param unit      the input unit
      * @return this definition for method chaining
      */
     public SoftSensorDefinition addInput(String inputName, String unit) {
@@ -535,7 +531,7 @@ public class SoftSensorExporter implements Serializable {
      * Add a parameter to this sensor.
      *
      * @param paramName the parameter name
-     * @param value the parameter value
+     * @param value     the parameter value
      * @return this definition for method chaining
      */
     public SoftSensorDefinition addParameter(String paramName, double value) {
@@ -565,28 +561,28 @@ public class SoftSensorExporter implements Serializable {
       map.put("type", sensorType.name());
       map.put("equipmentName", equipmentName);
       if (componentName != null) {
-        map.put("componentName", componentName);
+	map.put("componentName", componentName);
       }
       map.put("outputUnit", outputUnit);
       map.put("updateRateSeconds", updateRateSeconds);
       if (description != null) {
-        map.put("description", description);
+	map.put("description", description);
       }
 
       // Inputs
       List<Map<String, String>> inputList = new ArrayList<>();
       for (Map.Entry<String, String> entry : inputs.entrySet()) {
-        Map<String, String> input = new LinkedHashMap<>();
-        input.put("name", entry.getKey());
-        input.put("unit", entry.getValue());
-        input.put("tag", tagPrefix + equipmentName + "." + entry.getKey());
-        inputList.add(input);
+	Map<String, String> input = new LinkedHashMap<>();
+	input.put("name", entry.getKey());
+	input.put("unit", entry.getValue());
+	input.put("tag", tagPrefix + equipmentName + "." + entry.getKey());
+	inputList.add(input);
       }
       map.put("inputs", inputList);
 
       // Parameters
       if (!parameters.isEmpty()) {
-        map.put("parameters", parameters);
+	map.put("parameters", parameters);
       }
 
       return map;

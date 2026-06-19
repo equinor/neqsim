@@ -24,10 +24,10 @@ public class ComponentGeNRTL extends ComponentGE {
    * Constructor for ComponentGeNRTL.
    * </p>
    *
-   * @param name Name of component.
-   * @param moles Total number of moles of component.
+   * @param name         Name of component.
+   * @param moles        Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex Index number of component in phase object component array.
+   * @param compIndex    Index number of component in phase object component array.
    */
   public ComponentGeNRTL(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
@@ -35,9 +35,8 @@ public class ComponentGeNRTL extends ComponentGE {
 
   /** {@inheritDoc} */
   @Override
-  public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] intparam,
-      String[][] mixRule) {
+  public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+      PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] intparam, String[][] mixRule) {
     double E = 0;
     double tau = 0;
     double tau2 = 0;
@@ -120,21 +119,21 @@ public class ComponentGeNRTL extends ComponentGE {
       double dDdT = 0;
 
       for (int l = 0; l < numberOfComponents; l++) {
-        Dij = HVgij[l][j];
-        alpha = HValpha[l][j];
-        tau = Dij / (temperature);
-        dtaudt = -tau / temperature;
+	Dij = HVgij[l][j];
+	alpha = HValpha[l][j];
+	tau = Dij / (temperature);
+	dtaudt = -tau / temperature;
 
-        // System.out.println("error in NRTL comp here....");
-        G = Math.exp(-alpha * tau); // comp_Array[l].getb()*Math.exp(-alpha*tau);
-        dGdt = dtaudt * -alpha * G;
-        Gmatrix[l][j] = G;
-        tauMatrix[l][j] = tau;
+	// System.out.println("error in NRTL comp here....");
+	G = Math.exp(-alpha * tau); // comp_Array[l].getb()*Math.exp(-alpha*tau);
+	dGdt = dtaudt * -alpha * G;
+	Gmatrix[l][j] = G;
+	tauMatrix[l][j] = tau;
 
-        C += G * comp_Array[l].getx();
-        dCdT += dGdt * comp_Array[l].getx();
-        D += G * tau * comp_Array[l].getx();
-        dDdT += comp_Array[l].getx() * dGdt * tau + comp_Array[l].getx() * G * dtaudt;
+	C += G * comp_Array[l].getx();
+	dCdT += dGdt * comp_Array[l].getx();
+	D += G * tau * comp_Array[l].getx();
+	dDdT += comp_Array[l].getx() * dGdt * tau + comp_Array[l].getx() * G * dtaudt;
       }
       dA2dTetter += dA2dT / C;
       dA3dTetter += dA3dT * dCdT / (C * C);
@@ -148,8 +147,7 @@ public class ComponentGeNRTL extends ComponentGE {
 
       F += E / C * (tau2 - D / C);
       /*
-       * dFdT += (dEdT / C - E / (C * C) * dCdT) * (tau2 - D / C) + E / C * (dtau2dt - (dDdT / C - D
-       * / (C * C) * dCdT));
+       * dFdT += (dEdT / C - E / (C * C) * dCdT) * (tau2 - D / C) + E / C * (dtau2dt - (dDdT / C - D / (C * C) * dCdT));
        */
       // F2T = F2T - 2*2*A/Math.pow(C,2) + 2*2*E*D/Math.pow(C,3); // A til A2;
     }
@@ -158,8 +156,8 @@ public class ComponentGeNRTL extends ComponentGE {
     // dlngammadt = dAdT/B - A/(B*B)*dBdT + dFdT;
 
     /*
-     * double dlngammadt = (dAdT / B - A / (B * B) * dBdT + dA2dTetter - dA3dTetter + dA4dTetter -
-     * dA5dTetter - dA6dTetter);
+     * double dlngammadt = (dAdT / B - A / (B * B) * dBdT + dA2dTetter - dA3dTetter + dA4dTetter - dA5dTetter -
+     * dA6dTetter);
      */
 
     /*
@@ -190,37 +188,37 @@ public class ComponentGeNRTL extends ComponentGE {
       double Gtemp = 0;
 
       for (int p = 0; p < numberOfComponents; p++) {
-        dAdn = tauMatrix[p][this.getComponentNumber()] * Gmatrix[p][this.getComponentNumber()];
-        dBdn = Gmatrix[p][this.getComponentNumber()];
-        dEdn = Gmatrix[this.getComponentNumber()][p] * tauMatrix[this.getComponentNumber()][p];
-        // dFdn = Gmatrix[this.getComponentNumber()][p];
-        Dtemp = 0;
-        Ctemp = 0;
-        Etemp = 0;
-        Ftemp = 0;
-        Gtemp = 0;
-        double nt = 0;
-        for (int f = 0; f < numberOfComponents; f++) {
-          nt += comp_Array[f].getNumberOfMolesInPhase();
-          Ctemp += comp_Array[f].getx() * Gmatrix[f][p];
-          Etemp += comp_Array[f].getx() * Gmatrix[f][p] * tauMatrix[f][p];
-          double sum = 0.0;
-          double sum2 = 0.0;
-          for (int g = 0; g < numberOfComponents; g++) {
-            sum += comp_Array[g].getx() * Gmatrix[g][f];
-            sum2 += comp_Array[g].getx() * Gmatrix[g][f] * tauMatrix[g][f];
-          }
-          Dtemp += Gmatrix[p][f] * Gmatrix[this.getComponentNumber()][f]
-              * tauMatrix[this.getComponentNumber()][f] * comp_Array[f].getx() / (sum * sum);
-          Ftemp += comp_Array[f].getx() * Gmatrix[p][f] * sum2
-              * Gmatrix[this.getComponentNumber()][f] / (sum * sum * sum);
-          Gtemp += comp_Array[f].getx() * Gmatrix[p][f] * tauMatrix[p][f]
-              * Gmatrix[this.getComponentNumber()][f] / (sum * sum);
-        }
-        dlngammadn[p] = (dAdn / B - A / (B * B) * dBdn) + dEdn / Ctemp - Dtemp
-            - Etemp * Gmatrix[this.getComponentNumber()][p] / (Ctemp * Ctemp) + 2.0 * Ftemp - Gtemp;
-        // E/(C*C)*dCdn[p]*(tau2-D/C) + E/C*(-dDdn[p]/C + D/(C*C)*dCdn[p]);
-        dlngammadn[p] /= (nt);
+	dAdn = tauMatrix[p][this.getComponentNumber()] * Gmatrix[p][this.getComponentNumber()];
+	dBdn = Gmatrix[p][this.getComponentNumber()];
+	dEdn = Gmatrix[this.getComponentNumber()][p] * tauMatrix[this.getComponentNumber()][p];
+	// dFdn = Gmatrix[this.getComponentNumber()][p];
+	Dtemp = 0;
+	Ctemp = 0;
+	Etemp = 0;
+	Ftemp = 0;
+	Gtemp = 0;
+	double nt = 0;
+	for (int f = 0; f < numberOfComponents; f++) {
+	  nt += comp_Array[f].getNumberOfMolesInPhase();
+	  Ctemp += comp_Array[f].getx() * Gmatrix[f][p];
+	  Etemp += comp_Array[f].getx() * Gmatrix[f][p] * tauMatrix[f][p];
+	  double sum = 0.0;
+	  double sum2 = 0.0;
+	  for (int g = 0; g < numberOfComponents; g++) {
+	    sum += comp_Array[g].getx() * Gmatrix[g][f];
+	    sum2 += comp_Array[g].getx() * Gmatrix[g][f] * tauMatrix[g][f];
+	  }
+	  Dtemp += Gmatrix[p][f] * Gmatrix[this.getComponentNumber()][f] * tauMatrix[this.getComponentNumber()][f]
+	      * comp_Array[f].getx() / (sum * sum);
+	  Ftemp += comp_Array[f].getx() * Gmatrix[p][f] * sum2 * Gmatrix[this.getComponentNumber()][f]
+	      / (sum * sum * sum);
+	  Gtemp += comp_Array[f].getx() * Gmatrix[p][f] * tauMatrix[p][f] * Gmatrix[this.getComponentNumber()][f]
+	      / (sum * sum);
+	}
+	dlngammadn[p] = (dAdn / B - A / (B * B) * dBdn) + dEdn / Ctemp - Dtemp
+	    - Etemp * Gmatrix[this.getComponentNumber()][p] / (Ctemp * Ctemp) + 2.0 * Ftemp - Gtemp;
+	// E/(C*C)*dCdn[p]*(tau2-D/C) + E/C*(-dDdn[p]/C + D/(C*C)*dCdn[p]);
+	dlngammadn[p] /= (nt);
       }
       // System.out.println("Dlngamdn: " + dlngammadn[p] + " x: " +
       // comp_Array[p].getx()+ " length: ");
@@ -230,15 +228,13 @@ public class ComponentGeNRTL extends ComponentGE {
   }
 
   /*
-   * public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents, double temperature,
-   * double pressure, PhaseType pt){ dfugdp = (Math.log(fugcoef(phase, numberOfComponents,
-   * temperature, pressure+0.01, pt))-Math.log(fugcoef(phase, numberOfComponents, temperature,
-   * pressure-0.01, pt)))/0.02; return dfugdp; }
+   * public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+   * PhaseType pt){ dfugdp = (Math.log(fugcoef(phase, numberOfComponents, temperature, pressure+0.01,
+   * pt))-Math.log(fugcoef(phase, numberOfComponents, temperature, pressure-0.01, pt)))/0.02; return dfugdp; }
    *
-   * public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents, double temperature,
-   * double pressure, PhaseType pt){ dfugdt = (Math.log(fugcoef(phase, numberOfComponents,
-   * temperature+0.01, pressure, pt))-Math.log(fugcoef(phase, numberOfComponents, temperature-0.01,
-   * pressure, pt)))/0.02; return dfugdt; }
+   * public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+   * PhaseType pt){ dfugdt = (Math.log(fugcoef(phase, numberOfComponents, temperature+0.01, pressure,
+   * pt))-Math.log(fugcoef(phase, numberOfComponents, temperature-0.01, pressure, pt)))/0.02; return dfugdt; }
    */
 
   /**

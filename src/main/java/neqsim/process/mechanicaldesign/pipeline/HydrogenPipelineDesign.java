@@ -31,13 +31,42 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
  *
  * <table>
  * <caption>Material grades and hydrogen service compatibility</caption>
- * <tr><th>Material Grade</th><th>Max Pressure [bar]</th><th>Derating Factor</th>
- * <th>Compatibility</th></tr>
- * <tr><td>API 5L X42</td><td>100</td><td>1.0</td><td>Excellent</td></tr>
- * <tr><td>API 5L X52</td><td>100</td><td>0.95</td><td>Good</td></tr>
- * <tr><td>API 5L X60</td><td>80</td><td>0.90</td><td>Acceptable</td></tr>
- * <tr><td>API 5L X65</td><td>70</td><td>0.85</td><td>Limited</td></tr>
- * <tr><td>API 5L X70</td><td>50</td><td>0.80</td><td>Not recommended</td></tr>
+ * <tr>
+ * <th>Material Grade</th>
+ * <th>Max Pressure [bar]</th>
+ * <th>Derating Factor</th>
+ * <th>Compatibility</th>
+ * </tr>
+ * <tr>
+ * <td>API 5L X42</td>
+ * <td>100</td>
+ * <td>1.0</td>
+ * <td>Excellent</td>
+ * </tr>
+ * <tr>
+ * <td>API 5L X52</td>
+ * <td>100</td>
+ * <td>0.95</td>
+ * <td>Good</td>
+ * </tr>
+ * <tr>
+ * <td>API 5L X60</td>
+ * <td>80</td>
+ * <td>0.90</td>
+ * <td>Acceptable</td>
+ * </tr>
+ * <tr>
+ * <td>API 5L X65</td>
+ * <td>70</td>
+ * <td>0.85</td>
+ * <td>Limited</td>
+ * </tr>
+ * <tr>
+ * <td>API 5L X70</td>
+ * <td>50</td>
+ * <td>0.80</td>
+ * <td>Not recommended</td>
+ * </tr>
  * </table>
  *
  * <h2>Usage Example</h2>
@@ -150,8 +179,7 @@ public class HydrogenPipelineDesign extends MechanicalDesign {
     double smysPa = smys * 1.0e6;
 
     // t = P * D / (2 * S * F * E * T * Hf)
-    double effectiveStress = smysPa * designFactor * jointFactor
-        * temperatureDeratingFactor * hydrogenDeratingFactor;
+    double effectiveStress = smysPa * designFactor * jointFactor * temperatureDeratingFactor * hydrogenDeratingFactor;
 
     double tMinMm = 0.0;
     if (effectiveStress > 0.0) {

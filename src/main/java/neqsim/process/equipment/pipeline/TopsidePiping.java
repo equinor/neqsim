@@ -7,20 +7,18 @@ import neqsim.process.mechanicaldesign.pipeline.TopsidePipingMechanicalDesign;
 /**
  * Topside piping equipment class for offshore platforms and onshore facilities.
  *
- * &lt;p&gt; This class extends PipeBeggsAndBrills to provide topside piping-specific functionality
- * including: &lt;/p&gt; &lt;ul&gt; &lt;li&gt;ASME B31.3 Process Piping design&lt;/li&gt;
- * &lt;li&gt;Velocity limits for erosion and vibration prevention&lt;/li&gt; &lt;li&gt;Pipe support
- * spacing calculations&lt;/li&gt; &lt;li&gt;Flow-induced vibration (FIV) analysis&lt;/li&gt;
- * &lt;li&gt;Acoustic-induced vibration (AIV) screening&lt;/li&gt; &lt;li&gt;Thermal expansion and
- * stress analysis&lt;/li&gt; &lt;/ul&gt;
+ * &lt;p&gt; This class extends PipeBeggsAndBrills to provide topside piping-specific functionality including:
+ * &lt;/p&gt; &lt;ul&gt; &lt;li&gt;ASME B31.3 Process Piping design&lt;/li&gt; &lt;li&gt;Velocity limits for erosion and
+ * vibration prevention&lt;/li&gt; &lt;li&gt;Pipe support spacing calculations&lt;/li&gt; &lt;li&gt;Flow-induced
+ * vibration (FIV) analysis&lt;/li&gt; &lt;li&gt;Acoustic-induced vibration (AIV) screening&lt;/li&gt; &lt;li&gt;Thermal
+ * expansion and stress analysis&lt;/li&gt; &lt;/ul&gt;
  *
- * &lt;h2&gt;Service Types&lt;/h2&gt; &lt;p&gt; The class supports multiple service types:
- * &lt;/p&gt; &lt;ul&gt; &lt;li&gt;&lt;b&gt;PROCESS_GAS&lt;/b&gt;: High-pressure gas
- * piping&lt;/li&gt; &lt;li&gt;&lt;b&gt;PROCESS_LIQUID&lt;/b&gt;: Liquid hydrocarbon
- * piping&lt;/li&gt; &lt;li&gt;&lt;b&gt;MULTIPHASE&lt;/b&gt;: Two-phase or multiphase flow
- * piping&lt;/li&gt; &lt;li&gt;&lt;b&gt;PRODUCED_WATER&lt;/b&gt;: Produced water handling&lt;/li&gt;
- * &lt;li&gt;&lt;b&gt;STEAM&lt;/b&gt;: Steam distribution piping&lt;/li&gt;
- * &lt;li&gt;&lt;b&gt;UTILITY_AIR&lt;/b&gt;: Instrument and utility air&lt;/li&gt;
+ * &lt;h2&gt;Service Types&lt;/h2&gt; &lt;p&gt; The class supports multiple service types: &lt;/p&gt; &lt;ul&gt;
+ * &lt;li&gt;&lt;b&gt;PROCESS_GAS&lt;/b&gt;: High-pressure gas piping&lt;/li&gt;
+ * &lt;li&gt;&lt;b&gt;PROCESS_LIQUID&lt;/b&gt;: Liquid hydrocarbon piping&lt;/li&gt;
+ * &lt;li&gt;&lt;b&gt;MULTIPHASE&lt;/b&gt;: Two-phase or multiphase flow piping&lt;/li&gt;
+ * &lt;li&gt;&lt;b&gt;PRODUCED_WATER&lt;/b&gt;: Produced water handling&lt;/li&gt; &lt;li&gt;&lt;b&gt;STEAM&lt;/b&gt;:
+ * Steam distribution piping&lt;/li&gt; &lt;li&gt;&lt;b&gt;UTILITY_AIR&lt;/b&gt;: Instrument and utility air&lt;/li&gt;
  * &lt;li&gt;&lt;b&gt;FLARE&lt;/b&gt;: Flare header and knockout drum piping&lt;/li&gt;
  * &lt;li&gt;&lt;b&gt;FUEL_GAS&lt;/b&gt;: Fuel gas distribution&lt;/li&gt; &lt;/ul&gt;
  *
@@ -337,7 +335,7 @@ public class TopsidePiping extends PipeBeggsAndBrills {
   /**
    * Constructor with name and inlet stream.
    *
-   * @param name equipment name
+   * @param name     equipment name
    * @param inStream inlet stream
    */
   public TopsidePiping(String name, StreamInterface inStream) {
@@ -348,8 +346,8 @@ public class TopsidePiping extends PipeBeggsAndBrills {
    * Constructor with service type, name and inlet stream.
    *
    * @param serviceType the service type
-   * @param name equipment name
-   * @param inStream inlet stream
+   * @param name        equipment name
+   * @param inStream    inlet stream
    */
   public TopsidePiping(ServiceType serviceType, String name, StreamInterface inStream) {
     super(name, inStream);
@@ -361,7 +359,7 @@ public class TopsidePiping extends PipeBeggsAndBrills {
   /**
    * Create process gas piping.
    *
-   * @param name equipment name
+   * @param name     equipment name
    * @param inStream inlet stream
    * @return configured process gas piping
    */
@@ -373,7 +371,7 @@ public class TopsidePiping extends PipeBeggsAndBrills {
   /**
    * Create process liquid piping.
    *
-   * @param name equipment name
+   * @param name     equipment name
    * @param inStream inlet stream
    * @return configured process liquid piping
    */
@@ -385,7 +383,7 @@ public class TopsidePiping extends PipeBeggsAndBrills {
   /**
    * Create multiphase piping.
    *
-   * @param name equipment name
+   * @param name     equipment name
    * @param inStream inlet stream
    * @return configured multiphase piping
    */
@@ -397,7 +395,7 @@ public class TopsidePiping extends PipeBeggsAndBrills {
   /**
    * Create flare header piping.
    *
-   * @param name equipment name
+   * @param name     equipment name
    * @param inStream inlet stream
    * @return configured flare header piping
    */
@@ -409,7 +407,7 @@ public class TopsidePiping extends PipeBeggsAndBrills {
   /**
    * Create fuel gas piping.
    *
-   * @param name equipment name
+   * @param name     equipment name
    * @param inStream inlet stream
    * @return configured fuel gas piping
    */
@@ -421,7 +419,7 @@ public class TopsidePiping extends PipeBeggsAndBrills {
   /**
    * Create steam piping.
    *
-   * @param name equipment name
+   * @param name     equipment name
    * @param inStream inlet stream
    * @return configured steam piping
    */
@@ -967,8 +965,8 @@ public class TopsidePiping extends PipeBeggsAndBrills {
    *
    * @param elbows90 number of 90-degree elbows
    * @param elbows45 number of 45-degree elbows
-   * @param tees number of tees
-   * @param valves number of valves
+   * @param tees     number of tees
+   * @param valves   number of valves
    */
   public void setFittings(int elbows90, int elbows45, int tees, int valves) {
     this.numberOfElbows90 = elbows90;
@@ -980,7 +978,7 @@ public class TopsidePiping extends PipeBeggsAndBrills {
   /**
    * Set insulation configuration.
    *
-   * @param type insulation type
+   * @param type      insulation type
    * @param thickness thickness in meters
    */
   public void setInsulation(InsulationType type, double thickness) {
@@ -991,8 +989,8 @@ public class TopsidePiping extends PipeBeggsAndBrills {
   /**
    * Set operating envelope.
    *
-   * @param minPressure minimum operating pressure in bara
-   * @param maxPressure maximum operating pressure in bara
+   * @param minPressure    minimum operating pressure in bara
+   * @param maxPressure    maximum operating pressure in bara
    * @param minTemperature minimum operating temperature in Celsius
    * @param maxTemperature maximum operating temperature in Celsius
    */

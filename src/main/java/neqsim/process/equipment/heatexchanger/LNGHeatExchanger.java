@@ -53,8 +53,8 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * Plate-fin geometry for offset-strip, wavy, plain, or perforated fins.
    *
    * <p>
-   * Used by the Manglik-Bergles correlations (P5) to compute heat-transfer (j) and friction (f)
-   * factors and by core sizing (P8) to determine exchanger dimensions.
+   * Used by the Manglik-Bergles correlations (P5) to compute heat-transfer (j) and friction (f) factors and by core
+   * sizing (P8) to determine exchanger dimensions.
    * </p>
    *
    * @author NeqSim
@@ -81,15 +81,16 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
     /**
      * Default constructor with standard BAHX fin geometry.
      */
-    public FinGeometry() {}
+    public FinGeometry() {
+    }
 
     /**
      * Construct with key dimensions.
      *
-     * @param finHeight fin height in m
-     * @param finPitch fin pitch in m
+     * @param finHeight    fin height in m
+     * @param finPitch     fin pitch in m
      * @param finThickness fin thickness in m
-     * @param stripLength offset strip length in m
+     * @param stripLength  offset strip length in m
      */
     public FinGeometry(double finHeight, double finPitch, double finThickness, double stripLength) {
       this.finHeight = finHeight;
@@ -107,8 +108,7 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
       double s = finPitch - finThickness;
       double h = finHeight - finThickness;
       return 4.0 * s * h * stripLength
-          / (2.0 * (s * stripLength + h * stripLength + finThickness * h * s / stripLength)
-              + finThickness * s);
+	  / (2.0 * (s * stripLength + h * stripLength + finThickness * h * s / stripLength) + finThickness * s);
     }
 
     /**
@@ -227,7 +227,8 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
     /**
      * Default constructor.
      */
-    public CoreGeometry() {}
+    public CoreGeometry() {
+    }
 
     /** @return core length in m */
     public double getLength() {
@@ -306,13 +307,12 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
     /**
      * Construct a transient data point.
      *
-     * @param timeHours time in hours
-     * @param metalTempC average metal temperature in deg C
+     * @param timeHours     time in hours
+     * @param metalTempC    average metal temperature in deg C
      * @param fluidOutTempC fluid outlet temperature in deg C
-     * @param dutyKW instantaneous duty in kW
+     * @param dutyKW        instantaneous duty in kW
      */
-    public TransientPoint(double timeHours, double metalTempC, double fluidOutTempC,
-        double dutyKW) {
+    public TransientPoint(double timeHours, double metalTempC, double fluidOutTempC, double dutyKW) {
       this.timeHours = timeHours;
       this.metalTempC = metalTempC;
       this.fluidOutTempC = fluidOutTempC;
@@ -451,11 +451,11 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * Constructor for LNGHeatExchanger with initial streams.
    *
    * <p>
-   * Streams are auto-classified as hot or cold based on inlet temperature when {@link #run(UUID)}
-   * is called. The hotter stream(s) become hot and the colder one(s) become cold.
+   * Streams are auto-classified as hot or cold based on inlet temperature when {@link #run(UUID)} is called. The hotter
+   * stream(s) become hot and the colder one(s) become cold.
    * </p>
    *
-   * @param name name of the heat exchanger
+   * @param name      name of the heat exchanger
    * @param inStreams list of inlet streams
    */
   public LNGHeatExchanger(String name, List<StreamInterface> inStreams) {
@@ -476,8 +476,8 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * {@inheritDoc}
    *
    * <p>
-   * Stores the stream for deferred registration. The stream will be auto-classified as hot or cold
-   * based on its inlet temperature when {@link #run(UUID)} is called.
+   * Stores the stream for deferred registration. The stream will be auto-classified as hot or cold based on its inlet
+   * temperature when {@link #run(UUID)} is called.
    * </p>
    */
   @Override
@@ -507,12 +507,12 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * Classify a pending stream as hot (being cooled) or cold (being heated).
    *
    * <p>
-   * Must be called after {@link #addInStream(StreamInterface)} and before {@link #run(UUID)}. If
-   * not called, the exchanger will auto-classify based on inlet temperatures.
+   * Must be called after {@link #addInStream(StreamInterface)} and before {@link #run(UUID)}. If not called, the
+   * exchanger will auto-classify based on inlet temperatures.
    * </p>
    *
    * @param streamIndex 0-based index in the pending stream list
-   * @param isHot true if the stream is hot (will be cooled)
+   * @param isHot       true if the stream is hot (will be cooled)
    */
   public void setStreamIsHot(int streamIndex, boolean isHot) {
     while (pendingIsHot.size() <= streamIndex) {
@@ -568,13 +568,12 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * Set the pressure drop for a specific stream (Priority 2).
    *
    * <p>
-   * Pressure is linearly interpolated from inlet to outlet during the rigorous zone analysis. This
-   * shifts saturation temperatures and affects pinch location, typically by 1&ndash;3 deg C for LNG
-   * exchangers.
+   * Pressure is linearly interpolated from inlet to outlet during the rigorous zone analysis. This shifts saturation
+   * temperatures and affects pinch location, typically by 1&ndash;3 deg C for LNG exchangers.
    * </p>
    *
    * @param streamIndex 0-based index of the registered stream
-   * @param deltaPBar pressure drop in bar (positive value)
+   * @param deltaPBar   pressure drop in bar (positive value)
    */
   public void setStreamPressureDrop(int streamIndex, double deltaPBar) {
     while (streamPressureDrops.size() <= streamIndex) {
@@ -618,8 +617,8 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * Enable or disable adaptive zone refinement near phase boundaries (P4).
    *
    * <p>
-   * When enabled, zones where the enthalpy gradient changes by more than
-   * {@link #setAdaptiveThresholdFactor(double)} times the average are automatically subdivided.
+   * When enabled, zones where the enthalpy gradient changes by more than {@link #setAdaptiveThresholdFactor(double)}
+   * times the average are automatically subdivided.
    * </p>
    *
    * @param enabled true to enable adaptive refinement
@@ -659,8 +658,7 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * Set the threshold factor for adaptive zone refinement (P4).
    *
    * <p>
-   * A zone is refined when its enthalpy gradient exceeds this factor times the average gradient.
-   * Default is 2.0.
+   * A zone is refined when its enthalpy gradient exceeds this factor times the average gradient. Default is 2.0.
    * </p>
    *
    * @param factor threshold factor (must be &gt; 1.0)
@@ -682,9 +680,8 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * Set the flow maldistribution correction factor (P10).
    *
    * <p>
-   * Applies a penalty factor to the effective UA per zone and adjusts the computed MITA. A value of
-   * 1.0 means ideal (no maldistribution). Typical BAHX maldistribution factors range from 0.85 to
-   * 0.95.
+   * Applies a penalty factor to the effective UA per zone and adjusts the computed MITA. A value of 1.0 means ideal (no
+   * maldistribution). Typical BAHX maldistribution factors range from 0.85 to 0.95.
    * </p>
    *
    * @param factor correction factor, 0 &lt; factor &lt;= 1.0
@@ -706,8 +703,8 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * Set the maximum allowable thermal gradient for stress assessment.
    *
    * <p>
-   * Typical limit for aluminium BAHX is 5 deg C/m per API 662 Part II guidelines. The assessment
-   * compares the actual zone-by-zone gradient against this limit and flags warnings.
+   * Typical limit for aluminium BAHX is 5 deg C/m per API 662 Part II guidelines. The assessment compares the actual
+   * zone-by-zone gradient against this limit and flags warnings.
    * </p>
    *
    * @param gradientCPerM maximum gradient in deg C per metre of core length
@@ -729,12 +726,12 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * Set the fin geometry for a specific stream (P5).
    *
    * <p>
-   * When fin geometry is set, the Manglik-Bergles correlations for offset-strip fins are used to
-   * compute heat-transfer and friction factors. These are also used by core sizing (P8).
+   * When fin geometry is set, the Manglik-Bergles correlations for offset-strip fins are used to compute heat-transfer
+   * and friction factors. These are also used by core sizing (P8).
    * </p>
    *
    * @param streamIndex 0-based stream index
-   * @param fin fin geometry object
+   * @param fin         fin geometry object
    */
   public void setStreamFinGeometry(int streamIndex, FinGeometry fin) {
     while (streamFinGeometry.size() <= streamIndex) {
@@ -778,8 +775,8 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * Set the core thermal mass for transient cool-down analysis (P7).
    *
    * <p>
-   * The thermal mass is the product of core metal mass and specific heat capacity (m * Cp). Typical
-   * aluminium BAHX: ~2700 kg/m3 * 0.9 kJ/(kg K) = 2430 kJ/(m3 K).
+   * The thermal mass is the product of core metal mass and specific heat capacity (m * Cp). Typical aluminium BAHX:
+   * ~2700 kg/m3 * 0.9 kJ/(kg K) = 2430 kJ/(m3 K).
    * </p>
    *
    * @param thermalMassKJK core thermal mass in kJ/K
@@ -850,8 +847,8 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
   /**
    * Get the hot composite curve data (from rigorous zone-by-zone flash).
    *
-   * @return 2D array [numberOfZones+1][2] where col 0 = cumulative duty (kW) from cold end and col
-   *         1 = temperature (deg C)
+   * @return 2D array [numberOfZones+1][2] where col 0 = cumulative duty (kW) from cold end and col 1 = temperature (deg
+   *         C)
    */
   public double[][] getHotCompositeCurve() {
     return hotCompositeCurve;
@@ -860,8 +857,8 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
   /**
    * Get the cold composite curve data (from rigorous zone-by-zone flash).
    *
-   * @return 2D array [numberOfZones+1][2] where col 0 = cumulative duty (kW) from cold end and col
-   *         1 = temperature (deg C)
+   * @return 2D array [numberOfZones+1][2] where col 0 = cumulative duty (kW) from cold end and col 1 = temperature (deg
+   *         C)
    */
   public double[][] getColdCompositeCurve() {
     return coldCompositeCurve;
@@ -922,7 +919,7 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
     }
     for (boolean risk : freezeOutRiskPerZone) {
       if (risk) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -950,8 +947,8 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * Get the computed detailed pressure drop per stream from correlations (P5/P6).
    *
    * <p>
-   * Only populated when fin geometry is set for a stream. Returns the sum of single-phase
-   * (Manglik-Bergles) and two-phase (Lockhart-Martinelli) contributions.
+   * Only populated when fin geometry is set for a stream. Returns the sum of single-phase (Manglik-Bergles) and
+   * two-phase (Lockhart-Martinelli) contributions.
    * </p>
    *
    * @return array of computed pressure drops (bar), one per stream
@@ -1009,17 +1006,15 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * Generate a complete design feasibility report for this BAHX.
    *
    * <p>
-   * The report includes mechanical design (ASME VIII Div.1, ALPEMA), cost estimation (CAPEX, OPEX),
-   * supplier matching, and feasibility checks (temperature, pressure, mercury, freeze-out, thermal
-   * stress, MITA, exergy efficiency).
+   * The report includes mechanical design (ASME VIII Div.1, ALPEMA), cost estimation (CAPEX, OPEX), supplier matching,
+   * and feasibility checks (temperature, pressure, mercury, freeze-out, thermal stress, MITA, exergy efficiency).
    * </p>
    *
    * @return the feasibility report with verdict, issues, suppliers, cost, and mechanical design
    */
   public neqsim.process.mechanicaldesign.heatexchanger.HeatExchangerDesignFeasibilityReport generateFeasibilityReport() {
-    neqsim.process.mechanicaldesign.heatexchanger.HeatExchangerDesignFeasibilityReport report =
-        new neqsim.process.mechanicaldesign.heatexchanger.HeatExchangerDesignFeasibilityReport(
-            this);
+    neqsim.process.mechanicaldesign.heatexchanger.HeatExchangerDesignFeasibilityReport report = new neqsim.process.mechanicaldesign.heatexchanger.HeatExchangerDesignFeasibilityReport(
+	this);
     report.generateReport();
     return report;
   }
@@ -1086,12 +1081,12 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
     for (int i = 0; i < pendingStreams.size(); i++) {
       String type;
       if (pendingIsHot.get(i) != null) {
-        type = pendingIsHot.get(i) ? "hot" : "cold";
+	type = pendingIsHot.get(i) ? "hot" : "cold";
       } else {
-        type = temps.get(i) >= avgTemp ? "hot" : "cold";
-        if (pendingStreams.size() == 2 && Math.abs(temps.get(0) - temps.get(1)) < 0.01) {
-          type = (i == 0) ? "hot" : "cold";
-        }
+	type = temps.get(i) >= avgTemp ? "hot" : "cold";
+	if (pendingStreams.size() == 2 && Math.abs(temps.get(0) - temps.get(1)) < 0.01) {
+	  type = (i == 0) ? "hot" : "cold";
+	}
       }
       addInStreamMSHE(pendingStreams.get(i), type, null);
     }
@@ -1103,16 +1098,15 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * Rigorous zone-by-zone analysis with TP-flash at every zone boundary.
    *
    * <p>
-   * This is the core method that distinguishes this class from the parent. For each stream, the
-   * temperature range is divided into {@code numberOfZones} intervals and a full TP-flash is
-   * performed at each boundary. This captures the non-linear enthalpy-temperature relationship
-   * across phase transitions (methane condensation, MR evaporation), which is where the MITA pinch
-   * typically occurs in LNG exchangers.
+   * This is the core method that distinguishes this class from the parent. For each stream, the temperature range is
+   * divided into {@code numberOfZones} intervals and a full TP-flash is performed at each boundary. This captures the
+   * non-linear enthalpy-temperature relationship across phase transitions (methane condensation, MR evaporation), which
+   * is where the MITA pinch typically occurs in LNG exchangers.
    * </p>
    *
    * <p>
-   * Includes adaptive zone refinement (P4), freeze-out detection (P9), flow maldistribution (P10),
-   * and thermal stress assessment.
+   * Includes adaptive zone refinement (P4), freeze-out detection (P9), flow maldistribution (P10), and thermal stress
+   * assessment.
    * </p>
    */
   private void computeRigorousZoneData() {
@@ -1128,8 +1122,8 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
     if (adaptiveRefinement) {
       List<Double> refinedFractions = computeAdaptiveFractions(zoneFractions);
       if (refinedFractions.size() - 1 <= maxAdaptiveZones) {
-        zoneFractions = refinedFractions;
-        effectiveZones = zoneFractions.size() - 1;
+	zoneFractions = refinedFractions;
+	effectiveZones = zoneFractions.size() - 1;
       }
     }
 
@@ -1157,39 +1151,39 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
       SystemInterface baseFluid = inStr.getFluid().clone();
 
       for (int z = 0; z < nPoints; z++) {
-        double frac = zoneFractions.get(z);
-        double temp = inletTempC[i] + frac * (outletTempC[i] - inletTempC[i]);
-        double pres = pIn - frac * deltaP;
-        if (pres < 0.01) {
-          pres = 0.01;
-        }
+	double frac = zoneFractions.get(z);
+	double temp = inletTempC[i] + frac * (outletTempC[i] - inletTempC[i]);
+	double pres = pIn - frac * deltaP;
+	if (pres < 0.01) {
+	  pres = 0.01;
+	}
 
-        SystemInterface zoneFluid = baseFluid.clone();
-        zoneFluid.setTemperature(temp, "C");
-        zoneFluid.setPressure(pres, "bara");
+	SystemInterface zoneFluid = baseFluid.clone();
+	zoneFluid.setTemperature(temp, "C");
+	zoneFluid.setPressure(pres, "bara");
 
-        ThermodynamicOperations ops = new ThermodynamicOperations(zoneFluid);
-        ops.TPflash();
-        zoneFluid.initThermoProperties();
+	ThermodynamicOperations ops = new ThermodynamicOperations(zoneFluid);
+	ops.TPflash();
+	zoneFluid.initThermoProperties();
 
-        streamH[i][z] = zoneFluid.getEnthalpy("kJ/kg");
-        streamS[i][z] = zoneFluid.getEntropy("kJ/kgK");
-        streamTempC[i][z] = temp;
+	streamH[i][z] = zoneFluid.getEnthalpy("kJ/kg");
+	streamS[i][z] = zoneFluid.getEntropy("kJ/kgK");
+	streamTempC[i][z] = temp;
 
-        // Capture phase info for two-phase DP (P6) and freeze-out (P9)
-        int nPhases = zoneFluid.getNumberOfPhases();
-        if (nPhases > 1 && zoneFluid.hasPhaseType("gas")) {
-          int gasIdx = zoneFluid.getPhaseNumberOfPhase("gas");
-          streamVapFrac[i][z] = zoneFluid.getPhase(gasIdx).getBeta();
-        } else if (nPhases == 1 && zoneFluid.hasPhaseType("gas")) {
-          streamVapFrac[i][z] = 1.0;
-        } else {
-          streamVapFrac[i][z] = 0.0;
-        }
-        streamDensity[i][z] = zoneFluid.getDensity("kg/m3");
-        if (nPhases > 0) {
-          streamViscosity[i][z] = zoneFluid.getPhase(0).getViscosity("kg/msec");
-        }
+	// Capture phase info for two-phase DP (P6) and freeze-out (P9)
+	int nPhases = zoneFluid.getNumberOfPhases();
+	if (nPhases > 1 && zoneFluid.hasPhaseType("gas")) {
+	  int gasIdx = zoneFluid.getPhaseNumberOfPhase("gas");
+	  streamVapFrac[i][z] = zoneFluid.getPhase(gasIdx).getBeta();
+	} else if (nPhases == 1 && zoneFluid.hasPhaseType("gas")) {
+	  streamVapFrac[i][z] = 1.0;
+	} else {
+	  streamVapFrac[i][z] = 0.0;
+	}
+	streamDensity[i][z] = zoneFluid.getDensity("kg/m3");
+	if (nPhases > 0) {
+	  streamViscosity[i][z] = zoneFluid.getPhase(0).getViscosity("kg/msec");
+	}
       }
     }
 
@@ -1213,11 +1207,9 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
 
     // Cold end (p=0)
     hotCompositeCurve[0][0] = 0.0;
-    hotCompositeCurve[0][1] =
-        compositeTempAdaptive(streamTempC, massFlowKgS, true, effectiveZones, 0);
+    hotCompositeCurve[0][1] = compositeTempAdaptive(streamTempC, massFlowKgS, true, effectiveZones, 0);
     coldCompositeCurve[0][0] = 0.0;
-    coldCompositeCurve[0][1] =
-        compositeTempAdaptive(streamTempC, massFlowKgS, false, effectiveZones, 0);
+    coldCompositeCurve[0][1] = compositeTempAdaptive(streamTempC, massFlowKgS, false, effectiveZones, 0);
     zoneTempProfileHotC[0] = hotCompositeCurve[0][1];
     zoneTempProfileColdC[0] = coldCompositeCurve[0][1];
 
@@ -1230,11 +1222,11 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
       double hotZoneDuty = 0.0;
       double coldZoneDuty = 0.0;
       for (int i = 0; i < streamCount; i++) {
-        if (registeredIsHot.get(i)) {
-          hotZoneDuty += massFlowKgS[i] * (streamH[i][hotZCurr] - streamH[i][hotZPrev]);
-        } else {
-          coldZoneDuty += massFlowKgS[i] * (streamH[i][coldZCurr] - streamH[i][coldZPrev]);
-        }
+	if (registeredIsHot.get(i)) {
+	  hotZoneDuty += massFlowKgS[i] * (streamH[i][hotZCurr] - streamH[i][hotZPrev]);
+	} else {
+	  coldZoneDuty += massFlowKgS[i] * (streamH[i][coldZCurr] - streamH[i][coldZPrev]);
+	}
       }
 
       cumHotDuty += hotZoneDuty;
@@ -1264,42 +1256,42 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
 
       // P10: Flow maldistribution correction on MITA
       if (flowMaldistributionFactor < 1.0) {
-        minApproach = minApproach * flowMaldistributionFactor;
+	minApproach = minApproach * flowMaldistributionFactor;
       }
       mitaPerZone[p] = minApproach;
 
       if (minApproach < minimumInternalTemperatureApproach) {
-        minimumInternalTemperatureApproach = minApproach;
-        mitaZoneIndex = p;
+	minimumInternalTemperatureApproach = minApproach;
+	mitaZoneIndex = p;
       }
 
       // UA per zone via LMTD
       double zoneDuty = hotCompositeCurve[p + 1][0] - hotCompositeCurve[p][0];
       if (dT1 > 0.01 && dT2 > 0.01) {
-        double lmtd;
-        if (Math.abs(dT1 - dT2) < 0.01) {
-          lmtd = (dT1 + dT2) / 2.0;
-        } else {
-          lmtd = (dT1 - dT2) / Math.log(dT1 / dT2);
-        }
-        double uaRaw = Math.abs(zoneDuty) * 1000.0 / lmtd;
-        // P10: Maldistribution penalty on UA
-        uaPerZone[p] = uaRaw * flowMaldistributionFactor;
+	double lmtd;
+	if (Math.abs(dT1 - dT2) < 0.01) {
+	  lmtd = (dT1 + dT2) / 2.0;
+	} else {
+	  lmtd = (dT1 - dT2) / Math.log(dT1 / dT2);
+	}
+	double uaRaw = Math.abs(zoneDuty) * 1000.0 / lmtd;
+	// P10: Maldistribution penalty on UA
+	uaPerZone[p] = uaRaw * flowMaldistributionFactor;
       }
 
       // Exergy destruction
       double entropyGen = 0.0;
       for (int i = 0; i < streamCount; i++) {
-        int zIn;
-        int zOut;
-        if (registeredIsHot.get(i)) {
-          zIn = effectiveZones - p - 1;
-          zOut = effectiveZones - p;
-        } else {
-          zIn = p;
-          zOut = p + 1;
-        }
-        entropyGen += massFlowKgS[i] * (streamS[i][zOut] - streamS[i][zIn]);
+	int zIn;
+	int zOut;
+	if (registeredIsHot.get(i)) {
+	  zIn = effectiveZones - p - 1;
+	  zOut = effectiveZones - p;
+	} else {
+	  zIn = p;
+	  zOut = p + 1;
+	}
+	entropyGen += massFlowKgS[i] * (streamS[i][zOut] - streamS[i][zIn]);
       }
       exergyDestructionPerZone[p] = referenceTemperatureK * Math.abs(entropyGen);
       totalExergyDestruction += exergyDestructionPerZone[p];
@@ -1310,12 +1302,12 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
 
       // Thermal stress: gradient = |dT| / zone_length
       if (coreGeometry != null && coreGeometry.getLength() > 0.0) {
-        double zoneLength = coreGeometry.getLength() / effectiveZones;
-        double maxDT = Math.max(Math.abs(hotT2 - hotT1), Math.abs(coldT2 - coldT1));
-        thermalGradientPerZone[p] = maxDT / zoneLength;
-        if (thermalGradientPerZone[p] > maxAllowableThermalGradient) {
-          thermalStressWarning = true;
-        }
+	double zoneLength = coreGeometry.getLength() / effectiveZones;
+	double maxDT = Math.max(Math.abs(hotT2 - hotT1), Math.abs(coldT2 - coldT1));
+	thermalGradientPerZone[p] = maxDT / zoneLength;
+	if (thermalGradientPerZone[p] > maxAllowableThermalGradient) {
+	  thermalStressWarning = true;
+	}
       }
     }
 
@@ -1328,9 +1320,9 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
       double exergyChange = massFlowKgS[i] * (dH - referenceTemperatureK * dS);
 
       if (exergyChange < 0.0) {
-        exergyInput += Math.abs(exergyChange);
+	exergyInput += Math.abs(exergyChange);
       } else {
-        exergyOutput += exergyChange;
+	exergyOutput += exergyChange;
       }
     }
 
@@ -1339,15 +1331,13 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
     }
 
     // ── Step 5: Detailed DP correlations (P5/P6) ─────────────────────
-    computeDetailedPressureDrop(streamDensity, streamViscosity, streamVapFrac, massFlowKgS,
-        effectiveZones);
+    computeDetailedPressureDrop(streamDensity, streamViscosity, streamVapFrac, massFlowKgS, effectiveZones);
 
     logger.info(String.format(
-        "LNG HX rigorous: zones=%d, MITA=%.2f C (zone %d), eta_II=%.1f%%, "
-            + "exergy_dest=%.1f kW, freezeRisk=%b, thermalStress=%b",
-        effectiveZones, minimumInternalTemperatureApproach, mitaZoneIndex,
-        secondLawEfficiency * 100.0, totalExergyDestruction, hasFreezeOutRisk(),
-        thermalStressWarning));
+	"LNG HX rigorous: zones=%d, MITA=%.2f C (zone %d), eta_II=%.1f%%, "
+	    + "exergy_dest=%.1f kW, freezeRisk=%b, thermalStress=%b",
+	effectiveZones, minimumInternalTemperatureApproach, mitaZoneIndex, secondLawEfficiency * 100.0,
+	totalExergyDestruction, hasFreezeOutRisk(), thermalStressWarning));
   }
 
   // ════════════════════════════════════════════════════════════════════
@@ -1373,8 +1363,8 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    *
    * <p>
    * Uses a first-pass enthalpy scan on the first stream to detect zones where |dH/dT| exceeds
-   * {@link #adaptiveThresholdFactor} times the average gradient. Such zones are bisected to improve
-   * resolution near phase transitions.
+   * {@link #adaptiveThresholdFactor} times the average gradient. Such zones are bisected to improve resolution near
+   * phase transitions.
    * </p>
    *
    * @param uniformFracs initial uniform fraction list
@@ -1400,7 +1390,7 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
       double temp = tIn + frac * (tOut - tIn);
       double pres = pIn - frac * dp;
       if (pres < 0.01) {
-        pres = 0.01;
+	pres = 0.01;
       }
       SystemInterface zf = baseFluid.clone();
       zf.setTemperature(temp, "C");
@@ -1424,11 +1414,10 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
     List<Double> refined = new ArrayList<>();
     refined.add(uniformFracs.get(0));
     for (int z = 0; z < nUniform - 1; z++) {
-      if (gradients[z] > adaptiveThresholdFactor * avgGradient
-          && refined.size() + (nUniform - z) < maxAdaptiveZones) {
-        // Insert midpoint
-        double mid = (uniformFracs.get(z) + uniformFracs.get(z + 1)) / 2.0;
-        refined.add(mid);
+      if (gradients[z] > adaptiveThresholdFactor * avgGradient && refined.size() + (nUniform - z) < maxAdaptiveZones) {
+	// Insert midpoint
+	double mid = (uniformFracs.get(z) + uniformFracs.get(z + 1)) / 2.0;
+	refined.add(mid);
       }
       refined.add(uniformFracs.get(z + 1));
     }
@@ -1443,11 +1432,11 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * Compute Colburn j-factor and Fanning f-factor for offset-strip fins.
    *
    * <p>
-   * Manglik and Bergles (1995) correlations valid for 120 &lt; Re &lt; 10,000. Parameters are
-   * dimensionless ratios derived from fin geometry.
+   * Manglik and Bergles (1995) correlations valid for 120 &lt; Re &lt; 10,000. Parameters are dimensionless ratios
+   * derived from fin geometry.
    * </p>
    *
-   * @param re Reynolds number based on hydraulic diameter
+   * @param re  Reynolds number based on hydraulic diameter
    * @param fin fin geometry
    * @return double array [j, f] where j = Colburn factor, f = Fanning friction factor
    */
@@ -1468,15 +1457,17 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
 
     // j-factor correlation (Manglik & Bergles 1995, Eq. 1)
     double j = 0.6522 * Math.pow(re, -0.5403) * Math.pow(alpha, -0.1541) * Math.pow(delta, 0.1499)
-        * Math.pow(gamma, -0.0678) * Math.pow(1.0 + 5.269e-5 * Math.pow(re, 1.340)
-            * Math.pow(alpha, 0.504) * Math.pow(delta, 0.456) * Math.pow(gamma, -1.055), 0.1);
+	* Math.pow(gamma, -0.0678) * Math.pow(1.0 + 5.269e-5 * Math.pow(re, 1.340) * Math.pow(alpha, 0.504)
+	    * Math.pow(delta, 0.456) * Math.pow(gamma, -1.055), 0.1);
 
     // f-factor correlation (Manglik & Bergles 1995, Eq. 2)
     double f = 9.6243 * Math.pow(re, -0.7422) * Math.pow(alpha, -0.1856) * Math.pow(delta, 0.3053)
-        * Math.pow(gamma, -0.2659) * Math.pow(1.0 + 7.669e-8 * Math.pow(re, 4.429)
-            * Math.pow(alpha, 0.920) * Math.pow(delta, 3.767) * Math.pow(gamma, 0.236), 0.1);
+	* Math.pow(gamma, -0.2659)
+	* Math.pow(1.0
+	    + 7.669e-8 * Math.pow(re, 4.429) * Math.pow(alpha, 0.920) * Math.pow(delta, 3.767) * Math.pow(gamma, 0.236),
+	    0.1);
 
-    return new double[] {j, f};
+    return new double[] { j, f };
   }
 
   // ════════════════════════════════════════════════════════════════════
@@ -1487,20 +1478,18 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * Compute two-phase pressure drop multiplier using the Lockhart-Martinelli separated flow model.
    *
    * <p>
-   * The Martinelli parameter X_tt for turbulent-turbulent flow is computed from quality, density,
-   * and viscosity ratios. The two-phase multiplier phi_L squared is then evaluated using the
-   * Chisholm (1967) C-parameter correlation.
+   * The Martinelli parameter X_tt for turbulent-turbulent flow is computed from quality, density, and viscosity ratios.
+   * The two-phase multiplier phi_L squared is then evaluated using the Chisholm (1967) C-parameter correlation.
    * </p>
    *
-   * @param x vapour quality (mass fraction), 0 to 1
+   * @param x    vapour quality (mass fraction), 0 to 1
    * @param rhoL liquid density in kg/m3
    * @param rhoG gas density in kg/m3
-   * @param muL liquid viscosity in Pa s
-   * @param muG gas viscosity in Pa s
+   * @param muL  liquid viscosity in Pa s
+   * @param muG  gas viscosity in Pa s
    * @return two-phase multiplier phi_L squared (dimensionless, &gt;= 1.0)
    */
-  private double lockhartMartinelliPhiL2(double x, double rhoL, double rhoG, double muL,
-      double muG) {
+  private double lockhartMartinelliPhiL2(double x, double rhoL, double rhoG, double muL, double muG) {
     if (x <= 0.001 || x >= 0.999) {
       return 1.0; // effectively single-phase
     }
@@ -1509,8 +1498,7 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
     }
 
     // Martinelli parameter X_tt for turbulent-turbulent flow
-    double xtt =
-        Math.pow((1.0 - x) / x, 0.9) * Math.pow(rhoG / rhoL, 0.5) * Math.pow(muL / muG, 0.1);
+    double xtt = Math.pow((1.0 - x) / x, 0.9) * Math.pow(rhoG / rhoL, 0.5) * Math.pow(muL / muG, 0.1);
 
     // Chisholm C-parameter: C = 20 for turbulent-turbulent
     double c = 20.0;
@@ -1519,14 +1507,13 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
   }
 
   /**
-   * Compute detailed pressure drop per stream using Manglik-Bergles (P5) and Lockhart-Martinelli
-   * (P6) correlations.
+   * Compute detailed pressure drop per stream using Manglik-Bergles (P5) and Lockhart-Martinelli (P6) correlations.
    *
-   * @param streamDensity density at each zone boundary [stream][point] in kg/m3
+   * @param streamDensity   density at each zone boundary [stream][point] in kg/m3
    * @param streamViscosity viscosity at each zone boundary [stream][point] in Pa s
-   * @param streamVapFrac vapour fraction at each zone boundary [stream][point]
-   * @param massFlowKgS mass flow rate per stream in kg/s
-   * @param effectiveZones number of zones used
+   * @param streamVapFrac   vapour fraction at each zone boundary [stream][point]
+   * @param massFlowKgS     mass flow rate per stream in kg/s
+   * @param effectiveZones  number of zones used
    */
   private void computeDetailedPressureDrop(double[][] streamDensity, double[][] streamViscosity,
       double[][] streamVapFrac, double[] massFlowKgS, int effectiveZones) {
@@ -1537,7 +1524,7 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
     for (int i = 0; i < streamCount; i++) {
       FinGeometry fin = (i < streamFinGeometry.size()) ? streamFinGeometry.get(i) : null;
       if (fin == null) {
-        continue; // No fin geometry set, skip correlation-based DP
+	continue; // No fin geometry set, skip correlation-based DP
       }
 
       double dh = fin.getHydraulicDiameter();
@@ -1550,44 +1537,43 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
       // Assume core frontal area from core geometry if available, else 1 m2
       double aFrontal = 1.0;
       if (coreGeometry.getWidth() > 0 && coreGeometry.getHeight() > 0) {
-        aFrontal = coreGeometry.getWidth() * coreGeometry.getHeight();
+	aFrontal = coreGeometry.getWidth() * coreGeometry.getHeight();
       }
       double aFreeFlow = sigma * aFrontal;
       double massVelocity = massFlowKgS[i] / aFreeFlow; // kg/(m2·s)
 
       for (int z = 0; z < effectiveZones; z++) {
-        double rho = (streamDensity[i][z] + streamDensity[i][z + 1]) / 2.0;
-        double mu = (streamViscosity[i][z] + streamViscosity[i][z + 1]) / 2.0;
-        if (rho < 0.01 || mu < 1e-12) {
-          continue;
-        }
+	double rho = (streamDensity[i][z] + streamDensity[i][z + 1]) / 2.0;
+	double mu = (streamViscosity[i][z] + streamViscosity[i][z + 1]) / 2.0;
+	if (rho < 0.01 || mu < 1e-12) {
+	  continue;
+	}
 
-        double re = massVelocity * dh / mu;
-        double[] jf = manglikBerglesOSF(re, fin);
-        jSum += jf[0];
-        fSum += jf[1];
+	double re = massVelocity * dh / mu;
+	double[] jf = manglikBerglesOSF(re, fin);
+	jSum += jf[0];
+	fSum += jf[1];
 
-        // Zone length
-        double zoneLength =
-            (coreGeometry.getLength() > 0) ? coreGeometry.getLength() / effectiveZones
-                : 1.0 / effectiveZones;
+	// Zone length
+	double zoneLength = (coreGeometry.getLength() > 0) ? coreGeometry.getLength() / effectiveZones
+	    : 1.0 / effectiveZones;
 
-        // Single-phase friction DP for this zone
-        double dpZone = 2.0 * jf[1] * (zoneLength / dh) * massVelocity * massVelocity / rho;
+	// Single-phase friction DP for this zone
+	double dpZone = 2.0 * jf[1] * (zoneLength / dh) * massVelocity * massVelocity / rho;
 
-        // Two-phase correction (P6)
-        double x = (streamVapFrac[i][z] + streamVapFrac[i][z + 1]) / 2.0;
-        if (x > 0.001 && x < 0.999) {
-          // Need liquid and gas properties — use simplified split
-          double rhoL = rho / (1.0 - x + 0.001);
-          double rhoG = rho * 0.1; // approximation for LNG conditions
-          double muL = mu;
-          double muG = mu * 0.05;
-          double phiL2 = lockhartMartinelliPhiL2(x, rhoL, rhoG, muL, muG);
-          dpZone *= phiL2;
-        }
+	// Two-phase correction (P6)
+	double x = (streamVapFrac[i][z] + streamVapFrac[i][z + 1]) / 2.0;
+	if (x > 0.001 && x < 0.999) {
+	  // Need liquid and gas properties — use simplified split
+	  double rhoL = rho / (1.0 - x + 0.001);
+	  double rhoG = rho * 0.1; // approximation for LNG conditions
+	  double muL = mu;
+	  double muG = mu * 0.05;
+	  double phiL2 = lockhartMartinelliPhiL2(x, rhoL, rhoG, muL, muG);
+	  dpZone *= phiL2;
+	}
 
-        totalDP += dpZone;
+	totalDP += dpZone;
       }
 
       computedStreamDP[i] = totalDP / 1e5; // Pa to bar
@@ -1604,9 +1590,8 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * Run a simplified cool-down transient analysis (P7).
    *
    * <p>
-   * Uses a lumped thermal mass model: the core metal temperature decreases from ambient toward the
-   * cold fluid temperature as the cooling utility flows through the exchanger. The energy balance
-   * at each time step is:
+   * Uses a lumped thermal mass model: the core metal temperature decreases from ambient toward the cold fluid
+   * temperature as the cooling utility flows through the exchanger. The energy balance at each time step is:
    * </p>
    *
    * <pre>
@@ -1617,18 +1602,16 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * The core thermal mass and UA must be set before calling this method.
    * </p>
    *
-   * @param targetTempC target metal temperature in deg C
-   * @param ambientTempC initial metal temperature (ambient) in deg C
-   * @param timeSteps number of time steps for the simulation
+   * @param targetTempC    target metal temperature in deg C
+   * @param ambientTempC   initial metal temperature (ambient) in deg C
+   * @param timeSteps      number of time steps for the simulation
    * @param totalTimeHours total simulation duration in hours
    */
-  public void runCooldownTransient(double targetTempC, double ambientTempC, int timeSteps,
-      double totalTimeHours) {
+  public void runCooldownTransient(double targetTempC, double ambientTempC, int timeSteps, double totalTimeHours) {
     transientResults.clear();
 
     if (coreThermalMassKJK <= 0.0) {
-      logger.warn(
-          "Core thermal mass not set for transient analysis. " + "Use setCoreThermalMass(kJ/K).");
+      logger.warn("Core thermal mass not set for transient analysis. " + "Use setCoreThermalMass(kJ/K).");
       return;
     }
 
@@ -1636,7 +1619,7 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
     double totalUA_WK = 0.0;
     if (uaPerZone != null) {
       for (double ua : uaPerZone) {
-        totalUA_WK += ua;
+	totalUA_WK += ua;
       }
     }
     if (totalUA_WK <= 0.0) {
@@ -1665,7 +1648,7 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
       transientResults.add(new TransientPoint(step * dtHours, metalTemp, fluidOutTemp, duty));
 
       if (metalTemp <= targetTempC + 1.0) {
-        break; // Converged to target
+	break; // Converged to target
       }
     }
   }
@@ -1678,9 +1661,8 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * Size the BAHX core from total UA and fin geometry (P8).
    *
    * <p>
-   * Calculates the required core dimensions (Length x Width x Height) from the total UA requirement
-   * and fin geometry. The method assumes the Manglik-Bergles heat-transfer coefficient for the
-   * first stream with fin geometry set.
+   * Calculates the required core dimensions (Length x Width x Height) from the total UA requirement and fin geometry.
+   * The method assumes the Manglik-Bergles heat-transfer coefficient for the first stream with fin geometry set.
    * </p>
    *
    * <p>
@@ -1695,8 +1677,8 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * </ol>
    *
    * <p>
-   * Also computes core weight assuming aluminium 3003 alloy density (2730 kg/m3) and typical void
-   * fraction of 0.3 (70% metal fraction including headers and bars).
+   * Also computes core weight assuming aluminium 3003 alloy density (2730 kg/m3) and typical void fraction of 0.3 (70%
+   * metal fraction including headers and bars).
    * </p>
    */
   public void sizeCore() {
@@ -1704,7 +1686,7 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
     double totalUA_WK = 0.0;
     if (uaPerZone != null) {
       for (double ua : uaPerZone) {
-        totalUA_WK += ua;
+	totalUA_WK += ua;
       }
     }
     if (totalUA_WK <= 0.0) {
@@ -1717,9 +1699,9 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
     int refIdx = -1;
     for (int i = 0; i < streamFinGeometry.size(); i++) {
       if (streamFinGeometry.get(i) != null) {
-        refFin = streamFinGeometry.get(i);
-        refIdx = i;
-        break;
+	refFin = streamFinGeometry.get(i);
+	refIdx = i;
+	break;
       }
     }
     if (refFin == null) {
@@ -1727,9 +1709,8 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
     }
 
     // Average heat-transfer coefficient from j-factor
-    double jAvg = (streamJFactor != null && refIdx >= 0 && refIdx < streamJFactor.length)
-        ? streamJFactor[refIdx]
-        : 0.003; // default engineering estimate for BAHX
+    double jAvg = (streamJFactor != null && refIdx >= 0 && refIdx < streamJFactor.length) ? streamJFactor[refIdx]
+	: 0.003; // default engineering estimate for BAHX
     if (jAvg < 1e-6) {
       jAvg = 0.003;
     }
@@ -1762,8 +1743,7 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
     double weight = coreVolume * metalFraction * alDensity;
 
     // Number of layers per stream (assuming equal distribution)
-    int nLayers =
-        Math.max(1, (int) (coreHeight / (refFin.getFinHeight() + refFin.getPlateThickness())));
+    int nLayers = Math.max(1, (int) (coreHeight / (refFin.getFinHeight() + refFin.getPlateThickness())));
 
     coreGeometry.setLength(coreLength);
     coreGeometry.setWidth(coreWidth);
@@ -1775,10 +1755,9 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
     double cpAluminium = 0.9; // kJ/(kg·K)
     coreThermalMassKJK = weight * cpAluminium;
 
-    logger.info(String.format(
-        "BAHX core sized: L=%.2f m, W=%.2f m, H=%.2f m, weight=%.0f kg, "
-            + "area=%.0f m2, layers=%d",
-        coreLength, coreWidth, coreHeight, weight, requiredArea, nLayers));
+    logger.info(
+	String.format("BAHX core sized: L=%.2f m, W=%.2f m, H=%.2f m, weight=%.0f kg, " + "area=%.0f m2, layers=%d",
+	    coreLength, coreWidth, coreHeight, weight, requiredArea, nLayers));
   }
 
   // ════════════════════════════════════════════════════════════════════
@@ -1789,14 +1768,14 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * Assess mercury attack risk for aluminium BAHX.
    *
    * <p>
-   * Mercury attacks aluminium through liquid metal embrittlement (LME), forming amalgam that
-   * destroys the brazed joints. The industry limit for mercury in feed gas to aluminium BAHX is
-   * typically less than 0.01 microg/Nm3 (10 nanogram/Nm3 or ~10 ppt).
+   * Mercury attacks aluminium through liquid metal embrittlement (LME), forming amalgam that destroys the brazed
+   * joints. The industry limit for mercury in feed gas to aluminium BAHX is typically less than 0.01 microg/Nm3 (10
+   * nanogram/Nm3 or ~10 ppt).
    * </p>
    *
    * <p>
-   * This method checks the mercury concentration against the safe limit and flags a warning if the
-   * BAHX material is aluminium.
+   * This method checks the mercury concentration against the safe limit and flags a warning if the BAHX material is
+   * aluminium.
    * </p>
    *
    * @param mercuryPPB mercury concentration in ppb (parts per billion by volume)
@@ -1804,12 +1783,10 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
   public void assessMercuryRisk(double mercuryPPB) {
     if ("BAHX".equalsIgnoreCase(exchangerType) && mercuryPPB > MERCURY_SAFE_LIMIT_PPB) {
       mercuryRiskPresent = true;
-      mercuryRiskMessage = String.format(
-          "CRITICAL: Mercury concentration %.1f ppb exceeds safe limit %.1f ppb for "
-              + "aluminium BAHX. Risk of liquid metal embrittlement (LME). "
-              + "Install mercury removal unit (activated carbon or metal sulfide bed) "
-              + "upstream, or consider stainless steel PCHE alternative.",
-          mercuryPPB, MERCURY_SAFE_LIMIT_PPB);
+      mercuryRiskMessage = String.format("CRITICAL: Mercury concentration %.1f ppb exceeds safe limit %.1f ppb for "
+	  + "aluminium BAHX. Risk of liquid metal embrittlement (LME). "
+	  + "Install mercury removal unit (activated carbon or metal sulfide bed) "
+	  + "upstream, or consider stainless steel PCHE alternative.", mercuryPPB, MERCURY_SAFE_LIMIT_PPB);
       logger.warn(mercuryRiskMessage);
     } else {
       mercuryRiskPresent = false;
@@ -1824,26 +1801,26 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
   /**
    * Compute mass-flow-weighted composite temperature at a given position from cold end.
    *
-   * @param inletTempC inlet temperatures in deg C per stream
-   * @param outletTempC outlet temperatures in deg C per stream
-   * @param massFlowKgS mass flow rates in kg/s per stream
-   * @param hotSide true for hot composite, false for cold composite
+   * @param inletTempC     inlet temperatures in deg C per stream
+   * @param outletTempC    outlet temperatures in deg C per stream
+   * @param massFlowKgS    mass flow rates in kg/s per stream
+   * @param hotSide        true for hot composite, false for cold composite
    * @param posFromColdEnd position index from cold end (0 to numberOfZones)
    * @return weighted average temperature in deg C
    */
-  private double compositeTemp(double[] inletTempC, double[] outletTempC, double[] massFlowKgS,
-      boolean hotSide, int posFromColdEnd) {
+  private double compositeTemp(double[] inletTempC, double[] outletTempC, double[] massFlowKgS, boolean hotSide,
+      int posFromColdEnd) {
     double weightedSum = 0.0;
     double massSum = 0.0;
     for (int i = 0; i < streamCount; i++) {
       if (registeredIsHot.get(i) != hotSide) {
-        continue;
+	continue;
       }
       double frac;
       if (hotSide) {
-        frac = (double) (numberOfZones - posFromColdEnd) / numberOfZones;
+	frac = (double) (numberOfZones - posFromColdEnd) / numberOfZones;
       } else {
-        frac = (double) posFromColdEnd / numberOfZones;
+	frac = (double) posFromColdEnd / numberOfZones;
       }
       double temp = inletTempC[i] + frac * (outletTempC[i] - inletTempC[i]);
       weightedSum += massFlowKgS[i] * temp;
@@ -1859,26 +1836,26 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * Used with adaptive zone refinement where zone positions are non-uniform.
    * </p>
    *
-   * @param streamTempC pre-computed temperatures per stream per zone point
-   * @param massFlowKgS mass flow rates in kg/s per stream
-   * @param hotSide true for hot composite, false for cold composite
+   * @param streamTempC    pre-computed temperatures per stream per zone point
+   * @param massFlowKgS    mass flow rates in kg/s per stream
+   * @param hotSide        true for hot composite, false for cold composite
    * @param effectiveZones total number of effective zones
    * @param posFromColdEnd position index from cold end (0 to effectiveZones)
    * @return weighted average temperature in deg C
    */
-  private double compositeTempAdaptive(double[][] streamTempC, double[] massFlowKgS,
-      boolean hotSide, int effectiveZones, int posFromColdEnd) {
+  private double compositeTempAdaptive(double[][] streamTempC, double[] massFlowKgS, boolean hotSide,
+      int effectiveZones, int posFromColdEnd) {
     double weightedSum = 0.0;
     double massSum = 0.0;
     for (int i = 0; i < streamCount; i++) {
       if (registeredIsHot.get(i) != hotSide) {
-        continue;
+	continue;
       }
       int zIdx;
       if (hotSide) {
-        zIdx = effectiveZones - posFromColdEnd;
+	zIdx = effectiveZones - posFromColdEnd;
       } else {
-        zIdx = posFromColdEnd;
+	zIdx = posFromColdEnd;
       }
       weightedSum += massFlowKgS[i] * streamTempC[i][zIdx];
       massSum += massFlowKgS[i];

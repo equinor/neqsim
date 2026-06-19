@@ -62,7 +62,7 @@ class SeparatorTest extends neqsim.NeqSimTest {
   public void testOnePhase() {
     ((StreamInterface) processOps.getUnit("inlet stream")).setFlowRate(1.0, "MSm3/day");
     ((StreamInterface) processOps.getUnit("inlet stream")).getFluid()
-        .setMolarComposition(new double[] {1.0, 0.0, 0.0, 0.0});
+	.setMolarComposition(new double[] { 1.0, 0.0, 0.0, 0.0 });
 
     processOps.run();
   }
@@ -98,11 +98,9 @@ class SeparatorTest extends neqsim.NeqSimTest {
     processOps.add(separator1);
     processOps.run();
 
-    Assertions.assertEquals(0.06976026260, feedStream.getFluid().getPhase(PhaseType.OIL).getBeta(),
-        1e-5);
+    Assertions.assertEquals(0.06976026260, feedStream.getFluid().getPhase(PhaseType.OIL).getBeta(), 1e-5);
 
-    Assertions.assertEquals(0.06976026260, separator1.getFluid().getPhase(PhaseType.OIL).getBeta(),
-        1e-5);
+    Assertions.assertEquals(0.06976026260, separator1.getFluid().getPhase(PhaseType.OIL).getBeta(), 1e-5);
   }
 
   @Test
@@ -123,8 +121,8 @@ class SeparatorTest extends neqsim.NeqSimTest {
     Assertions.assertTrue(baseWaterMoles > 0.0, "Baseline separator should yield aqueous phase");
 
     Stream expectedFeed = createEntrainmentFeed("expectedFeed");
-    SystemInterface expectedSystem = applyEntrainment(expectedFeed.getFluid(), oilToGasFraction,
-        waterToGasFraction, gasToLiquidFraction);
+    SystemInterface expectedSystem = applyEntrainment(expectedFeed.getFluid(), oilToGasFraction, waterToGasFraction,
+	gasToLiquidFraction);
 
     Stream expectedGasStream = new Stream("expectedGas");
     expectedGasStream.setThermoSystemFromPhase(expectedSystem, "gas");
@@ -150,14 +148,14 @@ class SeparatorTest extends neqsim.NeqSimTest {
     double toleranceLiquid = Math.max(1e-8, Math.abs(expectedOilMoles + expectedWaterMoles) * 1e-6);
     double toleranceGasInLiquid = Math.max(1e-8, Math.abs(expectedGasInLiquidMoles) * 1e-6);
 
-    Assertions.assertEquals(expectedGasMoles,
-        getPhaseMoles(entrainmentSeparator.getGasOutStream(), "gas"), toleranceGas);
-    Assertions.assertEquals(expectedOilMoles,
-        getPhaseMoles(entrainmentSeparator.getLiquidOutStream(), "oil"), toleranceLiquid);
-    Assertions.assertEquals(expectedWaterMoles,
-        getPhaseMoles(entrainmentSeparator.getLiquidOutStream(), "aqueous"), toleranceLiquid);
-    Assertions.assertEquals(expectedGasInLiquidMoles,
-        getPhaseMoles(entrainmentSeparator.getLiquidOutStream(), "gas"), toleranceGasInLiquid);
+    Assertions.assertEquals(expectedGasMoles, getPhaseMoles(entrainmentSeparator.getGasOutStream(), "gas"),
+	toleranceGas);
+    Assertions.assertEquals(expectedOilMoles, getPhaseMoles(entrainmentSeparator.getLiquidOutStream(), "oil"),
+	toleranceLiquid);
+    Assertions.assertEquals(expectedWaterMoles, getPhaseMoles(entrainmentSeparator.getLiquidOutStream(), "aqueous"),
+	toleranceLiquid);
+    Assertions.assertEquals(expectedGasInLiquidMoles, getPhaseMoles(entrainmentSeparator.getLiquidOutStream(), "gas"),
+	toleranceGasInLiquid);
   }
 
   @Test
@@ -167,8 +165,7 @@ class SeparatorTest extends neqsim.NeqSimTest {
     baselineSeparator.run();
 
     Stream zeroEntrainmentFeed = createEntrainmentFeed("zeroEntrainmentFeed");
-    Separator zeroEntrainmentSeparator =
-        new Separator("zero entrainment separator", zeroEntrainmentFeed);
+    Separator zeroEntrainmentSeparator = new Separator("zero entrainment separator", zeroEntrainmentFeed);
     zeroEntrainmentSeparator.setEntrainment(0.0, "mole", "feed", "oil", "gas");
     zeroEntrainmentSeparator.setEntrainment(0.0, "mole", "feed", "aqueous", "gas");
     zeroEntrainmentSeparator.setEntrainment(0.0, "mole", "feed", "gas", "liquid");
@@ -177,16 +174,15 @@ class SeparatorTest extends neqsim.NeqSimTest {
     double tolerance = 1e-8;
 
     Assertions.assertEquals(getPhaseMoles(baselineSeparator.getGasOutStream(), "gas"),
-        getPhaseMoles(zeroEntrainmentSeparator.getGasOutStream(), "gas"), tolerance);
+	getPhaseMoles(zeroEntrainmentSeparator.getGasOutStream(), "gas"), tolerance);
     Assertions.assertEquals(getPhaseMoles(baselineSeparator.getLiquidOutStream(), "oil"),
-        getPhaseMoles(zeroEntrainmentSeparator.getLiquidOutStream(), "oil"), tolerance);
+	getPhaseMoles(zeroEntrainmentSeparator.getLiquidOutStream(), "oil"), tolerance);
     Assertions.assertEquals(getPhaseMoles(baselineSeparator.getLiquidOutStream(), "aqueous"),
-        getPhaseMoles(zeroEntrainmentSeparator.getLiquidOutStream(), "aqueous"), tolerance);
+	getPhaseMoles(zeroEntrainmentSeparator.getLiquidOutStream(), "aqueous"), tolerance);
   }
 
   private Stream createEntrainmentFeed(String name) {
-    neqsim.thermo.system.SystemSrkCPAstatoil fluid =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
+    neqsim.thermo.system.SystemSrkCPAstatoil fluid = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
     fluid.addComponent("methane", 72.3870849609375);
     fluid.addComponent("n-heptane", 13.90587639808655);
     fluid.addComponent("water", 40.0);
@@ -222,12 +218,10 @@ class SeparatorTest extends neqsim.NeqSimTest {
       double waterMoles = workingFluid.getPhase("aqueous").getNumberOfMolesInPhase();
       double liquidTotal = oilMoles + waterMoles;
       if (liquidTotal > 0.0) {
-        double oilShare = oilMoles / liquidTotal;
-        double waterShare = waterMoles / liquidTotal;
-        workingFluid.addPhaseFractionToPhase(gasToLiquidFraction * oilShare, "mole", "feed", "gas",
-            "oil");
-        workingFluid.addPhaseFractionToPhase(gasToLiquidFraction * waterShare, "mole", "feed",
-            "gas", "aqueous");
+	double oilShare = oilMoles / liquidTotal;
+	double waterShare = waterMoles / liquidTotal;
+	workingFluid.addPhaseFractionToPhase(gasToLiquidFraction * oilShare, "mole", "feed", "gas", "oil");
+	workingFluid.addPhaseFractionToPhase(gasToLiquidFraction * waterShare, "mole", "feed", "gas", "aqueous");
       }
     } else if (workingFluid.hasPhaseType("oil")) {
       workingFluid.addPhaseFractionToPhase(gasToLiquidFraction, "mole", "feed", "gas", "oil");
@@ -256,8 +250,8 @@ class SeparatorTest extends neqsim.NeqSimTest {
     feed.setFlowRate(1000.0, "kg/hr");
     feed.run();
 
-    Separator sep = Separator.builder("V-100").inletStream(feed).horizontal().length(6.0)
-        .diameter(2.0).liquidLevel(1.0).pressureDrop(0.1).efficiency(0.98).build();
+    Separator sep = Separator.builder("V-100").inletStream(feed).horizontal().length(6.0).diameter(2.0).liquidLevel(1.0)
+	.pressureDrop(0.1).efficiency(0.98).build();
 
     sep.run();
 
@@ -286,8 +280,8 @@ class SeparatorTest extends neqsim.NeqSimTest {
     feed.setFlowRate(500.0, "kg/hr");
     feed.run();
 
-    Separator sep = Separator.builder("V-101").inletStream(feed).vertical().length(4.0)
-        .diameter(1.5).designLiquidLevelFraction(0.6).build();
+    Separator sep = Separator.builder("V-101").inletStream(feed).vertical().length(4.0).diameter(1.5)
+	.designLiquidLevelFraction(0.6).build();
 
     sep.run();
 
@@ -313,9 +307,8 @@ class SeparatorTest extends neqsim.NeqSimTest {
     feed.setFlowRate(800.0, "kg/hr");
     feed.run();
 
-    Separator sep =
-        Separator.builder("V-102").inletStream(feed).horizontal().length(5.0).diameter(1.8)
-            .oilInGas(0.001, "mole").waterInGas(0.0005, "mole").gasInLiquid(0.002, "mole").build();
+    Separator sep = Separator.builder("V-102").inletStream(feed).horizontal().length(5.0).diameter(1.8)
+	.oilInGas(0.001, "mole").waterInGas(0.0005, "mole").gasInLiquid(0.002, "mole").build();
 
     sep.run();
 
@@ -325,8 +318,8 @@ class SeparatorTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * Test that GasScrubber reports meaningful utilization with minimum setup. Only internal diameter
-   * is required beyond the default constructor settings.
+   * Test that GasScrubber reports meaningful utilization with minimum setup. Only internal diameter is required beyond
+   * the default constructor settings.
    */
   @Test
   void testGasScrubberUtilizationMinimumSetup() {
@@ -353,12 +346,9 @@ class SeparatorTest extends neqsim.NeqSimTest {
 
     double utilization = scrubber.getCapacityUtilization();
     // Should be a valid number between 0 and some positive value
-    Assertions.assertFalse(Double.isNaN(utilization),
-        "Utilization should not be NaN with diameter set");
-    Assertions.assertTrue(utilization > 0.0,
-        "Utilization should be > 0 for gas flow, got: " + utilization);
-    Assertions.assertTrue(utilization < 10.0,
-        "Utilization should be reasonable, got: " + utilization);
+    Assertions.assertFalse(Double.isNaN(utilization), "Utilization should not be NaN with diameter set");
+    Assertions.assertTrue(utilization > 0.0, "Utilization should be > 0 for gas flow, got: " + utilization);
+    Assertions.assertTrue(utilization < 10.0, "Utilization should be reasonable, got: " + utilization);
 
     // Verify orientation is vertical
     Assertions.assertEquals("vertical", scrubber.getOrientation());
@@ -394,8 +384,6 @@ class SeparatorTest extends neqsim.NeqSimTest {
     // Should still get utilization even with no liquid
     double utilization = scrubber.getCapacityUtilization();
     Assertions.assertFalse(Double.isNaN(utilization), "Dry gas utilization should not be NaN");
-    Assertions.assertTrue(utilization > 0.0,
-        "Dry gas utilization should be > 0, got: " + utilization);
+    Assertions.assertTrue(utilization > 0.0, "Dry gas utilization should be > 0, got: " + utilization);
   }
 }
-

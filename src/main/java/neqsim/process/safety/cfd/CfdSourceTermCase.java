@@ -18,10 +18,9 @@ import neqsim.process.safety.scenario.ReleaseDispersionScenarioGenerator.Release
  * Versioned CFD source-term handoff case for detailed safety dispersion simulations.
  *
  * <p>
- * The case is a neutral JSON payload that carries NeqSim process context, source-term time series,
- * fluid composition, weather, inventory basis, consequence branches and quality metadata. It is
- * intended as the common handoff layer before writing simulator-specific files for OpenFOAM, FLACS,
- * KFX, PHAST or other detailed consequence tools.
+ * The case is a neutral JSON payload that carries NeqSim process context, source-term time series, fluid composition,
+ * weather, inventory basis, consequence branches and quality metadata. It is intended as the common handoff layer
+ * before writing simulator-specific files for OpenFOAM, FLACS, KFX, PHAST or other detailed consequence tools.
  * </p>
  *
  * @author ESOL
@@ -88,16 +87,13 @@ public class CfdSourceTermCase implements Serializable {
     if (scenario == null) {
       throw new IllegalArgumentException("scenario must not be null");
     }
-    return builder().caseId(normalizeCaseId(scenario.getScenarioName()))
-        .scenarioName(scenario.getScenarioName()).context(contextMap(scenario))
-        .fluid(fluidMap(scenario)).release(releaseMap(scenario))
-        .sourceTerm(sourceTermMap(scenario.getSourceTerm())).ambient(ambientMap(scenario))
-        .dispersionScreening(dispersionMap(scenario.getDispersionResult()))
-        .inventory(
-            inventoryMap(scenario.getTrappedInventoryResult(), scenario.getInventoryVolumeM3()))
-        .consequenceBranches(branchMaps(scenario.getConsequenceBranches()))
-        .cfdHints(defaultCfdHints(scenario)).provenance(provenanceMap(scenario))
-        .warnings(qualityWarnings(scenario)).build();
+    return builder().caseId(normalizeCaseId(scenario.getScenarioName())).scenarioName(scenario.getScenarioName())
+	.context(contextMap(scenario)).fluid(fluidMap(scenario)).release(releaseMap(scenario))
+	.sourceTerm(sourceTermMap(scenario.getSourceTerm())).ambient(ambientMap(scenario))
+	.dispersionScreening(dispersionMap(scenario.getDispersionResult()))
+	.inventory(inventoryMap(scenario.getTrappedInventoryResult(), scenario.getInventoryVolumeM3()))
+	.consequenceBranches(branchMaps(scenario.getConsequenceBranches())).cfdHints(defaultCfdHints(scenario))
+	.provenance(provenanceMap(scenario)).warnings(qualityWarnings(scenario)).build();
   }
 
   /**
@@ -204,11 +200,9 @@ public class CfdSourceTermCase implements Serializable {
     requireMap(ambient, "ambient", errors);
     requireMap(provenance, "provenance", errors);
     requirePositiveNumber(release.get("holeDiameterM"), "release.holeDiameterM", errors);
-    requirePositiveNumber(sourceTerm.get("peakMassFlowRateKgPerS"),
-        "sourceTerm.peakMassFlowRateKgPerS", errors);
+    requirePositiveNumber(sourceTerm.get("peakMassFlowRateKgPerS"), "sourceTerm.peakMassFlowRateKgPerS", errors);
     if (!Boolean.TRUE.equals(provenance.get("notForFinalLayoutWithoutValidation"))) {
-      warnings
-          .add("provenance.notForFinalLayoutWithoutValidation should be true for screening cases");
+      warnings.add("provenance.notForFinalLayoutWithoutValidation should be true for screening cases");
     }
     if (qualityWarnings.isEmpty()) {
       warnings.add("qualityWarnings is empty; industrial handoff should state assumptions");
@@ -246,12 +240,11 @@ public class CfdSourceTermCase implements Serializable {
   private static Map<String, Object> fluidMap(ReleaseDispersionScenario scenario) {
     Map<String, Object> map = new LinkedHashMap<String, Object>();
     map.put("componentMoleFractions", scenario.getComponentMoleFractions());
-    map.put("sourceDensityKgPerM3",
-        finiteOrNull(scenario.getDispersionResult().getSourceDensityKgPerM3()));
+    map.put("sourceDensityKgPerM3", finiteOrNull(scenario.getDispersionResult().getSourceDensityKgPerM3()));
     map.put("fuelMoleFraction", finiteOrNull(scenario.getDispersionResult().getFuelMoleFraction()));
     map.put("fuelMassFraction", finiteOrNull(scenario.getDispersionResult().getFuelMassFraction()));
     map.put("lowerFlammableLimitVolumeFraction",
-        finiteOrNull(scenario.getDispersionResult().getLowerFlammableLimitVolumeFraction()));
+	finiteOrNull(scenario.getDispersionResult().getLowerFlammableLimitVolumeFraction()));
     return map;
   }
 
@@ -379,12 +372,11 @@ public class CfdSourceTermCase implements Serializable {
   /**
    * Creates an inventory map.
    *
-   * @param inventoryResult optional trapped inventory result
+   * @param inventoryResult        optional trapped inventory result
    * @param representativeVolumeM3 representative fallback volume in m3
    * @return ordered inventory map
    */
-  private static Map<String, Object> inventoryMap(InventoryResult inventoryResult,
-      double representativeVolumeM3) {
+  private static Map<String, Object> inventoryMap(InventoryResult inventoryResult, double representativeVolumeM3) {
     if (inventoryResult != null) {
       Map<String, Object> map = new LinkedHashMap<String, Object>(inventoryResult.toMap());
       map.put("basis", "TrappedInventoryCalculator evidence-linked isolated inventory");
@@ -393,8 +385,8 @@ public class CfdSourceTermCase implements Serializable {
     Map<String, Object> map = new LinkedHashMap<String, Object>();
     map.put("basis", "Representative volume configured on ReleaseDispersionScenarioGenerator");
     map.put("totalVolumeM3", finiteOrNull(representativeVolumeM3));
-    map.put("warnings", Collections.singletonList(
-        "No TrappedInventoryCalculator result attached; volume is a screening assumption."));
+    map.put("warnings",
+	Collections.singletonList("No TrappedInventoryCalculator result attached; volume is a screening assumption."));
     return map;
   }
 
@@ -421,15 +413,14 @@ public class CfdSourceTermCase implements Serializable {
   private static Map<String, Object> defaultCfdHints(ReleaseDispersionScenario scenario) {
     Map<String, Object> map = new LinkedHashMap<String, Object>();
     double endpoint = maxFinite(scenario.getDispersionResult().getDistanceToHalfLflM(),
-        scenario.getDispersionResult().getToxicDistanceM());
+	scenario.getDispersionResult().getToxicDistanceM());
     if (!Double.isFinite(endpoint) || endpoint <= 0.0) {
       endpoint = 100.0;
     }
     map.put("recommendedDomainLengthM", finiteOrNull(Math.max(200.0, 2.0 * endpoint)));
     map.put("recommendedDomainWidthM", finiteOrNull(Math.max(80.0, endpoint)));
     map.put("recommendedDomainHeightM", finiteOrNull(Math.max(30.0, 0.25 * endpoint)));
-    map.put("sourceRefinementRadiusM",
-        finiteOrNull(Math.max(2.0, 20.0 * scenario.getHoleDiameterM())));
+    map.put("sourceRefinementRadiusM", finiteOrNull(Math.max(2.0, 20.0 * scenario.getHoleDiameterM())));
     map.put("solverFamily", "transient buoyant species transport / detailed CFD");
     map.put("openFoamHint", "map sourceTerm.timeSeries to a coded or tabulated mass source");
     return map;
@@ -438,7 +429,7 @@ public class CfdSourceTermCase implements Serializable {
   /**
    * Returns the maximum finite value from two endpoint distances.
    *
-   * @param first first endpoint value
+   * @param first  first endpoint value
    * @param second second endpoint value
    * @return maximum finite value, or NaN if neither value is finite
    */
@@ -496,8 +487,7 @@ public class CfdSourceTermCase implements Serializable {
    */
   private static List<String> limitations(ReleaseDispersionScenario scenario) {
     List<String> limitations = new ArrayList<String>();
-    limitations
-        .add("Screening source term and dispersion; validate before final layout decisions.");
+    limitations.add("Screening source term and dispersion; validate before final layout decisions.");
     limitations.add("Release coordinates default to local origin unless site layout is added.");
     limitations.add("CFD mesh, obstacle geometry and congestion are not generated by this schema.");
     if (Double.isNaN(scenario.getReleaseFrequencyPerYear())) {
@@ -519,8 +509,7 @@ public class CfdSourceTermCase implements Serializable {
     warnings.add("CFD handoff case is a source-term package, not a completed CFD model.");
     warnings.add("Replace default release coordinates with site layout before detailed CFD.");
     if (scenario.getTrappedInventoryResult() == null) {
-      warnings
-          .add("Inventory volume is representative; attach TrappedInventoryCalculator for audit.");
+      warnings.add("Inventory volume is representative; attach TrappedInventoryCalculator for audit.");
     } else {
       warnings.addAll(scenario.getTrappedInventoryResult().getWarnings());
     }
@@ -537,8 +526,7 @@ public class CfdSourceTermCase implements Serializable {
     if (scenarioName == null || scenarioName.trim().isEmpty()) {
       return "cfd-source-term-case";
     }
-    return scenarioName.trim().toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("^-+", "")
-        .replaceAll("-+$", "");
+    return scenarioName.trim().toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("^-+", "").replaceAll("-+$", "");
   }
 
   /**
@@ -557,8 +545,8 @@ public class CfdSourceTermCase implements Serializable {
   /**
    * Requires a text value.
    *
-   * @param value text value
-   * @param field field name
+   * @param value  text value
+   * @param field  field name
    * @param errors error list
    */
   private static void requireText(String value, String field, List<String> errors) {
@@ -570,8 +558,8 @@ public class CfdSourceTermCase implements Serializable {
   /**
    * Requires a map value.
    *
-   * @param map map to check
-   * @param field field name
+   * @param map    map to check
+   * @param field  field name
    * @param errors error list
    */
   private static void requireMap(Map<String, Object> map, String field, List<String> errors) {
@@ -583,8 +571,8 @@ public class CfdSourceTermCase implements Serializable {
   /**
    * Requires a positive numeric value.
    *
-   * @param value value to check
-   * @param field field name
+   * @param value  value to check
+   * @param field  field name
    * @param errors error list
    */
   private static void requirePositiveNumber(Object value, String field, List<String> errors) {
@@ -641,7 +629,7 @@ public class CfdSourceTermCase implements Serializable {
      */
     public Builder caseId(String caseId) {
       if (caseId != null && !caseId.trim().isEmpty()) {
-        this.caseId = caseId;
+	this.caseId = caseId;
       }
       return this;
     }
@@ -654,7 +642,7 @@ public class CfdSourceTermCase implements Serializable {
      */
     public Builder scenarioName(String scenarioName) {
       if (scenarioName != null && !scenarioName.trim().isEmpty()) {
-        this.scenarioName = scenarioName;
+	this.scenarioName = scenarioName;
       }
       return this;
     }
@@ -797,7 +785,7 @@ public class CfdSourceTermCase implements Serializable {
      */
     private static Map<String, Object> copyOrEmpty(Map<String, Object> map) {
       if (map == null) {
-        return new LinkedHashMap<String, Object>();
+	return new LinkedHashMap<String, Object>();
       }
       return new LinkedHashMap<String, Object>(map);
     }
@@ -812,7 +800,7 @@ public class CfdSourceTermCase implements Serializable {
     /**
      * Creates a validation result.
      *
-     * @param errors validation errors
+     * @param errors   validation errors
      * @param warnings validation warnings
      */
     private ValidationResult(List<String> errors, List<String> warnings) {

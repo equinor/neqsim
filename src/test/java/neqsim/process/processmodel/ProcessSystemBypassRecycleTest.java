@@ -18,8 +18,8 @@ import neqsim.thermo.system.SystemSrkEos;
 /**
  * Verifies the low-flow bypass mechanism interacts safely with {@link Recycle} loops:
  * <ul>
- * <li>{@code deactivateSection} stops descending at a {@link Recycle} that still has another active
- * feed (does not silently kill the parallel branch).</li>
+ * <li>{@code deactivateSection} stops descending at a {@link Recycle} that still has another active feed (does not
+ * silently kill the parallel branch).</li>
  * <li>A recycle loop still converges when a unit inside the loop is locked inactive.</li>
  * <li>{@code getBypassedUnits} reports the locked unit.</li>
  * </ul>
@@ -49,7 +49,7 @@ public class ProcessSystemBypassRecycleTest extends neqsim.NeqSimTest {
     Separator sep = new Separator("sep", mix.getOutletStream());
 
     Splitter gasSplit = new Splitter("gasSplit", sep.getGasOutStream(), 2);
-    gasSplit.setSplitFactors(new double[] {0.9, 0.1});
+    gasSplit.setSplitFactors(new double[] { 0.9, 0.1 });
 
     Heater recycleHeater = new Heater("recycleHeater", gasSplit.getSplitStream(1));
     recycleHeater.setOutTemperature(305.0);
@@ -76,22 +76,19 @@ public class ProcessSystemBypassRecycleTest extends neqsim.NeqSimTest {
     assertTrue(locked >= 1, "expected at least recycleHeater to be locked, got " + locked);
     assertTrue(recycleHeater.isLockedInactive());
     // freshFeed and the mixer must NOT be locked (other active feed reaches the mixer).
-    assertFalse(freshFeed.isLockedInactive(),
-        "freshFeed should remain active — mixer has another active feed");
+    assertFalse(freshFeed.isLockedInactive(), "freshFeed should remain active — mixer has another active feed");
     assertFalse(mix.isLockedInactive(), "mixer should remain active — fresh feed is still live");
 
     // Process should still run (recycle loop converges with the bypassed unit).
     ps.run();
 
     List<String> bypassed = ps.getBypassedUnits();
-    assertTrue(bypassed.contains("recycleHeater"),
-        "getBypassedUnits should list recycleHeater, got " + bypassed);
+    assertTrue(bypassed.contains("recycleHeater"), "getBypassedUnits should list recycleHeater, got " + bypassed);
 
     // The separator gas outlet should still carry roughly the fresh-feed gas inventory.
     StreamInterface gasProduct = gasSplit.getSplitStream(0);
     assertTrue(gasProduct.getFlowRate("kg/hr") > 500.0,
-        "main gas product should still carry meaningful flow, got "
-            + gasProduct.getFlowRate("kg/hr"));
+	"main gas product should still carry meaningful flow, got " + gasProduct.getFlowRate("kg/hr"));
   }
 
   @Test

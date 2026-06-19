@@ -20,11 +20,10 @@ class ValidatorTest {
 
   @Test
   void testValidFlash_noIssues() {
-    String json =
-        "{" + "\"model\": \"SRK\"," + "\"temperature\": {\"value\": 25.0, \"unit\": \"C\"},"
-            + "\"pressure\": {\"value\": 50.0, \"unit\": \"bara\"}," + "\"flashType\": \"TP\","
-            + "\"components\": {\"methane\": 0.85, \"ethane\": 0.10, \"propane\": 0.05},"
-            + "\"mixingRule\": \"classic\"" + "}";
+    String json = "{" + "\"model\": \"SRK\"," + "\"temperature\": {\"value\": 25.0, \"unit\": \"C\"},"
+	+ "\"pressure\": {\"value\": 50.0, \"unit\": \"bara\"}," + "\"flashType\": \"TP\","
+	+ "\"components\": {\"methane\": 0.85, \"ethane\": 0.10, \"propane\": 0.05}," + "\"mixingRule\": \"classic\""
+	+ "}";
 
     String result = Validator.validate(json);
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
@@ -166,9 +165,9 @@ class ValidatorTest {
   @Test
   void testValidProcess() {
     String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\","
-        + "  \"components\": {\"methane\": 0.85, \"ethane\": 0.15}" + "}," + "\"process\": ["
-        + "  {\"type\": \"Stream\", \"name\": \"feed\"},"
-        + "  {\"type\": \"Separator\", \"name\": \"HP Sep\", \"inlet\": \"feed\"}" + "]" + "}";
+	+ "  \"components\": {\"methane\": 0.85, \"ethane\": 0.15}" + "}," + "\"process\": ["
+	+ "  {\"type\": \"Stream\", \"name\": \"feed\"},"
+	+ "  {\"type\": \"Separator\", \"name\": \"HP Sep\", \"inlet\": \"feed\"}" + "]" + "}";
 
     String result = Validator.validate(json);
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
@@ -178,8 +177,7 @@ class ValidatorTest {
 
   @Test
   void testProcessMissingFluid() {
-    String json =
-        "{" + "\"process\": [" + "  {\"type\": \"Stream\", \"name\": \"feed\"}" + "]" + "}";
+    String json = "{" + "\"process\": [" + "  {\"type\": \"Stream\", \"name\": \"feed\"}" + "]" + "}";
 
     String result = Validator.validate(json);
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
@@ -191,8 +189,8 @@ class ValidatorTest {
 
   @Test
   void testProcessUnitMissingType() {
-    String json = "{" + "\"fluid\": {\"components\": {\"methane\": 1.0}}," + "\"process\": ["
-        + "  {\"name\": \"feed\"}" + "]" + "}";
+    String json = "{" + "\"fluid\": {\"components\": {\"methane\": 1.0}}," + "\"process\": [" + "  {\"name\": \"feed\"}"
+	+ "]" + "}";
 
     String result = Validator.validate(json);
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
@@ -204,7 +202,7 @@ class ValidatorTest {
   @Test
   void testProcessUnknownEquipmentType() {
     String json = "{" + "\"fluid\": {\"components\": {\"methane\": 1.0}}," + "\"process\": ["
-        + "  {\"type\": \"SuperWidget\", \"name\": \"widget1\"}" + "]" + "}";
+	+ "  {\"type\": \"SuperWidget\", \"name\": \"widget1\"}" + "]" + "}";
 
     String result = Validator.validate(json);
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
@@ -217,8 +215,7 @@ class ValidatorTest {
   @Test
   void testProcessDuplicateNames() {
     String json = "{" + "\"fluid\": {\"components\": {\"methane\": 1.0}}," + "\"process\": ["
-        + "  {\"type\": \"Stream\", \"name\": \"feed\"},"
-        + "  {\"type\": \"Stream\", \"name\": \"feed\"}" + "]" + "}";
+	+ "  {\"type\": \"Stream\", \"name\": \"feed\"}," + "  {\"type\": \"Stream\", \"name\": \"feed\"}" + "]" + "}";
 
     String result = Validator.validate(json);
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
@@ -229,7 +226,7 @@ class ValidatorTest {
   @Test
   void testProcessEmptyInlet() {
     String json = "{" + "\"fluid\": {\"components\": {\"methane\": 1.0}}," + "\"process\": ["
-        + "  {\"type\": \"Separator\", \"name\": \"sep\", \"inlet\": \"\"}" + "]" + "}";
+	+ "  {\"type\": \"Separator\", \"name\": \"sep\", \"inlet\": \"\"}" + "]" + "}";
 
     String result = Validator.validate(json);
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
@@ -269,8 +266,7 @@ class ValidatorTest {
   @Test
   void testMultipleErrors() {
     // Unknown model + unknown component + missing spec
-    String json = "{" + "\"model\": \"FAKEOS\"," + "\"flashType\": \"PH\","
-        + "\"components\": {\"fakey\": 1.0}" + "}";
+    String json = "{" + "\"model\": \"FAKEOS\"," + "\"flashType\": \"PH\"," + "\"components\": {\"fakey\": 1.0}" + "}";
 
     String result = Validator.validate(json);
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
@@ -289,7 +285,7 @@ class ValidatorTest {
     JsonArray issues = root.getAsJsonArray("issues");
     for (int i = 0; i < issues.size(); i++) {
       if (code.equals(issues.get(i).getAsJsonObject().get("code").getAsString())) {
-        return true;
+	return true;
       }
     }
     return false;

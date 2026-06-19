@@ -12,8 +12,7 @@ import neqsim.thermo.system.SystemInterface;
 
 /**
  * <p>
- * OptimizedVUflash class with enhanced performance for transient separator simulations. Key
- * optimizations:
+ * OptimizedVUflash class with enhanced performance for transient separator simulations. Key optimizations:
  * </p>
  * <ul>
  * <li>Adaptive convergence criteria based on system state</li>
@@ -57,8 +56,8 @@ public class OptimizedVUflash extends Flash {
    * Constructor for OptimizedVUflash.
    *
    * @param system thermodynamic system to flash
-   * @param Vspec specified total volume
-   * @param Uspec specified internal energy
+   * @param Vspec  specified total volume
+   * @param Uspec  specified internal energy
    */
   public OptimizedVUflash(SystemInterface system, double Vspec, double Uspec) {
     this.system = system;
@@ -87,9 +86,9 @@ public class OptimizedVUflash extends Flash {
 
       // If we're close to the previous solution, use it as starting point
       if (pressureDiff < 0.5 * lastPressure && tempDiff < 20.0) {
-        system.setPressure(lastPressure);
-        system.setTemperature(lastTemperature);
-        return;
+	system.setPressure(lastPressure);
+	system.setTemperature(lastTemperature);
+	return;
       }
     }
 
@@ -111,20 +110,19 @@ public class OptimizedVUflash extends Flash {
    */
   private double calcdQdP() {
     return system.getPressure() * (system.getVolume() - Vspec)
-        / (neqsim.thermo.ThermodynamicConstantsInterface.R * system.getTemperature());
+	/ (neqsim.thermo.ThermodynamicConstantsInterface.R * system.getTemperature());
   }
 
   private double calcdQdT() {
     return (Uspec + system.getPressure() * Vspec - system.getEnthalpy())
-        / (system.getTemperature() * neqsim.thermo.ThermodynamicConstantsInterface.R);
+	/ (system.getTemperature() * neqsim.thermo.ThermodynamicConstantsInterface.R);
   }
 
   private double calcdQdPP() {
     double dVdP = system.getdVdPtn();
     double dQdVV = (system.getVolume() - Vspec)
-        / (neqsim.thermo.ThermodynamicConstantsInterface.R * system.getTemperature())
-        + system.getPressure() * dVdP
-            / (neqsim.thermo.ThermodynamicConstantsInterface.R * system.getTemperature());
+	/ (neqsim.thermo.ThermodynamicConstantsInterface.R * system.getTemperature())
+	+ system.getPressure() * dVdP / (neqsim.thermo.ThermodynamicConstantsInterface.R * system.getTemperature());
 
     // Ensure derivative is not too small
     if (Math.abs(dQdVV) < DERIVATIVE_THRESHOLD) {
@@ -135,9 +133,8 @@ public class OptimizedVUflash extends Flash {
 
   private double calcdQdTT() {
     double dQdT_val = calcdQdT();
-    double dQdTT = -system.getCp()
-        / (system.getTemperature() * neqsim.thermo.ThermodynamicConstantsInterface.R)
-        - dQdT_val / system.getTemperature();
+    double dQdTT = -system.getCp() / (system.getTemperature() * neqsim.thermo.ThermodynamicConstantsInterface.R)
+	- dQdT_val / system.getTemperature();
 
     // Ensure derivative is not too small
     if (Math.abs(dQdTT) < DERIVATIVE_THRESHOLD) {
@@ -175,90 +172,90 @@ public class OptimizedVUflash extends Flash {
 
     try {
       do {
-        iterations++;
-        oldPres = nyPres;
-        oldTemp = nyTemp;
+	iterations++;
+	oldPres = nyPres;
+	oldTemp = nyTemp;
 
-        // Batch initialization to reduce overhead
-        system.init(3);
+	// Batch initialization to reduce overhead
+	system.init(3);
 
-        // Calculate all derivatives at once
-        double dQdP = calcdQdP();
-        double dQdT = calcdQdT();
-        double dQdPP = calcdQdPP();
-        double dQdTT = calcdQdTT();
+	// Calculate all derivatives at once
+	double dQdP = calcdQdP();
+	double dQdT = calcdQdT();
+	double dQdPP = calcdQdPP();
+	double dQdTT = calcdQdTT();
 
-        // Newton-Raphson updates with adaptive damping
-        double deltaPres = -damping * dQdP / dQdPP;
-        double deltaTemp = -damping * dQdT / dQdTT;
+	// Newton-Raphson updates with adaptive damping
+	double deltaPres = -damping * dQdP / dQdPP;
+	double deltaTemp = -damping * dQdT / dQdTT;
 
-        // Limit step sizes based on system behavior
-        double maxPresChange = isWellBehaved ? 0.3 * oldPres : 0.1 * oldPres;
-        double maxTempChange = isWellBehaved ? 50.0 : 20.0;
+	// Limit step sizes based on system behavior
+	double maxPresChange = isWellBehaved ? 0.3 * oldPres : 0.1 * oldPres;
+	double maxTempChange = isWellBehaved ? 50.0 : 20.0;
 
-        deltaPres = Math.max(-maxPresChange, Math.min(maxPresChange, deltaPres));
-        deltaTemp = Math.max(-maxTempChange, Math.min(maxTempChange, deltaTemp));
+	deltaPres = Math.max(-maxPresChange, Math.min(maxPresChange, deltaPres));
+	deltaTemp = Math.max(-maxTempChange, Math.min(maxTempChange, deltaTemp));
 
-        nyPres = oldPres + deltaPres;
-        nyTemp = oldTemp + deltaTemp;
+	nyPres = oldPres + deltaPres;
+	nyTemp = oldTemp + deltaTemp;
 
-        // Enforce bounds
-        nyPres = Math.max(MIN_PRESSURE, Math.min(MAX_PRESSURE, nyPres));
-        nyTemp = Math.max(MIN_TEMPERATURE, Math.min(MAX_TEMPERATURE, nyTemp));
+	// Enforce bounds
+	nyPres = Math.max(MIN_PRESSURE, Math.min(MAX_PRESSURE, nyPres));
+	nyTemp = Math.max(MIN_TEMPERATURE, Math.min(MAX_TEMPERATURE, nyTemp));
 
-        system.setPressure(nyPres);
-        system.setTemperature(nyTemp);
+	system.setPressure(nyPres);
+	system.setTemperature(nyTemp);
 
-        // Single TP flash per iteration
-        tpFlash.run();
+	// Single TP flash per iteration
+	tpFlash.run();
 
-        // Calculate convergence metrics - check BOTH iteration variable changes AND specification
-        // errors
-        double presError = Math.abs((nyPres - oldPres) / Math.max(nyPres, 0.1));
-        double tempError = Math.abs((nyTemp - oldTemp) / Math.max(nyTemp, 1.0));
-        double totalError = presError + tempError;
+	// Calculate convergence metrics - check BOTH iteration variable changes AND specification
+	// errors
+	double presError = Math.abs((nyPres - oldPres) / Math.max(nyPres, 0.1));
+	double tempError = Math.abs((nyTemp - oldTemp) / Math.max(nyTemp, 1.0));
+	double totalError = presError + tempError;
 
-        // Also check actual volume and energy specification errors
-        double volErr = Math.abs((system.getVolume() - Vspec) / Vspec);
-        double hTarget = Uspec + system.getPressure() * Vspec;
-        double hErr = Math.abs((system.getEnthalpy() - hTarget) / Math.max(Math.abs(hTarget), 1.0));
+	// Also check actual volume and energy specification errors
+	double volErr = Math.abs((system.getVolume() - Vspec) / Vspec);
+	double hTarget = Uspec + system.getPressure() * Vspec;
+	double hErr = Math.abs((system.getEnthalpy() - hTarget) / Math.max(Math.abs(hTarget), 1.0));
 
-        // Early termination only if BOTH iteration convergence AND specification errors are small
-        if (totalError < tolerance && volErr < 1e-6 && hErr < 1e-5) {
-          isWellBehaved = true;
-          break;
-        }
+	// Early termination only if BOTH iteration convergence AND specification errors are small
+	if (totalError < tolerance && volErr < 1e-6 && hErr < 1e-5) {
+	  isWellBehaved = true;
+	  break;
+	}
 
-        // Adaptive damping and tolerance
-        if (totalError < lastError) {
-          damping = Math.min(MAX_DAMPING, damping * 1.1); // Increase damping
-          stagnationCount = 0;
-        } else {
-          damping = Math.max(MIN_DAMPING, damping * 0.7); // Decrease damping
-          stagnationCount++;
-        }
+	// Adaptive damping and tolerance
+	if (totalError < lastError) {
+	  damping = Math.min(MAX_DAMPING, damping * 1.1); // Increase damping
+	  stagnationCount = 0;
+	} else {
+	  damping = Math.max(MIN_DAMPING, damping * 0.7); // Decrease damping
+	  stagnationCount++;
+	}
 
-        // Detect stagnation and adjust strategy
-        if (stagnationCount > 3) {
-          tolerance *= 2; // Relax tolerance
-          isWellBehaved = false;
-        }
+	// Detect stagnation and adjust strategy
+	if (stagnationCount > 3) {
+	  tolerance *= 2; // Relax tolerance
+	  isWellBehaved = false;
+	}
 
-        lastError = totalError;
+	lastError = totalError;
       } while (iterations < MAX_ITERATIONS);
 
       // Update performance tracking
       if (iterations < MAX_ITERATIONS) {
-        lastPressure = nyPres;
-        lastTemperature = nyTemp;
+	lastPressure = nyPres;
+	lastTemperature = nyTemp;
 
-        // Consider system well-behaved if converged quickly
-        if (iterations <= 10) {
-          isWellBehaved = true;
-        }
+	// Consider system well-behaved if converged quickly
+	if (iterations <= 10) {
+	  isWellBehaved = true;
+	}
       } else {
-        logger.warn("OptimizedVUflash did not converge after " + MAX_ITERATIONS + " iterations");
-        isWellBehaved = false;
+	logger.warn("OptimizedVUflash did not converge after " + MAX_ITERATIONS + " iterations");
+	isWellBehaved = false;
       }
     } catch (Exception e) {
       logger.warn("Exception in OptimizedVUflash: " + e.getMessage());

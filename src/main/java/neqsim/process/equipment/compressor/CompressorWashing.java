@@ -353,16 +353,14 @@ public class CompressorWashing implements Serializable {
     currentFoulingFactor = Math.max(0.0, currentFoulingFactor - recovery);
 
     // Record wash event
-    WashEvent event =
-        new WashEvent(method, totalOperatingHours, previousFouling, currentFoulingFactor, recovery);
+    WashEvent event = new WashEvent(method, totalOperatingHours, previousFouling, currentFoulingFactor, recovery);
     washHistory.add(event);
 
     // Reset counter
     hoursSinceLastWash = 0.0;
     lastWashMethod = method;
 
-    logger.info("Compressor wash performed: {} - Recovery: {:.1f}%", method.getDisplayName(),
-        recovery * 100);
+    logger.info("Compressor wash performed: {} - Recovery: {:.1f}%", method.getDisplayName(), recovery * 100);
 
     return recovery;
   }
@@ -393,18 +391,18 @@ public class CompressorWashing implements Serializable {
    */
   public double estimateWaterConsumption(WashingMethod method) {
     switch (method) {
-      case ONLINE_WET:
-        return onlineWashWaterFlow * onlineWashDuration;
-      case OFFLINE_SOAK:
-        return 500.0; // Typical soak tank volume
-      case CRANK_WASH:
-        return 1000.0; // Multiple fill cycles
-      case CHEMICAL_CLEAN:
-        return 200.0; // Smaller volume with chemicals
-      case DRY_ICE_BLAST:
-        return 0.0; // No water
-      default:
-        return 500.0;
+    case ONLINE_WET:
+      return onlineWashWaterFlow * onlineWashDuration;
+    case OFFLINE_SOAK:
+      return 500.0; // Typical soak tank volume
+    case CRANK_WASH:
+      return 1000.0; // Multiple fill cycles
+    case CHEMICAL_CLEAN:
+      return 200.0; // Smaller volume with chemicals
+    case DRY_ICE_BLAST:
+      return 0.0; // No water
+    default:
+      return 500.0;
     }
   }
 
@@ -418,7 +416,7 @@ public class CompressorWashing implements Serializable {
     // Inverse of fouling model: hours = sqrt(maxHeadLoss / 0.20) / rate
     double targetFouling = Math.sqrt(maxHeadLoss / 0.20);
     double effectiveRate = dominantFoulingType.getFoulingRatePerHour() * environmentalSeverity
-        * (1.0 - inletFilterEfficiency * 0.8);
+	* (1.0 - inletFilterEfficiency * 0.8);
     if (effectiveRate > 0) {
       return targetFouling / effectiveRate;
     }
@@ -428,7 +426,7 @@ public class CompressorWashing implements Serializable {
   /**
    * Calculate annual wash chemical cost.
    *
-   * @param washesPerYear number of washes per year
+   * @param washesPerYear        number of washes per year
    * @param chemicalCostPerLiter cost per liter of wash solution
    * @return annual chemical cost
    */
@@ -466,12 +464,11 @@ public class CompressorWashing implements Serializable {
    * Estimate annual production loss due to fouling.
    *
    * @param baseProductionRate base production rate [units/hr]
-   * @param avgFouling average fouling factor over year
-   * @param operatingHours annual operating hours
+   * @param avgFouling         average fouling factor over year
+   * @param operatingHours     annual operating hours
    * @return production loss [units]
    */
-  public double estimateAnnualProductionLoss(double baseProductionRate, double avgFouling,
-      double operatingHours) {
+  public double estimateAnnualProductionLoss(double baseProductionRate, double avgFouling, double operatingHours) {
     double avgHeadLoss = avgFouling * avgFouling * 0.20;
     // Assume production proportional to compressor capacity
     return baseProductionRate * avgHeadLoss * operatingHours;
@@ -497,14 +494,13 @@ public class CompressorWashing implements Serializable {
     /**
      * Creates a wash event record.
      *
-     * @param method washing method used
-     * @param hours operating hours at time of wash
-     * @param before fouling factor before wash
-     * @param after fouling factor after wash
+     * @param method   washing method used
+     * @param hours    operating hours at time of wash
+     * @param before   fouling factor before wash
+     * @param after    fouling factor after wash
      * @param recovery performance recovery achieved
      */
-    public WashEvent(WashingMethod method, double hours, double before, double after,
-        double recovery) {
+    public WashEvent(WashingMethod method, double hours, double before, double after, double recovery) {
       this.method = method;
       this.operatingHoursAtWash = hours;
       this.foulingBefore = before;

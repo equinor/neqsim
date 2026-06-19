@@ -31,8 +31,8 @@ class RiskMLInterfaceTest {
 
   @Test
   void testCreateFailurePredictionModel() {
-    RiskMLInterface.MLModel model =
-        mlInterface.createFailurePredictionModel("pump-failure-v1", "Pump Failure Predictor");
+    RiskMLInterface.MLModel model = mlInterface.createFailurePredictionModel("pump-failure-v1",
+	"Pump Failure Predictor");
 
     assertNotNull(model);
     assertEquals("pump-failure-v1", model.getModelId());
@@ -43,8 +43,7 @@ class RiskMLInterfaceTest {
 
   @Test
   void testCreateAnomalyDetectionModel() {
-    RiskMLInterface.MLModel model =
-        mlInterface.createAnomalyDetectionModel("anomaly-v1", "Process Anomaly Detector");
+    RiskMLInterface.MLModel model = mlInterface.createAnomalyDetectionModel("anomaly-v1", "Process Anomaly Detector");
 
     assertEquals(RiskMLInterface.MLModel.ModelType.ANOMALY_DETECTION, model.getModelType());
   }
@@ -58,8 +57,7 @@ class RiskMLInterfaceTest {
 
   @Test
   void testModelMetadata() {
-    RiskMLInterface.MLModel model =
-        mlInterface.createFailurePredictionModel("model-1", "Test Model");
+    RiskMLInterface.MLModel model = mlInterface.createFailurePredictionModel("model-1", "Test Model");
     model.setVersion("1.0.0");
     model.setAccuracy(0.92);
     model.setTrainedDate(Instant.now());
@@ -74,8 +72,7 @@ class RiskMLInterfaceTest {
 
   @Test
   void testRegisterPredictor() {
-    RiskMLInterface.MLModel model =
-        mlInterface.createFailurePredictionModel("model-1", "Test Model");
+    RiskMLInterface.MLModel model = mlInterface.createFailurePredictionModel("model-1", "Test Model");
 
     // Create a simple mock predictor
     model.setPredictor(features -> {
@@ -92,8 +89,7 @@ class RiskMLInterfaceTest {
 
   @Test
   void testMakePrediction() {
-    RiskMLInterface.MLModel model =
-        mlInterface.createFailurePredictionModel("model-1", "Test Model");
+    RiskMLInterface.MLModel model = mlInterface.createFailurePredictionModel("model-1", "Test Model");
 
     model.setPredictor(features -> {
       RiskMLInterface.MLPrediction pred = new RiskMLInterface.MLPrediction(model.getModelId());
@@ -118,8 +114,7 @@ class RiskMLInterfaceTest {
 
   @Test
   void testPredictionWithFeatureImportance() {
-    RiskMLInterface.MLModel model =
-        mlInterface.createFailurePredictionModel("model-1", "Test Model");
+    RiskMLInterface.MLModel model = mlInterface.createFailurePredictionModel("model-1", "Test Model");
 
     model.setPredictor(features -> {
       RiskMLInterface.MLPrediction pred = new RiskMLInterface.MLPrediction(model.getModelId());
@@ -157,8 +152,7 @@ class RiskMLInterfaceTest {
       return features;
     });
 
-    RiskMLInterface.MLModel model =
-        mlInterface.createFailurePredictionModel("model-1", "Test Model");
+    RiskMLInterface.MLModel model = mlInterface.createFailurePredictionModel("model-1", "Test Model");
     model.setPredictor(features -> {
       RiskMLInterface.MLPrediction pred = new RiskMLInterface.MLPrediction(model.getModelId());
       pred.setPrediction(0.5);
@@ -170,8 +164,7 @@ class RiskMLInterfaceTest {
     processData.put("TT-001", 55.0);
     processData.put("FT-001", 100.0);
 
-    RiskMLInterface.MLPrediction prediction =
-        mlInterface.predictWithExtraction("model-1", "process", processData);
+    RiskMLInterface.MLPrediction prediction = mlInterface.predictWithExtraction("model-1", "process", processData);
 
     assertNotNull(prediction);
   }
@@ -188,8 +181,7 @@ class RiskMLInterfaceTest {
 
   @Test
   void testPredictWithInactiveModel() {
-    RiskMLInterface.MLModel model =
-        mlInterface.createFailurePredictionModel("model-1", "Test Model");
+    RiskMLInterface.MLModel model = mlInterface.createFailurePredictionModel("model-1", "Test Model");
     model.setPredictor(features -> new RiskMLInterface.MLPrediction(model.getModelId()));
     model.setActive(false);
 
@@ -202,8 +194,7 @@ class RiskMLInterfaceTest {
   void testPredictWithUnknownModel() {
     Map<String, Double> features = new HashMap<>();
 
-    assertThrows(IllegalArgumentException.class,
-        () -> mlInterface.predict("unknown-model", features));
+    assertThrows(IllegalArgumentException.class, () -> mlInterface.predict("unknown-model", features));
   }
 
   @Test
@@ -220,8 +211,7 @@ class RiskMLInterfaceTest {
 
   @Test
   void testModelPerformanceTracking() {
-    RiskMLInterface.MLModel model =
-        mlInterface.createFailurePredictionModel("model-1", "Test Model");
+    RiskMLInterface.MLModel model = mlInterface.createFailurePredictionModel("model-1", "Test Model");
     model.setPredictor(features -> {
       RiskMLInterface.MLPrediction pred = new RiskMLInterface.MLPrediction(model.getModelId());
       pred.setPrediction(0.5);
@@ -246,8 +236,7 @@ class RiskMLInterfaceTest {
 
   @Test
   void testJsonSerialization() {
-    RiskMLInterface.MLModel model =
-        mlInterface.createFailurePredictionModel("model-1", "Test Model");
+    RiskMLInterface.MLModel model = mlInterface.createFailurePredictionModel("model-1", "Test Model");
     model.setVersion("1.0.0");
     model.setAccuracy(0.92);
 
@@ -276,7 +265,7 @@ class RiskMLInterfaceTest {
   @Test
   void testPredictionProbabilities() {
     RiskMLInterface.MLPrediction prediction = new RiskMLInterface.MLPrediction("test-model");
-    double[] probs = {0.1, 0.2, 0.7};
+    double[] probs = { 0.1, 0.2, 0.7 };
     prediction.setProbabilities(probs);
 
     assertEquals(3, prediction.getProbabilities().length);
@@ -285,8 +274,7 @@ class RiskMLInterfaceTest {
 
   @Test
   void testModelToMap() {
-    RiskMLInterface.MLModel model =
-        mlInterface.createFailurePredictionModel("model-1", "Test Model");
+    RiskMLInterface.MLModel model = mlInterface.createFailurePredictionModel("model-1", "Test Model");
     model.setVersion("2.0.0");
     model.setAccuracy(0.95);
 
@@ -301,11 +289,10 @@ class RiskMLInterfaceTest {
 
   @Test
   void testPerformanceMetricsCalculation() {
-    RiskMLInterface.MLModel model =
-        mlInterface.createFailurePredictionModel("model-1", "Test Model");
+    RiskMLInterface.MLModel model = mlInterface.createFailurePredictionModel("model-1", "Test Model");
 
-    final double[] predictions = {0.5, 0.6, 0.4, 0.7};
-    final int[] index = {0};
+    final double[] predictions = { 0.5, 0.6, 0.4, 0.7 };
+    final int[] index = { 0 };
 
     model.setPredictor(features -> {
       RiskMLInterface.MLPrediction pred = new RiskMLInterface.MLPrediction(model.getModelId());
@@ -322,8 +309,7 @@ class RiskMLInterfaceTest {
 
     RiskMLInterface.ModelPerformanceMetrics metrics = mlInterface.getModelPerformance("model-1");
 
-    assertTrue(metrics.getValidatedPredictions() >= 1,
-        "At least one prediction should be validated");
+    assertTrue(metrics.getValidatedPredictions() >= 1, "At least one prediction should be validated");
     assertEquals(0.1, metrics.getMeanAbsoluteError(), 0.01);
   }
 }

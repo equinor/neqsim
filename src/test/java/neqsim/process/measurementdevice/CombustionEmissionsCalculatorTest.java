@@ -48,8 +48,7 @@ public class CombustionEmissionsCalculatorTest {
     double[] chartConditions = new double[] {};
     double[] surgeflow = new double[] { 2789.0, 2550.0, 2500.0, 2200.0 };
     double[] surgehead = new double[] { 80.0, 72.0, 70.0, 65.0 };
-    compressor1.getCompressorChart().getSurgeCurve().setCurve(chartConditions, surgeflow,
-        surgehead);
+    compressor1.getCompressorChart().getSurgeCurve().setCurve(chartConditions, surgeflow, surgehead);
 
     Splitter splitter1 = new Splitter("splitter 1", stream1);
     splitter1.setSplitFactors(new double[] { 0.5, 0.5 });

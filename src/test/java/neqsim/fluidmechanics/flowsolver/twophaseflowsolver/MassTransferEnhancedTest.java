@@ -22,8 +22,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * <li>Solbraa (2002): "Gas-oil mass transfer in pipelines" - NTNU PhD thesis</li>
  * <li>Hewitt &amp; Hall-Taylor (1970): "Annular Two-Phase Flow" - Pergamon Press</li>
  * <li>Ishii &amp; Mishima (1989): "Droplet entrainment correlation in annular two-phase flow"</li>
- * <li>Tzotzi &amp; Andritsos (2013): "Interfacial shear stress in wavy stratified gas-liquid
- * flow"</li>
+ * <li>Tzotzi &amp; Andritsos (2013): "Interfacial shear stress in wavy stratified gas-liquid flow"</li>
  * <li>Lamont &amp; Scott (1970): "Turbulent mass transfer in pipe flow"</li>
  * </ul>
  * </p>
@@ -45,8 +44,7 @@ public class MassTransferEnhancedTest {
   }
 
   /**
-   * Test MassTransferConfig factory methods and defaults. Validates configuration class works
-   * correctly.
+   * Test MassTransferConfig factory methods and defaults. Validates configuration class works correctly.
    */
   @Test
   public void testMassTransferConfigDefaults() {
@@ -120,8 +118,8 @@ public class MassTransferEnhancedTest {
   // ========================================================================
 
   /**
-   * Test stratified flow interfacial area calculation. Literature: Solbraa (2002) reports a/D ~ 3-5
-   * for stratified wavy flow.
+   * Test stratified flow interfacial area calculation. Literature: Solbraa (2002) reports a/D ~ 3-5 for stratified wavy
+   * flow.
    */
   @Test
   public void testStratifiedInterfacialArea() {
@@ -130,8 +128,7 @@ public class MassTransferEnhancedTest {
     double liquidHoldup = 0.3; // 30% liquid
 
     // Calculate interfacial area using our model
-    double calculatedArea =
-        InterfacialAreaCalculator.calculateStratifiedArea(diameter, liquidHoldup);
+    double calculatedArea = InterfacialAreaCalculator.calculateStratifiedArea(diameter, liquidHoldup);
 
     // From Solbraa (2002): a_stratified ~ 1-2/D for smooth stratified
     // For D=0.1m, expect 10-20 m²/m³ for smooth stratified
@@ -141,14 +138,14 @@ public class MassTransferEnhancedTest {
 
     // Validate calculation is within expected literature range
     assertTrue(calculatedArea > minExpected,
-        "Stratified interfacial area (" + calculatedArea + ") should be > " + minExpected);
+	"Stratified interfacial area (" + calculatedArea + ") should be > " + minExpected);
     assertTrue(calculatedArea < maxExpected,
-        "Stratified interfacial area (" + calculatedArea + ") should be < " + maxExpected);
+	"Stratified interfacial area (" + calculatedArea + ") should be < " + maxExpected);
   }
 
   /**
-   * Test annular flow interfacial area with entrainment. Literature: Ishii &amp; Mishima (1989)
-   * entrainment correlation.
+   * Test annular flow interfacial area with entrainment. Literature: Ishii &amp; Mishima (1989) entrainment
+   * correlation.
    */
   @Test
   public void testAnnularInterfacialAreaWithEntrainment() {
@@ -171,8 +168,8 @@ public class MassTransferEnhancedTest {
   }
 
   /**
-   * Test wave enhancement factor for stratified wavy flow. Literature: Tzotzi &amp; Andritsos
-   * (2013) - K-H instability onset.
+   * Test wave enhancement factor for stratified wavy flow. Literature: Tzotzi &amp; Andritsos (2013) - K-H instability
+   * onset.
    */
   @Test
   public void testWaveEnhancementFactor() {
@@ -188,8 +185,7 @@ public class MassTransferEnhancedTest {
     // U_g,crit = sqrt(2 * k * sigma / rho_g * (1 + rho_g/rho_l))
     // where k = 2*pi/wavelength
     double k = 2.0 * Math.PI / wavelength;
-    double criticalVelocity =
-        Math.sqrt(2.0 * k * surfaceTension / gasDensity * (1.0 + gasDensity / liquidDensity));
+    double criticalVelocity = Math.sqrt(2.0 * k * surfaceTension / gasDensity * (1.0 + gasDensity / liquidDensity));
 
     // Wave enhancement increases when U_g > U_crit
     double velocityRatio = gasVelocity / criticalVelocity;
@@ -203,8 +199,7 @@ public class MassTransferEnhancedTest {
     // Wave enhancement varies significantly with conditions
     // High gas velocity relative to critical can give enhancement > 3
     // Practical range from literature: 1.0 - 10.0 depending on waves
-    assertTrue(waveEnhancement < 15.0,
-        "Wave enhancement (" + waveEnhancement + ") should be physically reasonable");
+    assertTrue(waveEnhancement < 15.0, "Wave enhancement (" + waveEnhancement + ") should be physically reasonable");
   }
 
   // ========================================================================
@@ -212,8 +207,8 @@ public class MassTransferEnhancedTest {
   // ========================================================================
 
   /**
-   * Test liquid-side mass transfer coefficient with turbulence. Literature: Lamont &amp; Scott
-   * (1970) - small eddy model. kL = 0.4 * (D * epsilon / nu^3)^0.25 * Sc^(-0.5)
+   * Test liquid-side mass transfer coefficient with turbulence. Literature: Lamont &amp; Scott (1970) - small eddy
+   * model. kL = 0.4 * (D * epsilon / nu^3)^0.25 * Sc^(-0.5)
    */
   @Test
   public void testLiquidMassTransferCoefficientTurbulence() {
@@ -228,16 +223,14 @@ public class MassTransferEnhancedTest {
     // Lamont & Scott (1970) correlation
     // Note: this gives VERY high values due to the high epsilon/nu^3 ratio
     // kL = 0.4 * (D * epsilon / nu^3)^0.25 * Sc^(-0.5)
-    double kL_LamontScott =
-        0.4 * Math.pow(diffusivity * epsilon / Math.pow(kinematicViscosity, 3), 0.25)
-            * Math.pow(Sc, -0.5);
+    double kL_LamontScott = 0.4 * Math.pow(diffusivity * epsilon / Math.pow(kinematicViscosity, 3), 0.25)
+	* Math.pow(Sc, -0.5);
 
     // The correlation can give wide range of values depending on turbulence level
     // High epsilon (0.01 m²/s³) is typical for very turbulent flow
     // Expect kL in range 10^-5 to 10^0 m/s depending on conditions
     assertTrue(kL_LamontScott > 1e-7, "kL (" + kL_LamontScott + ") should be > 1e-7 m/s");
-    assertTrue(kL_LamontScott < 10.0,
-        "kL (" + kL_LamontScott + ") should be < 10 m/s (upper physical limit)");
+    assertTrue(kL_LamontScott < 10.0, "kL (" + kL_LamontScott + ") should be < 10 m/s (upper physical limit)");
 
     // Perry's Handbook (8th ed.) Table 5-18: kL ~ 3e-5 to 3e-4 m/s for typical packed columns
     // Pipe flow with high turbulence can be higher
@@ -245,8 +238,8 @@ public class MassTransferEnhancedTest {
   }
 
   /**
-   * Test gas-side mass transfer coefficient. Literature: Gilliland-Sherwood correlation for
-   * turbulent pipe flow. Sh = 0.023 * Re^0.83 * Sc^0.44
+   * Test gas-side mass transfer coefficient. Literature: Gilliland-Sherwood correlation for turbulent pipe flow. Sh =
+   * 0.023 * Re^0.83 * Sc^0.44
    */
   @Test
   public void testGasMassTransferCoefficient() {
@@ -273,8 +266,7 @@ public class MassTransferEnhancedTest {
   }
 
   /**
-   * Test Marangoni correction factor. Literature: Springer &amp; Pigford (1970) - surface tension
-   * gradient effects.
+   * Test Marangoni correction factor. Literature: Springer &amp; Pigford (1970) - surface tension gradient effects.
    */
   @Test
   public void testMarangoniCorrection() {
@@ -309,8 +301,8 @@ public class MassTransferEnhancedTest {
   // ========================================================================
 
   /**
-   * Test complete dissolution scenario - gas bubble dissolving in liquid. Simulates MEG injection
-   * into natural gas pipeline.
+   * Test complete dissolution scenario - gas bubble dissolving in liquid. Simulates MEG injection into natural gas
+   * pipeline.
    */
   @Test
   public void testCompleteDissolutionScenario() {
@@ -327,15 +319,12 @@ public class MassTransferEnhancedTest {
 
     // Configuration for complete dissolution
     MassTransferConfig config = MassTransferConfig.forDissolution();
-    assertTrue(config.isAllowPhaseDisappearance(),
-        "Dissolution config should allow phase disappearance");
-    assertTrue(config.getMaxPhaseDepletionPerNode() > 0.9,
-        "Dissolution config should allow high depletion per node");
+    assertTrue(config.isAllowPhaseDisappearance(), "Dissolution config should allow phase disappearance");
+    assertTrue(config.getMaxPhaseDepletionPerNode() > 0.9, "Dissolution config should allow high depletion per node");
   }
 
   /**
-   * Test complete evaporation scenario - volatile liquid evaporating. Simulates light condensate
-   * evaporation.
+   * Test complete evaporation scenario - volatile liquid evaporating. Simulates light condensate evaporation.
    */
   @Test
   public void testCompleteEvaporationScenario() {
@@ -348,8 +337,7 @@ public class MassTransferEnhancedTest {
 
     // Configuration for complete evaporation
     MassTransferConfig config = MassTransferConfig.forEvaporation();
-    assertTrue(config.isAllowPhaseDisappearance(),
-        "Evaporation config should allow phase disappearance");
+    assertTrue(config.isAllowPhaseDisappearance(), "Evaporation config should allow phase disappearance");
   }
 
   /**
@@ -366,8 +354,7 @@ public class MassTransferEnhancedTest {
 
     // Configuration for three-phase
     MassTransferConfig config = MassTransferConfig.forThreePhase();
-    assertTrue(config.isEnableThreePhase(),
-        "Three-phase config should enable three-phase calculations");
+    assertTrue(config.isEnableThreePhase(), "Three-phase config should enable three-phase calculations");
 
     // Verify phase indices (gas is implicit 0, organic=1, aqueous=2)
     assertEquals(1, config.getOrganicPhaseIndex());
@@ -379,8 +366,7 @@ public class MassTransferEnhancedTest {
   // ========================================================================
 
   /**
-   * Validate interfacial area against Solbraa (2002) data. Test case: Stratified wavy flow in
-   * 8-inch pipe at 50 bara.
+   * Validate interfacial area against Solbraa (2002) data. Test case: Stratified wavy flow in 8-inch pipe at 50 bara.
    */
   @Test
   public void testInterfacialAreaAgainstSolbraa2002() {
@@ -408,8 +394,7 @@ public class MassTransferEnhancedTest {
   }
 
   /**
-   * Validate mass transfer coefficient against Hewitt (1998) correlations. Test case: Annular flow
-   * in vertical pipe.
+   * Validate mass transfer coefficient against Hewitt (1998) correlations. Test case: Annular flow in vertical pipe.
    */
   @Test
   public void testMassTransferAgainstHewitt1998() {
@@ -432,8 +417,8 @@ public class MassTransferEnhancedTest {
   }
 
   /**
-   * Validate overall mass transfer against Perry's Handbook values. Test case: Gas absorption in
-   * packed column equivalent.
+   * Validate overall mass transfer against Perry's Handbook values. Test case: Gas absorption in packed column
+   * equivalent.
    */
   @Test
   public void testMassTransferAgainstPerrysHandbook() {
@@ -453,8 +438,7 @@ public class MassTransferEnhancedTest {
 
     // Our correlations should give values in this range
     // for similar conditions (turbulent, high gas velocity)
-    logger.info("Perry's expected range: " + expected_KGa_min + " to " + expected_KGa_max
-        + " mol/(m³.s.Pa)");
+    logger.info("Perry's expected range: " + expected_KGa_min + " to " + expected_KGa_max + " mol/(m³.s.Pa)");
 
     assertTrue(expected_KGa_min > 0, "KG*a should be positive");
     assertTrue(expected_KGa_max < 1.0, "KG*a should be bounded");
@@ -468,23 +452,20 @@ public class MassTransferEnhancedTest {
     double diameter = 0.1; // 100mm pipe
 
     // Test stratified flow range
-    double[] stratifiedRange =
-        InterfacialAreaCalculator.getExpectedInterfacialAreaRange(FlowPattern.STRATIFIED, diameter);
+    double[] stratifiedRange = InterfacialAreaCalculator.getExpectedInterfacialAreaRange(FlowPattern.STRATIFIED,
+	diameter);
     assertNotNull(stratifiedRange);
     assertEquals(3, stratifiedRange.length); // [min, typical, max]
     assertTrue(stratifiedRange[0] < stratifiedRange[1], "Min should be less than typical");
     assertTrue(stratifiedRange[0] > 0, "Min should be positive");
 
     // Test annular flow range
-    double[] annularRange =
-        InterfacialAreaCalculator.getExpectedInterfacialAreaRange(FlowPattern.ANNULAR, diameter);
+    double[] annularRange = InterfacialAreaCalculator.getExpectedInterfacialAreaRange(FlowPattern.ANNULAR, diameter);
     assertNotNull(annularRange);
-    assertTrue(annularRange[0] > stratifiedRange[0],
-        "Annular should have higher interfacial area than stratified");
+    assertTrue(annularRange[0] > stratifiedRange[0], "Annular should have higher interfacial area than stratified");
 
     // Test bubbly flow range
-    double[] bubblyRange =
-        InterfacialAreaCalculator.getExpectedInterfacialAreaRange(FlowPattern.BUBBLE, diameter);
+    double[] bubblyRange = InterfacialAreaCalculator.getExpectedInterfacialAreaRange(FlowPattern.BUBBLE, diameter);
     assertNotNull(bubblyRange);
     assertTrue(bubblyRange[1] > 100, "Bubbly flow should have high interfacial area");
   }
@@ -498,25 +479,26 @@ public class MassTransferEnhancedTest {
     // Phase: 0 = gas, 1 = liquid
     double kL = 5e-5; // m/s
     double[] expectedRange = MassTransferCoefficientCalculator
-        .getExpectedMassTransferCoefficientRange(FlowPattern.ANNULAR, 1); // 1 = liquid phase
+	.getExpectedMassTransferCoefficientRange(FlowPattern.ANNULAR, 1); // 1 = liquid phase
 
     assertNotNull(expectedRange);
     assertEquals(3, expectedRange.length); // [min, typical, max]
 
     // Validate against literature using range
-    boolean valid =
-        MassTransferCoefficientCalculator.validateAgainstLiterature(kL, FlowPattern.ANNULAR, 1); // 1
-                                                                                                 // =
-                                                                                                 // liquid
-                                                                                                 // phase
+    boolean valid = MassTransferCoefficientCalculator.validateAgainstLiterature(kL, FlowPattern.ANNULAR, 1); // 1
+													     // =
+													     // liquid
+													     // phase
     // kL of 5e-5 should be reasonable for annular flow liquid phase
     // This tests that the validation method works, not that this specific value passes
     assertNotNull(Boolean.valueOf(valid), "Validation method should return a result");
 
     // Very high kL should likely fail
     double kL_high = 1.0; // m/s - unrealistically high
-    boolean validHigh = MassTransferCoefficientCalculator.validateAgainstLiterature(kL_high,
-        FlowPattern.ANNULAR, 1); // 1 = liquid phase
+    boolean validHigh = MassTransferCoefficientCalculator.validateAgainstLiterature(kL_high, FlowPattern.ANNULAR, 1); // 1
+														      // =
+														      // liquid
+														      // phase
     // May or may not fail depending on the range, but at least test the method runs
     assertNotNull(Boolean.valueOf(validHigh), "High kL validation should return a result");
   }

@@ -7,9 +7,8 @@ import java.util.stream.Collectors;
  * Core framework for validating NeqSim simulations before execution.
  *
  * <p>
- * <b>Purpose:</b> Detect setup errors early (missing mixing rules, invalid parameters, unconverged
- * state) before long-running simulations. Enables AI agents to self-correct and provides developers
- * with clear error messages.
+ * <b>Purpose:</b> Detect setup errors early (missing mixing rules, invalid parameters, unconverged state) before
+ * long-running simulations. Enables AI agents to self-correct and provides developers with clear error messages.
  *
  * <p>
  * <b>Usage:</b>
@@ -143,7 +142,7 @@ public class ValidationFramework {
 
     public List<ValidationError> getCriticalErrors() {
       return errors.stream().filter(e -> e.getSeverity() == ValidationError.Severity.CRITICAL)
-          .collect(Collectors.toList());
+	  .collect(Collectors.toList());
     }
 
     public long getValidationTimeMs() {
@@ -154,30 +153,29 @@ public class ValidationFramework {
       StringBuilder sb = new StringBuilder();
       sb.append("Validation failed for: ").append(validatedObject).append("\n");
       if (errors.isEmpty()) {
-        sb.append("No critical errors, but warnings exist:\n");
+	sb.append("No critical errors, but warnings exist:\n");
       }
       for (ValidationError error : errors) {
-        sb.append("  ").append(error).append("\n");
+	sb.append("  ").append(error).append("\n");
       }
       return sb.toString();
     }
 
     public String getWarningsSummary() {
       if (warnings.isEmpty()) {
-        return "No warnings.";
+	return "No warnings.";
       }
       StringBuilder sb = new StringBuilder();
       for (ValidationWarning warning : warnings) {
-        sb.append("  ").append(warning).append("\n");
+	sb.append("  ").append(warning).append("\n");
       }
       return sb.toString();
     }
 
     @Override
     public String toString() {
-      return String.format(
-          "ValidationResult{object=%s, ready=%s, errors=%d, warnings=%d, time=%dms}",
-          validatedObject, isReady(), errors.size(), warnings.size(), validationTimeMs);
+      return String.format("ValidationResult{object=%s, ready=%s, errors=%d, warnings=%d, time=%dms}", validatedObject,
+	  isReady(), errors.size(), warnings.size(), validationTimeMs);
     }
   }
 
@@ -238,38 +236,28 @@ public class ValidationFramework {
    */
   public static class CommonErrors {
     public static final String MIXING_RULE_NOT_SET = "Mixing rule not set for thermodynamic system";
-    public static final String REMEDIATION_MIXING_RULE =
-        "Call system.setMixingRule(\"classic\") or system.setMixingRule(int rulenumber)";
+    public static final String REMEDIATION_MIXING_RULE = "Call system.setMixingRule(\"classic\") or system.setMixingRule(int rulenumber)";
 
     public static final String NO_COMPONENTS = "No components added to thermodynamic system";
-    public static final String REMEDIATION_NO_COMPONENTS =
-        "Add at least one component: system.addComponent(\"methane\", 0.5)";
+    public static final String REMEDIATION_NO_COMPONENTS = "Add at least one component: system.addComponent(\"methane\", 0.5)";
 
     public static final String DATABASE_NOT_CREATED = "Component database not created";
-    public static final String REMEDIATION_DATABASE =
-        "Call system.createDatabase(true) after adding components";
+    public static final String REMEDIATION_DATABASE = "Call system.createDatabase(true) after adding components";
 
     public static final String FEED_STREAM_NOT_SET = "No feed stream connected to equipment";
-    public static final String REMEDIATION_FEED_STREAM =
-        "Call equipment.addFeedStream(stream) or pass stream to constructor";
+    public static final String REMEDIATION_FEED_STREAM = "Call equipment.addFeedStream(stream) or pass stream to constructor";
 
     public static final String INVALID_PRESSURE = "Pressure value is invalid (negative or zero)";
-    public static final String REMEDIATION_INVALID_PRESSURE =
-        "Set positive pressure: stream.setPressure(value) where value > 0";
+    public static final String REMEDIATION_INVALID_PRESSURE = "Set positive pressure: stream.setPressure(value) where value > 0";
 
-    public static final String INVALID_TEMPERATURE =
-        "Temperature value is invalid (below absolute zero)";
-    public static final String REMEDIATION_INVALID_TEMPERATURE =
-        "Set temperature above absolute zero: stream.setTemperature(value) where value > 0 K";
+    public static final String INVALID_TEMPERATURE = "Temperature value is invalid (below absolute zero)";
+    public static final String REMEDIATION_INVALID_TEMPERATURE = "Set temperature above absolute zero: stream.setTemperature(value) where value > 0 K";
 
-    public static final String COMPOSITION_SUM_NOT_UNITY =
-        "Component mole fractions do not sum to ~1.0";
-    public static final String REMEDIATION_COMPOSITION =
-        "Normalize mole fractions so they sum to 1.0";
+    public static final String COMPOSITION_SUM_NOT_UNITY = "Component mole fractions do not sum to ~1.0";
+    public static final String REMEDIATION_COMPOSITION = "Normalize mole fractions so they sum to 1.0";
 
     public static final String SYSTEM_NOT_INITIALIZED = "Thermodynamic system not initialized";
-    public static final String REMEDIATION_SYSTEM_INIT =
-        "Call system.init(0) after setting composition";
+    public static final String REMEDIATION_SYSTEM_INIT = "Call system.init(0) after setting composition";
 
     public static final String STREAM_NOT_RUN = "Stream has not been executed";
     public static final String REMEDIATION_STREAM_RUN = "Call stream.run() to calculate properties";
@@ -287,25 +275,23 @@ public class ValidationFramework {
 
     public ValidationBuilder checkTrue(boolean condition, String errorMsg, String remediation) {
       if (!condition) {
-        result.addError(new ValidationError(ValidationError.Severity.CRITICAL, "validation",
-            errorMsg, remediation));
+	result.addError(new ValidationError(ValidationError.Severity.CRITICAL, "validation", errorMsg, remediation));
       }
       return this;
     }
 
     public ValidationBuilder checkNotNull(Object obj, String fieldName) {
       if (obj == null) {
-        result.addError(new ValidationError(ValidationError.Severity.CRITICAL, "validation",
-            fieldName + " is null", "Initialize " + fieldName + " before validation"));
+	result.addError(new ValidationError(ValidationError.Severity.CRITICAL, "validation", fieldName + " is null",
+	    "Initialize " + fieldName + " before validation"));
       }
       return this;
     }
 
     public ValidationBuilder checkRange(double value, double min, double max, String fieldName) {
       if (value < min || value > max) {
-        result.addError(new ValidationError(ValidationError.Severity.MAJOR, "range",
-            fieldName + " is out of range [" + min + ", " + max + "]",
-            "Set " + fieldName + " within valid range"));
+	result.addError(new ValidationError(ValidationError.Severity.MAJOR, "range",
+	    fieldName + " is out of range [" + min + ", " + max + "]", "Set " + fieldName + " within valid range"));
       }
       return this;
     }
@@ -346,13 +332,13 @@ public class ValidationFramework {
       ValidationResult composite = new ValidationResult(compositeId);
 
       for (Validatable obj : objects) {
-        ValidationResult result = obj.validate();
-        for (ValidationError error : result.getErrors()) {
-          composite.addError(error);
-        }
-        for (ValidationWarning warning : result.getWarnings()) {
-          composite.addWarning(warning);
-        }
+	ValidationResult result = obj.validate();
+	for (ValidationError error : result.getErrors()) {
+	  composite.addError(error);
+	}
+	for (ValidationWarning warning : result.getWarnings()) {
+	  composite.addWarning(warning);
+	}
       }
 
       return composite;
@@ -364,16 +350,16 @@ public class ValidationFramework {
 
       boolean anySucceeded = false;
       for (Validatable obj : objects) {
-        ValidationResult result = obj.validate();
-        if (result.isReady()) {
-          anySucceeded = true;
-          break;
-        }
+	ValidationResult result = obj.validate();
+	if (result.isReady()) {
+	  anySucceeded = true;
+	  break;
+	}
       }
 
       if (!anySucceeded) {
-        composite.addError(new ValidationError(ValidationError.Severity.CRITICAL, "composite",
-            "No objects in the composite validation passed", "Fix errors in at least one object"));
+	composite.addError(new ValidationError(ValidationError.Severity.CRITICAL, "composite",
+	    "No objects in the composite validation passed", "Fix errors in at least one object"));
       }
 
       return composite;

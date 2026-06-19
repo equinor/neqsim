@@ -9,9 +9,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * ASTM D2500 - Standard Test Method for Cloud Point of Petroleum Products and Liquid Fuels.
  *
  * <p>
- * Calculates the cloud point of a petroleum product, which is the temperature at which a cloud of
- * wax crystals first appears when the oil is cooled under prescribed conditions. The cloud point is
- * important for:
+ * Calculates the cloud point of a petroleum product, which is the temperature at which a cloud of wax crystals first
+ * appears when the oil is cooled under prescribed conditions. The cloud point is important for:
  * </p>
  * <ul>
  * <li>Cold weather operability of diesel fuels</li>
@@ -20,8 +19,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </ul>
  *
  * <p>
- * The cloud point approximates the Wax Appearance Temperature (WAT) and is determined by cooling
- * the fluid and checking for wax formation.
+ * The cloud point approximates the Wax Appearance Temperature (WAT) and is determined by cooling the fluid and checking
+ * for wax formation.
  * </p>
  *
  * <p>
@@ -77,12 +76,12 @@ public class Standard_ASTM_D2500 extends neqsim.standards.Standard {
 
       // Try to calculate WAT (Wax Appearance Temperature)
       try {
-        ops.calcWAT();
-        cloudPointK = fluid.getTemperature();
+	ops.calcWAT();
+	cloudPointK = fluid.getTemperature();
       } catch (Exception ex) {
-        logger.debug("WAT calculation failed, trying cooling approach: {}", ex.getMessage());
-        // Fall back to a cooling scan
-        cloudPointK = coolingApproach(fluid);
+	logger.debug("WAT calculation failed, trying cooling approach: {}", ex.getMessage());
+	// Fall back to a cooling scan
+	cloudPointK = coolingApproach(fluid);
       }
     } catch (Exception ex) {
       logger.error("Cloud point calculation failed: {}", ex.getMessage());
@@ -102,35 +101,35 @@ public class Standard_ASTM_D2500 extends neqsim.standards.Standard {
 
     for (double tempC = startTempC; tempC >= endTempC; tempC -= stepC) {
       try {
-        SystemInterface fluid = originalFluid.clone();
-        fluid.setTemperature(273.15 + tempC);
-        fluid.setPressure(measurementPressure);
-        fluid.setMultiPhaseCheck(true);
-        ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-        ops.TPflash();
+	SystemInterface fluid = originalFluid.clone();
+	fluid.setTemperature(273.15 + tempC);
+	fluid.setPressure(measurementPressure);
+	fluid.setMultiPhaseCheck(true);
+	ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+	ops.TPflash();
 
-        if (fluid.hasPhaseType("wax") || fluid.hasPhaseType("solid")) {
-          // Refine: binary search between this temperature and previous step
-          double upper = tempC + stepC;
-          double lower = tempC;
-          for (int i = 0; i < 10; i++) {
-            double mid = (upper + lower) / 2.0;
-            SystemInterface testFluid = originalFluid.clone();
-            testFluid.setTemperature(273.15 + mid);
-            testFluid.setPressure(measurementPressure);
-            testFluid.setMultiPhaseCheck(true);
-            ThermodynamicOperations testOps = new ThermodynamicOperations(testFluid);
-            testOps.TPflash();
-            if (testFluid.hasPhaseType("wax") || testFluid.hasPhaseType("solid")) {
-              lower = mid;
-            } else {
-              upper = mid;
-            }
-          }
-          return 273.15 + (upper + lower) / 2.0;
-        }
+	if (fluid.hasPhaseType("wax") || fluid.hasPhaseType("solid")) {
+	  // Refine: binary search between this temperature and previous step
+	  double upper = tempC + stepC;
+	  double lower = tempC;
+	  for (int i = 0; i < 10; i++) {
+	    double mid = (upper + lower) / 2.0;
+	    SystemInterface testFluid = originalFluid.clone();
+	    testFluid.setTemperature(273.15 + mid);
+	    testFluid.setPressure(measurementPressure);
+	    testFluid.setMultiPhaseCheck(true);
+	    ThermodynamicOperations testOps = new ThermodynamicOperations(testFluid);
+	    testOps.TPflash();
+	    if (testFluid.hasPhaseType("wax") || testFluid.hasPhaseType("solid")) {
+	      lower = mid;
+	    } else {
+	      upper = mid;
+	    }
+	  }
+	  return 273.15 + (upper + lower) / 2.0;
+	}
       } catch (Exception ex) {
-        logger.debug("Flash failed at {} C: {}", tempC, ex.getMessage());
+	logger.debug("Flash failed at {} C: {}", tempC, ex.getMessage());
       }
     }
     return Double.NaN;

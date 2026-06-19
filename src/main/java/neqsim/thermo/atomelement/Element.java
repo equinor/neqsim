@@ -43,22 +43,22 @@ public class Element implements ThermodynamicConstantsInterface {
     ArrayList<String> stocCoef = new ArrayList<String>();
 
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-        java.sql.ResultSet dataSet =
-            database.getResultSet(("SELECT * FROM element WHERE componentname='" + name + "'"))) {
+	java.sql.ResultSet dataSet = database
+	    .getResultSet(("SELECT * FROM element WHERE componentname='" + name + "'"))) {
       if (!dataSet.next()) {
-        return;
+	return;
       }
 
       do {
-        names.add(dataSet.getString("atomelement").trim());
-        stocCoef.add(dataSet.getString("number"));
+	names.add(dataSet.getString("atomelement").trim());
+	stocCoef.add(dataSet.getString("number"));
       } while (dataSet.next());
 
       nameArray = new String[names.size()];
       coefArray = new double[nameArray.length];
       for (int i = 0; i < nameArray.length; i++) {
-        coefArray[i] = Double.parseDouble(stocCoef.get(i));
-        nameArray[i] = names.get(i);
+	coefArray[i] = Double.parseDouble(stocCoef.get(i));
+	nameArray[i] = names.get(i);
       }
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
@@ -91,12 +91,12 @@ public class Element implements ThermodynamicConstantsInterface {
    */
   public double getNumberOfElements(String elementName) {
     if (nameArray == null) {
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
-          "getNumberOfElements", elementName, "component not in element database.."));
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getNumberOfElements",
+	  elementName, "component not in element database.."));
     }
     for (int i = 0; i < nameArray.length; i++) {
       if (nameArray[i].equals(elementName)) {
-        return coefArray[i];
+	return coefArray[i];
       }
     }
     return 0.0;
@@ -119,10 +119,10 @@ public class Element implements ThermodynamicConstantsInterface {
   public static ArrayList<String> getAllElementComponentNames() {
     ArrayList<String> names = new ArrayList<String>();
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-        java.sql.ResultSet dataSet = database.getResultSet(("SELECT * FROM element"))) {
+	java.sql.ResultSet dataSet = database.getResultSet(("SELECT * FROM element"))) {
       dataSet.next();
       do {
-        names.add(dataSet.getString("componentname").trim());
+	names.add(dataSet.getString("componentname").trim());
       } while (dataSet.next());
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);

@@ -23,8 +23,8 @@ public class PHflashSingleComp extends Flash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param Hspec a double
-   * @param type a int
+   * @param Hspec  a double
+   * @param type   a int
    */
   public PHflashSingleComp(SystemInterface system, double Hspec, int type) {
     this.system = system;
@@ -34,25 +34,25 @@ public class PHflashSingleComp extends Flash {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    neqsim.thermodynamicoperations.ThermodynamicOperations bubOps =
-        new neqsim.thermodynamicoperations.ThermodynamicOperations(system);
+    neqsim.thermodynamicoperations.ThermodynamicOperations bubOps = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+	system);
     double initTemp = system.getTemperature();
 
     if (system.getPressure() < system.getPhase(0).getComponent(0).getPC()) {
       try {
-        bubOps.TPflash();
-        if (system.getPhase(0).getType() == PhaseType.GAS) {
-          try {
-            bubOps.dewPointTemperatureFlash();
-          } catch (Exception e) {
-            system.setTemperature(298.0);
-          }
-        } else {
-          bubOps.bubblePointTemperatureFlash();
-        }
+	bubOps.TPflash();
+	if (system.getPhase(0).getType() == PhaseType.GAS) {
+	  try {
+	    bubOps.dewPointTemperatureFlash();
+	  } catch (Exception e) {
+	    system.setTemperature(298.0);
+	  }
+	} else {
+	  bubOps.bubblePointTemperatureFlash();
+	}
       } catch (Exception ex) {
-        system.setTemperature(initTemp);
-        logger.error(ex.getMessage(), ex);
+	system.setTemperature(initTemp);
+	logger.error(ex.getMessage(), ex);
       }
     } else {
       bubOps.PHflash2(Hspec, 0);
@@ -67,11 +67,11 @@ public class PHflashSingleComp extends Flash {
      * double solidEnthalpy = 0.0;
      *
      * if (system.doSolidPhaseCheck()) { system.init(3, 3); solidEnthalpy =
-     * system.getPhase(PhaseType.SOLID).getEnthalpy() /
-     * system.getPhase(PhaseType.SOLID).getNumberOfMolesInPhase() system.getTotalNumberOfMoles();
+     * system.getPhase(PhaseType.SOLID).getEnthalpy() / system.getPhase(PhaseType.SOLID).getNumberOfMolesInPhase()
+     * system.getTotalNumberOfMoles();
      *
-     * if (Hspec < liqEnthalpy && Hspec > solidEnthalpy) { double solidbeta = (Hspec - liqEnthalpy)
-     * / (gasEnthalpy - liqEnthalpy); } }
+     * if (Hspec < liqEnthalpy && Hspec > solidEnthalpy) { double solidbeta = (Hspec - liqEnthalpy) / (gasEnthalpy -
+     * liqEnthalpy); } }
      */
 
     if (Hspec < liqEnthalpy || Hspec > gasEnthalpy) {

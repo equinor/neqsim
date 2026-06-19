@@ -6,9 +6,8 @@ import neqsim.process.equipment.stream.StreamInterface;
  * Pressure control valve (PCV) for automatic pressure regulation.
  *
  * <p>
- * PressureControlValve automatically modulates its opening to maintain a downstream pressure
- * setpoint. It extends ControlValve and adds pressure control logic with proportional control
- * action.
+ * PressureControlValve automatically modulates its opening to maintain a downstream pressure setpoint. It extends
+ * ControlValve and adds pressure control logic with proportional control action.
  * </p>
  *
  * <p>
@@ -101,7 +100,7 @@ public class PressureControlValve extends ControlValve {
   /**
    * Constructor for PressureControlValve.
    *
-   * @param name name of the pressure control valve
+   * @param name     name of the pressure control valve
    * @param inStream inlet stream
    */
   public PressureControlValve(String name, StreamInterface inStream) {
@@ -225,17 +224,17 @@ public class PressureControlValve extends ControlValve {
 
     // Determine process variable based on control mode
     switch (controlMode) {
-      case DOWNSTREAM:
-        processVariable = outletPressure;
-        break;
-      case UPSTREAM:
-        processVariable = inletPressure;
-        break;
-      case DIFFERENTIAL:
-        processVariable = inletPressure - outletPressure;
-        break;
-      default:
-        processVariable = outletPressure;
+    case DOWNSTREAM:
+      processVariable = outletPressure;
+      break;
+    case UPSTREAM:
+      processVariable = inletPressure;
+      break;
+    case DIFFERENTIAL:
+      processVariable = inletPressure - outletPressure;
+      break;
+    default:
+      processVariable = outletPressure;
     }
 
     // Calculate control error
@@ -273,8 +272,8 @@ public class PressureControlValve extends ControlValve {
   @Override
   public String toString() {
     return String.format(
-        "%s [Pressure Control Valve] - Mode: %s, SP: %.2f bara, PV: %.2f bara, Error: %.2f bara, Opening: %.1f%%",
-        getName(), autoMode ? "AUTO" : "MANUAL", pressureSetpoint, processVariable, controlError,
-        getPercentValveOpening());
+	"%s [Pressure Control Valve] - Mode: %s, SP: %.2f bara, PV: %.2f bara, Error: %.2f bara, Opening: %.1f%%",
+	getName(), autoMode ? "AUTO" : "MANUAL", pressureSetpoint, processVariable, controlError,
+	getPercentValveOpening());
   }
 }

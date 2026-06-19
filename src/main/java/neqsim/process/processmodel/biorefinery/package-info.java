@@ -2,9 +2,9 @@
  * Pre-built biorefinery process modules for NeqSim.
  *
  * <p>
- * This package contains composable process modules that assemble multiple NeqSim equipment units
- * into complete biorefinery flowsheets. Each module encapsulates the configuration, process
- * topology, and result extraction for a specific biorefinery pathway.
+ * This package contains composable process modules that assemble multiple NeqSim equipment units into complete
+ * biorefinery flowsheets. Each module encapsulates the configuration, process topology, and result extraction for a
+ * specific biorefinery pathway.
  * </p>
  *
  * <h2>Available Modules</h2>

@@ -38,8 +38,8 @@ public interface LogicAction {
    * Checks if the action has completed.
    *
    * <p>
-   * Some actions are instantaneous (return true immediately), while others may take time to
-   * complete (e.g., valve stroke).
+   * Some actions are instantaneous (return true immediately), while others may take time to complete (e.g., valve
+   * stroke).
    * </p>
    *
    * @return true if action is complete

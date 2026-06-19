@@ -16,9 +16,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * Tests for the well integrity standards integration.
  *
  * <p>
- * Covers: BarrierElement, BarrierEnvelope, WellBarrierSchematic, WellMechanicalDesignDataSource,
- * MAASP calculation in AnnularLeakagePath, and the wired WellMechanicalDesign with standards
- * loading.
+ * Covers: BarrierElement, BarrierEnvelope, WellBarrierSchematic, WellMechanicalDesignDataSource, MAASP calculation in
+ * AnnularLeakagePath, and the wired WellMechanicalDesign with standards loading.
  * </p>
  */
 class WellIntegrityStandardsTest {
@@ -37,8 +36,7 @@ class WellIntegrityStandardsTest {
 
   @Test
   void testBarrierElementWithDepth() {
-    BarrierElement el =
-        new BarrierElement(BarrierElement.ElementType.PACKER, "Prod Packer", 2500.0);
+    BarrierElement el = new BarrierElement(BarrierElement.ElementType.PACKER, "Prod Packer", 2500.0);
     assertEquals(2500.0, el.getDepthMD(), 0.01);
   }
 

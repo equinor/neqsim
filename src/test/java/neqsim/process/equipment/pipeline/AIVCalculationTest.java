@@ -62,8 +62,7 @@ public class AIVCalculationTest {
     assertTrue(fivAnalysis.containsKey("AIV_LOF"), "FIV analysis should include AIV LOF");
 
     // Verify constraint is present
-    assertTrue(pipe.getCapacityConstraints().containsKey("AIV"),
-        "AIV should be in capacity constraints");
+    assertTrue(pipe.getCapacityConstraints().containsKey("AIV"), "AIV should be in capacity constraints");
   }
 
   @Test
@@ -99,8 +98,7 @@ public class AIVCalculationTest {
     assertTrue(aivPower > 0.0, "AIV power should be positive with pressure drop");
 
     // Verify constraint is present
-    assertTrue(valve.getCapacityConstraints().containsKey("AIV"),
-        "AIV should be in valve capacity constraints");
+    assertTrue(valve.getCapacityConstraints().containsKey("AIV"), "AIV should be in valve capacity constraints");
 
     // Check AIV LOF with typical downstream pipe geometry
     double aivLOF = valve.calculateAIVLikelihoodOfFailure(0.2, 0.015); // 200mm OD, 15mm wall

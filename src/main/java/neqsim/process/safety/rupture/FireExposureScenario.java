@@ -10,8 +10,8 @@ import neqsim.process.util.fire.FireHeatLoadCalculator;
  * Fire exposure definition for trapped-liquid rupture screening.
  *
  * <p>
- * The scenario converts an industry fire basis, such as an API 521 pool-fire heat input or a fixed
- * incident heat flux, into a heat flux applied to the exposed pipe or flange surface.
+ * The scenario converts an industry fire basis, such as an API 521 pool-fire heat input or a fixed incident heat flux,
+ * into a heat flux applied to the exposed pipe or flange surface.
  * </p>
  *
  * @author ESOL
@@ -44,22 +44,21 @@ public class FireExposureScenario implements Serializable {
   /**
    * Creates a fire exposure scenario.
    *
-   * @param name scenario name
-   * @param fireType fire calculation method
-   * @param exposedAreaM2 exposed external area in m2; must be positive
-   * @param heatFluxWPerM2 fixed heat flux in W/m2 for fixed-flux cases
-   * @param environmentalFactor API 521 environmental factor for pool-fire cases
-   * @param emissivity effective flame emissivity for radiative cases
-   * @param viewFactor view factor for radiative cases
-   * @param flameTemperatureK flame temperature in K for radiative cases
-   * @param ambientTemperatureK ambient temperature in K; must be positive
-   * @param passiveProtectionHeatFluxFactor heat flux multiplier after PFP or insulation, from 0 to
-   *        1
+   * @param name                            scenario name
+   * @param fireType                        fire calculation method
+   * @param exposedAreaM2                   exposed external area in m2; must be positive
+   * @param heatFluxWPerM2                  fixed heat flux in W/m2 for fixed-flux cases
+   * @param environmentalFactor             API 521 environmental factor for pool-fire cases
+   * @param emissivity                      effective flame emissivity for radiative cases
+   * @param viewFactor                      view factor for radiative cases
+   * @param flameTemperatureK               flame temperature in K for radiative cases
+   * @param ambientTemperatureK             ambient temperature in K; must be positive
+   * @param passiveProtectionHeatFluxFactor heat flux multiplier after PFP or insulation, from 0 to 1
    * @throws IllegalArgumentException if the scenario input is invalid
    */
-  public FireExposureScenario(String name, FireType fireType, double exposedAreaM2,
-      double heatFluxWPerM2, double environmentalFactor, double emissivity, double viewFactor,
-      double flameTemperatureK, double ambientTemperatureK, double passiveProtectionHeatFluxFactor) {
+  public FireExposureScenario(String name, FireType fireType, double exposedAreaM2, double heatFluxWPerM2,
+      double environmentalFactor, double emissivity, double viewFactor, double flameTemperatureK,
+      double ambientTemperatureK, double passiveProtectionHeatFluxFactor) {
     if (fireType == null) {
       throw new IllegalArgumentException("fireType must not be null");
     }
@@ -83,48 +82,44 @@ public class FireExposureScenario implements Serializable {
   /**
    * Creates an API 521 pool-fire exposure.
    *
-   * @param exposedAreaM2 exposed external area in m2; must be positive
+   * @param exposedAreaM2       exposed external area in m2; must be positive
    * @param environmentalFactor API 521 environmental factor; must be positive
    * @return fire exposure scenario
    */
-  public static FireExposureScenario api521PoolFire(double exposedAreaM2,
-      double environmentalFactor) {
+  public static FireExposureScenario api521PoolFire(double exposedAreaM2, double environmentalFactor) {
     validatePositive(environmentalFactor, "environmentalFactor");
-    double totalHeatW = FireHeatLoadCalculator.api521PoolFireHeatLoad(exposedAreaM2,
-        environmentalFactor);
-    return new FireExposureScenario("API 521 pool fire", FireType.API_521_POOL_FIRE,
-        exposedAreaM2, totalHeatW / exposedAreaM2, environmentalFactor, 0.0, 0.0, 1200.0, 298.15,
-        1.0);
+    double totalHeatW = FireHeatLoadCalculator.api521PoolFireHeatLoad(exposedAreaM2, environmentalFactor);
+    return new FireExposureScenario("API 521 pool fire", FireType.API_521_POOL_FIRE, exposedAreaM2,
+	totalHeatW / exposedAreaM2, environmentalFactor, 0.0, 0.0, 1200.0, 298.15, 1.0);
   }
 
   /**
    * Creates a fixed heat-flux exposure.
    *
-   * @param exposedAreaM2 exposed external area in m2; must be positive
+   * @param exposedAreaM2  exposed external area in m2; must be positive
    * @param heatFluxWPerM2 incident heat flux in W/m2; must be positive
    * @return fire exposure scenario
    */
-  public static FireExposureScenario fixedHeatFlux(double exposedAreaM2,
-      double heatFluxWPerM2) {
+  public static FireExposureScenario fixedHeatFlux(double exposedAreaM2, double heatFluxWPerM2) {
     validatePositive(heatFluxWPerM2, "heatFluxWPerM2");
-    return new FireExposureScenario("Fixed heat flux", FireType.FIXED_HEAT_FLUX, exposedAreaM2,
-        heatFluxWPerM2, 1.0, 0.0, 0.0, 1200.0, 298.15, 1.0);
+    return new FireExposureScenario("Fixed heat flux", FireType.FIXED_HEAT_FLUX, exposedAreaM2, heatFluxWPerM2, 1.0,
+	0.0, 0.0, 1200.0, 298.15, 1.0);
   }
 
   /**
    * Creates a radiative fire exposure using Stefan-Boltzmann heat flux.
    *
-   * @param exposedAreaM2 exposed external area in m2; must be positive
-   * @param emissivity effective flame emissivity from 0 to 1
-   * @param viewFactor geometric view factor from 0 to 1
-   * @param flameTemperatureK flame temperature in K; must be positive
+   * @param exposedAreaM2       exposed external area in m2; must be positive
+   * @param emissivity          effective flame emissivity from 0 to 1
+   * @param viewFactor          geometric view factor from 0 to 1
+   * @param flameTemperatureK   flame temperature in K; must be positive
    * @param ambientTemperatureK ambient temperature in K; must be positive
    * @return fire exposure scenario
    */
-  public static FireExposureScenario radiativeFire(double exposedAreaM2, double emissivity,
-      double viewFactor, double flameTemperatureK, double ambientTemperatureK) {
-    return new FireExposureScenario("Radiative fire", FireType.RADIATIVE_FIRE, exposedAreaM2,
-        0.0, 1.0, emissivity, viewFactor, flameTemperatureK, ambientTemperatureK, 1.0);
+  public static FireExposureScenario radiativeFire(double exposedAreaM2, double emissivity, double viewFactor,
+      double flameTemperatureK, double ambientTemperatureK) {
+    return new FireExposureScenario("Radiative fire", FireType.RADIATIVE_FIRE, exposedAreaM2, 0.0, 1.0, emissivity,
+	viewFactor, flameTemperatureK, ambientTemperatureK, 1.0);
   }
 
   /**
@@ -134,9 +129,8 @@ public class FireExposureScenario implements Serializable {
    * @return protected fire exposure scenario
    */
   public FireExposureScenario withPassiveProtectionFactor(double heatFluxFactor) {
-    return new FireExposureScenario(name, fireType, exposedAreaM2, heatFluxWPerM2,
-        environmentalFactor, emissivity, viewFactor, flameTemperatureK, ambientTemperatureK,
-        heatFluxFactor);
+    return new FireExposureScenario(name, fireType, exposedAreaM2, heatFluxWPerM2, environmentalFactor, emissivity,
+	viewFactor, flameTemperatureK, ambientTemperatureK, heatFluxFactor);
   }
 
   /**
@@ -194,8 +188,8 @@ public class FireExposureScenario implements Serializable {
     validatePositive(outerSurfaceTemperatureK, "outerSurfaceTemperatureK");
     double flux;
     if (fireType == FireType.RADIATIVE_FIRE) {
-      flux = FireHeatLoadCalculator.generalizedStefanBoltzmannHeatFlux(emissivity, viewFactor,
-          flameTemperatureK, outerSurfaceTemperatureK);
+      flux = FireHeatLoadCalculator.generalizedStefanBoltzmannHeatFlux(emissivity, viewFactor, flameTemperatureK,
+	  outerSurfaceTemperatureK);
     } else {
       flux = heatFluxWPerM2;
     }
@@ -245,7 +239,7 @@ public class FireExposureScenario implements Serializable {
    * Validates that a numeric value is positive and finite.
    *
    * @param value value to validate
-   * @param name parameter name used in exception messages
+   * @param name  parameter name used in exception messages
    * @throws IllegalArgumentException if the value is invalid
    */
   private static void validatePositive(double value, String name) {

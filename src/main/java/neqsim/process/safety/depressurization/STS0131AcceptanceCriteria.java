@@ -7,10 +7,9 @@ import java.io.Serializable;
  *
  * <p>
  * The criteria are evaluated against the time series produced by
- * {@link DepressurizationSimulator.DepressurizationResult}. The class is intentionally simple:
- * project-specific rupture calculations, fire loads, and escape analyses provide the acceptance
- * thresholds; this class performs a traceable comparison of pressure, remaining mass, and peak
- * discharge rate at the limiting time.
+ * {@link DepressurizationSimulator.DepressurizationResult}. The class is intentionally simple: project-specific rupture
+ * calculations, fire loads, and escape analyses provide the acceptance thresholds; this class performs a traceable
+ * comparison of pressure, remaining mass, and peak discharge rate at the limiting time.
  * </p>
  *
  * @author NeqSim Development Team
@@ -58,8 +57,7 @@ public class STS0131AcceptanceCriteria implements Serializable {
    * @param maximumPressureAtRuptureBara maximum pressure in bara
    * @return this criteria object for chaining
    */
-  public STS0131AcceptanceCriteria setMaximumPressureAtRuptureBara(
-      double maximumPressureAtRuptureBara) {
+  public STS0131AcceptanceCriteria setMaximumPressureAtRuptureBara(double maximumPressureAtRuptureBara) {
     this.maximumPressureAtRuptureBara = maximumPressureAtRuptureBara;
     return this;
   }
@@ -81,8 +79,7 @@ public class STS0131AcceptanceCriteria implements Serializable {
    * @param maximumEscalatedFireRateKgPerS maximum discharge or escalated fire rate in kg/s
    * @return this criteria object for chaining
    */
-  public STS0131AcceptanceCriteria setMaximumEscalatedFireRateKgPerS(
-      double maximumEscalatedFireRateKgPerS) {
+  public STS0131AcceptanceCriteria setMaximumEscalatedFireRateKgPerS(double maximumEscalatedFireRateKgPerS) {
     this.maximumEscalatedFireRateKgPerS = maximumEscalatedFireRateKgPerS;
     return this;
   }
@@ -139,8 +136,7 @@ public class STS0131AcceptanceCriteria implements Serializable {
    * @return STS0131 acceptance result
    * @throws IllegalArgumentException if {@code result} is null or has no time samples
    */
-  public STS0131AcceptanceResult evaluate(
-      DepressurizationSimulator.DepressurizationResult result) {
+  public STS0131AcceptanceResult evaluate(DepressurizationSimulator.DepressurizationResult result) {
     if (result == null) {
       throw new IllegalArgumentException("result must not be null");
     }
@@ -159,13 +155,12 @@ public class STS0131AcceptanceCriteria implements Serializable {
 
     boolean pressureCriterionMet = !pressureConfigured || pressureBara <= maximumPressureAtRuptureBara;
     boolean massCriterionMet = !massConfigured || remainingMassKg <= maximumRemainingMassKg;
-    boolean fireRateCriterionMet = !fireRateConfigured
-        || peakDischargeRateKgPerS <= maximumEscalatedFireRateKgPerS;
+    boolean fireRateCriterionMet = !fireRateConfigured || peakDischargeRateKgPerS <= maximumEscalatedFireRateKgPerS;
     boolean acceptable = pressureCriterionMet && massCriterionMet && fireRateCriterionMet;
 
-    return new STS0131AcceptanceResult(limitingTime, pressureBara, remainingMassKg,
-        peakDischargeRateKgPerS, pressureConfigured, pressureCriterionMet, massConfigured,
-        massCriterionMet, fireRateConfigured, fireRateCriterionMet, acceptable);
+    return new STS0131AcceptanceResult(limitingTime, pressureBara, remainingMassKg, peakDischargeRateKgPerS,
+	pressureConfigured, pressureCriterionMet, massConfigured, massCriterionMet, fireRateConfigured,
+	fireRateCriterionMet, acceptable);
   }
 
   /**
@@ -188,13 +183,12 @@ public class STS0131AcceptanceCriteria implements Serializable {
   /**
    * Interpolates a time-series value.
    *
-   * @param time time vector in s
-   * @param values value vector
+   * @param time       time vector in s
+   * @param values     value vector
    * @param targetTime target time in s
    * @return interpolated value, or the nearest endpoint value outside the vector range
    */
-  private double interpolate(java.util.List<Double> time, java.util.List<Double> values,
-      double targetTime) {
+  private double interpolate(java.util.List<Double> time, java.util.List<Double> values, double targetTime) {
     if (time.isEmpty()) {
       return Double.NaN;
     }
@@ -204,12 +198,11 @@ public class STS0131AcceptanceCriteria implements Serializable {
     for (int i = 1; i < time.size(); i++) {
       double upperTime = time.get(i);
       if (targetTime <= upperTime) {
-        double lowerTime = time.get(i - 1);
-        double lowerValue = values.get(i - 1);
-        double upperValue = values.get(i);
-        double fraction = upperTime > lowerTime ? (targetTime - lowerTime) / (upperTime - lowerTime)
-            : 0.0;
-        return lowerValue + fraction * (upperValue - lowerValue);
+	double lowerTime = time.get(i - 1);
+	double lowerValue = values.get(i - 1);
+	double upperValue = values.get(i);
+	double fraction = upperTime > lowerTime ? (targetTime - lowerTime) / (upperTime - lowerTime) : 0.0;
+	return lowerValue + fraction * (upperValue - lowerValue);
       }
     }
     return values.get(values.size() - 1);
@@ -218,16 +211,15 @@ public class STS0131AcceptanceCriteria implements Serializable {
   /**
    * Finds the maximum discharge rate up to the limiting time.
    *
-   * @param result depressurization result
+   * @param result       depressurization result
    * @param limitingTime limiting time in s
    * @return maximum discharge rate in kg/s
    */
-  private double maxUpToTime(DepressurizationSimulator.DepressurizationResult result,
-      double limitingTime) {
+  private double maxUpToTime(DepressurizationSimulator.DepressurizationResult result, double limitingTime) {
     double maxRate = 0.0;
     for (int i = 0; i < result.time.size(); i++) {
       if (result.time.get(i) <= limitingTime) {
-        maxRate = Math.max(maxRate, result.massFlowKgPerS.get(i));
+	maxRate = Math.max(maxRate, result.massFlowKgPerS.get(i));
       }
     }
     return maxRate;

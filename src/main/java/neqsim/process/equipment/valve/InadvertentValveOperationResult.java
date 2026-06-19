@@ -9,9 +9,9 @@ import com.google.gson.GsonBuilder;
  * Result of an {@link InadvertentValveOperationAnalyzer} analysis.
  *
  * <p>
- * Captures the diagnosed inadvertent valve operation (IVO) scenario per API 521 §4.4.13 and NORSOK
- * P-002: the assumed valve role, the failure mode considered, the consequence severity and the
- * initiating-event frequency used to drive downstream LOPA / SIL studies.
+ * Captures the diagnosed inadvertent valve operation (IVO) scenario per API 521 §4.4.13 and NORSOK P-002: the assumed
+ * valve role, the failure mode considered, the consequence severity and the initiating-event frequency used to drive
+ * downstream LOPA / SIL studies.
  * </p>
  *
  * @author esol
@@ -22,8 +22,8 @@ public class InadvertentValveOperationResult implements Serializable {
   private static final long serialVersionUID = 1000;
 
   /**
-   * Functional role of the valve in the process. Used by the analyser to decide which IVO modes are
-   * credible and which consequences to evaluate.
+   * Functional role of the valve in the process. Used by the analyser to decide which IVO modes are credible and which
+   * consequences to evaluate.
    */
   public enum ValveRole {
     /** Manual or motor-operated block / isolation valve. */
@@ -89,7 +89,8 @@ public class InadvertentValveOperationResult implements Serializable {
   private final List<String> recommendations = new ArrayList<>();
 
   /** Default constructor. */
-  public InadvertentValveOperationResult() {}
+  public InadvertentValveOperationResult() {
+  }
 
   /**
    * @return valve tag / name
@@ -311,7 +312,6 @@ public class InadvertentValveOperationResult implements Serializable {
    * @return JSON representation of the result
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(this);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(this);
   }
 }

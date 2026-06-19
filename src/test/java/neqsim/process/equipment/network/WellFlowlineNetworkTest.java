@@ -87,8 +87,7 @@ class WellFlowlineNetworkTest {
     WellFlowlineNetwork network = new WellFlowlineNetwork("template network");
 
     WellFlowlineNetwork.ManifoldNode twoWellManifold = network.createManifold("two-well manifold");
-    WellFlowlineNetwork.ManifoldNode threeWellManifold =
-        network.createManifold("three-well manifold");
+    WellFlowlineNetwork.ManifoldNode threeWellManifold = network.createManifold("three-well manifold");
     WellFlowlineNetwork.ManifoldNode centralManifold = network.createManifold("central manifold");
 
     // Create wells and add branches to manifolds FIRST before connecting manifolds
@@ -167,8 +166,7 @@ class WellFlowlineNetworkTest {
     commonPipeline.setElevation(0.0);
     commonPipeline.setDiameter(0.55);
     commonPipeline.setPipeWallRoughness(4.5e-5);
-    WellFlowlineNetwork.ManifoldNode endManifold =
-        network.addManifold("end manifold", commonPipeline);
+    WellFlowlineNetwork.ManifoldNode endManifold = network.addManifold("end manifold", commonPipeline);
 
     network.setTargetEndpointPressure(55.0, "bara");
 
@@ -179,10 +177,8 @@ class WellFlowlineNetworkTest {
 
     double arrivalFlow = network.getArrivalStream().getFlowRate("MSm3/day");
     double expectedFlow = pipe1.getOutletStream().getFlowRate("MSm3/day")
-        + pipe2.getOutletStream().getFlowRate("MSm3/day")
-        + pipe3.getOutletStream().getFlowRate("MSm3/day")
-        + pipe4.getOutletStream().getFlowRate("MSm3/day")
-        + pipe5.getOutletStream().getFlowRate("MSm3/day");
+	+ pipe2.getOutletStream().getFlowRate("MSm3/day") + pipe3.getOutletStream().getFlowRate("MSm3/day")
+	+ pipe4.getOutletStream().getFlowRate("MSm3/day") + pipe5.getOutletStream().getFlowRate("MSm3/day");
     assertEquals(expectedFlow, arrivalFlow, 1e-4);
 
     double twoManifoldPressure = twoToCentral.getOutletStream().getPressure("bara");
@@ -222,8 +218,7 @@ class WellFlowlineNetworkTest {
     choke.setKv(15.0);
     choke.setPercentValveOpening(100.0);
 
-    PipeBeggsAndBrills pipeline =
-        new PipeBeggsAndBrills("branch pipeline", choke.getOutletStream());
+    PipeBeggsAndBrills pipeline = new PipeBeggsAndBrills("branch pipeline", choke.getOutletStream());
     pipeline.setLength(300.0);
     pipeline.setElevation(0.0);
     pipeline.setDiameter(0.32);
@@ -280,8 +275,7 @@ class WellFlowlineNetworkTest {
     pipe2.setPipeWallRoughness(4.5e-5);
     network.addBranch("oil branch 2", well2, pipe2, choke2, network.getManifolds().get(0));
 
-    PipeBeggsAndBrills exportLine =
-        new PipeBeggsAndBrills("export line", network.getArrivalMixer().getOutletStream());
+    PipeBeggsAndBrills exportLine = new PipeBeggsAndBrills("export line", network.getArrivalMixer().getOutletStream());
     exportLine.setLength(1000.0);
     exportLine.setElevation(0.0);
     exportLine.setDiameter(0.5);
@@ -291,26 +285,25 @@ class WellFlowlineNetworkTest {
     network.setTargetEndpointPressure(60.0, "bara");
     process.add(network);
 
-    double[] openings = new double[] {40.0, 70.0, 100.0};
+    double[] openings = new double[] { 40.0, 70.0, 100.0 };
     double bestOilRate = -1.0;
     double bestChoke1 = 0.0;
     double bestChoke2 = 0.0;
 
     for (double opening1 : openings) {
       for (double opening2 : openings) {
-        choke1.setPercentValveOpening(opening1);
-        choke2.setPercentValveOpening(opening2);
-        process.run();
+	choke1.setPercentValveOpening(opening1);
+	choke2.setPercentValveOpening(opening2);
+	process.run();
 
-        double oilRate =
-            network.getArrivalStream().getFluid().getComponent("nC12").getFlowRate("kg/hr");
+	double oilRate = network.getArrivalStream().getFluid().getComponent("nC12").getFlowRate("kg/hr");
 
-        if (oilRate > bestOilRate || (Math.abs(oilRate - bestOilRate) < 1e-6
-            && (opening1 > bestChoke1 || (opening1 == bestChoke1 && opening2 > bestChoke2)))) {
-          bestOilRate = oilRate;
-          bestChoke1 = opening1;
-          bestChoke2 = opening2;
-        }
+	if (oilRate > bestOilRate || (Math.abs(oilRate - bestOilRate) < 1e-6
+	    && (opening1 > bestChoke1 || (opening1 == bestChoke1 && opening2 > bestChoke2)))) {
+	  bestOilRate = oilRate;
+	  bestChoke1 = opening1;
+	  bestChoke2 = opening2;
+	}
       }
     }
 
@@ -319,14 +312,12 @@ class WellFlowlineNetworkTest {
 
     process.run();
 
-    double throttledOilRate =
-        network.getArrivalStream().getFluid().getComponent("nC12").getFlowRate("kg/hr");
+    double throttledOilRate = network.getArrivalStream().getFluid().getComponent("nC12").getFlowRate("kg/hr");
 
     choke1.setPercentValveOpening(30.0);
     choke2.setPercentValveOpening(30.0);
     process.run();
-    double tightOilRate =
-        network.getArrivalStream().getFluid().getComponent("nC12").getFlowRate("kg/hr");
+    double tightOilRate = network.getArrivalStream().getFluid().getComponent("nC12").getFlowRate("kg/hr");
 
     assertTrue(throttledOilRate >= tightOilRate - 1e-3);
     assertEquals(100.0, bestChoke1, 1e-6);

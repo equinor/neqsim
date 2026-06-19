@@ -35,10 +35,8 @@ public class DiffusivityDiagnosticTest {
       logger.info("  CriticalTemp (K):   " + sys.getComponent(i).getTC());
       logger.info("  CriticalPres (bara):" + sys.getComponent(i).getPC());
       logger.info("  NormLiqDens (g/cm3):" + sys.getComponent(i).getNormalLiquidDensity());
-      logger
-          .info("  LJ diameter (A):    " + sys.getComponent(i).getLennardJonesMolecularDiameter());
-      System.out
-          .println("  LJ epsilon/k (K):   " + sys.getComponent(i).getLennardJonesEnergyParameter());
+      logger.info("  LJ diameter (A):    " + sys.getComponent(i).getLennardJonesMolecularDiameter());
+      System.out.println("  LJ epsilon/k (K):   " + sys.getComponent(i).getLennardJonesEnergyParameter());
       logger.info("  NormBoilPt (K):     " + sys.getComponent(i).getNormalBoilingPoint());
       logger.info("  AcentricFactor:     " + sys.getComponent(i).getAcentricFactor());
     }
@@ -58,40 +56,36 @@ public class DiffusivityDiagnosticTest {
     if (sys.hasPhaseType("gas")) {
       logger.info("\n=== Gas Diffusion Coefficients (default Chapman-Enskog) ===");
       for (int i = 0; i < sys.getPhase("gas").getNumberOfComponents(); i++) {
-        for (int j = i + 1; j < sys.getPhase("gas").getNumberOfComponents(); j++) {
-          double D = sys.getPhase("gas").getPhysicalProperties().diffusivityCalc
-              .calcBinaryDiffusionCoefficient(i, j, 0);
-          logger.info("  D(" + sys.getComponent(i).getComponentName() + "-"
-              + sys.getComponent(j).getComponentName() + ") = " + D + " m2/s = " + (D * 1e4)
-              + " cm2/s");
-        }
+	for (int j = i + 1; j < sys.getPhase("gas").getNumberOfComponents(); j++) {
+	  double D = sys.getPhase("gas").getPhysicalProperties().diffusivityCalc.calcBinaryDiffusionCoefficient(i, j,
+	      0);
+	  logger.info("  D(" + sys.getComponent(i).getComponentName() + "-" + sys.getComponent(j).getComponentName()
+	      + ") = " + D + " m2/s = " + (D * 1e4) + " cm2/s");
+	}
       }
 
       // Switch to Fuller
-      sys.getPhase("gas").getPhysicalProperties()
-          .setDiffusionCoefficientModel("Fuller-Schettler-Giddings");
+      sys.getPhase("gas").getPhysicalProperties().setDiffusionCoefficientModel("Fuller-Schettler-Giddings");
       logger.info("\n=== Gas Diffusion Coefficients (Fuller-Schettler-Giddings) ===");
       for (int i = 0; i < sys.getPhase("gas").getNumberOfComponents(); i++) {
-        for (int j = i + 1; j < sys.getPhase("gas").getNumberOfComponents(); j++) {
-          double D = sys.getPhase("gas").getPhysicalProperties().diffusivityCalc
-              .calcBinaryDiffusionCoefficient(i, j, 0);
-          logger.info("  D(" + sys.getComponent(i).getComponentName() + "-"
-              + sys.getComponent(j).getComponentName() + ") = " + D + " m2/s = " + (D * 1e4)
-              + " cm2/s");
-        }
+	for (int j = i + 1; j < sys.getPhase("gas").getNumberOfComponents(); j++) {
+	  double D = sys.getPhase("gas").getPhysicalProperties().diffusivityCalc.calcBinaryDiffusionCoefficient(i, j,
+	      0);
+	  logger.info("  D(" + sys.getComponent(i).getComponentName() + "-" + sys.getComponent(j).getComponentName()
+	      + ") = " + D + " m2/s = " + (D * 1e4) + " cm2/s");
+	}
       }
 
       // Wilke-Lee
       sys.getPhase("gas").getPhysicalProperties().setDiffusionCoefficientModel("Wilke Lee");
       logger.info("\n=== Gas Diffusion Coefficients (Wilke-Lee) ===");
       for (int i = 0; i < sys.getPhase("gas").getNumberOfComponents(); i++) {
-        for (int j = i + 1; j < sys.getPhase("gas").getNumberOfComponents(); j++) {
-          double D = sys.getPhase("gas").getPhysicalProperties().diffusivityCalc
-              .calcBinaryDiffusionCoefficient(i, j, 0);
-          logger.info("  D(" + sys.getComponent(i).getComponentName() + "-"
-              + sys.getComponent(j).getComponentName() + ") = " + D + " m2/s = " + (D * 1e4)
-              + " cm2/s");
-        }
+	for (int j = i + 1; j < sys.getPhase("gas").getNumberOfComponents(); j++) {
+	  double D = sys.getPhase("gas").getPhysicalProperties().diffusivityCalc.calcBinaryDiffusionCoefficient(i, j,
+	      0);
+	  logger.info("  D(" + sys.getComponent(i).getComponentName() + "-" + sys.getComponent(j).getComponentName()
+	      + ") = " + D + " m2/s = " + (D * 1e4) + " cm2/s");
+	}
       }
     }
   }

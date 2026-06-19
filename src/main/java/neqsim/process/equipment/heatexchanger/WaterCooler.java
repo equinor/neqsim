@@ -34,7 +34,7 @@ public class WaterCooler extends Cooler {
    * Constructor for WaterCooler.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name     a {@link java.lang.String} object
    * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public WaterCooler(String name, StreamInterface inStream) {
@@ -46,29 +46,27 @@ public class WaterCooler extends Cooler {
    * Sets the water inlet temperature.
    *
    * @param temperature the water inlet temperature
-   * @param unit the unit of temperature
+   * @param unit        the unit of temperature
    */
   public void setWaterInletTemperature(double temperature, String unit) {
-    this.waterInletTemperature =
-        new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
+    this.waterInletTemperature = new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
   }
 
   /**
    * Sets the water outlet temperature.
    *
    * @param temperature the water outlet temperature
-   * @param unit the unit of temperature
+   * @param unit        the unit of temperature
    */
   public void setWaterOutletTemperature(double temperature, String unit) {
-    this.waterOutletTemperature =
-        new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
+    this.waterOutletTemperature = new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
   }
 
   /**
    * Sets the water pressure.
    *
    * @param pressure the water pressure
-   * @param unit the unit of pressure
+   * @param unit     the unit of pressure
    */
   public void setWaterPressure(double pressure, String unit) {
     this.waterPressure = new neqsim.util.unit.PressureUnit(pressure, unit).getValue("bara");
@@ -83,8 +81,7 @@ public class WaterCooler extends Cooler {
    * @return a double
    */
   public double getCoolingWaterFlowRate(String unit) {
-    return new neqsim.util.unit.RateUnit(coolingWaterFlowRate, "kg/sec", 1.0, 1.0, 0.0)
-        .getValue(unit);
+    return new neqsim.util.unit.RateUnit(coolingWaterFlowRate, "kg/sec", 1.0, 1.0, 0.0).getValue(unit);
   }
 
   private void setWaterModel() {

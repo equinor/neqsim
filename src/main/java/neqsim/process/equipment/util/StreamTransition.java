@@ -13,9 +13,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * </p>
  *
  * <p>
- * This class provides functionality for transferring fluid properties between streams with
- * potentially different thermodynamic models and component sets. It enables seamless transitions
- * between process units that may use different thermodynamic frameworks.
+ * This class provides functionality for transferring fluid properties between streams with potentially different
+ * thermodynamic models and component sets. It enables seamless transitions between process units that may use different
+ * thermodynamic frameworks.
  * </p>
  *
  * <p>
@@ -23,8 +23,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * </p>
  *
  * <p>
- * TODO: Consider implementing pressure-enthalpy (PH) based transitions as an alternative mode of
- * operation for cases where energy conservation is critical.
+ * TODO: Consider implementing pressure-enthalpy (PH) based transitions as an alternative mode of operation for cases
+ * where energy conservation is critical.
  * </p>
  *
  * @author asmund
@@ -39,8 +39,8 @@ public class StreamTransition extends TwoPortEquipment {
    * Constructor for StreamTransition.
    * </p>
    *
-   * @param name name of unit operation
-   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param name         name of unit operation
+   * @param inletStream  a {@link neqsim.process.equipment.stream.StreamInterface} object
    * @param outletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public StreamTransition(String name, StreamInterface inletStream, StreamInterface outletStream) {
@@ -54,8 +54,8 @@ public class StreamTransition extends TwoPortEquipment {
    * {@inheritDoc}
    *
    * <p>
-   * Performs the stream transition by transferring properties from the inlet stream to the outlet
-   * stream. Only components that exist in both systems will be transferred.
+   * Performs the stream transition by transferring properties from the inlet stream to the outlet stream. Only
+   * components that exist in both systems will be transferred.
    * </p>
    *
    * <p>
@@ -80,8 +80,8 @@ public class StreamTransition extends TwoPortEquipment {
 
     for (int i = 0; i < inStream.getFluid().getNumberOfComponents(); i++) {
       if (outThermoSystem.getPhase(0).hasComponent(inStream.getFluid().getComponent(i).getName())) {
-        outThermoSystem.addComponent(inStream.getFluid().getComponent(i).getName(),
-            inStream.getFluid().getComponent(i).getNumberOfmoles());
+	outThermoSystem.addComponent(inStream.getFluid().getComponent(i).getName(),
+	    inStream.getFluid().getComponent(i).getNumberOfmoles());
       }
     }
     outStream.setThermoSystem(outThermoSystem);
@@ -107,9 +107,9 @@ public class StreamTransition extends TwoPortEquipment {
   public static void main(String[] args) {
     ProcessSystem offshoreProcessoperations = ProcessSystem.open("c:/temp/offshorePro.neqsim");
     ProcessSystem TEGprocess = ProcessSystem.open("c:/temp//TEGprocessHX.neqsim");
-    StreamTransition trans =
-        new StreamTransition("tmp", (StreamInterface) offshoreProcessoperations.getUnit("rich gas"),
-            (StreamInterface) TEGprocess.getUnit("dry feed gas"));
+    StreamTransition trans = new StreamTransition("tmp",
+	(StreamInterface) offshoreProcessoperations.getUnit("rich gas"),
+	(StreamInterface) TEGprocess.getUnit("dry feed gas"));
 
     UUID id = UUID.randomUUID();
 

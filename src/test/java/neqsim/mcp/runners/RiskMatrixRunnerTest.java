@@ -14,12 +14,9 @@ class RiskMatrixRunnerTest {
 
   @Test
   void testFromLevels() {
-    String json = "{\"events\":["
-        + "  {\"name\":\"Compressor seal failure\","
-        + "   \"probabilityLevel\":3,\"consequenceLevel\":4},"
-        + "  {\"name\":\"PSV failure\","
-        + "   \"probabilityLevel\":2,\"consequenceLevel\":2}"
-        + "]}";
+    String json = "{\"events\":[" + "  {\"name\":\"Compressor seal failure\","
+	+ "   \"probabilityLevel\":3,\"consequenceLevel\":4}," + "  {\"name\":\"PSV failure\","
+	+ "   \"probabilityLevel\":2,\"consequenceLevel\":2}" + "]}";
     String result = RiskMatrixRunner.run(json);
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
     assertEquals("success", obj.get("status").getAsString());
@@ -37,10 +34,8 @@ class RiskMatrixRunnerTest {
 
   @Test
   void testFromFrequency() {
-    String json = "{\"events\":["
-        + "  {\"name\":\"Pump failure\","
-        + "   \"failuresPerYear\":0.5,\"productionLossPercent\":15.0}"
-        + "]}";
+    String json = "{\"events\":[" + "  {\"name\":\"Pump failure\","
+	+ "   \"failuresPerYear\":0.5,\"productionLossPercent\":15.0}" + "]}";
     String result = RiskMatrixRunner.run(json);
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
     assertEquals("success", obj.get("status").getAsString());

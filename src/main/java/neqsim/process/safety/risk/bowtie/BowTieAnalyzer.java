@@ -15,9 +15,9 @@ import neqsim.process.safety.risk.sis.SafetyInstrumentedFunction;
  * Bow-Tie Analyzer for process safety risk assessment.
  *
  * <p>
- * Generates bow-tie diagrams linking process hazards with threats (causes) and consequences,
- * including prevention and mitigation barriers. Integrates with the NeqSim process system to
- * automatically identify potential hazards and link to SIS/IPL barriers.
+ * Generates bow-tie diagrams linking process hazards with threats (causes) and consequences, including prevention and
+ * mitigation barriers. Integrates with the NeqSim process system to automatically identify potential hazards and link
+ * to SIS/IPL barriers.
  * </p>
  *
  * <h2>Bow-Tie Structure</h2>
@@ -128,8 +128,7 @@ public class BowTieAnalyzer implements Serializable {
       SAFETY, ENVIRONMENTAL, ASSET, PRODUCTION, REPUTATION
     }
 
-    public ConsequenceTemplate(String id, String description, ConsequenceCategory category,
-        int severity) {
+    public ConsequenceTemplate(String id, String description, ConsequenceCategory category, int severity) {
       this.id = id;
       this.description = description;
       this.category = category;
@@ -177,7 +176,7 @@ public class BowTieAnalyzer implements Serializable {
   /**
    * Creates a bow-tie analyzer for a process system.
    *
-   * @param name analyzer name
+   * @param name          analyzer name
    * @param processSystem process system
    */
   public BowTieAnalyzer(String name, ProcessSystem processSystem) {
@@ -191,24 +190,21 @@ public class BowTieAnalyzer implements Serializable {
 
     // Overpressure threats
     List<ThreatTemplate> overpressureThreats = new ArrayList<>();
-    ThreatTemplate t1 =
-        new ThreatTemplate("T-OVP-001", "Blocked outlet with continued feed", "Process", 0.1);
+    ThreatTemplate t1 = new ThreatTemplate("T-OVP-001", "Blocked outlet with continued feed", "Process", 0.1);
     t1.addApplicableEquipment("Separator");
     t1.addApplicableEquipment("Vessel");
     t1.addRecommendedBarrier("HIPPS");
     t1.addRecommendedBarrier("PSV");
     overpressureThreats.add(t1);
 
-    ThreatTemplate t2 =
-        new ThreatTemplate("T-OVP-002", "External fire causing overpressure", "External", 0.01);
+    ThreatTemplate t2 = new ThreatTemplate("T-OVP-002", "External fire causing overpressure", "External", 0.01);
     t2.addApplicableEquipment("Vessel");
     t2.addApplicableEquipment("Pipeline");
     t2.addRecommendedBarrier("PSV");
     t2.addRecommendedBarrier("Fire protection");
     overpressureThreats.add(t2);
 
-    ThreatTemplate t3 =
-        new ThreatTemplate("T-OVP-003", "Control valve fails open", "Equipment", 0.05);
+    ThreatTemplate t3 = new ThreatTemplate("T-OVP-003", "Control valve fails open", "Equipment", 0.05);
     t3.addApplicableEquipment("Separator");
     t3.addRecommendedBarrier("HIPPS");
     t3.addRecommendedBarrier("High pressure alarm");
@@ -218,16 +214,14 @@ public class BowTieAnalyzer implements Serializable {
 
     // Loss of containment threats
     List<ThreatTemplate> locThreats = new ArrayList<>();
-    ThreatTemplate t4 =
-        new ThreatTemplate("T-LOC-001", "Corrosion-induced leak", "Equipment", 0.02);
+    ThreatTemplate t4 = new ThreatTemplate("T-LOC-001", "Corrosion-induced leak", "Equipment", 0.02);
     t4.addApplicableEquipment("Pipeline");
     t4.addApplicableEquipment("Vessel");
     t4.addRecommendedBarrier("Corrosion monitoring");
     t4.addRecommendedBarrier("Inspection program");
     locThreats.add(t4);
 
-    ThreatTemplate t5 =
-        new ThreatTemplate("T-LOC-002", "Mechanical seal failure", "Equipment", 0.05);
+    ThreatTemplate t5 = new ThreatTemplate("T-LOC-002", "Mechanical seal failure", "Equipment", 0.05);
     t5.addApplicableEquipment("Pump");
     t5.addApplicableEquipment("Compressor");
     t5.addRecommendedBarrier("Dual seals");
@@ -239,13 +233,13 @@ public class BowTieAnalyzer implements Serializable {
     // Overpressure consequences
     List<ConsequenceTemplate> overpressureCons = new ArrayList<>();
     ConsequenceTemplate c1 = new ConsequenceTemplate("C-OVP-001", "Vessel rupture",
-        ConsequenceTemplate.ConsequenceCategory.SAFETY, 5);
+	ConsequenceTemplate.ConsequenceCategory.SAFETY, 5);
     c1.addRecommendedMitigation("Emergency shutdown");
     c1.addRecommendedMitigation("Blast walls");
     overpressureCons.add(c1);
 
     ConsequenceTemplate c2 = new ConsequenceTemplate("C-OVP-002", "Flange leak under pressure",
-        ConsequenceTemplate.ConsequenceCategory.SAFETY, 4);
+	ConsequenceTemplate.ConsequenceCategory.SAFETY, 4);
     c2.addRecommendedMitigation("Gas detection");
     c2.addRecommendedMitigation("Emergency isolation");
     overpressureCons.add(c2);
@@ -255,14 +249,14 @@ public class BowTieAnalyzer implements Serializable {
     // Loss of containment consequences
     List<ConsequenceTemplate> locCons = new ArrayList<>();
     ConsequenceTemplate c3 = new ConsequenceTemplate("C-LOC-001", "Hydrocarbon release - fire",
-        ConsequenceTemplate.ConsequenceCategory.SAFETY, 5);
+	ConsequenceTemplate.ConsequenceCategory.SAFETY, 5);
     c3.addRecommendedMitigation("Fire and gas detection");
     c3.addRecommendedMitigation("Deluge system");
     c3.addRecommendedMitigation("Emergency response");
     locCons.add(c3);
 
     ConsequenceTemplate c4 = new ConsequenceTemplate("C-LOC-002", "Environmental contamination",
-        ConsequenceTemplate.ConsequenceCategory.ENVIRONMENTAL, 3);
+	ConsequenceTemplate.ConsequenceCategory.ENVIRONMENTAL, 3);
     c4.addRecommendedMitigation("Secondary containment");
     c4.addRecommendedMitigation("Spill response");
     locCons.add(c4);
@@ -282,9 +276,9 @@ public class BowTieAnalyzer implements Serializable {
   /**
    * Creates a bow-tie model for a specific hazard.
    *
-   * @param hazardId hazard identifier
+   * @param hazardId          hazard identifier
    * @param hazardDescription hazard description
-   * @param hazardType type of hazard (e.g., OVERPRESSURE, LOSS_OF_CONTAINMENT)
+   * @param hazardType        type of hazard (e.g., OVERPRESSURE, LOSS_OF_CONTAINMENT)
    * @return created bow-tie model
    */
   public BowTieModel createBowTie(String hazardId, String hazardDescription, String hazardType) {
@@ -294,18 +288,18 @@ public class BowTieAnalyzer implements Serializable {
     // Auto-populate from libraries
     if (threatLibrary.containsKey(hazardType)) {
       for (ThreatTemplate template : threatLibrary.get(hazardType)) {
-        BowTieModel.Threat threat = new BowTieModel.Threat(template.getId(),
-            template.getDescription(), template.getBaseFrequency());
-        model.addThreat(threat);
+	BowTieModel.Threat threat = new BowTieModel.Threat(template.getId(), template.getDescription(),
+	    template.getBaseFrequency());
+	model.addThreat(threat);
       }
     }
 
     if (consequenceLibrary.containsKey(hazardType)) {
       for (ConsequenceTemplate template : consequenceLibrary.get(hazardType)) {
-        BowTieModel.Consequence consequence = new BowTieModel.Consequence(template.getId(),
-            template.getDescription(), template.getDefaultSeverity());
-        consequence.setCategory(template.getCategory().name());
-        model.addConsequence(consequence);
+	BowTieModel.Consequence consequence = new BowTieModel.Consequence(template.getId(), template.getDescription(),
+	    template.getDefaultSeverity());
+	consequence.setCategory(template.getCategory().name());
+	model.addConsequence(consequence);
       }
     }
 
@@ -333,16 +327,15 @@ public class BowTieAnalyzer implements Serializable {
 
       // Check for pressure-related hazards
       if (equipType.contains("Separator") || equipType.contains("Vessel")) {
-        BowTieModel overpressure =
-            createBowTie(equipName + "-OVP", "Overpressure in " + equipName, "OVERPRESSURE");
-        generated.add(overpressure);
+	BowTieModel overpressure = createBowTie(equipName + "-OVP", "Overpressure in " + equipName, "OVERPRESSURE");
+	generated.add(overpressure);
       }
 
       // Check for containment hazards
       if (equipType.contains("Pipe") || equipType.contains("Pump")) {
-        BowTieModel loc = createBowTie(equipName + "-LOC", "Loss of containment from " + equipName,
-            "LOSS_OF_CONTAINMENT");
-        generated.add(loc);
+	BowTieModel loc = createBowTie(equipName + "-LOC", "Loss of containment from " + equipName,
+	    "LOSS_OF_CONTAINMENT");
+	generated.add(loc);
       }
     }
 
@@ -355,30 +348,29 @@ public class BowTieAnalyzer implements Serializable {
   private void autoAssignSIFBarriers() {
     for (BowTieModel model : bowTieModels) {
       for (SafetyInstrumentedFunction sif : availableSIFs) {
-        // Match SIF category to hazard type
-        boolean matches = false;
-        switch (sif.getCategory()) {
-          case HIPPS:
-            matches = model.getHazardType().equals("OVERPRESSURE");
-            break;
-          case ESD:
-          case PSD:
-            matches = true; // ESD/PSD applies to most hazards
-            break;
-          case FIRE_GAS:
-            matches = model.getHazardType().equals("LOSS_OF_CONTAINMENT");
-            break;
-          default:
-            break;
-        }
+	// Match SIF category to hazard type
+	boolean matches = false;
+	switch (sif.getCategory()) {
+	case HIPPS:
+	  matches = model.getHazardType().equals("OVERPRESSURE");
+	  break;
+	case ESD:
+	case PSD:
+	  matches = true; // ESD/PSD applies to most hazards
+	  break;
+	case FIRE_GAS:
+	  matches = model.getHazardType().equals("LOSS_OF_CONTAINMENT");
+	  break;
+	default:
+	  break;
+	}
 
-        if (matches) {
-          BowTieModel.Barrier barrier =
-              new BowTieModel.Barrier(sif.getName(), sif.getName(), sif.getPfdAvg());
-          barrier.setBarrierType(BowTieModel.BarrierType.PREVENTION);
-          barrier.setSif(sif);
-          model.addBarrier(barrier);
-        }
+	if (matches) {
+	  BowTieModel.Barrier barrier = new BowTieModel.Barrier(sif.getName(), sif.getName(), sif.getPfdAvg());
+	  barrier.setBarrierType(BowTieModel.BarrierType.PREVENTION);
+	  barrier.setSif(sif);
+	  model.addBarrier(barrier);
+	}
       }
     }
   }
@@ -401,7 +393,7 @@ public class BowTieAnalyzer implements Serializable {
   public BowTieModel getBowTie(String hazardId) {
     for (BowTieModel model : bowTieModels) {
       if (model.getHazardId().equals(hazardId)) {
-        return model;
+	return model;
       }
     }
     return null;
@@ -460,8 +452,7 @@ public class BowTieAnalyzer implements Serializable {
    * @return JSON representation
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   public String getName() {

@@ -7,12 +7,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Validate that BWRS EoS produces reasonable compressor results (positive efficiency, outlet
- * temperature comparable to GERG-2008).
+ * Validate that BWRS EoS produces reasonable compressor results (positive efficiency, outlet temperature comparable to
+ * GERG-2008).
  */
 public class BWRSCompressorTest {
   private static final Logger logger = LogManager.getLogger(BWRSCompressorTest.class);
-
 
   @Test
   void testPureMethaneCompressorBWRS() {
@@ -26,13 +25,13 @@ public class BWRSCompressorTest {
     bwrsFluid.setForcePhaseTypes(true);
     bwrsFluid.setPhaseType(0, "GAS");
 
-    neqsim.process.equipment.stream.Stream bwrsStream =
-        new neqsim.process.equipment.stream.Stream("bwrs gas", bwrsFluid);
+    neqsim.process.equipment.stream.Stream bwrsStream = new neqsim.process.equipment.stream.Stream("bwrs gas",
+	bwrsFluid);
     bwrsStream.setFlowRate(10.0, "MSm3/day");
     bwrsStream.run();
 
-    neqsim.process.equipment.compressor.Compressor bwrsComp =
-        new neqsim.process.equipment.compressor.Compressor("bwrs compressor", bwrsStream);
+    neqsim.process.equipment.compressor.Compressor bwrsComp = new neqsim.process.equipment.compressor.Compressor(
+	"bwrs compressor", bwrsStream);
     bwrsComp.setOutletPressure(30.0, "bara");
     bwrsComp.setPolytropicEfficiency(0.75);
     bwrsComp.run();
@@ -51,13 +50,13 @@ public class BWRSCompressorTest {
     gergFluid.setForcePhaseTypes(true);
     gergFluid.setPhaseType(0, "GAS");
 
-    neqsim.process.equipment.stream.Stream gergStream =
-        new neqsim.process.equipment.stream.Stream("gerg gas", gergFluid);
+    neqsim.process.equipment.stream.Stream gergStream = new neqsim.process.equipment.stream.Stream("gerg gas",
+	gergFluid);
     gergStream.setFlowRate(10.0, "MSm3/day");
     gergStream.run();
 
-    neqsim.process.equipment.compressor.Compressor gergComp =
-        new neqsim.process.equipment.compressor.Compressor("gerg compressor", gergStream);
+    neqsim.process.equipment.compressor.Compressor gergComp = new neqsim.process.equipment.compressor.Compressor(
+	"gerg compressor", gergStream);
     gergComp.setOutletPressure(30.0, "bara");
     gergComp.setPolytropicEfficiency(0.75);
     gergComp.run();
@@ -67,10 +66,8 @@ public class BWRSCompressorTest {
     double gergHead = gergComp.getPolytropicHead("kJ/kg");
 
     logger.info("=== Pure Methane Compressor (10->30 bar, eta=0.75) ===");
-    logger.info(
-        "BWRS  Tout=" + bwrsTout + " C, Power=" + bwrsPower + " MW, Head=" + bwrsHead + " kJ/kg");
-    logger.info(
-        "GERG  Tout=" + gergTout + " C, Power=" + gergPower + " MW, Head=" + gergHead + " kJ/kg");
+    logger.info("BWRS  Tout=" + bwrsTout + " C, Power=" + bwrsPower + " MW, Head=" + bwrsHead + " kJ/kg");
+    logger.info("GERG  Tout=" + gergTout + " C, Power=" + gergPower + " MW, Head=" + gergHead + " kJ/kg");
 
     // BWRS must give positive outlet temperature rise (compression heats gas)
     assertTrue(bwrsTout > 25.0 + 20.0, "BWRS outlet temp too low: " + bwrsTout + " C (inlet 25 C)");
@@ -83,8 +80,7 @@ public class BWRSCompressorTest {
     assertTrue(bwrsHead > 0.0, "BWRS polytropic head must be positive: " + bwrsHead + " kJ/kg");
 
     // Compare with GERG within 15% tolerance for pure methane
-    assertEquals(gergTout, bwrsTout, gergTout * 0.15,
-        "BWRS outlet temp deviates too much from GERG");
+    assertEquals(gergTout, bwrsTout, gergTout * 0.15, "BWRS outlet temp deviates too much from GERG");
     assertEquals(gergPower, bwrsPower, gergPower * 0.15, "BWRS power deviates too much from GERG");
   }
 
@@ -101,13 +97,13 @@ public class BWRSCompressorTest {
     bwrsFluid.setForcePhaseTypes(true);
     bwrsFluid.setPhaseType(0, "GAS");
 
-    neqsim.process.equipment.stream.Stream bwrsStream =
-        new neqsim.process.equipment.stream.Stream("bwrs gas", bwrsFluid);
+    neqsim.process.equipment.stream.Stream bwrsStream = new neqsim.process.equipment.stream.Stream("bwrs gas",
+	bwrsFluid);
     bwrsStream.setFlowRate(10.0, "MSm3/day");
     bwrsStream.run();
 
-    neqsim.process.equipment.compressor.Compressor bwrsComp =
-        new neqsim.process.equipment.compressor.Compressor("bwrs compressor", bwrsStream);
+    neqsim.process.equipment.compressor.Compressor bwrsComp = new neqsim.process.equipment.compressor.Compressor(
+	"bwrs compressor", bwrsStream);
     bwrsComp.setOutletPressure(30.0, "bara");
     bwrsComp.setPolytropicEfficiency(0.75);
     bwrsComp.run();
@@ -126,13 +122,12 @@ public class BWRSCompressorTest {
     srkFluid.setForcePhaseTypes(true);
     srkFluid.setPhaseType(0, "GAS");
 
-    neqsim.process.equipment.stream.Stream srkStream =
-        new neqsim.process.equipment.stream.Stream("srk gas", srkFluid);
+    neqsim.process.equipment.stream.Stream srkStream = new neqsim.process.equipment.stream.Stream("srk gas", srkFluid);
     srkStream.setFlowRate(10.0, "MSm3/day");
     srkStream.run();
 
-    neqsim.process.equipment.compressor.Compressor srkComp =
-        new neqsim.process.equipment.compressor.Compressor("srk compressor", srkStream);
+    neqsim.process.equipment.compressor.Compressor srkComp = new neqsim.process.equipment.compressor.Compressor(
+	"srk compressor", srkStream);
     srkComp.setOutletPressure(30.0, "bara");
     srkComp.setPolytropicEfficiency(0.75);
     srkComp.run();
@@ -142,10 +137,8 @@ public class BWRSCompressorTest {
     double srkHead = srkComp.getPolytropicHead("kJ/kg");
 
     logger.info("=== Natural Gas Compressor (10->30 bar, eta=0.75) ===");
-    logger.info(
-        "BWRS  Tout=" + bwrsTout + " C, Power=" + bwrsPower + " MW, Head=" + bwrsHead + " kJ/kg");
-    logger.info(
-        "SRK   Tout=" + srkTout + " C, Power=" + srkPower + " MW, Head=" + srkHead + " kJ/kg");
+    logger.info("BWRS  Tout=" + bwrsTout + " C, Power=" + bwrsPower + " MW, Head=" + bwrsHead + " kJ/kg");
+    logger.info("SRK   Tout=" + srkTout + " C, Power=" + srkPower + " MW, Head=" + srkHead + " kJ/kg");
 
     // BWRS must give positive outlet temperature rise (compression heats gas)
     assertTrue(bwrsTout > 25.0 + 20.0, "BWRS outlet temp too low: " + bwrsTout + " C (inlet 25 C)");

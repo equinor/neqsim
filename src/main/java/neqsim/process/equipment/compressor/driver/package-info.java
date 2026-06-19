@@ -2,20 +2,20 @@
  * Driver models for rotating equipment (compressors, pumps, etc.).
  *
  * <p>
- * This package provides driver curve models for simulating the performance of compressor and pump
- * drivers, including gas turbines, electric motors, and steam turbines.
+ * This package provides driver curve models for simulating the performance of compressor and pump drivers, including
+ * gas turbines, electric motors, and steam turbines.
  * </p>
  *
  * <h2>Key Components</h2>
  * <ul>
- * <li>{@link neqsim.process.equipment.compressor.driver.DriverCurve} - Interface defining the
- * contract for all driver curve implementations</li>
- * <li>{@link neqsim.process.equipment.compressor.driver.GasTurbineDriver} - Gas turbine performance
- * model with ambient derating</li>
- * <li>{@link neqsim.process.equipment.compressor.driver.ElectricMotorDriver} - Electric motor model
- * with VFD support</li>
- * <li>{@link neqsim.process.equipment.compressor.driver.SteamTurbineDriver} - Steam turbine model
- * with Willans line</li>
+ * <li>{@link neqsim.process.equipment.compressor.driver.DriverCurve} - Interface defining the contract for all driver
+ * curve implementations</li>
+ * <li>{@link neqsim.process.equipment.compressor.driver.GasTurbineDriver} - Gas turbine performance model with ambient
+ * derating</li>
+ * <li>{@link neqsim.process.equipment.compressor.driver.ElectricMotorDriver} - Electric motor model with VFD
+ * support</li>
+ * <li>{@link neqsim.process.equipment.compressor.driver.SteamTurbineDriver} - Steam turbine model with Willans
+ * line</li>
  * </ul>
  *
  * <h2>Gas Turbine Driver</h2>

@@ -35,7 +35,8 @@ public class ControlStructureTest {
     }
 
     @Override
-    public void setTagNumber(String tagNumber) {}
+    public void setTagNumber(String tagNumber) {
+    }
 
     @Override
     public double getMeasuredValue() {
@@ -58,10 +59,12 @@ public class ControlStructureTest {
     }
 
     @Override
-    public void setUnit(String unit) {}
+    public void setUnit(String unit) {
+    }
 
     @Override
-    public void setTransmitter(MeasurementDeviceInterface device) {}
+    public void setTransmitter(MeasurementDeviceInterface device) {
+    }
 
     @Override
     public void runTransient(double initResponse, double dt, UUID id) {
@@ -79,10 +82,12 @@ public class ControlStructureTest {
     }
 
     @Override
-    public void setReverseActing(boolean reverseActing) {}
+    public void setReverseActing(boolean reverseActing) {
+    }
 
     @Override
-    public void setControllerParameters(double Kp, double Ti, double Td) {}
+    public void setControllerParameters(double Kp, double Ti, double Td) {
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -95,7 +100,8 @@ public class ControlStructureTest {
     }
 
     @Override
-    public void setActive(boolean isActive) {}
+    public void setActive(boolean isActive) {
+    }
 
     @Override
     public boolean isActive() {

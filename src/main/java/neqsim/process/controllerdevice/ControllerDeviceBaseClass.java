@@ -17,14 +17,13 @@ import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.util.NamedBaseClass;
 
 /**
- * Discrete PID controller implementation providing common features for process control in NeqSim.
- * The class supports anti-windup clamping, derivative filtering, gain scheduling, event logging and
- * performance metrics as well as auto-tuning utilities.
+ * Discrete PID controller implementation providing common features for process control in NeqSim. The class supports
+ * anti-windup clamping, derivative filtering, gain scheduling, event logging and performance metrics as well as
+ * auto-tuning utilities.
  *
  * <p>
- * The controller operates on a {@link neqsim.process.measurementdevice.MeasurementDeviceInterface}
- * transmitter and exposes a standard PID API through
- * {@link neqsim.process.controllerdevice.ControllerDeviceInterface}.
+ * The controller operates on a {@link neqsim.process.measurementdevice.MeasurementDeviceInterface} transmitter and
+ * exposes a standard PID API through {@link neqsim.process.controllerdevice.ControllerDeviceInterface}.
  * </p>
  *
  * @author ESOL
@@ -71,8 +70,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   private double lastTimeOutsideBand = 0.0;
   private double settlingTolerance = 0.02;
   private double setpointWeight = 1.0;
-  private neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignation =
-      new neqsim.process.equipment.iec81346.ReferenceDesignation();
+  private neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignation = new neqsim.process.equipment.iec81346.ReferenceDesignation();
 
   /**
    * <p>
@@ -131,8 +129,8 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
    * {@inheritDoc}
    *
    * <p>
-   * If no engineering unit is configured, the controller falls back to the legacy percent-based
-   * error formulation used by earlier NeqSim versions.
+   * If no engineering unit is configured, the controller falls back to the legacy percent-based error formulation used
+   * by earlier NeqSim versions.
    * </p>
    */
   @Override
@@ -152,8 +150,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
       oldoldError = oldError;
       oldError = error;
       error = measurement - controllerSetPoint;
-      eventLog
-          .add(new ControllerEvent(totalTime, measurement, controllerSetPoint, error, response));
+      eventLog.add(new ControllerEvent(totalTime, measurement, controllerSetPoint, error, response));
       calcIdentifier = id;
       return;
     }
@@ -174,7 +171,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
       oldoldError = error;
       derivativeState = 0.0;
       if (propConstant != 0) {
-        TintValue = (manualOutput - initResponse) / propConstant;
+	TintValue = (manualOutput - initResponse) / propConstant;
       }
       bumplessTransferPending = false;
     }
@@ -189,14 +186,13 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     if (usesDefaultUnit) {
       double measurementPercent = transmitter.getMeasuredPercentValue();
       double setPointPercent = (controllerSetPoint - transmitter.getMinimumValue())
-          / (transmitter.getMaximumValue() - transmitter.getMinimumValue()) * 100.0;
+	  / (transmitter.getMaximumValue() - transmitter.getMinimumValue()) * 100.0;
       error = measurementPercent - setPointPercent;
       if (Ti != 0) {
-        TintValue = Kp / Ti * error;
+	TintValue = Kp / Ti * error;
       }
       double TderivValue = Kp * Td * ((error - 2 * oldError + oldoldError) / (dt * dt));
-      response = initResponse
-          + propConstant * ((Kp * (error - oldError) / dt) + TintValue + TderivValue) * dt;
+      response = initResponse + propConstant * ((Kp * (error - oldError) / dt) + TintValue + TderivValue) * dt;
     } else {
       error = measurement - controllerSetPoint;
       // 2-DOF PID: proportional error uses setpoint weight b
@@ -206,25 +202,25 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
       integralAbsoluteError += Math.abs(error) * dt;
       band = settlingTolerance * Math.max(Math.abs(controllerSetPoint), 1.0);
       if (Math.abs(error) > band) {
-        lastTimeOutsideBand = totalTime;
+	lastTimeOutsideBand = totalTime;
       }
       TintIncrement = 0.0;
       if (Ti > 0) {
-        TintIncrement = Kp / Ti * error * dt;
-        TintValue += TintIncrement;
+	TintIncrement = Kp / Ti * error * dt;
+	TintValue += TintIncrement;
       } else {
-        TintValue = 0.0;
+	TintValue = 0.0;
       }
 
       derivative = (error - oldError) / dt;
       if (Td > 0) {
-        if (derivativeFilterTime > 0) {
-          derivativeState += dt / (derivativeFilterTime + dt) * (derivative - derivativeState);
-        } else {
-          derivativeState = derivative;
-        }
+	if (derivativeFilterTime > 0) {
+	  derivativeState += dt / (derivativeFilterTime + dt) * (derivative - derivativeState);
+	} else {
+	  derivativeState = derivative;
+	}
       } else {
-        derivativeState = 0.0;
+	derivativeState = 0.0;
       }
 
       delta = Kp * (propError - oldPropError) + TintValue + Kp * Td * derivativeState;
@@ -232,15 +228,15 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
       response = initResponse + propConstant * delta;
 
       if (response > maxResponse) {
-        response = maxResponse;
-        if (Ti > 0) {
-          TintValue -= TintIncrement;
-        }
+	response = maxResponse;
+	if (Ti > 0) {
+	  TintValue -= TintIncrement;
+	}
       } else if (response < minResponse) {
-        response = minResponse;
-        if (Ti > 0) {
-          TintValue -= TintIncrement;
-        }
+	response = minResponse;
+	if (Ti > 0) {
+	  TintValue -= TintIncrement;
+	}
       }
     }
 
@@ -293,15 +289,14 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
    *
    * @param referenceDesignation the reference designation to set
    */
-  public void setReferenceDesignation(
-      neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignation) {
+  public void setReferenceDesignation(neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignation) {
     this.referenceDesignation = referenceDesignation != null ? referenceDesignation
-        : new neqsim.process.equipment.iec81346.ReferenceDesignation();
+	: new neqsim.process.equipment.iec81346.ReferenceDesignation();
   }
 
   /**
-   * Gets the IEC 81346 reference designation string for this controller. Returns an empty string if
-   * no designation has been set.
+   * Gets the IEC 81346 reference designation string for this controller. Returns an empty string if no designation has
+   * been set.
    *
    * @return the reference designation string (e.g. "=A1.S1")
    */
@@ -486,8 +481,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
 
   /** {@inheritDoc} */
   @Override
-  public void autoTuneStepResponse(double processGain, double timeConstant, double deadTime,
-      boolean tuneDerivative) {
+  public void autoTuneStepResponse(double processGain, double timeConstant, double deadTime, boolean tuneDerivative) {
     if (processGain == 0.0 || timeConstant <= 0.0) {
       logger.warn("Invalid step response parameters for auto tune.");
       return;
@@ -502,20 +496,20 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
       double lambda = Math.max(theta, timeConstant / 4.0);
 
       if (tuneDerivative) {
-        double halfTheta = 0.5 * theta;
-        kp = (timeConstant + halfTheta) / (lambda + halfTheta) / processGain;
-        ti = timeConstant + halfTheta;
-        double denominator = 2.0 * timeConstant + theta;
-        td = denominator > 0.0 ? timeConstant * theta / denominator : 0.0;
+	double halfTheta = 0.5 * theta;
+	kp = (timeConstant + halfTheta) / (lambda + halfTheta) / processGain;
+	ti = timeConstant + halfTheta;
+	double denominator = 2.0 * timeConstant + theta;
+	td = denominator > 0.0 ? timeConstant * theta / denominator : 0.0;
       } else {
-        kp = timeConstant / (lambda + theta) / processGain;
-        ti = Math.min(timeConstant, 4.0 * (lambda + theta));
+	kp = timeConstant / (lambda + theta) / processGain;
+	ti = Math.min(timeConstant, 4.0 * (lambda + theta));
       }
     } else {
       double theta = deadTime;
       if (theta <= 0.0) {
-        logger.warn("Invalid dead time for classic step response auto tune.");
-        return;
+	logger.warn("Invalid dead time for classic step response auto tune.");
+	return;
       }
       kp = 1.2 / processGain * (timeConstant / theta);
       ti = 2.0 * theta;
@@ -577,18 +571,17 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     for (ControllerEvent event : eventLog) {
       double value = event.getMeasuredValue();
       if (Double.isNaN(tStart)) {
-        if ((positiveChange && value >= startThreshold)
-            || (!positiveChange && value <= startThreshold)) {
-          tStart = event.getTime();
-        }
+	if ((positiveChange && value >= startThreshold) || (!positiveChange && value <= startThreshold)) {
+	  tStart = event.getTime();
+	}
       }
       if (Double.isNaN(t63)) {
-        if ((positiveChange && value >= threshold63) || (!positiveChange && value <= threshold63)) {
-          t63 = event.getTime();
-        }
+	if ((positiveChange && value >= threshold63) || (!positiveChange && value <= threshold63)) {
+	  t63 = event.getTime();
+	}
       }
       if (!Double.isNaN(tStart) && !Double.isNaN(t63)) {
-        break;
+	break;
       }
     }
 
@@ -620,7 +613,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   /** {@inheritDoc} */
   @Override
   public void addGainSchedulePoint(double processValue, double Kp, double Ti, double Td) {
-    gainSchedule.put(processValue, new double[] {Kp, Ti, Td});
+    gainSchedule.put(processValue, new double[] { Kp, Ti, Td });
   }
 
   /** {@inheritDoc} */
@@ -666,10 +659,9 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
    * {@inheritDoc}
    *
    * <p>
-   * When switching from MANUAL to AUTO, a bumpless transfer is scheduled so that the controller
-   * output does not jump on the next {@code runTransient} call. The integral state is
-   * back-calculated to match the current manual output. When switching from AUTO to MANUAL, the
-   * current PID output is captured as the manual output value.
+   * When switching from MANUAL to AUTO, a bumpless transfer is scheduled so that the controller output does not jump on
+   * the next {@code runTransient} call. The integral state is back-calculated to match the current manual output. When
+   * switching from AUTO to MANUAL, the current PID output is captured as the manual output value.
    * </p>
    */
   @Override
@@ -714,8 +706,8 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   }
 
   /**
-   * Apply gain-scheduled controller parameters based on the current measurement value. The schedule
-   * selects the parameter set with the highest threshold not exceeding the measurement.
+   * Apply gain-scheduled controller parameters based on the current measurement value. The schedule selects the
+   * parameter set with the highest threshold not exceeding the measurement.
    *
    * @param measurement current process value
    */
@@ -733,10 +725,9 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   }
 
   /**
-   * Calculate the average value of the {@link ControllerEvent} properties for the last entries in
-   * the event log.
+   * Calculate the average value of the {@link ControllerEvent} properties for the last entries in the event log.
    *
-   * @param count number of samples to include in the average
+   * @param count     number of samples to include in the average
    * @param extractor function returning the value to average from the event
    * @return average of the selected event property
    */

@@ -17,8 +17,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Test class for the GERG-2008-NH3 equation of state with ammonia as the 22nd component.
  *
  * <p>
- * Tests verify that the ammonia extension produces sensible results for ammonia-containing natural
- * gas mixtures and does not break existing 21-component calculations.
+ * Tests verify that the ammonia extension produces sensible results for ammonia-containing natural gas mixtures and
+ * does not break existing 21-component calculations.
  * </p>
  */
 public class GERG2008NH3Test {
@@ -130,8 +130,7 @@ public class GERG2008NH3Test {
     doubleW Kappa = new doubleW(0.0);
     doubleW A = new doubleW(0.0);
 
-    gerg.PropertiesGERG(T, D.val, x, PP, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT,
-        Kappa, A);
+    gerg.PropertiesGERG(T, D.val, x, PP, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT, Kappa, A);
 
     assertTrue(Cp.val > Cv.val, "Cp should be greater than Cv");
     assertTrue(W.val > 0, "Speed of sound should be positive");
@@ -142,8 +141,8 @@ public class GERG2008NH3Test {
    * Test that pure methane results are unchanged compared to the standard GERG-2008.
    *
    * <p>
-   * This is a critical backward compatibility test: adding ammonia as component 22 must not alter
-   * calculations for the original 21 components when ammonia mole fraction is zero.
+   * This is a critical backward compatibility test: adding ammonia as component 22 must not alter calculations for the
+   * original 21 components when ammonia mole fraction is zero.
    * </p>
    */
   @Test
@@ -171,7 +170,7 @@ public class GERG2008NH3Test {
     assertEquals(0, ierr_nh3.val, "NH3 model should converge for pure CH4");
     assertEquals(0, ierr_std.val, "Standard model should converge for pure CH4");
     assertEquals(D_std.val, D_nh3.val, 1e-10,
-        "Pure CH4 density should be identical between standard and NH3-extended models");
+	"Pure CH4 density should be identical between standard and NH3-extended models");
   }
 
   /**
@@ -201,7 +200,7 @@ public class GERG2008NH3Test {
     gergStd.DensityGERG(0, T, P, x, D_std, ierr, herr);
 
     assertEquals(D_std.val, D_nh3.val, 1e-4,
-        "Natural gas density should be nearly identical when NH3 fraction is zero");
+	"Natural gas density should be nearly identical when NH3 fraction is zero");
   }
 
   /**

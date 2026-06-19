@@ -43,14 +43,13 @@ package neqsim.physicalproperties.interfaceproperties.solidadsorption;
  */
 public enum IsothermType {
   /**
-   * Dubinin-Radushkevich-Astakhov potential theory. Best for microporous adsorbents like activated
-   * carbon and zeolites.
+   * Dubinin-Radushkevich-Astakhov potential theory. Best for microporous adsorbents like activated carbon and zeolites.
    */
   DRA("Dubinin-Radushkevich-Astakhov", true),
 
   /**
-   * Langmuir isotherm for monolayer adsorption on homogeneous surfaces. Assumes single adsorption
-   * site type and no adsorbate-adsorbate interactions.
+   * Langmuir isotherm for monolayer adsorption on homogeneous surfaces. Assumes single adsorption site type and no
+   * adsorbate-adsorbate interactions.
    */
   LANGMUIR("Langmuir", false),
 
@@ -60,20 +59,18 @@ public enum IsothermType {
   FREUNDLICH("Freundlich", false),
 
   /**
-   * Brunauer-Emmett-Teller (BET) isotherm for multilayer adsorption. Used for surface area
-   * determination.
+   * Brunauer-Emmett-Teller (BET) isotherm for multilayer adsorption. Used for surface area determination.
    */
   BET("Brunauer-Emmett-Teller", false),
 
   /**
-   * Sips (Langmuir-Freundlich) isotherm. Combines Langmuir saturation with Freundlich
-   * heterogeneity.
+   * Sips (Langmuir-Freundlich) isotherm. Combines Langmuir saturation with Freundlich heterogeneity.
    */
   SIPS("Sips/Langmuir-Freundlich", false),
 
   /**
-   * Extended Langmuir for multi-component competitive adsorption. Models competition between
-   * adsorbates for surface sites.
+   * Extended Langmuir for multi-component competitive adsorption. Models competition between adsorbates for surface
+   * sites.
    */
   EXTENDED_LANGMUIR("Extended Langmuir", true);
 
@@ -83,7 +80,7 @@ public enum IsothermType {
   /**
    * Constructor for IsothermType.
    *
-   * @param displayName the human-readable name for the isotherm
+   * @param displayName            the human-readable name for the isotherm
    * @param supportsMultiComponent whether this model handles mixtures directly
    */
   IsothermType(String displayName, boolean supportsMultiComponent) {
@@ -122,13 +119,13 @@ public enum IsothermType {
     String upperName = name.toUpperCase().trim();
     for (IsothermType type : values()) {
       if (type.name().equals(upperName)) {
-        return type;
+	return type;
       }
     }
     // Check display names
     for (IsothermType type : values()) {
       if (type.getDisplayName().equalsIgnoreCase(name)) {
-        return type;
+	return type;
       }
     }
     return DRA;

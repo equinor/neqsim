@@ -6,11 +6,11 @@ import java.io.Serializable;
  * Economic and carbon parameters shared by the value-chain optimization classes.
  *
  * <p>
- * Collects the prices, costs and financial assumptions needed to turn a converged NeqSim flowsheet
- * into an economic objective: gas and oil sales prices, the cost of the energy consumed by rotating
- * equipment, a carbon price/tax applied to the associated CO<sub>2</sub>, the carbon intensity of
- * that energy, and the annual discount rate used for net-present-value calculations. All monetary
- * values are expressed in the configured {@link #getCurrency() currency} (default {@code "NOK"}).
+ * Collects the prices, costs and financial assumptions needed to turn a converged NeqSim flowsheet into an economic
+ * objective: gas and oil sales prices, the cost of the energy consumed by rotating equipment, a carbon price/tax
+ * applied to the associated CO<sub>2</sub>, the carbon intensity of that energy, and the annual discount rate used for
+ * net-present-value calculations. All monetary values are expressed in the configured {@link #getCurrency() currency}
+ * (default {@code "NOK"}).
  * </p>
  *
  * <p>
@@ -18,8 +18,8 @@ import java.io.Serializable;
  * </p>
  *
  * <pre>
- * EconomicParameters econ = new EconomicParameters().setGasPrice(3.0).setPowerCost(0.6)
- *     .setCo2Tax(1200.0).setCo2IntensityTonnePerMWh(0.20).setDiscountRate(0.08);
+ * EconomicParameters econ = new EconomicParameters().setGasPrice(3.0).setPowerCost(0.6).setCo2Tax(1200.0)
+ *     .setCo2IntensityTonnePerMWh(0.20).setDiscountRate(0.08);
  * </pre>
  *
  * @author NeqSim Development Team
@@ -54,7 +54,8 @@ public class EconomicParameters implements Serializable {
   /**
    * Creates a set of economic parameters with default North-Sea-style values.
    */
-  public EconomicParameters() {}
+  public EconomicParameters() {
+  }
 
   /**
    * Sets the gas sales price.
@@ -200,8 +201,8 @@ public class EconomicParameters implements Serializable {
    * Computes the discount factor for a given period.
    *
    * <p>
-   * The factor is {@code 1 / (1 + r)^year}, where {@code r} is the annual discount rate. Year 0
-   * returns 1.0 (present value of money today).
+   * The factor is {@code 1 / (1 + r)^year}, where {@code r} is the annual discount rate. Year 0 returns 1.0 (present
+   * value of money today).
    * </p>
    *
    * @param year the period index in years (0 = present)

@@ -76,10 +76,8 @@ class PhysicsIntegrationTest {
     assertTrue(pressure > 0, "Pressure should be read from equipment");
 
     // Values should match equipment values
-    assertEquals(separator.getTemperature(), temp, 0.1,
-        "Monitor temperature should match separator temperature");
-    assertEquals(separator.getPressure(), pressure, 0.1,
-        "Monitor pressure should match separator pressure");
+    assertEquals(separator.getTemperature(), temp, 0.1, "Monitor temperature should match separator temperature");
+    assertEquals(separator.getPressure(), pressure, 0.1, "Monitor pressure should match separator pressure");
   }
 
   @Test
@@ -134,11 +132,11 @@ class PhysicsIntegrationTest {
 
     // Poor health should have higher failure rate
     assertTrue(poorMonitor.getAdjustedFailureRate() > goodMonitor.getAdjustedFailureRate(),
-        "Adjusted failure rate should increase with poor health");
+	"Adjusted failure rate should increase with poor health");
 
     // 24-hour failure probability should be higher for poor health
     assertTrue(poorMonitor.getFailureProbability(24) > goodMonitor.getFailureProbability(24),
-        "Failure probability should be higher with poor health");
+	"Failure probability should be higher with poor health");
   }
 
   @Test
@@ -151,8 +149,7 @@ class PhysicsIntegrationTest {
     PhysicsBasedRiskMonitor.PhysicsBasedRiskAssessment assessment = riskMonitor.assess();
 
     // Should have read utilizations from equipment
-    assertFalse(assessment.getEquipmentUtilizations().isEmpty(),
-        "Should have equipment utilizations from NeqSim");
+    assertFalse(assessment.getEquipmentUtilizations().isEmpty(), "Should have equipment utilizations from NeqSim");
 
     // Should have health indices
     assertFalse(assessment.getEquipmentHealthIndices().isEmpty(), "Should have health indices");
@@ -258,8 +255,7 @@ class PhysicsIntegrationTest {
 
     // Data should be meaningful (not all zeros or NaN)
     @SuppressWarnings("unchecked")
-    java.util.Map<String, Double> healthMap =
-        (java.util.Map<String, Double>) map.get("equipmentHealthIndices");
+    java.util.Map<String, Double> healthMap = (java.util.Map<String, Double>) map.get("equipmentHealthIndices");
     boolean hasValidHealth = healthMap.values().stream().anyMatch(v -> v > 0 && v <= 1.0);
     assertTrue(hasValidHealth, "Should have valid health indices from physics");
   }

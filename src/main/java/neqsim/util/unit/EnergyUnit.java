@@ -17,7 +17,7 @@ public class EnergyUnit extends neqsim.util.unit.BaseUnit {
    * Constructor for EnergyUnit.
    *
    * @param value energy value
-   * @param unit engineering unit of value
+   * @param unit  engineering unit of value
    */
   public EnergyUnit(double value, String unit) {
     super(value, unit);
@@ -31,25 +31,24 @@ public class EnergyUnit extends neqsim.util.unit.BaseUnit {
    */
   public double getConversionFactor(String name) {
     switch (name) {
-      case "J":
-        return 1.0;
-      case "kJ":
-        return 1000.0;
-      case "MJ":
-        return 1.0e6;
-      case "Wh":
-        return 3600.0;
-      case "kWh":
-        return 3.6e6;
-      case "MWh":
-        return 3.6e9;
-      case "BTU":
-        return 1055.05585;
-      case "kcal":
-        return 4184.0;
-      default:
-        throw new RuntimeException(
-            new InvalidInputException(this, "getConversionFactor", name, "unit not supported"));
+    case "J":
+      return 1.0;
+    case "kJ":
+      return 1000.0;
+    case "MJ":
+      return 1.0e6;
+    case "Wh":
+      return 3600.0;
+    case "kWh":
+      return 3.6e6;
+    case "MWh":
+      return 3.6e9;
+    case "BTU":
+      return 1055.05585;
+    case "kcal":
+      return 4184.0;
+    default:
+      throw new RuntimeException(new InvalidInputException(this, "getConversionFactor", name, "unit not supported"));
     }
   }
 

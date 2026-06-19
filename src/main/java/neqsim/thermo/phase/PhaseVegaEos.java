@@ -69,7 +69,7 @@ public class PhaseVegaEos extends PhaseEos {
 
     for (int i = 0; i < numberOfComponents; i++) {
       if (Math.abs(cachedMoleFractions[i] - getComponent(i).getx()) > 1e-10) {
-        return true;
+	return true;
       }
     }
 
@@ -130,8 +130,7 @@ public class PhaseVegaEos extends PhaseEos {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
-      double beta) {
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt, double beta) {
     IPHASE = pt == PhaseType.LIQUID ? -1 : -2;
     super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
 
@@ -142,8 +141,8 @@ public class PhaseVegaEos extends PhaseEos {
     if (initType >= 1) {
       // Check if we can skip Vega calculations (state unchanged)
       if (propertiesCalculated && !hasStateChanged()) {
-        // State unchanged - skip expensive Vega calculations
-        return;
+	// State unchanged - skip expensive Vega calculations
+	return;
       }
 
       double[] temp = new double[18];
@@ -221,8 +220,7 @@ public class PhaseVegaEos extends PhaseEos {
   /** {@inheritDoc} */
   @Override
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
-      throws neqsim.util.exception.IsNaNException,
-      neqsim.util.exception.TooManyIterationsException {
+      throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
     return getMolarMass() * 1e5 / getDensity_Vega();
   }
 
@@ -235,36 +233,33 @@ public class PhaseVegaEos extends PhaseEos {
   /** {@inheritDoc} */
   @Override
   public double calcPressuredV() {
-    return -Math.pow(getDensity() / getMolarMass(), 2) * R * temperature
-        * (1 + 2 * ar[0][1].val + ar[0][2].val) / numberOfMolesInPhase;
+    return -Math.pow(getDensity() / getMolarMass(), 2) * R * temperature * (1 + 2 * ar[0][1].val + ar[0][2].val)
+	/ numberOfMolesInPhase;
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdN(int i) {
-    return ((ComponentEosInterface) getComponent(i)).dFdN(this, this.getNumberOfComponents(),
-        temperature, pressure);
+    return ((ComponentEosInterface) getComponent(i)).dFdN(this, this.getNumberOfComponents(), temperature, pressure);
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdNdN(int i, int j) {
-    return ((ComponentEosInterface) getComponent(i)).dFdNdN(j, this, this.getNumberOfComponents(),
-        temperature, pressure);
+    return ((ComponentEosInterface) getComponent(i)).dFdNdN(j, this, this.getNumberOfComponents(), temperature,
+	pressure);
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdNdV(int i) {
-    return ((ComponentEosInterface) getComponent(i)).dFdNdV(this, this.getNumberOfComponents(),
-        temperature, pressure);
+    return ((ComponentEosInterface) getComponent(i)).dFdNdV(this, this.getNumberOfComponents(), temperature, pressure);
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdNdT(int i) {
-    return ((ComponentEosInterface) getComponent(i)).dFdNdT(this, this.getNumberOfComponents(),
-        temperature, pressure);
+    return ((ComponentEosInterface) getComponent(i)).dFdNdT(this, this.getNumberOfComponents(), temperature, pressure);
   }
 
   /** {@inheritDoc} */
@@ -283,7 +278,7 @@ public class PhaseVegaEos extends PhaseEos {
   @Override
   public double getdPdVTn() {
     return -Math.pow(getNumberOfMolesInPhase() / getVolume(), 2) * R * temperature
-        * (1 + 2 * ar[0][1].val + ar[0][2].val) / numberOfMolesInPhase;
+	* (1 + 2 * ar[0][1].val + ar[0][2].val) / numberOfMolesInPhase;
   }
 
   /** {@inheritDoc} */

@@ -34,7 +34,7 @@ public class VolumeFlowTransmitter extends StreamMeasurementDeviceBaseClass {
    * Constructor for VolumeFlowTransmitter.
    * </p>
    *
-   * @param name Name of VolumeFlowTransmitter
+   * @param name   Name of VolumeFlowTransmitter
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public VolumeFlowTransmitter(String name, StreamInterface stream) {
@@ -56,24 +56,22 @@ public class VolumeFlowTransmitter extends StreamMeasurementDeviceBaseClass {
       return stream.getFlowRate(unit);
     } else if (unit.equals("m^3/hr")) {
       return stream.getThermoSystem().getPhase(measuredPhaseNumber).getNumberOfMolesInPhase()
-          * stream.getThermoSystem().getPhase(measuredPhaseNumber).getMolarMass() / stream
-              .getThermoSystem().getPhase(measuredPhaseNumber).getPhysicalProperties().getDensity()
-          * 3600.0;
+	  * stream.getThermoSystem().getPhase(measuredPhaseNumber).getMolarMass()
+	  / stream.getThermoSystem().getPhase(measuredPhaseNumber).getPhysicalProperties().getDensity() * 3600.0;
     } else if (unit.equals("Nm^3/day")) {
       return stream.getThermoSystem().getPhase(measuredPhaseNumber).getNumberOfMolesInPhase()
-          * neqsim.thermo.ThermodynamicConstantsInterface.R
-          * neqsim.thermo.ThermodynamicConstantsInterface.normalStateTemperature
-          / ThermodynamicConstantsInterface.atm * 3600.0 * 24;
+	  * neqsim.thermo.ThermodynamicConstantsInterface.R
+	  * neqsim.thermo.ThermodynamicConstantsInterface.normalStateTemperature / ThermodynamicConstantsInterface.atm
+	  * 3600.0 * 24;
     } else if (unit.equals("Sm^3/day")) {
       return stream.getThermoSystem().getPhase(measuredPhaseNumber).getNumberOfMolesInPhase()
-          * neqsim.thermo.ThermodynamicConstantsInterface.R
-          * neqsim.thermo.ThermodynamicConstantsInterface.standardStateTemperature
-          / ThermodynamicConstantsInterface.atm * 3600.0 * 24;
+	  * neqsim.thermo.ThermodynamicConstantsInterface.R
+	  * neqsim.thermo.ThermodynamicConstantsInterface.standardStateTemperature / ThermodynamicConstantsInterface.atm
+	  * 3600.0 * 24;
     } else {
       return stream.getThermoSystem().getPhase(measuredPhaseNumber).getNumberOfMolesInPhase()
-          * stream.getThermoSystem().getPhase(measuredPhaseNumber).getMolarMass() / stream
-              .getThermoSystem().getPhase(measuredPhaseNumber).getPhysicalProperties().getDensity()
-          * 3600.0;
+	  * stream.getThermoSystem().getPhase(measuredPhaseNumber).getMolarMass()
+	  / stream.getThermoSystem().getPhase(measuredPhaseNumber).getPhysicalProperties().getDensity() * 3600.0;
     }
   }
 

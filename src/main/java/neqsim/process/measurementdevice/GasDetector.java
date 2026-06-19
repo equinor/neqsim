@@ -6,9 +6,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Gas Detector instrument for detecting combustible or toxic gases.
  *
  * <p>
- * A gas detector measures the concentration of specific gases in the air, typically reporting in
- * percentage of Lower Explosive Limit (%LEL) for combustible gases, or ppm for toxic gases. It is
- * commonly used in Fire &amp; Gas (F&amp;G) systems for emergency shutdown (ESD) applications.
+ * A gas detector measures the concentration of specific gases in the air, typically reporting in percentage of Lower
+ * Explosive Limit (%LEL) for combustible gases, or ppm for toxic gases. It is commonly used in Fire &amp; Gas (F&amp;G)
+ * systems for emergency shutdown (ESD) applications.
  *
  * <p>
  * Key features:
@@ -124,7 +124,7 @@ public class GasDetector extends MeasurementDeviceBaseClass {
   /**
    * Constructor for GasDetector with specified gas type.
    *
-   * @param name name of gas detector
+   * @param name    name of gas detector
    * @param gasType type of gas being detected (COMBUSTIBLE, TOXIC, or OXYGEN)
    */
   public GasDetector(String name, GasType gasType) {
@@ -136,8 +136,8 @@ public class GasDetector extends MeasurementDeviceBaseClass {
   /**
    * Constructor for GasDetector with location.
    *
-   * @param name name of gas detector
-   * @param gasType type of gas being detected
+   * @param name     name of gas detector
+   * @param gasType  type of gas being detected
    * @param location location or zone where detector is installed
    */
   public GasDetector(String name, GasType gasType, String location) {
@@ -150,21 +150,21 @@ public class GasDetector extends MeasurementDeviceBaseClass {
    */
   private void configureRangeForType() {
     switch (gasType) {
-      case COMBUSTIBLE:
-        setMinimumValue(0.0);
-        setMaximumValue(100.0); // 0-100% LEL
-        break;
-      case TOXIC:
-        setMinimumValue(0.0);
-        setMaximumValue(1000.0); // 0-1000 ppm (configurable)
-        break;
-      case OXYGEN:
-        setMinimumValue(0.0);
-        setMaximumValue(25.0); // 0-25% O2
-        break;
-      default:
-        setMinimumValue(0.0);
-        setMaximumValue(100.0);
+    case COMBUSTIBLE:
+      setMinimumValue(0.0);
+      setMaximumValue(100.0); // 0-100% LEL
+      break;
+    case TOXIC:
+      setMinimumValue(0.0);
+      setMaximumValue(1000.0); // 0-1000 ppm (configurable)
+      break;
+    case OXYGEN:
+      setMinimumValue(0.0);
+      setMaximumValue(25.0); // 0-25% O2
+      break;
+    default:
+      setMinimumValue(0.0);
+      setMaximumValue(100.0);
     }
   }
 
@@ -172,8 +172,7 @@ public class GasDetector extends MeasurementDeviceBaseClass {
    * Sets the gas concentration reading.
    *
    * <p>
-   * For COMBUSTIBLE type: value is in %LEL (0-100%) For TOXIC type: value is in ppm For OXYGEN
-   * type: value is in %O2
+   * For COMBUSTIBLE type: value is in %LEL (0-100%) For TOXIC type: value is in ppm For OXYGEN type: value is in %O2
    * </p>
    *
    * @param concentration gas concentration in appropriate units for detector type
@@ -195,8 +194,8 @@ public class GasDetector extends MeasurementDeviceBaseClass {
    * Checks if gas is detected above threshold.
    *
    * <p>
-   * For combustible gases: typically &gt; 20% LEL is considered a detection For toxic gases:
-   * depends on gas type (e.g., H2S &gt; 10 ppm)
+   * For combustible gases: typically &gt; 20% LEL is considered a detection For toxic gases: depends on gas type (e.g.,
+   * H2S &gt; 10 ppm)
    * </p>
    *
    * @param threshold threshold value in detector's units
@@ -272,8 +271,8 @@ public class GasDetector extends MeasurementDeviceBaseClass {
    * Sets the Lower Explosive Limit for the gas being detected.
    *
    * <p>
-   * This is used to convert between ppm and %LEL. For example: - Methane: 50,000 ppm (5% vol) -
-   * Propane: 21,000 ppm (2.1% vol) - Hydrogen: 40,000 ppm (4% vol)
+   * This is used to convert between ppm and %LEL. For example: - Methane: 50,000 ppm (5% vol) - Propane: 21,000 ppm
+   * (2.1% vol) - Hydrogen: 40,000 ppm (4% vol)
    * </p>
    *
    * @param lel Lower Explosive Limit in ppm
@@ -347,8 +346,7 @@ public class GasDetector extends MeasurementDeviceBaseClass {
    * Gets the measured value in the specified unit.
    *
    * <p>
-   * Supported units depend on gas type: - COMBUSTIBLE: "%LEL", "% LEL" - TOXIC: "ppm" - OXYGEN:
-   * "%O2", "% O2"
+   * Supported units depend on gas type: - COMBUSTIBLE: "%LEL", "% LEL" - TOXIC: "ppm" - OXYGEN: "%O2", "% O2"
    * </p>
    *
    * @param unit engineering unit
@@ -357,7 +355,7 @@ public class GasDetector extends MeasurementDeviceBaseClass {
   @Override
   public double getMeasuredValue(String unit) {
     if (unit == null || unit.isEmpty() || unit.equalsIgnoreCase(this.unit)
-        || unit.equalsIgnoreCase(gasType.getDefaultUnit())) {
+	|| unit.equalsIgnoreCase(gasType.getDefaultUnit())) {
       return getMeasuredValue();
     }
 
@@ -369,9 +367,8 @@ public class GasDetector extends MeasurementDeviceBaseClass {
       return getMeasuredValue();
     }
 
-    throw new RuntimeException(
-        new neqsim.util.exception.InvalidInputException(this, "getMeasuredValue", "unit",
-            "GasDetector '" + getName() + "' only supports '" + this.unit + "' unit"));
+    throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getMeasuredValue", "unit",
+	"GasDetector '" + getName() + "' only supports '" + this.unit + "' unit"));
   }
 
   /**
@@ -392,23 +389,23 @@ public class GasDetector extends MeasurementDeviceBaseClass {
     if (gasType == GasType.COMBUSTIBLE) {
       System.out.println("  LEL: " + String.format("%.0f ppm", lowerExplosiveLimit));
       if (gasConcentration >= 60.0) {
-        System.out.println("  Status: HIGH ALARM - EVACUATE!");
+	System.out.println("  Status: HIGH ALARM - EVACUATE!");
       } else if (gasConcentration >= 20.0) {
-        System.out.println("  Status: WARNING - GAS DETECTED");
+	System.out.println("  Status: WARNING - GAS DETECTED");
       } else if (gasConcentration > 0.0) {
-        System.out.println("  Status: Low level detection");
+	System.out.println("  Status: Low level detection");
       } else {
-        System.out.println("  Status: NORMAL");
+	System.out.println("  Status: NORMAL");
       }
     } else if (gasType == GasType.TOXIC) {
       System.out.println("  Status: " + (gasConcentration > 0 ? "GAS DETECTED" : "NORMAL"));
     } else if (gasType == GasType.OXYGEN) {
       if (gasConcentration < 19.5) {
-        System.out.println("  Status: OXYGEN DEFICIENCY - DANGER!");
+	System.out.println("  Status: OXYGEN DEFICIENCY - DANGER!");
       } else if (gasConcentration > 23.5) {
-        System.out.println("  Status: OXYGEN ENRICHMENT - DANGER!");
+	System.out.println("  Status: OXYGEN ENRICHMENT - DANGER!");
       } else {
-        System.out.println("  Status: NORMAL");
+	System.out.println("  Status: NORMAL");
       }
     }
   }
@@ -430,9 +427,9 @@ public class GasDetector extends MeasurementDeviceBaseClass {
 
     if (gasType == GasType.COMBUSTIBLE) {
       if (gasConcentration >= 60.0) {
-        sb.append(" (HIGH ALARM)");
+	sb.append(" (HIGH ALARM)");
       } else if (gasConcentration >= 20.0) {
-        sb.append(" (WARNING)");
+	sb.append(" (WARNING)");
       }
     }
 

@@ -100,7 +100,7 @@ public class FireGasSISExample {
     Stream separatorGasOut = new Stream("Sep Gas Out", separator.getGasOutStream());
 
     Splitter gasSplitter = new Splitter("Gas Splitter", separatorGasOut, 2);
-    gasSplitter.setSplitFactors(new double[] {1.0, 0.0});
+    gasSplitter.setSplitFactors(new double[] { 1.0, 0.0 });
 
     Stream processStream = new Stream("To Process", gasSplitter.getSplitStream(0));
     Stream blowdownStream = new Stream("To Blowdown", gasSplitter.getSplitStream(1));
@@ -123,8 +123,8 @@ public class FireGasSISExample {
     // ═══════════════════════════════════════════════════════════════
 
     // Fire Detection SIF (2oo3 voting)
-    SafetyInstrumentedFunction fireSIF =
-        new SafetyInstrumentedFunction("Fire Detection SIF", VotingLogic.TWO_OUT_OF_THREE);
+    SafetyInstrumentedFunction fireSIF = new SafetyInstrumentedFunction("Fire Detection SIF",
+	VotingLogic.TWO_OUT_OF_THREE);
 
     Detector fireDetector1 = new Detector("FD-101", DetectorType.FIRE, AlarmLevel.HIGH, 60.0, "°C");
     Detector fireDetector2 = new Detector("FD-102", DetectorType.FIRE, AlarmLevel.HIGH, 60.0, "°C");
@@ -135,15 +135,12 @@ public class FireGasSISExample {
     fireSIF.addDetector(fireDetector3);
 
     // Gas Detection SIF (2oo3 voting)
-    SafetyInstrumentedFunction gasSIF =
-        new SafetyInstrumentedFunction("Gas Detection SIF", VotingLogic.TWO_OUT_OF_THREE);
+    SafetyInstrumentedFunction gasSIF = new SafetyInstrumentedFunction("Gas Detection SIF",
+	VotingLogic.TWO_OUT_OF_THREE);
 
-    Detector gasDetector1 =
-        new Detector("GD-101", DetectorType.GAS, AlarmLevel.HIGH_HIGH, 25.0, "% LEL");
-    Detector gasDetector2 =
-        new Detector("GD-102", DetectorType.GAS, AlarmLevel.HIGH_HIGH, 25.0, "% LEL");
-    Detector gasDetector3 =
-        new Detector("GD-103", DetectorType.GAS, AlarmLevel.HIGH_HIGH, 25.0, "% LEL");
+    Detector gasDetector1 = new Detector("GD-101", DetectorType.GAS, AlarmLevel.HIGH_HIGH, 25.0, "% LEL");
+    Detector gasDetector2 = new Detector("GD-102", DetectorType.GAS, AlarmLevel.HIGH_HIGH, 25.0, "% LEL");
+    Detector gasDetector3 = new Detector("GD-103", DetectorType.GAS, AlarmLevel.HIGH_HIGH, 25.0, "% LEL");
 
     gasSIF.addDetector(gasDetector1);
     gasSIF.addDetector(gasDetector2);
@@ -153,7 +150,7 @@ public class FireGasSISExample {
     ESDLogic esdLogic = new ESDLogic("ESD Level 1");
     esdLogic.addAction(new TripValveAction(esdInletValve), 0.0);
     esdLogic.addAction(new ActivateBlowdownAction(bdValve), 0.5);
-    esdLogic.addAction(new SetSplitterAction(gasSplitter, new double[] {0.0, 1.0}), 0.0);
+    esdLogic.addAction(new SetSplitterAction(gasSplitter, new double[] { 0.0, 1.0 }), 0.0);
 
     // Link SIFs to ESD logic
     fireSIF.linkToLogic(esdLogic);
@@ -171,25 +168,21 @@ public class FireGasSISExample {
     logger.info("Separator: HP Separator at 50 bara");
     logger.info("Gas flow rate: 10000 kg/hr");
 
-
     logger.info("SAFETY INSTRUMENTED FUNCTIONS:");
     logger.info("1. Fire Detection SIF:");
     logger.info("   - Voting: " + fireSIF.getVotingLogic());
     logger.info("   - Detectors: FD-101, FD-102, FD-103");
     logger.info("   - Setpoint: 60°C (High)");
 
-
     logger.info("2. Gas Detection SIF:");
     logger.info("   - Voting: " + gasSIF.getVotingLogic());
     logger.info("   - Detectors: GD-101, GD-102, GD-103");
     logger.info("   - Setpoint: 25% LEL (High-High)");
 
-
     logger.info("ESD LOGIC ACTIONS:");
     logger.info("  1. Trip inlet valve ESD-XV-101 (immediate)");
     logger.info("  2. Activate blowdown valve BD-101 (0.5s delay)");
     logger.info("  3. Redirect flow to blowdown (0.0s delay)");
-
 
     // Run initial steady state
     feedStream.run();
@@ -217,18 +210,14 @@ public class FireGasSISExample {
       logger.info("  " + det.toString());
     }
 
-
     logger.info(gasSIF.getStatusDescription());
     for (Detector det : gasSIF.getDetectors()) {
       logger.info("  " + det.toString());
     }
 
-
-    logger.printf(org.apache.logging.log4j.Level.INFO, "ESD Logic: %s%n",
-        esdLogic.getStatusDescription());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "ESD Logic: %s%n", esdLogic.getStatusDescription());
     logger.printf(org.apache.logging.log4j.Level.INFO, "Process flow: %.1f kg/hr%n",
-        processStream.getFlowRate("kg/hr"));
-
+	processStream.getFlowRate("kg/hr"));
 
     // ═══════════════════════════════════════════════════════════════
     // SCENARIO 2: SINGLE FIRE DETECTOR TRIP (NO ESD)
@@ -242,10 +231,8 @@ public class FireGasSISExample {
     logger.info("  FD-101: " + (fireDetector1.isTripped() ? "TRIPPED" : "NORMAL"));
     logger.info("  FD-102: " + (fireDetector2.isTripped() ? "TRIPPED" : "NORMAL"));
     logger.info("  FD-103: " + (fireDetector3.isTripped() ? "TRIPPED" : "NORMAL"));
-    logger.info("SIF Status: "
-        + (fireSIF.isTripped() ? "TRIPPED (ESD ACTIVATED)" : "NOT TRIPPED (Monitoring)"));
+    logger.info("SIF Status: " + (fireSIF.isTripped() ? "TRIPPED (ESD ACTIVATED)" : "NOT TRIPPED (Monitoring)"));
     logger.info("Voting requires 2/3 detectors - ESD NOT activated");
-
 
     // ═══════════════════════════════════════════════════════════════
     // SCENARIO 3: FIRE DETECTED - 2oo3 VOTING SATISFIED
@@ -260,19 +247,15 @@ public class FireGasSISExample {
     logger.info("  FD-102: " + (fireDetector2.isTripped() ? "TRIPPED" : "NORMAL"));
     logger.info("  FD-103: " + (fireDetector3.isTripped() ? "TRIPPED" : "NORMAL"));
     logger.info("SIF Status: " + (fireSIF.isTripped() ? "TRIPPED - ESD ACTIVATED" : "NOT TRIPPED"));
-    logger.printf(org.apache.logging.log4j.Level.INFO, "ESD Logic: %s%n",
-        esdLogic.getStatusDescription());
-
+    logger.printf(org.apache.logging.log4j.Level.INFO, "ESD Logic: %s%n", esdLogic.getStatusDescription());
 
     // Switch to dynamic mode
     separator.setCalculateSteadyState(false);
 
     // Simulate ESD execution
     logger.info("═══ ESD SEQUENCE EXECUTION ═══");
-    logger.info(
-        "Time (s) | Fire SIF | Gas SIF  | ESD Step | ESD Valve (%) | BD Valve (%) | Process Flow");
-    logger.info(
-        "---------|----------|----------|----------|---------------|--------------|-------------");
+    logger.info("Time (s) | Fire SIF | Gas SIF  | ESD Step | ESD Valve (%) | BD Valve (%) | Process Flow");
+    logger.info("---------|----------|----------|----------|---------------|--------------|-------------");
 
     double timeStep = 1.0;
     double totalTime = 8.0;
@@ -292,13 +275,13 @@ public class FireGasSISExample {
       esdInletValve.runTransient(timeStep, java.util.UUID.randomUUID());
 
       if (esdInletValve.getPercentValveOpening() < 1.0) {
-        separatorInlet.getThermoSystem().setTotalFlowRate(0.1, "kg/hr");
+	separatorInlet.getThermoSystem().setTotalFlowRate(0.1, "kg/hr");
       } else {
-        feedStream.run();
-        controlValve.run();
-        afterControlValve.run();
-        esdInletValve.run();
-        separatorInlet.run();
+	feedStream.run();
+	controlValve.run();
+	afterControlValve.run();
+	esdInletValve.run();
+	separatorInlet.run();
       }
 
       separator.runTransient(timeStep, java.util.UUID.randomUUID());
@@ -310,16 +293,12 @@ public class FireGasSISExample {
 
       String fireStatus = fireSIF.isTripped() ? "TRIPPED" : "NORMAL ";
       String gasStatus = gasSIF.isTripped() ? "TRIPPED" : "NORMAL ";
-      String esdStep =
-          esdLogic.isComplete() ? "DONE" : "Step " + (esdLogic.getCurrentActionIndex() + 1) + "/3";
+      String esdStep = esdLogic.isComplete() ? "DONE" : "Step " + (esdLogic.getCurrentActionIndex() + 1) + "/3";
 
-      logger.printf(org.apache.logging.log4j.Level.INFO,
-          "%8.1f | %8s | %8s | %8s | %13.1f | %12.1f | %12.1f%n", time, fireStatus, gasStatus,
-          esdStep, esdInletValve.getPercentValveOpening(), bdValve.getPercentValveOpening(),
-          processStream.getFlowRate("kg/hr"));
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%8.1f | %8s | %8s | %8s | %13.1f | %12.1f | %12.1f%n", time,
+	  fireStatus, gasStatus, esdStep, esdInletValve.getPercentValveOpening(), bdValve.getPercentValveOpening(),
+	  processStream.getFlowRate("kg/hr"));
     }
-
-
 
     // ═══════════════════════════════════════════════════════════════
     // SCENARIO 4: GAS DETECTION WITH BYPASS
@@ -338,18 +317,15 @@ public class FireGasSISExample {
 
     logger.info("Gas detectors status:");
     logger.info("  GD-101: " + (gasDetector1.isBypassed() ? "BYPASSED" : "ACTIVE") + " ("
-        + (gasDetector1.isTripped() ? "TRIPPED" : "NORMAL") + ")");
+	+ (gasDetector1.isTripped() ? "TRIPPED" : "NORMAL") + ")");
     logger.info("  GD-102: " + (gasDetector2.isBypassed() ? "BYPASSED" : "ACTIVE") + " ("
-        + (gasDetector2.isTripped() ? "TRIPPED" : "NORMAL") + ")");
+	+ (gasDetector2.isTripped() ? "TRIPPED" : "NORMAL") + ")");
     logger.info("  GD-103: " + (gasDetector3.isBypassed() ? "BYPASSED" : "ACTIVE") + " ("
-        + (gasDetector3.isTripped() ? "TRIPPED" : "NORMAL") + ")");
-
+	+ (gasDetector3.isTripped() ? "TRIPPED" : "NORMAL") + ")");
 
     logger.info(gasSIF.getStatusDescription());
     logger.info("Note: With 1 bypassed, 2oo3 becomes effectively 2oo2");
-    logger.info("SIF still provides adequate safety: "
-        + (gasSIF.isTripped() ? "YES (ESD activated)" : "NO"));
-
+    logger.info("SIF still provides adequate safety: " + (gasSIF.isTripped() ? "YES (ESD activated)" : "NO"));
 
     // ═══════════════════════════════════════════════════════════════
     // FINAL SUMMARY
@@ -365,13 +341,11 @@ public class FireGasSISExample {
     logger.info("✓ Coordinated multi-valve shutdown sequence");
     logger.info("✓ IEC 61511 compliant safety architecture");
 
-
     logger.info("SAFETY INTEGRITY:");
     logger.info("• Redundant detection reduces spurious trips");
     logger.info("• One detector can fail without losing safety function");
     logger.info("• Maintenance possible with one detector bypassed");
     logger.info("• Multiple independent SIFs for different hazards");
-
 
     logger.info("╔════════════════════════════════════════════════════════════════╗");
     logger.info("║         FIRE & GAS SIS EXAMPLE COMPLETED                       ║");

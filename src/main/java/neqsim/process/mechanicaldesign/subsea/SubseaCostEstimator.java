@@ -138,7 +138,8 @@ public class SubseaCostEstimator {
   /**
    * Default constructor.
    */
-  public SubseaCostEstimator() {}
+  public SubseaCostEstimator() {
+  }
 
   /**
    * Constructor with region.
@@ -156,21 +157,21 @@ public class SubseaCostEstimator {
   private void applyRegionFactor() {
     double factor = 1.0;
     switch (region) {
-      case NORWAY:
-        factor = 1.35;
-        break;
-      case UK:
-        factor = 1.25;
-        break;
-      case GOM:
-        factor = 1.0;
-        break;
-      case BRAZIL:
-        factor = 0.85;
-        break;
-      case WEST_AFRICA:
-        factor = 1.1;
-        break;
+    case NORWAY:
+      factor = 1.35;
+      break;
+    case UK:
+      factor = 1.25;
+      break;
+    case GOM:
+      factor = 1.0;
+      break;
+    case BRAZIL:
+      factor = 0.85;
+      break;
+    case WEST_AFRICA:
+      factor = 1.1;
+      break;
     }
 
     engineeringRate *= factor;
@@ -181,10 +182,10 @@ public class SubseaCostEstimator {
   /**
    * Calculate PLET cost estimate.
    *
-   * @param dryWeightTonnes dry weight in tonnes
-   * @param hubSizeInches hub size in inches
-   * @param waterDepthM water depth in meters
-   * @param hasIsolationValve has isolation valve
+   * @param dryWeightTonnes    dry weight in tonnes
+   * @param hubSizeInches      hub size in inches
+   * @param waterDepthM        water depth in meters
+   * @param hasIsolationValve  has isolation valve
    * @param hasPiggingFacility has pigging facilities
    */
   public void calculatePLETCost(double dryWeightTonnes, double hubSizeInches, double waterDepthM,
@@ -231,10 +232,10 @@ public class SubseaCostEstimator {
    * Calculate Subsea Tree cost estimate.
    *
    * @param pressureRatingPsi pressure rating in psi
-   * @param boreSizeInches bore size in inches
-   * @param waterDepthM water depth in meters
-   * @param isHorizontal is horizontal tree
-   * @param isDualBore is dual bore tree
+   * @param boreSizeInches    bore size in inches
+   * @param waterDepthM       water depth in meters
+   * @param isHorizontal      is horizontal tree
+   * @param isDualBore        is dual bore tree
    */
   public void calculateTreeCost(double pressureRatingPsi, double boreSizeInches, double waterDepthM,
       boolean isHorizontal, boolean isDualBore) {
@@ -283,10 +284,10 @@ public class SubseaCostEstimator {
   /**
    * Calculate Subsea Manifold cost estimate.
    *
-   * @param numberOfSlots number of well slots
+   * @param numberOfSlots   number of well slots
    * @param dryWeightTonnes dry weight in tonnes
-   * @param waterDepthM water depth in meters
-   * @param hasTestHeader has test header
+   * @param waterDepthM     water depth in meters
+   * @param hasTestHeader   has test header
    */
   public void calculateManifoldCost(int numberOfSlots, double dryWeightTonnes, double waterDepthM,
       boolean hasTestHeader) {
@@ -330,22 +331,21 @@ public class SubseaCostEstimator {
   /**
    * Calculate Subsea Jumper cost estimate.
    *
-   * @param lengthM length in meters
+   * @param lengthM        length in meters
    * @param diameterInches diameter in inches
-   * @param isRigid is rigid jumper
-   * @param waterDepthM water depth in meters
+   * @param isRigid        is rigid jumper
+   * @param waterDepthM    water depth in meters
    */
-  public void calculateJumperCost(double lengthM, double diameterInches, boolean isRigid,
-      double waterDepthM) {
+  public void calculateJumperCost(double lengthM, double diameterInches, boolean isRigid, double waterDepthM) {
     if (isRigid) {
       // Rigid jumper cost
       double baseCost;
       if (lengthM < 30) {
-        baseCost = 200000;
+	baseCost = 200000;
       } else if (lengthM <= 60) {
-        baseCost = 400000;
+	baseCost = 400000;
       } else {
-        baseCost = 700000;
+	baseCost = 700000;
       }
 
       // Material cost
@@ -365,11 +365,11 @@ public class SubseaCostEstimator {
       // Flexible jumper - price per meter
       double pricePerMeter;
       if (diameterInches <= 4) {
-        pricePerMeter = 600;
+	pricePerMeter = 600;
       } else if (diameterInches <= 6) {
-        pricePerMeter = 800;
+	pricePerMeter = 800;
       } else {
-        pricePerMeter = 1200;
+	pricePerMeter = 1200;
       }
 
       equipmentCost = lengthM * pricePerMeter;
@@ -402,16 +402,15 @@ public class SubseaCostEstimator {
   /**
    * Calculate Umbilical cost estimate.
    *
-   * @param lengthKm length in kilometers
-   * @param numberOfHydraulicLines number of hydraulic lines
-   * @param numberOfChemicalLines number of chemical lines
+   * @param lengthKm                 length in kilometers
+   * @param numberOfHydraulicLines   number of hydraulic lines
+   * @param numberOfChemicalLines    number of chemical lines
    * @param numberOfElectricalCables number of electrical cables
-   * @param waterDepthM water depth in meters
-   * @param isDynamic is dynamic section
+   * @param waterDepthM              water depth in meters
+   * @param isDynamic                is dynamic section
    */
-  public void calculateUmbilicalCost(double lengthKm, int numberOfHydraulicLines,
-      int numberOfChemicalLines, int numberOfElectricalCables, double waterDepthM,
-      boolean isDynamic) {
+  public void calculateUmbilicalCost(double lengthKm, int numberOfHydraulicLines, int numberOfChemicalLines,
+      int numberOfElectricalCables, double waterDepthM, boolean isDynamic) {
     // Base cost per km
     double baseCostPerKm = isDynamic ? 3500000 : 2000000;
 
@@ -453,14 +452,14 @@ public class SubseaCostEstimator {
   /**
    * Calculate Flexible Pipe cost estimate.
    *
-   * @param lengthM length in meters
+   * @param lengthM             length in meters
    * @param innerDiameterInches inner diameter in inches
-   * @param waterDepthM water depth in meters
-   * @param isDynamic is dynamic riser
-   * @param hasBuoyancy has buoyancy modules
+   * @param waterDepthM         water depth in meters
+   * @param isDynamic           is dynamic riser
+   * @param hasBuoyancy         has buoyancy modules
    */
-  public void calculateFlexiblePipeCost(double lengthM, double innerDiameterInches,
-      double waterDepthM, boolean isDynamic, boolean hasBuoyancy) {
+  public void calculateFlexiblePipeCost(double lengthM, double innerDiameterInches, double waterDepthM,
+      boolean isDynamic, boolean hasBuoyancy) {
     // Price per meter by size
     double pricePerMeter;
     if (innerDiameterInches <= 4) {
@@ -517,30 +516,29 @@ public class SubseaCostEstimator {
   /**
    * Calculate Subsea Booster cost estimate.
    *
-   * @param powerMW power in MW
-   * @param isCompressor is compressor (vs pump)
-   * @param waterDepthM water depth in meters
+   * @param powerMW       power in MW
+   * @param isCompressor  is compressor (vs pump)
+   * @param waterDepthM   water depth in meters
    * @param hasRedundancy has redundant motor
    */
-  public void calculateBoosterCost(double powerMW, boolean isCompressor, double waterDepthM,
-      boolean hasRedundancy) {
+  public void calculateBoosterCost(double powerMW, boolean isCompressor, double waterDepthM, boolean hasRedundancy) {
     // Base cost by power and type
     double baseCost;
     if (isCompressor) {
       if (powerMW < 5) {
-        baseCost = 60000000;
+	baseCost = 60000000;
       } else if (powerMW <= 10) {
-        baseCost = 100000000;
+	baseCost = 100000000;
       } else {
-        baseCost = 150000000;
+	baseCost = 150000000;
       }
     } else {
       if (powerMW < 3) {
-        baseCost = 30000000;
+	baseCost = 30000000;
       } else if (powerMW <= 6) {
-        baseCost = 50000000;
+	baseCost = 50000000;
       } else {
-        baseCost = 80000000;
+	baseCost = 80000000;
       }
     }
 
@@ -585,12 +583,11 @@ public class SubseaCostEstimator {
   /**
    * Calculate generic subsea installation cost.
    *
-   * @param weightTonnes equipment weight in tonnes
-   * @param waterDepthM water depth in meters
+   * @param weightTonnes      equipment weight in tonnes
+   * @param waterDepthM       water depth in meters
    * @param requiresPrecision requires precision landing
    */
-  private void calculateSubseaInstallation(double weightTonnes, double waterDepthM,
-      boolean requiresPrecision) {
+  private void calculateSubseaInstallation(double weightTonnes, double waterDepthM, boolean requiresPrecision) {
     // Vessel selection based on weight
     if (weightTonnes > 500) {
       vesselDayRate = 600000; // Heavy lift vessel
@@ -622,8 +619,7 @@ public class SubseaCostEstimator {
    * Calculate total costs.
    */
   private void calculateTotals() {
-    double subtotal = equipmentCost + fabricationCost + installationCost + engineeringCost
-        + projectManagementCost;
+    double subtotal = equipmentCost + fabricationCost + installationCost + engineeringCost + projectManagementCost;
     contingency = subtotal * contingencyPct;
     totalCost = subtotal + contingency;
 
@@ -688,11 +684,10 @@ public class SubseaCostEstimator {
    * Generate bill of materials.
    *
    * @param equipmentType equipment type name
-   * @param details equipment details
+   * @param details       equipment details
    * @return list of BOM items
    */
-  public List<Map<String, Object>> generateBillOfMaterials(String equipmentType,
-      Map<String, Object> details) {
+  public List<Map<String, Object>> generateBillOfMaterials(String equipmentType, Map<String, Object> details) {
     List<Map<String, Object>> bom = new ArrayList<Map<String, Object>>();
 
     // Main equipment
@@ -777,7 +772,7 @@ public class SubseaCostEstimator {
    */
   public String toJson() {
     return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(getCostBreakdown());
+	.toJson(getCostBreakdown());
   }
 
   // Getters
@@ -882,17 +877,17 @@ public class SubseaCostEstimator {
     this.currency = currency;
     // Update conversion rate based on currency
     switch (currency) {
-      case EUR:
-        currencyRate = 0.92;
-        break;
-      case GBP:
-        currencyRate = 0.79;
-        break;
-      case NOK:
-        currencyRate = 10.5;
-        break;
-      default:
-        currencyRate = 1.0;
+    case EUR:
+      currencyRate = 0.92;
+      break;
+    case GBP:
+      currencyRate = 0.79;
+      break;
+    case NOK:
+      currencyRate = 10.5;
+      break;
+    default:
+      currencyRate = 1.0;
     }
   }
 
@@ -900,12 +895,11 @@ public class SubseaCostEstimator {
    * Generate bill of materials for subsea equipment.
    *
    * @param equipmentType type of equipment
-   * @param weightTonnes equipment weight in tonnes
-   * @param waterDepth water depth in meters
+   * @param weightTonnes  equipment weight in tonnes
+   * @param waterDepth    water depth in meters
    * @return list of BOM items
    */
-  public List<Map<String, Object>> generateBOM(String equipmentType, double weightTonnes,
-      double waterDepth) {
+  public List<Map<String, Object>> generateBOM(String equipmentType, double weightTonnes, double waterDepth) {
     List<Map<String, Object>> bom = new ArrayList<Map<String, Object>>();
 
     // Steel structure

@@ -177,8 +177,7 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos(273.15 - 20, 1);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(273.15 - 20, 1);
     testSystem.addComponent("propane", 0.30);
     testSystem.createDatabase(true);
 
@@ -190,26 +189,20 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
     propaneModule.addInputStream("refrigerant", porpane);
     propaneModule.run();
 
-    double compressorWork =
-        ((CompressorInterface) propaneModule.getOperations().getUnit("propane compressor"))
-            .getEnergy();
+    double compressorWork = ((CompressorInterface) propaneModule.getOperations().getUnit("propane compressor"))
+	.getEnergy();
 
-    double evaporatorDuty =
-        ((Cooler) propaneModule.getOperations().getUnit("propane evaporator")).getEnergyInput();
-    double evaporatorPressure =
-        ((Cooler) propaneModule.getOperations().getUnit("propane evaporator")).getOutletStream()
-            .getPressure();
-    double evaporatorTemperature =
-        ((Cooler) propaneModule.getOperations().getUnit("propane evaporator")).getOutletStream()
-            .getTemperature();
+    double evaporatorDuty = ((Cooler) propaneModule.getOperations().getUnit("propane evaporator")).getEnergyInput();
+    double evaporatorPressure = ((Cooler) propaneModule.getOperations().getUnit("propane evaporator")).getOutletStream()
+	.getPressure();
+    double evaporatorTemperature = ((Cooler) propaneModule.getOperations().getUnit("propane evaporator"))
+	.getOutletStream().getTemperature();
 
-    double condenserDuty =
-        ((Heater) propaneModule.getOperations().getUnit("propane condenser")).getEnergyInput();
-    double condenserPressure = ((Heater) propaneModule.getOperations().getUnit("propane condenser"))
-        .getOutletStream().getPressure();
-    double condenserTemperature =
-        ((Heater) propaneModule.getOperations().getUnit("propane condenser")).getOutletStream()
-            .getTemperature();
+    double condenserDuty = ((Heater) propaneModule.getOperations().getUnit("propane condenser")).getEnergyInput();
+    double condenserPressure = ((Heater) propaneModule.getOperations().getUnit("propane condenser")).getOutletStream()
+	.getPressure();
+    double condenserTemperature = ((Heater) propaneModule.getOperations().getUnit("propane condenser"))
+	.getOutletStream().getTemperature();
 
     System.out.println("Compressor work " + compressorWork + " W");
 

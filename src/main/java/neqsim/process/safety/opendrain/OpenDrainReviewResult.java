@@ -121,10 +121,8 @@ public class OpenDrainReviewResult implements Serializable {
     map.put("drainSystemType", item == null ? "" : item.getDrainSystemType());
     map.put("verdict", verdict);
     map.put("confidence", confidence);
-    map.put("sourceReferences",
-        item == null ? new ArrayList<String>() : item.getSourceReferences());
-    map.put("evidenceValues",
-        item == null ? new LinkedHashMap<String, Object>() : item.getValues());
+    map.put("sourceReferences", item == null ? new ArrayList<String>() : item.getSourceReferences());
+    map.put("evidenceValues", item == null ? new LinkedHashMap<String, Object>() : item.getValues());
     List<Map<String, Object>> assessmentMaps = new ArrayList<Map<String, Object>>();
     for (OpenDrainAssessment assessment : assessments) {
       assessmentMaps.add(assessment.toMap());

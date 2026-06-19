@@ -43,7 +43,7 @@ class FluidClassifierTest {
 
     ReservoirFluidType type = FluidClassifier.classify(fluid);
     assertTrue(type == ReservoirFluidType.WET_GAS || type == ReservoirFluidType.DRY_GAS,
-        "Should classify as wet gas or dry gas");
+	"Should classify as wet gas or dry gas");
   }
 
   @Test
@@ -63,7 +63,7 @@ class FluidClassifierTest {
 
     ReservoirFluidType type = FluidClassifier.classify(fluid);
     assertTrue(type == ReservoirFluidType.GAS_CONDENSATE || type == ReservoirFluidType.VOLATILE_OIL,
-        "Should classify as gas condensate or volatile oil");
+	"Should classify as gas condensate or volatile oil");
   }
 
   @Test
@@ -86,9 +86,9 @@ class FluidClassifierTest {
     ReservoirFluidType type = FluidClassifier.classify(fluid);
     // With heavy fractions this should be black oil, volatile oil, or heavy oil
     assertTrue(
-        type == ReservoirFluidType.BLACK_OIL || type == ReservoirFluidType.VOLATILE_OIL
-            || type == ReservoirFluidType.HEAVY_OIL,
-        "Should classify as black oil, volatile oil, or heavy oil. Got: " + type);
+	type == ReservoirFluidType.BLACK_OIL || type == ReservoirFluidType.VOLATILE_OIL
+	    || type == ReservoirFluidType.HEAVY_OIL,
+	"Should classify as black oil, volatile oil, or heavy oil. Got: " + type);
   }
 
   @Test

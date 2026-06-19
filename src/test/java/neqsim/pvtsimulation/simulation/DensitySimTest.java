@@ -16,12 +16,12 @@ public class DensitySimTest {
     tempSystem.init(0);
 
     DensitySim sepSim = new DensitySim(tempSystem);
-    double[] temps = {300.15, 293.15, 283.15, 273.15, 264.15};
-    double[] pres = {5, 5, 5, 5.0, 5.0};
+    double[] temps = { 300.15, 293.15, 283.15, 273.15, 264.15 };
+    double[] pres = { 5, 5, 5, 5.0, 5.0 };
     sepSim.setTemperaturesAndPressures(temps, pres);
     sepSim.runCalc();
 
-    double[][] expData = {{2e-4, 3e-4, 4e-4, 5e-4, 6e-4},};
+    double[][] expData = { { 2e-4, 3e-4, 4e-4, 5e-4, 6e-4 }, };
     sepSim.setExperimentalData(expData);
     // sepSim.runTuning();
     sepSim.runCalc();

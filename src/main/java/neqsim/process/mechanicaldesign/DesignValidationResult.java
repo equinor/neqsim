@@ -10,8 +10,8 @@ import java.util.Map;
  * Represents validation results from design calculations.
  *
  * <p>
- * Collects warnings, errors, and info messages during design validation. Provides methods to check
- * overall status and generate reports.
+ * Collects warnings, errors, and info messages during design validation. Provides methods to check overall status and
+ * generate reports.
  * </p>
  *
  * @author esol
@@ -50,14 +50,14 @@ public class DesignValidationResult implements Serializable {
     /**
      * Constructor.
      *
-     * @param severity message severity
-     * @param category message category (e.g., "Pressure Rating", "Standards Compliance")
+     * @param severity      message severity
+     * @param category      message category (e.g., "Pressure Rating", "Standards Compliance")
      * @param equipmentName name of affected equipment
-     * @param message the validation message
-     * @param remediation suggested fix or action
+     * @param message       the validation message
+     * @param remediation   suggested fix or action
      */
-    public ValidationMessage(Severity severity, String category, String equipmentName,
-        String message, String remediation) {
+    public ValidationMessage(Severity severity, String category, String equipmentName, String message,
+	String remediation) {
       this.severity = severity;
       this.category = category;
       this.equipmentName = equipmentName;
@@ -130,15 +130,15 @@ public class DesignValidationResult implements Serializable {
   /**
    * Add a validation message.
    *
-   * @param severity message severity
-   * @param category message category
+   * @param severity      message severity
+   * @param category      message category
    * @param equipmentName affected equipment
-   * @param message the message
-   * @param remediation suggested fix
+   * @param message       the message
+   * @param remediation   suggested fix
    * @return this instance for chaining
    */
-  public DesignValidationResult addMessage(Severity severity, String category, String equipmentName,
-      String message, String remediation) {
+  public DesignValidationResult addMessage(Severity severity, String category, String equipmentName, String message,
+      String remediation) {
     messages.add(new ValidationMessage(severity, category, equipmentName, message, remediation));
     hasRun = true;
     return this;
@@ -148,7 +148,7 @@ public class DesignValidationResult implements Serializable {
    * Add an info message.
    *
    * @param equipmentName affected equipment
-   * @param message the message
+   * @param message       the message
    * @return this instance for chaining
    */
   public DesignValidationResult addInfo(String equipmentName, String message) {
@@ -158,49 +158,46 @@ public class DesignValidationResult implements Serializable {
   /**
    * Add a warning message.
    *
-   * @param category message category
+   * @param category      message category
    * @param equipmentName affected equipment
-   * @param message the message
-   * @param remediation suggested fix
+   * @param message       the message
+   * @param remediation   suggested fix
    * @return this instance for chaining
    */
-  public DesignValidationResult addWarning(String category, String equipmentName, String message,
-      String remediation) {
+  public DesignValidationResult addWarning(String category, String equipmentName, String message, String remediation) {
     return addMessage(Severity.WARNING, category, equipmentName, message, remediation);
   }
 
   /**
    * Add an error message.
    *
-   * @param category message category
+   * @param category      message category
    * @param equipmentName affected equipment
-   * @param message the message
-   * @param remediation suggested fix
+   * @param message       the message
+   * @param remediation   suggested fix
    * @return this instance for chaining
    */
-  public DesignValidationResult addError(String category, String equipmentName, String message,
-      String remediation) {
+  public DesignValidationResult addError(String category, String equipmentName, String message, String remediation) {
     return addMessage(Severity.ERROR, category, equipmentName, message, remediation);
   }
 
   /**
    * Add a critical error message.
    *
-   * @param category message category
+   * @param category      message category
    * @param equipmentName affected equipment
-   * @param message the message
-   * @param remediation suggested fix
+   * @param message       the message
+   * @param remediation   suggested fix
    * @return this instance for chaining
    */
-  public DesignValidationResult addCritical(String category, String equipmentName, String message,
-      String remediation) {
+  public DesignValidationResult addCritical(String category, String equipmentName, String message, String remediation) {
     return addMessage(Severity.CRITICAL, category, equipmentName, message, remediation);
   }
 
   /**
    * Add a metric value.
    *
-   * @param name metric name
+   * @param name  metric name
    * @param value metric value
    * @return this instance for chaining
    */
@@ -228,7 +225,7 @@ public class DesignValidationResult implements Serializable {
     List<ValidationMessage> filtered = new ArrayList<ValidationMessage>();
     for (ValidationMessage msg : messages) {
       if (msg.getSeverity() == severity) {
-        filtered.add(msg);
+	filtered.add(msg);
       }
     }
     return filtered;
@@ -251,7 +248,7 @@ public class DesignValidationResult implements Serializable {
   public boolean isValid() {
     for (ValidationMessage msg : messages) {
       if (msg.getSeverity() == Severity.ERROR || msg.getSeverity() == Severity.CRITICAL) {
-        return false;
+	return false;
       }
     }
     return true;
@@ -265,7 +262,7 @@ public class DesignValidationResult implements Serializable {
   public boolean hasWarnings() {
     for (ValidationMessage msg : messages) {
       if (msg.getSeverity() == Severity.WARNING) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -279,7 +276,7 @@ public class DesignValidationResult implements Serializable {
   public boolean hasErrors() {
     for (ValidationMessage msg : messages) {
       if (msg.getSeverity() == Severity.ERROR || msg.getSeverity() == Severity.CRITICAL) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -304,7 +301,7 @@ public class DesignValidationResult implements Serializable {
     int count = 0;
     for (ValidationMessage msg : messages) {
       if (msg.getSeverity() == severity) {
-        count++;
+	count++;
       }
     }
     return count;
@@ -334,7 +331,7 @@ public class DesignValidationResult implements Serializable {
       messages.addAll(other.messages);
       metrics.putAll(other.metrics);
       if (other.hasRun) {
-        hasRun = true;
+	hasRun = true;
       }
     }
     return this;
@@ -349,9 +346,8 @@ public class DesignValidationResult implements Serializable {
     StringBuilder sb = new StringBuilder();
     sb.append("Design Validation Results:\n");
     sb.append(String.format("  Status: %s\n", isValid() ? "VALID" : "INVALID"));
-    sb.append(String.format("  Critical: %d, Errors: %d, Warnings: %d, Info: %d\n",
-        getCount(Severity.CRITICAL), getCount(Severity.ERROR), getCount(Severity.WARNING),
-        getCount(Severity.INFO)));
+    sb.append(String.format("  Critical: %d, Errors: %d, Warnings: %d, Info: %d\n", getCount(Severity.CRITICAL),
+	getCount(Severity.ERROR), getCount(Severity.WARNING), getCount(Severity.INFO)));
     return sb.toString();
   }
 
@@ -362,10 +358,10 @@ public class DesignValidationResult implements Serializable {
     if (!messages.isEmpty()) {
       sb.append("\nMessages:\n");
       for (ValidationMessage msg : messages) {
-        sb.append("  ").append(msg.toString()).append("\n");
-        if (msg.getRemediation() != null && !msg.getRemediation().isEmpty()) {
-          sb.append("    Fix: ").append(msg.getRemediation()).append("\n");
-        }
+	sb.append("  ").append(msg.toString()).append("\n");
+	if (msg.getRemediation() != null && !msg.getRemediation().isEmpty()) {
+	  sb.append("    Fix: ").append(msg.getRemediation()).append("\n");
+	}
       }
     }
     return sb.toString();

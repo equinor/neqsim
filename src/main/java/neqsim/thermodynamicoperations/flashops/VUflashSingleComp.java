@@ -24,8 +24,8 @@ public class VUflashSingleComp extends Flash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param Vspec a double
-   * @param Uspec a double
+   * @param Vspec  a double
+   * @param Uspec  a double
    */
   public VUflashSingleComp(SystemInterface system, double Vspec, double Uspec) {
     this.system = system;
@@ -36,25 +36,25 @@ public class VUflashSingleComp extends Flash {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    neqsim.thermodynamicoperations.ThermodynamicOperations bubOps =
-        new neqsim.thermodynamicoperations.ThermodynamicOperations(system);
+    neqsim.thermodynamicoperations.ThermodynamicOperations bubOps = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+	system);
     double initTemp = system.getTemperature();
 
     if (system.getPressure() < system.getPhase(0).getComponent(0).getPC()) {
       try {
-        bubOps.TPflash();
-        if (system.getPhase(0).getType() == PhaseType.GAS) {
-          try {
-            bubOps.dewPointTemperatureFlash();
-          } catch (Exception e) {
-            system.setTemperature(298.0);
-          }
-        } else {
-          bubOps.bubblePointTemperatureFlash();
-        }
+	bubOps.TPflash();
+	if (system.getPhase(0).getType() == PhaseType.GAS) {
+	  try {
+	    bubOps.dewPointTemperatureFlash();
+	  } catch (Exception e) {
+	    system.setTemperature(298.0);
+	  }
+	} else {
+	  bubOps.bubblePointTemperatureFlash();
+	}
       } catch (Exception ex) {
-        system.setTemperature(initTemp);
-        logger.error(ex.getMessage(), ex);
+	system.setTemperature(initTemp);
+	logger.error(ex.getMessage(), ex);
       }
     } else {
       new VUflash(system, Vspec, Uspec).run();

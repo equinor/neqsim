@@ -42,8 +42,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author ESOL
  * @version $Id: $Id
  */
-public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
-    implements ProcessEquipmentInterface {
+public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass implements ProcessEquipmentInterface {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
@@ -57,8 +56,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   /**
    * Map of controller tag name to controller device. Supports multiple controllers per equipment.
    */
-  private final Map<String, ControllerDeviceInterface> controllerMap =
-      new LinkedHashMap<String, ControllerDeviceInterface>();
+  private final Map<String, ControllerDeviceInterface> controllerMap = new LinkedHashMap<String, ControllerDeviceInterface>();
   private String specification = "TP";
   public String[][] report = new String[0][0];
   public HashMap<String, String> properties = new HashMap<String, String>();
@@ -70,8 +68,8 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   private double minimumFlow = 1e-20;
 
   /**
-   * Flag to enable/disable capacity analysis for this equipment. When disabled, this equipment is
-   * excluded from bottleneck detection, capacity utilization summaries, and optimization routines.
+   * Flag to enable/disable capacity analysis for this equipment. When disabled, this equipment is excluded from
+   * bottleneck detection, capacity utilization summaries, and optimization routines.
    */
   private boolean capacityAnalysisEnabled = true;
 
@@ -86,15 +84,15 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   private boolean isFailed = false;
 
   /**
-   * IEC 81346 reference designation for this equipment. Contains the function, product, and
-   * location aspects per IEC 81346 standard.
+   * IEC 81346 reference designation for this equipment. Contains the function, product, and location aspects per IEC
+   * 81346 standard.
    */
   private ReferenceDesignation referenceDesignation = new ReferenceDesignation();
 
   /**
    * Capacity constraints for this equipment, keyed by constraint name. Marked transient because
-   * {@link CapacityConstraint} instances may hold non-serializable lambda value suppliers. After
-   * deserialization, subclasses should call {@link #initializeDefaultConstraints()} to rebuild.
+   * {@link CapacityConstraint} instances may hold non-serializable lambda value suppliers. After deserialization,
+   * subclasses should call {@link #initializeDefaultConstraints()} to rebuild.
    */
   private transient Map<String, CapacityConstraint> capacityConstraints;
 
@@ -118,7 +116,8 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   /** {@inheritDoc} */
   @Override
   @ExcludeFromJacocoGeneratedReport
-  public void displayResult() {}
+  public void displayResult() {
+  }
 
   /**
    * Create deep copy.
@@ -156,7 +155,8 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
-  public void setRegulatorOutSignal(double signal) {}
+  public void setRegulatorOutSignal(double signal) {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -164,8 +164,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     this.controller = controller;
     hasController = controller != null;
     if (controller != null) {
-      String tag =
-          controller instanceof neqsim.util.NamedInterface ? controller.getName() : "default";
+      String tag = controller instanceof neqsim.util.NamedInterface ? controller.getName() : "default";
       controllerMap.put(tag, controller);
     }
   }
@@ -180,8 +179,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   public void setFlowValveController(ControllerDeviceInterface controller) {
     this.flowValveController = controller;
     if (controller != null) {
-      String tag =
-          controller instanceof neqsim.util.NamedInterface ? controller.getName() : "flowValve";
+      String tag = controller instanceof neqsim.util.NamedInterface ? controller.getName() : "flowValve";
       controllerMap.put(tag, controller);
     }
   }
@@ -225,15 +223,18 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
-  public void initMechanicalDesign() {}
+  public void initMechanicalDesign() {
+  }
 
   /** {@inheritDoc} */
   @Override
-  public void initElectricalDesign() {}
+  public void initElectricalDesign() {
+  }
 
   /** {@inheritDoc} */
   @Override
-  public void initInstrumentDesign() {}
+  public void initInstrumentDesign() {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -366,7 +367,8 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
-  public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {}
+  public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {
+  }
 
   public String conditionAnalysisMessage = "";
 
@@ -388,9 +390,8 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     final int prime = 31;
     int result = 1;
     result = prime * result + Arrays.deepHashCode(report);
-    result = prime * result
-        + Objects.hash(conditionAnalysisMessage, controller, controllerMap, energyStream,
-            flowValveController, hasController, isSetEnergyStream, name, properties, specification);
+    result = prime * result + Objects.hash(conditionAnalysisMessage, controller, controllerMap, energyStream,
+	flowValveController, hasController, isSetEnergyStream, name, properties, specification);
     return result;
   }
 
@@ -408,14 +409,12 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     }
     ProcessEquipmentBaseClass other = (ProcessEquipmentBaseClass) obj;
     return Objects.equals(conditionAnalysisMessage, other.conditionAnalysisMessage)
-        && Objects.equals(controller, other.controller)
-        && Objects.equals(controllerMap, other.controllerMap)
-        && Objects.equals(energyStream, other.energyStream)
-        && Objects.equals(flowValveController, other.flowValveController)
-        && hasController == other.hasController && isSetEnergyStream == other.isSetEnergyStream
-        && Objects.equals(name, other.name) && Objects.equals(properties, other.properties)
-        && Arrays.deepEquals(report, other.report)
-        && Objects.equals(specification, other.specification);
+	&& Objects.equals(controller, other.controller) && Objects.equals(controllerMap, other.controllerMap)
+	&& Objects.equals(energyStream, other.energyStream)
+	&& Objects.equals(flowValveController, other.flowValveController) && hasController == other.hasController
+	&& isSetEnergyStream == other.isSetEnergyStream && Objects.equals(name, other.name)
+	&& Objects.equals(properties, other.properties) && Arrays.deepEquals(report, other.report)
+	&& Objects.equals(specification, other.specification);
   }
 
   /** {@inheritDoc} */
@@ -441,7 +440,8 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
-  public void run_step(UUID id) {}
+  public void run_step(UUID id) {
+  }
 
   /**
    * <p>
@@ -492,8 +492,8 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   }
 
   /**
-   * Convenience helper for equipment to auto-bypass when its primary inlet flow is below the
-   * configured low-flow threshold.
+   * Convenience helper for equipment to auto-bypass when its primary inlet flow is below the configured low-flow
+   * threshold.
    *
    * <p>
    * Typical usage at the start of {@code run(UUID)}:
@@ -506,19 +506,18 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    * </pre>
    *
    * <p>
-   * When the inlet mass flow is below {@link #getMinimumFlow()} the equipment is marked inactive
-   * via {@link #isActive(boolean)} and {@link #setCalculationIdentifier(UUID)} is called so the
-   * scheduler treats the unit as solved for the current calculation pass. Otherwise the equipment
-   * is (re)marked active and {@code false} is returned so the caller can continue normal execution.
+   * When the inlet mass flow is below {@link #getMinimumFlow()} the equipment is marked inactive via
+   * {@link #isActive(boolean)} and {@link #setCalculationIdentifier(UUID)} is called so the scheduler treats the unit
+   * as solved for the current calculation pass. Otherwise the equipment is (re)marked active and {@code false} is
+   * returned so the caller can continue normal execution.
    * </p>
    *
    * @param inlet primary inlet stream (may be null, in which case no bypass is applied)
-   * @param id current calculation identifier
-   * @return true if the equipment was auto-bypassed and {@code run()} should return immediately,
-   *         false if the equipment should execute normally
+   * @param id    current calculation identifier
+   * @return true if the equipment was auto-bypassed and {@code run()} should return immediately, false if the equipment
+   *         should execute normally
    */
-  protected boolean checkAndHandleLowFlow(neqsim.process.equipment.stream.StreamInterface inlet,
-      UUID id) {
+  protected boolean checkAndHandleLowFlow(neqsim.process.equipment.stream.StreamInterface inlet, UUID id) {
     if (inlet == null) {
       return false;
     }
@@ -540,51 +539,49 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   }
 
   /**
-   * Convenience helper for auto-bypassing equipment to propagate zero mass flow to one or more
-   * outlet streams, so downstream equipment also auto-bypasses via
+   * Convenience helper for auto-bypassing equipment to propagate zero mass flow to one or more outlet streams, so
+   * downstream equipment also auto-bypasses via
    * {@link #checkAndHandleLowFlow(neqsim.process.equipment.stream.StreamInterface, UUID)}.
    *
    * <p>
-   * Each outlet stream's total flow rate is set to {@code 0.0 kg/hr} and the calculation identifier
-   * {@code id} is stamped onto it so the scheduler treats it as solved for the current pass. Null
-   * outlets are skipped silently. Failures to mutate the thermo system are logged at DEBUG level
-   * and otherwise swallowed so a missing thermo system on one outlet does not abort propagation to
-   * the others.
+   * Each outlet stream's total flow rate is set to {@code 0.0 kg/hr} and the calculation identifier {@code id} is
+   * stamped onto it so the scheduler treats it as solved for the current pass. Null outlets are skipped silently.
+   * Failures to mutate the thermo system are logged at DEBUG level and otherwise swallowed so a missing thermo system
+   * on one outlet does not abort propagation to the others.
    * </p>
    *
-   * @param id current calculation identifier
+   * @param id      current calculation identifier
    * @param outlets outlet streams to zero out (may include null entries)
    */
-  protected void propagateZeroFlow(UUID id,
-      neqsim.process.equipment.stream.StreamInterface... outlets) {
+  protected void propagateZeroFlow(UUID id, neqsim.process.equipment.stream.StreamInterface... outlets) {
     if (outlets == null) {
       return;
     }
     for (neqsim.process.equipment.stream.StreamInterface outlet : outlets) {
       if (outlet == null) {
-        continue;
+	continue;
       }
       try {
-        outlet.getThermoSystem().setTotalFlowRate(0.0, "kg/hr");
-        outlet.setCalculationIdentifier(id);
+	outlet.getThermoSystem().setTotalFlowRate(0.0, "kg/hr");
+	outlet.setCalculationIdentifier(id);
       } catch (NullPointerException ex) {
-        logger.debug("Could not propagate zero flow from inactive '" + getName()
-            + "' (outlet has no thermo system attached)", ex);
+	logger.debug(
+	    "Could not propagate zero flow from inactive '" + getName() + "' (outlet has no thermo system attached)",
+	    ex);
       }
     }
   }
 
   /**
-   * Returns whether this equipment has been explicitly (manually) deactivated and should remain
-   * bypassed across simulation runs.
+   * Returns whether this equipment has been explicitly (manually) deactivated and should remain bypassed across
+   * simulation runs.
    *
    * <p>
-   * Unlike the transient {@link #isActive()} flag — which is set automatically by
-   * {@link #checkAndHandleLowFlow} based on the current inlet flow — {@code lockedInactive} is a
-   * user-controlled "hard bypass" flag. {@link neqsim.process.processmodel.ProcessSystem} resets
-   * {@code isActive} to {@code true} at the start of each run for every unit where
-   * {@code lockedInactive == false}; locked units remain inactive and their {@code run()} method is
-   * never invoked.
+   * Unlike the transient {@link #isActive()} flag — which is set automatically by {@link #checkAndHandleLowFlow} based
+   * on the current inlet flow — {@code lockedInactive} is a user-controlled "hard bypass" flag.
+   * {@link neqsim.process.processmodel.ProcessSystem} resets {@code isActive} to {@code true} at the start of each run
+   * for every unit where {@code lockedInactive == false}; locked units remain inactive and their {@code run()} method
+   * is never invoked.
    * </p>
    *
    * @return true if the equipment is manually locked in the inactive state
@@ -595,13 +592,11 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   }
 
   /**
-   * Manually lock or unlock this equipment in the inactive (bypassed) state. When set to
-   * {@code true} the equipment is also marked inactive ({@link #isActive(boolean)}) so the next
-   * scheduler pass skips it; when set to {@code false} the equipment is re-marked active and will
-   * be evaluated on the next simulation run.
+   * Manually lock or unlock this equipment in the inactive (bypassed) state. When set to {@code true} the equipment is
+   * also marked inactive ({@link #isActive(boolean)}) so the next scheduler pass skips it; when set to {@code false}
+   * the equipment is re-marked active and will be evaluated on the next simulation run.
    *
-   * @param lockedInactive true to bypass this equipment indefinitely; false to allow normal
-   *        execution (default)
+   * @param lockedInactive true to bypass this equipment indefinitely; false to allow normal execution (default)
    */
   @Override
   public void setLockedInactive(boolean lockedInactive) {
@@ -617,9 +612,8 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    * Checks if capacity analysis is enabled for this equipment.
    *
    * <p>
-   * When disabled, this equipment is excluded from bottleneck detection, capacity utilization
-   * summaries, and optimization routines. The equipment still tracks its constraints but doesn't
-   * contribute to system-level analysis.
+   * When disabled, this equipment is excluded from bottleneck detection, capacity utilization summaries, and
+   * optimization routines. The equipment still tracks its constraints but doesn't contribute to system-level analysis.
    * </p>
    *
    * @return true if capacity analysis is enabled (default is true)
@@ -662,9 +656,8 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    * Sets a failure mode on the equipment.
    *
    * <p>
-   * When a failure mode is set, the equipment is marked as failed and its behavior changes
-   * according to the failure mode characteristics (capacity factor, etc.). Setting null clears the
-   * failure.
+   * When a failure mode is set, the equipment is marked as failed and its behavior changes according to the failure
+   * mode characteristics (capacity factor, etc.). Setting null clears the failure.
    * </p>
    *
    * @param failureMode the failure mode to apply, or null to clear failure
@@ -691,8 +684,8 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    * Simulates a trip (complete failure) on the equipment.
    *
    * <p>
-   * Convenience method that applies a standard trip failure mode. The equipment becomes inactive
-   * and is excluded from capacity analysis.
+   * Convenience method that applies a standard trip failure mode. The equipment becomes inactive and is excluded from
+   * capacity analysis.
    * </p>
    */
   public void simulateTrip() {
@@ -731,8 +724,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   /** {@inheritDoc} */
   @Override
   public void setReferenceDesignation(ReferenceDesignation referenceDesignation) {
-    this.referenceDesignation =
-        referenceDesignation != null ? referenceDesignation : new ReferenceDesignation();
+    this.referenceDesignation = referenceDesignation != null ? referenceDesignation : new ReferenceDesignation();
   }
 
   /**
@@ -755,9 +747,8 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    * Ensures the capacity constraints map is initialized.
    *
    * <p>
-   * The map is transient (not serialized) so it may be null after deserialization. This method
-   * lazily initializes it and calls {@link #initializeDefaultConstraints()} to let subclasses
-   * re-attach their lambda value suppliers.
+   * The map is transient (not serialized) so it may be null after deserialization. This method lazily initializes it
+   * and calls {@link #initializeDefaultConstraints()} to let subclasses re-attach their lambda value suppliers.
    * </p>
    */
   private void ensureCapacityConstraintsInitialized() {
@@ -771,9 +762,9 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    * Hook for subclasses to set up default capacity constraints.
    *
    * <p>
-   * Called lazily when constraints are first accessed, and after deserialization. Subclasses should
-   * override this to add equipment-specific constraints using
-   * {@link #addCapacityConstraint(CapacityConstraint)}. The default implementation does nothing.
+   * Called lazily when constraints are first accessed, and after deserialization. Subclasses should override this to
+   * add equipment-specific constraints using {@link #addCapacityConstraint(CapacityConstraint)}. The default
+   * implementation does nothing.
    * </p>
    */
   protected void initializeDefaultConstraints() {
@@ -797,27 +788,25 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   }
 
   /**
-   * Derives capacity constraints from this equipment's mechanical-design limits and registers them
-   * for capacity/utilization analysis.
+   * Derives capacity constraints from this equipment's mechanical-design limits and registers them for
+   * capacity/utilization analysis.
    *
    * <p>
    * This is the opt-in bridge that makes the limits configured on the equipment's
    * {@link neqsim.process.mechanicaldesign.MechanicalDesign} (for example
-   * {@code getMechanicalDesign().setMaxDesignPower(kW)} or {@code setMaxDesignVolumeFlow(...)})
-   * surface in {@link #getMaxUtilization()}, {@link #getBottleneckConstraint()} and the utilization
-   * snapshot. Call it after the design limits have been set and after the process has run, since
-   * the derived metrics depend on live stream conditions.
+   * {@code getMechanicalDesign().setMaxDesignPower(kW)} or {@code setMaxDesignVolumeFlow(...)}) surface in
+   * {@link #getMaxUtilization()}, {@link #getBottleneckConstraint()} and the utilization snapshot. Call it after the
+   * design limits have been set and after the process has run, since the derived metrics depend on live stream
+   * conditions.
    * </p>
    *
    * <p>
-   * The constraints are added through the polymorphic
-   * {@link #addCapacityConstraint(CapacityConstraint)} method so they are registered in the correct
-   * constraint map even for equipment types (such as heat exchangers, valves and compressors) that
-   * maintain their own capacity-constraint storage. The derived constraints use stable names (for
-   * example {@code "design pressure drop"}), so the method is idempotent: re-invoking it overwrites
-   * the previous values rather than creating duplicates. Call it again whenever design limits or
-   * operating conditions change. It never throws — failures to read the mechanical design are
-   * treated as "no derived constraints".
+   * The constraints are added through the polymorphic {@link #addCapacityConstraint(CapacityConstraint)} method so they
+   * are registered in the correct constraint map even for equipment types (such as heat exchangers, valves and
+   * compressors) that maintain their own capacity-constraint storage. The derived constraints use stable names (for
+   * example {@code "design pressure drop"}), so the method is idempotent: re-invoking it overwrites the previous values
+   * rather than creating duplicates. Call it again whenever design limits or operating conditions change. It never
+   * throws — failures to read the mechanical design are treated as "no derived constraints".
    * </p>
    *
    * @return the number of mechanical-design-derived constraints that were registered
@@ -828,15 +817,15 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     try {
       MechanicalDesign design = getMechanicalDesign();
       if (design != null) {
-        List<CapacityConstraint> derived = design.getDesignCapacityConstraints();
-        if (derived != null) {
-          for (CapacityConstraint constraint : derived) {
-            if (constraint != null) {
-              addCapacityConstraint(constraint);
-              added++;
-            }
-          }
-        }
+	List<CapacityConstraint> derived = design.getDesignCapacityConstraints();
+	if (derived != null) {
+	  for (CapacityConstraint constraint : derived) {
+	    if (constraint != null) {
+	      addCapacityConstraint(constraint);
+	      added++;
+	    }
+	  }
+	}
       }
     } catch (RuntimeException ex) {
       logger.debug("Could not derive mechanical-design capacity constraints", ex);
@@ -852,11 +841,11 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     double maxUtil = -1.0;
     for (CapacityConstraint c : capacityConstraints.values()) {
       if (c.isEnabled()) {
-        double util = c.getUtilization();
-        if (util > maxUtil) {
-          maxUtil = util;
-          bottleneck = c;
-        }
+	double util = c.getUtilization();
+	if (util > maxUtil) {
+	  maxUtil = util;
+	  bottleneck = c;
+	}
       }
     }
     return bottleneck;
@@ -868,7 +857,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     ensureCapacityConstraintsInitialized();
     for (CapacityConstraint c : capacityConstraints.values()) {
       if (c.isEnabled() && c.isViolated()) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -880,7 +869,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     ensureCapacityConstraintsInitialized();
     for (CapacityConstraint c : capacityConstraints.values()) {
       if (c.isEnabled() && c.isHardLimitExceeded()) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -893,10 +882,10 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     double maxUtil = 0.0;
     for (CapacityConstraint c : capacityConstraints.values()) {
       if (c.isEnabled()) {
-        double util = c.getUtilization();
-        if (util > maxUtil) {
-          maxUtil = util;
-        }
+	double util = c.getUtilization();
+	if (util > maxUtil) {
+	  maxUtil = util;
+	}
       }
     }
     return maxUtil;
@@ -926,7 +915,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     ensureCapacityConstraintsInitialized();
     for (CapacityConstraint c : capacityConstraints.values()) {
       if (c.isEnabled() && c.isNearLimit()) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -940,7 +929,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     for (Map.Entry<String, CapacityConstraint> entry : capacityConstraints.entrySet()) {
       CapacityConstraint c = entry.getValue();
       if (c.isEnabled()) {
-        summary.put(entry.getKey(), c.getUtilization() * 100.0);
+	summary.put(entry.getKey(), c.getUtilization() * 100.0);
       }
     }
     return summary;
@@ -950,8 +939,8 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    * Evaluates all capacity constraints and returns a summary string.
    *
    * <p>
-   * Useful for logging and diagnostics. Each enabled constraint is evaluated and its utilization is
-   * reported. Constraints that are violated or near their limit are flagged.
+   * Useful for logging and diagnostics. Each enabled constraint is evaluated and its utilization is reported.
+   * Constraints that are violated or near their limit are flagged.
    * </p>
    *
    * @return multi-line summary of constraint status
@@ -963,14 +952,14 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     for (Map.Entry<String, CapacityConstraint> entry : capacityConstraints.entrySet()) {
       CapacityConstraint c = entry.getValue();
       if (c.isEnabled()) {
-        sb.append("  ").append(entry.getKey());
-        sb.append(": ").append(String.format("%.1f%%", c.getUtilization() * 100.0));
-        if (c.isViolated()) {
-          sb.append(" [VIOLATED]");
-        } else if (c.isNearLimit()) {
-          sb.append(" [WARNING]");
-        }
-        sb.append("\n");
+	sb.append("  ").append(entry.getKey());
+	sb.append(": ").append(String.format("%.1f%%", c.getUtilization() * 100.0));
+	if (c.isViolated()) {
+	  sb.append(" [VIOLATED]");
+	} else if (c.isNearLimit()) {
+	  sb.append(" [WARNING]");
+	}
+	sb.append("\n");
       }
     }
     return sb.toString();

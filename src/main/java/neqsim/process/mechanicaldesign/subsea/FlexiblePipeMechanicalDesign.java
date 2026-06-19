@@ -161,15 +161,14 @@ public class FlexiblePipeMechanicalDesign extends MechanicalDesign {
 
     // Calculate catenary tension for risers
     if (flexPipe.getApplication() == FlexiblePipe.Application.DYNAMIC_RISER
-        || flexPipe.getApplication() == FlexiblePipe.Application.STATIC_RISER) {
+	|| flexPipe.getApplication() == FlexiblePipe.Application.STATIC_RISER) {
 
       // Simplified catenary calculation
       double hangoffAngle = Math.toRadians(10); // Typical 10 degree hangoff
       double catTension = submergedWeight * 9.81 * waterDepth / Math.sin(hangoffAngle) / 1000; // kN
 
       // Add dynamic amplification for dynamic risers
-      double dynamicFactor =
-          flexPipe.getApplication() == FlexiblePipe.Application.DYNAMIC_RISER ? 1.5 : 1.2;
+      double dynamicFactor = flexPipe.getApplication() == FlexiblePipe.Application.DYNAMIC_RISER ? 1.5 : 1.2;
 
       requiredTensileCapacity = catTension * dynamicFactor;
     } else {
@@ -232,9 +231,9 @@ public class FlexiblePipeMechanicalDesign extends MechanicalDesign {
 
     // Calculate outer diameter
     double calculatedOD = innerDiameter + 2 * carcassThickness + 2 * internalSheathThickness
-        + 2 * pressureArmorThickness + numLayers * 2 * tensileArmorWireSize + 2 * 2.0 + // Anti-wear
-                                                                                        // tape
-        2 * 5.0; // Outer sheath
+	+ 2 * pressureArmorThickness + numLayers * 2 * tensileArmorWireSize + 2 * 2.0 + // Anti-wear
+											// tape
+	2 * 5.0; // Outer sheath
 
     flexPipe.setOuterDiameterMm(calculatedOD);
   }
@@ -290,12 +289,10 @@ public class FlexiblePipeMechanicalDesign extends MechanicalDesign {
 
     // Simplified weight calculation
     double totalSteelArea = carcassThickness * innerDiameter * Math.PI / 1e6
-        + pressureArmorThickness * (innerDiameter + 0.02) * Math.PI / 1e6
-        + flexPipe.getTensileArmorLayers() * tensileArmorWireSize * (innerDiameter + 0.04) * Math.PI
-            / 1e6;
+	+ pressureArmorThickness * (innerDiameter + 0.02) * Math.PI / 1e6
+	+ flexPipe.getTensileArmorLayers() * tensileArmorWireSize * (innerDiameter + 0.04) * Math.PI / 1e6;
 
-    double totalPolymerArea =
-        (internalSheathThickness + 5.0) * (innerDiameter + 0.01) * Math.PI / 1e6;
+    double totalPolymerArea = (internalSheathThickness + 5.0) * (innerDiameter + 0.01) * Math.PI / 1e6;
 
     double dryWeightPerMeter = totalSteelArea * steelDensity + totalPolymerArea * polymerDensity;
     double displacedVolume = Math.PI * outerDiameter * outerDiameter / 4;
@@ -320,12 +317,11 @@ public class FlexiblePipeMechanicalDesign extends MechanicalDesign {
 
     boolean isDynamic = flexPipe.getApplication() == FlexiblePipe.Application.DYNAMIC_RISER;
     // Buoyancy typically used for lazy wave and steep wave configurations
-    boolean hasBuoyancy =
-        flexPipe.getRiserConfiguration() == FlexiblePipe.RiserConfiguration.LAZY_WAVE
-            || flexPipe.getRiserConfiguration() == FlexiblePipe.RiserConfiguration.STEEP_WAVE;
+    boolean hasBuoyancy = flexPipe.getRiserConfiguration() == FlexiblePipe.RiserConfiguration.LAZY_WAVE
+	|| flexPipe.getRiserConfiguration() == FlexiblePipe.RiserConfiguration.STEEP_WAVE;
 
     costEstimator.calculateFlexiblePipeCost(flexPipe.getLength(), flexPipe.getInnerDiameterInches(),
-        flexPipe.getWaterDepth(), isDynamic, hasBuoyancy);
+	flexPipe.getWaterDepth(), isDynamic, hasBuoyancy);
 
     totalCostUSD = costEstimator.getTotalCost();
     equipmentCostUSD = costEstimator.getEquipmentCost();
@@ -362,8 +358,8 @@ public class FlexiblePipeMechanicalDesign extends MechanicalDesign {
     if (costEstimator == null) {
       costEstimator = new SubseaCostEstimator();
     }
-    return costEstimator.generateBOM("FlexiblePipe",
-        flexPipe.getDryWeightPerMeter() * flexPipe.getLength() / 1000, flexPipe.getWaterDepth());
+    return costEstimator.generateBOM("FlexiblePipe", flexPipe.getDryWeightPerMeter() * flexPipe.getLength() / 1000,
+	flexPipe.getWaterDepth());
   }
 
   /**
@@ -470,8 +466,7 @@ public class FlexiblePipeMechanicalDesign extends MechanicalDesign {
     JsonObject weight = new JsonObject();
     weight.addProperty("dryWeightPerMeterKgM", flexPipe.getDryWeightPerMeter());
     weight.addProperty("submergedWeightPerMeterKgM", flexPipe.getSubmergedWeightPerMeter());
-    weight.addProperty("totalDryWeightTonnes",
-        flexPipe.getDryWeightPerMeter() * flexPipe.getLength() / 1000);
+    weight.addProperty("totalDryWeightTonnes", flexPipe.getDryWeightPerMeter() * flexPipe.getLength() / 1000);
     jsonObj.add("weight", weight);
 
     // Cost estimation
@@ -487,8 +482,7 @@ public class FlexiblePipeMechanicalDesign extends MechanicalDesign {
     }
     jsonObj.add("costEstimation", cost);
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(jsonObj);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(jsonObj);
   }
 
   /**

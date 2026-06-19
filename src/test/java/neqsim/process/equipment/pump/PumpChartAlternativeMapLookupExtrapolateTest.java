@@ -7,8 +7,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 /**
- * Tests for PumpChartAlternativeMapLookupExtrapolate covering BEP, specific speed, NPSH,
- * density/viscosity corrections, and operating status.
+ * Tests for PumpChartAlternativeMapLookupExtrapolate covering BEP, specific speed, NPSH, density/viscosity corrections,
+ * and operating status.
  */
 class PumpChartAlternativeMapLookupExtrapolateTest {
   /** Shared chart instance loaded with typical pump curves. */
@@ -22,13 +22,12 @@ class PumpChartAlternativeMapLookupExtrapolateTest {
   static void setUp() {
     chart = new PumpChartAlternativeMapLookupExtrapolate();
     // Typical pump curve data (3 speed curves)
-    speed = new double[] {3000, 2700, 2400};
-    flow = new double[][] {{100, 200, 300, 400, 500}, {90, 180, 270, 360, 450},
-        {80, 160, 240, 320, 400}};
-    head = new double[][] {{80, 75, 65, 50, 30}, {65, 60, 52, 40, 22}, {50, 47, 40, 30, 16}};
-    polyEff = new double[][] {{60, 75, 82, 78, 55}, {58, 73, 80, 76, 53}, {55, 70, 78, 74, 50}};
+    speed = new double[] { 3000, 2700, 2400 };
+    flow = new double[][] { { 100, 200, 300, 400, 500 }, { 90, 180, 270, 360, 450 }, { 80, 160, 240, 320, 400 } };
+    head = new double[][] { { 80, 75, 65, 50, 30 }, { 65, 60, 52, 40, 22 }, { 50, 47, 40, 30, 16 } };
+    polyEff = new double[][] { { 60, 75, 82, 78, 55 }, { 58, 73, 80, 76, 53 }, { 55, 70, 78, 74, 50 } };
 
-    double[] chartConditions = new double[] {0.3, 1.0, 1.0, 1.0};
+    double[] chartConditions = new double[] { 0.3, 1.0, 1.0, 1.0 };
     chart.setCurves(chartConditions, speed, flow, head, polyEff);
   }
 
@@ -58,8 +57,7 @@ class PumpChartAlternativeMapLookupExtrapolateTest {
   @Test
   void testSpecificSpeedUnitHandling() {
     // Create a chart with kJ/kg head unit
-    PumpChartAlternativeMapLookupExtrapolate kjChart =
-        new PumpChartAlternativeMapLookupExtrapolate();
+    PumpChartAlternativeMapLookupExtrapolate kjChart = new PumpChartAlternativeMapLookupExtrapolate();
     kjChart.setHeadUnit("kJ/kg");
 
     // Convert head from meters to kJ/kg: head_kJ = head_m * g / 1000
@@ -67,10 +65,10 @@ class PumpChartAlternativeMapLookupExtrapolateTest {
     for (int i = 0; i < head.length; i++) {
       headKj[i] = new double[head[i].length];
       for (int j = 0; j < head[i].length; j++) {
-        headKj[i][j] = head[i][j] * 9.80665 / 1000.0;
+	headKj[i][j] = head[i][j] * 9.80665 / 1000.0;
       }
     }
-    double[] chartConditions = new double[] {0.3, 1.0, 1.0, 1.0};
+    double[] chartConditions = new double[] { 0.3, 1.0, 1.0, 1.0 };
     kjChart.setCurves(chartConditions, speed, flow, headKj, polyEff);
     double ns = kjChart.getSpecificSpeed();
     assertTrue(ns > 0, "Specific speed should be positive for kJ/kg chart");
@@ -80,7 +78,7 @@ class PumpChartAlternativeMapLookupExtrapolateTest {
   void testOperatingStatusNormal() {
     String status = chart.getOperatingStatus(250, 3000);
     assertTrue("NORMAL".equals(status) || "OPTIMAL".equals(status),
-        "Status at mid-flow should be NORMAL or OPTIMAL, got " + status);
+	"Status at mid-flow should be NORMAL or OPTIMAL, got " + status);
   }
 
   @Test
@@ -105,14 +103,13 @@ class PumpChartAlternativeMapLookupExtrapolateTest {
 
   @Test
   void testNPSHCurveSetAndQuery() {
-    PumpChartAlternativeMapLookupExtrapolate npshChart =
-        new PumpChartAlternativeMapLookupExtrapolate();
-    double[] chartConds = new double[] {0.3, 1.0, 1.0, 1.0};
+    PumpChartAlternativeMapLookupExtrapolate npshChart = new PumpChartAlternativeMapLookupExtrapolate();
+    double[] chartConds = new double[] { 0.3, 1.0, 1.0, 1.0 };
     npshChart.setCurves(chartConds, speed, flow, head, polyEff);
 
     // NPSH typically increases with flow
-    double[][] npshReq = new double[][] {{3.0, 3.5, 4.5, 6.0, 9.0}, {2.4, 2.8, 3.6, 4.8, 7.2},
-        {1.9, 2.2, 2.8, 3.8, 5.7}};
+    double[][] npshReq = new double[][] { { 3.0, 3.5, 4.5, 6.0, 9.0 }, { 2.4, 2.8, 3.6, 4.8, 7.2 },
+	{ 1.9, 2.2, 2.8, 3.8, 5.7 } };
 
     npshChart.setNPSHCurve(npshReq);
     assertTrue(npshChart.hasNPSHCurve(), "NPSH should be available after setting");
@@ -129,9 +126,8 @@ class PumpChartAlternativeMapLookupExtrapolateTest {
 
   @Test
   void testDensityCorrectionEnabled() {
-    PumpChartAlternativeMapLookupExtrapolate dcChart =
-        new PumpChartAlternativeMapLookupExtrapolate();
-    double[] chartConds = new double[] {0.3, 1.0, 1.0, 1.0};
+    PumpChartAlternativeMapLookupExtrapolate dcChart = new PumpChartAlternativeMapLookupExtrapolate();
+    double[] chartConds = new double[] { 0.3, 1.0, 1.0, 1.0 };
     dcChart.setCurves(chartConds, speed, flow, head, polyEff);
     dcChart.setReferenceDensity(998.0);
 
@@ -149,9 +145,8 @@ class PumpChartAlternativeMapLookupExtrapolateTest {
 
   @Test
   void testViscosityCorrectionLowViscosity() {
-    PumpChartAlternativeMapLookupExtrapolate vcChart =
-        new PumpChartAlternativeMapLookupExtrapolate();
-    double[] chartConds = new double[] {0.3, 1.0, 1.0, 1.0};
+    PumpChartAlternativeMapLookupExtrapolate vcChart = new PumpChartAlternativeMapLookupExtrapolate();
+    double[] chartConds = new double[] { 0.3, 1.0, 1.0, 1.0 };
     vcChart.setCurves(chartConds, speed, flow, head, polyEff);
 
     // Viscosity <= 1 cSt — no correction (water-like)
@@ -163,27 +158,22 @@ class PumpChartAlternativeMapLookupExtrapolateTest {
 
   @Test
   void testViscosityCorrectionHighViscosity() {
-    PumpChartAlternativeMapLookupExtrapolate vcChart =
-        new PumpChartAlternativeMapLookupExtrapolate();
-    double[] chartConds = new double[] {0.3, 1.0, 1.0, 1.0};
+    PumpChartAlternativeMapLookupExtrapolate vcChart = new PumpChartAlternativeMapLookupExtrapolate();
+    double[] chartConds = new double[] { 0.3, 1.0, 1.0, 1.0 };
     vcChart.setCurves(chartConds, speed, flow, head, polyEff);
     vcChart.setUseViscosityCorrection(true);
 
     // 100 cSt oil — should get significant correction
     vcChart.calculateViscosityCorrection(100.0, 300, 65, 3000);
-    assertTrue(vcChart.getFlowCorrectionFactor() < 1.0,
-        "Flow correction should reduce for high viscosity");
-    assertTrue(vcChart.getHeadCorrectionFactor() < 1.0,
-        "Head correction should reduce for high viscosity");
-    assertTrue(vcChart.getEfficiencyCorrectionFactor() < 1.0,
-        "Efficiency correction should reduce for high viscosity");
+    assertTrue(vcChart.getFlowCorrectionFactor() < 1.0, "Flow correction should reduce for high viscosity");
+    assertTrue(vcChart.getHeadCorrectionFactor() < 1.0, "Head correction should reduce for high viscosity");
+    assertTrue(vcChart.getEfficiencyCorrectionFactor() < 1.0, "Efficiency correction should reduce for high viscosity");
   }
 
   @Test
   void testFullyCorrectedHead() {
-    PumpChartAlternativeMapLookupExtrapolate fcChart =
-        new PumpChartAlternativeMapLookupExtrapolate();
-    double[] chartConds = new double[] {0.3, 1.0, 1.0, 1.0};
+    PumpChartAlternativeMapLookupExtrapolate fcChart = new PumpChartAlternativeMapLookupExtrapolate();
+    double[] chartConds = new double[] { 0.3, 1.0, 1.0, 1.0 };
     fcChart.setCurves(chartConds, speed, flow, head, polyEff);
     fcChart.setReferenceDensity(998.0);
     fcChart.setUseViscosityCorrection(true);
@@ -193,15 +183,13 @@ class PumpChartAlternativeMapLookupExtrapolateTest {
     // With light fluid and moderate viscosity
     double corrHead = fcChart.getFullyCorrectedHead(300, 3000, 900.0, 30.0);
     // Should differ from base (both corrections active)
-    assertTrue(Math.abs(corrHead - baseHead) > 0.1,
-        "Fully corrected head should differ from base head");
+    assertTrue(Math.abs(corrHead - baseHead) > 0.1, "Fully corrected head should differ from base head");
   }
 
   @Test
   void testCorrectedEfficiency() {
-    PumpChartAlternativeMapLookupExtrapolate ceChart =
-        new PumpChartAlternativeMapLookupExtrapolate();
-    double[] chartConds = new double[] {0.3, 1.0, 1.0, 1.0};
+    PumpChartAlternativeMapLookupExtrapolate ceChart = new PumpChartAlternativeMapLookupExtrapolate();
+    double[] chartConds = new double[] { 0.3, 1.0, 1.0, 1.0 };
     ceChart.setCurves(chartConds, speed, flow, head, polyEff);
     ceChart.setUseViscosityCorrection(true);
 

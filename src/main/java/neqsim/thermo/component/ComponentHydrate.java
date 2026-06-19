@@ -24,7 +24,7 @@ public class ComponentHydrate extends Component {
   // double[][] emptyHydrateVapourPressureConstant = {{17.6025820786,
   // -6056.0650578668},{17.332, -6017.6}}; //fitted
   // Sloan (1990)
-  double[][] emptyHydrateVapourPressureConstant = {{17.44, -6003.9}, {17.332, -6017.6}};
+  double[][] emptyHydrateVapourPressureConstant = { { 17.44, -6003.9 }, { 17.332, -6017.6 } };
   // double[][] emptyHydrateVapourPressureConstant = {{ 17.5061457754,
   // -6030.6886435166},{17.332, -6017.6}}; //fitted (1990)
   int hydrateStructure = 0;
@@ -34,8 +34,8 @@ public class ComponentHydrate extends Component {
   double[][] cavprwat = new double[2][2]; // [structure][cavitytype]
   // double[] dGfHydrate = {-236539.2, -235614.0};
   // double[] dHfHydrate = {-292714.5, -292016.0};
-  double[] dGfHydrate = {-235557, -235614};
-  double[] dHfHydrate = {-291786, -292016};
+  double[] dGfHydrate = { -235557, -235614 };
+  double[] dHfHydrate = { -291786, -292016 };
   double[] reffug = new double[neqsim.thermo.ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   private double sphericalCoreRadiusHydrate = 0.0;
   private double lennardJonesEnergyParameterHydrate = 0.0;
@@ -49,10 +49,10 @@ public class ComponentHydrate extends Component {
    * Constructor for ComponentHydrate.
    * </p>
    *
-   * @param name Name of component.
-   * @param moles Total number of moles of component.
+   * @param name         Name of component.
+   * @param moles        Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex Index number of component in phase object component array.
+   * @param compIndex    Index number of component in phase object component array.
    */
   public ComponentHydrate(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
@@ -79,37 +79,34 @@ public class ComponentHydrate extends Component {
 
     if (!name.equals("default")) {
       java.sql.ResultSet dataSet = null;
-      try (neqsim.util.database.NeqSimDataBase database =
-          new neqsim.util.database.NeqSimDataBase()) {
-        try {
-          if (NeqSimDataBase.createTemporaryTables()) {
-            dataSet = database.getResultSet(("SELECT * FROM comptemp WHERE name='" + name + "'"));
-          } else {
-            dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + name + "'"));
-          }
-          dataSet.next();
-          dataSet.getString("FORMULA");
-        } catch (Exception ex) {
-          dataSet.close();
-          logger.info("no parameters in tempcomp -- trying comp.. " + name);
-          dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + name + "'"));
-          dataSet.next();
-        }
-        lennardJonesMolecularDiameterHydrate =
-            Double.parseDouble(dataSet.getString("LJdiameterHYDRATE")); // BF
-        lennardJonesEnergyParameterHydrate = Double.parseDouble(dataSet.getString("LJepsHYDRATE"));
-        sphericalCoreRadiusHydrate =
-            Double.parseDouble(dataSet.getString("SphericalCoreRadiusHYDRATE"));
+      try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
+	try {
+	  if (NeqSimDataBase.createTemporaryTables()) {
+	    dataSet = database.getResultSet(("SELECT * FROM comptemp WHERE name='" + name + "'"));
+	  } else {
+	    dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + name + "'"));
+	  }
+	  dataSet.next();
+	  dataSet.getString("FORMULA");
+	} catch (Exception ex) {
+	  dataSet.close();
+	  logger.info("no parameters in tempcomp -- trying comp.. " + name);
+	  dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + name + "'"));
+	  dataSet.next();
+	}
+	lennardJonesMolecularDiameterHydrate = Double.parseDouble(dataSet.getString("LJdiameterHYDRATE")); // BF
+	lennardJonesEnergyParameterHydrate = Double.parseDouble(dataSet.getString("LJepsHYDRATE"));
+	sphericalCoreRadiusHydrate = Double.parseDouble(dataSet.getString("SphericalCoreRadiusHYDRATE"));
       } catch (Exception ex) {
-        logger.error("error in comp");
+	logger.error("error in comp");
       } finally {
-        try {
-          if (dataSet != null) {
-            dataSet.close();
-          }
-        } catch (Exception ex) {
-          logger.error("error closing database.....", ex);
-        }
+	try {
+	  if (dataSet != null) {
+	    dataSet.close();
+	  }
+	} catch (Exception ex) {
+	  logger.error("error closing database.....", ex);
+	}
       }
     }
   }
@@ -119,13 +116,13 @@ public class ComponentHydrate extends Component {
    * readHydrateParameters.
    * </p>
    */
-  public void readHydrateParameters() {}
+  public void readHydrateParameters() {
+  }
 
   /** {@inheritDoc} */
   @Override
   public double fugcoef(PhaseInterface phase) {
-    return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(),
-        phase.getPressure());
+    return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure());
   }
 
   /**
@@ -133,11 +130,10 @@ public class ComponentHydrate extends Component {
    * Calculate, set and return fugacity coefficient.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object to get fugacity coefficient
-   *        of.
+   * @param phase         a {@link neqsim.thermo.phase.PhaseInterface} object to get fugacity coefficient of.
    * @param numberOfComps a int
-   * @param temp a double
-   * @param pres a double
+   * @param temp          a double
+   * @param pres          a double
    * @return Fugacity coefficient
    */
   public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres) {
@@ -148,40 +144,38 @@ public class ComponentHydrate extends Component {
       double fugold = 0.0;
 
       do {
-        val = 0;
-        tempy = 0.0;
-        fugold = fugacityCoefficient;
-        if (hydrateStructure >= 0) {
-          for (int cavType = 0; cavType < 2; cavType++) {
-            tempy = 0.0;
-            for (int j = 0; j < phase.getNumberOfComponents(); j++) {
-              // System.out.println(phase.getComponent(j));
-              tempy += ((ComponentHydrate) phase.getComponent(j)).calcYKI(hydrateStructure, cavType,
-                  phase);
-              // System.out.println("tempny " +tempy);
-              // System.out.println("temp ny " + this); //phase.getComponent(j));
-            }
-            val += getCavprwat()[hydrateStructure][cavType] * Math.log(1.0 - tempy);
-          }
-        }
-        // System.out.println("val " +(val));
-        // System.out.println("fugacityCoefficient bef " + fugacityCoefficient);
-        double solvol = 1.0 / 906.0 * getMolarMass();
-        fugacityCoefficient = Math.exp(val)
-            * getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)
-            * Math.exp(solvol / (R * temp)
-                * ((pres - getEmptyHydrateStructureVapourPressure(hydrateStructure, temp))) * 1e5)
-            / pres;
-        // System.out.println("struct " + hydrateStruct + " fug " + tempfugcoef + " val
-        // "+ val);
+	val = 0;
+	tempy = 0.0;
+	fugold = fugacityCoefficient;
+	if (hydrateStructure >= 0) {
+	  for (int cavType = 0; cavType < 2; cavType++) {
+	    tempy = 0.0;
+	    for (int j = 0; j < phase.getNumberOfComponents(); j++) {
+	      // System.out.println(phase.getComponent(j));
+	      tempy += ((ComponentHydrate) phase.getComponent(j)).calcYKI(hydrateStructure, cavType, phase);
+	      // System.out.println("tempny " +tempy);
+	      // System.out.println("temp ny " + this); //phase.getComponent(j));
+	    }
+	    val += getCavprwat()[hydrateStructure][cavType] * Math.log(1.0 - tempy);
+	  }
+	}
+	// System.out.println("val " +(val));
+	// System.out.println("fugacityCoefficient bef " + fugacityCoefficient);
+	double solvol = 1.0 / 906.0 * getMolarMass();
+	fugacityCoefficient = Math.exp(val) * getEmptyHydrateStructureVapourPressure(hydrateStructure, temp)
+	    * Math.exp(
+		solvol / (R * temp) * ((pres - getEmptyHydrateStructureVapourPressure(hydrateStructure, temp))) * 1e5)
+	    / pres;
+	// System.out.println("struct " + hydrateStruct + " fug " + tempfugcoef + " val
+	// "+ val);
 
-        // fugacityCoefficient =
-        // Math.exp(val) *
-        // getEmptyHydrateStructureVapourPressure(hydrateStructure,temp) *
-        // Math.exp(solvol/(R*temp)*((pres-getEmptyHydrateStructureVapourPressure(hydrateStructure,temp)))*1e5)/pres;
-        // fugacityCoefficient = getAntoineVaporPressure(temp)/pres;
-        // fugacityCoefficient = Math.exp(Math.log(fugacityCoefficient) + val*boltzmannConstant/R);
-        // System.out.println("fugacityCoefficient " + fugacityCoefficient);
+	// fugacityCoefficient =
+	// Math.exp(val) *
+	// getEmptyHydrateStructureVapourPressure(hydrateStructure,temp) *
+	// Math.exp(solvol/(R*temp)*((pres-getEmptyHydrateStructureVapourPressure(hydrateStructure,temp)))*1e5)/pres;
+	// fugacityCoefficient = getAntoineVaporPressure(temp)/pres;
+	// fugacityCoefficient = Math.exp(Math.log(fugacityCoefficient) + val*boltzmannConstant/R);
+	// System.out.println("fugacityCoefficient " + fugacityCoefficient);
       } while (Math.abs((fugacityCoefficient - fugold) / fugold) > 1e-6);
     } else {
       fugacityCoefficient = 1e5;
@@ -218,7 +212,7 @@ public class ComponentHydrate extends Component {
    * getEmptyHydrateStructureVapourPressure.
    * </p>
    *
-   * @param type a int
+   * @param type        a int
    * @param temperature a double
    * @return a double
    */
@@ -226,10 +220,9 @@ public class ComponentHydrate extends Component {
     if (type == -1) {
       return getSolidVaporPressure(temperature);
     } else {
-      return Math
-          .exp(getEmptyHydrateVapourPressureConstant(type, 0)
-              + getEmptyHydrateVapourPressureConstant(type, 1) / temperature)
-          * ThermodynamicConstantsInterface.referencePressure;
+      return Math.exp(
+	  getEmptyHydrateVapourPressureConstant(type, 0) + getEmptyHydrateVapourPressureConstant(type, 1) / temperature)
+	  * ThermodynamicConstantsInterface.referencePressure;
     }
   }
 
@@ -239,11 +232,10 @@ public class ComponentHydrate extends Component {
    * </p>
    *
    * @param hydrateStructure a int
-   * @param parameterNumber a int
-   * @param value a double
+   * @param parameterNumber  a int
+   * @param value            a double
    */
-  public void setEmptyHydrateVapourPressureConstant(int hydrateStructure, int parameterNumber,
-      double value) {
+  public void setEmptyHydrateVapourPressureConstant(int hydrateStructure, int parameterNumber, double value) {
     emptyHydrateVapourPressureConstant[hydrateStructure][parameterNumber] = value;
   }
 
@@ -253,7 +245,7 @@ public class ComponentHydrate extends Component {
    * </p>
    *
    * @param hydrateStructure a int
-   * @param parameterNumber a int
+   * @param parameterNumber  a int
    * @return a double
    */
   public double getEmptyHydrateVapourPressureConstant(int hydrateStructure, int parameterNumber) {
@@ -265,15 +257,14 @@ public class ComponentHydrate extends Component {
    * calcChemPotEmpty.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase         a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComps a int
-   * @param temp a double
-   * @param pres a double
+   * @param temp          a double
+   * @param pres          a double
    * @param hydrateStruct a int
    * @return a double
    */
-  public double calcChemPotEmpty(PhaseInterface phase, int numberOfComps, double temp, double pres,
-      int hydrateStruct) {
+  public double calcChemPotEmpty(PhaseInterface phase, int numberOfComps, double temp, double pres, int hydrateStruct) {
     double dGf = 0.0;
     double dHf = 0.0;
     double Cpa = getCpA();
@@ -293,10 +284,10 @@ public class ComponentHydrate extends Component {
     double T0 = 298.15;
 
     dHf += Cpa * (temp - T0) + Cpb * Math.log(temp / T0) - Cpc * (1.0 / temp - 1.0 / T0)
-        - 1.0 / 2.0 * Cpd * (1.0 / (temp * temp) - 1.0 / (T0 * T0));
+	- 1.0 / 2.0 * Cpd * (1.0 / (temp * temp) - 1.0 / (T0 * T0));
 
     return (dGf / R / T0 + 1.0 * dHf * (1.0 / R / temp - 1.0 / R / T0))
-        + deltaMolarVolume / R / ((temp + T0) / 2.0) * (pres * 1e5 - 1e5);
+	+ deltaMolarVolume / R / ((temp + T0) / 2.0) * (pres * 1e5 - 1e5);
   }
 
   /**
@@ -304,15 +295,15 @@ public class ComponentHydrate extends Component {
    * calcChemPotIdealWater.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase         a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComps a int
-   * @param temp a double
-   * @param pres a double
+   * @param temp          a double
+   * @param pres          a double
    * @param hydrateStruct a int
    * @return a double
    */
-  public double calcChemPotIdealWater(PhaseInterface phase, int numberOfComps, double temp,
-      double pres, int hydrateStruct) {
+  public double calcChemPotIdealWater(PhaseInterface phase, int numberOfComps, double temp, double pres,
+      int hydrateStruct) {
     double dGf = -228700.0;
     double dHf = -242000.0;
     double Cpa = getCpA();
@@ -324,7 +315,7 @@ public class ComponentHydrate extends Component {
     // Cpc = -1.727e-5;
     double T0 = 298.15;
     dHf += Cpa * (temp - T0) + Cpb * Math.log(temp / T0) - Cpc * (1.0 / temp - 1.0 / T0)
-        - 1.0 / 2.0 * Cpd * (1.0 / (temp * temp) - 1.0 / (T0 * T0));
+	- 1.0 / 2.0 * Cpd * (1.0 / (temp * temp) - 1.0 / (T0 * T0));
     return (dGf / R / T0 + 1.0 * dHf * (1.0 / R / temp - 1.0 / R / T0));
   }
 
@@ -333,9 +324,9 @@ public class ComponentHydrate extends Component {
    * calcYKI.
    * </p>
    *
-   * @param stucture a int
+   * @param stucture   a int
    * @param cavityType a int
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase      a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
    */
   public double calcYKI(int stucture, int cavityType, PhaseInterface phase) {
@@ -347,10 +338,9 @@ public class ComponentHydrate extends Component {
     double temp = 1.0;
     for (int i = 0; i < phase.getNumberOfComponents(); i++) {
       if (!phase.getComponent(i).getComponentName().equals("water")) {
-        if (phase.getComponent(i).isHydrateFormer()) {
-          temp += ((ComponentHydrate) phase.getComponent(i)).calcCKI(stucture, cavityType, phase)
-              * reffug[i];
-        }
+	if (phase.getComponent(i).isHydrateFormer()) {
+	  temp += ((ComponentHydrate) phase.getComponent(i)).calcCKI(stucture, cavityType, phase) * reffug[i];
+	}
       }
     }
     return yki / temp;
@@ -363,14 +353,13 @@ public class ComponentHydrate extends Component {
    * calcCKI.
    * </p>
    *
-   * @param stucture a int
+   * @param stucture   a int
    * @param cavityType a int
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase      a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
    */
   public double calcCKI(int stucture, int cavityType, PhaseInterface phase) {
-    double cki = 4.0 * pi / (boltzmannConstant * phase.getTemperature())
-        * potIntegral(stucture, cavityType, phase);
+    double cki = 4.0 * pi / (boltzmannConstant * phase.getTemperature()) * potIntegral(stucture, cavityType, phase);
     // System.out.println("cki " + cki);
     return cki;
   }
@@ -381,7 +370,7 @@ public class ComponentHydrate extends Component {
    * </p>
    *
    * @param compNumbm a int
-   * @param val a double
+   * @param val       a double
    */
   public void setRefFug(int compNumbm, double val) {
     // System.out.println("ref fug setting " + val);
@@ -393,9 +382,9 @@ public class ComponentHydrate extends Component {
    * potIntegral.
    * </p>
    *
-   * @param stucture a int
+   * @param stucture   a int
    * @param cavityType a int
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase      a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
    */
   public double potIntegral(int stucture, int cavityType, PhaseInterface phase) {
@@ -407,9 +396,8 @@ public class ComponentHydrate extends Component {
     for (int i = 1; i < 100; i++) {
       // System.out.println("x" +x);
       // System.out.println("pot " + getPot(x,stucture,cavityType,phase));
-      val += step * ((getPot(x, stucture, cavityType, phase)
-          + 4 * getPot((x + 0.5 * step), stucture, cavityType, phase)
-          + getPot(x + step, stucture, cavityType, phase)) / 6.0);
+      val += step * ((getPot(x, stucture, cavityType, phase) + 4 * getPot((x + 0.5 * step), stucture, cavityType, phase)
+	  + getPot(x + step, stucture, cavityType, phase)) / 6.0);
       x = i * step;
     }
     return val / 100000.0;
@@ -420,25 +408,22 @@ public class ComponentHydrate extends Component {
    * getPot.
    * </p>
    *
-   * @param radius a double
+   * @param radius     a double
    * @param struccture a int
    * @param cavityType a int
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase      a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
    */
   public double getPot(double radius, int struccture, int cavityType, PhaseInterface phase) {
-    double pot =
-        2.0 * coordNumb[struccture][cavityType] * this.getLennardJonesEnergyParameterHydrate()
-            * ((Math.pow(this.getLennardJonesMolecularDiameterHydrate(), 12.0)
-                / (Math.pow(cavRadius[struccture][cavityType], 11.0) * radius)
-                * (delt(10.0, radius, struccture, cavityType, this)
-                    + this.getSphericalCoreRadiusHydrate() / cavRadius[struccture][cavityType]
-                        * delt(11.0, radius, struccture, cavityType, this)))
-                - (Math.pow(this.getLennardJonesMolecularDiameterHydrate(), 6.0)
-                    / (Math.pow(cavRadius[struccture][cavityType], 5.0) * radius)
-                    * (delt(4.0, radius, struccture, cavityType, this)
-                        + this.getSphericalCoreRadiusHydrate() / cavRadius[struccture][cavityType]
-                            * delt(5.0, radius, struccture, cavityType, this))));
+    double pot = 2.0 * coordNumb[struccture][cavityType] * this.getLennardJonesEnergyParameterHydrate()
+	* ((Math.pow(this.getLennardJonesMolecularDiameterHydrate(), 12.0)
+	    / (Math.pow(cavRadius[struccture][cavityType], 11.0) * radius)
+	    * (delt(10.0, radius, struccture, cavityType, this) + this.getSphericalCoreRadiusHydrate()
+		/ cavRadius[struccture][cavityType] * delt(11.0, radius, struccture, cavityType, this)))
+	    - (Math.pow(this.getLennardJonesMolecularDiameterHydrate(), 6.0)
+		/ (Math.pow(cavRadius[struccture][cavityType], 5.0) * radius)
+		* (delt(4.0, radius, struccture, cavityType, this) + this.getSphericalCoreRadiusHydrate()
+		    / cavRadius[struccture][cavityType] * delt(5.0, radius, struccture, cavityType, this))));
     // System.out.println("lenjones "
     // +this.getLennardJonesMolecularDiameterHydrate() );
     // System.out.println("pot bef " + pot);
@@ -452,25 +437,22 @@ public class ComponentHydrate extends Component {
    * delt.
    * </p>
    *
-   * @param n a double
-   * @param radius a double
+   * @param n          a double
+   * @param radius     a double
    * @param struccture a int
    * @param cavityType a int
-   * @param comp a {@link neqsim.thermo.component.ComponentInterface} object
+   * @param comp       a {@link neqsim.thermo.component.ComponentInterface} object
    * @return a double
    */
-  public double delt(double n, double radius, int struccture, int cavityType,
-      ComponentInterface comp) {
+  public double delt(double n, double radius, int struccture, int cavityType, ComponentInterface comp) {
     double delt = 1.0 / n
-        * (Math
-            .pow(1.0 - radius / cavRadius[struccture][cavityType]
-                - ((ComponentHydrate) comp).getSphericalCoreRadiusHydrate()
-                    / cavRadius[struccture][cavityType],
-                -n)
-            - Math.pow(1.0 + radius / cavRadius[struccture][cavityType]
-                - ((ComponentHydrate) comp).getSphericalCoreRadiusHydrate()
-                    / cavRadius[struccture][cavityType],
-                -n));
+	* (Math
+	    .pow(1.0 - radius / cavRadius[struccture][cavityType]
+		- ((ComponentHydrate) comp).getSphericalCoreRadiusHydrate() / cavRadius[struccture][cavityType], -n)
+	    - Math.pow(
+		1.0 + radius / cavRadius[struccture][cavityType]
+		    - ((ComponentHydrate) comp).getSphericalCoreRadiusHydrate() / cavRadius[struccture][cavityType],
+		-n));
 
     // System.out.println("delt " + delt);
     return delt;
@@ -504,7 +486,7 @@ public class ComponentHydrate extends Component {
    * </p>
    *
    * @param dGfHydrate a double
-   * @param i a int
+   * @param i          a int
    */
   public void setDGfHydrate(double dGfHydrate, int i) {
     this.dGfHydrate[i] = dGfHydrate;
@@ -527,7 +509,7 @@ public class ComponentHydrate extends Component {
    * </p>
    *
    * @param dHfHydrate a double
-   * @param i a int
+   * @param i          a int
    */
   public void setDHfHydrate(double dHfHydrate, int i) {
     this.dHfHydrate[i] = dHfHydrate;
@@ -549,7 +531,7 @@ public class ComponentHydrate extends Component {
    * getMolarVolumeHydrate.
    * </p>
    *
-   * @param structure a int
+   * @param structure   a int
    * @param temperature a double
    * @return a double
    */
@@ -562,21 +544,21 @@ public class ComponentHydrate extends Component {
       double k2 = 5.9537e-7;
       double k3 = 1.3707e-10;
       return v0 * (1.0 + k1 * (temperature - TO) + k2 * Math.pow(temperature - TO, 2.0)
-          + k3 * Math.pow(temperature - TO, 3.0)) / 1.0e6;
+	  + k3 * Math.pow(temperature - TO, 3.0)) / 1.0e6;
     } else if (structure == 1) {
       double v0 = 22.57;
       double k1 = 1.9335e-4;
       double k2 = 2.1768e-7;
       double k3 = -1.4786e-10;
       return v0 * (1.0 + k1 * (temperature - TO) + k2 * Math.pow(temperature - TO, 2.0)
-          + k3 * Math.pow(temperature - TO, 3.0)) / 1.0e6;
+	  + k3 * Math.pow(temperature - TO, 3.0)) / 1.0e6;
     } else if (structure == -1) {
       double v0 = 19.6522;
       double k1 = 1.6070e-4;
       double k2 = 3.4619e-7;
       double k3 = -1.4786e-10;
       return v0 * (1.0 + k1 * (temperature - TO) + k2 * Math.pow(temperature - TO, 2.0)
-          + k3 * Math.pow(temperature - TO, 3.0)) / 1.0e6;
+	  + k3 * Math.pow(temperature - TO, 3.0)) / 1.0e6;
     } else {
       return 0.0;
     }
@@ -723,7 +705,7 @@ public class ComponentHydrate extends Component {
    * Getter for the field <code>cavprwat</code>.
    * </p>
    *
-   * @param structure a int
+   * @param structure  a int
    * @param cavityType a int
    * @return the cavprwat
    */

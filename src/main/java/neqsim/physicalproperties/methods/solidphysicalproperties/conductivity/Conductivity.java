@@ -58,9 +58,8 @@ public class Conductivity extends SolidPhysicalPropertyMethod implements Conduct
    * {@inheritDoc}
    *
    * <p>
-   * Thermal conductivity of organic solids is typically 0.15-0.35 W/mK. Values based on: -
-   * Asphaltene: ~0.17-0.22 W/mK (similar to bitumen) - Wax/Paraffin: ~0.20-0.25 W/mK - Hydrate:
-   * ~0.50-0.60 W/mK (ice-like structure)
+   * Thermal conductivity of organic solids is typically 0.15-0.35 W/mK. Values based on: - Asphaltene: ~0.17-0.22 W/mK
+   * (similar to bitumen) - Wax/Paraffin: ~0.20-0.25 W/mK - Hydrate: ~0.50-0.60 W/mK (ice-like structure)
    * </p>
    */
   @Override

@@ -8,9 +8,8 @@ import java.util.Map;
  * Result from one material degradation or compatibility mechanism check.
  *
  * <p>
- * Examples include CO2 corrosion, sour service, chloride SCC, oxygen corrosion, dense CO2, hydrogen
- * embrittlement, HTHA, ammonia SCC, CUI, erosion-corrosion, MIC, galvanic corrosion, and
- * fatigue/FIV screening.
+ * Examples include CO2 corrosion, sour service, chloride SCC, oxygen corrosion, dense CO2, hydrogen embrittlement,
+ * HTHA, ammonia SCC, CUI, erosion-corrosion, MIC, galvanic corrosion, and fatigue/FIV screening.
  * </p>
  *
  * @author NeqSim contributors
@@ -44,15 +43,15 @@ public class DamageMechanismAssessment implements Serializable {
   /**
    * Creates a mechanism assessment.
    *
-   * @param mechanism mechanism name
-   * @param standard standard or recommended practice
-   * @param status assessment status
-   * @param severity severity level
-   * @param message finding message
+   * @param mechanism      mechanism name
+   * @param standard       standard or recommended practice
+   * @param status         assessment status
+   * @param severity       severity level
+   * @param message        finding message
    * @param recommendation recommended action
    */
-  public DamageMechanismAssessment(String mechanism, String standard, String status,
-      String severity, String message, String recommendation) {
+  public DamageMechanismAssessment(String mechanism, String standard, String status, String severity, String message,
+      String recommendation) {
     this.mechanism = mechanism == null ? "" : mechanism;
     this.standard = standard == null ? "" : standard;
     this.status = status == null ? "INFO" : status;
@@ -64,69 +63,65 @@ public class DamageMechanismAssessment implements Serializable {
   /**
    * Creates a passing assessment.
    *
-   * @param mechanism mechanism name
-   * @param standard standard or recommended practice
-   * @param message finding message
+   * @param mechanism      mechanism name
+   * @param standard       standard or recommended practice
+   * @param message        finding message
    * @param recommendation recommended action
    * @return passing assessment
    */
   public static DamageMechanismAssessment pass(String mechanism, String standard, String message,
       String recommendation) {
-    return new DamageMechanismAssessment(mechanism, standard, "PASS", "LOW", message,
-        recommendation);
+    return new DamageMechanismAssessment(mechanism, standard, "PASS", "LOW", message, recommendation);
   }
 
   /**
    * Creates an informational assessment.
    *
-   * @param mechanism mechanism name
-   * @param standard standard or recommended practice
-   * @param message finding message
+   * @param mechanism      mechanism name
+   * @param standard       standard or recommended practice
+   * @param message        finding message
    * @param recommendation recommended action
    * @return informational assessment
    */
   public static DamageMechanismAssessment info(String mechanism, String standard, String message,
       String recommendation) {
-    return new DamageMechanismAssessment(mechanism, standard, "INFO", "LOW", message,
-        recommendation);
+    return new DamageMechanismAssessment(mechanism, standard, "INFO", "LOW", message, recommendation);
   }
 
   /**
    * Creates a warning assessment.
    *
-   * @param mechanism mechanism name
-   * @param standard standard or recommended practice
-   * @param severity severity level
-   * @param message finding message
+   * @param mechanism      mechanism name
+   * @param standard       standard or recommended practice
+   * @param severity       severity level
+   * @param message        finding message
    * @param recommendation recommended action
    * @return warning assessment
    */
-  public static DamageMechanismAssessment warning(String mechanism, String standard,
-      String severity, String message, String recommendation) {
-    return new DamageMechanismAssessment(mechanism, standard, "WARNING", severity, message,
-        recommendation);
+  public static DamageMechanismAssessment warning(String mechanism, String standard, String severity, String message,
+      String recommendation) {
+    return new DamageMechanismAssessment(mechanism, standard, "WARNING", severity, message, recommendation);
   }
 
   /**
    * Creates a failing assessment.
    *
-   * @param mechanism mechanism name
-   * @param standard standard or recommended practice
-   * @param severity severity level
-   * @param message finding message
+   * @param mechanism      mechanism name
+   * @param standard       standard or recommended practice
+   * @param severity       severity level
+   * @param message        finding message
    * @param recommendation recommended action
    * @return failing assessment
    */
-  public static DamageMechanismAssessment fail(String mechanism, String standard, String severity,
-      String message, String recommendation) {
-    return new DamageMechanismAssessment(mechanism, standard, "FAIL", severity, message,
-        recommendation);
+  public static DamageMechanismAssessment fail(String mechanism, String standard, String severity, String message,
+      String recommendation) {
+    return new DamageMechanismAssessment(mechanism, standard, "FAIL", severity, message, recommendation);
   }
 
   /**
    * Adds a trace detail to this assessment.
    *
-   * @param key detail key
+   * @param key   detail key
    * @param value detail value
    * @return this assessment for fluent construction
    */

@@ -11,8 +11,8 @@ import com.google.gson.GsonBuilder;
  * Cooling water system designer for process plant utility sizing.
  *
  * <p>
- * Collects cooling duty requirements from process coolers, sizes the cooling water circulation
- * system (pump, network, cooling tower), and estimates operating cost.
+ * Collects cooling duty requirements from process coolers, sizes the cooling water circulation system (pump, network,
+ * cooling tower), and estimates operating cost.
  * </p>
  *
  * <p>
@@ -97,13 +97,12 @@ public class CoolingWaterSystem implements Serializable {
     /**
      * Creates a cooling requirement.
      *
-     * @param name cooler name
-     * @param dutyKW cooling duty in kW
+     * @param name               cooler name
+     * @param dutyKW             cooling duty in kW
      * @param processOutletTempC process outlet temperature in C
-     * @param approachDeltaTC minimum approach temperature in C
+     * @param approachDeltaTC    minimum approach temperature in C
      */
-    public CoolingRequirement(String name, double dutyKW, double processOutletTempC,
-        double approachDeltaTC) {
+    public CoolingRequirement(String name, double dutyKW, double processOutletTempC, double approachDeltaTC) {
       this.name = name;
       this.dutyKW = dutyKW;
       this.processOutletTempC = processOutletTempC;
@@ -121,13 +120,12 @@ public class CoolingWaterSystem implements Serializable {
   /**
    * Adds a cooling duty requirement.
    *
-   * @param name cooler name
-   * @param dutyKW required cooling duty in kW
+   * @param name               cooler name
+   * @param dutyKW             required cooling duty in kW
    * @param processOutletTempC process outlet temperature in C
-   * @param approachDeltaTC minimum approach temperature in C
+   * @param approachDeltaTC    minimum approach temperature in C
    */
-  public void addCoolingRequirement(String name, double dutyKW, double processOutletTempC,
-      double approachDeltaTC) {
+  public void addCoolingRequirement(String name, double dutyKW, double processOutletTempC, double approachDeltaTC) {
     requirements.add(new CoolingRequirement(name, dutyKW, processOutletTempC, approachDeltaTC));
     calculated = false;
   }
@@ -345,7 +343,6 @@ public class CoolingWaterSystem implements Serializable {
     results.put("annualOperatingHours", annualOperatingHours);
     result.put("results", results);
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(result);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(result);
   }
 }

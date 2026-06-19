@@ -15,9 +15,9 @@ import neqsim.process.safety.risk.OperationalRiskSimulator;
  * Portfolio Risk Analyzer for multi-asset analysis.
  *
  * <p>
- * Performs Monte Carlo simulation across multiple assets to analyze portfolio-level risk, including
- * common cause failures, correlated events, and aggregated production impact. Essential for
- * corporate risk management and insurance/contract negotiations.
+ * Performs Monte Carlo simulation across multiple assets to analyze portfolio-level risk, including common cause
+ * failures, correlated events, and aggregated production impact. Essential for corporate risk management and
+ * insurance/contract negotiations.
  * </p>
  *
  * @author NeqSim Development Team
@@ -84,11 +84,11 @@ public class PortfolioRiskAnalyzer implements Serializable {
      */
     public void runRiskSimulation(int iterations) {
       if (riskSimulator != null) {
-        // Run simulation for 365 days (1 year)
-        OperationalRiskResult result = riskSimulator.runSimulation(iterations, 365.0);
-        // Availability is returned as percentage (0-100), convert to fraction (0-1)
-        this.systemAvailability = result.getAvailability() / 100.0;
-        this.expectedProductionLoss = result.getExpectedProductionLoss();
+	// Run simulation for 365 days (1 year)
+	OperationalRiskResult result = riskSimulator.runSimulation(iterations, 365.0);
+	// Availability is returned as percentage (0-100), convert to fraction (0-1)
+	this.systemAvailability = result.getAvailability() / 100.0;
+	this.expectedProductionLoss = result.getExpectedProductionLoss();
       }
     }
 
@@ -181,8 +181,7 @@ public class PortfolioRiskAnalyzer implements Serializable {
       WEATHER, REGIONAL_INFRASTRUCTURE, SUPPLY_CHAIN, MARKET, CYBER, PANDEMIC, GEOPOLITICAL
     }
 
-    public CommonCauseScenario(String id, String description, CommonCauseType type,
-        double frequency) {
+    public CommonCauseScenario(String id, String description, CommonCauseType type, double frequency) {
       this.scenarioId = id;
       this.description = description;
       this.type = type;
@@ -270,8 +269,8 @@ public class PortfolioRiskAnalyzer implements Serializable {
   /**
    * Creates and adds an asset.
    *
-   * @param id asset ID
-   * @param name asset name
+   * @param id            asset ID
+   * @param name          asset name
    * @param maxProduction maximum production rate
    * @return created asset
    */
@@ -293,22 +292,20 @@ public class PortfolioRiskAnalyzer implements Serializable {
   /**
    * Creates a regional weather scenario.
    *
-   * @param region affected region
+   * @param region    affected region
    * @param frequency annual frequency
-   * @param duration duration in days
+   * @param duration  duration in days
    * @return created scenario
    */
-  public CommonCauseScenario createRegionalWeatherScenario(String region, double frequency,
-      double duration) {
-    CommonCauseScenario scenario =
-        new CommonCauseScenario("WEATHER-" + region, "Severe weather event in " + region,
-            CommonCauseScenario.CommonCauseType.WEATHER, frequency);
+  public CommonCauseScenario createRegionalWeatherScenario(String region, double frequency, double duration) {
+    CommonCauseScenario scenario = new CommonCauseScenario("WEATHER-" + region, "Severe weather event in " + region,
+	CommonCauseScenario.CommonCauseType.WEATHER, frequency);
     scenario.setDuration(duration);
 
     // Add all assets in region
     for (Asset asset : assets) {
       if (region.equals(asset.getRegion())) {
-        scenario.addAffectedAsset(asset.getAssetId(), 0.5); // 50% production impact
+	scenario.addAffectedAsset(asset.getAssetId(), 0.5); // 50% production impact
       }
     }
 
@@ -366,41 +363,41 @@ public class PortfolioRiskAnalyzer implements Serializable {
 
       // Initialize asset losses from individual availability
       for (Asset asset : assets) {
-        double individualLoss = asset.getMaxProduction() * (1 - asset.getSystemAvailability())
-            * simulationPeriodYears * 365;
-        simAssetLoss.put(asset.getAssetId(), individualLoss);
-        totalPortfolioLoss += individualLoss;
+	double individualLoss = asset.getMaxProduction() * (1 - asset.getSystemAvailability()) * simulationPeriodYears
+	    * 365;
+	simAssetLoss.put(asset.getAssetId(), individualLoss);
+	totalPortfolioLoss += individualLoss;
       }
 
       // Simulate common cause events
       for (CommonCauseScenario scenario : commonCauseScenarios) {
-        // Poisson sampling for number of events
-        int events = samplePoisson(scenario.getFrequency() * simulationPeriodYears);
+	// Poisson sampling for number of events
+	int events = samplePoisson(scenario.getFrequency() * simulationPeriodYears);
 
-        for (int e = 0; e < events; e++) {
-          double eventLoss = 0;
-          for (String assetId : scenario.getAffectedAssetIds()) {
-            Asset asset = getAsset(assetId);
-            if (asset != null) {
-              double impact = scenario.getAssetImpact(assetId);
-              double loss = asset.getMaxProduction() * impact * scenario.getDuration();
-              eventLoss += loss;
+	for (int e = 0; e < events; e++) {
+	  double eventLoss = 0;
+	  for (String assetId : scenario.getAffectedAssetIds()) {
+	    Asset asset = getAsset(assetId);
+	    if (asset != null) {
+	      double impact = scenario.getAssetImpact(assetId);
+	      double loss = asset.getMaxProduction() * impact * scenario.getDuration();
+	      eventLoss += loss;
 
-              // Update asset-specific loss
-              double currentLoss = simAssetLoss.getOrDefault(assetId, 0.0);
-              simAssetLoss.put(assetId, currentLoss + loss);
-            }
-          }
-          totalCommonCauseLoss += eventLoss;
-          totalPortfolioLoss += eventLoss;
-        }
+	      // Update asset-specific loss
+	      double currentLoss = simAssetLoss.getOrDefault(assetId, 0.0);
+	      simAssetLoss.put(assetId, currentLoss + loss);
+	    }
+	  }
+	  totalCommonCauseLoss += eventLoss;
+	  totalPortfolioLoss += eventLoss;
+	}
       }
 
       portfolioLosses.add(totalPortfolioLoss);
       commonCauseLosses.add(totalCommonCauseLoss);
 
       for (Map.Entry<String, Double> entry : simAssetLoss.entrySet()) {
-        assetLosses.get(entry.getKey()).add(entry.getValue());
+	assetLosses.get(entry.getKey()).add(entry.getValue());
       }
     }
 
@@ -469,7 +466,7 @@ public class PortfolioRiskAnalyzer implements Serializable {
   private Asset getAsset(String assetId) {
     for (Asset asset : assets) {
       if (asset.getAssetId().equals(assetId)) {
-        return asset;
+	return asset;
       }
     }
     return null;
@@ -504,7 +501,7 @@ public class PortfolioRiskAnalyzer implements Serializable {
     double m = Double.NEGATIVE_INFINITY;
     for (double v : values) {
       if (v > m) {
-        m = v;
+	m = v;
       }
     }
     return m;
@@ -555,13 +552,12 @@ public class PortfolioRiskAnalyzer implements Serializable {
       map.put("result", lastResult.toMap());
     }
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(map);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(map);
   }
 
   @Override
   public String toString() {
     return String.format("PortfolioRiskAnalyzer[%s, assets=%d, scenarios=%d]", name, assets.size(),
-        commonCauseScenarios.size());
+	commonCauseScenarios.size());
   }
 }

@@ -20,8 +20,8 @@ import neqsim.thermo.system.SystemSrkEos;
 public class DistillationColumnCapacityTest {
 
   /**
-   * The Fs factor must return 0 (not Infinity/NaN) before the column has been run, so the capacity
-   * constraint supplier degrades gracefully.
+   * The Fs factor must return 0 (not Infinity/NaN) before the column has been run, so the capacity constraint supplier
+   * degrades gracefully.
    */
   @Test
   public void fsFactorReturnsZeroBeforeRun() {
@@ -33,8 +33,8 @@ public class DistillationColumnCapacityTest {
   }
 
   /**
-   * The maximum allowable Fs factor has a sensible default and can be configured. Setting a
-   * non-positive value must be rejected.
+   * The maximum allowable Fs factor has a sensible default and can be configured. Setting a non-positive value must be
+   * rejected.
    */
   @Test
   public void maxAllowableFsFactorIsConfigurable() {
@@ -49,9 +49,8 @@ public class DistillationColumnCapacityTest {
   }
 
   /**
-   * The column must expose an Fs-factor capacity constraint through the
-   * {@code CapacityConstrainedEquipment} interface and keep its design value in sync with the
-   * configured maximum allowable Fs factor.
+   * The column must expose an Fs-factor capacity constraint through the {@code CapacityConstrainedEquipment} interface
+   * and keep its design value in sync with the configured maximum allowable Fs factor.
    */
   @Test
   public void columnExposesFsFactorCapacityConstraint() {
@@ -70,8 +69,8 @@ public class DistillationColumnCapacityTest {
   }
 
   /**
-   * Runs a small binary column and verifies that the Fs factor, utilization and capacity bottleneck
-   * reporting respond to the column hydraulics and the configured diameter.
+   * Runs a small binary column and verifies that the Fs factor, utilization and capacity bottleneck reporting respond
+   * to the column hydraulics and the configured diameter.
    */
   @Test
   public void capacityRespondsToColumnHydraulics() {

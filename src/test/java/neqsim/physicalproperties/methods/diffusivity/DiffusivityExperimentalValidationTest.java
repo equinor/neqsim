@@ -16,8 +16,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  * <ul>
  * <li>Marrero, T.R. and Mason, E.A. (1972). J. Phys. Chem. Ref. Data, 1(1), 3-118.</li>
- * <li>Poling, B.E., Prausnitz, J.M. and O'Connell, J.P. (2001). "The Properties of Gases and
- * Liquids", 5th ed., McGraw-Hill, Tables 11-2 through 11-4.</li>
+ * <li>Poling, B.E., Prausnitz, J.M. and O'Connell, J.P. (2001). "The Properties of Gases and Liquids", 5th ed.,
+ * McGraw-Hill, Tables 11-2 through 11-4.</li>
  * </ul>
  *
  * <p>
@@ -31,8 +31,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author Even Solbraa
  */
 public class DiffusivityExperimentalValidationTest {
-  private static final Logger logger =
-      LogManager.getLogger(DiffusivityExperimentalValidationTest.class);
+  private static final Logger logger = LogManager.getLogger(DiffusivityExperimentalValidationTest.class);
 
   // Gas-phase experimental data at ~1 atm, in m2/s
   // CH4-N2 at 298 K: 0.22 cm2/s (Marrero & Mason 1972)
@@ -105,8 +104,7 @@ public class DiffusivityExperimentalValidationTest {
     double expectedRatio = 5.0 / 1.01325;
     double actualRatio = D1 / D5;
     double ratioError = Math.abs(actualRatio - expectedRatio) / expectedRatio;
-    assertTrue(ratioError < 0.01,
-        "1/P scaling: expected ratio " + expectedRatio + ", got " + actualRatio);
+    assertTrue(ratioError < 0.01, "1/P scaling: expected ratio " + expectedRatio + ", got " + actualRatio);
   }
 
   // Verify T^1.75 dependence for Fuller
@@ -122,8 +120,7 @@ public class DiffusivityExperimentalValidationTest {
     double expectedRatio = Math.pow(400.0 / 300.0, 1.75);
     double actualRatio = D400 / D300;
     double ratioError = Math.abs(actualRatio - expectedRatio) / expectedRatio;
-    assertTrue(ratioError < 0.01,
-        "T^1.75 scaling: expected ratio " + expectedRatio + ", got " + actualRatio);
+    assertTrue(ratioError < 0.01, "T^1.75 scaling: expected ratio " + expectedRatio + ", got " + actualRatio);
   }
 
   // ---------- Liquid-phase validation ----------
@@ -192,8 +189,7 @@ public class DiffusivityExperimentalValidationTest {
   private double getGasDiffusionCoefficient(SystemInterface sys, int i, int j, String model) {
     assertTrue(sys.hasPhaseType("gas"), "Gas phase should exist");
     sys.getPhase("gas").getPhysicalProperties().setDiffusionCoefficientModel(model);
-    return sys.getPhase("gas").getPhysicalProperties().diffusivityCalc
-        .calcBinaryDiffusionCoefficient(i, j, 0);
+    return sys.getPhase("gas").getPhysicalProperties().diffusivityCalc.calcBinaryDiffusionCoefficient(i, j, 0);
   }
 
   private double getLiquidDiffusionCO2Water(String model) {
@@ -209,34 +205,30 @@ public class DiffusivityExperimentalValidationTest {
     assertTrue(sys.hasPhaseType("aqueous"), "Aqueous phase should exist");
     sys.getPhase("aqueous").getPhysicalProperties().setDiffusionCoefficientModel(model);
     // CO2 is solute (i=0), water is solvent (j=1)
-    double D = sys.getPhase("aqueous").getPhysicalProperties().diffusivityCalc
-        .calcBinaryDiffusionCoefficient(0, 1, 0);
-    logger.info(model + " CO2/water: D = " + D + " m2/s (" + (D * 1e4) + " cm2/s), exp = "
-        + EXP_CO2_WATER_298K + " m2/s");
+    double D = sys.getPhase("aqueous").getPhysicalProperties().diffusivityCalc.calcBinaryDiffusionCoefficient(0, 1, 0);
+    logger.info(
+	model + " CO2/water: D = " + D + " m2/s (" + (D * 1e4) + " cm2/s), exp = " + EXP_CO2_WATER_298K + " m2/s");
     return D;
   }
 
   private void assertGasAccuracy(String label, double calc, double exp, double tol) {
     double error = Math.abs(calc - exp) / exp;
     logger.info(label + ": calc=" + (calc * 1e4) + " cm2/s, exp=" + (exp * 1e4) + " cm2/s, error="
-        + String.format("%.1f", error * 100) + "%");
-    assertTrue(error < tol,
-        label + " error " + String.format("%.1f", error * 100) + "% exceeds " + (tol * 100) + "%");
+	+ String.format("%.1f", error * 100) + "%");
+    assertTrue(error < tol, label + " error " + String.format("%.1f", error * 100) + "% exceeds " + (tol * 100) + "%");
   }
 
   private void assertLiquidAccuracy(String label, double calc, double exp, double tol) {
     double error = Math.abs(calc - exp) / exp;
-    logger.info(label + ": calc=" + calc + " m2/s, exp=" + exp + " m2/s, error="
-        + String.format("%.1f", error * 100) + "%");
-    assertTrue(calc > 1e-12 && calc < 1e-6,
-        label + " value " + calc + " outside reasonable liquid D range");
-    assertTrue(error < tol,
-        label + " error " + String.format("%.1f", error * 100) + "% exceeds " + (tol * 100) + "%");
+    logger.info(
+	label + ": calc=" + calc + " m2/s, exp=" + exp + " m2/s, error=" + String.format("%.1f", error * 100) + "%");
+    assertTrue(calc > 1e-12 && calc < 1e-6, label + " value " + calc + " outside reasonable liquid D range");
+    assertTrue(error < tol, label + " error " + String.format("%.1f", error * 100) + "% exceeds " + (tol * 100) + "%");
   }
 
   private void assertModelsAgree(String label, double d1, double d2, double maxRatio) {
     double ratio = d1 / d2;
     assertTrue(ratio > 1.0 / maxRatio && ratio < maxRatio,
-        label + " ratio " + ratio + " outside [" + (1.0 / maxRatio) + ", " + maxRatio + "]");
+	label + " ratio " + ratio + " outside [" + (1.0 / maxRatio) + ", " + maxRatio + "]");
   }
 }

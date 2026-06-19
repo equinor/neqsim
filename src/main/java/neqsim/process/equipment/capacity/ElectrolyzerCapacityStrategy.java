@@ -37,12 +37,13 @@ public class ElectrolyzerCapacityStrategy implements EquipmentCapacityStrategy {
   /**
    * Default constructor.
    */
-  public ElectrolyzerCapacityStrategy() {}
+  public ElectrolyzerCapacityStrategy() {
+  }
 
   /**
    * Constructor with custom constraints.
    *
-   * @param maxVoltageV maximum cell voltage in volts
+   * @param maxVoltageV  maximum cell voltage in volts
    * @param ratedPowerKW rated power consumption in kW
    */
   public ElectrolyzerCapacityStrategy(double maxVoltageV, double ratedPowerKW) {
@@ -81,10 +82,10 @@ public class ElectrolyzerCapacityStrategy implements EquipmentCapacityStrategy {
     double maxUtil = 0.0;
     for (CapacityConstraint c : constraints.values()) {
       if (c.isEnabled()) {
-        double util = c.getUtilization();
-        if (!Double.isNaN(util) && util > maxUtil) {
-          maxUtil = util;
-        }
+	double util = c.getUtilization();
+	if (!Double.isNaN(util) && util > maxUtil) {
+	  maxUtil = util;
+	}
       }
     }
     return maxUtil;
@@ -113,33 +114,30 @@ public class ElectrolyzerCapacityStrategy implements EquipmentCapacityStrategy {
   /**
    * Adds constraints for water electrolyzer.
    *
-   * @param constraints map to add constraints to
+   * @param constraints  map to add constraints to
    * @param electrolyzer the electrolyzer
    */
-  private void addElectrolyzerConstraints(Map<String, CapacityConstraint> constraints,
-      Electrolyzer electrolyzer) {
+  private void addElectrolyzerConstraints(Map<String, CapacityConstraint> constraints, Electrolyzer electrolyzer) {
     // Cell voltage constraint
-    CapacityConstraint voltageConstraint = new CapacityConstraint("cellVoltage")
-        .setDesignValue(maxVoltageV).setMaxValue(maxVoltageV * 1.1).setUnit("V")
-        .setSeverity(CapacityConstraint.ConstraintSeverity.HARD).setWarningThreshold(0.9)
-        .setDescription("Cell voltage vs maximum design")
-        .setValueSupplier(() -> electrolyzer.getCellVoltage());
+    CapacityConstraint voltageConstraint = new CapacityConstraint("cellVoltage").setDesignValue(maxVoltageV)
+	.setMaxValue(maxVoltageV * 1.1).setUnit("V").setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
+	.setWarningThreshold(0.9).setDescription("Cell voltage vs maximum design")
+	.setValueSupplier(() -> electrolyzer.getCellVoltage());
     constraints.put("cellVoltage", voltageConstraint);
   }
 
   /**
    * Adds constraints for CO2 electrolyzer.
    *
-   * @param constraints map to add constraints to
+   * @param constraints     map to add constraints to
    * @param co2Electrolyzer the CO2 electrolyzer
    */
   private void addCO2ElectrolyzerConstraints(Map<String, CapacityConstraint> constraints,
       CO2Electrolyzer co2Electrolyzer) {
     // Cell voltage constraint (CO2 electrolysis typically higher voltage)
-    CapacityConstraint voltageConstraint = new CapacityConstraint("cellVoltage")
-        .setDesignValue(maxVoltageV * 1.5).setMaxValue(maxVoltageV * 1.65).setUnit("V")
-        .setSeverity(CapacityConstraint.ConstraintSeverity.HARD).setWarningThreshold(0.9)
-        .setDescription("CO2 electrolyzer cell voltage vs maximum design");
+    CapacityConstraint voltageConstraint = new CapacityConstraint("cellVoltage").setDesignValue(maxVoltageV * 1.5)
+	.setMaxValue(maxVoltageV * 1.65).setUnit("V").setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
+	.setWarningThreshold(0.9).setDescription("CO2 electrolyzer cell voltage vs maximum design");
     constraints.put("cellVoltage", voltageConstraint);
   }
 
@@ -149,7 +147,7 @@ public class ElectrolyzerCapacityStrategy implements EquipmentCapacityStrategy {
     List<CapacityConstraint> violations = new ArrayList<CapacityConstraint>();
     for (CapacityConstraint c : getConstraints(equipment).values()) {
       if (c.isViolated()) {
-        violations.add(c);
+	violations.add(c);
       }
     }
     return violations;
@@ -163,8 +161,8 @@ public class ElectrolyzerCapacityStrategy implements EquipmentCapacityStrategy {
     for (CapacityConstraint c : getConstraints(equipment).values()) {
       double util = c.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
-        maxUtil = util;
-        bottleneck = c;
+	maxUtil = util;
+	bottleneck = c;
       }
     }
     return bottleneck;
@@ -175,10 +173,10 @@ public class ElectrolyzerCapacityStrategy implements EquipmentCapacityStrategy {
   public boolean isWithinHardLimits(ProcessEquipmentInterface equipment) {
     for (CapacityConstraint c : getConstraints(equipment).values()) {
       if (c.getSeverity() == CapacityConstraint.ConstraintSeverity.HARD
-          || c.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL) {
-        if (c.isHardLimitExceeded()) {
-          return false;
-        }
+	  || c.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL) {
+	if (c.isHardLimitExceeded()) {
+	  return false;
+	}
       }
     }
     return true;
@@ -189,7 +187,7 @@ public class ElectrolyzerCapacityStrategy implements EquipmentCapacityStrategy {
   public boolean isWithinSoftLimits(ProcessEquipmentInterface equipment) {
     for (CapacityConstraint c : getConstraints(equipment).values()) {
       if (c.isViolated()) {
-        return false;
+	return false;
       }
     }
     return true;

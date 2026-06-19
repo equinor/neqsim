@@ -13,20 +13,19 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 /**
- * Multi-server composition layer that enables NeqSim MCP to coordinate with external MCP servers
- * for cross-domain engineering workflows.
+ * Multi-server composition layer that enables NeqSim MCP to coordinate with external MCP servers for cross-domain
+ * engineering workflows.
  *
  * <p>
- * Manages a registry of external MCP server endpoints and provides orchestration for multi-server
- * workflows. Each external server can be a cost estimation service, plant historian connector,
- * CAD/3D system, document extraction service, or any MCP-compliant tool provider.
+ * Manages a registry of external MCP server endpoints and provides orchestration for multi-server workflows. Each
+ * external server can be a cost estimation service, plant historian connector, CAD/3D system, document extraction
+ * service, or any MCP-compliant tool provider.
  * </p>
  *
  * <p>
- * Since NeqSim MCP runs over STDIO, external server calls are modeled as registered endpoints that
- * agents can discover and invoke. The actual cross-server communication is handled by the host
- * application (Claude, Copilot, etc.) which has access to all connected MCP servers. This runner
- * provides the composition metadata and workflow templates.
+ * Since NeqSim MCP runs over STDIO, external server calls are modeled as registered endpoints that agents can discover
+ * and invoke. The actual cross-server communication is handled by the host application (Claude, Copilot, etc.) which
+ * has access to all connected MCP servers. This runner provides the composition metadata and workflow templates.
  * </p>
  *
  * @author Even Solbraa
@@ -34,16 +33,13 @@ import com.google.gson.JsonParser;
  */
 public final class CompositionRunner {
 
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   /** Registry of known external MCP servers and their capabilities. */
-  private static final ConcurrentHashMap<String, ExternalServer> SERVERS =
-      new ConcurrentHashMap<String, ExternalServer>();
+  private static final ConcurrentHashMap<String, ExternalServer> SERVERS = new ConcurrentHashMap<String, ExternalServer>();
 
   /** Pre-built workflow templates for common multi-server patterns. */
-  private static final Map<String, WorkflowTemplate> TEMPLATES =
-      new LinkedHashMap<String, WorkflowTemplate>();
+  private static final Map<String, WorkflowTemplate> TEMPLATES = new LinkedHashMap<String, WorkflowTemplate>();
 
   static {
     initializeDefaultServers();
@@ -53,7 +49,8 @@ public final class CompositionRunner {
   /**
    * Private constructor — all methods are static.
    */
-  private CompositionRunner() {}
+  private CompositionRunner() {
+  }
 
   /**
    * Main entry point for composition operations.
@@ -67,24 +64,24 @@ public final class CompositionRunner {
       String action = input.has("action") ? input.get("action").getAsString() : "";
 
       switch (action) {
-        case "listServers":
-          return listServers();
-        case "registerServer":
-          return registerServer(input);
-        case "removeServer":
-          return removeServer(input);
-        case "listWorkflows":
-          return listWorkflows();
-        case "getWorkflow":
-          return getWorkflow(input);
-        case "planComposition":
-          return planComposition(input);
-        case "describeCapabilities":
-          return describeCapabilities();
-        default:
-          return errorJson("UNKNOWN_ACTION", "Unknown composition action: " + action,
-              "Use: listServers, registerServer, removeServer, listWorkflows, "
-                  + "getWorkflow, planComposition, describeCapabilities");
+      case "listServers":
+	return listServers();
+      case "registerServer":
+	return registerServer(input);
+      case "removeServer":
+	return removeServer(input);
+      case "listWorkflows":
+	return listWorkflows();
+      case "getWorkflow":
+	return getWorkflow(input);
+      case "planComposition":
+	return planComposition(input);
+      case "describeCapabilities":
+	return describeCapabilities();
+      default:
+	return errorJson("UNKNOWN_ACTION", "Unknown composition action: " + action,
+	    "Use: listServers, registerServer, removeServer, listWorkflows, "
+		+ "getWorkflow, planComposition, describeCapabilities");
       }
     } catch (Exception e) {
       return errorJson("COMPOSITION_ERROR", e.getMessage(), "Check JSON format");
@@ -107,9 +104,9 @@ public final class CompositionRunner {
     }
     response.add("servers", servers);
     response.addProperty("note",
-        "These are known MCP server types that can compose with NeqSim. "
-            + "The host application (Claude, Copilot) handles actual connections. "
-            + "Use 'planComposition' to get a multi-server workflow plan.");
+	"These are known MCP server types that can compose with NeqSim. "
+	    + "The host application (Claude, Copilot) handles actual connections. "
+	    + "Use 'planComposition' to get a multi-server workflow plan.");
     return GSON.toJson(response);
   }
 
@@ -134,13 +131,13 @@ public final class CompositionRunner {
 
     if (input.has("tools") && input.get("tools").isJsonArray()) {
       for (JsonElement t : input.getAsJsonArray("tools")) {
-        server.tools.add(t.getAsString());
+	server.tools.add(t.getAsString());
       }
     }
 
     if (input.has("dataFormats") && input.get("dataFormats").isJsonArray()) {
       for (JsonElement f : input.getAsJsonArray("dataFormats")) {
-        server.dataFormats.add(f.getAsString());
+	server.dataFormats.add(f.getAsString());
       }
     }
 
@@ -190,7 +187,7 @@ public final class CompositionRunner {
 
       JsonArray servers = new JsonArray();
       for (String s : tmpl.requiredServers) {
-        servers.add(s);
+	servers.add(s);
       }
       wf.add("requiredServers", servers);
       workflows.add(wf);
@@ -210,8 +207,7 @@ public final class CompositionRunner {
     WorkflowTemplate tmpl = TEMPLATES.get(id);
 
     if (tmpl == null) {
-      return errorJson("NOT_FOUND", "Workflow '" + id + "' not found",
-          "Use listWorkflows to see available templates");
+      return errorJson("NOT_FOUND", "Workflow '" + id + "' not found", "Use listWorkflows to see available templates");
     }
 
     JsonObject response = new JsonObject();
@@ -255,56 +251,48 @@ public final class CompositionRunner {
     JsonArray steps = new JsonArray();
 
     // Always include NeqSim
-    addRecommendation(recommended, "neqsim", "Core thermodynamic and process simulation",
-        "required");
+    addRecommendation(recommended, "neqsim", "Core thermodynamic and process simulation", "required");
 
     // Check for cost-related keywords
-    if (lower.contains("cost") || lower.contains("capex") || lower.contains("opex")
-        || lower.contains("economic") || lower.contains("npv") || lower.contains("budget")) {
-      addRecommendation(recommended, "cost-estimation",
-          "CAPEX/OPEX cost estimation and economic analysis", "recommended");
+    if (lower.contains("cost") || lower.contains("capex") || lower.contains("opex") || lower.contains("economic")
+	|| lower.contains("npv") || lower.contains("budget")) {
+      addRecommendation(recommended, "cost-estimation", "CAPEX/OPEX cost estimation and economic analysis",
+	  "recommended");
       addStep(steps, 1, "neqsim", "runProcess", "Run process simulation to size equipment");
-      addStep(steps, 2, "cost-estimation", "estimateCosts",
-          "Estimate costs based on sized equipment");
+      addStep(steps, 2, "cost-estimation", "estimateCosts", "Estimate costs based on sized equipment");
     }
 
     // Check for plant data keywords
-    if (lower.contains("plant") || lower.contains("historian") || lower.contains("pi ")
-        || lower.contains("ip.21") || lower.contains("operational") || lower.contains("measured")
-        || lower.contains("digital twin")) {
-      addRecommendation(recommended, "plant-historian",
-          "Real-time and historical plant data access", "recommended");
-      addStep(steps, 1, "plant-historian", "readTags",
-          "Read current operating data from historian");
+    if (lower.contains("plant") || lower.contains("historian") || lower.contains("pi ") || lower.contains("ip.21")
+	|| lower.contains("operational") || lower.contains("measured") || lower.contains("digital twin")) {
+      addRecommendation(recommended, "plant-historian", "Real-time and historical plant data access", "recommended");
+      addStep(steps, 1, "plant-historian", "readTags", "Read current operating data from historian");
       addStep(steps, 2, "neqsim", "runProcess", "Run simulation with real operating conditions");
       addStep(steps, 3, "neqsim", "validateResults", "Compare simulation vs measured values");
     }
 
     // Check for document extraction
-    if (lower.contains("datasheet") || lower.contains("document") || lower.contains("pdf")
-        || lower.contains("extract") || lower.contains("vendor")
-        || lower.contains("specification")) {
+    if (lower.contains("datasheet") || lower.contains("document") || lower.contains("pdf") || lower.contains("extract")
+	|| lower.contains("vendor") || lower.contains("specification")) {
       addRecommendation(recommended, "document-extraction",
-          "Extract data from PDFs, datasheets, and engineering documents", "recommended");
+	  "Extract data from PDFs, datasheets, and engineering documents", "recommended");
     }
 
     // Check for 3D/layout
-    if (lower.contains("layout") || lower.contains("3d") || lower.contains("cad")
-        || lower.contains("piping") || lower.contains("arrangement")) {
+    if (lower.contains("layout") || lower.contains("3d") || lower.contains("cad") || lower.contains("piping")
+	|| lower.contains("arrangement")) {
       addRecommendation(recommended, "cad-3d", "3D equipment layout and piping design", "optional");
     }
 
     // Check for safety/risk
-    if (lower.contains("safety") || lower.contains("hazop") || lower.contains("sil")
-        || lower.contains("relief") || lower.contains("flare")) {
-      addRecommendation(recommended, "safety-analysis", "HAZOP, SIL, relief/flare analysis",
-          "recommended");
+    if (lower.contains("safety") || lower.contains("hazop") || lower.contains("sil") || lower.contains("relief")
+	|| lower.contains("flare")) {
+      addRecommendation(recommended, "safety-analysis", "HAZOP, SIL, relief/flare analysis", "recommended");
     }
 
     // Default: if no specific steps planned, give generic plan
     if (steps.size() == 0) {
-      addStep(steps, 1, "neqsim", "runFlash or runProcess",
-          "Run thermodynamic or process simulation");
+      addStep(steps, 1, "neqsim", "runFlash or runProcess", "Run thermodynamic or process simulation");
       addStep(steps, 2, "neqsim", "validateResults", "Validate results against design rules");
       addStep(steps, 3, "neqsim", "generateReport", "Generate engineering report");
     }
@@ -312,9 +300,9 @@ public final class CompositionRunner {
     response.add("recommendedServers", recommended);
     response.add("suggestedSteps", steps);
     response.addProperty("compositionNote",
-        "The host application orchestrates cross-server calls. "
-            + "Each step's output feeds into the next step's input. "
-            + "NeqSim provides the thermodynamic and process simulation core.");
+	"The host application orchestrates cross-server calls. "
+	    + "Each step's output feeds into the next step's input. "
+	    + "NeqSim provides the thermodynamic and process simulation core.");
     return GSON.toJson(response);
   }
 
@@ -453,13 +441,12 @@ public final class CompositionRunner {
     digitalTwin.requiredServers.add("neqsim");
     digitalTwin.requiredServers.add("plant-historian");
     digitalTwin.steps.add(new WorkflowStep(1, "plant-historian", "readTags",
-        "Read current operating data (temperatures, pressures, flows)"));
-    digitalTwin.steps.add(new WorkflowStep(2, "neqsim", "runProcess",
-        "Run simulation with real operating conditions"));
-    digitalTwin.steps.add(new WorkflowStep(3, "neqsim", "validateResults",
-        "Compare simulation vs measured values, identify deviations"));
-    digitalTwin.steps.add(new WorkflowStep(4, "neqsim", "generateReport",
-        "Generate deviation report with recommendations"));
+	"Read current operating data (temperatures, pressures, flows)"));
+    digitalTwin.steps.add(new WorkflowStep(2, "neqsim", "runProcess", "Run simulation with real operating conditions"));
+    digitalTwin.steps.add(
+	new WorkflowStep(3, "neqsim", "validateResults", "Compare simulation vs measured values, identify deviations"));
+    digitalTwin.steps
+	.add(new WorkflowStep(4, "neqsim", "generateReport", "Generate deviation report with recommendations"));
     TEMPLATES.put("digital-twin", digitalTwin);
 
     // 2. FEED Study workflow
@@ -469,14 +456,13 @@ public final class CompositionRunner {
     feed.description = "Front-End Engineering Design: process sim + sizing + cost + deliverables";
     feed.requiredServers.add("neqsim");
     feed.requiredServers.add("cost-estimation");
-    feed.steps.add(new WorkflowStep(1, "neqsim", "runProcess",
-        "Run process simulation to establish operating conditions"));
-    feed.steps.add(new WorkflowStep(2, "neqsim", "validateResults",
-        "Validate against design standards (ASME, API, NORSOK)"));
-    feed.steps.add(new WorkflowStep(3, "cost-estimation", "estimateProjectCost",
-        "Estimate CAPEX from sized equipment"));
-    feed.steps.add(new WorkflowStep(4, "neqsim", "generateReport",
-        "Generate engineering report with all results"));
+    feed.steps
+	.add(new WorkflowStep(1, "neqsim", "runProcess", "Run process simulation to establish operating conditions"));
+    feed.steps
+	.add(new WorkflowStep(2, "neqsim", "validateResults", "Validate against design standards (ASME, API, NORSOK)"));
+    feed.steps
+	.add(new WorkflowStep(3, "cost-estimation", "estimateProjectCost", "Estimate CAPEX from sized equipment"));
+    feed.steps.add(new WorkflowStep(4, "neqsim", "generateReport", "Generate engineering report with all results"));
     TEMPLATES.put("feed-study", feed);
 
     // 3. Vendor datasheet workflow
@@ -486,12 +472,11 @@ public final class CompositionRunner {
     vendor.description = "Extract vendor data, simulate, compare with specifications";
     vendor.requiredServers.add("neqsim");
     vendor.requiredServers.add("document-extraction");
-    vendor.steps.add(new WorkflowStep(1, "document-extraction", "parseDatasheet",
-        "Extract equipment specs from vendor datasheet"));
     vendor.steps.add(
-        new WorkflowStep(2, "neqsim", "runProcess", "Simulate equipment at specified conditions"));
-    vendor.steps.add(new WorkflowStep(3, "neqsim", "validateResults",
-        "Compare simulation results vs vendor guarantees"));
+	new WorkflowStep(1, "document-extraction", "parseDatasheet", "Extract equipment specs from vendor datasheet"));
+    vendor.steps.add(new WorkflowStep(2, "neqsim", "runProcess", "Simulate equipment at specified conditions"));
+    vendor.steps
+	.add(new WorkflowStep(3, "neqsim", "validateResults", "Compare simulation results vs vendor guarantees"));
     TEMPLATES.put("vendor-evaluation", vendor);
 
     // 4. Safety study workflow
@@ -501,14 +486,12 @@ public final class CompositionRunner {
     safety.description = "Depressurization + relief sizing + consequence analysis";
     safety.requiredServers.add("neqsim");
     safety.requiredServers.add("safety-analysis");
-    safety.steps.add(new WorkflowStep(1, "neqsim", "runProcess",
-        "Define process conditions and fluid compositions"));
-    safety.steps.add(
-        new WorkflowStep(2, "neqsim", "runDynamic", "Simulate depressurization/blowdown scenario"));
-    safety.steps.add(new WorkflowStep(3, "safety-analysis", "sizeReliefValve",
-        "Size relief valve based on worst-case flow"));
+    safety.steps.add(new WorkflowStep(1, "neqsim", "runProcess", "Define process conditions and fluid compositions"));
+    safety.steps.add(new WorkflowStep(2, "neqsim", "runDynamic", "Simulate depressurization/blowdown scenario"));
+    safety.steps
+	.add(new WorkflowStep(3, "safety-analysis", "sizeReliefValve", "Size relief valve based on worst-case flow"));
     safety.steps.add(new WorkflowStep(4, "safety-analysis", "runConsequenceAnalysis",
-        "Model release dispersion and thermal radiation"));
+	"Model release dispersion and thermal radiation"));
     TEMPLATES.put("safety-study", safety);
   }
 
@@ -519,13 +502,12 @@ public final class CompositionRunner {
   /**
    * Adds a recommendation entry to an array.
    *
-   * @param arr the array
-   * @param server the server name
-   * @param reason the reason
+   * @param arr      the array
+   * @param server   the server name
+   * @param reason   the reason
    * @param priority the priority level
    */
-  private static void addRecommendation(JsonArray arr, String server, String reason,
-      String priority) {
+  private static void addRecommendation(JsonArray arr, String server, String reason, String priority) {
     JsonObject rec = new JsonObject();
     rec.addProperty("server", server);
     rec.addProperty("reason", reason);
@@ -536,14 +518,13 @@ public final class CompositionRunner {
   /**
    * Adds a workflow step to an array.
    *
-   * @param arr the array
-   * @param order the step order
-   * @param server the server
-   * @param tool the tool
+   * @param arr         the array
+   * @param order       the step order
+   * @param server      the server
+   * @param tool        the tool
    * @param description the description
    */
-  private static void addStep(JsonArray arr, int order, String server, String tool,
-      String description) {
+  private static void addStep(JsonArray arr, int order, String server, String tool, String description) {
     JsonObject step = new JsonObject();
     step.addProperty("order", order);
     step.addProperty("server", server);
@@ -555,8 +536,8 @@ public final class CompositionRunner {
   /**
    * Creates a standard error JSON response.
    *
-   * @param code the error code
-   * @param message the error message
+   * @param code        the error code
+   * @param message     the error message
    * @param remediation the fix
    * @return the JSON string
    */
@@ -616,12 +597,12 @@ public final class CompositionRunner {
       obj.addProperty("version", version);
       JsonArray toolArr = new JsonArray();
       for (String t : tools) {
-        toolArr.add(t);
+	toolArr.add(t);
       }
       obj.add("tools", toolArr);
       JsonArray fmtArr = new JsonArray();
       for (String f : dataFormats) {
-        fmtArr.add(f);
+	fmtArr.add(f);
       }
       obj.add("dataFormats", fmtArr);
       return obj;
@@ -667,9 +648,9 @@ public final class CompositionRunner {
     /**
      * Creates a workflow step.
      *
-     * @param order the step order
-     * @param server the server name
-     * @param tool the tool name
+     * @param order       the step order
+     * @param server      the server name
+     * @param tool        the tool name
      * @param description the step description
      */
     WorkflowStep(int order, String server, String tool, String description) {

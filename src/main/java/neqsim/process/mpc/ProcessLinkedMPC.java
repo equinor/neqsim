@@ -11,8 +11,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * Bridge class that auto-configures and links MPC to a ProcessSystem.
  *
  * <p>
- * ProcessLinkedMPC provides automatic integration between NeqSim's ProcessSystem simulation and
- * Model Predictive Control. It handles:
+ * ProcessLinkedMPC provides automatic integration between NeqSim's ProcessSystem simulation and Model Predictive
+ * Control. It handles:
  * </p>
  * <ul>
  * <li>Automatic model identification through linearization or step testing</li>
@@ -130,7 +130,7 @@ public class ProcessLinkedMPC implements Serializable {
   /**
    * Construct a process-linked MPC controller.
    *
-   * @param name the controller name
+   * @param name          the controller name
    * @param processSystem the process system to control
    */
   public ProcessLinkedMPC(String name, ProcessSystem processSystem) {
@@ -147,15 +147,14 @@ public class ProcessLinkedMPC implements Serializable {
    * Add a manipulated variable.
    *
    * @param equipmentName the equipment name
-   * @param propertyName the property name (opening, duty, flowRate, etc.)
-   * @param minValue minimum value
-   * @param maxValue maximum value
+   * @param propertyName  the property name (opening, duty, flowRate, etc.)
+   * @param minValue      minimum value
+   * @param maxValue      maximum value
    * @return the created ManipulatedVariable
    */
-  public ManipulatedVariable addMV(String equipmentName, String propertyName, double minValue,
-      double maxValue) {
+  public ManipulatedVariable addMV(String equipmentName, String propertyName, double minValue, double maxValue) {
     ManipulatedVariable mv = new ManipulatedVariable(equipmentName + "." + propertyName,
-        processSystem.getUnit(equipmentName), propertyName);
+	processSystem.getUnit(equipmentName), propertyName);
     mv.setBounds(minValue, maxValue);
     manipulatedVariables.add(mv);
     return mv;
@@ -164,15 +163,15 @@ public class ProcessLinkedMPC implements Serializable {
   /**
    * Add a manipulated variable with rate limits.
    *
-   * @param equipmentName the equipment name
-   * @param propertyName the property name
-   * @param minValue minimum value
-   * @param maxValue maximum value
+   * @param equipmentName   the equipment name
+   * @param propertyName    the property name
+   * @param minValue        minimum value
+   * @param maxValue        maximum value
    * @param maxRateOfChange maximum rate of change per sample
    * @return the created ManipulatedVariable
    */
-  public ManipulatedVariable addMV(String equipmentName, String propertyName, double minValue,
-      double maxValue, double maxRateOfChange) {
+  public ManipulatedVariable addMV(String equipmentName, String propertyName, double minValue, double maxValue,
+      double maxRateOfChange) {
     ManipulatedVariable mv = addMV(equipmentName, propertyName, minValue, maxValue);
     mv.setRateLimit(-maxRateOfChange, maxRateOfChange);
     return mv;
@@ -182,13 +181,13 @@ public class ProcessLinkedMPC implements Serializable {
    * Add a controlled variable with setpoint.
    *
    * @param equipmentName the equipment name
-   * @param propertyName the property name (pressure, temperature, level, etc.)
-   * @param setpoint the setpoint value
+   * @param propertyName  the property name (pressure, temperature, level, etc.)
+   * @param setpoint      the setpoint value
    * @return the created ControlledVariable
    */
   public ControlledVariable addCV(String equipmentName, String propertyName, double setpoint) {
     ControlledVariable cv = new ControlledVariable(equipmentName + "." + propertyName,
-        processSystem.getUnit(equipmentName), propertyName);
+	processSystem.getUnit(equipmentName), propertyName);
     cv.setSetpoint(setpoint);
     controlledVariables.add(cv);
     return cv;
@@ -198,9 +197,9 @@ public class ProcessLinkedMPC implements Serializable {
    * Add a controlled variable with zone control.
    *
    * @param equipmentName the equipment name
-   * @param propertyName the property name
-   * @param lowSetpoint low zone boundary
-   * @param highSetpoint high zone boundary
+   * @param propertyName  the property name
+   * @param lowSetpoint   low zone boundary
+   * @param highSetpoint  high zone boundary
    * @return the created ControlledVariable
    */
   public ControlledVariable addCVZone(String equipmentName, String propertyName, double lowSetpoint,
@@ -214,17 +213,16 @@ public class ProcessLinkedMPC implements Serializable {
    * Set constraints on a controlled variable.
    *
    * @param equipmentName the equipment name
-   * @param propertyName the property name
-   * @param minValue minimum constraint
-   * @param maxValue maximum constraint
+   * @param propertyName  the property name
+   * @param minValue      minimum constraint
+   * @param maxValue      maximum constraint
    */
-  public void setConstraint(String equipmentName, String propertyName, double minValue,
-      double maxValue) {
+  public void setConstraint(String equipmentName, String propertyName, double minValue, double maxValue) {
     String fullName = equipmentName + "." + propertyName;
     for (ControlledVariable cv : controlledVariables) {
       if (cv.getName().equals(fullName)) {
-        cv.setHardConstraints(minValue, maxValue);
-        return;
+	cv.setHardConstraints(minValue, maxValue);
+	return;
       }
     }
     throw new IllegalArgumentException("CV not found: " + fullName);
@@ -234,12 +232,12 @@ public class ProcessLinkedMPC implements Serializable {
    * Add a disturbance variable.
    *
    * @param equipmentName the equipment name
-   * @param propertyName the property name
+   * @param propertyName  the property name
    * @return the created DisturbanceVariable
    */
   public DisturbanceVariable addDV(String equipmentName, String propertyName) {
     DisturbanceVariable dv = new DisturbanceVariable(equipmentName + "." + propertyName,
-        processSystem.getUnit(equipmentName), propertyName);
+	processSystem.getUnit(equipmentName), propertyName);
     disturbanceVariables.add(dv);
     return dv;
   }
@@ -248,18 +246,17 @@ public class ProcessLinkedMPC implements Serializable {
    * Add a state variable (SVR) for nonlinear MPC.
    *
    * <p>
-   * State variables are internal model states that evolve according to dynamic equations. They are
-   * tracked for model accuracy but not directly controlled. Examples include flow rates, internal
-   * pressures, and calculated gains.
+   * State variables are internal model states that evolve according to dynamic equations. They are tracked for model
+   * accuracy but not directly controlled. Examples include flow rates, internal pressures, and calculated gains.
    * </p>
    *
    * @param equipmentName the equipment name
-   * @param propertyName the property name
+   * @param propertyName  the property name
    * @return the created StateVariable
    */
   public StateVariable addSVR(String equipmentName, String propertyName) {
-    StateVariable svr = new StateVariable(equipmentName + "." + propertyName,
-        processSystem.getUnit(equipmentName), propertyName);
+    StateVariable svr = new StateVariable(equipmentName + "." + propertyName, processSystem.getUnit(equipmentName),
+	propertyName);
     stateVariables.add(svr);
     return svr;
   }
@@ -268,8 +265,8 @@ public class ProcessLinkedMPC implements Serializable {
    * Add a state variable with a data index.
    *
    * @param equipmentName the equipment name
-   * @param propertyName the property name
-   * @param dtaIx data index for C++ code linking
+   * @param propertyName  the property name
+   * @param dtaIx         data index for C++ code linking
    * @return the created StateVariable
    */
   public StateVariable addSVR(String equipmentName, String propertyName, String dtaIx) {
@@ -387,8 +384,8 @@ public class ProcessLinkedMPC implements Serializable {
     for (int i = 0; i < manipulatedVariables.size(); i++) {
       ManipulatedVariable mv = manipulatedVariables.get(i);
       if (mv.getName().equals(mvName) || mv.getName().endsWith("." + mvName)) {
-        mv.setMoveWeight(weight);
-        return;
+	mv.setMoveWeight(weight);
+	return;
       }
     }
     throw new IllegalArgumentException("MV not found: " + mvName);
@@ -403,8 +400,8 @@ public class ProcessLinkedMPC implements Serializable {
   public void setErrorWeight(String cvName, double weight) {
     for (ControlledVariable cv : controlledVariables) {
       if (cv.getName().equals(cvName) || cv.getName().endsWith("." + cvName)) {
-        cv.setWeight(weight);
-        return;
+	cv.setWeight(weight);
+	return;
       }
     }
     throw new IllegalArgumentException("CV not found: " + cvName);
@@ -464,10 +461,10 @@ public class ProcessLinkedMPC implements Serializable {
       nonlinearPredictor.setPredictionHorizon(predictionHorizon);
       nonlinearPredictor.setSampleTime(sampleTimeSeconds);
       for (ManipulatedVariable mv : manipulatedVariables) {
-        nonlinearPredictor.addMV(mv);
+	nonlinearPredictor.addMV(mv);
       }
       for (ControlledVariable cv : controlledVariables) {
-        nonlinearPredictor.addCV(cv);
+	nonlinearPredictor.addCV(cv);
       }
     }
 
@@ -529,7 +526,7 @@ public class ProcessLinkedMPC implements Serializable {
     if (modelUpdateInterval > 0) {
       stepsSinceModelUpdate++;
       if (stepsSinceModelUpdate >= modelUpdateInterval) {
-        updateModel();
+	updateModel();
       }
     }
 
@@ -555,36 +552,36 @@ public class ProcessLinkedMPC implements Serializable {
       double totalGain = 0;
 
       for (int j = 0; j < controlledVariables.size(); j++) {
-        ControlledVariable cv = controlledVariables.get(j);
-        double error = cv.getSetpoint() - cv.readValue();
-        double gain = gains[j][i];
-        double weight = cv.getWeight();
+	ControlledVariable cv = controlledVariables.get(j);
+	double error = cv.getSetpoint() - cv.readValue();
+	double gain = gains[j][i];
+	double weight = cv.getWeight();
 
-        if (Math.abs(gain) > 1e-10) {
-          totalError += weight * error / gain;
-          totalGain += weight * Math.abs(1.0 / gain);
-        }
+	if (Math.abs(gain) > 1e-10) {
+	  totalError += weight * error / gain;
+	  totalGain += weight * Math.abs(1.0 / gain);
+	}
       }
 
       if (totalGain > 0) {
-        double delta = totalError / totalGain * 0.3; // Conservative gain factor
+	double delta = totalError / totalGain * 0.3; // Conservative gain factor
 
-        // Apply move suppression
-        double moveWeight = mv.getMoveWeight();
-        if (moveWeight > 0) {
-          delta = delta / (1.0 + moveWeight);
-        }
+	// Apply move suppression
+	double moveWeight = mv.getMoveWeight();
+	if (moveWeight > 0) {
+	  delta = delta / (1.0 + moveWeight);
+	}
 
-        // Apply rate limits
-        double maxRate = mv.getMaxRateOfChange();
-        if (Double.isFinite(maxRate)) {
-          delta = Math.max(-maxRate, Math.min(maxRate, delta));
-        }
+	// Apply rate limits
+	double maxRate = mv.getMaxRateOfChange();
+	if (Double.isFinite(maxRate)) {
+	  delta = Math.max(-maxRate, Math.min(maxRate, delta));
+	}
 
-        moves[i] = mvValue + delta;
+	moves[i] = mvValue + delta;
 
-        // Apply bounds
-        moves[i] = Math.max(mv.getMinValue(), Math.min(mv.getMaxValue(), moves[i]));
+	// Apply bounds
+	moves[i] = Math.max(mv.getMinValue(), Math.min(mv.getMaxValue(), moves[i]));
       }
     }
 
@@ -658,14 +655,14 @@ public class ProcessLinkedMPC implements Serializable {
   /**
    * Set a CV setpoint.
    *
-   * @param cvName the CV name
+   * @param cvName   the CV name
    * @param setpoint the new setpoint
    */
   public void setSetpoint(String cvName, double setpoint) {
     for (ControlledVariable cv : controlledVariables) {
       if (cv.getName().equals(cvName) || cv.getName().endsWith("." + cvName)) {
-        cv.setSetpoint(setpoint);
-        return;
+	cv.setSetpoint(setpoint);
+	return;
       }
     }
     throw new IllegalArgumentException("CV not found: " + cvName);
@@ -722,7 +719,7 @@ public class ProcessLinkedMPC implements Serializable {
     sb.append("\n  MVs (").append(manipulatedVariables.size()).append("):\n");
     for (ManipulatedVariable mv : manipulatedVariables) {
       sb.append("    - ").append(mv.getName()).append(" [").append(mv.getMinValue()).append(", ")
-          .append(mv.getMaxValue()).append("]\n");
+	  .append(mv.getMaxValue()).append("]\n");
     }
     sb.append("\n  CVs (").append(controlledVariables.size()).append("):\n");
     for (ControlledVariable cv : controlledVariables) {
@@ -731,7 +728,7 @@ public class ProcessLinkedMPC implements Serializable {
     if (!disturbanceVariables.isEmpty()) {
       sb.append("\n  DVs (").append(disturbanceVariables.size()).append("):\n");
       for (DisturbanceVariable dv : disturbanceVariables) {
-        sb.append("    - ").append(dv.getName()).append("\n");
+	sb.append("    - ").append(dv.getName()).append("\n");
       }
     }
     return sb.toString();
@@ -741,8 +738,8 @@ public class ProcessLinkedMPC implements Serializable {
    * Create an industrial MPC exporter for this controller.
    *
    * <p>
-   * The exporter can generate model files in formats compatible with industrial MPC platforms,
-   * including step response models, gain matrices, and variable configurations.
+   * The exporter can generate model files in formats compatible with industrial MPC platforms, including step response
+   * models, gain matrices, and variable configurations.
    * </p>
    *
    * @return a new IndustrialMPCExporter instance
@@ -755,9 +752,8 @@ public class ProcessLinkedMPC implements Serializable {
    * Create a data exchange interface for real-time integration.
    *
    * <p>
-   * The data exchange interface provides standardized methods for bidirectional communication with
-   * external control systems, including timestamped data vectors, quality flags, and execution
-   * status.
+   * The data exchange interface provides standardized methods for bidirectional communication with external control
+   * systems, including timestamped data vectors, quality flags, and execution status.
    * </p>
    *
    * @return a new ControllerDataExchange instance
@@ -770,9 +766,9 @@ public class ProcessLinkedMPC implements Serializable {
    * Create a SubrModl exporter for nonlinear MPC integration.
    *
    * <p>
-   * The SubrModl exporter generates configuration files compatible with industrial nonlinear MPC
-   * systems that use programmed model objects. This includes SubrXvr definitions with DtaIx
-   * mappings, model parameters, and state variables.
+   * The SubrModl exporter generates configuration files compatible with industrial nonlinear MPC systems that use
+   * programmed model objects. This includes SubrXvr definitions with DtaIx mappings, model parameters, and state
+   * variables.
    * </p>
    *
    * @return a new SubrModlExporter instance populated from this controller
@@ -785,8 +781,7 @@ public class ProcessLinkedMPC implements Serializable {
 
     // Add state variables
     for (StateVariable svr : stateVariables) {
-      exporter.addStateVariable(svr.getName(), svr.getDtaIx(), svr.getDescription(),
-          svr.getModelValue());
+      exporter.addStateVariable(svr.getName(), svr.getDtaIx(), svr.getDescription(), svr.getModelValue());
     }
 
     return exporter;
@@ -794,8 +789,7 @@ public class ProcessLinkedMPC implements Serializable {
 
   @Override
   public String toString() {
-    return "ProcessLinkedMPC[" + name + ", MVs=" + manipulatedVariables.size() + ", CVs="
-        + controlledVariables.size() + ", SVRs=" + stateVariables.size() + ", identified="
-        + modelIdentified + "]";
+    return "ProcessLinkedMPC[" + name + ", MVs=" + manipulatedVariables.size() + ", CVs=" + controlledVariables.size()
+	+ ", SVRs=" + stateVariables.size() + ", identified=" + modelIdentified + "]";
   }
 }

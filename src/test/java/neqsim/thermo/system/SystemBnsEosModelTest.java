@@ -7,8 +7,8 @@ import neqsim.thermo.ThermodynamicModelTest;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Verifies basic thermodynamic consistency of the Burgoyne–Nielsen–Stanko PR model for a gas-phase
- * system using ThermodynamicModelTest utilities.
+ * Verifies basic thermodynamic consistency of the Burgoyne–Nielsen–Stanko PR model for a gas-phase system using
+ * ThermodynamicModelTest utilities.
  */
 public class SystemBnsEosModelTest {
   static SystemBnsEos system;

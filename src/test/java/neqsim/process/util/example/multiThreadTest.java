@@ -34,8 +34,7 @@ public class multiThreadTest {
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 20.00);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 20.00);
     testSystem.addComponent("methane", 500.00);
     testSystem.addComponent("ethane", 500.00);
     testSystem.addComponent("CO2", 100.00);
@@ -61,8 +60,7 @@ public class multiThreadTest {
     cooler1.setOutTemperature(283.15 + 30);
 
     // mixer.addStream(stream_2);
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(stream_2);
     operations.add(mixer);
@@ -71,8 +69,7 @@ public class multiThreadTest {
     operations.add(comp1);
     operations.add(cooler1);
 
-    neqsim.thermo.system.SystemInterface testSystem2 =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 20.00);
+    neqsim.thermo.system.SystemInterface testSystem2 = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 20.00);
     testSystem2.addComponent("methane", 400.00);
     testSystem2.addComponent("ethane", 4.00);
     testSystem2.addComponent("CO2", 100.00);
@@ -108,8 +105,7 @@ public class multiThreadTest {
     mixer2.addStream(resyc.getOutletStream());
 
     // mixer2.addStream(stream_222);
-    neqsim.process.processmodel.ProcessSystem operations2 =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations2 = new neqsim.process.processmodel.ProcessSystem();
     operations2.add(stream_22);
     operations2.add(mixer2);
     operations2.add(stream_32);
@@ -131,10 +127,10 @@ public class multiThreadTest {
       processThread2.start();
 
       try {
-        processThread1.join(1000);
-        processThread2.join(1000);
+	processThread1.join(1000);
+	processThread2.join(1000);
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+	logger.error(ex.getMessage(), ex);
       }
     }
     // } while (processThread1.isAlive()); // && processThread2.isAlive());

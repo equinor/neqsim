@@ -9,8 +9,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 /**
- * Tests for {@link NelsonCurveAssessment} — API 941 Nelson curve high-temperature hydrogen attack
- * assessment.
+ * Tests for {@link NelsonCurveAssessment} — API 941 Nelson curve high-temperature hydrogen attack assessment.
  *
  * @author ESOL
  * @version 1.0
@@ -39,8 +38,7 @@ public class NelsonCurveAssessmentTest {
     nelson.evaluate();
 
     // 300°C should be above the carbon steel Nelson curve at 10 bar H2
-    assertFalse(nelson.isBelowNelsonCurve(),
-        "300°C at 10 bar H2 should be above carbon steel Nelson curve");
+    assertFalse(nelson.isBelowNelsonCurve(), "300°C at 10 bar H2 should be above carbon steel Nelson curve");
     assertEquals("Very High", nelson.getRiskLevel());
     assertTrue(nelson.getTemperatureMarginC() > 0, "Margin should be positive (unsafe)");
   }
@@ -55,8 +53,7 @@ public class NelsonCurveAssessmentTest {
 
     double maxTemp = nelson.getMaxAllowableTemperatureC();
     // At 0 psia H2, carbon steel curve is 500°F = 260°C
-    assertEquals(260.0, maxTemp, 5.0,
-        "Max temp at 0 psia should be ~260°C for CS");
+    assertEquals(260.0, maxTemp, 5.0, "Max temp at 0 psia should be ~260°C for CS");
     assertTrue(nelson.isBelowNelsonCurve());
   }
 
@@ -70,12 +67,10 @@ public class NelsonCurveAssessmentTest {
     nelson.setMaterialType("carbon_steel");
     nelson.evaluate();
 
-    assertTrue(nelson.isBelowNelsonCurve(),
-        "220°C at 100 psia should be just below curve (~232°C limit)");
+    assertTrue(nelson.isBelowNelsonCurve(), "220°C at 100 psia should be just below curve (~232°C limit)");
     // Should be High risk (close to curve, within 20°C)
-    assertTrue(
-        "Medium".equals(nelson.getRiskLevel()) || "High".equals(nelson.getRiskLevel()),
-        "Borderline should be Medium or High risk: " + nelson.getRiskLevel());
+    assertTrue("Medium".equals(nelson.getRiskLevel()) || "High".equals(nelson.getRiskLevel()),
+	"Borderline should be Medium or High risk: " + nelson.getRiskLevel());
   }
 
   @Test
@@ -87,8 +82,7 @@ public class NelsonCurveAssessmentTest {
     nelson.evaluate();
 
     // 2.25Cr-1Mo should easily handle 400°C at 10 bar H2
-    assertTrue(nelson.isBelowNelsonCurve(),
-        "400°C at 10 bar H2 should be safe for 2.25Cr-1Mo");
+    assertTrue(nelson.isBelowNelsonCurve(), "400°C at 10 bar H2 should be safe for 2.25Cr-1Mo");
     assertEquals("Low", nelson.getRiskLevel());
   }
 
@@ -101,8 +95,7 @@ public class NelsonCurveAssessmentTest {
     nelson.evaluate();
 
     // Very high temperature and very high pressure — should exceed even 2.25Cr-1Mo
-    assertFalse(nelson.isBelowNelsonCurve(),
-        "550°C at 100 bar H2 should exceed 2.25Cr-1Mo Nelson curve");
+    assertFalse(nelson.isBelowNelsonCurve(), "550°C at 100 bar H2 should exceed 2.25Cr-1Mo Nelson curve");
   }
 
   @Test
@@ -114,8 +107,7 @@ public class NelsonCurveAssessmentTest {
     nelson.evaluate();
 
     // Austenitic SS should easily handle 500°C
-    assertTrue(nelson.isBelowNelsonCurve(),
-        "500°C should be safe for austenitic SS");
+    assertTrue(nelson.isBelowNelsonCurve(), "500°C should be safe for austenitic SS");
   }
 
   @Test
@@ -157,8 +149,7 @@ public class NelsonCurveAssessmentTest {
 
     // Below 200°C → Low risk (HTHA not applicable)
     assertTrue(nelson.isBelowNelsonCurve());
-    assertEquals("Low", nelson.getRiskLevel(),
-        "Below 200°C should always be Low risk");
+    assertEquals("Low", nelson.getRiskLevel(), "Below 200°C should always be Low risk");
   }
 
   @Test
@@ -207,8 +198,7 @@ public class NelsonCurveAssessmentTest {
     nelson.evaluate();
 
     // 1Cr-0.5Mo should handle 350°C at 10 bar
-    assertTrue(nelson.isBelowNelsonCurve(),
-        "350°C at 10 bar should be safe for 1Cr-0.5Mo");
+    assertTrue(nelson.isBelowNelsonCurve(), "350°C at 10 bar should be safe for 1Cr-0.5Mo");
   }
 
   @Test
@@ -220,8 +210,7 @@ public class NelsonCurveAssessmentTest {
     nelson.evaluate();
 
     // C-0.5Mo has higher curve than CS but API 941 warns of field failures
-    assertTrue(nelson.isBelowNelsonCurve(),
-        "280°C at 5 bar should be below C-0.5Mo curve");
+    assertTrue(nelson.isBelowNelsonCurve(), "280°C at 5 bar should be below C-0.5Mo curve");
   }
 
   @Test
@@ -262,8 +251,7 @@ public class NelsonCurveAssessmentTest {
   void testMaterialHierarchy() {
     // Verify that higher alloy materials have higher temperature limits
     double[] maxTemps = new double[6];
-    String[] materials = {"carbon_steel", "c_0_5mo", "1cr_0_5mo",
-        "1_25cr_0_5mo", "2_25cr_1mo", "austenitic_ss"};
+    String[] materials = { "carbon_steel", "c_0_5mo", "1cr_0_5mo", "1_25cr_0_5mo", "2_25cr_1mo", "austenitic_ss" };
 
     for (int i = 0; i < materials.length; i++) {
       NelsonCurveAssessment nelson = new NelsonCurveAssessment();
@@ -276,9 +264,8 @@ public class NelsonCurveAssessmentTest {
 
     // Each material should have a higher limit than the previous
     for (int i = 1; i < maxTemps.length; i++) {
-      assertTrue(maxTemps[i] > maxTemps[i - 1],
-          materials[i] + " (" + maxTemps[i] + "°C) should have higher limit than "
-              + materials[i - 1] + " (" + maxTemps[i - 1] + "°C)");
+      assertTrue(maxTemps[i] > maxTemps[i - 1], materials[i] + " (" + maxTemps[i] + "°C) should have higher limit than "
+	  + materials[i - 1] + " (" + maxTemps[i - 1] + "°C)");
     }
   }
 
@@ -295,7 +282,7 @@ public class NelsonCurveAssessmentTest {
     double maxTemp = nelson.getMaxAllowableTemperatureC();
     // For carbon steel at very high pressure, max temp should be ~166°C (330°F)
     assertTrue(maxTemp > 100 && maxTemp < 200,
-        "At very high pressure, carbon steel max temp should be ~166°C: " + maxTemp);
+	"At very high pressure, carbon steel max temp should be ~166°C: " + maxTemp);
   }
 
   @Test
@@ -308,9 +295,7 @@ public class NelsonCurveAssessmentTest {
 
     // At 0 pressure, max temp is the first point: 500°F = 260°C
     double maxTemp = nelson.getMaxAllowableTemperatureC();
-    assertEquals(260.0, maxTemp, 2.0,
-        "Max temp at 0 psia should be ~260°C: " + maxTemp);
-    assertTrue(nelson.isBelowNelsonCurve(),
-        "250°C should be safe at 0 pressure");
+    assertEquals(260.0, maxTemp, 2.0, "Max temp at 0 psia should be ~260°C: " + maxTemp);
+    assertTrue(nelson.isBelowNelsonCurve(), "250°C should be safe at 0 pressure");
   }
 }

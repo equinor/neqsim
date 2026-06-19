@@ -9,8 +9,8 @@ import neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign;
  * Cost estimation class for valves.
  *
  * <p>
- * This class provides valve-specific cost estimation methods using chemical engineering cost
- * correlations for control valves, gate valves, ball valves, and other valve types.
+ * This class provides valve-specific cost estimation methods using chemical engineering cost correlations for control
+ * valves, gate valves, ball valves, and other valve types.
  * </p>
  *
  * @author asmund
@@ -41,8 +41,7 @@ public class ValveCostEstimate extends UnitCostEstimateBaseClass {
   /**
    * Constructor for ValveCostEstimate.
    *
-   * @param mechanicalEquipment a
-   *        {@link neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign} object
+   * @param mechanicalEquipment a {@link neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign} object
    */
   public ValveCostEstimate(ValveMechanicalDesign mechanicalEquipment) {
     super(mechanicalEquipment);
@@ -216,20 +215,20 @@ public class ValveCostEstimate extends UnitCostEstimateBaseClass {
    */
   private double getPressureClassFactor() {
     switch (pressureClass) {
-      case 150:
-        return 1.0;
-      case 300:
-        return 1.2;
-      case 600:
-        return 1.5;
-      case 900:
-        return 2.0;
-      case 1500:
-        return 2.5;
-      case 2500:
-        return 3.5;
-      default:
-        return 1.0;
+    case 150:
+      return 1.0;
+    case 300:
+      return 1.2;
+    case 600:
+      return 1.5;
+    case 900:
+      return 2.0;
+    case 1500:
+      return 2.5;
+    case 2500:
+      return 3.5;
+    default:
+      return 1.0;
     }
   }
 

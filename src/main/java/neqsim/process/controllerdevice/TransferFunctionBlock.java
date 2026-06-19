@@ -7,9 +7,9 @@ import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.util.NamedBaseClass;
 
 /**
- * Transfer function block for representing control dynamics in dynamic simulation. Supports
- * first-order lag, lead-lag, pure dead time (transport delay), and second-order dynamics. These are
- * the fundamental building blocks used in control system design and simulation.
+ * Transfer function block for representing control dynamics in dynamic simulation. Supports first-order lag, lead-lag,
+ * pure dead time (transport delay), and second-order dynamics. These are the fundamental building blocks used in
+ * control system design and simulation.
  *
  * <p>
  * The transfer function is represented in the Laplace domain as:
@@ -27,8 +27,7 @@ import neqsim.util.NamedBaseClass;
  * </p>
  *
  * <pre>
- * TransferFunctionBlock leadLag =
- *     new TransferFunctionBlock("FF-comp", TransferFunctionBlock.Type.LEAD_LAG);
+ * TransferFunctionBlock leadLag = new TransferFunctionBlock("FF-comp", TransferFunctionBlock.Type.LEAD_LAG);
  * leadLag.setGain(1.0);
  * leadLag.setLeadTime(30.0); // 30 seconds lead
  * leadLag.setLagTime(120.0); // 120 seconds lag
@@ -154,8 +153,8 @@ public class TransferFunctionBlock extends NamedBaseClass implements ControllerD
   }
 
   /**
-   * Set the primary lag time constant [s]. For FIRST_ORDER_LAG this is tau. For LEAD_LAG this is
-   * tauLag. For SECOND_ORDER this is tau1.
+   * Set the primary lag time constant [s]. For FIRST_ORDER_LAG this is tau. For LEAD_LAG this is tauLag. For
+   * SECOND_ORDER this is tau1.
    *
    * @param lagTime time constant in seconds (must be positive)
    */
@@ -365,20 +364,20 @@ public class TransferFunctionBlock extends NamedBaseClass implements ControllerD
 
     double y;
     switch (type) {
-      case FIRST_ORDER_LAG:
-        y = computeFirstOrderLag(u, dt);
-        break;
-      case LEAD_LAG:
-        y = computeLeadLag(u, dt);
-        break;
-      case DEAD_TIME:
-        y = computeDeadTime(u, dt);
-        break;
-      case SECOND_ORDER:
-        y = computeSecondOrder(u, dt);
-        break;
-      default:
-        y = gain * u;
+    case FIRST_ORDER_LAG:
+      y = computeFirstOrderLag(u, dt);
+      break;
+    case LEAD_LAG:
+      y = computeLeadLag(u, dt);
+      break;
+    case DEAD_TIME:
+      y = computeDeadTime(u, dt);
+      break;
+    case SECOND_ORDER:
+      y = computeSecondOrder(u, dt);
+      break;
+    default:
+      y = gain * u;
     }
 
     output = y + outputBias;
@@ -441,7 +440,7 @@ public class TransferFunctionBlock extends NamedBaseClass implements ControllerD
       deadTimeBuffer = new double[bufferSize];
       double steadyStateValue = gain * u;
       for (int i = 0; i < bufferSize; i++) {
-        deadTimeBuffer[i] = steadyStateValue;
+	deadTimeBuffer[i] = steadyStateValue;
       }
       deadTimeWriteIndex = 0;
     }
@@ -452,7 +451,7 @@ public class TransferFunctionBlock extends NamedBaseClass implements ControllerD
   /**
    * First-order lag: y(k) = alpha * y(k-1) + (1 - alpha) * K * u(k) where alpha = tau / (tau + dt).
    *
-   * @param u the input signal value
+   * @param u  the input signal value
    * @param dt the time step in seconds
    * @return the filtered output value
    */
@@ -468,10 +467,10 @@ public class TransferFunctionBlock extends NamedBaseClass implements ControllerD
   }
 
   /**
-   * Lead-lag: implemented as a first-order lag plus a derivative lead correction. Discretized as:
-   * y(k) = (tauLead/tauLag) * K * u(k) + (1 - tauLead/tauLag) * lagFiltered(K*u).
+   * Lead-lag: implemented as a first-order lag plus a derivative lead correction. Discretized as: y(k) =
+   * (tauLead/tauLag) * K * u(k) + (1 - tauLead/tauLag) * lagFiltered(K*u).
    *
-   * @param u the input signal value
+   * @param u  the input signal value
    * @param dt the time step in seconds
    * @return the lead-lag filtered output value
    */
@@ -500,7 +499,7 @@ public class TransferFunctionBlock extends NamedBaseClass implements ControllerD
   /**
    * Pure dead time: stores the input in a circular buffer and reads out the delayed value.
    *
-   * @param u the input signal value
+   * @param u  the input signal value
    * @param dt the time step in seconds
    * @return the delayed output value
    */
@@ -522,7 +521,7 @@ public class TransferFunctionBlock extends NamedBaseClass implements ControllerD
   /**
    * Second-order system: cascade of two first-order lags. G(s) = K / (tau1*s + 1)(tau2*s + 1)
    *
-   * @param u the input signal value
+   * @param u  the input signal value
    * @param dt the time step in seconds
    * @return the second-order filtered output value
    */
@@ -547,7 +546,7 @@ public class TransferFunctionBlock extends NamedBaseClass implements ControllerD
    * Apply dead time via circular buffer.
    *
    * @param currentValue the current signal value to delay
-   * @param dt the time step in seconds
+   * @param dt           the time step in seconds
    * @return the delayed output value from the circular buffer
    */
   private double applyDeadTime(double currentValue, double dt) {

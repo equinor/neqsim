@@ -22,9 +22,7 @@ public class SepDesignSection {
    * Constructor for SepDesignSection.
    * </p>
    *
-   * @param separatorSection a
-   *                         {@link neqsim.process.equipment.separator.sectiontype.SeparatorSection}
-   *                         object
+   * @param separatorSection a {@link neqsim.process.equipment.separator.sectiontype.SeparatorSection} object
    */
   public SepDesignSection(SeparatorSection separatorSection) {
     this.separatorSection = separatorSection;

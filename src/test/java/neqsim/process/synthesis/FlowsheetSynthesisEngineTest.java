@@ -19,8 +19,7 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 class FlowsheetSynthesisEngineTest {
 
-  private Stream makeFeed(String name, double pBara, double tC, String[] comps, double[] zMole,
-      double flowKgHr) {
+  private Stream makeFeed(String name, double pBara, double tC, String[] comps, double[] zMole, double flowKgHr) {
     SystemInterface fluid = new SystemSrkEos(273.15 + tC, pBara);
     for (int i = 0; i < comps.length; i++) {
       fluid.addComponent(comps[i], zMole[i]);
@@ -36,22 +35,17 @@ class FlowsheetSynthesisEngineTest {
 
   @Test
   void dutyValidatesArguments() {
-    assertThrows(IllegalArgumentException.class,
-        () -> new SeparationDuty(null,
-            makeFeed("f", 30, 30, new String[] {"methane"}, new double[] {1.0}, 1000), null, null,
-            Double.NaN));
-    assertThrows(IllegalArgumentException.class,
-        () -> new SeparationDuty("",
-            makeFeed("f", 30, 30, new String[] {"methane"}, new double[] {1.0}, 1000), null, null,
-            Double.NaN));
+    assertThrows(IllegalArgumentException.class, () -> new SeparationDuty(null,
+	makeFeed("f", 30, 30, new String[] { "methane" }, new double[] { 1.0 }, 1000), null, null, Double.NaN));
+    assertThrows(IllegalArgumentException.class, () -> new SeparationDuty("",
+	makeFeed("f", 30, 30, new String[] { "methane" }, new double[] { 1.0 }, 1000), null, null, Double.NaN));
   }
 
   @Test
   void singleFlashChosenForMethaneNDecane() {
     // Methane + n-decane at 30 bara, 25C — flash already gives ~pure methane gas and
     // mostly decane liquid. Reasonable specs should be met by single flash.
-    Stream feed = makeFeed("HC", 30.0, 25.0, new String[] {"methane", "nC10"},
-        new double[] {0.6, 0.4}, 10000.0);
+    Stream feed = makeFeed("HC", 30.0, 25.0, new String[] { "methane", "nC10" }, new double[] { 0.6, 0.4 }, 10000.0);
     Map<String, Double> topSpec = new LinkedHashMap<String, Double>();
     topSpec.put("methane", 0.97);
     Map<String, Double> botSpec = new LinkedHashMap<String, Double>();
@@ -69,8 +63,8 @@ class FlowsheetSynthesisEngineTest {
     boolean foundSep = false;
     for (Object u : p.getProcessSystem().getUnitOperations()) {
       if (u instanceof Separator) {
-        foundSep = true;
-        break;
+	foundSep = true;
+	break;
       }
     }
     assertTrue(foundSep, "expected a Separator in the proposed flowsheet");
@@ -79,8 +73,8 @@ class FlowsheetSynthesisEngineTest {
   @Test
   void distillationProposedForPropaneNButane() {
     // Propane/n-butane at 10 bara, 50C — α ~ 2.5, single flash won't meet 99%/99% specs.
-    Stream feed = makeFeed("LPG", 10.0, 50.0, new String[] {"propane", "n-butane"},
-        new double[] {0.5, 0.5}, 5000.0);
+    Stream feed = makeFeed("LPG", 10.0, 50.0, new String[] { "propane", "n-butane" }, new double[] { 0.5, 0.5 },
+	5000.0);
     Map<String, Double> topSpec = new LinkedHashMap<String, Double>();
     topSpec.put("propane", 0.98);
     Map<String, Double> botSpec = new LinkedHashMap<String, Double>();
@@ -100,8 +94,8 @@ class FlowsheetSynthesisEngineTest {
     boolean foundCol = false;
     for (Object u : p.getProcessSystem().getUnitOperations()) {
       if (u instanceof DistillationColumn) {
-        foundCol = true;
-        break;
+	foundCol = true;
+	break;
       }
     }
     assertTrue(foundCol, "expected a DistillationColumn in the proposed flowsheet");
@@ -110,8 +104,7 @@ class FlowsheetSynthesisEngineTest {
   @Test
   void singlePhaseFeedEscalatesToDistillation() {
     // Pure methane at 50 bara, 50C — single-phase gas. Engine must escalate.
-    Stream feed = makeFeed("pure", 50.0, 50.0, new String[] {"methane", "ethane"},
-        new double[] {0.5, 0.5}, 1000.0);
+    Stream feed = makeFeed("pure", 50.0, 50.0, new String[] { "methane", "ethane" }, new double[] { 0.5, 0.5 }, 1000.0);
     Map<String, Double> topSpec = new LinkedHashMap<String, Double>();
     topSpec.put("methane", 0.95);
     Map<String, Double> botSpec = new LinkedHashMap<String, Double>();
@@ -125,8 +118,7 @@ class FlowsheetSynthesisEngineTest {
 
   @Test
   void proposalJsonHasExpectedFields() {
-    Stream feed = makeFeed("HC", 30.0, 25.0, new String[] {"methane", "nC10"},
-        new double[] {0.6, 0.4}, 10000.0);
+    Stream feed = makeFeed("HC", 30.0, 25.0, new String[] { "methane", "nC10" }, new double[] { 0.6, 0.4 }, 10000.0);
     Map<String, Double> topSpec = new LinkedHashMap<String, Double>();
     topSpec.put("methane", 0.97);
     SeparationDuty duty = new SeparationDuty("HCsplit", feed, topSpec, null, Double.NaN);
@@ -143,16 +135,15 @@ class FlowsheetSynthesisEngineTest {
 
   @Test
   void nullDutyThrows() {
-    assertThrows(IllegalArgumentException.class,
-        () -> new FlowsheetSynthesisEngine().proposeAndBuild(null));
+    assertThrows(IllegalArgumentException.class, () -> new FlowsheetSynthesisEngine().proposeAndBuild(null));
   }
 
   @Test
   void infeasibleWhenAlphaIsLow() {
     // Two close-boiling species with very similar K — engineer them via xylene isomers.
     // SRK isn't accurate for them but we just need alpha near 1.
-    Stream feed = makeFeed("xy", 1.5, 140.0, new String[] {"o-Xylene", "p-Xylene"},
-        new double[] {0.5, 0.5}, 1000.0);
+    Stream feed = makeFeed("xy", 1.5, 140.0, new String[] { "o-Xylene", "p-Xylene" }, new double[] { 0.5, 0.5 },
+	1000.0);
     Map<String, Double> topSpec = new LinkedHashMap<String, Double>();
     topSpec.put("p-Xylene", 0.99);
     Map<String, Double> botSpec = new LinkedHashMap<String, Double>();

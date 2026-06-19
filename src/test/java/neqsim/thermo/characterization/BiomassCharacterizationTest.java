@@ -96,8 +96,7 @@ class BiomassCharacterizationTest {
 
   @Test
   void testUnknownFeedstockThrows() {
-    assertThrows(IllegalArgumentException.class,
-        () -> BiomassCharacterization.library("unicorn_dust"));
+    assertThrows(IllegalArgumentException.class, () -> BiomassCharacterization.library("unicorn_dust"));
   }
 
   @Test

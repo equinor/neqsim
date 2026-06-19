@@ -17,8 +17,7 @@ import neqsim.thermo.component.ComponentInterface;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class ReferencePotComparator
-    implements Comparator<ComponentInterface>, java.io.Serializable {
+public class ReferencePotComparator implements Comparator<ComponentInterface>, java.io.Serializable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 

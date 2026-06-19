@@ -13,9 +13,8 @@ import com.google.gson.JsonParser;
  * Domain-specific validation profiles for engineering simulations.
  *
  * <p>
- * Different jurisdictions, operators, and project phases have different design standards and
- * acceptance criteria. This runner manages validation profiles that configure which rules apply and
- * what tolerances are acceptable.
+ * Different jurisdictions, operators, and project phases have different design standards and acceptance criteria. This
+ * runner manages validation profiles that configure which rules apply and what tolerances are acceptable.
  * </p>
  *
  * <p>
@@ -33,12 +32,10 @@ import com.google.gson.JsonParser;
  */
 public final class ValidationProfileRunner {
 
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   /** Custom profiles created by users. */
-  private static final ConcurrentHashMap<String, JsonObject> CUSTOM_PROFILES =
-      new ConcurrentHashMap<String, JsonObject>();
+  private static final ConcurrentHashMap<String, JsonObject> CUSTOM_PROFILES = new ConcurrentHashMap<String, JsonObject>();
 
   /** Currently active profile. */
   private static volatile String activeProfile = "generic";
@@ -46,7 +43,8 @@ public final class ValidationProfileRunner {
   /**
    * Private constructor — all methods are static.
    */
-  private ValidationProfileRunner() {}
+  private ValidationProfileRunner() {
+  }
 
   /**
    * Main entry point for validation profile operations.
@@ -60,27 +58,26 @@ public final class ValidationProfileRunner {
       String action = input.has("action") ? input.get("action").getAsString() : "";
 
       switch (action) {
-        case "listProfiles":
-          return listProfiles();
-        case "getProfile":
-          return getProfile(input);
-        case "setActiveProfile":
-          return setActiveProfile(input);
-        case "createProfile":
-          return createProfile(input);
-        case "deleteProfile":
-          return deleteProfile(input);
-        case "validateWithProfile":
-          return validateWithProfile(input);
-        case "getActiveProfile":
-          return getActiveProfile();
-        case "getStandardsForEquipment":
-          return getStandardsForEquipment(input);
-        default:
-          return errorJson("UNKNOWN_ACTION", "Unknown validation profile action: " + action,
-              "Use: listProfiles, getProfile, setActiveProfile, createProfile, "
-                  + "deleteProfile, validateWithProfile, getActiveProfile, "
-                  + "getStandardsForEquipment");
+      case "listProfiles":
+	return listProfiles();
+      case "getProfile":
+	return getProfile(input);
+      case "setActiveProfile":
+	return setActiveProfile(input);
+      case "createProfile":
+	return createProfile(input);
+      case "deleteProfile":
+	return deleteProfile(input);
+      case "validateWithProfile":
+	return validateWithProfile(input);
+      case "getActiveProfile":
+	return getActiveProfile();
+      case "getStandardsForEquipment":
+	return getStandardsForEquipment(input);
+      default:
+	return errorJson("UNKNOWN_ACTION", "Unknown validation profile action: " + action,
+	    "Use: listProfiles, getProfile, setActiveProfile, createProfile, "
+		+ "deleteProfile, validateWithProfile, getActiveProfile, " + "getStandardsForEquipment");
       }
     } catch (Exception e) {
       return errorJson("VALIDATION_PROFILE_ERROR", e.getMessage(), "Check JSON format");
@@ -139,10 +136,8 @@ public final class ValidationProfileRunner {
       entry.addProperty("type", "built-in");
       entry.addProperty("active", name.equals(activeProfile));
       JsonObject profile = getBuiltInProfile(name);
-      entry.addProperty("description",
-          profile.has("description") ? profile.get("description").getAsString() : "");
-      entry.addProperty("jurisdiction",
-          profile.has("jurisdiction") ? profile.get("jurisdiction").getAsString() : "");
+      entry.addProperty("description", profile.has("description") ? profile.get("description").getAsString() : "");
+      entry.addProperty("jurisdiction", profile.has("jurisdiction") ? profile.get("jurisdiction").getAsString() : "");
       profiles.add(entry);
     }
 
@@ -153,8 +148,7 @@ public final class ValidationProfileRunner {
       custom.addProperty("type", "custom");
       custom.addProperty("active", entry.getKey().equals(activeProfile));
       JsonObject profile = entry.getValue();
-      custom.addProperty("description",
-          profile.has("description") ? profile.get("description").getAsString() : "");
+      custom.addProperty("description", profile.has("description") ? profile.get("description").getAsString() : "");
       profiles.add(custom);
     }
 
@@ -172,8 +166,7 @@ public final class ValidationProfileRunner {
   private static String getProfile(JsonObject input) {
     String name = input.has("profileName") ? input.get("profileName").getAsString() : "";
     if (name.isEmpty()) {
-      return errorJson("MISSING_NAME", "profileName is required",
-          "Provide the name of the profile to retrieve");
+      return errorJson("MISSING_NAME", "profileName is required", "Provide the name of the profile to retrieve");
     }
 
     JsonObject profile;
@@ -184,8 +177,8 @@ public final class ValidationProfileRunner {
     } else {
       profile = getBuiltInProfile(name);
       if (profile == null) {
-        return errorJson("PROFILE_NOT_FOUND", "Profile not found: " + name,
-            "Use 'listProfiles' to see available profiles");
+	return errorJson("PROFILE_NOT_FOUND", "Profile not found: " + name,
+	    "Use 'listProfiles' to see available profiles");
       }
       type = "built-in";
     }
@@ -207,14 +200,13 @@ public final class ValidationProfileRunner {
   private static String setActiveProfile(JsonObject input) {
     String name = input.has("profileName") ? input.get("profileName").getAsString() : "";
     if (name.isEmpty()) {
-      return errorJson("MISSING_NAME", "profileName is required",
-          "Provide the name of the profile to activate");
+      return errorJson("MISSING_NAME", "profileName is required", "Provide the name of the profile to activate");
     }
 
     // Verify it exists
     if (!CUSTOM_PROFILES.containsKey(name) && getBuiltInProfile(name) == null) {
       return errorJson("PROFILE_NOT_FOUND", "Profile not found: " + name,
-          "Use 'listProfiles' to see available profiles, or 'createProfile' to make one");
+	  "Use 'listProfiles' to see available profiles, or 'createProfile' to make one");
     }
 
     activeProfile = name;
@@ -235,14 +227,13 @@ public final class ValidationProfileRunner {
   private static String createProfile(JsonObject input) {
     String name = input.has("profileName") ? input.get("profileName").getAsString() : "";
     if (name.isEmpty()) {
-      return errorJson("MISSING_NAME", "profileName is required",
-          "Provide a name for the custom profile");
+      return errorJson("MISSING_NAME", "profileName is required", "Provide a name for the custom profile");
     }
 
     // Don't allow overwriting built-in profiles
     if (Arrays.asList("ncs", "ukcs", "gom", "brazil", "generic").contains(name)) {
       return errorJson("RESERVED_NAME", "Cannot overwrite built-in profile: " + name,
-          "Choose a different name for your custom profile");
+	  "Choose a different name for your custom profile");
     }
 
     // Build profile from input or from base + overrides
@@ -254,15 +245,15 @@ public final class ValidationProfileRunner {
       String baseName = input.has("basedOn") ? input.get("basedOn").getAsString() : "generic";
       profile = getBuiltInProfile(baseName);
       if (profile == null) {
-        profile = getBuiltInProfile("generic");
+	profile = getBuiltInProfile("generic");
       }
 
       // Apply overrides
       if (input.has("overrides")) {
-        JsonObject overrides = input.getAsJsonObject("overrides");
-        for (String key : overrides.keySet()) {
-          profile.add(key, overrides.get(key));
-        }
+	JsonObject overrides = input.getAsJsonObject("overrides");
+	for (String key : overrides.keySet()) {
+	  profile.add(key, overrides.get(key));
+	}
       }
     }
 
@@ -292,7 +283,7 @@ public final class ValidationProfileRunner {
     String name = input.has("profileName") ? input.get("profileName").getAsString() : "";
     if (Arrays.asList("ncs", "ukcs", "gom", "brazil", "generic").contains(name)) {
       return errorJson("CANNOT_DELETE", "Cannot delete built-in profile: " + name,
-          "Only custom profiles can be deleted");
+	  "Only custom profiles can be deleted");
     }
 
     JsonObject removed = CUSTOM_PROFILES.remove(name);
@@ -314,8 +305,7 @@ public final class ValidationProfileRunner {
    * @return JSON with validation results
    */
   private static String validateWithProfile(JsonObject input) {
-    String profileName =
-        input.has("profileName") ? input.get("profileName").getAsString() : activeProfile;
+    String profileName = input.has("profileName") ? input.get("profileName").getAsString() : activeProfile;
 
     JsonObject profile;
     if (CUSTOM_PROFILES.containsKey(profileName)) {
@@ -338,8 +328,7 @@ public final class ValidationProfileRunner {
     }
 
     // Build enriched validation request
-    String validationResult =
-        EngineeringValidator.validate(GSON.toJson(validationInput), "general");
+    String validationResult = EngineeringValidator.validate(GSON.toJson(validationInput), "general");
     JsonObject valObj = JsonParser.parseString(validationResult).getAsJsonObject();
 
     // Add profile context to validation results
@@ -365,14 +354,12 @@ public final class ValidationProfileRunner {
    * @return JSON with applicable standards
    */
   private static String getStandardsForEquipment(JsonObject input) {
-    String equipmentType =
-        input.has("equipmentType") ? input.get("equipmentType").getAsString() : "";
-    String profileName =
-        input.has("profileName") ? input.get("profileName").getAsString() : activeProfile;
+    String equipmentType = input.has("equipmentType") ? input.get("equipmentType").getAsString() : "";
+    String profileName = input.has("profileName") ? input.get("profileName").getAsString() : activeProfile;
 
     if (equipmentType.isEmpty()) {
       return errorJson("MISSING_TYPE", "equipmentType is required",
-          "Provide equipment type: separator, pipeline, compressor, heatExchanger, vessel, valve");
+	  "Provide equipment type: separator, pipeline, compressor, heatExchanger, vessel, valve");
     }
 
     JsonObject profile;
@@ -397,8 +384,8 @@ public final class ValidationProfileRunner {
     if (profile.has("equipmentStandards")) {
       JsonObject eqStandards = profile.getAsJsonObject("equipmentStandards");
       if (eqStandards.has(lowerType)) {
-        response.add("standards", eqStandards.get(lowerType));
-        return GSON.toJson(response);
+	response.add("standards", eqStandards.get(lowerType));
+	return GSON.toJson(response);
       }
     }
 
@@ -419,18 +406,18 @@ public final class ValidationProfileRunner {
    */
   private static JsonObject getBuiltInProfile(String name) {
     switch (name) {
-      case "ncs":
-        return buildNcsProfile();
-      case "ukcs":
-        return buildUkcsProfile();
-      case "gom":
-        return buildGomProfile();
-      case "brazil":
-        return buildBrazilProfile();
-      case "generic":
-        return buildGenericProfile();
-      default:
-        return null;
+    case "ncs":
+      return buildNcsProfile();
+    case "ukcs":
+      return buildUkcsProfile();
+    case "gom":
+      return buildGomProfile();
+    case "brazil":
+      return buildBrazilProfile();
+    case "generic":
+      return buildGenericProfile();
+    default:
+      return null;
     }
   }
 
@@ -578,8 +565,7 @@ public final class ValidationProfileRunner {
   private static JsonObject buildBrazilProfile() {
     JsonObject profile = new JsonObject();
     profile.addProperty("name", "brazil");
-    profile.addProperty("description",
-        "Brazil deepwater — ANP regulations, Petrobras N-series standards");
+    profile.addProperty("description", "Brazil deepwater — ANP regulations, Petrobras N-series standards");
     profile.addProperty("jurisdiction", "Brazil");
     profile.addProperty("regulator", "ANP (Agencia Nacional do Petroleo)");
 
@@ -755,8 +741,8 @@ public final class ValidationProfileRunner {
   /**
    * Creates a standard error JSON response.
    *
-   * @param code the error code
-   * @param message the error message
+   * @param code        the error code
+   * @param message     the error message
    * @param remediation how to fix
    * @return the error JSON string
    */

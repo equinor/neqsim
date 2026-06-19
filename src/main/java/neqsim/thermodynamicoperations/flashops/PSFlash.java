@@ -30,8 +30,8 @@ public class PSFlash extends QfuncFlash {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param Sspec a double
-   * @param type a int
+   * @param Sspec  a double
+   * @param type   a int
    */
   public PSFlash(SystemInterface system, double Sspec, int type) {
     this.system = system;
@@ -80,9 +80,9 @@ public class PSFlash extends QfuncFlash {
 
     do {
       if (error > errorOld && factor > 0.1 && correctFactor) {
-        factor *= 0.5;
+	factor *= 0.5;
       } else if (error < errorOld && correctFactor) {
-        factor = 1.0;
+	factor = 1.0;
       }
 
       iterations++;
@@ -91,45 +91,44 @@ public class PSFlash extends QfuncFlash {
       newCorr = factor * calcdQdT() / calcdQdTT();
       nyTemp = oldTemp - newCorr;
       if (Math.abs(system.getTemperature() - nyTemp) > 10.0) {
-        nyTemp = system.getTemperature() - Math.signum(system.getTemperature() - nyTemp) * 10.0;
-        correctFactor = false;
+	nyTemp = system.getTemperature() - Math.signum(system.getTemperature() - nyTemp) * 10.0;
+	correctFactor = false;
       } else if (nyTemp < 0) {
-        nyTemp = Math.abs(system.getTemperature() - 10.0);
-        correctFactor = false;
+	nyTemp = Math.abs(system.getTemperature() - 10.0);
+	correctFactor = false;
       } else if (Double.isNaN(nyTemp)) {
-        nyTemp = oldTemp + 1.0;
-        correctFactor = false;
+	nyTemp = oldTemp + 1.0;
+	correctFactor = false;
       } else {
-        correctFactor = true;
+	correctFactor = true;
       }
 
       system.setTemperature(nyTemp);
       try {
-        tpFlash.run();
-        system.init(2);
+	tpFlash.run();
+	system.init(2);
       } catch (Exception ex) {
-        // EOS solver failed at this temperature, revert and reduce step
-        nyTemp = oldTemp;
-        system.setTemperature(oldTemp);
-        tpFlash.run();
-        system.init(2);
-        factor *= 0.5;
-        correctFactor = false;
+	// EOS solver failed at this temperature, revert and reduce step
+	nyTemp = oldTemp;
+	system.setTemperature(oldTemp);
+	tpFlash.run();
+	system.init(2);
+	factor *= 0.5;
+	correctFactor = false;
       }
       errorOld = error;
       error = Math.abs(calcdQdT()); // Math.abs((nyTemp - oldTemp) / (nyTemp));
-      if (iterations > 3 && Math.abs(error - errorOld) <= entropyTolerance
-          && error <= stagnantAcceptanceTolerance) {
-        stagnantIterations++;
+      if (iterations > 3 && Math.abs(error - errorOld) <= entropyTolerance && error <= stagnantAcceptanceTolerance) {
+	stagnantIterations++;
       } else {
-        stagnantIterations = 0;
+	stagnantIterations = 0;
       }
       // if(error>errorOld) factor *= -1.0;
       // System.out.println("temp " + system.getTemperature() + " iter "+ iterations +
       // " error "+ error + " correction " + newCorr + " factor "+ factor);
       // newCorr = Math.abs(factor * calcdQdT() / calcdQdTT());
-    } while (((error + errorOld) > entropyTolerance || iterations < 3)
-        && stagnantIterations < STAGNANT_ITERATION_LIMIT && iterations < 200);
+    } while (((error + errorOld) > entropyTolerance || iterations < 3) && stagnantIterations < STAGNANT_ITERATION_LIMIT
+	&& iterations < 200);
     return nyTemp;
   }
 
@@ -138,7 +137,8 @@ public class PSFlash extends QfuncFlash {
    * onPhaseSolve.
    * </p>
    */
-  public void onPhaseSolve() {}
+  public void onPhaseSolve() {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -155,12 +155,12 @@ public class PSFlash extends QfuncFlash {
       neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
 
       if (type == 0) {
-        solveQ();
+	solveQ();
       } else {
-        SysNewtonRhapsonPHflash secondOrderSolver = new SysNewtonRhapsonPHflash(system, 2,
-            system.getPhases()[0].getNumberOfComponents(), 1);
-        secondOrderSolver.setSpec(Sspec);
-        secondOrderSolver.solve(1);
+	SysNewtonRhapsonPHflash secondOrderSolver = new SysNewtonRhapsonPHflash(system, 2,
+	    system.getPhases()[0].getNumberOfComponents(), 1);
+	secondOrderSolver.setSpec(Sspec);
+	secondOrderSolver.solve(1);
       }
     } finally {
       neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarm);

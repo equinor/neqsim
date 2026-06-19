@@ -9,29 +9,26 @@ import neqsim.process.equipment.ProcessEquipmentBaseClass;
  * Cement degradation model for CO2 injection wells.
  *
  * <p>
- * Models the time-dependent degradation of wellbore cement exposed to CO2, which is critical for
- * assessing long-term out-of-zone leakage risk in CCS projects.
+ * Models the time-dependent degradation of wellbore cement exposed to CO2, which is critical for assessing long-term
+ * out-of-zone leakage risk in CCS projects.
  * </p>
  *
  * <p>
  * The model tracks two key processes:
  * </p>
  * <ul>
- * <li><b>Carbonation front advance:</b> CO2 reacts with Ca(OH)2 and C-S-H in Portland cement,
- * creating CaCO3. The front advances as d(t) = A * sqrt(D_eff * t), where D_eff is the effective
- * CO2 diffusivity.</li>
- * <li><b>Permeability evolution:</b> Behind the carbonation front, the microstructure changes
- * (initially densification, then degradation at high CO2 exposure), modifying the cement's
- * permeability over time.</li>
+ * <li><b>Carbonation front advance:</b> CO2 reacts with Ca(OH)2 and C-S-H in Portland cement, creating CaCO3. The front
+ * advances as d(t) = A * sqrt(D_eff * t), where D_eff is the effective CO2 diffusivity.</li>
+ * <li><b>Permeability evolution:</b> Behind the carbonation front, the microstructure changes (initially densification,
+ * then degradation at high CO2 exposure), modifying the cement's permeability over time.</li>
  * </ul>
  *
  * <h2>Cement Types</h2>
  * <ul>
- * <li><b>PORTLAND:</b> Standard Class G/H cement. Initial permeability ~0.001 mD, but can degrade
- * to 0.01-1 mD under CO2 exposure over decades.</li>
+ * <li><b>PORTLAND:</b> Standard Class G/H cement. Initial permeability ~0.001 mD, but can degrade to 0.01-1 mD under
+ * CO2 exposure over decades.</li>
  * <li><b>SILICA_PORTLAND:</b> Portland with silica flour, more CO2-resistant.</li>
- * <li><b>CO2_RESISTANT:</b> Specialty cements (calcium aluminate, geopolymer) designed for CCS
- * applications.</li>
+ * <li><b>CO2_RESISTANT:</b> Specialty cements (calcium aluminate, geopolymer) designed for CCS applications.</li>
  * </ul>
  *
  * <h2>Usage Example</h2>
@@ -104,7 +101,7 @@ public class CementDegradationModel extends ProcessEquipmentBaseClass {
    * Set initial cement permeability.
    *
    * @param permeability permeability value
-   * @param unit unit ("mD", "D", "m2")
+   * @param unit         unit ("mD", "D", "m2")
    */
   public void setInitialPermeability(double permeability, String unit) {
     if ("D".equalsIgnoreCase(unit)) {
@@ -120,7 +117,7 @@ public class CementDegradationModel extends ProcessEquipmentBaseClass {
    * Set the fully-degraded permeability (end-state when cement is fully carbonated).
    *
    * @param permeability degraded permeability value
-   * @param unit unit ("mD", "D")
+   * @param unit         unit ("mD", "D")
    */
   public void setDegradedPermeability(double permeability, String unit) {
     if ("D".equalsIgnoreCase(unit)) {
@@ -134,7 +131,7 @@ public class CementDegradationModel extends ProcessEquipmentBaseClass {
    * Set cement sheath thickness.
    *
    * @param thickness cement thickness
-   * @param unit thickness unit ("m", "mm", "in")
+   * @param unit      thickness unit ("m", "mm", "in")
    */
   public void setCementThickness(double thickness, String unit) {
     if ("mm".equalsIgnoreCase(unit)) {
@@ -150,7 +147,7 @@ public class CementDegradationModel extends ProcessEquipmentBaseClass {
    * Set CO2 exposure conditions.
    *
    * @param co2PartialPressureBar CO2 partial pressure (bar)
-   * @param temperatureK temperature (K)
+   * @param temperatureK          temperature (K)
    */
   public void setCO2Conditions(double co2PartialPressureBar, double temperatureK) {
     this.co2PartialPressure = co2PartialPressureBar;
@@ -171,13 +168,12 @@ public class CementDegradationModel extends ProcessEquipmentBaseClass {
    * Get the depth of the carbonation front at a given time.
    *
    * <p>
-   * The carbonation front advances as: d(t) = A * sqrt(D_eff * t), where A depends on cement
-   * chemistry, CO2 partial pressure, and temperature. The front cannot exceed total cement
-   * thickness.
+   * The carbonation front advances as: d(t) = A * sqrt(D_eff * t), where A depends on cement chemistry, CO2 partial
+   * pressure, and temperature. The front cannot exceed total cement thickness.
    * </p>
    *
    * @param years exposure time (years)
-   * @param unit output unit ("m", "mm", "in")
+   * @param unit  output unit ("m", "mm", "in")
    * @return carbonation front depth
    */
   public double getDegradationDepth(double years, String unit) {
@@ -203,12 +199,12 @@ public class CementDegradationModel extends ProcessEquipmentBaseClass {
    * Get the cement permeability at a given time, accounting for degradation.
    *
    * <p>
-   * The permeability evolves as a weighted average between initial and degraded values based on the
-   * fraction of cement thickness that has been carbonated.
+   * The permeability evolves as a weighted average between initial and degraded values based on the fraction of cement
+   * thickness that has been carbonated.
    * </p>
    *
    * @param years exposure time (years)
-   * @param unit output unit ("mD", "D")
+   * @param unit  output unit ("mD", "D")
    * @return permeability at the specified time
    */
   public double getPermeabilityAtTime(double years, String unit) {
@@ -216,8 +212,7 @@ public class CementDegradationModel extends ProcessEquipmentBaseClass {
     double degradedFraction = cementThickness > 0 ? degradedDepthM / cementThickness : 0.0;
 
     // Linear interpolation between initial and degraded permeability
-    double kMd =
-        initialPermeability + (degradedPermeability - initialPermeability) * degradedFraction;
+    double kMd = initialPermeability + (degradedPermeability - initialPermeability) * degradedFraction;
 
     if ("D".equalsIgnoreCase(unit)) {
       return kMd / 1000.0;
@@ -229,8 +224,8 @@ public class CementDegradationModel extends ProcessEquipmentBaseClass {
    * Check if the cement is considered compromised at the given time.
    *
    * <p>
-   * Cement is compromised when the carbonation front has penetrated through more than 80% of the
-   * sheath thickness, or when the effective permeability exceeds 0.1 mD.
+   * Cement is compromised when the carbonation front has penetrated through more than 80% of the sheath thickness, or
+   * when the effective permeability exceeds 0.1 mD.
    * </p>
    *
    * @param years exposure time (years)
@@ -292,26 +287,26 @@ public class CementDegradationModel extends ProcessEquipmentBaseClass {
    */
   private void applyDefaultsForCementType() {
     switch (cementType) {
-      case PORTLAND:
-        initialPermeability = 0.001; // mD
-        degradedPermeability = 1.0; // mD
-        effectiveDiffusivity = 1e-12; // m²/s
-        carbonationRateFactor = 1.0;
-        break;
-      case SILICA_PORTLAND:
-        initialPermeability = 0.0005; // mD (lower initial)
-        degradedPermeability = 0.1; // mD (more resistant)
-        effectiveDiffusivity = 5e-13; // m²/s (slower diffusion)
-        carbonationRateFactor = 0.5; // Half the rate
-        break;
-      case CO2_RESISTANT:
-        initialPermeability = 0.001; // mD
-        degradedPermeability = 0.01; // mD (very resistant)
-        effectiveDiffusivity = 1e-13; // m²/s (much slower)
-        carbonationRateFactor = 0.1; // 10x slower
-        break;
-      default:
-        break;
+    case PORTLAND:
+      initialPermeability = 0.001; // mD
+      degradedPermeability = 1.0; // mD
+      effectiveDiffusivity = 1e-12; // m²/s
+      carbonationRateFactor = 1.0;
+      break;
+    case SILICA_PORTLAND:
+      initialPermeability = 0.0005; // mD (lower initial)
+      degradedPermeability = 0.1; // mD (more resistant)
+      effectiveDiffusivity = 5e-13; // m²/s (slower diffusion)
+      carbonationRateFactor = 0.5; // Half the rate
+      break;
+    case CO2_RESISTANT:
+      initialPermeability = 0.001; // mD
+      degradedPermeability = 0.01; // mD (very resistant)
+      effectiveDiffusivity = 1e-13; // m²/s (much slower)
+      carbonationRateFactor = 0.1; // 10x slower
+      break;
+    default:
+      break;
     }
   }
 
@@ -350,22 +345,22 @@ public class CementDegradationModel extends ProcessEquipmentBaseClass {
     // Temperature-dependent diffusivity using Arrhenius
     double baseDiffusivity;
     switch (cementType) {
-      case SILICA_PORTLAND:
-        baseDiffusivity = 5e-13;
-        break;
-      case CO2_RESISTANT:
-        baseDiffusivity = 1e-13;
-        break;
-      case PORTLAND:
-      default:
-        baseDiffusivity = 1e-12;
-        break;
+    case SILICA_PORTLAND:
+      baseDiffusivity = 5e-13;
+      break;
+    case CO2_RESISTANT:
+      baseDiffusivity = 1e-13;
+      break;
+    case PORTLAND:
+    default:
+      baseDiffusivity = 1e-12;
+      break;
     }
     double refTemp = 323.15;
     double activationEnergy = 20000.0; // J/mol for diffusion
     double gasConstant = 8.314;
     this.effectiveDiffusivity = baseDiffusivity
-        * Math.exp(-activationEnergy / gasConstant * (1.0 / temperature - 1.0 / refTemp));
+	* Math.exp(-activationEnergy / gasConstant * (1.0 / temperature - 1.0 / refTemp));
   }
 
   /** {@inheritDoc} */

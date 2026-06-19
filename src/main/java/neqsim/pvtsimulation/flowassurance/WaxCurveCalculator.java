@@ -12,9 +12,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Calculator for wax fraction curves with monotonicity enforcement.
  *
  * <p>
- * This class calculates the wax weight fraction as a function of temperature at a given pressure,
- * using NeqSim's thermodynamic wax models. The resulting curve is post-processed to enforce
- * physical monotonicity (wax fraction must increase with decreasing temperature).
+ * This class calculates the wax weight fraction as a function of temperature at a given pressure, using NeqSim's
+ * thermodynamic wax models. The resulting curve is post-processed to enforce physical monotonicity (wax fraction must
+ * increase with decreasing temperature).
  * </p>
  *
  * <p>
@@ -115,8 +115,8 @@ public class WaxCurveCalculator {
    * Sets the temperature range for the wax curve.
    *
    * @param startC lower temperature [C]
-   * @param endC upper temperature [C]
-   * @param stepC temperature step [C]
+   * @param endC   upper temperature [C]
+   * @param stepC  temperature step [C]
    */
   public void setTemperatureRange(double startC, double endC, double stepC) {
     this.tempStartC = startC;
@@ -140,8 +140,8 @@ public class WaxCurveCalculator {
    * Calculates the wax fraction curve.
    *
    * <p>
-   * Evaluates wax weight fraction at each temperature point from high to low temperature. The curve
-   * is then optionally post-processed to enforce monotonicity.
+   * Evaluates wax weight fraction at each temperature point from high to low temperature. The curve is then optionally
+   * post-processed to enforce monotonicity.
    * </p>
    */
   public void calculate() {
@@ -159,47 +159,45 @@ public class WaxCurveCalculator {
     for (int i = 0; i < nPoints; i++) {
       double tempC = tempEndC - i * tempStepC;
       if (tempC < tempStartC) {
-        tempC = tempStartC;
+	tempC = tempStartC;
       }
       temperaturesC[i] = tempC;
 
       try {
-        SystemInterface tempFluid = fluid.clone();
-        tempFluid.setTemperature(tempC + 273.15);
-        tempFluid.setPressure(pressureBara);
-        tempFluid.setMultiPhaseCheck(true);
+	SystemInterface tempFluid = fluid.clone();
+	tempFluid.setTemperature(tempC + 273.15);
+	tempFluid.setPressure(pressureBara);
+	tempFluid.setMultiPhaseCheck(true);
 
-        ThermodynamicOperations ops = new ThermodynamicOperations(tempFluid);
-        ops.TPflash();
-        tempFluid.initPhysicalProperties();
+	ThermodynamicOperations ops = new ThermodynamicOperations(tempFluid);
+	ops.TPflash();
+	tempFluid.initPhysicalProperties();
 
-        // Check for wax phase
-        double waxFraction = 0.0;
-        for (int p = 0; p < tempFluid.getNumberOfPhases(); p++) {
-          String phaseType = tempFluid.getPhase(p).getPhaseTypeName();
-          if ("wax".equalsIgnoreCase(phaseType)) {
-            // Wax weight fraction of total system
-            double waxMoles = tempFluid.getPhase(p).getNumberOfMolesInPhase();
-            double waxMW = tempFluid.getPhase(p).getMolarMass();
-            double totalMass = 0.0;
-            for (int q = 0; q < tempFluid.getNumberOfPhases(); q++) {
-              totalMass += tempFluid.getPhase(q).getNumberOfMolesInPhase()
-                  * tempFluid.getPhase(q).getMolarMass();
-            }
-            if (totalMass > 0) {
-              waxFraction = (waxMoles * waxMW) / totalMass;
-            }
-            break;
-          }
-        }
+	// Check for wax phase
+	double waxFraction = 0.0;
+	for (int p = 0; p < tempFluid.getNumberOfPhases(); p++) {
+	  String phaseType = tempFluid.getPhase(p).getPhaseTypeName();
+	  if ("wax".equalsIgnoreCase(phaseType)) {
+	    // Wax weight fraction of total system
+	    double waxMoles = tempFluid.getPhase(p).getNumberOfMolesInPhase();
+	    double waxMW = tempFluid.getPhase(p).getMolarMass();
+	    double totalMass = 0.0;
+	    for (int q = 0; q < tempFluid.getNumberOfPhases(); q++) {
+	      totalMass += tempFluid.getPhase(q).getNumberOfMolesInPhase() * tempFluid.getPhase(q).getMolarMass();
+	    }
+	    if (totalMass > 0) {
+	      waxFraction = (waxMoles * waxMW) / totalMass;
+	    }
+	    break;
+	  }
+	}
 
-        rawWaxFractions[i] = waxFraction;
-        successCount++;
+	rawWaxFractions[i] = waxFraction;
+	successCount++;
       } catch (Exception e) {
-        logger.debug("Wax flash failed at T={}C, P={}bara: {}", tempC, pressureBara,
-            e.getMessage());
-        rawWaxFractions[i] = i > 0 ? rawWaxFractions[i - 1] : 0.0;
-        failCount++;
+	logger.debug("Wax flash failed at T={}C, P={}bara: {}", tempC, pressureBara, e.getMessage());
+	rawWaxFractions[i] = i > 0 ? rawWaxFractions[i - 1] : 0.0;
+	failCount++;
       }
     }
 
@@ -213,21 +211,21 @@ public class WaxCurveCalculator {
     watC = Double.NaN;
     for (int i = 0; i < nPoints; i++) {
       if (waxFractions[i] > 1e-8) {
-        // Interpolate WAT between this point and the previous
-        if (i > 0 && waxFractions[i - 1] <= 1e-8) {
-          double t1 = temperaturesC[i - 1];
-          double t2 = temperaturesC[i];
-          double f1 = waxFractions[i - 1];
-          double f2 = waxFractions[i];
-          if (f2 > f1) {
-            watC = t1 + (t2 - t1) * (1e-8 - f1) / (f2 - f1);
-          } else {
-            watC = t2;
-          }
-        } else {
-          watC = temperaturesC[i];
-        }
-        break;
+	// Interpolate WAT between this point and the previous
+	if (i > 0 && waxFractions[i - 1] <= 1e-8) {
+	  double t1 = temperaturesC[i - 1];
+	  double t2 = temperaturesC[i];
+	  double f1 = waxFractions[i - 1];
+	  double f2 = waxFractions[i];
+	  if (f2 > f1) {
+	    watC = t1 + (t2 - t1) * (1e-8 - f1) / (f2 - f1);
+	  } else {
+	    watC = t2;
+	  }
+	} else {
+	  watC = temperaturesC[i];
+	}
+	break;
       }
     }
   }
@@ -236,9 +234,8 @@ public class WaxCurveCalculator {
    * Enforces monotonicity on the wax fraction array.
    *
    * <p>
-   * Since temperatures are stored from high to low, wax fractions should be non-decreasing (index 0
-   * = highest T = lowest wax). This method corrects any violations by replacing decreasing values
-   * with the previous maximum.
+   * Since temperatures are stored from high to low, wax fractions should be non-decreasing (index 0 = highest T =
+   * lowest wax). This method corrects any violations by replacing decreasing values with the previous maximum.
    * </p>
    *
    * @param fractions the wax fraction array to enforce monotonicity on (modified in place)
@@ -249,10 +246,10 @@ public class WaxCurveCalculator {
 
     for (int i = 0; i < fractions.length; i++) {
       if (fractions[i] < maxSoFar) {
-        fractions[i] = maxSoFar;
-        monotonicityCorrections++;
+	fractions[i] = maxSoFar;
+	monotonicityCorrections++;
       } else {
-        maxSoFar = fractions[i];
+	maxSoFar = fractions[i];
       }
     }
 
@@ -284,43 +281,41 @@ public class WaxCurveCalculator {
    * Calculates wax fraction at multiple pressures for a pipeline profile.
    *
    * @param pressuresBara array of pressures [bara]
-   * @param temperatureC temperature [C]
+   * @param temperatureC  temperature [C]
    * @return map of pressure to wax weight fraction
    */
-  public Map<Double, Double> calculateAtMultiplePressures(double[] pressuresBara,
-      double temperatureC) {
+  public Map<Double, Double> calculateAtMultiplePressures(double[] pressuresBara, double temperatureC) {
     Map<Double, Double> results = new LinkedHashMap<Double, Double>();
 
     for (double pressure : pressuresBara) {
       try {
-        SystemInterface tempFluid = fluid.clone();
-        tempFluid.setTemperature(temperatureC + 273.15);
-        tempFluid.setPressure(pressure);
-        tempFluid.setMultiPhaseCheck(true);
+	SystemInterface tempFluid = fluid.clone();
+	tempFluid.setTemperature(temperatureC + 273.15);
+	tempFluid.setPressure(pressure);
+	tempFluid.setMultiPhaseCheck(true);
 
-        ThermodynamicOperations ops = new ThermodynamicOperations(tempFluid);
-        ops.TPflash();
+	ThermodynamicOperations ops = new ThermodynamicOperations(tempFluid);
+	ops.TPflash();
 
-        double waxFraction = 0.0;
-        for (int p = 0; p < tempFluid.getNumberOfPhases(); p++) {
-          String phaseType = tempFluid.getPhase(p).getPhaseTypeName();
-          if ("wax".equalsIgnoreCase(phaseType)) {
-            double waxMoles = tempFluid.getPhase(p).getNumberOfMolesInPhase();
-            double waxMW = tempFluid.getPhase(p).getMolarMass();
-            double totalMass = 0.0;
-            for (int q = 0; q < tempFluid.getNumberOfPhases(); q++) {
-              totalMass += tempFluid.getPhase(q).getNumberOfMolesInPhase()
-                  * tempFluid.getPhase(q).getMolarMass();
-            }
-            if (totalMass > 0) {
-              waxFraction = (waxMoles * waxMW) / totalMass;
-            }
-            break;
-          }
-        }
-        results.put(pressure, waxFraction);
+	double waxFraction = 0.0;
+	for (int p = 0; p < tempFluid.getNumberOfPhases(); p++) {
+	  String phaseType = tempFluid.getPhase(p).getPhaseTypeName();
+	  if ("wax".equalsIgnoreCase(phaseType)) {
+	    double waxMoles = tempFluid.getPhase(p).getNumberOfMolesInPhase();
+	    double waxMW = tempFluid.getPhase(p).getMolarMass();
+	    double totalMass = 0.0;
+	    for (int q = 0; q < tempFluid.getNumberOfPhases(); q++) {
+	      totalMass += tempFluid.getPhase(q).getNumberOfMolesInPhase() * tempFluid.getPhase(q).getMolarMass();
+	    }
+	    if (totalMass > 0) {
+	      waxFraction = (waxMoles * waxMW) / totalMass;
+	    }
+	    break;
+	  }
+	}
+	results.put(pressure, waxFraction);
       } catch (Exception e) {
-        results.put(pressure, Double.NaN);
+	results.put(pressure, Double.NaN);
       }
     }
 
@@ -335,8 +330,8 @@ public class WaxCurveCalculator {
    * Enforces monotonically non-decreasing values on an array.
    *
    * <p>
-   * Each element is replaced with the running maximum. Use this for wax fractions that should
-   * increase with decreasing temperature when temperatures are sorted descending.
+   * Each element is replaced with the running maximum. Use this for wax fractions that should increase with decreasing
+   * temperature when temperatures are sorted descending.
    * </p>
    *
    * @param values array of values to enforce (modified in place)
@@ -348,10 +343,10 @@ public class WaxCurveCalculator {
 
     for (int i = 1; i < values.length; i++) {
       if (values[i] < maxSoFar) {
-        values[i] = maxSoFar;
-        corrections++;
+	values[i] = maxSoFar;
+	corrections++;
       } else {
-        maxSoFar = values[i];
+	maxSoFar = values[i];
       }
     }
     return corrections;
@@ -361,8 +356,8 @@ public class WaxCurveCalculator {
    * Enforces monotonically non-increasing values on an array.
    *
    * <p>
-   * Each element is replaced with the running minimum. Use this for properties that should decrease
-   * with a monotonic independent variable.
+   * Each element is replaced with the running minimum. Use this for properties that should decrease with a monotonic
+   * independent variable.
    * </p>
    *
    * @param values array of values to enforce (modified in place)
@@ -374,10 +369,10 @@ public class WaxCurveCalculator {
 
     for (int i = 1; i < values.length; i++) {
       if (values[i] > minSoFar) {
-        values[i] = minSoFar;
-        corrections++;
+	values[i] = minSoFar;
+	corrections++;
       } else {
-        minSoFar = values[i];
+	minSoFar = values[i];
       }
     }
     return corrections;
@@ -386,7 +381,7 @@ public class WaxCurveCalculator {
   /**
    * Counts the number of monotonicity violations in an array.
    *
-   * @param values the array to check
+   * @param values        the array to check
    * @param nonDecreasing true to check for non-decreasing, false for non-increasing
    * @return number of violations
    */
@@ -394,9 +389,9 @@ public class WaxCurveCalculator {
     int violations = 0;
     for (int i = 1; i < values.length; i++) {
       if (nonDecreasing && values[i] < values[i - 1]) {
-        violations++;
+	violations++;
       } else if (!nonDecreasing && values[i] > values[i - 1]) {
-        violations++;
+	violations++;
       }
     }
     return violations;

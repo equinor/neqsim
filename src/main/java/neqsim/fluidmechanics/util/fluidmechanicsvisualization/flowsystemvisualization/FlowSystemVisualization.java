@@ -24,14 +24,15 @@ public class FlowSystemVisualization implements FlowSystemVisualizationInterface
    * Constructor for FlowSystemVisualization.
    * </p>
    */
-  public FlowSystemVisualization() {}
+  public FlowSystemVisualization() {
+  }
 
   /**
    * <p>
    * Constructor for FlowSystemVisualization.
    * </p>
    *
-   * @param nodes a int
+   * @param nodes     a int
    * @param timeSteps a int
    */
   public FlowSystemVisualization(int nodes, int timeSteps) {
@@ -40,7 +41,7 @@ public class FlowSystemVisualization implements FlowSystemVisualizationInterface
     absTime = new double[timeSteps];
     for (int i = 0; i < timeSteps; i++) {
       for (int j = 0; j < nodes; j++) {
-        flowNodes[i][j] = new FlowNodeVisualization();
+	flowNodes[i][j] = new FlowNodeVisualization();
       }
     }
     // System.out.println("nodes " + nodes);
@@ -72,10 +73,12 @@ public class FlowSystemVisualization implements FlowSystemVisualizationInterface
 
   /** {@inheritDoc} */
   @Override
-  public void setPoints() {}
+  public void setPoints() {
+  }
 
   /** {@inheritDoc} */
   @Override
   @ExcludeFromJacocoGeneratedReport
-  public void displayResult(String name) {}
+  public void displayResult(String name) {
+  }
 }

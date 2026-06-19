@@ -27,8 +27,7 @@ class StreamingRunnerTest {
 
   @Test
   void testPollNonexistent() {
-    String json =
-        "{\"action\": \"poll\", \"operationId\": \"nonexistent-id\"," + "\"lastIndex\": 0}";
+    String json = "{\"action\": \"poll\", \"operationId\": \"nonexistent-id\"," + "\"lastIndex\": 0}";
     String result = StreamingRunner.run(json);
     assertNotNull(result);
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();

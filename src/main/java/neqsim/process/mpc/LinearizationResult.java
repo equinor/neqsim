@@ -6,14 +6,14 @@ import java.io.Serializable;
  * Result of a linearization operation containing the gain matrix and metadata.
  *
  * <p>
- * The linearization result captures the sensitivity of controlled variables (CVs) to manipulated
- * variables (MVs) and disturbance variables (DVs) around an operating point. These sensitivities
- * form the gain matrices used by linear MPC algorithms.
+ * The linearization result captures the sensitivity of controlled variables (CVs) to manipulated variables (MVs) and
+ * disturbance variables (DVs) around an operating point. These sensitivities form the gain matrices used by linear MPC
+ * algorithms.
  * </p>
  *
  * <p>
- * The gain matrix G[i][j] represents ∂CV[i]/∂MV[j], the change in CV[i] per unit change in MV[j].
- * Similarly, the disturbance gain matrix D[i][k] represents ∂CV[i]/∂DV[k].
+ * The gain matrix G[i][j] represents ∂CV[i]/∂MV[j], the change in CV[i] per unit change in MV[j]. Similarly, the
+ * disturbance gain matrix D[i][k] represents ∂CV[i]/∂DV[k].
  * </p>
  *
  * @author Even Solbraa
@@ -62,21 +62,20 @@ public class LinearizationResult implements Serializable {
   /**
    * Construct a successful linearization result.
    *
-   * @param gainMatrix the MV-to-CV gain matrix
+   * @param gainMatrix            the MV-to-CV gain matrix
    * @param disturbanceGainMatrix the DV-to-CV gain matrix
-   * @param mvOperatingPoint MV values at operating point
-   * @param cvOperatingPoint CV values at operating point
-   * @param dvOperatingPoint DV values at operating point
-   * @param mvNames names of MVs
-   * @param cvNames names of CVs
-   * @param dvNames names of DVs
-   * @param perturbationSize perturbation used
-   * @param computationTimeMs time taken
+   * @param mvOperatingPoint      MV values at operating point
+   * @param cvOperatingPoint      CV values at operating point
+   * @param dvOperatingPoint      DV values at operating point
+   * @param mvNames               names of MVs
+   * @param cvNames               names of CVs
+   * @param dvNames               names of DVs
+   * @param perturbationSize      perturbation used
+   * @param computationTimeMs     time taken
    */
-  public LinearizationResult(double[][] gainMatrix, double[][] disturbanceGainMatrix,
-      double[] mvOperatingPoint, double[] cvOperatingPoint, double[] dvOperatingPoint,
-      String[] mvNames, String[] cvNames, String[] dvNames, double perturbationSize,
-      long computationTimeMs) {
+  public LinearizationResult(double[][] gainMatrix, double[][] disturbanceGainMatrix, double[] mvOperatingPoint,
+      double[] cvOperatingPoint, double[] dvOperatingPoint, String[] mvNames, String[] cvNames, String[] dvNames,
+      double perturbationSize, long computationTimeMs) {
     this.gainMatrix = deepCopy(gainMatrix);
     this.disturbanceGainMatrix = deepCopy(disturbanceGainMatrix);
     this.mvOperatingPoint = mvOperatingPoint != null ? mvOperatingPoint.clone() : new double[0];
@@ -94,7 +93,7 @@ public class LinearizationResult implements Serializable {
   /**
    * Construct a failed linearization result.
    *
-   * @param errorMessage the error description
+   * @param errorMessage      the error description
    * @param computationTimeMs time taken before failure
    */
   public LinearizationResult(String errorMessage, long computationTimeMs) {
@@ -328,7 +327,7 @@ public class LinearizationResult implements Serializable {
     double[] column = new double[gainMatrix.length];
     for (int i = 0; i < gainMatrix.length; i++) {
       if (mvIndex >= 0 && mvIndex < gainMatrix[i].length) {
-        column[i] = gainMatrix[i][mvIndex];
+	column[i] = gainMatrix[i][mvIndex];
       }
     }
     return column;
@@ -340,7 +339,7 @@ public class LinearizationResult implements Serializable {
     }
     for (int i = 0; i < names.length; i++) {
       if (name.equals(names[i])) {
-        return i;
+	return i;
       }
     }
     return -1;
@@ -365,7 +364,7 @@ public class LinearizationResult implements Serializable {
     for (int i = 0; i < cvNames.length; i++) {
       sb.append(String.format("%20s", cvNames[i]));
       for (int j = 0; j < mvNames.length; j++) {
-        sb.append(String.format(" %12.4f", gainMatrix[i][j]));
+	sb.append(String.format(" %12.4f", gainMatrix[i][j]));
       }
       sb.append("\n");
     }

@@ -77,29 +77,27 @@ public class SaturateWithWater extends QfuncFlash {
     do {
       i++;
       if (system.getNumberOfPhases() == 1 && hasAq) {
-        lastdn = -system.getComponent("water").getNumberOfmoles() * 0.1;
+	lastdn = -system.getComponent("water").getNumberOfmoles() * 0.1;
       } else if (!hasAq) {
-        lastdn = Math.abs(lastdn) * 1.05;
+	lastdn = Math.abs(lastdn) * 1.05;
       } else {
-        lastdn = -system.getPhase(PhaseType.AQUEOUS).getComponent("water").getNumberOfMolesInPhase()
-            * 0.9;
+	lastdn = -system.getPhase(PhaseType.AQUEOUS).getComponent("water").getNumberOfMolesInPhase() * 0.9;
       }
       dn = lastdn / system.getNumberOfMoles();
       system.addComponent("water", lastdn);
       try {
-        tpFlash.run();
-        lastConvergedMoles = captureMoles(system);
+	tpFlash.run();
+	lastConvergedMoles = captureMoles(system);
       } catch (RuntimeException ex) {
-        logger.warn("water saturation refinement flash diverged near the saturation point; "
-            + "restoring last converged state: " + ex.getMessage());
-        restoreMoles(system, lastConvergedMoles);
-        try {
-          tpFlash.run();
-        } catch (RuntimeException ex2) {
-          logger
-              .warn("recovery flash after water saturation divergence failed: " + ex2.getMessage());
-        }
-        break;
+	logger.warn("water saturation refinement flash diverged near the saturation point; "
+	    + "restoring last converged state: " + ex.getMessage());
+	restoreMoles(system, lastConvergedMoles);
+	try {
+	  tpFlash.run();
+	} catch (RuntimeException ex2) {
+	  logger.warn("recovery flash after water saturation divergence failed: " + ex2.getMessage());
+	}
+	break;
       }
       hasAq = system.hasPhaseType(PhaseType.AQUEOUS);
     } while (Math.abs(dn) > 1e-7 && i <= 50);
@@ -109,10 +107,9 @@ public class SaturateWithWater extends QfuncFlash {
     if (system.hasPhaseType(PhaseType.AQUEOUS)) {
       system.removePhase(system.getNumberOfPhases() - 1);
       try {
-        tpFlash.run();
+	tpFlash.run();
       } catch (RuntimeException ex) {
-        logger.warn("flash after removing residual aqueous phase in water saturation failed: "
-            + ex.getMessage());
+	logger.warn("flash after removing residual aqueous phase in water saturation failed: " + ex.getMessage());
       }
     }
     if (changedMultiPhase) {
@@ -139,9 +136,9 @@ public class SaturateWithWater extends QfuncFlash {
   /**
    * Restores a system to a previously captured set of absolute component mole numbers.
    *
-   * @param sys the thermodynamic system to restore
+   * @param sys   the thermodynamic system to restore
    * @param moles array of component mole numbers in component order, as produced by
-   *        {@link #captureMoles(SystemInterface)}
+   *              {@link #captureMoles(SystemInterface)}
    */
   private static void restoreMoles(SystemInterface sys, double[] moles) {
     sys.setMolarFlowRates(moles);

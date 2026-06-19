@@ -19,8 +19,7 @@ public class ErosionSandLoadDefaultsTest {
 
   @Test
   public void testNaturalCompletionDefaults() {
-    ErosionPredictionCalculator.SandLoadDefaults defaults =
-        ErosionPredictionCalculator.getSandLoadDefaults("natural");
+    ErosionPredictionCalculator.SandLoadDefaults defaults = ErosionPredictionCalculator.getSandLoadDefaults("natural");
     assertNotNull(defaults);
     assertEquals(1.0, defaults.getLiquidPpmWt(), 1e-10);
     assertEquals(0.05, defaults.getGasPpmWt(), 1e-10);
@@ -29,8 +28,8 @@ public class ErosionSandLoadDefaultsTest {
 
   @Test
   public void testNaturalFailureDefaults() {
-    ErosionPredictionCalculator.SandLoadDefaults defaults =
-        ErosionPredictionCalculator.getSandLoadDefaults("natural_failure");
+    ErosionPredictionCalculator.SandLoadDefaults defaults = ErosionPredictionCalculator
+	.getSandLoadDefaults("natural_failure");
     assertNotNull(defaults);
     assertEquals(10.0, defaults.getLiquidPpmWt(), 1e-10);
     assertEquals(0.5, defaults.getGasPpmWt(), 1e-10);
@@ -39,8 +38,7 @@ public class ErosionSandLoadDefaultsTest {
 
   @Test
   public void testSASCompletionDefaults() {
-    ErosionPredictionCalculator.SandLoadDefaults defaults =
-        ErosionPredictionCalculator.getSandLoadDefaults("sas");
+    ErosionPredictionCalculator.SandLoadDefaults defaults = ErosionPredictionCalculator.getSandLoadDefaults("sas");
     assertNotNull(defaults);
     assertEquals(3.0, defaults.getLiquidPpmWt(), 1e-10);
     assertEquals(0.3, defaults.getGasPpmWt(), 1e-10);
@@ -49,8 +47,8 @@ public class ErosionSandLoadDefaultsTest {
 
   @Test
   public void testOHGPCompleteDefaults() {
-    ErosionPredictionCalculator.SandLoadDefaults defaults =
-        ErosionPredictionCalculator.getSandLoadDefaults("ohgp_complete");
+    ErosionPredictionCalculator.SandLoadDefaults defaults = ErosionPredictionCalculator
+	.getSandLoadDefaults("ohgp_complete");
     assertNotNull(defaults);
     assertEquals(1.0, defaults.getLiquidPpmWt(), 1e-10);
     assertEquals(0.05, defaults.getGasPpmWt(), 1e-10);
@@ -59,15 +57,14 @@ public class ErosionSandLoadDefaultsTest {
 
   @Test
   public void testUnknownCompletionTypeReturnsNull() {
-    ErosionPredictionCalculator.SandLoadDefaults defaults =
-        ErosionPredictionCalculator.getSandLoadDefaults("unknown_type");
+    ErosionPredictionCalculator.SandLoadDefaults defaults = ErosionPredictionCalculator
+	.getSandLoadDefaults("unknown_type");
     assertNull(defaults);
   }
 
   @Test
   public void testNullCompletionTypeReturnsNull() {
-    ErosionPredictionCalculator.SandLoadDefaults defaults =
-        ErosionPredictionCalculator.getSandLoadDefaults(null);
+    ErosionPredictionCalculator.SandLoadDefaults defaults = ErosionPredictionCalculator.getSandLoadDefaults(null);
     assertNull(defaults);
   }
 
@@ -181,8 +178,7 @@ public class ErosionSandLoadDefaultsTest {
 
   @Test
   public void testSandLoadDefaultsGetterMethods() {
-    ErosionPredictionCalculator.SandLoadDefaults defaults =
-        ErosionPredictionCalculator.getSandLoadDefaults("natural");
+    ErosionPredictionCalculator.SandLoadDefaults defaults = ErosionPredictionCalculator.getSandLoadDefaults("natural");
     assertNotNull(defaults.getCompletionType());
     assertTrue(defaults.getCompletionType().contains("Natural"));
   }

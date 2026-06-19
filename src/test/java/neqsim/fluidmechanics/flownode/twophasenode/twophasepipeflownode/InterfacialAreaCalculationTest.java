@@ -118,8 +118,7 @@ public class InterfacialAreaCalculationTest {
     node.initFlowCalc();
     double areaSmallBubbles = node.calcInterfacialAreaPerVolume();
 
-    assertTrue(areaSmallBubbles > areaLargeBubbles,
-        "Smaller bubbles should have larger interfacial area per volume");
+    assertTrue(areaSmallBubbles > areaLargeBubbles, "Smaller bubbles should have larger interfacial area per volume");
   }
 
   @Test
@@ -137,6 +136,6 @@ public class InterfacialAreaCalculationTest {
     double areaSmallDroplets = node.calcInterfacialAreaPerVolume();
 
     assertTrue(areaSmallDroplets > areaLargeDroplets,
-        "Smaller droplets should have larger interfacial area per volume");
+	"Smaller droplets should have larger interfacial area per volume");
   }
 }

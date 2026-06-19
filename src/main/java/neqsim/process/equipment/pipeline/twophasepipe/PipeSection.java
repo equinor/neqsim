@@ -6,8 +6,8 @@ import java.io.Serializable;
  * Represents the state of a single section/cell in the multiphase pipe.
  *
  * <p>
- * Stores both conservative variables (for numerical integration) and primitive variables (for
- * physical interpretation and closure relations).
+ * Stores both conservative variables (for numerical integration) and primitive variables (for physical interpretation
+ * and closure relations).
  * </p>
  *
  * @author Even Solbraa
@@ -105,9 +105,9 @@ public class PipeSection implements Cloneable, Serializable {
   /**
    * Constructor with geometry.
    *
-   * @param position Position from inlet (m)
-   * @param length Segment length (m)
-   * @param diameter Pipe diameter (m)
+   * @param position    Position from inlet (m)
+   * @param length      Segment length (m)
+   * @param diameter    Pipe diameter (m)
    * @param inclination Pipe inclination (radians)
    */
   public PipeSection(double position, double length, double diameter, double inclination) {
@@ -148,7 +148,7 @@ public class PipeSection implements Cloneable, Serializable {
    * Calculate liquid level from holdup for circular pipe.
    *
    * @param holdup Liquid holdup (0-1)
-   * @param D Diameter (m)
+   * @param D      Diameter (m)
    * @return Liquid level (m)
    */
   private double calcLiquidLevelFromHoldup(double holdup, double D) {
@@ -169,7 +169,7 @@ public class PipeSection implements Cloneable, Serializable {
       double areaFrac = (theta - Math.sin(theta)) / (2.0 * Math.PI);
       double error = areaFrac - holdup;
       if (Math.abs(error) < 1e-6) {
-        break;
+	break;
       }
       // Derivative
       double dAdh = 4.0 / (D * Math.PI) * Math.sqrt(h * (D - h)) / D;
@@ -196,7 +196,7 @@ public class PipeSection implements Cloneable, Serializable {
   /**
    * Set state from conservative variables.
    *
-   * @param U Conservative variables
+   * @param U        Conservative variables
    * @param gasProps Gas density and enthalpy
    * @param liqProps Liquid density and enthalpy
    */
@@ -327,7 +327,7 @@ public class PipeSection implements Cloneable, Serializable {
     if (isInSlugBody || isInSlugBubble) {
       // Guard against uninitialized or invalid slugHoldup
       if (slugHoldup <= 0 || Double.isNaN(slugHoldup)) {
-        return liquidHoldup;
+	return liquidHoldup;
       }
       return slugHoldup;
     }
@@ -561,11 +561,8 @@ public class PipeSection implements Cloneable, Serializable {
    */
   public double getWallisSoundSpeed() {
     double rho_m = getMixtureDensity();
-    double termG =
-        (gasHoldup > 1e-6) ? gasHoldup / (gasDensity * gasSoundSpeed * gasSoundSpeed) : 0;
-    double termL =
-        (liquidHoldup > 1e-6) ? liquidHoldup / (liquidDensity * liquidSoundSpeed * liquidSoundSpeed)
-            : 0;
+    double termG = (gasHoldup > 1e-6) ? gasHoldup / (gasDensity * gasSoundSpeed * gasSoundSpeed) : 0;
+    double termL = (liquidHoldup > 1e-6) ? liquidHoldup / (liquidDensity * liquidSoundSpeed * liquidSoundSpeed) : 0;
 
     double compressibility = termG + termL;
     if (compressibility <= 0 || rho_m <= 0) {

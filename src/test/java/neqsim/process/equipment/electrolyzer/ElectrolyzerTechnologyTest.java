@@ -5,9 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 /**
- * Sanity tests for {@link ElectrolyzerTechnology} — defaults must remain in textbook ranges so
- * downstream cost and energy estimates stay consistent with public benchmarks (IRENA 2022, IEA
- * 2023).
+ * Sanity tests for {@link ElectrolyzerTechnology} — defaults must remain in textbook ranges so downstream cost and
+ * energy estimates stay consistent with public benchmarks (IRENA 2022, IEA 2023).
  */
 class ElectrolyzerTechnologyTest {
 
@@ -25,17 +24,16 @@ class ElectrolyzerTechnologyTest {
   void testAlkalineDefaults() {
     ElectrolyzerTechnology t = ElectrolyzerTechnology.ALKALINE;
     assertTrue(t.getDefaultCurrentDensity() < ElectrolyzerTechnology.PEM.getDefaultCurrentDensity(),
-        "Alkaline operates at lower current density than PEM");
+	"Alkaline operates at lower current density than PEM");
     assertTrue(t.getDefaultPressureBara() < ElectrolyzerTechnology.PEM.getDefaultPressureBara(),
-        "Alkaline pressure default should be below PEM");
+	"Alkaline pressure default should be below PEM");
   }
 
   @Test
   void testSoecDefaults() {
     ElectrolyzerTechnology t = ElectrolyzerTechnology.SOEC;
     assertTrue(t.getDefaultTemperatureC() > 500.0, "SOEC must be high-temperature");
-    assertTrue(t.getDefaultCellVoltage() < 1.5,
-        "SOEC cell voltage benefits from thermo-neutral operation");
+    assertTrue(t.getDefaultCellVoltage() < 1.5, "SOEC cell voltage benefits from thermo-neutral operation");
   }
 
   @Test
@@ -46,8 +44,7 @@ class ElectrolyzerTechnologyTest {
       assertTrue(t.getDefaultCurrentDensity() > 0.0, t + " currentDensity");
       assertTrue(t.getDefaultTemperatureC() > 0.0, t + " T");
       assertTrue(t.getDefaultPressureBara() > 0.0, t + " P");
-      assertTrue(t.getDefaultFaradaicEfficiency() > 0.0 && t.getDefaultFaradaicEfficiency() <= 1.0,
-          t + " eta_F");
+      assertTrue(t.getDefaultFaradaicEfficiency() > 0.0 && t.getDefaultFaradaicEfficiency() <= 1.0, t + " eta_F");
     }
   }
 }

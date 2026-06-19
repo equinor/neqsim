@@ -20,7 +20,7 @@ public class TestPSRK {
   private static final Logger logger = LogManager.getLogger(TestPSRK.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.

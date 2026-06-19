@@ -9,9 +9,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Calculates the asphaltene onset pressure at a given temperature.
  *
  * <p>
- * The asphaltene onset pressure (AOP) is the pressure at which asphaltenes begin to precipitate
- * from the oil phase. This typically occurs near the bubble point pressure where the oil's solvency
- * for asphaltenes decreases due to light-end vaporization.
+ * The asphaltene onset pressure (AOP) is the pressure at which asphaltenes begin to precipitate from the oil phase.
+ * This typically occurs near the bubble point pressure where the oil's solvency for asphaltenes decreases due to
+ * light-end vaporization.
  * </p>
  *
  * <p>
@@ -79,12 +79,11 @@ public class AsphalteneOnsetPressureFlash extends ConstantDutyFlash {
   /**
    * Constructor with specified pressure range.
    *
-   * @param system the thermodynamic system
+   * @param system        the thermodynamic system
    * @param startPressure starting pressure for search (bara)
-   * @param minPressure minimum pressure to search to (bara)
+   * @param minPressure   minimum pressure to search to (bara)
    */
-  public AsphalteneOnsetPressureFlash(SystemInterface system, double startPressure,
-      double minPressure) {
+  public AsphalteneOnsetPressureFlash(SystemInterface system, double startPressure, double minPressure) {
     super(system);
     this.startPressure = startPressure;
     this.minPressure = minPressure;
@@ -115,22 +114,22 @@ public class AsphalteneOnsetPressureFlash extends ConstantDutyFlash {
       system.setPressure(currentPressure);
 
       try {
-        ops.TPflash();
+	ops.TPflash();
       } catch (Exception e) {
-        logger.error("Flash failed at P = {} bara: {}", currentPressure, e.getMessage());
-        currentPressure -= pressureStep;
-        continue;
+	logger.error("Flash failed at P = {} bara: {}", currentPressure, e.getMessage());
+	currentPressure -= pressureStep;
+	continue;
       }
 
       boolean hasAsphaltenePhase = checkForAsphaltenePrecipitation();
 
       if (hasAsphaltenePhase && wasStable) {
-        // Transition from stable to unstable - onset is between previous and current
-        onsetFound = true;
+	// Transition from stable to unstable - onset is between previous and current
+	onsetFound = true;
 
-        // Phase 2: Refine with bisection
-        onsetPressure = refinePressure(previousPressure, currentPressure, ops);
-        break;
+	// Phase 2: Refine with bisection
+	onsetPressure = refinePressure(previousPressure, currentPressure, ops);
+	break;
       }
 
       wasStable = !hasAsphaltenePhase;
@@ -139,21 +138,19 @@ public class AsphalteneOnsetPressureFlash extends ConstantDutyFlash {
     }
 
     if (!onsetFound) {
-      logger.info("No asphaltene onset found in pressure range {} to {} bara", startPressure,
-          minPressure);
+      logger.info("No asphaltene onset found in pressure range {} to {} bara", startPressure, minPressure);
       onsetPressure = Double.NaN;
     } else {
       // Calculate precipitated amount at onset
       system.setPressure(onsetPressure - 1.0); // Slightly below onset
       try {
-        ops.TPflash();
-        precipitatedFraction = calculatePrecipitatedFraction();
+	ops.TPflash();
+	precipitatedFraction = calculatePrecipitatedFraction();
       } catch (Exception e) {
-        logger.debug("Could not calculate precipitated fraction: {}", e.getMessage());
+	logger.debug("Could not calculate precipitated fraction: {}", e.getMessage());
       }
 
-      logger.info("Asphaltene onset pressure: {} bara at T = {} K", onsetPressure,
-          system.getTemperature());
+      logger.info("Asphaltene onset pressure: {} bara at T = {} K", onsetPressure, system.getTemperature());
     }
   }
 
@@ -162,7 +159,7 @@ public class AsphalteneOnsetPressureFlash extends ConstantDutyFlash {
    *
    * @param upperP upper pressure bound (stable)
    * @param lowerP lower pressure bound (unstable)
-   * @param ops thermodynamic operations object
+   * @param ops    thermodynamic operations object
    * @return refined onset pressure
    */
   private double refinePressure(double upperP, double lowerP, ThermodynamicOperations ops) {
@@ -177,17 +174,17 @@ public class AsphalteneOnsetPressureFlash extends ConstantDutyFlash {
       system.setPressure(mid);
 
       try {
-        ops.TPflash();
+	ops.TPflash();
       } catch (Exception e) {
-        logger.debug("Flash failed during refinement at P = {}", mid);
-        high = mid;
-        continue;
+	logger.debug("Flash failed during refinement at P = {}", mid);
+	high = mid;
+	continue;
       }
 
       if (checkForAsphaltenePrecipitation()) {
-        low = mid; // Precipitation at mid, onset is above
+	low = mid; // Precipitation at mid, onset is above
       } else {
-        high = mid; // Stable at mid, onset is below
+	high = mid; // Stable at mid, onset is below
       }
     }
 
@@ -203,7 +200,7 @@ public class AsphalteneOnsetPressureFlash extends ConstantDutyFlash {
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       String name = system.getPhase(0).getComponent(i).getComponentName().toLowerCase();
       if (name.contains("asphaltene") || name.contains("asphalten")) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -213,8 +210,8 @@ public class AsphalteneOnsetPressureFlash extends ConstantDutyFlash {
    * Checks if asphaltene precipitation has occurred.
    *
    * <p>
-   * Supports both solid asphaltene (PhaseType.ASPHALTENE) and liquid-liquid split
-   * (PhaseType.LIQUID_ASPHALTENE) for Pedersen's approach.
+   * Supports both solid asphaltene (PhaseType.ASPHALTENE) and liquid-liquid split (PhaseType.LIQUID_ASPHALTENE) for
+   * Pedersen's approach.
    * </p>
    *
    * @return true if asphaltene-rich phase exists
@@ -223,29 +220,29 @@ public class AsphalteneOnsetPressureFlash extends ConstantDutyFlash {
     // Check for solid asphaltene phase (PhaseType.ASPHALTENE)
     if (system.hasPhaseType("asphaltene")) {
       try {
-        if (system.getPhaseOfType("asphaltene").getNumberOfMolesInPhase() > 1e-10) {
-          return true;
-        }
+	if (system.getPhaseOfType("asphaltene").getNumberOfMolesInPhase() > 1e-10) {
+	  return true;
+	}
       } catch (Exception e) {
-        // Phase type check failed
+	// Phase type check failed
       }
     }
 
     // Check for liquid asphaltene phase (Pedersen's method - PhaseType.LIQUID_ASPHALTENE)
     if (system.hasPhaseType("asphaltene liquid")) {
       try {
-        if (system.getPhaseOfType("asphaltene liquid").getNumberOfMolesInPhase() > 1e-10) {
-          return true;
-        }
+	if (system.getPhaseOfType("asphaltene liquid").getNumberOfMolesInPhase() > 1e-10) {
+	  return true;
+	}
       } catch (Exception e) {
-        // Phase type check failed
+	// Phase type check failed
       }
     }
 
     // Check for asphaltene-rich liquid phases using isAsphalteneRich()
     for (int p = 0; p < system.getNumberOfPhases(); p++) {
       if (system.getPhase(p).isAsphalteneRich()) {
-        return true;
+	return true;
       }
     }
 
@@ -253,19 +250,19 @@ public class AsphalteneOnsetPressureFlash extends ConstantDutyFlash {
     if (system.hasPhaseType("solid")) {
       // Verify it contains asphaltene component
       try {
-        neqsim.thermo.phase.PhaseInterface solidPhase = system.getPhaseOfType("solid");
-        if (solidPhase.getNumberOfMolesInPhase() > 1e-10) {
-          // Check if solid phase contains asphaltene component
-          for (int i = 0; i < solidPhase.getNumberOfComponents(); i++) {
-            String name = solidPhase.getComponent(i).getComponentName().toLowerCase();
-            if ((name.contains("asphaltene") || name.contains("asphalten"))
-                && solidPhase.getComponent(i).getNumberOfMolesInPhase() > 1e-10) {
-              return true;
-            }
-          }
-        }
+	neqsim.thermo.phase.PhaseInterface solidPhase = system.getPhaseOfType("solid");
+	if (solidPhase.getNumberOfMolesInPhase() > 1e-10) {
+	  // Check if solid phase contains asphaltene component
+	  for (int i = 0; i < solidPhase.getNumberOfComponents(); i++) {
+	    String name = solidPhase.getComponent(i).getComponentName().toLowerCase();
+	    if ((name.contains("asphaltene") || name.contains("asphalten"))
+		&& solidPhase.getComponent(i).getNumberOfMolesInPhase() > 1e-10) {
+	      return true;
+	    }
+	  }
+	}
       } catch (Exception e) {
-        // Phase type check failed
+	// Phase type check failed
       }
     }
 
@@ -291,13 +288,13 @@ public class AsphalteneOnsetPressureFlash extends ConstantDutyFlash {
       // Also check for asphaltene-rich liquid phases
       boolean hasAsphalteneRichPhase = false;
       for (int p = 0; p < system.getNumberOfPhases(); p++) {
-        if (system.getPhase(p).isAsphalteneRich()) {
-          hasAsphalteneRichPhase = true;
-          break;
-        }
+	if (system.getPhase(p).isAsphalteneRich()) {
+	  hasAsphalteneRichPhase = true;
+	  break;
+	}
       }
       if (!hasAsphalteneRichPhase) {
-        return 0.0;
+	return 0.0;
       }
     }
 
@@ -307,28 +304,24 @@ public class AsphalteneOnsetPressureFlash extends ConstantDutyFlash {
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       String name = system.getPhase(0).getComponent(i).getComponentName().toLowerCase();
       if (name.contains("asphaltene") || name.contains("asphalten")) {
-        totalAsphaltene =
-            system.getPhase(0).getComponent(i).getz() * system.getTotalNumberOfMoles();
+	totalAsphaltene = system.getPhase(0).getComponent(i).getz() * system.getTotalNumberOfMoles();
 
-        if (hasAsphaltenePhase) {
-          precipitatedAsphaltene =
-              system.getPhaseOfType("asphaltene").getComponent(i).getNumberOfMolesInPhase();
-        } else if (hasLiquidAsphaltenePhase) {
-          precipitatedAsphaltene =
-              system.getPhaseOfType("asphaltene liquid").getComponent(i).getNumberOfMolesInPhase();
-        } else if (hasSolidPhase) {
-          precipitatedAsphaltene =
-              system.getPhaseOfType("solid").getComponent(i).getNumberOfMolesInPhase();
-        } else {
-          // Check for asphaltene-rich liquid phases
-          for (int p = 0; p < system.getNumberOfPhases(); p++) {
-            if (system.getPhase(p).isAsphalteneRich()) {
-              precipitatedAsphaltene = system.getPhase(p).getComponent(i).getNumberOfMolesInPhase();
-              break;
-            }
-          }
-        }
-        break;
+	if (hasAsphaltenePhase) {
+	  precipitatedAsphaltene = system.getPhaseOfType("asphaltene").getComponent(i).getNumberOfMolesInPhase();
+	} else if (hasLiquidAsphaltenePhase) {
+	  precipitatedAsphaltene = system.getPhaseOfType("asphaltene liquid").getComponent(i).getNumberOfMolesInPhase();
+	} else if (hasSolidPhase) {
+	  precipitatedAsphaltene = system.getPhaseOfType("solid").getComponent(i).getNumberOfMolesInPhase();
+	} else {
+	  // Check for asphaltene-rich liquid phases
+	  for (int p = 0; p < system.getNumberOfPhases(); p++) {
+	    if (system.getPhase(p).isAsphalteneRich()) {
+	      precipitatedAsphaltene = system.getPhase(p).getComponent(i).getNumberOfMolesInPhase();
+	      break;
+	    }
+	  }
+	}
+	break;
       }
     }
 
@@ -359,18 +352,18 @@ public class AsphalteneOnsetPressureFlash extends ConstantDutyFlash {
     }
 
     switch (unit.toLowerCase()) {
-      case "bara":
-      case "bar":
-        return onsetPressure;
-      case "psia":
-      case "psi":
-        return onsetPressure * 14.5038;
-      case "mpa":
-        return onsetPressure * 0.1;
-      case "kpa":
-        return onsetPressure * 100.0;
-      default:
-        return onsetPressure;
+    case "bara":
+    case "bar":
+      return onsetPressure;
+    case "psia":
+    case "psi":
+      return onsetPressure * 14.5038;
+    case "mpa":
+      return onsetPressure * 0.1;
+    case "kpa":
+      return onsetPressure * 100.0;
+    default:
+      return onsetPressure;
     }
   }
 

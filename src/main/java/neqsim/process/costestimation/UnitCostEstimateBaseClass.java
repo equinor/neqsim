@@ -12,9 +12,9 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
  * Base class for equipment cost estimation.
  *
  * <p>
- * This class provides comprehensive cost estimation methods for process equipment based on chemical
- * engineering cost correlations. It supports multiple cost estimation methodologies and provides
- * JSON export capabilities for integration with project cost systems.
+ * This class provides comprehensive cost estimation methods for process equipment based on chemical engineering cost
+ * correlations. It supports multiple cost estimation methodologies and provides JSON export capabilities for
+ * integration with project cost systems.
  * </p>
  *
  * <p>
@@ -104,8 +104,8 @@ public class UnitCostEstimateBaseClass implements java.io.Serializable {
    * Calculate all cost estimates for the equipment.
    *
    * <p>
-   * This method calculates purchased equipment cost, bare module cost, total module cost, and grass
-   * roots cost based on the equipment weight and design pressure.
+   * This method calculates purchased equipment cost, bare module cost, total module cost, and grass roots cost based on
+   * the equipment weight and design pressure.
    * </p>
    */
   public void calculateCostEstimate() {
@@ -239,7 +239,7 @@ public class UnitCostEstimateBaseClass implements java.io.Serializable {
    * Calculate annual operating cost.
    *
    * @param electricityCostPerKWh electricity cost in $/kWh
-   * @param steamCostPerTonne steam cost in $/tonne
+   * @param steamCostPerTonne     steam cost in $/tonne
    * @param coolingWaterCostPerM3 cooling water cost in $/m3
    * @param operatingHoursPerYear annual operating hours
    * @return annual operating cost in USD
@@ -284,8 +284,7 @@ public class UnitCostEstimateBaseClass implements java.io.Serializable {
       internals.put("item", "Internals");
       internals.put("material", mechanicalEquipment.getConstrutionMaterial());
       internals.put("weight_kg", mechanicalEquipment.getWeigthInternals());
-      internals.put("unit_cost_USD",
-          mechanicalEquipment.getWeigthInternals() * costPerWeightUnit * 1.5);
+      internals.put("unit_cost_USD", mechanicalEquipment.getWeigthInternals() * costPerWeightUnit * 1.5);
       bom.add(internals);
     }
 
@@ -314,8 +313,7 @@ public class UnitCostEstimateBaseClass implements java.io.Serializable {
       Map<String, Object> ei = new LinkedHashMap<String, Object>();
       ei.put("item", "Electrical & Instrumentation");
       ei.put("weight_kg", mechanicalEquipment.getWeightElectroInstrument());
-      ei.put("unit_cost_USD",
-          mechanicalEquipment.getWeightElectroInstrument() * costPerWeightUnit * 3.0);
+      ei.put("unit_cost_USD", mechanicalEquipment.getWeightElectroInstrument() * costPerWeightUnit * 3.0);
       bom.add(ei);
     }
 
@@ -325,8 +323,7 @@ public class UnitCostEstimateBaseClass implements java.io.Serializable {
       structural.put("item", "Structural Steel");
       structural.put("material", "Carbon Steel");
       structural.put("weight_kg", mechanicalEquipment.getWeightStructualSteel());
-      structural.put("unit_cost_USD",
-          mechanicalEquipment.getWeightStructualSteel() * costPerWeightUnit * 0.8);
+      structural.put("unit_cost_USD", mechanicalEquipment.getWeightStructualSteel() * costPerWeightUnit * 0.8);
       bom.add(structural);
     }
 
@@ -398,8 +395,7 @@ public class UnitCostEstimateBaseClass implements java.io.Serializable {
    * @return JSON string
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   /**
@@ -536,9 +532,8 @@ public class UnitCostEstimateBaseClass implements java.io.Serializable {
       return false;
     }
     UnitCostEstimateBaseClass other = (UnitCostEstimateBaseClass) obj;
-    return Double.doubleToLongBits(costPerWeightUnit) == Double
-        .doubleToLongBits(other.costPerWeightUnit)
-        && Objects.equals(mechanicalEquipment, other.mechanicalEquipment)
-        && Objects.equals(equipmentType, other.equipmentType);
+    return Double.doubleToLongBits(costPerWeightUnit) == Double.doubleToLongBits(other.costPerWeightUnit)
+	&& Objects.equals(mechanicalEquipment, other.mechanicalEquipment)
+	&& Objects.equals(equipmentType, other.equipmentType);
   }
 }

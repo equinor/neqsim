@@ -17,17 +17,14 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Multi-effect evaporator for concentration of solutions.
  *
  * <p>
- * Models a series of evaporator effects at decreasing pressures. Each effect
- * uses the vapor from
- * the previous effect as the heating medium, achieving significant steam
- * economy. Commonly used in
- * sugar refining, dairy processing, and bio-product concentration.
+ * Models a series of evaporator effects at decreasing pressures. Each effect uses the vapor from the previous effect as
+ * the heating medium, achieving significant steam economy. Commonly used in sugar refining, dairy processing, and
+ * bio-product concentration.
  * </p>
  *
  * <p>
- * The model performs sequential flash calculations at decreasing pressures,
- * removing vapor at each
- * stage to concentrate the liquid product.
+ * The model performs sequential flash calculations at decreasing pressures, removing vapor at each stage to concentrate
+ * the liquid product.
  * </p>
  *
  * <p>
@@ -326,38 +323,37 @@ public class MultiEffectEvaporator extends ProcessEquipmentBaseClass {
       // Flash at the effect pressure (isenthalpic for realistic modeling)
       ThermodynamicOperations ops = new ThermodynamicOperations(currentLiquid);
       try {
-        ops.TPflash();
+	ops.TPflash();
       } catch (Exception ex) {
-        logger.warn("Flash failed at effect {} (P={} bara): {}", effect + 1, effectPressure,
-            ex.getMessage());
-        continue;
+	logger.warn("Flash failed at effect {} (P={} bara): {}", effect + 1, effectPressure, ex.getMessage());
+	continue;
       }
 
       currentLiquid.init(3);
 
       // Separate gas phase from liquid
       if (currentLiquid.getNumberOfPhases() > 1 && currentLiquid.hasPhaseType("gas")) {
-        // Extract vapor phase
-        SystemInterface vaporPhase = currentLiquid.phaseToSystem(currentLiquid.getPhases()[0]);
+	// Extract vapor phase
+	SystemInterface vaporPhase = currentLiquid.phaseToSystem(currentLiquid.getPhases()[0]);
 
-        // Keep only liquid for next effect
-        currentLiquid = currentLiquid.phaseToSystem(currentLiquid.getPhases()[1]);
+	// Keep only liquid for next effect
+	currentLiquid = currentLiquid.phaseToSystem(currentLiquid.getPhases()[1]);
 
-        // Accumulate total vapor
-        if (totalVapor == null) {
-          totalVapor = vaporPhase;
-        } else {
-          // Add the vapor components to total
-          for (int i = 0; i < vaporPhase.getNumberOfComponents(); i++) {
-            String compName = vaporPhase.getComponent(i).getComponentName();
-            double moles = vaporPhase.getComponent(i).getNumberOfmoles();
-            try {
-              totalVapor.addComponent(compName, moles);
-            } catch (Exception ex) {
-              // Skip if component can't be added
-            }
-          }
-        }
+	// Accumulate total vapor
+	if (totalVapor == null) {
+	  totalVapor = vaporPhase;
+	} else {
+	  // Add the vapor components to total
+	  for (int i = 0; i < vaporPhase.getNumberOfComponents(); i++) {
+	    String compName = vaporPhase.getComponent(i).getComponentName();
+	    double moles = vaporPhase.getComponent(i).getNumberOfmoles();
+	    try {
+	      totalVapor.addComponent(compName, moles);
+	    } catch (Exception ex) {
+	      // Skip if component can't be added
+	    }
+	  }
+	}
       }
     }
 
@@ -379,8 +375,7 @@ public class MultiEffectEvaporator extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   /**

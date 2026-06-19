@@ -117,8 +117,7 @@ class StaticMixerTest {
 
     process.run();
 
-    double inletMass = stream1.getThermoSystem().getFlowRate("kg/hr")
-        + stream2.getThermoSystem().getFlowRate("kg/hr");
+    double inletMass = stream1.getThermoSystem().getFlowRate("kg/hr") + stream2.getThermoSystem().getFlowRate("kg/hr");
     double outletMass = mixer.getOutletStream().getThermoSystem().getFlowRate("kg/hr");
 
     assertEquals(inletMass, outletMass, inletMass * 1e-4);
@@ -230,8 +229,8 @@ class StaticMixerTest {
 
     process.run();
 
-    double totalIn = s1.getThermoSystem().getFlowRate("kg/hr")
-        + s2.getThermoSystem().getFlowRate("kg/hr") + s3.getThermoSystem().getFlowRate("kg/hr");
+    double totalIn = s1.getThermoSystem().getFlowRate("kg/hr") + s2.getThermoSystem().getFlowRate("kg/hr")
+	+ s3.getThermoSystem().getFlowRate("kg/hr");
     double totalOut = mixer.getOutletStream().getThermoSystem().getFlowRate("kg/hr");
     assertEquals(totalIn, totalOut, totalIn * 1e-4);
   }

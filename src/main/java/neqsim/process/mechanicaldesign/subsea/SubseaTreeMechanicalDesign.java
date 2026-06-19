@@ -137,8 +137,7 @@ public class SubseaTreeMechanicalDesign extends MechanicalDesign {
     double designPressure = tree.getDesignPressure();
 
     // Connector must handle pressure end load plus external loads
-    double pressureEndLoad =
-        Math.PI * Math.pow(boreSize * 25.4 / 2, 2) * designPressure / 10 / 1000; // kN
+    double pressureEndLoad = Math.PI * Math.pow(boreSize * 25.4 / 2, 2) * designPressure / 10 / 1000; // kN
 
     // Add external load allowance (current, vessel motion, etc.)
     double externalLoad = 500.0; // kN typical
@@ -217,8 +216,8 @@ public class SubseaTreeMechanicalDesign extends MechanicalDesign {
     boolean isHorizontal = tree.getTreeType() == SubseaTree.TreeType.HORIZONTAL;
     boolean isDualBore = tree.getTreeType() == SubseaTree.TreeType.DUAL_BORE;
 
-    costEstimator.calculateTreeCost(pressureRatingPsi, tree.getBoreSizeInches(),
-        tree.getWaterDepth(), isHorizontal, isDualBore);
+    costEstimator.calculateTreeCost(pressureRatingPsi, tree.getBoreSizeInches(), tree.getWaterDepth(), isHorizontal,
+	isDualBore);
 
     totalCostUSD = costEstimator.getTotalCost();
     equipmentCostUSD = costEstimator.getEquipmentCost();
@@ -367,8 +366,7 @@ public class SubseaTreeMechanicalDesign extends MechanicalDesign {
     }
     jsonObj.add("costEstimation", cost);
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(jsonObj);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(jsonObj);
   }
 
   /**

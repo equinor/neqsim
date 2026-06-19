@@ -7,19 +7,18 @@ import java.util.Arrays;
  * Allocates a fixed shared total across competing legs to maximise a coupled objective.
  *
  * <p>
- * Many production problems are allocation problems: split a fixed gas-lift budget across wells,
- * apportion a plateau rate across fields sharing a host, or divide duty across parallel trains that
- * feed shared compression. A naive parameter sweep scales poorly with the number of legs; this
- * class treats allocation as a constrained optimization that conserves the shared total exactly.
+ * Many production problems are allocation problems: split a fixed gas-lift budget across wells, apportion a plateau
+ * rate across fields sharing a host, or divide duty across parallel trains that feed shared compression. A naive
+ * parameter sweep scales poorly with the number of legs; this class treats allocation as a constrained optimization
+ * that conserves the shared total exactly.
  * </p>
  *
  * <p>
- * The objective is supplied by a functional {@link AllocationEvaluator} that scores a candidate
- * split (typically by setting per-leg rates on a coupled {@code ProcessModel}, running it to
- * convergence and pricing the result with {@link ValueChainObjective}). The optimizer uses a
- * transfer-based pattern search: it repeatedly moves a shrinking quantity between pairs of legs,
- * accepting any move that improves the objective while respecting per-leg bounds. Because every
- * accepted move transfers from one leg to another, the sum of the allocation is preserved at the
+ * The objective is supplied by a functional {@link AllocationEvaluator} that scores a candidate split (typically by
+ * setting per-leg rates on a coupled {@code ProcessModel}, running it to convergence and pricing the result with
+ * {@link ValueChainObjective}). The optimizer uses a transfer-based pattern search: it repeatedly moves a shrinking
+ * quantity between pairs of legs, accepting any move that improves the objective while respecting per-leg bounds.
+ * Because every accepted move transfers from one leg to another, the sum of the allocation is preserved at the
  * configured total throughout.
  * </p>
  *
@@ -89,8 +88,8 @@ public class NetworkAllocationOptimizer implements Serializable {
      * Creates an allocation result.
      *
      * @param allocation the per-leg allocation
-     * @param objective the objective value (higher is better)
-     * @param feasible true if the allocation is feasible
+     * @param objective  the objective value (higher is better)
+     * @param feasible   true if the allocation is feasible
      */
     public AllocationResult(double[] allocation, double objective, boolean feasible) {
       this.allocation = allocation.clone();
@@ -150,7 +149,7 @@ public class NetworkAllocationOptimizer implements Serializable {
   /**
    * Sets the lower and upper bound for one leg.
    *
-   * @param leg the leg index (0-based)
+   * @param leg   the leg index (0-based)
    * @param lower the lower bound (non-negative)
    * @param upper the upper bound (greater than or equal to the lower bound)
    * @return this optimizer for method chaining
@@ -244,34 +243,34 @@ public class NetworkAllocationOptimizer implements Serializable {
     while (step > tolerance * total && iter < maxIterations) {
       boolean improved = false;
       for (int i = 0; i < nLegs; i++) {
-        for (int j = 0; j < nLegs; j++) {
-          if (i == j) {
-            continue;
-          }
-          if (best[i] + step > upperBound[i] || best[j] - step < lowerBound[j]) {
-            continue;
-          }
-          double[] trial = best.clone();
-          trial[i] += step;
-          trial[j] -= step;
-          AllocationResult r = evaluator.evaluate(trial);
-          iter++;
-          if (r.isFeasible() && (!haveFeasible || r.getObjective() > bestObj + 1e-12)) {
-            best = trial;
-            bestObj = r.getObjective();
-            haveFeasible = true;
-            improved = true;
-          }
-          if (iter >= maxIterations) {
-            break;
-          }
-        }
-        if (iter >= maxIterations) {
-          break;
-        }
+	for (int j = 0; j < nLegs; j++) {
+	  if (i == j) {
+	    continue;
+	  }
+	  if (best[i] + step > upperBound[i] || best[j] - step < lowerBound[j]) {
+	    continue;
+	  }
+	  double[] trial = best.clone();
+	  trial[i] += step;
+	  trial[j] -= step;
+	  AllocationResult r = evaluator.evaluate(trial);
+	  iter++;
+	  if (r.isFeasible() && (!haveFeasible || r.getObjective() > bestObj + 1e-12)) {
+	    best = trial;
+	    bestObj = r.getObjective();
+	    haveFeasible = true;
+	    improved = true;
+	  }
+	  if (iter >= maxIterations) {
+	    break;
+	  }
+	}
+	if (iter >= maxIterations) {
+	  break;
+	}
       }
       if (!improved) {
-        step *= 0.5;
+	step *= 0.5;
       }
     }
     return new AllocationResult(best, bestObj, haveFeasible);
@@ -302,17 +301,17 @@ public class NetworkAllocationOptimizer implements Serializable {
     // Distribute the residual across legs that still have headroom in the needed direction.
     if (Math.abs(diff) > 1e-12) {
       for (int i = 0; i < nLegs && Math.abs(diff) > 1e-12; i++) {
-        if (diff > 0) {
-          double headroom = upperBound[i] - alloc[i];
-          double add = Math.min(headroom, diff);
-          alloc[i] += add;
-          diff -= add;
-        } else {
-          double headroom = alloc[i] - lowerBound[i];
-          double sub = Math.min(headroom, -diff);
-          alloc[i] -= sub;
-          diff += sub;
-        }
+	if (diff > 0) {
+	  double headroom = upperBound[i] - alloc[i];
+	  double add = Math.min(headroom, diff);
+	  alloc[i] += add;
+	  diff -= add;
+	} else {
+	  double headroom = alloc[i] - lowerBound[i];
+	  double sub = Math.min(headroom, -diff);
+	  alloc[i] -= sub;
+	  diff += sub;
+	}
       }
     }
     return alloc;

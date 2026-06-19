@@ -17,16 +17,15 @@ import neqsim.process.chemistry.util.StandardsRegistry.StandardReference;
  * The model exposes:
  * </p>
  * <ul>
- * <li><strong>Colloidal Instability Index (CII) shift.</strong> The reduction of CII achieved by a
- * polymeric inhibitor at the given dose. CII below 0.7 is generally considered stable; above 0.9 is
- * unstable. The shift is dose-dependent with a Langmuir saturation.</li>
- * <li><strong>Onset-pressure shift.</strong> Approximate downward shift of the asphaltene onset
- * pressure (AOP), enabling the inhibitor to keep production above the new onset.</li>
+ * <li><strong>Colloidal Instability Index (CII) shift.</strong> The reduction of CII achieved by a polymeric inhibitor
+ * at the given dose. CII below 0.7 is generally considered stable; above 0.9 is unstable. The shift is dose-dependent
+ * with a Langmuir saturation.</li>
+ * <li><strong>Onset-pressure shift.</strong> Approximate downward shift of the asphaltene onset pressure (AOP),
+ * enabling the inhibitor to keep production above the new onset.</li>
  * </ul>
  *
  * <p>
- * For the baseline CII / AOP use NeqSim's {@code AsphalteneStabilityAnalyzer}; this class adds the
- * chemistry response.
+ * For the baseline CII / AOP use NeqSim's {@code AsphalteneStabilityAnalyzer}; this class adds the chemistry response.
  * </p>
  *
  * @author ESOL
@@ -73,7 +72,8 @@ public class AsphalteneInhibitorPerformance implements Serializable {
   /**
    * Default constructor.
    */
-  public AsphalteneInhibitorPerformance() {}
+  public AsphalteneInhibitorPerformance() {
+  }
 
   /**
    * Sets the inhibitor chemistry.
@@ -150,8 +150,8 @@ public class AsphalteneInhibitorPerformance implements Serializable {
     inhibitedAopBara = baseAsphalteneOnsetPressureBara - aopShiftBar;
     stableAfterTreatment = inhibitedCii < 0.7;
     if (!stableAfterTreatment) {
-      warnings.add("CII after treatment " + String.format("%.2f", inhibitedCii)
-          + " still > 0.7 — fluid remains unstable");
+      warnings
+	  .add("CII after treatment " + String.format("%.2f", inhibitedCii) + " still > 0.7 — fluid remains unstable");
     }
     if (efficacyFraction < 0.4) {
       warnings.add("Dose " + doseMgL + " mg/L is below 50% efficacy point");
@@ -238,10 +238,9 @@ public class AsphalteneInhibitorPerformance implements Serializable {
    */
   public List<Map<String, Object>> getStandardsApplied() {
     return StandardsRegistry.toMapList(
-        new StandardReference("ASTM D6560", "ASTM",
-            "Determination of asphaltenes (heptane insolubles) in crude petroleum"),
-        new StandardReference("Yen-Mullins model", "Industrial",
-            "Asphaltene aggregation reference framework"));
+	new StandardReference("ASTM D6560", "ASTM",
+	    "Determination of asphaltenes (heptane insolubles) in crude petroleum"),
+	new StandardReference("Yen-Mullins model", "Industrial", "Asphaltene aggregation reference framework"));
   }
 
   /**

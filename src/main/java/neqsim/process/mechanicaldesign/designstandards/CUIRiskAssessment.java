@@ -8,13 +8,13 @@ import java.util.List;
  * Corrosion Under Insulation (CUI) risk assessment per API 581 / NORSOK M-501.
  *
  * <p>
- * Provides temperature-based susceptibility screening, material and insulation type compatibility
- * checks, and inspection interval recommendations following industry best practice.
+ * Provides temperature-based susceptibility screening, material and insulation type compatibility checks, and
+ * inspection interval recommendations following industry best practice.
  * </p>
  *
  * <p>
- * CUI is one of the leading causes of unplanned shutdowns in process plants. The risk depends
- * primarily on operating temperature, insulation type, coating system, and environment.
+ * CUI is one of the leading causes of unplanned shutdowns in process plants. The risk depends primarily on operating
+ * temperature, insulation type, coating system, and environment.
  * </p>
  *
  * <p>
@@ -92,19 +92,19 @@ public class CUIRiskAssessment implements Serializable {
    * Assess CUI risk based on operating temperature per API 581 screening criteria.
    *
    * <p>
-   * Carbon steel is most susceptible to CUI in the range -4 C to 175 C (25 F to 350 F). The highest
-   * risk zone is 80-120 C where aqueous corrosion and wet-dry cycling are most aggressive.
+   * Carbon steel is most susceptible to CUI in the range -4 C to 175 C (25 F to 350 F). The highest risk zone is 80-120
+   * C where aqueous corrosion and wet-dry cycling are most aggressive.
    * </p>
    *
-   * @param operatingTempC operating temperature in Celsius
-   * @param isStainlessSteel true if material is austenitic stainless steel (300-series)
-   * @param insulationType insulation type
-   * @param coatingAge years since last coating application
+   * @param operatingTempC      operating temperature in Celsius
+   * @param isStainlessSteel    true if material is austenitic stainless steel (300-series)
+   * @param insulationType      insulation type
+   * @param coatingAge          years since last coating application
    * @param isMarineEnvironment true if offshore or coastal
    * @return CUI risk level
    */
-  public static CUIRisk assessRisk(double operatingTempC, boolean isStainlessSteel,
-      InsulationType insulationType, double coatingAge, boolean isMarineEnvironment) {
+  public static CUIRisk assessRisk(double operatingTempC, boolean isStainlessSteel, InsulationType insulationType,
+      double coatingAge, boolean isMarineEnvironment) {
 
     double baseScore = temperatureRiskScore(operatingTempC, isStainlessSteel);
 
@@ -138,7 +138,7 @@ public class CUIRiskAssessment implements Serializable {
   /**
    * Calculate temperature-based risk score per API 581 / API 583 guidance.
    *
-   * @param operatingTempC operating temperature in Celsius
+   * @param operatingTempC   operating temperature in Celsius
    * @param isStainlessSteel true if austenitic stainless steel
    * @return risk score (0 = negligible, 1 = low, 3 = high, 5 = very high)
    */
@@ -146,23 +146,23 @@ public class CUIRiskAssessment implements Serializable {
     if (isStainlessSteel) {
       // Stainless steel: susceptible to chloride SCC under insulation, 50-150 C
       if (operatingTempC >= 60 && operatingTempC <= 150) {
-        return 4.0;
+	return 4.0;
       } else if (operatingTempC >= 50 && operatingTempC <= 175) {
-        return 2.5;
+	return 2.5;
       } else if (operatingTempC >= -4 && operatingTempC <= 200) {
-        return 1.0;
+	return 1.0;
       }
       return 0.3;
     } else {
       // Carbon steel: aqueous corrosion under insulation
       if (operatingTempC >= 80 && operatingTempC <= 120) {
-        return 4.0; // Peak CUI zone
+	return 4.0; // Peak CUI zone
       } else if (operatingTempC >= 50 && operatingTempC <= 150) {
-        return 3.0;
+	return 3.0;
       } else if (operatingTempC >= -4 && operatingTempC <= 175) {
-        return 2.0;
+	return 2.0;
       } else if (operatingTempC > 175 && operatingTempC <= 200) {
-        return 1.0;
+	return 1.0;
       }
       return 0.3; // Below -4 C or above 200 C: low CUI risk
     }
@@ -176,16 +176,16 @@ public class CUIRiskAssessment implements Serializable {
    */
   public static int recommendedInspectionIntervalYears(CUIRisk risk) {
     switch (risk) {
-      case VERY_HIGH:
-        return 1;
-      case HIGH:
-        return 3;
-      case MEDIUM:
-        return 5;
-      case LOW:
-        return 10;
-      default:
-        return 5;
+    case VERY_HIGH:
+      return 1;
+    case HIGH:
+      return 3;
+    case MEDIUM:
+      return 5;
+    case LOW:
+      return 10;
+    default:
+      return 5;
     }
   }
 
@@ -197,21 +197,17 @@ public class CUIRiskAssessment implements Serializable {
    */
   public static List<String> recommendedInspectionMethods(CUIRisk risk) {
     switch (risk) {
-      case VERY_HIGH:
-        return Arrays.asList("Strip insulation and visually inspect",
-            "UT thickness measurement at CMLs", "Radiographic profile (RT)",
-            "Pulsed eddy current (PEC)");
-      case HIGH:
-        return Arrays.asList("Pulsed eddy current (PEC) screening",
-            "UT spot thickness measurements", "Infrared thermography for moisture detection",
-            "Neutron backscatter for moisture mapping");
-      case MEDIUM:
-        return Arrays.asList("Infrared thermography survey",
-            "Visual inspection of jacketing and sealants",
-            "UT spot checks at known vulnerable locations");
-      default:
-        return Arrays.asList("Visual inspection of jacketing condition",
-            "Infrared thermography (opportunistic)");
+    case VERY_HIGH:
+      return Arrays.asList("Strip insulation and visually inspect", "UT thickness measurement at CMLs",
+	  "Radiographic profile (RT)", "Pulsed eddy current (PEC)");
+    case HIGH:
+      return Arrays.asList("Pulsed eddy current (PEC) screening", "UT spot thickness measurements",
+	  "Infrared thermography for moisture detection", "Neutron backscatter for moisture mapping");
+    case MEDIUM:
+      return Arrays.asList("Infrared thermography survey", "Visual inspection of jacketing and sealants",
+	  "UT spot checks at known vulnerable locations");
+    default:
+      return Arrays.asList("Visual inspection of jacketing condition", "Infrared thermography (opportunistic)");
     }
   }
 
@@ -224,20 +220,20 @@ public class CUIRiskAssessment implements Serializable {
    */
   public static boolean isInsulationSuitable(InsulationType insulationType, double operatingTempC) {
     switch (insulationType) {
-      case PIR_FOAM:
-        return operatingTempC <= 140; // PIR limited to ~140C
-      case CELLULAR_GLASS:
-        return operatingTempC >= -268 && operatingTempC <= 430;
-      case MINERAL_WOOL:
-        return operatingTempC >= -50 && operatingTempC <= 700;
-      case CALCIUM_SILICATE:
-        return operatingTempC >= 0 && operatingTempC <= 650;
-      case PERLITE:
-        return operatingTempC >= -268 && operatingTempC <= 650;
-      case AEROGEL:
-        return operatingTempC >= -200 && operatingTempC <= 650;
-      default:
-        return true;
+    case PIR_FOAM:
+      return operatingTempC <= 140; // PIR limited to ~140C
+    case CELLULAR_GLASS:
+      return operatingTempC >= -268 && operatingTempC <= 430;
+    case MINERAL_WOOL:
+      return operatingTempC >= -50 && operatingTempC <= 700;
+    case CALCIUM_SILICATE:
+      return operatingTempC >= 0 && operatingTempC <= 650;
+    case PERLITE:
+      return operatingTempC >= -268 && operatingTempC <= 650;
+    case AEROGEL:
+      return operatingTempC >= -200 && operatingTempC <= 650;
+    default:
+      return true;
     }
   }
 
@@ -245,10 +241,9 @@ public class CUIRiskAssessment implements Serializable {
    * Estimate remaining corrosion allowance based on CUI conditions.
    *
    * @param originalThicknessMm original wall thickness in mm
-   * @param currentThicknessMm measured current wall thickness in mm
-   * @param yearsInService years in service
-   * @return estimated remaining life in years at current corrosion rate, or Double.MAX_VALUE if no
-   *         measurable thinning
+   * @param currentThicknessMm  measured current wall thickness in mm
+   * @param yearsInService      years in service
+   * @return estimated remaining life in years at current corrosion rate, or Double.MAX_VALUE if no measurable thinning
    */
   public static double estimateRemainingLife(double originalThicknessMm, double currentThicknessMm,
       double yearsInService) {

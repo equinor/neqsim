@@ -23,8 +23,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author ESOL
  * @version $Id: $Id
  */
-public abstract class ProcessModuleBaseClass extends SimulationBaseClass
-    implements ModuleInterface {
+public abstract class ProcessModuleBaseClass extends SimulationBaseClass implements ModuleInterface {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
@@ -33,8 +32,7 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
   protected boolean isInitializedStreams = false;
 
   private boolean isCalcDesign = false;
-  private neqsim.process.processmodel.ProcessSystem operations =
-      new neqsim.process.processmodel.ProcessSystem();
+  private neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
 
   /**
    * <p>
@@ -68,11 +66,13 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
-  public void setRegulatorOutSignal(double signal) {}
+  public void setRegulatorOutSignal(double signal) {
+  }
 
   /** {@inheritDoc} */
   @Override
-  public void setController(ControllerDeviceInterface controller) {}
+  public void setController(ControllerDeviceInterface controller) {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -155,13 +155,15 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
    * </p>
    *
    * @param specificationName a {@link java.lang.String} object
-   * @param value a double
+   * @param value             a double
    */
-  public void setSpecification(String specificationName, double value) {}
+  public void setSpecification(String specificationName, double value) {
+  }
 
   /** {@inheritDoc} */
   @Override
-  public void setSpecification(String specification) {}
+  public void setSpecification(String specification) {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -181,10 +183,11 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
    * </p>
    *
    * @param propertyName a {@link java.lang.String} object
-   * @param value a double
-   * @param unit a {@link java.lang.String} object
+   * @param value        a double
+   * @param unit         a {@link java.lang.String} object
    */
-  public void setProperty(String propertyName, double value, String unit) {}
+  public void setProperty(String propertyName, double value, String unit) {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -200,7 +203,8 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
-  public void setPressure(double pressure) {}
+  public void setPressure(double pressure) {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -223,7 +227,7 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
   /**
    * Exergy destruction rate aggregated over all unit operations contained in this module.
    *
-   * @param unit energy / power unit of the returned value
+   * @param unit                   energy / power unit of the returned value
    * @param surroundingTemperature dead-state temperature in K
    * @return total exergy destruction in the requested unit
    */
@@ -234,7 +238,8 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
-  public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {}
+  public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -268,7 +273,8 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
-  public void run_step(UUID id) {}
+  public void run_step(UUID id) {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -292,8 +298,8 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
    * Disables all capacity constraints on all equipment in this module.
    *
    * <p>
-   * Use this for what-if scenarios where you want to ignore capacity limits. Delegates to the
-   * internal {@link ProcessSystem#disableAllConstraints()}.
+   * Use this for what-if scenarios where you want to ignore capacity limits. Delegates to the internal
+   * {@link ProcessSystem#disableAllConstraints()}.
    * </p>
    *
    * @return the total number of constraints that were disabled

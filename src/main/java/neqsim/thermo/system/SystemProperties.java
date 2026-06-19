@@ -36,7 +36,7 @@ public class SystemProperties {
    * @param fluid input fluid
    */
   public SystemProperties(SystemInterface fluid) {
-    final String[] phaseName = {"gas", "oil", "aqueous"};
+    final String[] phaseName = { "gas", "oil", "aqueous" };
 
     values = new Double[nCols];
     names = new String[nCols];
@@ -87,91 +87,91 @@ public class SystemProperties {
       String currPhaseName = phaseName[j];
 
       if (fluid.hasPhaseType(phaseName[j])) {
-        int phaseNumber = fluid.getPhaseNumberOfPhase(phaseName[j]);
-        PhaseInterface currPhase = fluid.getPhase(phaseNumber);
-        names[++k] = currPhaseName + " Mole Percent";
-        values[k] = fluid.getMoleFraction(phaseNumber) * 100;
-        names[++k] = currPhaseName + " Weight Percent";
-        values[k] = fluid.getWtFraction(phaseNumber) * 100;
-        names[++k] = currPhaseName + " Molar Volume [m3/mol]";
-        values[k] = 1.0 / currPhase.getDensity("mol/m3");
-        names[++k] = currPhaseName + " Volume Percent";
-        values[k] = fluid.getCorrectedVolumeFraction(phaseNumber) * 100;
-        names[++k] = currPhaseName + " Density [kg/m3]";
-        values[k] = currPhase.getDensity("kg/m3");
-        names[++k] = currPhaseName + " Z Factor";
-        if (Objects.equals(phaseName[j], "oil") || Objects.equals(phaseName[j], "aqueous")) {
-          // Phase doesn't calculate correct result for these properties. See specs
-          values[k] = Double.NaN;
-        } else {
-          values[k] = currPhase.getZ();
-        }
+	int phaseNumber = fluid.getPhaseNumberOfPhase(phaseName[j]);
+	PhaseInterface currPhase = fluid.getPhase(phaseNumber);
+	names[++k] = currPhaseName + " Mole Percent";
+	values[k] = fluid.getMoleFraction(phaseNumber) * 100;
+	names[++k] = currPhaseName + " Weight Percent";
+	values[k] = fluid.getWtFraction(phaseNumber) * 100;
+	names[++k] = currPhaseName + " Molar Volume [m3/mol]";
+	values[k] = 1.0 / currPhase.getDensity("mol/m3");
+	names[++k] = currPhaseName + " Volume Percent";
+	values[k] = fluid.getCorrectedVolumeFraction(phaseNumber) * 100;
+	names[++k] = currPhaseName + " Density [kg/m3]";
+	values[k] = currPhase.getDensity("kg/m3");
+	names[++k] = currPhaseName + " Z Factor";
+	if (Objects.equals(phaseName[j], "oil") || Objects.equals(phaseName[j], "aqueous")) {
+	  // Phase doesn't calculate correct result for these properties. See specs
+	  values[k] = Double.NaN;
+	} else {
+	  values[k] = currPhase.getZ();
+	}
 
-        names[++k] = currPhaseName + "Molecular Weight [g/mol]";
-        values[k] = currPhase.getMolarMass() * 1000;
-        names[++k] = currPhaseName + "Enthalpy [J/mol]";
-        values[k] = currPhase.getEnthalpy("J/mol");
-        // currPhase.getEnthalpy() / currPhase.getNumberOfMolesInPhase();
-        names[++k] = currPhaseName + "Entropy [J/molK]";
-        values[k] = currPhase.getEntropy("J/molK");
-        // currPhase.getEntropy() / currPhase.getNumberOfMolesInPhase();
-        names[++k] = currPhaseName + "Heat Capacity-Cp [J/molK]";
-        values[k] = currPhase.getCp("J/molK");
-        // currPhase.getCp() / currPhase.getNumberOfMolesInPhase();
-        names[++k] = currPhaseName + " Heat Capacity-Cv [J/molK]";
-        values[k] = currPhase.getCv("J/molK");
-        // currPhase.getCv() / currPhase.getNumberOfMolesInPhase();
-        names[++k] = currPhaseName + " Kappa (Cp/Cv)";
-        values[k] = currPhase.getGamma(); // currPhase.getCp() / currPhase.getCv();
-        names[++k] = currPhaseName + " JT Coefficient [K/Pa]";
-        if (Objects.equals(phaseName[j], "oil") || Objects.equals(phaseName[j], "aqueous")) {
-          // Phase doesn't calculate correct result for these properties. See specs
-          values[k] = Double.NaN;
-          names[++k] = currPhaseName + " Velocity of Sound [m/s]";
-          values[k] = Double.NaN;
-        } else {
-          values[k] = currPhase.getJouleThomsonCoefficient() / 1e5;
-          names[++k] = currPhaseName + " Velocity of Sound [m/s]";
-          values[k] = currPhase.getSoundSpeed();
-        }
+	names[++k] = currPhaseName + "Molecular Weight [g/mol]";
+	values[k] = currPhase.getMolarMass() * 1000;
+	names[++k] = currPhaseName + "Enthalpy [J/mol]";
+	values[k] = currPhase.getEnthalpy("J/mol");
+	// currPhase.getEnthalpy() / currPhase.getNumberOfMolesInPhase();
+	names[++k] = currPhaseName + "Entropy [J/molK]";
+	values[k] = currPhase.getEntropy("J/molK");
+	// currPhase.getEntropy() / currPhase.getNumberOfMolesInPhase();
+	names[++k] = currPhaseName + "Heat Capacity-Cp [J/molK]";
+	values[k] = currPhase.getCp("J/molK");
+	// currPhase.getCp() / currPhase.getNumberOfMolesInPhase();
+	names[++k] = currPhaseName + " Heat Capacity-Cv [J/molK]";
+	values[k] = currPhase.getCv("J/molK");
+	// currPhase.getCv() / currPhase.getNumberOfMolesInPhase();
+	names[++k] = currPhaseName + " Kappa (Cp/Cv)";
+	values[k] = currPhase.getGamma(); // currPhase.getCp() / currPhase.getCv();
+	names[++k] = currPhaseName + " JT Coefficient [K/Pa]";
+	if (Objects.equals(phaseName[j], "oil") || Objects.equals(phaseName[j], "aqueous")) {
+	  // Phase doesn't calculate correct result for these properties. See specs
+	  values[k] = Double.NaN;
+	  names[++k] = currPhaseName + " Velocity of Sound [m/s]";
+	  values[k] = Double.NaN;
+	} else {
+	  values[k] = currPhase.getJouleThomsonCoefficient() / 1e5;
+	  names[++k] = currPhaseName + " Velocity of Sound [m/s]";
+	  values[k] = currPhase.getSoundSpeed();
+	}
 
-        names[++k] = currPhaseName + " Viscosity [Pa s] or [kg/msec]";
-        values[k] = currPhase.getViscosity("kg/msec");
-        names[++k] = currPhaseName + " Thermal Conductivity [W/mK]";
-        values[k] = currPhase.getThermalConductivity("W/mK");
+	names[++k] = currPhaseName + " Viscosity [Pa s] or [kg/msec]";
+	values[k] = currPhase.getViscosity("kg/msec");
+	names[++k] = currPhaseName + " Thermal Conductivity [W/mK]";
+	values[k] = currPhase.getThermalConductivity("W/mK");
       } else {
-        names[++k] = currPhaseName + " Mole Percent";
-        values[k] = Double.NaN;
-        names[++k] = currPhaseName + " Weight Percent";
-        values[k] = Double.NaN;
-        names[++k] = currPhaseName + " Molar Volume [m3/mol]";
-        values[k] = Double.NaN;
-        names[++k] = currPhaseName + " Volume Percent";
-        values[k] = Double.NaN;
-        names[++k] = currPhaseName + " Density [kg/m3]";
-        values[k] = Double.NaN;
-        names[++k] = currPhaseName + " Z Factor";
-        values[k] = Double.NaN;
-        names[++k] = currPhaseName + " Molecular Weight [g/mol]";
-        values[k] = Double.NaN;
-        names[++k] = currPhaseName + " Enthalpy [J/mol]";
-        values[k] = Double.NaN;
-        names[++k] = currPhaseName + " Entropy [J/molK]";
-        values[k] = Double.NaN;
-        names[++k] = currPhaseName + " Heat Capacity-Cp [J/molK]";
-        values[k] = Double.NaN;
-        names[++k] = currPhaseName + " Heat Capacity-Cv [J/molK]";
-        values[k] = Double.NaN;
-        names[++k] = currPhaseName + " Kappa (Cp/Cv)";
-        values[k] = Double.NaN;
-        names[++k] = currPhaseName + " JT Coefficient [K/Pa]";
-        values[k] = Double.NaN;
-        names[++k] = currPhaseName + " Velocity of Sound [m/s]";
-        values[k] = Double.NaN;
-        names[++k] = currPhaseName + " Viscosity [Pa s] or [kg/msec]";
-        values[k] = Double.NaN;
-        names[++k] = currPhaseName + " Thermal Conductivity [W/mK]";
-        values[k] = Double.NaN;
+	names[++k] = currPhaseName + " Mole Percent";
+	values[k] = Double.NaN;
+	names[++k] = currPhaseName + " Weight Percent";
+	values[k] = Double.NaN;
+	names[++k] = currPhaseName + " Molar Volume [m3/mol]";
+	values[k] = Double.NaN;
+	names[++k] = currPhaseName + " Volume Percent";
+	values[k] = Double.NaN;
+	names[++k] = currPhaseName + " Density [kg/m3]";
+	values[k] = Double.NaN;
+	names[++k] = currPhaseName + " Z Factor";
+	values[k] = Double.NaN;
+	names[++k] = currPhaseName + " Molecular Weight [g/mol]";
+	values[k] = Double.NaN;
+	names[++k] = currPhaseName + " Enthalpy [J/mol]";
+	values[k] = Double.NaN;
+	names[++k] = currPhaseName + " Entropy [J/molK]";
+	values[k] = Double.NaN;
+	names[++k] = currPhaseName + " Heat Capacity-Cp [J/molK]";
+	values[k] = Double.NaN;
+	names[++k] = currPhaseName + " Heat Capacity-Cv [J/molK]";
+	values[k] = Double.NaN;
+	names[++k] = currPhaseName + " Kappa (Cp/Cv)";
+	values[k] = Double.NaN;
+	names[++k] = currPhaseName + " JT Coefficient [K/Pa]";
+	values[k] = Double.NaN;
+	names[++k] = currPhaseName + " Velocity of Sound [m/s]";
+	values[k] = Double.NaN;
+	names[++k] = currPhaseName + " Viscosity [Pa s] or [kg/msec]";
+	values[k] = Double.NaN;
+	names[++k] = currPhaseName + " Thermal Conductivity [W/mK]";
+	values[k] = Double.NaN;
       }
     }
 

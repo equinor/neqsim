@@ -11,25 +11,23 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * TurboExpanderOperatingEnvelope (P6) generalises a single turndown line into a two-dimensional
- * operating-envelope sweep over inlet pressure and feed flow rate. For each grid point it runs the
- * coupled {@link TurboExpanderCompressor} model and records:
+ * TurboExpanderOperatingEnvelope (P6) generalises a single turndown line into a two-dimensional operating-envelope
+ * sweep over inlet pressure and feed flow rate. For each grid point it runs the coupled {@link TurboExpanderCompressor}
+ * model and records:
  *
  * <ul>
- * <li><b>Feasibility</b> &mdash; whether the power balance solved with the shaft speed inside its
- * mechanical limits.</li>
- * <li><b>Surge margin</b> &mdash; the compressor Q/N ratio relative to a configurable surge Q/N
- * limit (proxy for distance to surge).</li>
- * <li><b>Cold-end temperature</b> &mdash; the expander outlet temperature, the key cryogenic design
- * constraint.</li>
- * <li><b>Hydrate margin</b> &mdash; expander outlet temperature minus the hydrate formation
- * temperature at the outlet pressure (only when the fluid carries water).</li>
+ * <li><b>Feasibility</b> &mdash; whether the power balance solved with the shaft speed inside its mechanical
+ * limits.</li>
+ * <li><b>Surge margin</b> &mdash; the compressor Q/N ratio relative to a configurable surge Q/N limit (proxy for
+ * distance to surge).</li>
+ * <li><b>Cold-end temperature</b> &mdash; the expander outlet temperature, the key cryogenic design constraint.</li>
+ * <li><b>Hydrate margin</b> &mdash; expander outlet temperature minus the hydrate formation temperature at the outlet
+ * pressure (only when the fluid carries water).</li>
  * </ul>
  *
  * <p>
- * The resulting contour maps are emitted through {@link #toJson()} so they can be consumed directly
- * by the NeqSim report generator and plotted as feasibility / surge / cold-end-T / hydrate-margin
- * contour plots.
+ * The resulting contour maps are emitted through {@link #toJson()} so they can be consumed directly by the NeqSim
+ * report generator and plotted as feasibility / surge / cold-end-T / hydrate-margin contour plots.
  * </p>
  *
  * @author NeqSim
@@ -75,7 +73,8 @@ public class TurboExpanderOperatingEnvelope implements Serializable {
   /**
    * Default constructor.
    */
-  public TurboExpanderOperatingEnvelope() {}
+  public TurboExpanderOperatingEnvelope() {
+  }
 
   /**
    * Constructs an operating-envelope sweep for the given machine.
@@ -90,19 +89,18 @@ public class TurboExpanderOperatingEnvelope implements Serializable {
    * Set the inlet pressure and feed flow grids for the sweep.
    *
    * @param inletPressures inlet pressure grid in bara
-   * @param flowRates feed flow grid in kg/hr
+   * @param flowRates      feed flow grid in kg/hr
    */
   public void setGrid(double[] inletPressures, double[] flowRates) {
     this.inletPressures = inletPressures == null ? null
-        : java.util.Arrays.copyOf(inletPressures, inletPressures.length);
-    this.flowRates =
-        flowRates == null ? null : java.util.Arrays.copyOf(flowRates, flowRates.length);
+	: java.util.Arrays.copyOf(inletPressures, inletPressures.length);
+    this.flowRates = flowRates == null ? null : java.util.Arrays.copyOf(flowRates, flowRates.length);
   }
 
   /**
-   * Run the two-dimensional sweep and populate the result grids. The machine inlet stream is set to
-   * each pressure/flow combination, the model is run, and the feasibility, surge margin, cold-end
-   * temperature and hydrate margin are recorded.
+   * Run the two-dimensional sweep and populate the result grids. The machine inlet stream is set to each pressure/flow
+   * combination, the model is run, and the feasibility, surge margin, cold-end temperature and hydrate margin are
+   * recorded.
    *
    * @throws IllegalStateException if the machine or grid has not been configured
    */
@@ -126,45 +124,44 @@ public class TurboExpanderOperatingEnvelope implements Serializable {
 
     for (int i = 0; i < nP; i++) {
       for (int j = 0; j < nF; j++) {
-        double pressure = inletPressures[i];
-        double flow = flowRates[j];
-        boolean feasible = false;
-        double margin = Double.NaN;
-        double coldT = Double.NaN;
-        double hydMargin = Double.NaN;
-        double speed = Double.NaN;
-        try {
-          inlet.setPressure(pressure, "bara");
-          inlet.setFlowRate(flow, "kg/hr");
-          inlet.run();
-          if (compFeed != null && compFeed != inlet) {
-            compFeed.setPressure(compFeed.getPressure("bara"), "bara");
-            compFeed.run();
-          }
-          machine.run();
-          speed = machine.getSpeed();
-          feasible = speed > minAllowableSpeed && speed < maxAllowableSpeed;
-          double qnComp = machine.getQNratiocompressor();
-          margin = (qnComp - surgeQnLimit) / surgeQnLimit;
-          StreamInterface expOut = machine.getExpanderOutletStream();
-          coldT = expOut.getTemperature("C");
-          hydMargin = calcHydrateMargin(expOut);
-        } catch (Exception ex) {
-          logger.debug("Envelope point P=" + pressure + " flow=" + flow + " failed", ex);
-        }
-        feasibility[i][j] = feasible;
-        surgeMargin[i][j] = margin;
-        coldEndTemperature[i][j] = coldT;
-        hydrateMargin[i][j] = hydMargin;
-        shaftSpeed[i][j] = speed;
+	double pressure = inletPressures[i];
+	double flow = flowRates[j];
+	boolean feasible = false;
+	double margin = Double.NaN;
+	double coldT = Double.NaN;
+	double hydMargin = Double.NaN;
+	double speed = Double.NaN;
+	try {
+	  inlet.setPressure(pressure, "bara");
+	  inlet.setFlowRate(flow, "kg/hr");
+	  inlet.run();
+	  if (compFeed != null && compFeed != inlet) {
+	    compFeed.setPressure(compFeed.getPressure("bara"), "bara");
+	    compFeed.run();
+	  }
+	  machine.run();
+	  speed = machine.getSpeed();
+	  feasible = speed > minAllowableSpeed && speed < maxAllowableSpeed;
+	  double qnComp = machine.getQNratiocompressor();
+	  margin = (qnComp - surgeQnLimit) / surgeQnLimit;
+	  StreamInterface expOut = machine.getExpanderOutletStream();
+	  coldT = expOut.getTemperature("C");
+	  hydMargin = calcHydrateMargin(expOut);
+	} catch (Exception ex) {
+	  logger.debug("Envelope point P=" + pressure + " flow=" + flow + " failed", ex);
+	}
+	feasibility[i][j] = feasible;
+	surgeMargin[i][j] = margin;
+	coldEndTemperature[i][j] = coldT;
+	hydrateMargin[i][j] = hydMargin;
+	shaftSpeed[i][j] = speed;
       }
     }
   }
 
   /**
-   * Compute the hydrate margin (stream temperature minus hydrate formation temperature) for the
-   * expander outlet stream. Returns {@link Double#NaN} when the fluid carries no water or the
-   * hydrate calculation does not converge.
+   * Compute the hydrate margin (stream temperature minus hydrate formation temperature) for the expander outlet stream.
+   * Returns {@link Double#NaN} when the fluid carries no water or the hydrate calculation does not converge.
    *
    * @param stream the expander outlet stream
    * @return the hydrate margin in deg C, or {@link Double#NaN} if not available
@@ -173,7 +170,7 @@ public class TurboExpanderOperatingEnvelope implements Serializable {
     try {
       SystemInterface fluid = stream.getFluid().clone();
       if (!fluid.getPhase(0).hasComponent("water")) {
-        return Double.NaN;
+	return Double.NaN;
       }
       double streamTempC = stream.getTemperature("C");
       ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
@@ -210,8 +207,7 @@ public class TurboExpanderOperatingEnvelope implements Serializable {
    * @return a pretty-printed JSON string of the envelope result grids
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   // --- Getters / setters ---

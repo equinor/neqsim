@@ -22,8 +22,7 @@ public class threePhaseSeparation_1 {
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkCPAs((273.15 + 25.0), 50.00);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAs((273.15 + 25.0), 50.00);
     testSystem.addComponent("methane", 10.00);
     testSystem.addComponent("n-heptane", 1.0);
     testSystem.addComponent("water", 1.0);
@@ -41,8 +40,7 @@ public class threePhaseSeparation_1 {
     Stream stream_3 = new Stream("oil from separator", separator.getOilOutStream());
     Stream stream_4 = new Stream("water from separator", separator.getWaterOutStream());
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(separator);
     operations.add(stream_2);

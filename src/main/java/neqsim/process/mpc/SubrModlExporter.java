@@ -16,8 +16,8 @@ import com.google.gson.GsonBuilder;
  * Exports NeqSim process models in SubrModl format for nonlinear MPC integration.
  *
  * <p>
- * This class generates configuration files compatible with industrial nonlinear MPC systems that
- * use programmed model objects (SubrModl). The export includes:
+ * This class generates configuration files compatible with industrial nonlinear MPC systems that use programmed model
+ * objects (SubrModl). The export includes:
  * </p>
  * <ul>
  * <li>Model parameters (constants like volume, height, density)</li>
@@ -27,8 +27,8 @@ import com.google.gson.GsonBuilder;
  * </ul>
  *
  * <p>
- * The SubrModl format supports nonlinear dynamic equations with commands like INIT, STEP, STDSTEP
- * for steady-state, UPDT for state updates, and SAVE for persistence.
+ * The SubrModl format supports nonlinear dynamic equations with commands like INIT, STEP, STDSTEP for steady-state,
+ * UPDT for state updates, and SAVE for persistence.
  * </p>
  *
  * <p>
@@ -98,9 +98,9 @@ public class SubrModlExporter implements Serializable {
     /**
      * Create a model parameter.
      *
-     * @param name parameter name
-     * @param value parameter value
-     * @param unit engineering unit
+     * @param name        parameter name
+     * @param value       parameter value
+     * @param unit        engineering unit
      * @param description parameter description
      */
     public ModelParameter(String name, double value, String unit, String description) {
@@ -142,10 +142,10 @@ public class SubrModlExporter implements Serializable {
     /**
      * Create a SubrXvr definition.
      *
-     * @param name variable name
+     * @param name  variable name
      * @param dtaIx data index for C++ linking
      * @param text1 primary description
-     * @param init initial value
+     * @param init  initial value
      */
     public SubrXvr(String name, String dtaIx, String text1, double init) {
       this.name = name;
@@ -206,10 +206,10 @@ public class SubrModlExporter implements Serializable {
     /**
      * Create a state variable.
      *
-     * @param name variable name
-     * @param dtaIx data index
+     * @param name        variable name
+     * @param dtaIx       data index
      * @param description variable description
-     * @param modelValue initial model value
+     * @param modelValue  initial model value
      */
     public StateVariable(String name, String dtaIx, String description, double modelValue) {
       this.name = name;
@@ -302,9 +302,9 @@ public class SubrModlExporter implements Serializable {
   /**
    * Add a model parameter (constant).
    *
-   * @param name parameter name
+   * @param name  parameter name
    * @param value parameter value
-   * @param unit engineering unit
+   * @param unit  engineering unit
    * @return this exporter for chaining
    */
   public SubrModlExporter addParameter(String name, double value, String unit) {
@@ -315,9 +315,9 @@ public class SubrModlExporter implements Serializable {
   /**
    * Add a model parameter with description.
    *
-   * @param name parameter name
-   * @param value parameter value
-   * @param unit engineering unit
+   * @param name        parameter name
+   * @param value       parameter value
+   * @param unit        engineering unit
    * @param description parameter description
    * @return this exporter for chaining
    */
@@ -329,10 +329,10 @@ public class SubrModlExporter implements Serializable {
   /**
    * Add a SubrXvr definition.
    *
-   * @param name variable name
-   * @param dtaIx data index for C++ linking
+   * @param name        variable name
+   * @param dtaIx       data index for C++ linking
    * @param description variable description
-   * @param init initial value
+   * @param init        initial value
    * @return this exporter for chaining
    */
   public SubrModlExporter addSubrXvr(String name, String dtaIx, String description, double init) {
@@ -346,14 +346,13 @@ public class SubrModlExporter implements Serializable {
   /**
    * Add a state variable (SVR).
    *
-   * @param name variable name
-   * @param dtaIx data index
+   * @param name        variable name
+   * @param dtaIx       data index
    * @param description variable description
-   * @param modelValue initial model value
+   * @param modelValue  initial model value
    * @return this exporter for chaining
    */
-  public SubrModlExporter addStateVariable(String name, String dtaIx, String description,
-      double modelValue) {
+  public SubrModlExporter addStateVariable(String name, String dtaIx, String description, double modelValue) {
     stateVariables.add(new StateVariable(name, dtaIx, description, modelValue));
     if (!indexTable.contains(dtaIx)) {
       indexTable.add(dtaIx);
@@ -378,8 +377,8 @@ public class SubrModlExporter implements Serializable {
    * Export the model configuration in SubrModl format.
    *
    * <p>
-   * This generates a configuration file compatible with industrial nonlinear MPC systems using the
-   * SubrProc/SubrModl pattern.
+   * This generates a configuration file compatible with industrial nonlinear MPC systems using the SubrProc/SubrModl
+   * pattern.
    * </p>
    *
    * @param filename the output filename
@@ -399,24 +398,24 @@ public class SubrModlExporter implements Serializable {
       writer.newLine();
 
       for (ModelParameter param : parameters) {
-        writer.write(String.format("%16s=  %s", param.getName(), formatValue(param.getValue())));
-        writer.newLine();
+	writer.write(String.format("%16s=  %s", param.getName(), formatValue(param.getValue())));
+	writer.newLine();
       }
       writer.newLine();
 
       // SubrXvr definitions
       for (SubrXvr xvr : subrXvrs) {
-        writer.write(String.format("  SubrXvr:       %s", xvr.getName()));
-        writer.newLine();
-        writer.write(String.format("         Text1=  \"%s\"", xvr.getText1()));
-        writer.newLine();
-        writer.write(String.format("         Text2=  \"%s\"", xvr.getText2()));
-        writer.newLine();
-        writer.write(String.format("         DtaIx=  \"%s\"", xvr.getDtaIx()));
-        writer.newLine();
-        writer.write(String.format("          Init=  %s", formatValue(xvr.getInit())));
-        writer.newLine();
-        writer.newLine();
+	writer.write(String.format("  SubrXvr:       %s", xvr.getName()));
+	writer.newLine();
+	writer.write(String.format("         Text1=  \"%s\"", xvr.getText1()));
+	writer.newLine();
+	writer.write(String.format("         Text2=  \"%s\"", xvr.getText2()));
+	writer.newLine();
+	writer.write(String.format("         DtaIx=  \"%s\"", xvr.getDtaIx()));
+	writer.newLine();
+	writer.write(String.format("          Init=  %s", formatValue(xvr.getInit())));
+	writer.newLine();
+	writer.newLine();
       }
 
       // Model section (for MPC)
@@ -426,26 +425,26 @@ public class SubrModlExporter implements Serializable {
       writer.newLine();
 
       for (ModelParameter param : parameters) {
-        writer.write(String.format("%16s=  %s", param.getName(), formatValue(param.getValue())));
-        writer.newLine();
+	writer.write(String.format("%16s=  %s", param.getName(), formatValue(param.getValue())));
+	writer.newLine();
       }
       writer.newLine();
 
       // State variables
       if (!stateVariables.isEmpty()) {
-        writer.write("# State Variables (SVR)");
-        writer.newLine();
-        for (StateVariable svr : stateVariables) {
-          writer.write(String.format("  SubrXvr:       %s", svr.getName()));
-          writer.newLine();
-          writer.write(String.format("         Text1=  \"%s\"", svr.getDescription()));
-          writer.newLine();
-          writer.write(String.format("         DtaIx=  \"%s\"", svr.getDtaIx()));
-          writer.newLine();
-          writer.write(String.format("          Init=  %s", formatValue(svr.getModelValue())));
-          writer.newLine();
-          writer.newLine();
-        }
+	writer.write("# State Variables (SVR)");
+	writer.newLine();
+	for (StateVariable svr : stateVariables) {
+	  writer.write(String.format("  SubrXvr:       %s", svr.getName()));
+	  writer.newLine();
+	  writer.write(String.format("         Text1=  \"%s\"", svr.getDescription()));
+	  writer.newLine();
+	  writer.write(String.format("         DtaIx=  \"%s\"", svr.getDtaIx()));
+	  writer.newLine();
+	  writer.write(String.format("          Init=  %s", formatValue(svr.getModelValue())));
+	  writer.newLine();
+	  writer.newLine();
+	}
       }
     }
   }
@@ -457,7 +456,7 @@ public class SubrModlExporter implements Serializable {
    * This generates the SmpcAppl configuration section with tuning parameters for nonlinear MPC.
    * </p>
    *
-   * @param filename the output filename
+   * @param filename     the output filename
    * @param useNonlinear whether to use nonlinear (SQP) or linear (QP) solver
    * @throws IOException if writing fails
    */
@@ -480,53 +479,53 @@ public class SubrModlExporter implements Serializable {
       writer.newLine();
 
       if (useNonlinear) {
-        // Nonlinear MPC parameters
-        writer.write(String.format("     IterOpt=  %s", "ON"));
-        writer.newLine();
-        writer.write(String.format(" IterNewSens=  %s", "ON"));
-        writer.newLine();
-        writer.write(String.format("   IterQpMax=  %s", "10"));
-        writer.newLine();
-        writer.write(String.format(" IterLineMax=  %s", "10"));
-        writer.newLine();
-        writer.write(String.format("SteadySolver=  %s", "SQP"));
-        writer.newLine();
-        writer.write(String.format("    MajItLim=  %s", "200"));
-        writer.newLine();
-        writer.write(String.format("    MajPrint=  %s", "0"));
-        writer.newLine();
-        writer.write(String.format(" VerifyGrads=  %s", "OFF"));
-        writer.newLine();
-        writer.write(String.format("    FuncPrec=  %s", "1e-08"));
-        writer.newLine();
-        writer.write(String.format("       FeTol=  %s", "1e-03"));
-        writer.newLine();
-        writer.write(String.format("    OptimTol=  %s", "1e-05"));
-        writer.newLine();
-        writer.write(String.format("    FdifIntv=  %s", "0.001"));
-        writer.newLine();
-        writer.write(String.format("  MaxSeconds=  %s", "10"));
-        writer.newLine();
-        writer.write(String.format("      LmPrio=  %s", "100"));
-        writer.newLine();
-        writer.write(String.format("  MaxPrioSQP=  %s", "100"));
-        writer.newLine();
-        writer.write(String.format("     RelPert=  %s", "0.2"));
-        writer.newLine();
-        writer.write(String.format("   EachParam=  %s", "ON"));
-        writer.newLine();
-        writer.write(String.format(" LinErrorLim=  %s", "0.2"));
-        writer.newLine();
-        writer.write(String.format("   SensLimSS=  %s", "1e-06"));
-        writer.newLine();
-        writer.write(String.format("  SensLimDyn=  %s", "1e-06"));
-        writer.newLine();
+	// Nonlinear MPC parameters
+	writer.write(String.format("     IterOpt=  %s", "ON"));
+	writer.newLine();
+	writer.write(String.format(" IterNewSens=  %s", "ON"));
+	writer.newLine();
+	writer.write(String.format("   IterQpMax=  %s", "10"));
+	writer.newLine();
+	writer.write(String.format(" IterLineMax=  %s", "10"));
+	writer.newLine();
+	writer.write(String.format("SteadySolver=  %s", "SQP"));
+	writer.newLine();
+	writer.write(String.format("    MajItLim=  %s", "200"));
+	writer.newLine();
+	writer.write(String.format("    MajPrint=  %s", "0"));
+	writer.newLine();
+	writer.write(String.format(" VerifyGrads=  %s", "OFF"));
+	writer.newLine();
+	writer.write(String.format("    FuncPrec=  %s", "1e-08"));
+	writer.newLine();
+	writer.write(String.format("       FeTol=  %s", "1e-03"));
+	writer.newLine();
+	writer.write(String.format("    OptimTol=  %s", "1e-05"));
+	writer.newLine();
+	writer.write(String.format("    FdifIntv=  %s", "0.001"));
+	writer.newLine();
+	writer.write(String.format("  MaxSeconds=  %s", "10"));
+	writer.newLine();
+	writer.write(String.format("      LmPrio=  %s", "100"));
+	writer.newLine();
+	writer.write(String.format("  MaxPrioSQP=  %s", "100"));
+	writer.newLine();
+	writer.write(String.format("     RelPert=  %s", "0.2"));
+	writer.newLine();
+	writer.write(String.format("   EachParam=  %s", "ON"));
+	writer.newLine();
+	writer.write(String.format(" LinErrorLim=  %s", "0.2"));
+	writer.newLine();
+	writer.write(String.format("   SensLimSS=  %s", "1e-06"));
+	writer.newLine();
+	writer.write(String.format("  SensLimDyn=  %s", "1e-06"));
+	writer.newLine();
       } else {
-        // Linear MPC parameters
-        writer.write(String.format("SteadySolver=  %s", "QP"));
-        writer.newLine();
-        writer.write(String.format("     IterOpt=  %s", "OFF"));
-        writer.newLine();
+	// Linear MPC parameters
+	writer.write(String.format("SteadySolver=  %s", "QP"));
+	writer.newLine();
+	writer.write(String.format("     IterOpt=  %s", "OFF"));
+	writer.newLine();
       }
       writer.newLine();
     }
@@ -551,14 +550,14 @@ public class SubrModlExporter implements Serializable {
       writer.write("    ");
 
       for (int i = 0; i < indexTable.size(); i++) {
-        writer.write("\"" + indexTable.get(i) + "\"");
-        if (i < indexTable.size() - 1) {
-          writer.write(", ");
-        }
-        if ((i + 1) % 8 == 0 && i < indexTable.size() - 1) {
-          writer.newLine();
-          writer.write("    ");
-        }
+	writer.write("\"" + indexTable.get(i) + "\"");
+	if (i < indexTable.size() - 1) {
+	  writer.write(", ");
+	}
+	if ((i + 1) % 8 == 0 && i < indexTable.size() - 1) {
+	  writer.newLine();
+	  writer.write("    ");
+	}
       }
       writer.write(", \"\"};");
       writer.newLine();
@@ -620,8 +619,7 @@ public class SubrModlExporter implements Serializable {
     // Index table
     model.put("indexTable", indexTable);
 
-    Gson gson =
-        new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+    Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
     try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
       writer.write(gson.toJson(model));
     }
@@ -631,8 +629,7 @@ public class SubrModlExporter implements Serializable {
    * Auto-populate from ProcessLinkedMPC controller.
    *
    * <p>
-   * This automatically extracts MVs, CVs, DVs from the MPC controller and creates corresponding
-   * SubrXvr definitions.
+   * This automatically extracts MVs, CVs, DVs from the MPC controller and creates corresponding SubrXvr definitions.
    * </p>
    *
    * @param controller the MPC controller

@@ -26,8 +26,7 @@ import java.util.List;
  * <code>ΔP = (q·μ)/(4πkh) × Ei(-r²/(4·η·t))</code>
  * </p>
  * <p>
- * where η = k/(φ·μ·ct) is the hydraulic diffusivity. For the wellbore (r=rw), using the logarithmic
- * approximation:
+ * where η = k/(φ·μ·ct) is the hydraulic diffusivity. For the wellbore (r=rw), using the logarithmic approximation:
  * </p>
  * <p>
  * <code>P_wf = P_i - (q·μ)/(4πkh) × [ln(4·η·t/r_w²) - γ + 2S]</code>
@@ -285,9 +284,9 @@ public class TransientWellModel implements Serializable {
     /**
      * Constructor.
      *
-     * @param time time in hours
+     * @param time     time in hours
      * @param pressure pressure in bara
-     * @param rate rate in Sm³/day
+     * @param rate     rate in Sm³/day
      */
     public PressurePoint(double time, double pressure, double rate) {
       this.time = time;
@@ -330,7 +329,7 @@ public class TransientWellModel implements Serializable {
   /**
    * Calculates drawdown pressure at a given time.
    *
-   * @param rate production rate (Sm³/day)
+   * @param rate      production rate (Sm³/day)
    * @param timeHours time since start of production (hours)
    * @return drawdown result
    */
@@ -388,13 +387,13 @@ public class TransientWellModel implements Serializable {
     for (int i = 0; i < rateHistory.size(); i++) {
       RateChange rc = rateHistory.get(i);
       if (rc.rate == 0 && lastRate > 0) {
-        // This is the shut-in
-        shutInStartTime = rc.time;
-        break;
+	// This is the shut-in
+	shutInStartTime = rc.time;
+	break;
       }
       if (rc.rate > 0 && lastRate == 0) {
-        // Start of production
-        producingTime = 0;
+	// Start of production
+	producingTime = 0;
       }
       lastRate = rc.rate;
     }
@@ -403,11 +402,11 @@ public class TransientWellModel implements Serializable {
     for (int i = rateHistory.size() - 1; i >= 0; i--) {
       RateChange rc = rateHistory.get(i);
       if (rc.rate > 0) {
-        result.rateBeforeShutIn = rc.rate;
-        if (shutInStartTime > rc.time) {
-          producingTime = shutInStartTime - rc.time;
-        }
-        break;
+	result.rateBeforeShutIn = rc.rate;
+	if (shutInStartTime > rc.time) {
+	  producingTime = shutInStartTime - rc.time;
+	}
+	break;
       }
     }
 
@@ -427,8 +426,7 @@ public class TransientWellModel implements Serializable {
 
     // Permeability from slope: k = q·μ·B / (4πmh)
     // m in bar/log cycle, h in m
-    double kCalc = qReservoir * fluidViscosity * 1e-3 * formationVolumeFactor
-        / (4 * PI * m / 1e5 * formationThickness);
+    double kCalc = qReservoir * fluidViscosity * 1e-3 * formationVolumeFactor / (4 * PI * m / 1e5 * formationThickness);
     result.permeabilityFromSlope = kCalc / 9.869233e-16; // Convert to mD
 
     // Extrapolated pressure P* (Horner time → 1)
@@ -441,8 +439,10 @@ public class TransientWellModel implements Serializable {
     double p1hr = calculatePressureWithSuperposition(shutInStartTime + 1.0);
     double pwfAtShutIn = calculatePressureWithSuperposition(shutInStartTime);
     if (m > 0) {
-      double logTerm = Math.log10(permeability * 9.869233e-16 / (porosity * fluidViscosity * 1e-3
-          * totalCompressibility / 1e5 * wellboreRadius * wellboreRadius)) - 3.23;
+      double logTerm = Math
+	  .log10(permeability * 9.869233e-16
+	      / (porosity * fluidViscosity * 1e-3 * totalCompressibility / 1e5 * wellboreRadius * wellboreRadius))
+	  - 3.23;
       result.skinFromIntercept = 1.151 * ((p1hr - pwfAtShutIn) / m - logTerm);
     } else {
       result.skinFromIntercept = skinFactor;
@@ -469,14 +469,14 @@ public class TransientWellModel implements Serializable {
 
     for (RateChange rc : rateHistory) {
       if (rc.time >= timeHours) {
-        break;
+	break;
       }
 
       double deltaRate = rc.rate - previousRate;
       double deltaTime = (timeHours - rc.time) * 3600.0; // Convert to seconds
 
       if (deltaTime > 0 && deltaRate != 0) {
-        pressure -= calculatePressureDrop(deltaRate, deltaTime);
+	pressure -= calculatePressureDrop(deltaRate, deltaTime);
       }
 
       previousRate = rc.rate;
@@ -507,8 +507,8 @@ public class TransientWellModel implements Serializable {
    * Generates logarithmically spaced time points for analysis.
    *
    * @param startHours start time (hours)
-   * @param endHours end time (hours)
-   * @param numPoints number of points
+   * @param endHours   end time (hours)
+   * @param numPoints  number of points
    * @return array of time points
    */
   public double[] generateLogTimePoints(double startHours, double endHours, int numPoints) {
@@ -552,7 +552,7 @@ public class TransientWellModel implements Serializable {
    * where T = kh/μ is the transmissibility.
    * </p>
    *
-   * @param rate rate (Sm³/day)
+   * @param rate    rate (Sm³/day)
    * @param timeSec time (seconds)
    * @return pressure drop (bar)
    */
@@ -590,8 +590,8 @@ public class TransientWellModel implements Serializable {
    * <code>t_D = η·t / r_w² = (k·t) / (φ·μ·c_t·r_w²)</code>
    * </p>
    * <p>
-   * where η is the hydraulic diffusivity. This parameter controls the rate of pressure propagation
-   * through the reservoir.
+   * where η is the hydraulic diffusivity. This parameter controls the rate of pressure propagation through the
+   * reservoir.
    * </p>
    *
    * @param timeSec time (seconds)
@@ -612,9 +612,8 @@ public class TransientWellModel implements Serializable {
    * <code>r_inv = √(4·η·t)</code>
    * </p>
    * <p>
-   * This is based on the distance at which the pressure disturbance is approximately 1% of the
-   * wellbore value. When r_inv approaches the drainage radius, the well transitions from
-   * infinite-acting to boundary-dominated flow.
+   * This is based on the distance at which the pressure disturbance is approximately 1% of the wellbore value. When
+   * r_inv approaches the drainage radius, the well transitions from infinite-acting to boundary-dominated flow.
    * </p>
    *
    * @param timeSec time (seconds)
@@ -638,11 +637,9 @@ public class TransientWellModel implements Serializable {
    * For negative arguments (transient flow), this is computed using:
    * </p>
    * <ul>
-   * <li><b>Small |x| (less than 1):</b> Series expansion:
-   * {@code Ei(-x) = -γ - ln(x) + x - x²/(2·2!) + x³/(3·3!) -
+   * <li><b>Small |x| (less than 1):</b> Series expansion: {@code Ei(-x) = -γ - ln(x) + x - x²/(2·2!) + x³/(3·3!) -
    * ...}</li>
-   * <li><b>Large |x| (≥ 1):</b> Asymptotic expansion: Ei(-x) ≈ -(e^(-x)/x) × [1 - 1/x + 2!/x² -
-   * ...]</li>
+   * <li><b>Large |x| (≥ 1):</b> Asymptotic expansion: Ei(-x) ≈ -(e^(-x)/x) × [1 - 1/x + 2!/x² - ...]</li>
    * </ul>
    * <p>
    * where γ = 0.5772... is the Euler-Mascheroni constant.
@@ -662,11 +659,11 @@ public class TransientWellModel implements Serializable {
       double sum = -EULER_GAMMA - Math.log(absX);
       double term = absX;
       for (int n = 1; n <= 50; n++) {
-        sum += term / n;
-        term *= -absX / (n + 1);
-        if (Math.abs(term / n) < 1e-15) {
-          break;
-        }
+	sum += term / n;
+	term *= -absX / (n + 1);
+	if (Math.abs(term / n) < 1e-15) {
+	  break;
+	}
       }
       return sum;
     } else {
@@ -674,12 +671,12 @@ public class TransientWellModel implements Serializable {
       double sum = 0;
       double term = 1;
       for (int n = 1; n <= 50; n++) {
-        double newTerm = term * n / absX;
-        if (newTerm > term) {
-          break;
-        }
-        sum += term;
-        term = newTerm;
+	double newTerm = term * n / absX;
+	if (newTerm > term) {
+	  break;
+	}
+	sum += term;
+	term = newTerm;
       }
       return -Math.exp(-absX) / absX * sum;
     }
@@ -695,9 +692,9 @@ public class TransientWellModel implements Serializable {
     double rate = 0;
     for (RateChange rc : rateHistory) {
       if (rc.time <= timeHours) {
-        rate = rc.rate;
+	rate = rc.rate;
       } else {
-        break;
+	break;
       }
     }
     return rate;
@@ -711,7 +708,7 @@ public class TransientWellModel implements Serializable {
    * Adds a rate change to the history.
    *
    * @param timeHours time of change (hours)
-   * @param rate rate after change (Sm³/day)
+   * @param rate      rate after change (Sm³/day)
    * @return this for chaining
    */
   public TransientWellModel addRateChange(double timeHours, double rate) {
@@ -735,7 +732,7 @@ public class TransientWellModel implements Serializable {
    * Sets reservoir initial pressure.
    *
    * @param pressure pressure
-   * @param unit unit (bara, psia)
+   * @param unit     unit (bara, psia)
    * @return this for chaining
    */
   public TransientWellModel setReservoirPressure(double pressure, String unit) {
@@ -752,7 +749,7 @@ public class TransientWellModel implements Serializable {
    * Sets formation permeability.
    *
    * @param permeability permeability
-   * @param unit unit (mD, D)
+   * @param unit         unit (mD, D)
    * @return this for chaining
    */
   public TransientWellModel setPermeability(double permeability, String unit) {
@@ -769,7 +766,7 @@ public class TransientWellModel implements Serializable {
    * Sets formation thickness.
    *
    * @param thickness thickness
-   * @param unit unit (m, ft)
+   * @param unit      unit (m, ft)
    * @return this for chaining
    */
   public TransientWellModel setFormationThickness(double thickness, String unit) {
@@ -798,7 +795,7 @@ public class TransientWellModel implements Serializable {
    * Sets total compressibility.
    *
    * @param compressibility compressibility
-   * @param unit unit (1/bar, 1/psi)
+   * @param unit            unit (1/bar, 1/psi)
    * @return this for chaining
    */
   public TransientWellModel setTotalCompressibility(double compressibility, String unit) {
@@ -815,7 +812,7 @@ public class TransientWellModel implements Serializable {
    * Sets fluid viscosity.
    *
    * @param viscosity viscosity
-   * @param unit unit (cP, mPa.s)
+   * @param unit      unit (cP, mPa.s)
    * @return this for chaining
    */
   public TransientWellModel setFluidViscosity(double viscosity, String unit) {
@@ -828,7 +825,7 @@ public class TransientWellModel implements Serializable {
    * Sets wellbore radius.
    *
    * @param radius radius
-   * @param unit unit (m, ft, in)
+   * @param unit   unit (m, ft, in)
    * @return this for chaining
    */
   public TransientWellModel setWellboreRadius(double radius, String unit) {
@@ -869,7 +866,7 @@ public class TransientWellModel implements Serializable {
    * Sets drainage radius.
    *
    * @param radius radius
-   * @param unit unit (m, ft)
+   * @param unit   unit (m, ft)
    * @return this for chaining
    */
   public TransientWellModel setDrainageRadius(double radius, String unit) {

@@ -103,8 +103,7 @@ public class PhaseGERG2008Eos extends PhaseEos {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
-      double beta) {
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt, double beta) {
     IPHASE = pt == PhaseType.LIQUID ? -1 : -2;
     super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
 
@@ -118,8 +117,8 @@ public class PhaseGERG2008Eos extends PhaseEos {
     if (initType >= 1) {
       // Check if we can skip GERG calculations (state unchanged)
       if (propertiesCalculated && !hasStateChanged()) {
-        // State unchanged - skip expensive GERG-2008 calculations
-        return;
+	// State unchanged - skip expensive GERG-2008 calculations
+	return;
       }
 
       double[] temp = new double[18];
@@ -169,7 +168,7 @@ public class PhaseGERG2008Eos extends PhaseEos {
     }
     for (int i = 0; i < numberOfComponents; i++) {
       if (Math.abs(getComponent(i).getx() - cachedMoleFractions[i]) > 1e-10) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -251,8 +250,7 @@ public class PhaseGERG2008Eos extends PhaseEos {
   /** {@inheritDoc} */
   @Override
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
-      throws neqsim.util.exception.IsNaNException,
-      neqsim.util.exception.TooManyIterationsException {
+      throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
     return getMolarMass() * 1e5 / getDensity_GERG2008();
   }
 
@@ -265,36 +263,33 @@ public class PhaseGERG2008Eos extends PhaseEos {
   /** {@inheritDoc} */
   @Override
   public double calcPressuredV() {
-    return -Math.pow(getDensity() / getMolarMass(), 2) * R * temperature
-        * (1 + 2 * ar[0][1].val + ar[0][2].val) / numberOfMolesInPhase;
+    return -Math.pow(getDensity() / getMolarMass(), 2) * R * temperature * (1 + 2 * ar[0][1].val + ar[0][2].val)
+	/ numberOfMolesInPhase;
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdN(int i) {
-    return ((ComponentEosInterface) getComponent(i)).dFdN(this, this.getNumberOfComponents(),
-        temperature, pressure);
+    return ((ComponentEosInterface) getComponent(i)).dFdN(this, this.getNumberOfComponents(), temperature, pressure);
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdNdN(int i, int j) {
-    return ((ComponentEosInterface) getComponent(i)).dFdNdN(j, this, this.getNumberOfComponents(),
-        temperature, pressure);
+    return ((ComponentEosInterface) getComponent(i)).dFdNdN(j, this, this.getNumberOfComponents(), temperature,
+	pressure);
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdNdV(int i) {
-    return ((ComponentEosInterface) getComponent(i)).dFdNdV(this, this.getNumberOfComponents(),
-        temperature, pressure);
+    return ((ComponentEosInterface) getComponent(i)).dFdNdV(this, this.getNumberOfComponents(), temperature, pressure);
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdNdT(int i) {
-    return ((ComponentEosInterface) getComponent(i)).dFdNdT(this, this.getNumberOfComponents(),
-        temperature, pressure);
+    return ((ComponentEosInterface) getComponent(i)).dFdNdT(this, this.getNumberOfComponents(), temperature, pressure);
   }
 
   /** {@inheritDoc} */
@@ -332,8 +327,8 @@ public class PhaseGERG2008Eos extends PhaseEos {
    * {@inheritDoc}
    *
    * <p>
-   * Returns the density calculated directly from GERG-2008 equation of state without requiring
-   * physical property initialization.
+   * Returns the density calculated directly from GERG-2008 equation of state without requiring physical property
+   * initialization.
    * </p>
    */
   @Override
@@ -341,17 +336,17 @@ public class PhaseGERG2008Eos extends PhaseEos {
     double refDensity = getDensity_GERG2008(); // density in kg/m3
     double conversionFactor = 1.0;
     switch (unit) {
-      case "kg/m3":
-        conversionFactor = 1.0;
-        break;
-      case "mol/m3":
-        conversionFactor = 1.0 / getMolarMass();
-        break;
-      case "lb/ft3":
-        conversionFactor = 0.0624279606;
-        break;
-      default:
-        throw new RuntimeException("unit not supported " + unit);
+    case "kg/m3":
+      conversionFactor = 1.0;
+      break;
+    case "mol/m3":
+      conversionFactor = 1.0 / getMolarMass();
+      break;
+    case "lb/ft3":
+      conversionFactor = 0.0624279606;
+      break;
+    default:
+      throw new RuntimeException("unit not supported " + unit);
     }
     return refDensity * conversionFactor;
   }
@@ -366,7 +361,7 @@ public class PhaseGERG2008Eos extends PhaseEos {
   @Override
   public double getdPdVTn() {
     return -Math.pow(getNumberOfMolesInPhase() / getVolume(), 2) * R * temperature
-        * (1 + 2 * ar[0][1].val + ar[0][2].val) / numberOfMolesInPhase;
+	* (1 + 2 * ar[0][1].val + ar[0][2].val) / numberOfMolesInPhase;
   }
 
   /** {@inheritDoc} */

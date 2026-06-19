@@ -5,10 +5,9 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 
 /**
- * Utility class implementing the Ammonia2023 reference equation of state. The implementation
- * evaluates Helmholtz energy and its derivatives for a single ammonia component and derives a
- * limited set of thermodynamic properties. The equations are implemented in a compact form and only
- * provide the properties required by {@code PhaseAmmoniaEos}.
+ * Utility class implementing the Ammonia2023 reference equation of state. The implementation evaluates Helmholtz energy
+ * and its derivatives for a single ammonia component and derives a limited set of thermodynamic properties. The
+ * equations are implemented in a compact form and only provide the properties required by {@code PhaseAmmoniaEos}.
  *
  * @author esol
  */
@@ -28,39 +27,34 @@ public class Ammonia2023 {
   private static final double A1 = -6.59406093943886;
   private static final double A2 = 5.601011519879;
   private static final double C0 = 3.0;
-  private static final double[] IDEAL_N = {2.224, 3.148, 0.9579};
-  private static final double[] IDEAL_T =
-      {4.0585856593352405, 9.776605187888352, 17.829667620080876};
+  private static final double[] IDEAL_N = { 2.224, 3.148, 0.9579 };
+  private static final double[] IDEAL_T = { 4.0585856593352405, 9.776605187888352, 17.829667620080876 };
 
   // --- Residual part parameters ---------------------------------------------
   // coefficients for polynomial/exponential/gaussian terms
-  private static final double[] N = {0.006132232, 1.7395866, -2.2261792, -0.30127553, 0.08967023,
-      -0.076387037, -0.84063963, -0.27026327, 6.212578, -5.7844357, 2.4817542, -2.3739168,
-      0.01493697, -3.7749264, 0.0006254348, -1.7359e-05, -0.13462033, 0.07749072839};
-  private static final double[] T = {1.0, 0.382, 1.0, 1.0, 0.677, 2.915, 3.51, 1.063, 0.655, 1.3,
-      3.1, 1.4395, 1.623, 0.643, 1.13, 4.5, 1.0, 4.0};
-  private static final double[] D = {4, 1, 1, 2, 3, 3, 2, 3, 1, 1, 1, 2, 2, 1, 3, 3, 1, 1};
+  private static final double[] N = { 0.006132232, 1.7395866, -2.2261792, -0.30127553, 0.08967023, -0.076387037,
+      -0.84063963, -0.27026327, 6.212578, -5.7844357, 2.4817542, -2.3739168, 0.01493697, -3.7749264, 0.0006254348,
+      -1.7359e-05, -0.13462033, 0.07749072839 };
+  private static final double[] T = { 1.0, 0.382, 1.0, 1.0, 0.677, 2.915, 3.51, 1.063, 0.655, 1.3, 3.1, 1.4395, 1.623,
+      0.643, 1.13, 4.5, 1.0, 4.0 };
+  private static final double[] D = { 4, 1, 1, 2, 3, 3, 2, 3, 1, 1, 1, 2, 2, 1, 3, 3, 1, 1 };
   // exponential terms c_i and g_i
-  private static final double[] L = {2, 2, 1};
-  private static final double[] G = {1, 1, 1};
+  private static final double[] L = { 2, 2, 1 };
+  private static final double[] G = { 1, 1, 1 };
   // gaussian terms parameters
-  private static final double[] ETA =
-      {0.42776, 0.6424, 0.8175, 0.7995, 0.91, 0.3574, 1.21, 4.14, 22.56, 22.68};
-  private static final double[] BETA =
-      {1.708, 1.4865, 2.0915, 2.43, 0.488, 1.1, 0.85, 1.14, 945.64, 993.85};
-  private static final double[] GAMMA =
-      {1.036, 1.2777, 1.083, 1.2906, 0.928, 0.934, 0.919, 1.852, 1.05897, 1.05277};
-  private static final double[] EPS =
-      {-0.0726, -0.1274, 0.7527, 0.57, 2.2, -0.243, 2.96, 3.02, 0.9574, 0.9576};
+  private static final double[] ETA = { 0.42776, 0.6424, 0.8175, 0.7995, 0.91, 0.3574, 1.21, 4.14, 22.56, 22.68 };
+  private static final double[] BETA = { 1.708, 1.4865, 2.0915, 2.43, 0.488, 1.1, 0.85, 1.14, 945.64, 993.85 };
+  private static final double[] GAMMA = { 1.036, 1.2777, 1.083, 1.2906, 0.928, 0.934, 0.919, 1.852, 1.05897, 1.05277 };
+  private static final double[] EPS = { -0.0726, -0.1274, 0.7527, 0.57, 2.2, -0.243, 2.96, 3.02, 0.9574, 0.9576 };
   // Gao-B terms
-  private static final double[] GAOB_N = {-1.6909858, 0.93739074};
-  private static final double[] GAOB_T = {4.3315, 4.015};
-  private static final double[] GAOB_D = {1.0, 1.0};
-  private static final double[] GAOB_ETA = {-2.8452, -2.8342};
-  private static final double[] GAOB_BETA = {0.3696, 0.2962};
-  private static final double[] GAOB_GAMMA = {1.108, 1.313};
-  private static final double[] GAOB_EPS = {0.4478, 0.44689};
-  private static final double[] GAOB_B = {1.244, 0.6826};
+  private static final double[] GAOB_N = { -1.6909858, 0.93739074 };
+  private static final double[] GAOB_T = { 4.3315, 4.015 };
+  private static final double[] GAOB_D = { 1.0, 1.0 };
+  private static final double[] GAOB_ETA = { -2.8452, -2.8342 };
+  private static final double[] GAOB_BETA = { 0.3696, 0.2962 };
+  private static final double[] GAOB_GAMMA = { 1.108, 1.313 };
+  private static final double[] GAOB_EPS = { 0.4478, 0.44689 };
+  private static final double[] GAOB_B = { 1.244, 0.6826 };
 
   // --- Simple viscosity correlation coefficients ----------------------------
   // Fitted to CoolProp viscosity data at 293.15 K
@@ -73,7 +67,8 @@ public class Ammonia2023 {
    * Constructor for Ammonia2023.
    * </p>
    */
-  public Ammonia2023() {}
+  public Ammonia2023() {
+  }
 
   /**
    * <p>
@@ -105,8 +100,7 @@ public class Ammonia2023 {
    * @return molar density in mol/m<sup>3</sup>
    */
   private double solveDensity(double T, double p) {
-    boolean liquidGuess =
-        phase != null && (phase.getType() == PhaseType.LIQUID || phase.getType() == PhaseType.OIL);
+    boolean liquidGuess = phase != null && (phase.getType() == PhaseType.LIQUID || phase.getType() == PhaseType.OIL);
 
     double rho = liquidGuess ? RHO_CRIT * 2.0 : p / (R * T);
 
@@ -116,13 +110,12 @@ public class Ammonia2023 {
       double tau = T_CRIT / T;
       ResidualDerivs res = residual(delta, tau);
       double pCalc = rho * R * T * (1.0 + delta * res.dalpha_dDelta);
-      double dpdrho =
-          R * T * (1.0 + 2.0 * delta * res.dalpha_dDelta + delta * delta * res.d2alpha_dDelta2);
+      double dpdrho = R * T * (1.0 + 2.0 * delta * res.dalpha_dDelta + delta * delta * res.d2alpha_dDelta2);
       double diff = pCalc - p;
       double step = diff / dpdrho;
       rho -= step;
       if (Math.abs(step) < 1e-8) {
-        break;
+	break;
       }
     }
 
@@ -135,27 +128,27 @@ public class Ammonia2023 {
       double fHigh = pressureFromDensity(rhoHigh, T) - p;
       int iter = 0;
       while (fLow * fHigh > 0.0 && iter < 50) {
-        rhoHigh *= 2.0;
-        fHigh = pressureFromDensity(rhoHigh, T) - p;
-        iter++;
+	rhoHigh *= 2.0;
+	fHigh = pressureFromDensity(rhoHigh, T) - p;
+	iter++;
       }
       if (fLow * fHigh < 0.0) {
-        for (int i = 0; i < 100; i++) {
-          double rhoMid = 0.5 * (rhoLow + rhoHigh);
-          double fMid = pressureFromDensity(rhoMid, T) - p;
-          if (Math.abs(fMid) < 1e-8) {
-            rho = rhoMid;
-            break;
-          }
-          if (fLow * fMid < 0.0) {
-            rhoHigh = rhoMid;
-            fHigh = fMid;
-          } else {
-            rhoLow = rhoMid;
-            fLow = fMid;
-          }
-          rho = rhoMid;
-        }
+	for (int i = 0; i < 100; i++) {
+	  double rhoMid = 0.5 * (rhoLow + rhoHigh);
+	  double fMid = pressureFromDensity(rhoMid, T) - p;
+	  if (Math.abs(fMid) < 1e-8) {
+	    rho = rhoMid;
+	    break;
+	  }
+	  if (fLow * fMid < 0.0) {
+	    rhoHigh = rhoMid;
+	    fHigh = fMid;
+	  } else {
+	    rhoLow = rhoMid;
+	    fLow = fMid;
+	  }
+	  rho = rhoMid;
+	}
       }
     }
     return rho;
@@ -215,7 +208,7 @@ public class Ammonia2023 {
     doubleW[][] ar = new doubleW[4][4];
     for (int i = 0; i < 4; i++) {
       for (int j = 0; j < 4; j++) {
-        ar[i][j] = new doubleW(0.0);
+	ar[i][j] = new doubleW(0.0);
       }
     }
     ar[0][0].val = r.alpha;
@@ -241,7 +234,7 @@ public class Ammonia2023 {
    * Compute residual Helmholtz energy and derivatives.
    *
    * @param delta reduced density (rho / rhoCrit)
-   * @param tau inverse reduced temperature (Tcrit / T)
+   * @param tau   inverse reduced temperature (Tcrit / T)
    * @return container with residual Helmholtz energy derivatives
    */
   private static ResidualDerivs residual(double delta, double tau) {
@@ -270,8 +263,8 @@ public class Ammonia2023 {
       double B = D[i] / delta - G[li] * L[li] * Math.pow(delta, L[li] - 1.0);
       r.alpha += term;
       r.dalpha_dDelta += term * B;
-      r.d2alpha_dDelta2 += term * (B * B - D[i] / (delta * delta)
-          - G[li] * L[li] * (L[li] - 1.0) * Math.pow(delta, L[li] - 2.0));
+      r.d2alpha_dDelta2 += term
+	  * (B * B - D[i] / (delta * delta) - G[li] * L[li] * (L[li] - 1.0) * Math.pow(delta, L[li] - 2.0));
       r.dalpha_dTau += term * T[i] / tau;
       r.d2alpha_dTau2 += term * T[i] * (T[i] - 1.0) / (tau * tau);
       r.d2alpha_dDelta_dTau += term * B * T[i] / tau;
@@ -308,11 +301,10 @@ public class Ammonia2023 {
       double Bt = GAOB_T[i] / tau + (2.0 * GAOB_BETA[i] * (tau - GAOB_GAMMA[i])) / (Y * Y);
       r.alpha += term;
       r.dalpha_dDelta += term * Bdelta;
-      r.d2alpha_dDelta2 +=
-          term * (Bdelta * Bdelta - GAOB_D[i] / (delta * delta) + 2.0 * GAOB_ETA[i]);
+      r.d2alpha_dDelta2 += term * (Bdelta * Bdelta - GAOB_D[i] / (delta * delta) + 2.0 * GAOB_ETA[i]);
       r.dalpha_dTau += term * Bt;
-      r.d2alpha_dTau2 += term * (Bt * Bt - GAOB_T[i] / (tau * tau) + 2.0 * GAOB_BETA[i]
-          * ((Y - 2.0 * GAOB_BETA[i] * Math.pow(tau - GAOB_GAMMA[i], 2.0)) / (Y * Y * Y)));
+      r.d2alpha_dTau2 += term * (Bt * Bt - GAOB_T[i] / (tau * tau)
+	  + 2.0 * GAOB_BETA[i] * ((Y - 2.0 * GAOB_BETA[i] * Math.pow(tau - GAOB_GAMMA[i], 2.0)) / (Y * Y * Y)));
       r.d2alpha_dDelta_dTau += term * Bdelta * Bt;
     }
 
@@ -330,7 +322,7 @@ public class Ammonia2023 {
    * Compute ideal-gas Helmholtz energy and derivatives.
    *
    * @param delta reduced density (rho / rhoCrit)
-   * @param tau inverse reduced temperature (Tcrit / T)
+   * @param tau   inverse reduced temperature (Tcrit / T)
    * @return container with ideal Helmholtz derivatives
    */
   private static IdealDerivs ideal(double delta, double tau) {
@@ -349,8 +341,7 @@ public class Ammonia2023 {
   }
 
   /**
-   * Evaluate thermodynamic properties and return an array following the same layout as the GERG2008
-   * utility class.
+   * Evaluate thermodynamic properties and return an array following the same layout as the GERG2008 utility class.
    *
    * @return an array of double objects
    */
@@ -372,21 +363,16 @@ public class Ammonia2023 {
     double u = R * T * tau * (id.dalpha_dTau + r.dalpha_dTau);
     double h = R * T * (1.0 + tau * (id.dalpha_dTau + r.dalpha_dTau) + delta * r.dalpha_dDelta);
     double s = R * (tau * (id.dalpha_dTau + r.dalpha_dTau) - (id.alpha0 + r.alpha));
-    double g = R * T * (1.0 + id.alpha0 + r.alpha + delta * r.dalpha_dDelta
-        - tau * (id.dalpha_dTau + r.dalpha_dTau));
+    double g = R * T * (1.0 + id.alpha0 + r.alpha + delta * r.dalpha_dDelta - tau * (id.dalpha_dTau + r.dalpha_dTau));
 
-    double dpdrho =
-        R * T * (1.0 + 2.0 * delta * r.dalpha_dDelta + delta * delta * r.d2alpha_dDelta2);
-    double dpdT =
-        rhoMolar * R * (1.0 + delta * r.dalpha_dDelta - delta * tau * r.d2alpha_dDelta_dTau);
+    double dpdrho = R * T * (1.0 + 2.0 * delta * r.dalpha_dDelta + delta * delta * r.d2alpha_dDelta2);
+    double dpdT = rhoMolar * R * (1.0 + delta * r.dalpha_dDelta - delta * tau * r.d2alpha_dDelta_dTau);
     double kappa = 1.0 / (rhoMolar * dpdrho);
     double dv_dT_p = (dpdT / dpdrho) / (rhoMolar * rhoMolar);
     double muJT = (T * dv_dT_p - 1.0 / rhoMolar) / cp;
 
-    double sound = Math.sqrt(Math.max(0.0,
-        R * T / MOLAR_MASS
-            * (1.0 + 2.0 * delta * r.dalpha_dDelta + delta * delta * r.d2alpha_dDelta2
-                - numer * numer / (tau * tau * (id.d2alpha_dTau2 + r.d2alpha_dTau2)))));
+    double sound = Math.sqrt(Math.max(0.0, R * T / MOLAR_MASS * (1.0 + 2.0 * delta * r.dalpha_dDelta
+	+ delta * delta * r.d2alpha_dDelta2 - numer * numer / (tau * tau * (id.d2alpha_dTau2 + r.d2alpha_dTau2)))));
 
     double pCalc = rhoMolar * R * T * (1.0 + delta * r.dalpha_dDelta);
     double Z = pCalc / (rhoMolar * R * T);
@@ -410,9 +396,9 @@ public class Ammonia2023 {
    * Dynamic viscosity of ammonia in Pa·s.
    *
    * <p>
-   * Correlation obtained by a least-squares fit to CoolProp data in the range 250–400&nbsp;K and
-   * 1–20&nbsp;bar. The functional form includes temperature-only, density-only and mixed
-   * temperature–density terms and reproduces CoolProp within roughly 1&nbsp;% in the fitted region.
+   * Correlation obtained by a least-squares fit to CoolProp data in the range 250–400&nbsp;K and 1–20&nbsp;bar. The
+   * functional form includes temperature-only, density-only and mixed temperature–density terms and reproduces CoolProp
+   * within roughly 1&nbsp;% in the fitted region.
    * </p>
    *
    * @return dynamic viscosity in Pa·s
@@ -421,10 +407,8 @@ public class Ammonia2023 {
     double T = phase.getTemperature();
     double rho = getDensity(); // kg/m3
 
-    double mu =
-        2.96712939e-5 + -2.64322748e-7 * T + 9.76290851e-10 * T * T + -1.03914665e-12 * T * T * T;
-    mu += 1.87902771e-6 * rho + -1.17331240e-8 * rho * T + 1.78334448e-11 * rho * T * T
-        + 3.89672644e-10 * rho * rho;
+    double mu = 2.96712939e-5 + -2.64322748e-7 * T + 9.76290851e-10 * T * T + -1.03914665e-12 * T * T * T;
+    mu += 1.87902771e-6 * rho + -1.17331240e-8 * rho * T + 1.78334448e-11 * rho * T * T + 3.89672644e-10 * rho * rho;
     return mu;
   }
 
@@ -432,9 +416,8 @@ public class Ammonia2023 {
    * Thermal conductivity of ammonia in W/(m·K).
    *
    * <p>
-   * Implementation of the dilute-gas and residual polynomial terms defined for ammonia in
-   * CoolProp's transport property database. The critical enhancement is neglected as it is
-   * insignificant away from the critical region.
+   * Implementation of the dilute-gas and residual polynomial terms defined for ammonia in CoolProp's transport property
+   * database. The critical enhancement is neglected as it is insignificant away from the critical region.
    * </p>
    *
    * @return thermal conductivity in W/(m·K)
@@ -444,7 +427,7 @@ public class Ammonia2023 {
     double rho = getDensity(); // kg/m3
 
     // Dilute-gas contribution: ratio of polynomials in temperature
-    double[] A = {0.03589, -0.000175, 4.551e-7, 1.685e-10, -4.828e-13};
+    double[] A = { 0.03589, -0.000175, 4.551e-7, 1.685e-10, -4.828e-13 };
     double num = 0.0;
     for (int i = 0; i < A.length; i++) {
       num += A[i] * Math.pow(T, i);
@@ -452,8 +435,8 @@ public class Ammonia2023 {
     double lambda0 = num; // denominator is 1.0
 
     // Residual part: polynomial in reduced density
-    double[] Br = {0.03808645, 0.06647986, -0.0300295, 0.00998779};
-    int[] d = {1, 2, 3, 4};
+    double[] Br = { 0.03808645, 0.06647986, -0.0300295, 0.00998779 };
+    int[] d = { 1, 2, 3, 4 };
     double rhoRed = rho / 235.0; // kg/m3 reducing value
     double lambdaR = 0.0;
     for (int i = 0; i < Br.length; i++) {

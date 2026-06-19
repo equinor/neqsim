@@ -26,10 +26,10 @@ import neqsim.process.safety.risk.RiskMatrix;
  */
 public final class RiskMatrixRunner {
 
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
-  private RiskMatrixRunner() {}
+  private RiskMatrixRunner() {
+  }
 
   /**
    * Runs a risk-matrix scoring from a JSON definition.
@@ -44,7 +44,7 @@ public final class RiskMatrixRunner {
     try {
       JsonObject input = JsonParser.parseString(json).getAsJsonObject();
       if (!input.has("events")) {
-        return errorJson("Missing required field: events (array)");
+	return errorJson("Missing required field: events (array)");
       }
       JsonArray events = input.getAsJsonArray("events");
 
@@ -54,46 +54,44 @@ public final class RiskMatrixRunner {
       String overallColor = "green";
 
       for (JsonElement el : events) {
-        JsonObject ev = el.getAsJsonObject();
-        String name = ev.has("name") ? ev.get("name").getAsString() : "event";
+	JsonObject ev = el.getAsJsonObject();
+	String name = ev.has("name") ? ev.get("name").getAsString() : "event";
 
-        RiskMatrix.ProbabilityCategory pCat;
-        RiskMatrix.ConsequenceCategory cCat;
-        if (ev.has("probabilityLevel") && ev.has("consequenceLevel")) {
-          pCat = probabilityFromLevel(ev.get("probabilityLevel").getAsInt());
-          cCat = consequenceFromLevel(ev.get("consequenceLevel").getAsInt());
-        } else if (ev.has("failuresPerYear") && ev.has("productionLossPercent")) {
-          pCat =
-              RiskMatrix.ProbabilityCategory.fromFrequency(ev.get("failuresPerYear").getAsDouble());
-          cCat = RiskMatrix.ConsequenceCategory
-              .fromProductionLoss(ev.get("productionLossPercent").getAsDouble());
-        } else {
-          return errorJson("Each event needs (probabilityLevel + consequenceLevel) "
-              + "or (failuresPerYear + productionLossPercent)");
-        }
+	RiskMatrix.ProbabilityCategory pCat;
+	RiskMatrix.ConsequenceCategory cCat;
+	if (ev.has("probabilityLevel") && ev.has("consequenceLevel")) {
+	  pCat = probabilityFromLevel(ev.get("probabilityLevel").getAsInt());
+	  cCat = consequenceFromLevel(ev.get("consequenceLevel").getAsInt());
+	} else if (ev.has("failuresPerYear") && ev.has("productionLossPercent")) {
+	  pCat = RiskMatrix.ProbabilityCategory.fromFrequency(ev.get("failuresPerYear").getAsDouble());
+	  cCat = RiskMatrix.ConsequenceCategory.fromProductionLoss(ev.get("productionLossPercent").getAsDouble());
+	} else {
+	  return errorJson("Each event needs (probabilityLevel + consequenceLevel) "
+	      + "or (failuresPerYear + productionLossPercent)");
+	}
 
-        int score = pCat.getLevel() * cCat.getLevel();
-        RiskMatrix.RiskLevel level = RiskMatrix.RiskLevel.fromScore(score);
+	int score = pCat.getLevel() * cCat.getLevel();
+	RiskMatrix.RiskLevel level = RiskMatrix.RiskLevel.fromScore(score);
 
-        JsonObject row = new JsonObject();
-        row.addProperty("name", name);
-        row.addProperty("probabilityLevel", pCat.getLevel());
-        row.addProperty("probabilityCategory", pCat.getName());
-        row.addProperty("consequenceLevel", cCat.getLevel());
-        row.addProperty("consequenceCategory", cCat.getName());
-        row.addProperty("riskScore", score);
-        row.addProperty("riskLevel", level.getName());
-        row.addProperty("color", level.getColor());
-        if (ev.has("mitigation")) {
-          row.add("mitigation", ev.get("mitigation"));
-        }
-        scored.add(row);
+	JsonObject row = new JsonObject();
+	row.addProperty("name", name);
+	row.addProperty("probabilityLevel", pCat.getLevel());
+	row.addProperty("probabilityCategory", pCat.getName());
+	row.addProperty("consequenceLevel", cCat.getLevel());
+	row.addProperty("consequenceCategory", cCat.getName());
+	row.addProperty("riskScore", score);
+	row.addProperty("riskLevel", level.getName());
+	row.addProperty("color", level.getColor());
+	if (ev.has("mitigation")) {
+	  row.add("mitigation", ev.get("mitigation"));
+	}
+	scored.add(row);
 
-        if (score > maxScore) {
-          maxScore = score;
-          overallLevel = level.getName();
-          overallColor = level.getColor();
-        }
+	if (score > maxScore) {
+	  maxScore = score;
+	  overallLevel = level.getName();
+	  overallColor = level.getColor();
+	}
       }
 
       JsonObject out = new JsonObject();
@@ -120,18 +118,18 @@ public final class RiskMatrixRunner {
    */
   private static RiskMatrix.ProbabilityCategory probabilityFromLevel(int level) {
     switch (level) {
-      case 1:
-        return RiskMatrix.ProbabilityCategory.VERY_LOW;
-      case 2:
-        return RiskMatrix.ProbabilityCategory.LOW;
-      case 3:
-        return RiskMatrix.ProbabilityCategory.MEDIUM;
-      case 4:
-        return RiskMatrix.ProbabilityCategory.HIGH;
-      case 5:
-        return RiskMatrix.ProbabilityCategory.VERY_HIGH;
-      default:
-        throw new IllegalArgumentException("probabilityLevel must be 1-5, got: " + level);
+    case 1:
+      return RiskMatrix.ProbabilityCategory.VERY_LOW;
+    case 2:
+      return RiskMatrix.ProbabilityCategory.LOW;
+    case 3:
+      return RiskMatrix.ProbabilityCategory.MEDIUM;
+    case 4:
+      return RiskMatrix.ProbabilityCategory.HIGH;
+    case 5:
+      return RiskMatrix.ProbabilityCategory.VERY_HIGH;
+    default:
+      throw new IllegalArgumentException("probabilityLevel must be 1-5, got: " + level);
     }
   }
 
@@ -143,18 +141,18 @@ public final class RiskMatrixRunner {
    */
   private static RiskMatrix.ConsequenceCategory consequenceFromLevel(int level) {
     switch (level) {
-      case 1:
-        return RiskMatrix.ConsequenceCategory.NEGLIGIBLE;
-      case 2:
-        return RiskMatrix.ConsequenceCategory.MINOR;
-      case 3:
-        return RiskMatrix.ConsequenceCategory.MODERATE;
-      case 4:
-        return RiskMatrix.ConsequenceCategory.MAJOR;
-      case 5:
-        return RiskMatrix.ConsequenceCategory.CATASTROPHIC;
-      default:
-        throw new IllegalArgumentException("consequenceLevel must be 1-5, got: " + level);
+    case 1:
+      return RiskMatrix.ConsequenceCategory.NEGLIGIBLE;
+    case 2:
+      return RiskMatrix.ConsequenceCategory.MINOR;
+    case 3:
+      return RiskMatrix.ConsequenceCategory.MODERATE;
+    case 4:
+      return RiskMatrix.ConsequenceCategory.MAJOR;
+    case 5:
+      return RiskMatrix.ConsequenceCategory.CATASTROPHIC;
+    default:
+      throw new IllegalArgumentException("consequenceLevel must be 1-5, got: " + level);
     }
   }
 

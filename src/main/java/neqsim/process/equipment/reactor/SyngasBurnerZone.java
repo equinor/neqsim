@@ -13,10 +13,10 @@ import neqsim.thermo.system.SystemInterface;
  * High-temperature oxygen-blown burner zone for syngas generation models.
  *
  * <p>
- * The burner zone represents the rapid mixing and partial oxidation section used upstream of ATR
- * and POX equilibrium zones. It uses adiabatic Gibbs equilibrium and adds practical screening
- * metrics for oxygen-to-carbon ratio, flame temperature, and oxygen-safety envelope checks.
- * Detailed burner aerodynamics and flame CFD are outside the scope of this screening model.
+ * The burner zone represents the rapid mixing and partial oxidation section used upstream of ATR and POX equilibrium
+ * zones. It uses adiabatic Gibbs equilibrium and adds practical screening metrics for oxygen-to-carbon ratio, flame
+ * temperature, and oxygen-safety envelope checks. Detailed burner aerodynamics and flame CFD are outside the scope of
+ * this screening model.
  * </p>
  *
  * @author NeqSim contributors
@@ -62,7 +62,7 @@ public class SyngasBurnerZone extends TwoPortEquipment {
   /**
    * Creates a syngas burner zone with an inlet stream.
    *
-   * @param name equipment name
+   * @param name        equipment name
    * @param inletStream premixed methane, oxygen, and optional steam feed
    */
   public SyngasBurnerZone(String name, StreamInterface inletStream) {
@@ -77,7 +77,7 @@ public class SyngasBurnerZone extends TwoPortEquipment {
    */
   public void setOxygenToCarbonEnvelope(double minimumRatio, double maximumRatio) {
     if (!Double.isFinite(minimumRatio) || !Double.isFinite(maximumRatio) || minimumRatio < 0.0
-        || maximumRatio <= minimumRatio) {
+	|| maximumRatio <= minimumRatio) {
       throw new IllegalArgumentException("oxygen-to-carbon envelope must be finite and ordered");
     }
     this.minimumOxygenToCarbonRatio = minimumRatio;
@@ -152,8 +152,8 @@ public class SyngasBurnerZone extends TwoPortEquipment {
     Stream burnerFeed = new Stream(getName() + " feed", feedSystem);
     burnerFeed.run(id);
 
-    equilibriumReactor = HydrogenProductionUtils.createSyngasGibbsReactor(
-        getName() + " Gibbs equilibrium", burnerFeed, GibbsReactor.EnergyMode.ADIABATIC);
+    equilibriumReactor = HydrogenProductionUtils.createSyngasGibbsReactor(getName() + " Gibbs equilibrium", burnerFeed,
+	GibbsReactor.EnergyMode.ADIABATIC);
     equilibriumReactor.run(id);
 
     SystemInterface outletSystem = equilibriumReactor.getOutletStream().getThermoSystem().clone();
@@ -180,7 +180,7 @@ public class SyngasBurnerZone extends TwoPortEquipment {
     results.put("safetyWarning", safetyWarning);
     if (outStream != null && outStream.getThermoSystem() != null) {
       results.put("syngasComposition_molFrac",
-          HydrogenProductionUtils.extractSyngasComposition(outStream.getThermoSystem()));
+	  HydrogenProductionUtils.extractSyngasComposition(outStream.getThermoSystem()));
     }
     return results;
   }
@@ -188,8 +188,7 @@ public class SyngasBurnerZone extends TwoPortEquipment {
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(getResults());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(getResults());
   }
 
   /**

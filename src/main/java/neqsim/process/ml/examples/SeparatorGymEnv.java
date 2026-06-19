@@ -14,8 +14,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * Gymnasium-compatible separator control environment.
  *
  * <p>
- * This environment wraps a NeqSim separator model with a Gym-compatible API that works directly
- * with Python RL frameworks via JPype/Py4J.
+ * This environment wraps a NeqSim separator model with a Gym-compatible API that works directly with Python RL
+ * frameworks via JPype/Py4J.
  *
  * <h2>State Space (8-dimensional, continuous):</h2>
  * <ul>
@@ -98,13 +98,13 @@ public class SeparatorGymEnv extends GymEnvironment {
 
     // Observation space: 8 dimensions
     observationDim = 8;
-    observationLow = new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0};
-    observationHigh = new double[] {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
+    observationLow = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0 };
+    observationHigh = new double[] { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 };
 
     // Action space: 1 dimension (valve delta)
     actionDim = 1;
-    actionLow = new double[] {-0.1};
-    actionHigh = new double[] {0.1};
+    actionLow = new double[] { -0.1 };
+    actionHigh = new double[] { 0.1 };
 
     maxEpisodeSteps = 500;
   }
@@ -215,8 +215,7 @@ public class SeparatorGymEnv extends GymEnvironment {
     SystemInterface fluid = separator.getFluid();
 
     double pressure = fluid != null ? fluid.getPressure("bar") / maxPressure : 0.5;
-    double temperature =
-        fluid != null ? (fluid.getTemperature("K") - minTemp) / (maxTemp - minTemp) : 0.5;
+    double temperature = fluid != null ? (fluid.getTemperature("K") - minTemp) / (maxTemp - minTemp) : 0.5;
     double feedFlow = feed.getFluid().getFlowRate("kg/hr") / maxFeedFlow;
 
     double gasDensity = 0.5;
@@ -224,14 +223,14 @@ public class SeparatorGymEnv extends GymEnvironment {
     if (fluid != null && fluid.getNumberOfPhases() > 0) {
       gasDensity = Math.min(1.0, fluid.getPhase(0).getDensity("kg/m3") / 100.0);
       if (fluid.getNumberOfPhases() > 1) {
-        liquidDensity = Math.min(1.0, fluid.getPhase(1).getDensity("kg/m3") / 800.0);
+	liquidDensity = Math.min(1.0, fluid.getPhase(1).getDensity("kg/m3") / 800.0);
       }
     }
 
     double levelError = (liquidLevel - levelSetpoint) / 0.5; // Normalized error
 
-    return new double[] {liquidLevel, pressure, temperature, feedFlow, gasDensity, liquidDensity,
-        levelError, valvePosition};
+    return new double[] { liquidLevel, pressure, temperature, feedFlow, gasDensity, liquidDensity, levelError,
+	valvePosition };
   }
 
   private double getLiquidOutflowRate() {
@@ -290,8 +289,8 @@ public class SeparatorGymEnv extends GymEnvironment {
    * @return feature names
    */
   public String[] getObservationNames() {
-    return new String[] {"liquid_level", "pressure", "temperature", "feed_flow", "gas_density",
-        "liquid_density", "level_error", "valve_position"};
+    return new String[] { "liquid_level", "pressure", "temperature", "feed_flow", "gas_density", "liquid_density",
+	"level_error", "valve_position" };
   }
 
   /**
@@ -300,6 +299,6 @@ public class SeparatorGymEnv extends GymEnvironment {
    * @return action names
    */
   public String[] getActionNames() {
-    return new String[] {"valve_delta"};
+    return new String[] { "valve_delta" };
   }
 }

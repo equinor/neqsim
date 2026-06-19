@@ -73,8 +73,8 @@ public class EmissionsTrackerTest {
     assertFalse(report.equipmentEmissions.isEmpty());
 
     // Should have emissions from compressor (electrical)
-    boolean hasCompressorEmissions =
-        report.equipmentEmissions.keySet().stream().anyMatch(k -> k.contains("compressor"));
+    boolean hasCompressorEmissions = report.equipmentEmissions.keySet().stream()
+	.anyMatch(k -> k.contains("compressor"));
     assertTrue(hasCompressorEmissions);
   }
 

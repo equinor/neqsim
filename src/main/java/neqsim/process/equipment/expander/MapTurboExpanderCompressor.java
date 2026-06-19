@@ -16,33 +16,30 @@ import neqsim.process.equipment.stream.StreamInterface;
  * </p>
  *
  * <p>
- * An alternative single-shaft turboexpander-compressor (companding machine) model that couples a
- * real {@link Expander} and a real {@link Compressor} on a common shaft. Unlike
- * {@link TurboExpanderCompressor}, which uses bespoke U/C and Q/N curve-fit correction factors,
- * this model reuses NeqSim's existing compressor performance-map machinery ({@code CompressorChart}
- * or {@code CompressorChartKhader2015}) for the compressor side. The two machines are coupled
- * through a mechanical (shaft/bearing) efficiency and solved so that the shaft power produced by
- * the expander equals the power absorbed by the compressor at a common shaft speed.
+ * An alternative single-shaft turboexpander-compressor (companding machine) model that couples a real {@link Expander}
+ * and a real {@link Compressor} on a common shaft. Unlike {@link TurboExpanderCompressor}, which uses bespoke U/C and
+ * Q/N curve-fit correction factors, this model reuses NeqSim's existing compressor performance-map machinery
+ * ({@code CompressorChart} or {@code CompressorChartKhader2015}) for the compressor side. The two machines are coupled
+ * through a mechanical (shaft/bearing) efficiency and solved so that the shaft power produced by the expander equals
+ * the power absorbed by the compressor at a common shaft speed.
  * </p>
  *
  * <p>
- * This is conceptually equivalent to the Atlas Copco Mafi-Trench / River City Engineering EC-OD
- * off-design rating utility for Aspen HYSYS, but built on the open NeqSim chart classes so that the
- * compressor map can account for changing gas composition (via the Mach-number based
- * {@code CompressorChartKhader2015}).
+ * This is conceptually equivalent to the Atlas Copco Mafi-Trench / River City Engineering EC-OD off-design rating
+ * utility for Aspen HYSYS, but built on the open NeqSim chart classes so that the compressor map can account for
+ * changing gas composition (via the Mach-number based {@code CompressorChartKhader2015}).
  * </p>
  *
  * <p>
  * Two operating modes are supported:
  * </p>
  * <ul>
- * <li>{@link ShaftMode#SPECIFIED_PRESSURES} &ndash; both the expander outlet pressure and the
- * compressor outlet pressure are specified. The two machines are solved independently and the shaft
- * power balance residual is reported. Useful at the design point.</li>
- * <li>{@link ShaftMode#BALANCED_SPEED} &ndash; rigorous off-design rating. The expander outlet
- * pressure is specified and the compressor uses a performance map. The common shaft speed is solved
- * so that the compressor power equals the shaft power delivered by the expander; the compressor
- * discharge pressure is then an output of the calculation.</li>
+ * <li>{@link ShaftMode#SPECIFIED_PRESSURES} &ndash; both the expander outlet pressure and the compressor outlet
+ * pressure are specified. The two machines are solved independently and the shaft power balance residual is reported.
+ * Useful at the design point.</li>
+ * <li>{@link ShaftMode#BALANCED_SPEED} &ndash; rigorous off-design rating. The expander outlet pressure is specified
+ * and the compressor uses a performance map. The common shaft speed is solved so that the compressor power equals the
+ * shaft power delivered by the expander; the compressor discharge pressure is then an output of the calculation.</li>
  * </ul>
  *
  * @author esol
@@ -69,15 +66,14 @@ public class MapTurboExpanderCompressor extends ProcessEquipmentBaseClass {
     /** Interior shaft-speed solution found; expander and compressor power balanced. */
     BALANCED,
     /**
-     * Expander cannot supply the compressor power even at the minimum map speed. The shaft is
-     * pegged at the minimum speed and the compressor operating point has crossed its surge line; in
-     * practice the anti-surge / recycle valve must open. This is the low-pressure turndown limit of
-     * the machine.
+     * Expander cannot supply the compressor power even at the minimum map speed. The shaft is pegged at the minimum
+     * speed and the compressor operating point has crossed its surge line; in practice the anti-surge / recycle valve
+     * must open. This is the low-pressure turndown limit of the machine.
      */
     UNDER_POWER_SURGE,
     /**
-     * Expander supplies more power than the compressor can absorb even at the maximum map speed.
-     * The shaft is pegged at the maximum speed (over-speed / over-power limit).
+     * Expander supplies more power than the compressor can absorb even at the maximum map speed. The shaft is pegged at
+     * the maximum speed (over-speed / over-power limit).
      */
     OVER_POWER_MAX_SPEED
   }
@@ -124,8 +120,8 @@ public class MapTurboExpanderCompressor extends ProcessEquipmentBaseClass {
   /**
    * Constructor for MapTurboExpanderCompressor.
    *
-   * @param name name of the unit operation
-   * @param expanderInletStream high-pressure feed to the expander
+   * @param name                  name of the unit operation
+   * @param expanderInletStream   high-pressure feed to the expander
    * @param compressorInletStream feed to the brake compressor
    */
   public MapTurboExpanderCompressor(String name, StreamInterface expanderInletStream,
@@ -172,8 +168,8 @@ public class MapTurboExpanderCompressor extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Set the compressor discharge pressure. Only used in {@link ShaftMode#SPECIFIED_PRESSURES} mode;
-   * in {@link ShaftMode#BALANCED_SPEED} mode the compressor discharge pressure is an output.
+   * Set the compressor discharge pressure. Only used in {@link ShaftMode#SPECIFIED_PRESSURES} mode; in
+   * {@link ShaftMode#BALANCED_SPEED} mode the compressor discharge pressure is an output.
    *
    * @param pressure compressor outlet pressure in bara
    */
@@ -236,8 +232,7 @@ public class MapTurboExpanderCompressor extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Set the lower and upper bounds for the shaft speed search in {@link ShaftMode#BALANCED_SPEED}
-   * mode.
+   * Set the lower and upper bounds for the shaft speed search in {@link ShaftMode#BALANCED_SPEED} mode.
    *
    * @param minSpeed lower bound in RPM (0 = use compressor chart minimum)
    * @param maxSpeed upper bound in RPM (0 = use compressor chart maximum)
@@ -285,8 +280,8 @@ public class MapTurboExpanderCompressor extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Indicates whether the shaft speed was pegged at one of the search bounds (i.e. the power
-   * balance could not be satisfied within the allowed speed range).
+   * Indicates whether the shaft speed was pegged at one of the search bounds (i.e. the power balance could not be
+   * satisfied within the allowed speed range).
    *
    * @return {@code true} if the shaft speed was limited by a bound
    */
@@ -305,12 +300,11 @@ public class MapTurboExpanderCompressor extends ProcessEquipmentBaseClass {
 
   /**
    * Indicates whether the machine has a physically feasible balanced operating point. In
-   * {@link ShaftMode#BALANCED_SPEED} mode the machine is feasible only when an interior shaft-speed
-   * solution exists ({@link OperatingStatus#BALANCED}); an
-   * {@link OperatingStatus#UNDER_POWER_SURGE} status corresponds to the low-pressure turndown /
-   * surge limit where the brake compressor would have to recycle. In
-   * {@link ShaftMode#SPECIFIED_PRESSURES} mode the result is always considered feasible (the
-   * residual is reported separately).
+   * {@link ShaftMode#BALANCED_SPEED} mode the machine is feasible only when an interior shaft-speed solution exists
+   * ({@link OperatingStatus#BALANCED}); an {@link OperatingStatus#UNDER_POWER_SURGE} status corresponds to the
+   * low-pressure turndown / surge limit where the brake compressor would have to recycle. In
+   * {@link ShaftMode#SPECIFIED_PRESSURES} mode the result is always considered feasible (the residual is reported
+   * separately).
    *
    * @return {@code true} if a balanced operating point was found
    */
@@ -358,14 +352,10 @@ public class MapTurboExpanderCompressor extends ProcessEquipmentBaseClass {
     map.put("consumedCompressorPower_MW", Double.valueOf(consumedCompressorPower / 1.0e6));
     map.put("powerBalanceResidual_MW", Double.valueOf(powerBalanceResidual / 1.0e6));
     map.put("expanderInletPressure_bara", Double.valueOf(expander.getInletStream().getPressure()));
-    map.put("expanderOutletPressure_bara",
-        Double.valueOf(expander.getOutletStream().getPressure()));
-    map.put("expanderOutletTemperature_C",
-        Double.valueOf(expander.getOutletStream().getTemperature("C")));
-    map.put("compressorInletPressure_bara",
-        Double.valueOf(compressor.getInletStream().getPressure()));
-    map.put("compressorOutletPressure_bara",
-        Double.valueOf(compressor.getOutletStream().getPressure()));
+    map.put("expanderOutletPressure_bara", Double.valueOf(expander.getOutletStream().getPressure()));
+    map.put("expanderOutletTemperature_C", Double.valueOf(expander.getOutletStream().getTemperature("C")));
+    map.put("compressorInletPressure_bara", Double.valueOf(compressor.getInletStream().getPressure()));
+    map.put("compressorOutletPressure_bara", Double.valueOf(compressor.getOutletStream().getPressure()));
     map.put("compressorPolytropicEfficiency", Double.valueOf(compressor.getPolytropicEfficiency()));
     return map;
   }
@@ -377,16 +367,14 @@ public class MapTurboExpanderCompressor extends ProcessEquipmentBaseClass {
    */
   @Override
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   /**
-   * Compute the compressor absorbed power at a given shaft speed using the compressor performance
-   * map.
+   * Compute the compressor absorbed power at a given shaft speed using the compressor performance map.
    *
    * @param speed shaft speed in RPM
-   * @param id calculation identifier
+   * @param id    calculation identifier
    * @return compressor absorbed power in Watt
    */
   private double compressorPowerAtSpeed(double speed, UUID id) {
@@ -412,41 +400,39 @@ public class MapTurboExpanderCompressor extends ProcessEquipmentBaseClass {
     operatingStatus = OperatingStatus.BALANCED;
 
     if (shaftMode == ShaftMode.BALANCED_SPEED) {
-      double sLow =
-          minShaftSpeed > 0.0 ? minShaftSpeed : compressor.getCompressorChart().getMinSpeedCurve();
-      double sHigh =
-          maxShaftSpeed > 0.0 ? maxShaftSpeed : compressor.getCompressorChart().getMaxSpeedCurve();
+      double sLow = minShaftSpeed > 0.0 ? minShaftSpeed : compressor.getCompressorChart().getMinSpeedCurve();
+      double sHigh = maxShaftSpeed > 0.0 ? maxShaftSpeed : compressor.getCompressorChart().getMaxSpeedCurve();
 
       double fLow = compressorPowerAtSpeed(sLow, id) - availableShaftPower;
       double fHigh = compressorPowerAtSpeed(sHigh, id) - availableShaftPower;
 
       if (fLow > 0.0) {
-        // Expander cannot supply enough power even at the lowest speed.
-        shaftSpeed = sLow;
-        speedLimited = true;
-        operatingStatus = OperatingStatus.UNDER_POWER_SURGE;
+	// Expander cannot supply enough power even at the lowest speed.
+	shaftSpeed = sLow;
+	speedLimited = true;
+	operatingStatus = OperatingStatus.UNDER_POWER_SURGE;
       } else if (fHigh < 0.0) {
-        // Surplus power available; speed pegged at the upper bound.
-        shaftSpeed = sHigh;
-        speedLimited = true;
-        operatingStatus = OperatingStatus.OVER_POWER_MAX_SPEED;
+	// Surplus power available; speed pegged at the upper bound.
+	shaftSpeed = sHigh;
+	speedLimited = true;
+	operatingStatus = OperatingStatus.OVER_POWER_MAX_SPEED;
       } else {
-        // Bisection on the monotonically increasing power-speed relationship.
-        double a = sLow;
-        double b = sHigh;
-        for (int iter = 0; iter < 80; iter++) {
-          double mid = 0.5 * (a + b);
-          double fMid = compressorPowerAtSpeed(mid, id) - availableShaftPower;
-          if (fMid > 0.0) {
-            b = mid;
-          } else {
-            a = mid;
-          }
-          if (Math.abs(b - a) < 1.0e-3) {
-            break;
-          }
-        }
-        shaftSpeed = 0.5 * (a + b);
+	// Bisection on the monotonically increasing power-speed relationship.
+	double a = sLow;
+	double b = sHigh;
+	for (int iter = 0; iter < 80; iter++) {
+	  double mid = 0.5 * (a + b);
+	  double fMid = compressorPowerAtSpeed(mid, id) - availableShaftPower;
+	  if (fMid > 0.0) {
+	    b = mid;
+	  } else {
+	    a = mid;
+	  }
+	  if (Math.abs(b - a) < 1.0e-3) {
+	    break;
+	  }
+	}
+	shaftSpeed = 0.5 * (a + b);
       }
 
       // Final run at the solved (or pegged) shaft speed.

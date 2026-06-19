@@ -12,17 +12,16 @@ import neqsim.thermo.component.ComponentSrkCPA;
  * Combines two acceleration strategies:
  * </p>
  * <ul>
- * <li><b>Fully implicit coupled Newton-Raphson</b> from Igben et al. (2026): simultaneous solution
- * of molar volume and association site fractions, eliminating inner iterations.</li>
- * <li><b>Site type reduction</b>: groups equivalent association sites (same deltaNog row on same
- * component) into types with multiplicities, reducing the system dimension from (n_s + 1) to (p +
- * 1).</li>
+ * <li><b>Fully implicit coupled Newton-Raphson</b> from Igben et al. (2026): simultaneous solution of molar volume and
+ * association site fractions, eliminating inner iterations.</li>
+ * <li><b>Site type reduction</b>: groups equivalent association sites (same deltaNog row on same component) into types
+ * with multiplicities, reducing the system dimension from (n_s + 1) to (p + 1).</li>
  * </ul>
  *
  * <p>
- * The Newton Jacobian is built analytically on the reduced (p+1)-dimensional system at every
- * iteration (no Broyden approximation), solved via Gaussian elimination O(p^3). This gives both the
- * per-iteration cost reduction of dimension reduction AND the quadratic convergence of full Newton.
+ * The Newton Jacobian is built analytically on the reduced (p+1)-dimensional system at every iteration (no Broyden
+ * approximation), solved via Gaussian elimination O(p^3). This gives both the per-iteration cost reduction of dimension
+ * reduction AND the quadratic convergence of full Newton.
  * </p>
  *
  * <p>
@@ -189,15 +188,14 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
    * {@inheritDoc}
    *
    * <p>
-   * Fully implicit + reduced molar volume solver. Operates on the reduced (p+1)-dimensional system
-   * where p is the number of unique association site types. Uses full Newton Jacobian at every
-   * iteration (no Broyden approximation), solved via Gaussian elimination.
+   * Fully implicit + reduced molar volume solver. Operates on the reduced (p+1)-dimensional system where p is the
+   * number of unique association site types. Uses full Newton Jacobian at every iteration (no Broyden approximation),
+   * solved via Gaussian elimination.
    * </p>
    */
   @Override
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
-      throws neqsim.util.exception.IsNaNException,
-      neqsim.util.exception.TooManyIterationsException {
+      throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
 
     int ns = getTotalNumberOfAccociationSites();
 
@@ -279,20 +277,20 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
     for (int t = 0; t < p; t++) {
       double val = xSiteFull[typeRepSite[t]];
       if (val <= 1.0e-15 || val >= 1.0 || Double.isNaN(val)) {
-        needsInit = true;
-        break;
+	needsInit = true;
+	break;
       }
       xType[t] = val;
     }
     if (needsInit) {
       for (int t = 0; t < p; t++) {
-        xType[t] = 0.5;
+	xType[t] = 0.5;
       }
       expandAndSetSiteFractions(xType, ns);
       solveX2(10);
       readXsiteFromComponents(xSiteFull, ns);
       for (int t = 0; t < p; t++) {
-        xType[t] = xSiteFull[typeRepSite[t]];
+	xType[t] = xSiteFull[typeRepSite[t]];
       }
     }
 
@@ -326,11 +324,11 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
       // --- Update g-function and delta ---
       gcpa = calc_g();
       if (gcpa < 0) {
-        setMolarVolume(Btemp / numberOfMolesInPhase);
-        gcpa = calc_g();
-        totalVol = getMolarVolume() * numberOfMolesInPhase;
-        zeta = Btemp / (numberOfMolesInPhase * getMolarVolume());
-        molarVol = getMolarVolume();
+	setMolarVolume(Btemp / numberOfMolesInPhase);
+	gcpa = calc_g();
+	totalVol = getMolarVolume() * numberOfMolesInPhase;
+	zeta = Btemp / (numberOfMolesInPhase * getMolarVolume());
+	molarVol = getMolarVolume();
       }
       gcpav = calc_lngV();
       gcpavv = calc_lngVV();
@@ -344,15 +342,15 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
       double sumFV = 0.0;
       double sumFVV = 0.0;
       for (int a = 0; a < p; a++) {
-        for (int b = a; b < p; b++) {
-          double dab = delta[typeRepSite[a]][typeRepSite[b]];
-          double kRed = tMoles[a] * tMoles[b] / totalVol * dab * typeMult[a] * typeMult[b];
-          double xaxb = xType[a] * xType[b];
-          double kx = kRed * xaxb;
-          double sym = (a == b) ? 1.0 : 2.0;
-          sumFV += sym * kx * gdv1;
-          sumFVV += sym * kx * (gdv1 * gdv1 + gcpavv + 1.0 / totalVol2);
-        }
+	for (int b = a; b < p; b++) {
+	  double dab = delta[typeRepSite[a]][typeRepSite[b]];
+	  double kRed = tMoles[a] * tMoles[b] / totalVol * dab * typeMult[a] * typeMult[b];
+	  double xaxb = xType[a] * xType[b];
+	  double kx = kRed * xaxb;
+	  double sym = (a == b) ? 1.0 : 2.0;
+	  sumFV += sym * kx * gdv1;
+	  sumFVV += sym * kx * (gdv1 * gdv1 + gcpavv + 1.0 / totalVol2);
+	}
       }
       dFCPAdV = -0.5 * sumFV;
       dFCPAdVdV = -0.5 * sumFVV;
@@ -360,25 +358,25 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
       // --- Build reduced residual ---
       double[] redSum = workRedSum;
       for (int a = 0; a < p; a++) {
-        double s = 0.0;
-        for (int b = 0; b < p; b++) {
-          s += typeMult[b] * tMoles[b] * delta[typeRepSite[a]][typeRepSite[b]] * xType[b];
-        }
-        redSum[a] = s;
-        residual[a] = xType[a] - 1.0 / (1.0 + redSum[a] / totalVol);
+	double s = 0.0;
+	for (int b = 0; b < p; b++) {
+	  s += typeMult[b] * tMoles[b] * delta[typeRepSite[a]][typeRepSite[b]] * xType[b];
+	}
+	redSum[a] = s;
+	residual[a] = xType[a] - 1.0 / (1.0 + redSum[a] / totalVol);
       }
       double h = zeta - Btemp / numberOfMolesInPhase * dFdV()
-          - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
+	  - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
       residual[p] = h;
 
       // --- Check convergence ---
       double maxResidual = 0.0;
       for (int i = 0; i < dim; i++) {
-        maxResidual = Math.max(maxResidual, Math.abs(residual[i]));
+	maxResidual = Math.max(maxResidual, Math.abs(residual[i]));
       }
       if (maxResidual < CONVERGENCE_TOL && iterations > 1) {
-        converged = true;
-        break;
+	converged = true;
+	break;
       }
 
       // --- Build full Newton Jacobian (every iteration) ---
@@ -387,60 +385,60 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
 
       // --- Solve J * dx = -R using Gaussian elimination ---
       for (int i = 0; i < dim; i++) {
-        dx[i] = -residual[i];
+	dx[i] = -residual[i];
       }
       boolean solveOk = solveLinearSystem(jacobian, dx, dim);
       if (!solveOk) {
-        fallbackCount++;
-        return super.molarVolume(pressure, temperature, A, B, pt);
+	fallbackCount++;
+	return super.molarVolume(pressure, temperature, A, B, pt);
       }
 
       // --- Step limiting ---
       double maxStep = 1.0;
       for (int t = 0; t < p; t++) {
-        double proposed = xType[t] + maxStep * dx[t];
-        if (proposed < 1.0e-15) {
-          double limit = MAX_REL_STEP * xType[t] / Math.abs(dx[t]);
-          maxStep = Math.min(maxStep, limit);
-        }
-        if (proposed > 1.0) {
-          double limit = (1.0 - xType[t]) / dx[t];
-          maxStep = Math.min(maxStep, Math.max(0.1, limit));
-        }
+	double proposed = xType[t] + maxStep * dx[t];
+	if (proposed < 1.0e-15) {
+	  double limit = MAX_REL_STEP * xType[t] / Math.abs(dx[t]);
+	  maxStep = Math.min(maxStep, limit);
+	}
+	if (proposed > 1.0) {
+	  double limit = (1.0 - xType[t]) / dx[t];
+	  maxStep = Math.min(maxStep, Math.max(0.1, limit));
+	}
       }
       double proposedZeta = zeta + maxStep * dx[p];
       if (proposedZeta < 1.0e-10) {
-        double limit = MAX_REL_STEP * zeta / Math.abs(dx[p]);
-        maxStep = Math.min(maxStep, limit);
+	double limit = MAX_REL_STEP * zeta / Math.abs(dx[p]);
+	maxStep = Math.min(maxStep, limit);
       }
       if (proposedZeta > 1.0 - 1.0e-10) {
-        double limit = (1.0 - 1.0e-10 - zeta) / dx[p];
-        maxStep = Math.min(maxStep, Math.max(0.1, limit));
+	double limit = (1.0 - 1.0e-10 - zeta) / dx[p];
+	maxStep = Math.min(maxStep, Math.max(0.1, limit));
       }
       if (Math.abs(dx[p]) / Math.max(zeta, 1.0e-10) > 0.3) {
-        maxStep = Math.min(maxStep, 0.3 * zeta / Math.abs(dx[p]));
+	maxStep = Math.min(maxStep, 0.3 * zeta / Math.abs(dx[p]));
       }
 
       // --- Apply update ---
       for (int t = 0; t < p; t++) {
-        xType[t] += maxStep * dx[t];
-        xType[t] = Math.max(1.0e-15, Math.min(1.0, xType[t]));
+	xType[t] += maxStep * dx[t];
+	xType[t] = Math.max(1.0e-15, Math.min(1.0, xType[t]));
       }
       zeta += maxStep * dx[p];
       zeta = Math.max(1.0e-10, Math.min(1.0 - 1.0e-10, zeta));
 
       // --- Restart criterion (supercritical detection) ---
       if (iterations > 20 && maxResidual > 0.1 && !restartTriggered) {
-        restartTriggered = true;
-        if (pt == PhaseType.GAS) {
-          zeta = 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
-        } else {
-          zeta = pressure * Btemp / (numberOfMolesInPhase * temperature * R);
-        }
-        zeta = Math.max(1.0e-8, Math.min(1.0 - 1.0e-8, zeta));
-        for (int t = 0; t < p; t++) {
-          xType[t] = 0.5;
-        }
+	restartTriggered = true;
+	if (pt == PhaseType.GAS) {
+	  zeta = 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
+	} else {
+	  zeta = pressure * Btemp / (numberOfMolesInPhase * temperature * R);
+	}
+	zeta = Math.max(1.0e-8, Math.min(1.0 - 1.0e-8, zeta));
+	for (int t = 0; t < p; t++) {
+	  xType[t] = 0.5;
+	}
       }
 
     } while (iterations < MAX_ITERATIONS);
@@ -448,8 +446,8 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
     if (!converged) {
       fallbackCount++;
       if (logger.isDebugEnabled()) {
-        logger.debug("Implicit-reduced non-convergence: ns=" + ns + " p=" + numTypes + " pt=" + pt
-            + " iters=" + iterations + " zeta=" + zeta + " P=" + pressure + " T=" + temperature);
+	logger.debug("Implicit-reduced non-convergence: ns=" + ns + " p=" + numTypes + " pt=" + pt + " iters="
+	    + iterations + " zeta=" + zeta + " P=" + pressure + " T=" + temperature);
       }
       return super.molarVolume(pressure, temperature, A, B, pt);
     }
@@ -486,9 +484,8 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
    * Build the site type map by grouping equivalent association sites.
    *
    * <p>
-   * Two individual sites are equivalent if they belong to the same component and have identical
-   * deltaNog rows (same bonding pattern to all other sites). This corresponds to sites with the
-   * same charge in the CPA association scheme.
+   * Two individual sites are equivalent if they belong to the same component and have identical deltaNog rows (same
+   * bonding pattern to all other sites). This corresponds to sites with the same charge in the CPA association scheme.
    * </p>
    *
    * @param ns total number of individual association sites
@@ -503,29 +500,29 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
     for (int i = 0; i < ns; i++) {
       boolean matched = false;
       for (int t = 0; t < numTypes; t++) {
-        if (moleculeNumber[i] != moleculeNumber[typeRepSite[t]]) {
-          continue;
-        }
-        boolean identical = true;
-        for (int j = 0; j < ns; j++) {
-          if (Math.abs(deltaNog[i][j] - deltaNog[typeRepSite[t]][j]) > 1.0e-30) {
-            identical = false;
-            break;
-          }
-        }
-        if (identical) {
-          siteToType[i] = t;
-          typeMult[t]++;
-          matched = true;
-          break;
-        }
+	if (moleculeNumber[i] != moleculeNumber[typeRepSite[t]]) {
+	  continue;
+	}
+	boolean identical = true;
+	for (int j = 0; j < ns; j++) {
+	  if (Math.abs(deltaNog[i][j] - deltaNog[typeRepSite[t]][j]) > 1.0e-30) {
+	    identical = false;
+	    break;
+	  }
+	}
+	if (identical) {
+	  siteToType[i] = t;
+	  typeMult[t]++;
+	  matched = true;
+	  break;
+	}
       }
       if (!matched) {
-        typeRepSite[numTypes] = i;
-        siteToType[i] = numTypes;
-        typeMult[numTypes] = 1;
-        typeCompIdx[numTypes] = moleculeNumber[i];
-        numTypes++;
+	typeRepSite[numTypes] = i;
+	siteToType[i] = numTypes;
+	typeMult[numTypes] = 1;
+	typeCompIdx[numTypes] = moleculeNumber[i];
+	numTypes++;
       }
     }
   }
@@ -534,15 +531,15 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
    * Expand reduced site fraction values to all individual sites on components.
    *
    * @param xType reduced site fraction array (length p)
-   * @param ns total number of individual sites
+   * @param ns    total number of individual sites
    */
   private void expandAndSetSiteFractions(double[] xType, int ns) {
     int idx = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) {
-        int typeIdx = siteToType[idx];
-        ((ComponentCPAInterface) componentArray[i]).setXsite(j, xType[typeIdx]);
-        idx++;
+	int typeIdx = siteToType[idx];
+	((ComponentCPAInterface) componentArray[i]).setXsite(j, xType[typeIdx]);
+	idx++;
       }
     }
   }
@@ -551,14 +548,14 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
    * Read individual site fractions from component objects into a flat array.
    *
    * @param xSite array to fill (length ns)
-   * @param ns total number of individual sites
+   * @param ns    total number of individual sites
    */
   private void readXsiteFromComponents(double[] xSite, int ns) {
     int idx = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) {
-        xSite[idx] = ((ComponentSrkCPA) componentArray[i]).getXsite()[j];
-        idx++;
+	xSite[idx] = ((ComponentSrkCPA) componentArray[i]).getXsite()[j];
+	idx++;
       }
     }
   }
@@ -580,28 +577,28 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
    * <li>j_zeta_zeta: volume equation self-sensitivity</li>
    * </ul>
    *
-   * @param jac Jacobian matrix to populate (dim x dim)
-   * @param xType reduced site fraction values (length p)
-   * @param tMoles moles per type (length p)
-   * @param redSum precomputed reduced summation for each type (length p)
+   * @param jac      Jacobian matrix to populate (dim x dim)
+   * @param xType    reduced site fraction values (length p)
+   * @param tMoles   moles per type (length p)
+   * @param redSum   precomputed reduced summation for each type (length p)
    * @param totalVol total volume V
-   * @param gdv1 g'(V) - 1/V
-   * @param zeta current B/(nV)
-   * @param btemp co-volume B
-   * @param dim system dimension (p+1)
-   * @param p number of unique site types
+   * @param gdv1     g'(V) - 1/V
+   * @param zeta     current B/(nV)
+   * @param btemp    co-volume B
+   * @param dim      system dimension (p+1)
+   * @param p        number of unique site types
    */
-  private void buildReducedJacobian(double[][] jac, double[] xType, double[] tMoles,
-      double[] redSum, double totalVol, double gdv1, double zeta, double btemp, int dim, int p) {
+  private void buildReducedJacobian(double[][] jac, double[] xType, double[] tMoles, double[] redSum, double totalVol,
+      double gdv1, double zeta, double btemp, int dim, int p) {
 
     // J_XX block: dR_a/dX_b = delta_ab + X_a^2 * mult_b * n_b * delta(rep_a,rep_b)
     // / V
     for (int a = 0; a < p; a++) {
       double xa2 = xType[a] * xType[a];
       for (int b = 0; b < p; b++) {
-        double dab = (a == b) ? 1.0 : 0.0;
-        double dlt = delta[typeRepSite[a]][typeRepSite[b]];
-        jac[a][b] = dab + xa2 * typeMult[b] * tMoles[b] * dlt / totalVol;
+	double dab = (a == b) ? 1.0 : 0.0;
+	double dlt = delta[typeRepSite[a]][typeRepSite[b]];
+	jac[a][b] = dab + xa2 * typeMult[b] * tMoles[b] * dlt / totalVol;
       }
     }
 
@@ -612,17 +609,16 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
       double xa2 = xType[a] * xType[a];
       double sumDeriv = 0.0;
       for (int b = 0; b < p; b++) {
-        double dlt = delta[typeRepSite[a]][typeRepSite[b]];
-        double dDeltadV = dlt * gcpav;
-        sumDeriv += typeMult[b] * tMoles[b] * xType[b] * (dDeltadV * totalVol - dlt) / totalVol2;
+	double dlt = delta[typeRepSite[a]][typeRepSite[b]];
+	double dDeltadV = dlt * gcpav;
+	sumDeriv += typeMult[b] * tMoles[b] * xType[b] * (dDeltadV * totalVol - dlt) / totalVol2;
       }
       jac[a][p] = xa2 * sumDeriv * dVdZeta;
     }
 
     // j_zeta_X row: dR_zeta/dX_a
     for (int a = 0; a < p; a++) {
-      jac[p][a] = btemp / numberOfMolesInPhase * cpaon * typeMult[a] * (tMoles[a] / totalVol) * gdv1
-          * redSum[a];
+      jac[p][a] = btemp / numberOfMolesInPhase * cpaon * typeMult[a] * (tMoles[a] / totalVol) * gdv1 * redSum[a];
     }
 
     // j_zeta_zeta scalar
@@ -638,8 +634,8 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
   private void updateDeltaWithG(int ns) {
     for (int i = 0; i < ns; i++) {
       for (int j = i; j < ns; j++) {
-        delta[i][j] = deltaNog[i][j] * gcpa;
-        delta[j][i] = delta[i][j];
+	delta[i][j] = deltaNog[i][j] * gcpa;
+	delta[j][i] = delta[i][j];
       }
     }
   }
@@ -669,9 +665,9 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
    * {@inheritDoc}
    *
    * <p>
-   * Override type 1 initialization to use reduced-dimension site type computation. Higher-order
-   * volume derivatives (FCPA, dFCPAdV, dFCPAdVdV, dFCPAdVdVdV) are computed using the type
-   * grouping, reducing linear system size from n_s to p.
+   * Override type 1 initialization to use reduced-dimension site type computation. Higher-order volume derivatives
+   * (FCPA, dFCPAdV, dFCPAdVdV, dFCPAdVdVdV) are computed using the type grouping, reducing linear system size from n_s
+   * to p.
    * </p>
    */
   @Override
@@ -715,8 +711,7 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
     double gv = getGcpav();
     double fV = gv - 1.0 / totalVolume;
     double fVV = fV * fV + gcpavv + 1.0 / totalVolume2;
-    double fVVV =
-        fV * fV * fV + 3.0 * fV * (gcpavv + 1.0 / totalVolume2) + gcpavvv - 2.0 / totalVolume3;
+    double fVVV = fV * fV * fV + 3.0 * fV * (gcpavv + 1.0 / totalVolume2) + gcpavvv - 2.0 / totalVolume3;
 
     // Read reduced site fractions and moles
     double[] xSiteFull = new double[ns];
@@ -732,9 +727,9 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
     for (int a = 0; a < p; a++) {
       double maInvV = typeMult[a] * workM[a] * invV;
       for (int b = a; b < p; b++) {
-        double k = maInvV * typeMult[b] * workM[b] * delta[typeRepSite[a]][typeRepSite[b]];
-        workKlk[a][b] = k;
-        workKlk[b][a] = k;
+	double k = maInvV * typeMult[b] * workM[b] * delta[typeRepSite[a]][typeRepSite[b]];
+	workKlk[a][b] = k;
+	workKlk[b][a] = k;
       }
     }
 
@@ -742,7 +737,7 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
     for (int a = 0; a < p; a++) {
       double s = 0.0;
       for (int b = 0; b < p; b++) {
-        s += workKlk[a][b] * workKsi[b];
+	s += workKlk[a][b] * workKsi[b];
       }
       workKlkKsi[a] = s;
     }
@@ -750,7 +745,7 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
     // Build reduced Hessian for XV linear system
     for (int a = 0; a < p; a++) {
       for (int b = 0; b < p; b++) {
-        workHess[a][b] = -workKlk[a][b];
+	workHess[a][b] = -workKlk[a][b];
       }
       workHess[a][a] -= typeMult[a] * workM[a] / (workKsi[a] * workKsi[a]);
     }
@@ -779,7 +774,7 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
     for (int a = 0; a < p; a++) {
       double s = 0.0;
       for (int b = 0; b < p; b++) {
-        s += workKlk[a][b] * workXV[b];
+	s += workKlk[a][b] * workXV[b];
       }
       dotXVKlkXV += workXV[a] * s;
     }
@@ -791,13 +786,12 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
       sumXV2 += typeMult[a] * workXV[a] * workXV[a];
     }
 
-    dFCPAdVdVdV = -0.5 * fVVV * dotKsiKlkKsi - 3.0 * fVV * dotKlkKsiXV - 3.0 * fV * dotXVKlkXV
-        + sumQXV * sumXV2;
+    dFCPAdVdVdV = -0.5 * fVVV * dotKsiKlkKsi - 3.0 * fVV * dotKlkKsiXV - 3.0 * fV * dotXVKlkXV + sumQXV * sumXV2;
   }
 
   /**
-   * Solve a linear system A*x = b in-place (b overwritten with solution) using Gaussian elimination
-   * with partial pivoting.
+   * Solve a linear system A*x = b in-place (b overwritten with solution) using Gaussian elimination with partial
+   * pivoting.
    *
    * @param a coefficient matrix (modified in-place)
    * @param b right-hand side vector (overwritten with solution)
@@ -809,36 +803,36 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
       int maxRow = col;
       double maxVal = Math.abs(a[col][col]);
       for (int row = col + 1; row < n; row++) {
-        double val = Math.abs(a[row][col]);
-        if (val > maxVal) {
-          maxVal = val;
-          maxRow = row;
-        }
+	double val = Math.abs(a[row][col]);
+	if (val > maxVal) {
+	  maxVal = val;
+	  maxRow = row;
+	}
       }
       if (maxVal < 1.0e-30) {
-        return false;
+	return false;
       }
       if (maxRow != col) {
-        double[] tempRow = a[col];
-        a[col] = a[maxRow];
-        a[maxRow] = tempRow;
-        double tempB = b[col];
-        b[col] = b[maxRow];
-        b[maxRow] = tempB;
+	double[] tempRow = a[col];
+	a[col] = a[maxRow];
+	a[maxRow] = tempRow;
+	double tempB = b[col];
+	b[col] = b[maxRow];
+	b[maxRow] = tempB;
       }
       double pivot = a[col][col];
       for (int row = col + 1; row < n; row++) {
-        double factor = a[row][col] / pivot;
-        for (int k = col + 1; k < n; k++) {
-          a[row][k] -= factor * a[col][k];
-        }
-        b[row] -= factor * b[col];
+	double factor = a[row][col] / pivot;
+	for (int k = col + 1; k < n; k++) {
+	  a[row][k] -= factor * a[col][k];
+	}
+	b[row] -= factor * b[col];
       }
     }
     for (int row = n - 1; row >= 0; row--) {
       double sum = b[row];
       for (int k = row + 1; k < n; k++) {
-        sum -= a[row][k] * b[k];
+	sum -= a[row][k] * b[k];
       }
       b[row] = sum / a[row][row];
     }
@@ -847,9 +841,8 @@ public class PhaseSrkCPAfullyImplicitReduced extends PhaseSrkCPAs {
 
   /** {@inheritDoc} */
   @Override
-  public double molarVolumeChangePhase(double pressure, double temperature, double A, double B,
-      PhaseType pt) throws neqsim.util.exception.IsNaNException,
-      neqsim.util.exception.TooManyIterationsException {
+  public double molarVolumeChangePhase(double pressure, double temperature, double A, double B, PhaseType pt)
+      throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
     return super.molarVolumeChangePhase(pressure, temperature, A, B, pt);
   }
 

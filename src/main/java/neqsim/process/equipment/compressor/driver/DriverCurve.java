@@ -6,10 +6,9 @@ import java.io.Serializable;
  * Interface for compressor and pump driver performance curves.
  *
  * <p>
- * This interface defines the contract for modeling driver characteristics including power
- * availability, torque limits, and efficiency at various operating conditions. Driver curves are
- * used to determine if a compressor or pump can achieve the required duty within the mechanical
- * constraints of its driver.
+ * This interface defines the contract for modeling driver characteristics including power availability, torque limits,
+ * and efficiency at various operating conditions. Driver curves are used to determine if a compressor or pump can
+ * achieve the required duty within the mechanical constraints of its driver.
  * </p>
  *
  * <p>
@@ -63,8 +62,8 @@ public interface DriverCurve extends Serializable {
    * Gets the available power at the specified speed.
    *
    * <p>
-   * For gas turbines, this accounts for ambient temperature derating. For electric motors with VFD,
-   * this may be constant torque (power proportional to speed) or constant power.
+   * For gas turbines, this accounts for ambient temperature derating. For electric motors with VFD, this may be
+   * constant torque (power proportional to speed) or constant power.
    * </p>
    *
    * @param speed operating speed in RPM
@@ -83,7 +82,7 @@ public interface DriverCurve extends Serializable {
   /**
    * Gets the driver efficiency at the specified speed and load.
    *
-   * @param speed operating speed in RPM
+   * @param speed        operating speed in RPM
    * @param loadFraction load as fraction of available power (0-1)
    * @return efficiency as fraction (0-1)
    */
@@ -107,7 +106,7 @@ public interface DriverCurve extends Serializable {
    * Checks if the driver can provide the required power at the specified speed.
    *
    * @param requiredPower required power in kW
-   * @param speed operating speed in RPM
+   * @param speed         operating speed in RPM
    * @return true if driver can provide the power
    */
   boolean canSupplyPower(double requiredPower, double speed);
@@ -116,12 +115,12 @@ public interface DriverCurve extends Serializable {
    * Gets the fuel or energy consumption for the given power output.
    *
    * <p>
-   * For gas turbines, returns fuel gas consumption in kg/hr or kW. For electric motors, returns
-   * electrical power input in kW.
+   * For gas turbines, returns fuel gas consumption in kg/hr or kW. For electric motors, returns electrical power input
+   * in kW.
    * </p>
    *
    * @param powerOutput power output in kW
-   * @param speed operating speed in RPM
+   * @param speed       operating speed in RPM
    * @return fuel or energy consumption
    */
   double getFuelConsumption(double powerOutput, double speed);
@@ -158,8 +157,8 @@ public interface DriverCurve extends Serializable {
    * Gets the power derating factor due to ambient conditions.
    *
    * <p>
-   * Returns a factor between 0 and 1 that is applied to the rated power to get the available power
-   * at current ambient conditions.
+   * Returns a factor between 0 and 1 that is applied to the rated power to get the available power at current ambient
+   * conditions.
    * </p>
    *
    * @return derating factor (0-1)
@@ -170,12 +169,11 @@ public interface DriverCurve extends Serializable {
    * Gets the current power margin.
    *
    * <p>
-   * Returns the difference between available power and current load as a fraction of available
-   * power.
+   * Returns the difference between available power and current load as a fraction of available power.
    * </p>
    *
    * @param currentLoad current power load in kW
-   * @param speed operating speed in RPM
+   * @param speed       operating speed in RPM
    * @return power margin as fraction (positive = headroom available)
    */
   default double getPowerMargin(double currentLoad, double speed) {

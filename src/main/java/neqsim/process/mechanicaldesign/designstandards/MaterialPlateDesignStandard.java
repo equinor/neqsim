@@ -23,14 +23,15 @@ public class MaterialPlateDesignStandard extends DesignStandard {
    * Constructor for MaterialPlateDesignStandard.
    * </p>
    */
-  public MaterialPlateDesignStandard() {}
+  public MaterialPlateDesignStandard() {
+  }
 
   /**
    * <p>
    * Constructor for MaterialPlateDesignStandard.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name         a {@link java.lang.String} object
    * @param equipmentInn a {@link neqsim.process.mechanicaldesign.MechanicalDesign} object
    */
   public MaterialPlateDesignStandard(String name, MechanicalDesign equipmentInn) {
@@ -72,9 +73,9 @@ public class MaterialPlateDesignStandard extends DesignStandard {
    * readMaterialDesignStandard.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
-   * @param specNo a {@link java.lang.String} object
-   * @param grade a {@link java.lang.String} object
+   * @param name       a {@link java.lang.String} object
+   * @param specNo     a {@link java.lang.String} object
+   * @param grade      a {@link java.lang.String} object
    * @param divClassNo a int
    */
   public void readMaterialDesignStandard(String name, String specNo, String grade, int divClassNo) {
@@ -83,17 +84,15 @@ public class MaterialPlateDesignStandard extends DesignStandard {
     divisionClassNumber = divClassNo;
 
     try (
-        neqsim.util.database.NeqSimProcessDesignDataBase database =
-            new neqsim.util.database.NeqSimProcessDesignDataBase();
-        java.sql.ResultSet dataSet =
-            database.getResultSet(("SELECT * FROM materialplateproperties WHERE materialName='"
-                + name + "' AND grade='" + grade + "' AND specificationNumber='" + specNo + "'"))) {
+	neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase();
+	java.sql.ResultSet dataSet = database.getResultSet(("SELECT * FROM materialplateproperties WHERE materialName='"
+	    + name + "' AND grade='" + grade + "' AND specificationNumber='" + specNo + "'"))) {
       while (dataSet.next()) {
-        if (divClassNo == 1) {
-          divisionClass = (Double.parseDouble(dataSet.getString("divisionClass1"))) * 0.00689475729; // MPa
-        } else {
-          divisionClass = (Double.parseDouble(dataSet.getString("divisionClass2"))) * 0.00689475729; // MPa
-        }
+	if (divClassNo == 1) {
+	  divisionClass = (Double.parseDouble(dataSet.getString("divisionClass1"))) * 0.00689475729; // MPa
+	} else {
+	  divisionClass = (Double.parseDouble(dataSet.getString("divisionClass2"))) * 0.00689475729; // MPa
+	}
       }
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);

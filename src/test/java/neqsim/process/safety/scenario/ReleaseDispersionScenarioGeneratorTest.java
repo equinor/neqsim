@@ -31,8 +31,8 @@ class ReleaseDispersionScenarioGeneratorTest {
     ProcessSystem process = createGasProcess(false);
 
     List<ReleaseDispersionScenario> scenarios = new ReleaseDispersionScenarioGenerator(process)
-        .boundaryConditions(standardWeather()).holeDiameter(50.0, "mm").inventoryVolume(3.0)
-        .releaseDuration(30.0, 5.0).generateScenarios();
+	.boundaryConditions(standardWeather()).holeDiameter(50.0, "mm").inventoryVolume(3.0).releaseDuration(30.0, 5.0)
+	.generateScenarios();
 
     assertFalse(scenarios.isEmpty());
     ReleaseDispersionScenario scenario = findFlammableScenario(scenarios);
@@ -55,8 +55,8 @@ class ReleaseDispersionScenarioGeneratorTest {
     ProcessSystem process = createGasProcess(true);
 
     List<ReleaseDispersionScenario> scenarios = new ReleaseDispersionScenarioGenerator(process)
-        .boundaryConditions(standardWeather()).holeDiameter(50.0, "mm").inventoryVolume(2.0)
-        .releaseDuration(20.0, 5.0).toxicEndpoint("H2S", 100.0).generateScenarios();
+	.boundaryConditions(standardWeather()).holeDiameter(50.0, "mm").inventoryVolume(2.0).releaseDuration(20.0, 5.0)
+	.toxicEndpoint("H2S", 100.0).generateScenarios();
 
     assertFalse(scenarios.isEmpty());
     ReleaseDispersionScenario scenario = findToxicScenario(scenarios);
@@ -68,8 +68,8 @@ class ReleaseDispersionScenarioGeneratorTest {
   void minimumPressureFiltersLowPressureStreams() {
     ProcessSystem process = createGasProcess(false);
 
-    List<ReleaseDispersionScenario> scenarios =
-        new ReleaseDispersionScenarioGenerator(process).minimumPressure(200.0).generateScenarios();
+    List<ReleaseDispersionScenario> scenarios = new ReleaseDispersionScenarioGenerator(process).minimumPressure(200.0)
+	.generateScenarios();
 
     assertTrue(scenarios.isEmpty());
   }
@@ -79,8 +79,7 @@ class ReleaseDispersionScenarioGeneratorTest {
     ProcessSystem process = new ProcessSystem();
     process.setName("empty");
 
-    List<ReleaseDispersionScenario> scenarios =
-        new ReleaseDispersionScenarioGenerator(process).generateScenarios();
+    List<ReleaseDispersionScenario> scenarios = new ReleaseDispersionScenarioGenerator(process).generateScenarios();
 
     assertTrue(scenarios.isEmpty());
   }
@@ -105,9 +104,8 @@ class ReleaseDispersionScenarioGeneratorTest {
     ProcessSystem process = createGasProcess(false);
     BoundaryConditions weather = BoundaryConditions.northSeaWinter();
 
-    ReleaseDispersionScenarioGenerator generator =
-        new ReleaseDispersionScenarioGenerator(process).boundaryConditions(weather)
-            .holeDiameter(10.0, "mm").inventoryVolume(5.0).releaseDuration(60.0, 5.0);
+    ReleaseDispersionScenarioGenerator generator = new ReleaseDispersionScenarioGenerator(process)
+	.boundaryConditions(weather).holeDiameter(10.0, "mm").inventoryVolume(5.0).releaseDuration(60.0, 5.0);
 
     List<ReleaseDispersionScenario> scenarios = generator.generateScenarios();
 
@@ -129,9 +127,8 @@ class ReleaseDispersionScenarioGeneratorTest {
     ProcessSystem process = createSingleStreamProcess();
 
     List<ReleaseDispersionScenario> scenarios = new ReleaseDispersionScenarioGenerator(process)
-        .releaseCases(ReleaseCase.FIVE_MM_HOLE, ReleaseCase.FULL_BORE_RUPTURE)
-        .fullBoreDiameter(150.0, "mm").addWeatherCase("stable-D", standardWeather())
-        .releaseDuration(20.0, 5.0).generateScenarios();
+	.releaseCases(ReleaseCase.FIVE_MM_HOLE, ReleaseCase.FULL_BORE_RUPTURE).fullBoreDiameter(150.0, "mm")
+	.addWeatherCase("stable-D", standardWeather()).releaseDuration(20.0, 5.0).generateScenarios();
 
     assertEquals(2, scenarios.size());
     assertEquals("5 mm process leak", scenarios.get(0).getReleaseCaseName());
@@ -146,12 +143,11 @@ class ReleaseDispersionScenarioGeneratorTest {
   void trappedInventoryIsUsedInScenariosAndCfdCases() {
     ProcessSystem process = createSingleStreamProcess();
     InventoryResult inventory = new TrappedInventoryCalculator().setFluid(createLeanGas())
-        .setOperatingConditions(55.0, "bara", 25.0, "C").addEquipmentVolume("V-101", 4.0, 0.0, null)
-        .calculate();
+	.setOperatingConditions(55.0, "bara", 25.0, "C").addEquipmentVolume("V-101", 4.0, 0.0, null).calculate();
 
     ReleaseDispersionScenarioGenerator generator = new ReleaseDispersionScenarioGenerator(process)
-        .trappedInventory(inventory).releaseCases(ReleaseCase.TEN_MM_HOLE)
-        .addWeatherCase("neutral-D", standardWeather()).releaseDuration(20.0, 5.0);
+	.trappedInventory(inventory).releaseCases(ReleaseCase.TEN_MM_HOLE)
+	.addWeatherCase("neutral-D", standardWeather()).releaseDuration(20.0, 5.0);
 
     List<ReleaseDispersionScenario> scenarios = generator.generateScenarios();
     List<CfdSourceTermCase> cfdCases = generator.generateCfdSourceTermCases();
@@ -165,30 +161,28 @@ class ReleaseDispersionScenarioGeneratorTest {
   }
 
   private static BoundaryConditions standardWeather() {
-    return BoundaryConditions.builder().ambientTemperature(15.0, "C").windSpeed(5.0)
-        .pasquillStabilityClass('D').isOffshore(false).surfaceRoughness(0.1).build();
+    return BoundaryConditions.builder().ambientTemperature(15.0, "C").windSpeed(5.0).pasquillStabilityClass('D')
+	.isOffshore(false).surfaceRoughness(0.1).build();
   }
 
-  private static ReleaseDispersionScenario findFlammableScenario(
-      List<ReleaseDispersionScenario> scenarios) {
+  private static ReleaseDispersionScenario findFlammableScenario(List<ReleaseDispersionScenario> scenarios) {
     for (ReleaseDispersionScenario scenario : scenarios) {
       if (scenario.hasFlammableCloud()) {
-        return scenario;
+	return scenario;
       }
     }
-    throw new AssertionError("Expected at least one flammable release-dispersion scenario: "
-        + summarizeScenarios(scenarios));
+    throw new AssertionError(
+	"Expected at least one flammable release-dispersion scenario: " + summarizeScenarios(scenarios));
   }
 
-  private static ReleaseDispersionScenario findToxicScenario(
-      List<ReleaseDispersionScenario> scenarios) {
+  private static ReleaseDispersionScenario findToxicScenario(List<ReleaseDispersionScenario> scenarios) {
     for (ReleaseDispersionScenario scenario : scenarios) {
       if (scenario.hasToxicEndpoint()) {
-        return scenario;
+	return scenario;
       }
     }
-    throw new AssertionError("Expected at least one toxic release-dispersion scenario: "
-        + summarizeScenarios(scenarios));
+    throw new AssertionError(
+	"Expected at least one toxic release-dispersion scenario: " + summarizeScenarios(scenarios));
   }
 
   private static String summarizeScenarios(List<ReleaseDispersionScenario> scenarios) {

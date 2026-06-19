@@ -20,7 +20,7 @@ public class H2Sdistribution {
   private static final Logger logger = LogManager.getLogger(H2Sdistribution.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.

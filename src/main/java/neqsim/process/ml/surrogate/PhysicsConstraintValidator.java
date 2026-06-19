@@ -12,8 +12,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * Validates AI-proposed actions against physics constraints.
  *
  * <p>
- * This class enforces thermodynamic and safety constraints before allowing AI/ML models to execute
- * actions on a process system. Key principles:
+ * This class enforces thermodynamic and safety constraints before allowing AI/ML models to execute actions on a process
+ * system. Key principles:
  * <ul>
  * <li><b>Physics First:</b> All actions must satisfy mass/energy balances</li>
  * <li><b>Safety by Design:</b> Constraint violations are caught before execution</li>
@@ -77,46 +77,42 @@ public class PhysicsConstraintValidator implements Serializable {
 
   private void addDefaultPhysicalConstraints() {
     // Temperature must be positive (Kelvin)
-    constraints.add(new PhysicalBoundConstraint("temperature", 0.0, Double.MAX_VALUE, "K",
-        "Temperature must be positive"));
+    constraints
+	.add(new PhysicalBoundConstraint("temperature", 0.0, Double.MAX_VALUE, "K", "Temperature must be positive"));
 
     // Pressure must be positive
-    constraints.add(new PhysicalBoundConstraint("pressure", 0.0, Double.MAX_VALUE, "Pa",
-        "Pressure must be positive"));
+    constraints.add(new PhysicalBoundConstraint("pressure", 0.0, Double.MAX_VALUE, "Pa", "Pressure must be positive"));
 
     // Flow rates must be non-negative
-    constraints.add(new PhysicalBoundConstraint("flow", 0.0, Double.MAX_VALUE, "kg/s",
-        "Flow rate must be non-negative"));
+    constraints
+	.add(new PhysicalBoundConstraint("flow", 0.0, Double.MAX_VALUE, "kg/s", "Flow rate must be non-negative"));
 
     // Valve opening must be 0-100%
-    constraints.add(new PhysicalBoundConstraint("valve.opening", 0.0, 1.0, "-",
-        "Valve opening must be between 0 and 1"));
+    constraints
+	.add(new PhysicalBoundConstraint("valve.opening", 0.0, 1.0, "-", "Valve opening must be between 0 and 1"));
   }
 
   /**
    * Adds a pressure limit constraint for specific equipment.
    *
    * @param equipmentName name of the equipment
-   * @param minPressure minimum pressure
-   * @param maxPressure maximum pressure
-   * @param unit pressure unit
+   * @param minPressure   minimum pressure
+   * @param maxPressure   maximum pressure
+   * @param unit          pressure unit
    */
-  public void addPressureLimit(String equipmentName, double minPressure, double maxPressure,
-      String unit) {
-    constraints
-        .add(new EquipmentConstraint(equipmentName, "pressure", minPressure, maxPressure, unit));
+  public void addPressureLimit(String equipmentName, double minPressure, double maxPressure, String unit) {
+    constraints.add(new EquipmentConstraint(equipmentName, "pressure", minPressure, maxPressure, unit));
   }
 
   /**
    * Adds a temperature limit constraint for specific equipment.
    *
    * @param equipmentName name of the equipment
-   * @param minTemp minimum temperature
-   * @param maxTemp maximum temperature
-   * @param unit temperature unit
+   * @param minTemp       minimum temperature
+   * @param maxTemp       maximum temperature
+   * @param unit          temperature unit
    */
-  public void addTemperatureLimit(String equipmentName, double minTemp, double maxTemp,
-      String unit) {
+  public void addTemperatureLimit(String equipmentName, double minTemp, double maxTemp, String unit) {
     constraints.add(new EquipmentConstraint(equipmentName, "temperature", minTemp, maxTemp, unit));
   }
 
@@ -124,9 +120,9 @@ public class PhysicsConstraintValidator implements Serializable {
    * Adds a flow rate limit constraint for specific equipment.
    *
    * @param equipmentName name of the equipment
-   * @param minFlow minimum flow rate
-   * @param maxFlow maximum flow rate
-   * @param unit flow unit
+   * @param minFlow       minimum flow rate
+   * @param maxFlow       maximum flow rate
+   * @param unit          flow unit
    */
   public void addFlowLimit(String equipmentName, double minFlow, double maxFlow, String unit) {
     constraints.add(new EquipmentConstraint(equipmentName, "flow", minFlow, maxFlow, unit));
@@ -165,13 +161,12 @@ public class PhysicsConstraintValidator implements Serializable {
       double value = action.getValue();
 
       for (Constraint constraint : constraints) {
-        if (constraint.appliesTo(variable)) {
-          ConstraintCheckResult check = constraint.check(variable, value);
-          if (!check.satisfied) {
-            result.addViolation(
-                new ConstraintViolation(constraint.getName(), variable, value, check.message));
-          }
-        }
+	if (constraint.appliesTo(variable)) {
+	  ConstraintCheckResult check = constraint.check(variable, value);
+	  if (!check.satisfied) {
+	    result.addViolation(new ConstraintViolation(constraint.getName(), variable, value, check.message));
+	  }
+	}
       }
     }
 
@@ -179,8 +174,7 @@ public class PhysicsConstraintValidator implements Serializable {
     if (enforceMassBalance) {
       ConstraintCheckResult massCheck = checkMassBalance();
       if (!massCheck.satisfied) {
-        result.addViolation(
-            new ConstraintViolation("MassBalance", "system", Double.NaN, massCheck.message));
+	result.addViolation(new ConstraintViolation("MassBalance", "system", Double.NaN, massCheck.message));
       }
     }
 
@@ -188,8 +182,7 @@ public class PhysicsConstraintValidator implements Serializable {
     if (enforceEnergyBalance) {
       ConstraintCheckResult energyCheck = checkEnergyBalance();
       if (!energyCheck.satisfied) {
-        result.addViolation(
-            new ConstraintViolation("EnergyBalance", "system", Double.NaN, energyCheck.message));
+	result.addViolation(new ConstraintViolation("EnergyBalance", "system", Double.NaN, energyCheck.message));
       }
     }
 
@@ -207,17 +200,17 @@ public class PhysicsConstraintValidator implements Serializable {
     // Check equipment-specific constraints
     for (ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
       for (Constraint constraint : constraints) {
-        if (constraint instanceof EquipmentConstraint) {
-          EquipmentConstraint ec = (EquipmentConstraint) constraint;
-          if (ec.equipmentName.equals(equipment.getName())) {
-            double value = getEquipmentValue(equipment, ec.property);
-            ConstraintCheckResult check = ec.check(ec.property, value);
-            if (!check.satisfied) {
-              result.addViolation(new ConstraintViolation(constraint.getName(),
-                  equipment.getName() + "." + ec.property, value, check.message));
-            }
-          }
-        }
+	if (constraint instanceof EquipmentConstraint) {
+	  EquipmentConstraint ec = (EquipmentConstraint) constraint;
+	  if (ec.equipmentName.equals(equipment.getName())) {
+	    double value = getEquipmentValue(equipment, ec.property);
+	    ConstraintCheckResult check = ec.check(ec.property, value);
+	    if (!check.satisfied) {
+	      result.addViolation(new ConstraintViolation(constraint.getName(), equipment.getName() + "." + ec.property,
+		  value, check.message));
+	    }
+	  }
+	}
       }
     }
 
@@ -230,17 +223,17 @@ public class PhysicsConstraintValidator implements Serializable {
     }
 
     switch (property.toLowerCase()) {
-      case "pressure":
-        return equipment.getThermoSystem().getPressure();
-      case "temperature":
-        return equipment.getThermoSystem().getTemperature();
-      case "flow":
-        if (equipment instanceof StreamInterface) {
-          return ((StreamInterface) equipment).getFlowRate("kg/sec");
-        }
-        return Double.NaN;
-      default:
-        return Double.NaN;
+    case "pressure":
+      return equipment.getThermoSystem().getPressure();
+    case "temperature":
+      return equipment.getThermoSystem().getTemperature();
+    case "flow":
+      if (equipment instanceof StreamInterface) {
+	return ((StreamInterface) equipment).getFlowRate("kg/sec");
+      }
+      return Double.NaN;
+    default:
+      return Double.NaN;
     }
   }
 
@@ -251,12 +244,12 @@ public class PhysicsConstraintValidator implements Serializable {
 
     for (ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
       if (equipment instanceof StreamInterface) {
-        StreamInterface stream = (StreamInterface) equipment;
-        // This is simplified - real implementation would track in/out streams
-        double flow = stream.getFlowRate("kg/sec");
-        if (flow > 0) {
-          totalIn += flow;
-        }
+	StreamInterface stream = (StreamInterface) equipment;
+	// This is simplified - real implementation would track in/out streams
+	double flow = stream.getFlowRate("kg/sec");
+	if (flow > 0) {
+	  totalIn += flow;
+	}
       }
     }
 
@@ -268,8 +261,7 @@ public class PhysicsConstraintValidator implements Serializable {
     double error = Math.abs(totalIn - totalOut) / totalIn;
     if (error > massBalanceTolerance) {
       return new ConstraintCheckResult(false,
-          String.format("Mass balance error %.2f%% exceeds tolerance %.2f%%", error * 100,
-              massBalanceTolerance * 100));
+	  String.format("Mass balance error %.2f%% exceeds tolerance %.2f%%", error * 100, massBalanceTolerance * 100));
     }
 
     return new ConstraintCheckResult(true, "Mass balance satisfied");
@@ -330,7 +322,7 @@ public class PhysicsConstraintValidator implements Serializable {
      */
     public String getRejectionReason() {
       if (violations.isEmpty()) {
-        return null;
+	return null;
       }
       return violations.get(0).getMessage();
     }
@@ -364,12 +356,11 @@ public class PhysicsConstraintValidator implements Serializable {
      * Constructor for a constraint violation.
      *
      * @param constraintName name of the violated constraint
-     * @param variable the variable that violated the constraint
-     * @param value the value of the variable
-     * @param message explanation of the violation
+     * @param variable       the variable that violated the constraint
+     * @param value          the value of the variable
+     * @param message        explanation of the violation
      */
-    public ConstraintViolation(String constraintName, String variable, double value,
-        String message) {
+    public ConstraintViolation(String constraintName, String variable, double value, String message) {
       this.constraintName = constraintName;
       this.variable = variable;
       this.value = value;
@@ -434,8 +425,7 @@ public class PhysicsConstraintValidator implements Serializable {
     private final String unit;
     private final String description;
 
-    PhysicalBoundConstraint(String pattern, double min, double max, String unit,
-        String description) {
+    PhysicalBoundConstraint(String pattern, double min, double max, String unit, String description) {
       this.variablePattern = pattern;
       this.min = min;
       this.max = max;
@@ -456,12 +446,12 @@ public class PhysicsConstraintValidator implements Serializable {
     @Override
     public ConstraintCheckResult check(String variable, double value) {
       if (value < min) {
-        return new ConstraintCheckResult(false,
-            String.format("%s: value %.4f below minimum %.4f %s", description, value, min, unit));
+	return new ConstraintCheckResult(false,
+	    String.format("%s: value %.4f below minimum %.4f %s", description, value, min, unit));
       }
       if (value > max) {
-        return new ConstraintCheckResult(false,
-            String.format("%s: value %.4f above maximum %.4f %s", description, value, max, unit));
+	return new ConstraintCheckResult(false,
+	    String.format("%s: value %.4f above maximum %.4f %s", description, value, max, unit));
       }
       return new ConstraintCheckResult(true, "OK");
     }
@@ -500,12 +490,12 @@ public class PhysicsConstraintValidator implements Serializable {
     @Override
     public ConstraintCheckResult check(String variable, double value) {
       if (value < min) {
-        return new ConstraintCheckResult(false, String.format("%s %s %.4f below limit %.4f %s",
-            equipmentName, property, value, min, unit));
+	return new ConstraintCheckResult(false,
+	    String.format("%s %s %.4f below limit %.4f %s", equipmentName, property, value, min, unit));
       }
       if (value > max) {
-        return new ConstraintCheckResult(false, String.format("%s %s %.4f above limit %.4f %s",
-            equipmentName, property, value, max, unit));
+	return new ConstraintCheckResult(false,
+	    String.format("%s %s %.4f above limit %.4f %s", equipmentName, property, value, max, unit));
       }
       return new ConstraintCheckResult(true, "OK");
     }

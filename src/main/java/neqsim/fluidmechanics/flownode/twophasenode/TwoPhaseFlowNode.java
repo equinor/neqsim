@@ -39,7 +39,8 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
    * Constructor for TwoPhaseFlowNode.
    * </p>
    */
-  public TwoPhaseFlowNode() {}
+  public TwoPhaseFlowNode() {
+  }
 
   /**
    * <p>
@@ -47,8 +48,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface}
-   *        object
+   * @param pipe   a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public TwoPhaseFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
     super(system, pipe);
@@ -111,8 +111,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
       molarFlowRate[1] = 0.0;
       massFlowRate[0] = molarFlowRate[0] * getBulkSystem().getPhase(0).getMolarMass();
       massFlowRate[1] = 0.0;
-      volumetricFlowRate[0] =
-          massFlowRate[0] / getBulkSystem().getPhase(0).getPhysicalProperties().getDensity();
+      volumetricFlowRate[0] = massFlowRate[0] / getBulkSystem().getPhase(0).getPhysicalProperties().getDensity();
       volumetricFlowRate[1] = 0.0;
 
       // Single phase uses full pipe area
@@ -126,10 +125,8 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
     molarFlowRate[0] = getBulkSystem().getPhases()[0].getNumberOfMolesInPhase();
     massFlowRate[1] = molarFlowRate[1] * getBulkSystem().getPhases()[1].getMolarMass();
     massFlowRate[0] = molarFlowRate[0] * getBulkSystem().getPhases()[0].getMolarMass();
-    volumetricFlowRate[0] =
-        massFlowRate[0] / getBulkSystem().getPhases()[0].getPhysicalProperties().getDensity();
-    volumetricFlowRate[1] =
-        massFlowRate[1] / getBulkSystem().getPhases()[1].getPhysicalProperties().getDensity();
+    volumetricFlowRate[0] = massFlowRate[0] / getBulkSystem().getPhases()[0].getPhysicalProperties().getDensity();
+    volumetricFlowRate[1] = massFlowRate[1] / getBulkSystem().getPhases()[1].getPhysicalProperties().getDensity();
 
     // Guard against zero phase fraction to avoid division by zero (Infinity velocity)
     double gasArea = phaseFraction[0] * pipe.getArea();
@@ -214,45 +211,41 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
       initVelocity();
       init();
 
-      double Fg = 0.5 * bulkSystem.getPhases()[0].getPhysicalProperties().getDensity()
-          * wallFrictionFactor[0] * Math.pow(velocity[0], 2.0) * wallContactLength[0]
-          / (pipe.getArea() * 4.0);
-      double Fl = 0.5 * bulkSystem.getPhases()[1].getPhysicalProperties().getDensity()
-          * wallFrictionFactor[1] * Math.pow(velocity[1], 2.0) * wallContactLength[1]
-          / (pipe.getArea() * 4.0);
-      double Fi = 0.5 * bulkSystem.getPhases()[0].getPhysicalProperties().getDensity()
-          * interphaseFrictionFactor[0] * Math.pow(velocity[0] - velocity[1], 2.0)
-          * interphaseContactLength[0] / (pipe.getArea() * 4.0);
+      double Fg = 0.5 * bulkSystem.getPhases()[0].getPhysicalProperties().getDensity() * wallFrictionFactor[0]
+	  * Math.pow(velocity[0], 2.0) * wallContactLength[0] / (pipe.getArea() * 4.0);
+      double Fl = 0.5 * bulkSystem.getPhases()[1].getPhysicalProperties().getDensity() * wallFrictionFactor[1]
+	  * Math.pow(velocity[1], 2.0) * wallContactLength[1] / (pipe.getArea() * 4.0);
+      double Fi = 0.5 * bulkSystem.getPhases()[0].getPhysicalProperties().getDensity() * interphaseFrictionFactor[0]
+	  * Math.pow(velocity[0] - velocity[1], 2.0) * interphaseContactLength[0] / (pipe.getArea() * 4.0);
 
       f = -phaseFraction[0] * Fl + (1 - phaseFraction[0]) * Fg + Fi
-          + (1.0 - phaseFraction[0]) * phaseFraction[0]
-              * (bulkSystem.getPhases()[1].getPhysicalProperties().getDensity()
-                  - bulkSystem.getPhases()[0].getPhysicalProperties().getDensity())
-              * gravity * inclination;
+	  + (1.0 - phaseFraction[0]) * phaseFraction[0]
+	      * (bulkSystem.getPhases()[1].getPhysicalProperties().getDensity()
+		  - bulkSystem.getPhases()[0].getPhysicalProperties().getDensity())
+	      * gravity * inclination;
 
       /*
        * df = -Fl - Fg + (bulkSystem.getPhases()[1].getPhysicalProperties().getDensity() -
        * bulkSystem.getPhases()[0].getPhysicalProperties().getDensity()) * gravity * inclination -
-       * Math.pow(phaseFraction[0], 2.0)
-       * (bulkSystem.getPhases()[1].getPhysicalProperties().getDensity() -
+       * Math.pow(phaseFraction[0], 2.0) (bulkSystem.getPhases()[1].getPhysicalProperties().getDensity() -
        * bulkSystem.getPhases()[0].getPhysicalProperties().getDensity()) gravity * inclination;
        */
 
       if (f > 0) {
-        phaseFraction[0] += (betaOld - phaseFraction[0]);
-        if (fOld < 0) {
-          step *= 5.0;
-        }
+	phaseFraction[0] += (betaOld - phaseFraction[0]);
+	if (fOld < 0) {
+	  step *= 5.0;
+	}
       } else {
-        betaOld = phaseFraction[0];
-        phaseFraction[0] -= phaseFraction[0] / step;
+	betaOld = phaseFraction[0];
+	phaseFraction[0] -= phaseFraction[0] / step;
       }
       // Ensure phase fractions stay within physical bounds to prevent velocity divergence
       if (phaseFraction[0] < 0.001) {
-        phaseFraction[0] = 0.001;
+	phaseFraction[0] = 0.001;
       }
       if (phaseFraction[0] > 0.999) {
-        phaseFraction[0] = 0.999;
+	phaseFraction[0] = 0.999;
       }
       phaseFraction[1] = 1.0 - phaseFraction[0];
       // System.out.println("f " + f + " iterations " + iterations + " beta " + phaseFraction[0]);
@@ -277,12 +270,11 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
    */
   public double calcHydraulicDiameter() {
     double wallPlusInterface = wallContactLength[0] + interphaseContactLength[0];
-    hydraulicDiameter[0] =
-        (wallPlusInterface > 1e-20) ? 4.0 * phaseFraction[0] * pipe.getArea() / wallPlusInterface
-            : 0.0;
+    hydraulicDiameter[0] = (wallPlusInterface > 1e-20) ? 4.0 * phaseFraction[0] * pipe.getArea() / wallPlusInterface
+	: 0.0;
     hydraulicDiameter[1] = (wallContactLength[1] > 1e-20)
-        ? 4.0 * phaseFraction[1] * pipe.getArea() / wallContactLength[1]
-        : 0.0;
+	? 4.0 * phaseFraction[1] * pipe.getArea() / wallContactLength[1]
+	: 0.0;
     return hydraulicDiameter[0];
   }
 
@@ -296,10 +288,12 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   public double calcReynoldNumber() {
     double visc1 = bulkSystem.getPhases()[1].getPhysicalProperties().getViscosity();
     double visc0 = bulkSystem.getPhases()[0].getPhysicalProperties().getViscosity();
-    reynoldsNumber[1] = (Math.abs(visc1) > 1e-30) ? velocity[1] * hydraulicDiameter[1]
-        * bulkSystem.getPhases()[1].getPhysicalProperties().getDensity() / visc1 : 0.0;
-    reynoldsNumber[0] = (Math.abs(visc0) > 1e-30) ? velocity[0] * hydraulicDiameter[0]
-        * bulkSystem.getPhases()[0].getPhysicalProperties().getDensity() / visc0 : 0.0;
+    reynoldsNumber[1] = (Math.abs(visc1) > 1e-30)
+	? velocity[1] * hydraulicDiameter[1] * bulkSystem.getPhases()[1].getPhysicalProperties().getDensity() / visc1
+	: 0.0;
+    reynoldsNumber[0] = (Math.abs(visc0) > 1e-30)
+	? velocity[0] * hydraulicDiameter[0] * bulkSystem.getPhases()[0].getPhysicalProperties().getDensity() / visc0
+	: 0.0;
     return reynoldsNumber[1];
   }
 
@@ -312,10 +306,9 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
    */
   public double calcWallFrictionFactor() {
     for (int i = 0; i < 2; i++) {
-      wallFrictionFactor[i] = Math.pow(
-          (1.0 / (-1.8 * Math.log10(6.9 / getReynoldsNumber(i)
-              * Math.pow(pipe.getRelativeRoughnes(this.getHydraulicDiameter(i)) / 3.7, 1.11)))),
-          2.0);
+      wallFrictionFactor[i] = Math.pow((1.0 / (-1.8 * Math.log10(
+	  6.9 / getReynoldsNumber(i) * Math.pow(pipe.getRelativeRoughnes(this.getHydraulicDiameter(i)) / 3.7, 1.11)))),
+	  2.0);
     }
     return wallFrictionFactor[0];
   }
@@ -338,31 +331,30 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
     for (int phaseNum = 0; phaseNum < 2; phaseNum++) {
       double targetMolarFlow = molarFlowRate[phaseNum];
       if (!Double.isFinite(targetMolarFlow) || targetMolarFlow < 0.0) {
-        continue;
+	continue;
       }
 
       double currentMolesInPhase = getBulkSystem().getPhase(phaseNum).getNumberOfMolesInPhase();
       if (!Double.isFinite(currentMolesInPhase) || currentMolesInPhase <= 0.0) {
-        continue;
+	continue;
       }
 
       if (targetMolarFlow > 1e-100) {
-        double scale = targetMolarFlow / currentMolesInPhase;
-        if (!Double.isFinite(scale) || scale < 0.0) {
-          continue;
-        }
+	double scale = targetMolarFlow / currentMolesInPhase;
+	if (!Double.isFinite(scale) || scale < 0.0) {
+	  continue;
+	}
 
-        for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
-          double currentMoles =
-              getBulkSystem().getPhase(phaseNum).getComponent(i).getNumberOfMolesInPhase();
-          if (!Double.isFinite(currentMoles) || currentMoles <= 0.0) {
-            continue;
-          }
-          double delta = currentMoles * (scale - 1.0);
-          if (Double.isFinite(delta) && Math.abs(delta) > 0.0) {
-            getBulkSystem().getPhase(phaseNum).addMoles(i, delta);
-          }
-        }
+	for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
+	  double currentMoles = getBulkSystem().getPhase(phaseNum).getComponent(i).getNumberOfMolesInPhase();
+	  if (!Double.isFinite(currentMoles) || currentMoles <= 0.0) {
+	    continue;
+	  }
+	  double delta = currentMoles * (scale - 1.0);
+	  if (Double.isFinite(delta) && Math.abs(delta) > 0.0) {
+	    getBulkSystem().getPhase(phaseNum).addMoles(i, delta);
+	  }
+	}
       }
     }
     getBulkSystem().initBeta();
@@ -385,12 +377,10 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   @Override
   public void init() {
     super.init();
-    massFlowRate[0] =
-        velocity[0] * getBulkSystem().getPhases()[0].getPhysicalProperties().getDensity()
-            * pipe.getArea() * phaseFraction[0];
-    massFlowRate[1] =
-        velocity[1] * getBulkSystem().getPhases()[1].getPhysicalProperties().getDensity()
-            * pipe.getArea() * phaseFraction[1];
+    massFlowRate[0] = velocity[0] * getBulkSystem().getPhases()[0].getPhysicalProperties().getDensity() * pipe.getArea()
+	* phaseFraction[0];
+    massFlowRate[1] = velocity[1] * getBulkSystem().getPhases()[1].getPhysicalProperties().getDensity() * pipe.getArea()
+	* phaseFraction[1];
     molarFlowRate[0] = massFlowRate[0] / getBulkSystem().getPhases()[0].getMolarMass();
     molarFlowRate[1] = massFlowRate[1] / getBulkSystem().getPhases()[1].getMolarMass();
     superficialVelocity[0] = velocity[0] * phaseFraction[0];
@@ -407,10 +397,8 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
     wallFrictionFactor[0] = interphaseTransportCoefficient.calcWallFrictionFactor(0, this);
     wallFrictionFactor[1] = interphaseTransportCoefficient.calcWallFrictionFactor(1, this);
 
-    interphaseFrictionFactor[0] =
-        interphaseTransportCoefficient.calcInterPhaseFrictionFactor(0, this);
-    interphaseFrictionFactor[1] =
-        interphaseTransportCoefficient.calcInterPhaseFrictionFactor(1, this);
+    interphaseFrictionFactor[0] = interphaseTransportCoefficient.calcInterPhaseFrictionFactor(0, this);
+    interphaseFrictionFactor[1] = interphaseTransportCoefficient.calcInterPhaseFrictionFactor(1, this);
   }
 
   /**
@@ -431,25 +419,24 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
    * </p>
    *
    * <p>
-   * The interfacial area per unit volume is critical for mass transfer calculations: N_i = k_L * a
-   * * ΔC_i
+   * The interfacial area per unit volume is critical for mass transfer calculations: N_i = k_L * a * ΔC_i
    * </p>
    *
    * @return the interfacial area per unit volume in 1/m
    */
   public double calcInterfacialAreaPerVolume() {
     switch (interfacialAreaModel) {
-      case GEOMETRIC:
-        interfacialAreaPerVolume = calcGeometricInterfacialAreaPerVolume();
-        break;
-      case EMPIRICAL_CORRELATION:
-        interfacialAreaPerVolume = calcEmpiricalInterfacialAreaPerVolume();
-        break;
-      case USER_DEFINED:
-        interfacialAreaPerVolume = userDefinedInterfacialAreaPerVolume;
-        break;
-      default:
-        interfacialAreaPerVolume = calcGeometricInterfacialAreaPerVolume();
+    case GEOMETRIC:
+      interfacialAreaPerVolume = calcGeometricInterfacialAreaPerVolume();
+      break;
+    case EMPIRICAL_CORRELATION:
+      interfacialAreaPerVolume = calcEmpiricalInterfacialAreaPerVolume();
+      break;
+    case USER_DEFINED:
+      interfacialAreaPerVolume = userDefinedInterfacialAreaPerVolume;
+      break;
+    default:
+      interfacialAreaPerVolume = calcGeometricInterfacialAreaPerVolume();
     }
     return interfacialAreaPerVolume;
   }
@@ -536,14 +523,14 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   // ==================== PHASE TRANSITION HANDLING ====================
 
   /**
-   * Minimum phase fraction threshold to avoid numerical singularities. When a phase fraction drops
-   * below this threshold, special handling is required for near single-phase conditions.
+   * Minimum phase fraction threshold to avoid numerical singularities. When a phase fraction drops below this
+   * threshold, special handling is required for near single-phase conditions.
    */
   public static final double MIN_PHASE_FRACTION = 1.0e-10;
 
   /**
-   * Initial nucleation phase fraction. When condensation/boiling is initiated, this is the initial
-   * fraction of the emerging phase.
+   * Initial nucleation phase fraction. When condensation/boiling is initiated, this is the initial fraction of the
+   * emerging phase.
    */
   public static final double NUCLEATION_PHASE_FRACTION = 1.0e-6;
 
@@ -571,8 +558,8 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
 
   /**
    * <p>
-   * Checks if the conditions are favorable for condensation (droplet formation from gas phase).
-   * This occurs when the gas is supersaturated - temperature is below dew point.
+   * Checks if the conditions are favorable for condensation (droplet formation from gas phase). This occurs when the
+   * gas is supersaturated - temperature is below dew point.
    * </p>
    *
    * @return true if condensation initiation is expected
@@ -585,8 +572,8 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
     try {
       // Clone system to avoid modifying the original
       neqsim.thermo.system.SystemInterface tempSystem = getBulkSystem().clone();
-      neqsim.thermodynamicoperations.ThermodynamicOperations ops =
-          new neqsim.thermodynamicoperations.ThermodynamicOperations(tempSystem);
+      neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+	  tempSystem);
       ops.dewPointTemperatureFlash();
       double dewPointTemp = tempSystem.getTemperature();
       return getBulkSystem().getTemperature() < dewPointTemp;
@@ -598,8 +585,8 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
 
   /**
    * <p>
-   * Checks if the conditions are favorable for bubble nucleation (gas formation from liquid phase).
-   * This occurs when the liquid is superheated - temperature is above bubble point.
+   * Checks if the conditions are favorable for bubble nucleation (gas formation from liquid phase). This occurs when
+   * the liquid is superheated - temperature is above bubble point.
    * </p>
    *
    * @return true if bubble nucleation is expected
@@ -612,8 +599,8 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
     try {
       // Clone system to avoid modifying the original
       neqsim.thermo.system.SystemInterface tempSystem = getBulkSystem().clone();
-      neqsim.thermodynamicoperations.ThermodynamicOperations ops =
-          new neqsim.thermodynamicoperations.ThermodynamicOperations(tempSystem);
+      neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+	  tempSystem);
       ops.bubblePointTemperatureFlash();
       double bubblePointTemp = tempSystem.getTemperature();
       return getBulkSystem().getTemperature() > bubblePointTemp;
@@ -625,13 +612,12 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
 
   /**
    * <p>
-   * Initiates condensation by setting up the liquid phase with nucleation phase fraction. This is
-   * used when transitioning from single-phase gas to two-phase flow.
+   * Initiates condensation by setting up the liquid phase with nucleation phase fraction. This is used when
+   * transitioning from single-phase gas to two-phase flow.
    * </p>
    *
    * <p>
-   * The initial droplet size is calculated based on homogeneous nucleation theory or set to a
-   * default value.
+   * The initial droplet size is calculated based on homogeneous nucleation theory or set to a default value.
    * </p>
    */
   public void initiateCondensation() {
@@ -641,16 +627,16 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
 
     // Perform flash to equilibrate phases
     try {
-      neqsim.thermodynamicoperations.ThermodynamicOperations ops =
-          new neqsim.thermodynamicoperations.ThermodynamicOperations(getBulkSystem());
+      neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+	  getBulkSystem());
       ops.TPflash();
       getBulkSystem().init(3);
 
       // Update phase fractions from flash result
       double flashedGasFraction = getBulkSystem().getVolumeFraction(0);
       if (flashedGasFraction < 1.0 - MIN_PHASE_FRACTION) {
-        phaseFraction[0] = flashedGasFraction;
-        phaseFraction[1] = 1.0 - flashedGasFraction;
+	phaseFraction[0] = flashedGasFraction;
+	phaseFraction[1] = 1.0 - flashedGasFraction;
       }
     } catch (Exception e) {
       logger.warn("Flash calculation failed during condensation initiation: " + e.getMessage());
@@ -661,8 +647,8 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
 
   /**
    * <p>
-   * Initiates bubble nucleation by setting up the gas phase with nucleation phase fraction. This is
-   * used when transitioning from single-phase liquid to two-phase flow.
+   * Initiates bubble nucleation by setting up the gas phase with nucleation phase fraction. This is used when
+   * transitioning from single-phase liquid to two-phase flow.
    * </p>
    */
   public void initiateBubbleNucleation() {
@@ -672,16 +658,16 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
 
     // Perform flash to equilibrate phases
     try {
-      neqsim.thermodynamicoperations.ThermodynamicOperations ops =
-          new neqsim.thermodynamicoperations.ThermodynamicOperations(getBulkSystem());
+      neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+	  getBulkSystem());
       ops.TPflash();
       getBulkSystem().init(3);
 
       // Update phase fractions from flash result
       double flashedGasFraction = getBulkSystem().getVolumeFraction(0);
       if (flashedGasFraction > MIN_PHASE_FRACTION) {
-        phaseFraction[0] = flashedGasFraction;
-        phaseFraction[1] = 1.0 - flashedGasFraction;
+	phaseFraction[0] = flashedGasFraction;
+	phaseFraction[1] = 1.0 - flashedGasFraction;
       }
     } catch (Exception e) {
       logger.warn("Flash calculation failed during bubble nucleation: " + e.getMessage());
@@ -692,8 +678,8 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
 
   /**
    * <p>
-   * Enforces minimum phase fraction limits to avoid numerical singularities in two-phase
-   * calculations. This is called during initialization to ensure stable calculations.
+   * Enforces minimum phase fraction limits to avoid numerical singularities in two-phase calculations. This is called
+   * during initialization to ensure stable calculations.
    * </p>
    */
   public void enforceMinimumPhaseFractions() {
@@ -711,8 +697,8 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
 
   /**
    * <p>
-   * Checks phase equilibrium and initiates phase transitions if necessary. This method should be
-   * called at each node to handle condensation or bubble nucleation.
+   * Checks phase equilibrium and initiates phase transitions if necessary. This method should be called at each node to
+   * handle condensation or bubble nucleation.
    * </p>
    *
    * @return true if a phase transition was initiated
@@ -731,15 +717,13 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
 
   /**
    * <p>
-   * Gets the initial droplet/bubble diameter for nucleation using Classical Nucleation Theory
-   * (CNT).
+   * Gets the initial droplet/bubble diameter for nucleation using Classical Nucleation Theory (CNT).
    * </p>
    *
    * <p>
-   * For droplet formation (condensation), uses heterogeneous CNT with a default pipe wall contact
-   * angle of 60 degrees. The supersaturation is estimated from the pressure difference between
-   * actual conditions and the dew/bubble point. Surface tension and gas properties are taken from
-   * the bulk thermodynamic system.
+   * For droplet formation (condensation), uses heterogeneous CNT with a default pipe wall contact angle of 60 degrees.
+   * The supersaturation is estimated from the pressure difference between actual conditions and the dew/bubble point.
+   * Surface tension and gas properties are taken from the bulk thermodynamic system.
    * </p>
    *
    * <p>
@@ -761,12 +745,12 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
     double saturationPressure;
     try {
       neqsim.thermo.system.SystemInterface tempSystem = getBulkSystem().clone();
-      neqsim.thermodynamicoperations.ThermodynamicOperations ops =
-          new neqsim.thermodynamicoperations.ThermodynamicOperations(tempSystem);
+      neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+	  tempSystem);
       if (isDroplet) {
-        ops.dewPointPressureFlash();
+	ops.dewPointPressureFlash();
       } else {
-        ops.bubblePointPressureFlash();
+	ops.bubblePointPressureFlash();
       }
       saturationPressure = tempSystem.getPressure();
     } catch (Exception e) {
@@ -785,11 +769,10 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
       double mw = getBulkSystem().getPhase(0).getComponent(heaviestComp).getMolarMass();
       double condensedDensity = 800.0; // Approximate hydrocarbon liquid density
       if (getBulkSystem().getNumberOfPhases() >= 2) {
-        condensedDensity = getBulkSystem().getPhase(1).getPhysicalProperties().getDensity();
+	condensedDensity = getBulkSystem().getPhase(1).getPhysicalProperties().getDensity();
       }
 
-      ClassicalNucleationTheory cnt =
-          new ClassicalNucleationTheory(mw, condensedDensity, surfaceTension);
+      ClassicalNucleationTheory cnt = new ClassicalNucleationTheory(mw, condensedDensity, surfaceTension);
       cnt.setTemperature(getBulkSystem().getTemperature());
       cnt.setTotalPressure(getBulkSystem().getPressure() * 1e5);
 
@@ -798,24 +781,24 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
       double satPressurePa = saturationPressure * 1e5;
       double supersat;
       if (isDroplet) {
-        // For condensation: S = p_actual / p_dew (actual pressure exceeds dew point)
-        supersat = Math.max(1.01, actualPressure / satPressurePa);
+	// For condensation: S = p_actual / p_dew (actual pressure exceeds dew point)
+	supersat = Math.max(1.01, actualPressure / satPressurePa);
       } else {
-        // For bubble nucleation: S = p_bubble / p_actual
-        supersat = Math.max(1.01, satPressurePa / actualPressure);
+	// For bubble nucleation: S = p_bubble / p_actual
+	supersat = Math.max(1.01, satPressurePa / actualPressure);
       }
       cnt.setSupersaturationRatio(supersat);
 
       // Set gas-phase transport properties
       if (getBulkSystem().getNumberOfPhases() >= 1) {
-        try {
-          double visc = getBulkSystem().getPhase(0).getPhysicalProperties().getViscosity();
-          if (visc > 0) {
-            cnt.setGasViscosity(visc);
-          }
-        } catch (Exception e) {
-          // Use defaults
-        }
+	try {
+	  double visc = getBulkSystem().getPhase(0).getPhysicalProperties().getViscosity();
+	  if (visc > 0) {
+	    cnt.setGasViscosity(visc);
+	  }
+	} catch (Exception e) {
+	  // Use defaults
+	}
       }
 
       // Use heterogeneous nucleation (pipe wall acts as nucleation site)
@@ -831,7 +814,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
 
       double diameter = cnt.getMeanParticleDiameter();
       if (diameter > 0.0 && Double.isFinite(diameter)) {
-        return Math.max(1.0e-9, Math.min(1.0e-3, diameter));
+	return Math.max(1.0e-9, Math.min(1.0e-3, diameter));
       }
     } catch (Exception e) {
       logger.debug("CNT calculation failed, using simplified estimate: " + e.getMessage());
@@ -843,8 +826,8 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   }
 
   /**
-   * Finds the index of the heaviest (highest molecular weight) component in the system. This is
-   * typically the most condensable component.
+   * Finds the index of the heaviest (highest molecular weight) component in the system. This is typically the most
+   * condensable component.
    *
    * @return index of the heaviest component
    */
@@ -854,16 +837,16 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
     for (int i = 0; i < getBulkSystem().getPhase(0).getNumberOfComponents(); i++) {
       double mw = getBulkSystem().getPhase(0).getComponent(i).getMolarMass();
       if (mw > maxMw) {
-        maxMw = mw;
-        heaviest = i;
+	maxMw = mw;
+	heaviest = i;
       }
     }
     return heaviest;
   }
 
   /**
-   * Checks if interphase mass transfer calculations are possible. Mass transfer requires at least 2
-   * phases and 2 components to form valid transfer matrices.
+   * Checks if interphase mass transfer calculations are possible. Mass transfer requires at least 2 phases and 2
+   * components to form valid transfer matrices.
    *
    * @return true if mass transfer can be calculated, false otherwise
    */
@@ -886,8 +869,8 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   }
 
   /**
-   * Performs a TP flash to check for phase formation and updates the bulk system. This can be used
-   * to detect when a single-phase fluid transitions to two-phase.
+   * Performs a TP flash to check for phase formation and updates the bulk system. This can be used to detect when a
+   * single-phase fluid transitions to two-phase.
    */
   public void checkPhaseFormation() {
     try {
@@ -951,18 +934,16 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
       // double liquid_dT =
       // -this.flowDirection[1]*heatFlux/1000.0/getBulkSystem().getPhase(1).getCp();
 
-      double liquid_dT = this.flowDirection[1] * heatFluxLiquid * getGeometry().getNodeLength()
-          / getVelocity(1) / getBulkSystem().getPhase(1).getCp();
-      double gas_dT = this.flowDirection[0] * heatFluxGas * getGeometry().getNodeLength()
-          / getVelocity(0) / getBulkSystem().getPhase(0).getCp();
+      double liquid_dT = this.flowDirection[1] * heatFluxLiquid * getGeometry().getNodeLength() / getVelocity(1)
+	  / getBulkSystem().getPhase(1).getCp();
+      double gas_dT = this.flowDirection[0] * heatFluxGas * getGeometry().getNodeLength() / getVelocity(0)
+	  / getBulkSystem().getPhase(0).getCp();
       liquid_dT -= 0 * getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(1, this)
-          * (getBulkSystem().getPhase(1).getTemperature() - pipe.getInnerWallTemperature())
-          * getWallContactLength(1) * getGeometry().getNodeLength()
-          / getBulkSystem().getPhase(1).getCp();
+	  * (getBulkSystem().getPhase(1).getTemperature() - pipe.getInnerWallTemperature()) * getWallContactLength(1)
+	  * getGeometry().getNodeLength() / getBulkSystem().getPhase(1).getCp();
       gas_dT -= 0 * getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(0, this)
-          * (getBulkSystem().getPhase(0).getTemperature() - pipe.getInnerWallTemperature())
-          * getWallContactLength(0) * getGeometry().getNodeLength()
-          / getBulkSystem().getPhase(0).getCp();
+	  * (getBulkSystem().getPhase(0).getTemperature() - pipe.getInnerWallTemperature()) * getWallContactLength(0)
+	  * getGeometry().getNodeLength() / getBulkSystem().getPhase(0).getCp();
       // liquid_dT +=
       // getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(0, this)*
       // (getBulkSystem().getPhase(0).getTemperature()-pipe.getOuterTemperature())*
@@ -973,41 +954,36 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
       // System.out.println("Cp " + getBulkSystem().getPhase(1).getCp());
       // System.out.println("liq dT " + liquid_dT);
       // System.out.println("gas dT " + gas_dT);
-      double fluxwallinternal =
-          getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(1, this)
-              * (getBulkSystem().getPhase(1).getTemperature() - pipe.getInnerWallTemperature())
-              * getWallContactLength(1) * getGeometry().getNodeLength()
-              + getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(0, this)
-                  * (getBulkSystem().getPhase(0).getTemperature() - pipe.getInnerWallTemperature())
-                  * getWallContactLength(0) * getGeometry().getNodeLength();
+      double fluxwallinternal = getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(1, this)
+	  * (getBulkSystem().getPhase(1).getTemperature() - pipe.getInnerWallTemperature()) * getWallContactLength(1)
+	  * getGeometry().getNodeLength()
+	  + getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(0, this)
+	      * (getBulkSystem().getPhase(0).getTemperature() - pipe.getInnerWallTemperature())
+	      * getWallContactLength(0) * getGeometry().getNodeLength();
 
       double JolprK = 3.14 * 0.2032 * 0.0094 * getGeometry().getNodeLength() * 7500 * 500;
       double fluxOut = -50.0 * 3.14 * (0.2032 + 0.01) * getGeometry().getNodeLength()
-          * (pipe.getInnerWallTemperature() - pipe.getSurroundingEnvironment().getTemperature());
+	  * (pipe.getInnerWallTemperature() - pipe.getSurroundingEnvironment().getTemperature());
       double dTwall = 0 * (fluxOut + fluxwallinternal) / JolprK;
       pipe.setInnerWallTemperature(pipe.getInnerWallTemperature() + dTwall);
 
-      getBulkSystem().getPhase(1)
-          .setTemperature(getBulkSystem().getPhase(1).getTemperature() + liquid_dT);
-      getBulkSystem().getPhase(0)
-          .setTemperature(getBulkSystem().getPhase(0).getTemperature() + gas_dT);
+      getBulkSystem().getPhase(1).setTemperature(getBulkSystem().getPhase(1).getTemperature() + liquid_dT);
+      getBulkSystem().getPhase(0).setTemperature(getBulkSystem().getPhase(0).getTemperature() + gas_dT);
 
       // System.out.println("pipe wall temperature " + pipe.getTemperature());
       // System.out.println("liquid velocity " + getSuperficialVelocity(1));
       // System.out.println("gas velocity " + getSuperficialVelocity(0));
 
       for (int componentNumber = 0; componentNumber < getBulkSystem().getPhases()[0]
-          .getNumberOfComponents(); componentNumber++) {
-        double liquidMolarRate =
-            getFluidBoundary().getInterphaseMolarFlux(componentNumber) * getInterphaseContactArea(); // getInterphaseContactLength(0)*getGeometry().getNodeLength();
+	  .getNumberOfComponents(); componentNumber++) {
+	double liquidMolarRate = getFluidBoundary().getInterphaseMolarFlux(componentNumber)
+	    * getInterphaseContactArea(); // getInterphaseContactLength(0)*getGeometry().getNodeLength();
 
-        double gasMolarRate = -getFluidBoundary().getInterphaseMolarFlux(componentNumber)
-            * getInterphaseContactArea(); // getInterphaseContactLength(0)*getGeometry().getNodeLength();
+	double gasMolarRate = -getFluidBoundary().getInterphaseMolarFlux(componentNumber) * getInterphaseContactArea(); // getInterphaseContactLength(0)*getGeometry().getNodeLength();
 
-        // System.out.println("liquidMolarRate" + liquidMolarRate);
-        getBulkSystem().getPhase(0).addMoles(componentNumber, this.flowDirection[0] * gasMolarRate);
-        getBulkSystem().getPhase(1).addMoles(componentNumber,
-            this.flowDirection[1] * liquidMolarRate);
+	// System.out.println("liquidMolarRate" + liquidMolarRate);
+	getBulkSystem().getPhase(0).addMoles(componentNumber, this.flowDirection[0] * gasMolarRate);
+	getBulkSystem().getPhase(1).addMoles(componentNumber, this.flowDirection[1] * liquidMolarRate);
       }
     }
     // For single-phase flow, no interphase transfer occurs - just maintain current state
@@ -1033,17 +1009,14 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
     // Only apply mass transfer if we have two phases and 2+ components
     if (canCalculateMassTransfer()) {
       for (int componentNumber = 0; componentNumber < getBulkSystem().getPhases()[0]
-          .getNumberOfComponents(); componentNumber++) {
-        double liquidMolarRate =
-            getFluidBoundary().getInterphaseMolarFlux(componentNumber) * getInterphaseContactArea(); // getInterphaseContactLength(0)*getGeometry().getNodeLength();
+	  .getNumberOfComponents(); componentNumber++) {
+	double liquidMolarRate = getFluidBoundary().getInterphaseMolarFlux(componentNumber)
+	    * getInterphaseContactArea(); // getInterphaseContactLength(0)*getGeometry().getNodeLength();
 
-        double gasMolarRate = -getFluidBoundary().getInterphaseMolarFlux(componentNumber)
-            * getInterphaseContactArea(); // getInterphaseContactLength(0)*getGeometry().getNodeLength();
+	double gasMolarRate = -getFluidBoundary().getInterphaseMolarFlux(componentNumber) * getInterphaseContactArea(); // getInterphaseContactLength(0)*getGeometry().getNodeLength();
 
-        getBulkSystem().getPhase(0).addMoles(componentNumber,
-            this.flowDirection[0] * gasMolarRate * deltaTime);
-        getBulkSystem().getPhase(1).addMoles(componentNumber,
-            this.flowDirection[1] * liquidMolarRate * deltaTime);
+	getBulkSystem().getPhase(0).addMoles(componentNumber, this.flowDirection[0] * gasMolarRate * deltaTime);
+	getBulkSystem().getPhase(1).addMoles(componentNumber, this.flowDirection[1] * liquidMolarRate * deltaTime);
       }
     }
     // For single-phase flow, no mass transfer occurs

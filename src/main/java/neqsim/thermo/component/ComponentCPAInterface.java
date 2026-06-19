@@ -52,7 +52,7 @@ public interface ComponentCPAInterface extends ComponentEosInterface {
    * setXsitedTdT.
    * </p>
    *
-   * @param i a int
+   * @param i         a int
    * @param xsitedTdT a double
    */
   public void setXsitedTdT(int i, double xsitedTdT);
@@ -62,7 +62,7 @@ public interface ComponentCPAInterface extends ComponentEosInterface {
    * setXsitedT.
    * </p>
    *
-   * @param i a int
+   * @param i       a int
    * @param xsitedT a double
    */
   public void setXsitedT(int i, double xsitedT);
@@ -72,7 +72,7 @@ public interface ComponentCPAInterface extends ComponentEosInterface {
    * dFCPAdXi.
    * </p>
    *
-   * @param site a int
+   * @param site  a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
    */
@@ -105,7 +105,7 @@ public interface ComponentCPAInterface extends ComponentEosInterface {
    * setXsite.
    * </p>
    *
-   * @param i a int
+   * @param i     a int
    * @param xsite a double
    */
   public void setXsite(int i, double xsite);
@@ -115,7 +115,7 @@ public interface ComponentCPAInterface extends ComponentEosInterface {
    * setXsiteOld.
    * </p>
    *
-   * @param i a int
+   * @param i     a int
    * @param xsite a double
    */
   public void setXsiteOld(int i, double xsite);
@@ -125,7 +125,7 @@ public interface ComponentCPAInterface extends ComponentEosInterface {
    * setXsitedV.
    * </p>
    *
-   * @param i a int
+   * @param i     a int
    * @param xsite a double
    */
   public void setXsitedV(int i, double xsite);
@@ -135,7 +135,7 @@ public interface ComponentCPAInterface extends ComponentEosInterface {
    * dFCPAdNdXi.
    * </p>
    *
-   * @param site a int
+   * @param site  a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
    */
@@ -146,7 +146,7 @@ public interface ComponentCPAInterface extends ComponentEosInterface {
    * dFCPAdVdXi.
    * </p>
    *
-   * @param site a int
+   * @param site  a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
    */
@@ -157,9 +157,9 @@ public interface ComponentCPAInterface extends ComponentEosInterface {
    * setXsitedni.
    * </p>
    *
-   * @param xnumb a int
+   * @param xnumb    a int
    * @param compnumb a int
-   * @param val a double
+   * @param val      a double
    */
   public void setXsitedni(int xnumb, int compnumb, double val);
 }

@@ -67,8 +67,7 @@ class CompressorTest extends neqsim.NeqSimTest {
 
     String tmp = "test_compressor_saved.ser";
 
-    try (
-        ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(tmp))) {
+    try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(tmp))) {
       objectOutputStream.writeObject(cmp);
       objectOutputStream.flush();
       objectOutputStream.close();
@@ -152,8 +151,8 @@ class CompressorTest extends neqsim.NeqSimTest {
     inletStream.setTemperature(temperature_inlet, "C");
     inletStream.setFlowRate(gasFlowRate, "MSm3/day");
     inletStream.run();
-    neqsim.process.equipment.compressor.Compressor compressor1 =
-        new neqsim.process.equipment.compressor.Compressor("Compressor1", inletStream);
+    neqsim.process.equipment.compressor.Compressor compressor1 = new neqsim.process.equipment.compressor.Compressor(
+	"Compressor1", inletStream);
     compressor1.setUsePolytropicCalc(true);
     compressor1.setOutletPressure(pressure_Out);
     compressor1.setOutTemperature(358.0);
@@ -180,8 +179,8 @@ class CompressorTest extends neqsim.NeqSimTest {
     inletStream.setTemperature(temperature_inlet, "C");
     inletStream.setFlowRate(gasFlowRate, "MSm3/day");
     inletStream.run();
-    neqsim.process.equipment.compressor.Compressor compressor1 =
-        new neqsim.process.equipment.compressor.Compressor("Compressor1", inletStream);
+    neqsim.process.equipment.compressor.Compressor compressor1 = new neqsim.process.equipment.compressor.Compressor(
+	"Compressor1", inletStream);
     compressor1.setUsePolytropicCalc(true);
     compressor1.setOutletPressure(pressure_Out);
     compressor1.setOutTemperature(358.0);
@@ -210,8 +209,8 @@ class CompressorTest extends neqsim.NeqSimTest {
     inletStream.setTemperature(temperature_inlet, "C");
     inletStream.setFlowRate(gasFlowRate, "MSm3/day");
     inletStream.run();
-    neqsim.process.equipment.compressor.Compressor compressor1 =
-        new neqsim.process.equipment.compressor.Compressor("Compressor1", inletStream);
+    neqsim.process.equipment.compressor.Compressor compressor1 = new neqsim.process.equipment.compressor.Compressor(
+	"Compressor1", inletStream);
     compressor1.setOutletPressure(pressure_Out);
     compressor1.setPolytropicEfficiency(0.56);
     compressor1.setUsePolytropicCalc(true);
@@ -367,8 +366,8 @@ class CompressorTest extends neqsim.NeqSimTest {
     inletStream.run();
 
     // Create and configure the compressor
-    neqsim.process.equipment.compressor.Compressor compressor1 =
-        new neqsim.process.equipment.compressor.Compressor("Compressor1", inletStream);
+    neqsim.process.equipment.compressor.Compressor compressor1 = new neqsim.process.equipment.compressor.Compressor(
+	"Compressor1", inletStream);
     compressor1.setUsePolytropicCalc(true);
     compressor1.setOutletPressure(pressure_Out);
     compressor1.setOutTemperature(400.0);
@@ -398,8 +397,8 @@ class CompressorTest extends neqsim.NeqSimTest {
     inletStream.setTemperature(temperature_inlet, "C");
     inletStream.setFlowRate(gasFlowRate, "MSm3/day");
     inletStream.run();
-    neqsim.process.equipment.compressor.Compressor compressor1 =
-        new neqsim.process.equipment.compressor.Compressor("Compressor1", inletStream);
+    neqsim.process.equipment.compressor.Compressor compressor1 = new neqsim.process.equipment.compressor.Compressor(
+	"Compressor1", inletStream);
     compressor1.setOutletPressure(pressure_Out);
     compressor1.setPolytropicEfficiency(0.56);
     compressor1.setUsePolytropicCalc(true);
@@ -431,8 +430,8 @@ class CompressorTest extends neqsim.NeqSimTest {
     inletStream.run();
 
     // Create and configure the compressor
-    neqsim.process.equipment.compressor.Compressor compressor1 =
-        new neqsim.process.equipment.compressor.Compressor("Compressor1", inletStream);
+    neqsim.process.equipment.compressor.Compressor compressor1 = new neqsim.process.equipment.compressor.Compressor(
+	"Compressor1", inletStream);
     compressor1.setUsePolytropicCalc(true);
     compressor1.setOutletPressure(pressure_Out);
     compressor1.setOutTemperature(400.0);
@@ -462,8 +461,8 @@ class CompressorTest extends neqsim.NeqSimTest {
     inletStream.setTemperature(temperature_inlet, "C");
     inletStream.setFlowRate(gasFlowRate, "MSm3/day");
     inletStream.run();
-    neqsim.process.equipment.compressor.Compressor compressor1 =
-        new neqsim.process.equipment.compressor.Compressor("Compressor1", inletStream);
+    neqsim.process.equipment.compressor.Compressor compressor1 = new neqsim.process.equipment.compressor.Compressor(
+	"Compressor1", inletStream);
     compressor1.setOutletPressure(pressure_Out);
     compressor1.setPolytropicEfficiency(0.56);
     compressor1.setUsePolytropicCalc(true);
@@ -489,9 +488,8 @@ class CompressorTest extends neqsim.NeqSimTest {
     inletStream.setFlowRate(5.0, "MSm3/day");
     inletStream.run();
 
-    Compressor comp =
-        Compressor.builder("K-100").inletStream(inletStream).outletPressure(150.0, "bara")
-            .polytropicEfficiency(0.77).speed(8000).polytropicMethod("schultz").build();
+    Compressor comp = Compressor.builder("K-100").inletStream(inletStream).outletPressure(150.0, "bara")
+	.polytropicEfficiency(0.77).speed(8000).polytropicMethod("schultz").build();
 
     comp.run();
 
@@ -516,7 +514,7 @@ class CompressorTest extends neqsim.NeqSimTest {
     inletStream.run();
 
     Compressor comp = Compressor.builder("K-101").inletStream(inletStream).outletPressure(100.0)
-        .isentropicEfficiency(0.80).build();
+	.isentropicEfficiency(0.80).build();
 
     comp.run();
 
@@ -538,7 +536,7 @@ class CompressorTest extends neqsim.NeqSimTest {
     inletStream.run();
 
     Compressor comp = Compressor.builder("K-102").inletStream(inletStream).compressionRatio(3.0)
-        .polytropicEfficiency(0.75).maxSpeed(15000).minSpeed(3000).build();
+	.polytropicEfficiency(0.75).maxSpeed(15000).minSpeed(3000).build();
 
     comp.run();
 

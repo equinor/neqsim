@@ -13,9 +13,8 @@ import com.google.gson.JsonParser;
  * Compares two or more process configurations side by side.
  *
  * <p>
- * Accepts an array of process cases (each with its own fluid and process definition), runs them
- * all, and returns a comparison table highlighting differences in key outputs (temperatures,
- * pressures, duties, compositions).
+ * Accepts an array of process cases (each with its own fluid and process definition), runs them all, and returns a
+ * comparison table highlighting differences in key outputs (temperatures, pressures, duties, compositions).
  * </p>
  *
  * @author Even Solbraa
@@ -23,13 +22,13 @@ import com.google.gson.JsonParser;
  */
 public final class ProcessComparisonRunner {
 
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   /**
    * Private constructor — all methods are static.
    */
-  private ProcessComparisonRunner() {}
+  private ProcessComparisonRunner() {
+  }
 
   /**
    * Runs multiple process cases and compares results.
@@ -46,12 +45,12 @@ public final class ProcessComparisonRunner {
       JsonObject input = JsonParser.parseString(json).getAsJsonObject();
 
       if (!input.has("cases") || !input.get("cases").isJsonArray()) {
-        return errorJson("Missing 'cases' array. Provide at least 2 process cases to compare.");
+	return errorJson("Missing 'cases' array. Provide at least 2 process cases to compare.");
       }
 
       JsonArray cases = input.getAsJsonArray("cases");
       if (cases.size() < 2) {
-        return errorJson("Need at least 2 cases to compare. Got " + cases.size());
+	return errorJson("Need at least 2 cases to compare. Got " + cases.size());
       }
 
       List<JsonObject> caseResults = new ArrayList<JsonObject>();
@@ -59,28 +58,27 @@ public final class ProcessComparisonRunner {
       List<String> errors = new ArrayList<String>();
 
       for (int i = 0; i < cases.size(); i++) {
-        JsonObject caseObj = cases.get(i).getAsJsonObject();
-        String caseName =
-            caseObj.has("name") ? caseObj.get("name").getAsString() : "Case " + (i + 1);
-        caseNames.add(caseName);
+	JsonObject caseObj = cases.get(i).getAsJsonObject();
+	String caseName = caseObj.has("name") ? caseObj.get("name").getAsString() : "Case " + (i + 1);
+	caseNames.add(caseName);
 
-        try {
-          // Build the process JSON (remove the "name" field, pass rest to ProcessRunner)
-          JsonObject processJson = new JsonObject();
-          if (caseObj.has("fluid")) {
-            processJson.add("fluid", caseObj.get("fluid"));
-          }
-          if (caseObj.has("process")) {
-            processJson.add("process", caseObj.get("process"));
-          }
+	try {
+	  // Build the process JSON (remove the "name" field, pass rest to ProcessRunner)
+	  JsonObject processJson = new JsonObject();
+	  if (caseObj.has("fluid")) {
+	    processJson.add("fluid", caseObj.get("fluid"));
+	  }
+	  if (caseObj.has("process")) {
+	    processJson.add("process", caseObj.get("process"));
+	  }
 
-          String resultStr = ProcessRunner.run(GSON.toJson(processJson));
-          JsonObject resultObj = JsonParser.parseString(resultStr).getAsJsonObject();
-          caseResults.add(resultObj);
-        } catch (Exception e) {
-          errors.add(caseName + ": " + e.getMessage());
-          caseResults.add(null);
-        }
+	  String resultStr = ProcessRunner.run(GSON.toJson(processJson));
+	  JsonObject resultObj = JsonParser.parseString(resultStr).getAsJsonObject();
+	  caseResults.add(resultObj);
+	} catch (Exception e) {
+	  errors.add(caseName + ": " + e.getMessage());
+	  caseResults.add(null);
+	}
       }
 
       // Build comparison
@@ -91,23 +89,23 @@ public final class ProcessComparisonRunner {
       // Case names
       JsonArray namesArray = new JsonArray();
       for (String name : caseNames) {
-        namesArray.add(name);
+	namesArray.add(name);
       }
       result.add("caseNames", namesArray);
 
       // Individual results
       JsonArray individualResults = new JsonArray();
       for (int i = 0; i < caseResults.size(); i++) {
-        JsonObject entry = new JsonObject();
-        entry.addProperty("name", caseNames.get(i));
-        if (caseResults.get(i) != null) {
-          entry.add("result", caseResults.get(i));
-          entry.addProperty("converged", !hasError(caseResults.get(i)));
-        } else {
-          entry.addProperty("converged", false);
-          entry.addProperty("error", errors.isEmpty() ? "Unknown error" : "Simulation failed");
-        }
-        individualResults.add(entry);
+	JsonObject entry = new JsonObject();
+	entry.addProperty("name", caseNames.get(i));
+	if (caseResults.get(i) != null) {
+	  entry.add("result", caseResults.get(i));
+	  entry.addProperty("converged", !hasError(caseResults.get(i)));
+	} else {
+	  entry.addProperty("converged", false);
+	  entry.addProperty("error", errors.isEmpty() ? "Unknown error" : "Simulation failed");
+	}
+	individualResults.add(entry);
       }
       result.add("cases", individualResults);
 
@@ -116,11 +114,11 @@ public final class ProcessComparisonRunner {
       result.add("comparison", comparison);
 
       if (!errors.isEmpty()) {
-        JsonArray errArray = new JsonArray();
-        for (String err : errors) {
-          errArray.add(err);
-        }
-        result.add("errors", errArray);
+	JsonArray errArray = new JsonArray();
+	for (String err : errors) {
+	  errArray.add(err);
+	}
+	result.add("errors", errArray);
       }
 
       return GSON.toJson(result);
@@ -132,12 +130,11 @@ public final class ProcessComparisonRunner {
   /**
    * Builds a comparison summary from individual case results.
    *
-   * @param caseNames list of case names
+   * @param caseNames   list of case names
    * @param caseResults list of result JSON objects
    * @return comparison JSON object
    */
-  private static JsonObject buildComparisonSummary(List<String> caseNames,
-      List<JsonObject> caseResults) {
+  private static JsonObject buildComparisonSummary(List<String> caseNames, List<JsonObject> caseResults) {
     JsonObject comparison = new JsonObject();
 
     // Extract key metrics from each case's report
@@ -149,44 +146,43 @@ public final class ProcessComparisonRunner {
 
       JsonObject caseResult = caseResults.get(i);
       if (caseResult != null && caseResult.has("report")) {
-        JsonObject report = caseResult.getAsJsonObject("report");
+	JsonObject report = caseResult.getAsJsonObject("report");
 
-        // Extract equipment summaries
-        if (report.has("equipment")) {
-          JsonArray equipment = report.getAsJsonArray("equipment");
-          caseMetrics.addProperty("equipmentCount", equipment.size());
+	// Extract equipment summaries
+	if (report.has("equipment")) {
+	  JsonArray equipment = report.getAsJsonArray("equipment");
+	  caseMetrics.addProperty("equipmentCount", equipment.size());
 
-          // Summarize equipment outputs
-          JsonArray equipSummary = new JsonArray();
-          for (JsonElement eq : equipment) {
-            JsonObject eqObj = eq.getAsJsonObject();
-            JsonObject summary = new JsonObject();
-            if (eqObj.has("name")) {
-              summary.addProperty("name", eqObj.get("name").getAsString());
-            }
-            if (eqObj.has("type")) {
-              summary.addProperty("type", eqObj.get("type").getAsString());
-            }
-            equipSummary.add(summary);
-          }
-          caseMetrics.add("equipment", equipSummary);
-        }
+	  // Summarize equipment outputs
+	  JsonArray equipSummary = new JsonArray();
+	  for (JsonElement eq : equipment) {
+	    JsonObject eqObj = eq.getAsJsonObject();
+	    JsonObject summary = new JsonObject();
+	    if (eqObj.has("name")) {
+	      summary.addProperty("name", eqObj.get("name").getAsString());
+	    }
+	    if (eqObj.has("type")) {
+	      summary.addProperty("type", eqObj.get("type").getAsString());
+	    }
+	    equipSummary.add(summary);
+	  }
+	  caseMetrics.add("equipment", equipSummary);
+	}
 
-        // Extract stream conditions
-        if (report.has("streams")) {
-          caseMetrics.add("streams", report.get("streams"));
-        }
+	// Extract stream conditions
+	if (report.has("streams")) {
+	  caseMetrics.add("streams", report.get("streams"));
+	}
       } else {
-        caseMetrics.addProperty("equipmentCount", 0);
-        caseMetrics.addProperty("note", "Simulation did not produce a report");
+	caseMetrics.addProperty("equipmentCount", 0);
+	caseMetrics.addProperty("note", "Simulation did not produce a report");
       }
 
       metrics.add(caseMetrics);
     }
 
     comparison.add("caseMetrics", metrics);
-    comparison.addProperty("comparisonNote",
-        "Compare 'cases[i].result.report' for detailed equipment and stream data");
+    comparison.addProperty("comparisonNote", "Compare 'cases[i].result.report' for detailed equipment and stream data");
 
     return comparison;
   }

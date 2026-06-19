@@ -37,15 +37,13 @@ public class OpenDrainReviewReport implements Serializable {
    * @param projectName reviewed project name
    */
   public OpenDrainReviewReport(String projectName) {
-    this.projectName = projectName == null || projectName.trim().isEmpty() ? "open-drain-review"
-        : projectName.trim();
+    this.projectName = projectName == null || projectName.trim().isEmpty() ? "open-drain-review" : projectName.trim();
     standardsApplied.add(OpenDrainReviewEngine.NORSOK_S001 + " Clause 9");
     assumptions.add("Evidence may be normalized STID/P&ID input or calculated from NeqSim process streams.");
     assumptions.add("If no area-specific process fire leak rate is supplied, 5 kg/s is used.");
-    limitations.add(
-        "The review checks evidence and rule consistency; it is not a CFD or hydraulic transient model.");
-    limitations.add(
-        "Tagreader data is optional operational evidence and is not required for deterministic standards review.");
+    limitations.add("The review checks evidence and rule consistency; it is not a CFD or hydraulic transient model.");
+    limitations
+	.add("Tagreader data is optional operational evidence and is not required for deterministic standards review.");
   }
 
   /**
@@ -107,9 +105,9 @@ public class OpenDrainReviewReport implements Serializable {
     int warningItems = 0;
     for (OpenDrainReviewResult result : results) {
       if ("FAIL".equals(result.getVerdict())) {
-        failedItems++;
+	failedItems++;
       } else if ("PASS_WITH_WARNINGS".equals(result.getVerdict())) {
-        warningItems++;
+	warningItems++;
       }
     }
     map.put("status", "success");

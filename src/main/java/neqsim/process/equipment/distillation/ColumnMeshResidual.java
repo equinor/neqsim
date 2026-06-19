@@ -7,9 +7,8 @@ import java.util.Arrays;
  * Immutable residual vector for distillation column MESH diagnostics.
  *
  * <p>
- * Residuals are scaled to dimensionless values where possible. The object stores equation type,
- * tray index, and optional component labels so tests and future solvers can inspect the structure
- * without reparsing the column state.
+ * Residuals are scaled to dimensionless values where possible. The object stores equation type, tray index, and
+ * optional component labels so tests and future solvers can inspect the structure without reparsing the column state.
  * </p>
  *
  * @author esol
@@ -30,15 +29,15 @@ final class ColumnMeshResidual implements Serializable {
   /**
    * Create a residual vector.
    *
-   * @param values residual values
-   * @param equationTypes equation type per residual
-   * @param trayIndices tray index per residual
+   * @param values         residual values
+   * @param equationTypes  equation type per residual
+   * @param trayIndices    tray index per residual
    * @param componentNames component label per residual
    */
   ColumnMeshResidual(double[] values, ColumnMeshEquationType[] equationTypes, int[] trayIndices,
       String[] componentNames) {
     if (values.length != equationTypes.length || values.length != trayIndices.length
-        || values.length != componentNames.length) {
+	|| values.length != componentNames.length) {
       throw new IllegalArgumentException("Residual metadata arrays must have equal length");
     }
     this.values = values.clone();
@@ -100,7 +99,7 @@ final class ColumnMeshResidual implements Serializable {
   boolean isFinite() {
     for (int i = 0; i < values.length; i++) {
       if (!Double.isFinite(values[i])) {
-        return false;
+	return false;
       }
     }
     return true;
@@ -129,7 +128,7 @@ final class ColumnMeshResidual implements Serializable {
     double max = 0.0;
     for (int i = 0; i < values.length; i++) {
       if (equationTypes[i] == type) {
-        max = Math.max(max, Math.abs(values[i]));
+	max = Math.max(max, Math.abs(values[i]));
       }
     }
     return max;
@@ -158,7 +157,7 @@ final class ColumnMeshResidual implements Serializable {
     int count = 0;
     for (int i = 0; i < equationTypes.length; i++) {
       if (equationTypes[i] == type) {
-        count++;
+	count++;
       }
     }
     return count;
@@ -167,7 +166,7 @@ final class ColumnMeshResidual implements Serializable {
   /** {@inheritDoc} */
   @Override
   public String toString() {
-    return "ColumnMeshResidual[size=" + values.length + ", infinityNorm=" + getInfinityNorm()
-        + ", values=" + Arrays.toString(values) + "]";
+    return "ColumnMeshResidual[size=" + values.length + ", infinityNorm=" + getInfinityNorm() + ", values="
+	+ Arrays.toString(values) + "]";
   }
 }

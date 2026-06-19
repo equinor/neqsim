@@ -24,7 +24,8 @@ public class Recombine {
    * @param gas a {@link neqsim.thermo.system.SystemInterface} object
    * @param oil a {@link neqsim.thermo.system.SystemInterface} object
    */
-  public Recombine(SystemInterface gas, SystemInterface oil) {}
+  public Recombine(SystemInterface gas, SystemInterface oil) {
+  }
 
   /**
    * <p>

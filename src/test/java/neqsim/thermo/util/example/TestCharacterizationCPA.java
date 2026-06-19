@@ -20,7 +20,7 @@ public class TestCharacterizationCPA {
   private static final Logger logger = LogManager.getLogger(TestCharacterizationCPA.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.

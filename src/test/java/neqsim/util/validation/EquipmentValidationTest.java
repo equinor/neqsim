@@ -24,8 +24,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * Comprehensive tests for validateSetup() implementations across process equipment classes.
  *
  * <p>
- * These tests verify that equipment validation catches common configuration errors before
- * simulation execution, providing actionable remediation hints.
+ * These tests verify that equipment validation catches common configuration errors before simulation execution,
+ * providing actionable remediation hints.
  * </p>
  *
  * @author NeqSim
@@ -67,8 +67,8 @@ class EquipmentValidationTest {
       Stream emptyStream = new Stream("EmptyStream");
       ValidationResult result = emptyStream.validateSetup();
       assertFalse(result.isValid());
-      assertTrue(result.getReport().contains("no thermodynamic system")
-          || result.getReport().contains("no components"));
+      assertTrue(
+	  result.getReport().contains("no thermodynamic system") || result.getReport().contains("no components"));
     }
 
     @Test
@@ -80,7 +80,7 @@ class EquipmentValidationTest {
       ValidationResult result = coldStream.validateSetup();
       assertFalse(result.isValid());
       assertTrue(result.getReport().contains("temperature too low")
-          || result.getReport().toLowerCase().contains("temperature"));
+	  || result.getReport().toLowerCase().contains("temperature"));
     }
 
     @Test
@@ -90,8 +90,7 @@ class EquipmentValidationTest {
       ValidationResult result = emptyStream.validateSetup();
       String report = result.getReport();
       // Should contain remediation hints
-      assertTrue(report.contains("new Stream") || report.contains("thermoSystem")
-          || report.contains("addComponent"));
+      assertTrue(report.contains("new Stream") || report.contains("thermoSystem") || report.contains("addComponent"));
     }
   }
 
@@ -115,8 +114,7 @@ class EquipmentValidationTest {
       Separator separator = new Separator("EmptySeparator");
       ValidationResult result = separator.validateSetup();
       assertFalse(result.isValid());
-      assertTrue(
-          result.getReport().contains("inlet stream") || result.getReport().contains("stream"));
+      assertTrue(result.getReport().contains("inlet stream") || result.getReport().contains("stream"));
     }
 
     @Test
@@ -177,7 +175,7 @@ class EquipmentValidationTest {
     @DisplayName("Valid splitter passes validation")
     void testValidSplitterPasses() {
       Splitter splitter = new Splitter("TestSplitter", validStream, 2);
-      splitter.setSplitFactors(new double[] {0.5, 0.5});
+      splitter.setSplitFactors(new double[] { 0.5, 0.5 });
       ValidationResult result = splitter.validateSetup();
       assertTrue(result.isValid(), "Valid splitter should pass: " + result.getReport());
     }
@@ -188,8 +186,7 @@ class EquipmentValidationTest {
       Splitter splitter = new Splitter("EmptySplitter");
       ValidationResult result = splitter.validateSetup();
       assertFalse(result.isValid());
-      assertTrue(
-          result.getReport().contains("inlet stream") || result.getReport().contains("stream"));
+      assertTrue(result.getReport().contains("inlet stream") || result.getReport().contains("stream"));
     }
 
     @Test
@@ -221,8 +218,7 @@ class EquipmentValidationTest {
       Tank tank = new Tank("EmptyTank");
       ValidationResult result = tank.validateSetup();
       assertFalse(result.isValid());
-      assertTrue(
-          result.getReport().contains("inlet stream") || result.getReport().contains("stream"));
+      assertTrue(result.getReport().contains("inlet stream") || result.getReport().contains("stream"));
     }
   }
 
@@ -247,8 +243,7 @@ class EquipmentValidationTest {
       ThrottlingValve valve = new ThrottlingValve("EmptyValve");
       ValidationResult result = valve.validateSetup();
       assertFalse(result.isValid());
-      assertTrue(
-          result.getReport().contains("inlet stream") || result.getReport().contains("stream"));
+      assertTrue(result.getReport().contains("inlet stream") || result.getReport().contains("stream"));
     }
   }
 
@@ -273,8 +268,7 @@ class EquipmentValidationTest {
       DistillationColumn column = new DistillationColumn("EmptyColumn", 5, true, true);
       ValidationResult result = column.validateSetup();
       assertFalse(result.isValid());
-      assertTrue(
-          result.getReport().contains("feed stream") || result.getReport().contains("stream"));
+      assertTrue(result.getReport().contains("feed stream") || result.getReport().contains("stream"));
     }
 
     @Test
@@ -325,8 +319,7 @@ class EquipmentValidationTest {
       Adjuster adjuster = new Adjuster("EmptyAdjuster");
       ValidationResult result = adjuster.validateSetup();
       assertFalse(result.isValid());
-      assertTrue(result.getReport().contains("adjusted equipment")
-          || result.getReport().contains("adjusted"));
+      assertTrue(result.getReport().contains("adjusted equipment") || result.getReport().contains("adjusted"));
     }
 
     @Test
@@ -336,8 +329,7 @@ class EquipmentValidationTest {
       adjuster.setAdjustedVariable(validStream, "flow rate", "kg/hr");
       adjuster.setTargetValue(100.0);
       ValidationResult result = adjuster.validateSetup();
-      assertTrue(result.isValid(),
-          "Adjuster with adjusted equipment should pass: " + result.getReport());
+      assertTrue(result.isValid(), "Adjuster with adjusted equipment should pass: " + result.getReport());
     }
   }
 
@@ -350,8 +342,7 @@ class EquipmentValidationTest {
     @Test
     @DisplayName("Valid process system passes validation")
     void testValidProcessSystemPasses() {
-      neqsim.process.processmodel.ProcessSystem process =
-          new neqsim.process.processmodel.ProcessSystem("TestProcess");
+      neqsim.process.processmodel.ProcessSystem process = new neqsim.process.processmodel.ProcessSystem("TestProcess");
       process.add(validStream);
       Separator separator = new Separator("TestSeparator", validStream);
       process.add(separator);
@@ -363,8 +354,7 @@ class EquipmentValidationTest {
     @Test
     @DisplayName("Empty process system fails validation")
     void testEmptyProcessSystemFails() {
-      neqsim.process.processmodel.ProcessSystem process =
-          new neqsim.process.processmodel.ProcessSystem("EmptyProcess");
+      neqsim.process.processmodel.ProcessSystem process = new neqsim.process.processmodel.ProcessSystem("EmptyProcess");
 
       ValidationResult result = process.validateSetup();
       assertFalse(result.isValid());
@@ -374,8 +364,7 @@ class EquipmentValidationTest {
     @Test
     @DisplayName("Process system with invalid equipment fails validation")
     void testProcessSystemWithInvalidEquipmentFails() {
-      neqsim.process.processmodel.ProcessSystem process =
-          new neqsim.process.processmodel.ProcessSystem("TestProcess");
+      neqsim.process.processmodel.ProcessSystem process = new neqsim.process.processmodel.ProcessSystem("TestProcess");
       process.add(validStream);
       Separator emptySeparator = new Separator("EmptySeparator"); // No inlet stream
       process.add(emptySeparator);
@@ -388,8 +377,7 @@ class EquipmentValidationTest {
     @Test
     @DisplayName("ProcessSystem.validateAll() returns individual results")
     void testProcessSystemValidateAll() {
-      neqsim.process.processmodel.ProcessSystem process =
-          new neqsim.process.processmodel.ProcessSystem("TestProcess");
+      neqsim.process.processmodel.ProcessSystem process = new neqsim.process.processmodel.ProcessSystem("TestProcess");
       process.add(validStream);
       Separator separator = new Separator("TestSeparator", validStream);
       process.add(separator);
@@ -404,21 +392,20 @@ class EquipmentValidationTest {
     @Test
     @DisplayName("ProcessSystem.isReadyToRun() returns correct status")
     void testProcessSystemIsReadyToRun() {
-      neqsim.process.processmodel.ProcessSystem validProcess =
-          new neqsim.process.processmodel.ProcessSystem("ValidProcess");
+      neqsim.process.processmodel.ProcessSystem validProcess = new neqsim.process.processmodel.ProcessSystem(
+	  "ValidProcess");
       validProcess.add(validStream);
       assertTrue(validProcess.isReadyToRun());
 
-      neqsim.process.processmodel.ProcessSystem emptyProcess =
-          new neqsim.process.processmodel.ProcessSystem("EmptyProcess");
+      neqsim.process.processmodel.ProcessSystem emptyProcess = new neqsim.process.processmodel.ProcessSystem(
+	  "EmptyProcess");
       assertFalse(emptyProcess.isReadyToRun());
     }
 
     @Test
     @DisplayName("Process system already prevents duplicate equipment names")
     void testProcessSystemPreventsDuplicateNames() {
-      neqsim.process.processmodel.ProcessSystem process =
-          new neqsim.process.processmodel.ProcessSystem("TestProcess");
+      neqsim.process.processmodel.ProcessSystem process = new neqsim.process.processmodel.ProcessSystem("TestProcess");
 
       Stream stream1 = new Stream("DuplicateName", validFluid.clone());
       Stream stream2 = new Stream("DuplicateName", validFluid.clone());
@@ -426,11 +413,11 @@ class EquipmentValidationTest {
 
       // ProcessSystem throws RuntimeException when adding duplicate names
       Exception exception = assertThrows(RuntimeException.class, () -> {
-        process.add(stream2);
+	process.add(stream2);
       });
       // Verify exception message mentions the duplicate name
       assertTrue(exception.getMessage().contains("DuplicateName")
-          || exception.getCause().getMessage().contains("DuplicateName"));
+	  || exception.getCause().getMessage().contains("DuplicateName"));
     }
   }
 
@@ -466,8 +453,7 @@ class EquipmentValidationTest {
     @Test
     @DisplayName("SimulationValidator.validate() works with ProcessSystem")
     void testSimulationValidatorProcessSystem() {
-      neqsim.process.processmodel.ProcessSystem process =
-          new neqsim.process.processmodel.ProcessSystem("TestProcess");
+      neqsim.process.processmodel.ProcessSystem process = new neqsim.process.processmodel.ProcessSystem("TestProcess");
       process.add(validStream);
 
       ValidationResult result = SimulationValidator.validate(process);
@@ -484,8 +470,7 @@ class EquipmentValidationTest {
     @Test
     @DisplayName("Empty ProcessModel fails validation")
     void testEmptyProcessModelFails() {
-      neqsim.process.processmodel.ProcessModel model =
-          new neqsim.process.processmodel.ProcessModel();
+      neqsim.process.processmodel.ProcessModel model = new neqsim.process.processmodel.ProcessModel();
       ValidationResult result = model.validateSetup();
       assertFalse(result.isValid());
       assertTrue(result.getReport().contains("no processes"));
@@ -494,10 +479,8 @@ class EquipmentValidationTest {
     @Test
     @DisplayName("Valid ProcessModel passes validation")
     void testValidProcessModelPasses() {
-      neqsim.process.processmodel.ProcessModel model =
-          new neqsim.process.processmodel.ProcessModel();
-      neqsim.process.processmodel.ProcessSystem process =
-          new neqsim.process.processmodel.ProcessSystem("Process1");
+      neqsim.process.processmodel.ProcessModel model = new neqsim.process.processmodel.ProcessModel();
+      neqsim.process.processmodel.ProcessSystem process = new neqsim.process.processmodel.ProcessSystem("Process1");
       process.add(validStream);
       model.add("Process1", process);
 
@@ -508,10 +491,9 @@ class EquipmentValidationTest {
     @Test
     @DisplayName("ProcessModel with invalid process fails validation")
     void testProcessModelWithInvalidProcessFails() {
-      neqsim.process.processmodel.ProcessModel model =
-          new neqsim.process.processmodel.ProcessModel();
-      neqsim.process.processmodel.ProcessSystem emptyProcess =
-          new neqsim.process.processmodel.ProcessSystem("EmptyProcess");
+      neqsim.process.processmodel.ProcessModel model = new neqsim.process.processmodel.ProcessModel();
+      neqsim.process.processmodel.ProcessSystem emptyProcess = new neqsim.process.processmodel.ProcessSystem(
+	  "EmptyProcess");
       model.add("EmptyProcess", emptyProcess);
 
       ValidationResult result = model.validateSetup();
@@ -521,16 +503,15 @@ class EquipmentValidationTest {
     @Test
     @DisplayName("ProcessModel.validateAll() returns per-process results")
     void testProcessModelValidateAll() {
-      neqsim.process.processmodel.ProcessModel model =
-          new neqsim.process.processmodel.ProcessModel();
+      neqsim.process.processmodel.ProcessModel model = new neqsim.process.processmodel.ProcessModel();
 
-      neqsim.process.processmodel.ProcessSystem process1 =
-          new neqsim.process.processmodel.ProcessSystem("ValidProcess");
+      neqsim.process.processmodel.ProcessSystem process1 = new neqsim.process.processmodel.ProcessSystem(
+	  "ValidProcess");
       process1.add(validStream);
       model.add("ValidProcess", process1);
 
-      neqsim.process.processmodel.ProcessSystem process2 =
-          new neqsim.process.processmodel.ProcessSystem("EmptyProcess");
+      neqsim.process.processmodel.ProcessSystem process2 = new neqsim.process.processmodel.ProcessSystem(
+	  "EmptyProcess");
       model.add("EmptyProcess", process2);
 
       java.util.Map<String, ValidationResult> results = model.validateAll();
@@ -545,26 +526,22 @@ class EquipmentValidationTest {
     @Test
     @DisplayName("ProcessModel.isReadyToRun() returns correct status")
     void testProcessModelIsReadyToRun() {
-      neqsim.process.processmodel.ProcessModel validModel =
-          new neqsim.process.processmodel.ProcessModel();
-      neqsim.process.processmodel.ProcessSystem process =
-          new neqsim.process.processmodel.ProcessSystem("ValidProcess");
+      neqsim.process.processmodel.ProcessModel validModel = new neqsim.process.processmodel.ProcessModel();
+      neqsim.process.processmodel.ProcessSystem process = new neqsim.process.processmodel.ProcessSystem("ValidProcess");
       process.add(validStream);
       validModel.add("ValidProcess", process);
       assertTrue(validModel.isReadyToRun());
 
-      neqsim.process.processmodel.ProcessModel emptyModel =
-          new neqsim.process.processmodel.ProcessModel();
+      neqsim.process.processmodel.ProcessModel emptyModel = new neqsim.process.processmodel.ProcessModel();
       assertFalse(emptyModel.isReadyToRun());
     }
 
     @Test
     @DisplayName("ProcessModel.getValidationReport() provides formatted output")
     void testProcessModelValidationReport() {
-      neqsim.process.processmodel.ProcessModel model =
-          new neqsim.process.processmodel.ProcessModel();
-      neqsim.process.processmodel.ProcessSystem emptyProcess =
-          new neqsim.process.processmodel.ProcessSystem("EmptyProcess");
+      neqsim.process.processmodel.ProcessModel model = new neqsim.process.processmodel.ProcessModel();
+      neqsim.process.processmodel.ProcessSystem emptyProcess = new neqsim.process.processmodel.ProcessSystem(
+	  "EmptyProcess");
       model.add("EmptyProcess", emptyProcess);
 
       String report = model.getValidationReport();
@@ -576,14 +553,11 @@ class EquipmentValidationTest {
     @Test
     @DisplayName("ProcessModel aggregates validation from multiple processes")
     void testProcessModelAggregatesValidation() {
-      neqsim.process.processmodel.ProcessModel model =
-          new neqsim.process.processmodel.ProcessModel();
+      neqsim.process.processmodel.ProcessModel model = new neqsim.process.processmodel.ProcessModel();
 
       // Add two empty processes
-      neqsim.process.processmodel.ProcessSystem process1 =
-          new neqsim.process.processmodel.ProcessSystem("Empty1");
-      neqsim.process.processmodel.ProcessSystem process2 =
-          new neqsim.process.processmodel.ProcessSystem("Empty2");
+      neqsim.process.processmodel.ProcessSystem process1 = new neqsim.process.processmodel.ProcessSystem("Empty1");
+      neqsim.process.processmodel.ProcessSystem process2 = new neqsim.process.processmodel.ProcessSystem("Empty2");
       model.add("Empty1", process1);
       model.add("Empty2", process2);
 

@@ -9,10 +9,9 @@ import java.util.List;
  * Represents a well barrier envelope per NORSOK D-010 Section 5.
  *
  * <p>
- * A barrier envelope is an ordered collection of barrier elements that together form a
- * pressure-containing boundary between the reservoir and the environment. Per NORSOK D-010, every
- * well must maintain at least two independent barrier envelopes (primary and secondary) at all
- * times.
+ * A barrier envelope is an ordered collection of barrier elements that together form a pressure-containing boundary
+ * between the reservoir and the environment. Per NORSOK D-010, every well must maintain at least two independent
+ * barrier envelopes (primary and secondary) at all times.
  * </p>
  *
  * <p>
@@ -100,7 +99,7 @@ public class BarrierEnvelope implements Serializable {
     int count = 0;
     for (BarrierElement el : elements) {
       if (el.isFunctional()) {
-        count++;
+	count++;
       }
     }
     return count;
@@ -115,7 +114,7 @@ public class BarrierEnvelope implements Serializable {
     int count = 0;
     for (BarrierElement el : elements) {
       if (el.isVerified()) {
-        count++;
+	count++;
       }
     }
     return count;
@@ -132,7 +131,7 @@ public class BarrierEnvelope implements Serializable {
     }
     for (BarrierElement el : elements) {
       if (!el.isFunctional()) {
-        return false;
+	return false;
       }
     }
     return true;
@@ -161,7 +160,7 @@ public class BarrierEnvelope implements Serializable {
   public boolean hasElementType(BarrierElement.ElementType type) {
     for (BarrierElement el : elements) {
       if (el.getType() == type) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -177,7 +176,7 @@ public class BarrierEnvelope implements Serializable {
     List<BarrierElement> result = new ArrayList<BarrierElement>();
     for (BarrierElement el : elements) {
       if (el.getType() == type) {
-        result.add(el);
+	result.add(el);
       }
     }
     return result;
@@ -192,7 +191,7 @@ public class BarrierEnvelope implements Serializable {
     List<BarrierElement> failed = new ArrayList<BarrierElement>();
     for (BarrierElement el : elements) {
       if (el.getStatus() == BarrierElement.Status.FAILED) {
-        failed.add(el);
+	failed.add(el);
       }
     }
     return failed;
@@ -200,7 +199,6 @@ public class BarrierEnvelope implements Serializable {
 
   @Override
   public String toString() {
-    return name + " envelope: " + getFunctionalElementCount() + "/" + elements.size()
-        + " functional";
+    return name + " envelope: " + getFunctionalElementCount() + "/" + elements.size() + " functional";
   }
 }

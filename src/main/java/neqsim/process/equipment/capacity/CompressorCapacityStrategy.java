@@ -42,17 +42,17 @@ public class CompressorCapacityStrategy implements EquipmentCapacityStrategy {
   /**
    * Default constructor.
    */
-  public CompressorCapacityStrategy() {}
+  public CompressorCapacityStrategy() {
+  }
 
   /**
    * Constructor with custom constraints.
    *
-   * @param minSurgeMargin minimum surge margin as fraction
+   * @param minSurgeMargin     minimum surge margin as fraction
    * @param minStonewallMargin minimum stonewall margin as fraction
-   * @param maxDischargeTemp maximum discharge temperature in Celsius
+   * @param maxDischargeTemp   maximum discharge temperature in Celsius
    */
-  public CompressorCapacityStrategy(double minSurgeMargin, double minStonewallMargin,
-      double maxDischargeTemp) {
+  public CompressorCapacityStrategy(double minSurgeMargin, double minStonewallMargin, double maxDischargeTemp) {
     this.minSurgeMargin = minSurgeMargin;
     this.minStonewallMargin = minStonewallMargin;
     this.maxDischargeTemp = maxDischargeTemp;
@@ -132,18 +132,18 @@ public class CompressorCapacityStrategy implements EquipmentCapacityStrategy {
     if (comp.getDriver() != null) {
       double maxPower = comp.getDriver().getMaxAvailablePower();
       if (maxPower > 0) {
-        return maxPower;
+	return maxPower;
       }
       maxPower = comp.getDriver().getRatedPower();
       if (maxPower > 0) {
-        return maxPower;
+	return maxPower;
       }
     }
     // Fallback to mechanical design
     if (comp.getMechanicalDesign() != null) {
       double maxPower = comp.getMechanicalDesign().maxDesignPower;
       if (maxPower > 0) {
-        return maxPower;
+	return maxPower;
       }
     }
     return 0.0;
@@ -171,9 +171,9 @@ public class CompressorCapacityStrategy implements EquipmentCapacityStrategy {
     double maxSpeed = comp.getMaximumSpeed();
     double minSpeed = comp.getMinimumSpeed();
     if (maxSpeed > 0) {
-      CapacityConstraint speedConstraint = StandardConstraintType.COMPRESSOR_SPEED
-          .createConstraint().setDesignValue(maxSpeed).setMaxValue(maxSpeed * 1.05)
-          .setMinValue(minSpeed).setValueSupplier(() -> comp.getSpeed());
+      CapacityConstraint speedConstraint = StandardConstraintType.COMPRESSOR_SPEED.createConstraint()
+	  .setDesignValue(maxSpeed).setMaxValue(maxSpeed * 1.05).setMinValue(minSpeed)
+	  .setValueSupplier(() -> comp.getSpeed());
       constraints.put("speed", speedConstraint);
     }
 
@@ -181,42 +181,39 @@ public class CompressorCapacityStrategy implements EquipmentCapacityStrategy {
     double power = comp.getPower("kW");
     double maxPower = getMaxPower(comp);
     if (maxPower > 0) {
-      CapacityConstraint powerConstraint =
-          StandardConstraintType.COMPRESSOR_POWER.createConstraint().setDesignValue(maxPower)
-              .setMaxValue(maxPower * 1.1).setValueSupplier(() -> comp.getPower("kW"));
+      CapacityConstraint powerConstraint = StandardConstraintType.COMPRESSOR_POWER.createConstraint()
+	  .setDesignValue(maxPower).setMaxValue(maxPower * 1.1).setValueSupplier(() -> comp.getPower("kW"));
       constraints.put("power", powerConstraint);
     }
 
     // Surge margin constraint
     double surgeMargin = comp.getDistanceToSurge();
     if (!Double.isNaN(surgeMargin) && !Double.isInfinite(surgeMargin)) {
-      CapacityConstraint surgeConstraint =
-          StandardConstraintType.COMPRESSOR_SURGE_MARGIN.createConstraint().setDesignValue(100.0)
-              .setMinValue(minSurgeMargin * 100.0).setValueSupplier(() -> {
-                double margin = comp.getDistanceToSurge();
-                return margin > 0 ? 100.0 / (1.0 + margin) : 100.0;
-              });
+      CapacityConstraint surgeConstraint = StandardConstraintType.COMPRESSOR_SURGE_MARGIN.createConstraint()
+	  .setDesignValue(100.0).setMinValue(minSurgeMargin * 100.0).setValueSupplier(() -> {
+	    double margin = comp.getDistanceToSurge();
+	    return margin > 0 ? 100.0 / (1.0 + margin) : 100.0;
+	  });
       constraints.put("surgeMargin", surgeConstraint);
     }
 
     // Stonewall margin constraint
     double stonewallMargin = comp.getDistanceToStoneWall();
     if (!Double.isNaN(stonewallMargin) && !Double.isInfinite(stonewallMargin)) {
-      CapacityConstraint stonewallConstraint = StandardConstraintType.COMPRESSOR_STONEWALL_MARGIN
-          .createConstraint().setDesignValue(100.0).setMinValue(minStonewallMargin * 100.0)
-          .setValueSupplier(() -> {
-            double margin = comp.getDistanceToStoneWall();
-            return margin > 0 ? 100.0 / (1.0 + margin) : 100.0;
-          });
+      CapacityConstraint stonewallConstraint = StandardConstraintType.COMPRESSOR_STONEWALL_MARGIN.createConstraint()
+	  .setDesignValue(100.0).setMinValue(minStonewallMargin * 100.0).setValueSupplier(() -> {
+	    double margin = comp.getDistanceToStoneWall();
+	    return margin > 0 ? 100.0 / (1.0 + margin) : 100.0;
+	  });
       constraints.put("stonewallMargin", stonewallConstraint);
     }
 
     // Discharge temperature constraint
     if (comp.getOutletStream() != null && comp.getOutletStream().getThermoSystem() != null) {
       CapacityConstraint tempConstraint = new CapacityConstraint("dischargeTemperature")
-          .setDesignValue(maxDischargeTemp).setMaxValue(maxDischargeTemp * 1.1).setUnit("C")
-          .setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
-          .setValueSupplier(() -> comp.getOutletStream().getTemperature("C"));
+	  .setDesignValue(maxDischargeTemp).setMaxValue(maxDischargeTemp * 1.1).setUnit("C")
+	  .setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
+	  .setValueSupplier(() -> comp.getOutletStream().getTemperature("C"));
       constraints.put("dischargeTemperature", tempConstraint);
     }
 
@@ -231,7 +228,7 @@ public class CompressorCapacityStrategy implements EquipmentCapacityStrategy {
 
     for (CapacityConstraint constraint : constraints.values()) {
       if (constraint.isViolated()) {
-        violations.add(constraint);
+	violations.add(constraint);
       }
     }
 
@@ -249,8 +246,8 @@ public class CompressorCapacityStrategy implements EquipmentCapacityStrategy {
     for (CapacityConstraint constraint : constraints.values()) {
       double util = constraint.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
-        maxUtil = util;
-        bottleneck = constraint;
+	maxUtil = util;
+	bottleneck = constraint;
       }
     }
 
@@ -280,10 +277,10 @@ public class CompressorCapacityStrategy implements EquipmentCapacityStrategy {
     Map<String, CapacityConstraint> constraints = getConstraints(equipment);
     for (CapacityConstraint constraint : constraints.values()) {
       if (constraint.getSeverity() == CapacityConstraint.ConstraintSeverity.HARD
-          || constraint.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL) {
-        if (constraint.isHardLimitExceeded()) {
-          return false;
-        }
+	  || constraint.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL) {
+	if (constraint.isHardLimitExceeded()) {
+	  return false;
+	}
       }
     }
 
@@ -297,7 +294,7 @@ public class CompressorCapacityStrategy implements EquipmentCapacityStrategy {
 
     for (CapacityConstraint constraint : constraints.values()) {
       if (constraint.getUtilization() > 1.0) {
-        return false;
+	return false;
       }
     }
 

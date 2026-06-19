@@ -32,8 +32,8 @@ public class ProcessSafetyAnalyzerTest extends NeqSimTest {
     InMemoryResultRepository repository = new InMemoryResultRepository();
     ProcessSafetyAnalyzer analyzer = new ProcessSafetyAnalyzer(base, repository);
 
-    ProcessSafetyScenario scenario = ProcessSafetyScenario.builder("Blocked pump")
-        .blockOutlet("pump1").controllerSetPoint("pump1", 5.0).build();
+    ProcessSafetyScenario scenario = ProcessSafetyScenario.builder("Blocked pump").blockOutlet("pump1")
+	.controllerSetPoint("pump1", 5.0).build();
 
     ProcessSafetyAnalysisSummary summary = analyzer.analyze(scenario);
 
@@ -65,8 +65,7 @@ public class ProcessSafetyAnalyzerTest extends NeqSimTest {
 
     List<ProcessSafetyScenario> scenarios = new ArrayList<>();
     scenarios.add(ProcessSafetyScenario.builder("Utility loss").utilityLoss("cooler1").build());
-    scenarios.add(ProcessSafetyScenario.builder("Controller change")
-        .controllerSetPoint("cooler1", 15.0).build());
+    scenarios.add(ProcessSafetyScenario.builder("Controller change").controllerSetPoint("cooler1", 15.0).build());
 
     List<ProcessSafetyAnalysisSummary> summaries = analyzer.analyze(scenarios);
 

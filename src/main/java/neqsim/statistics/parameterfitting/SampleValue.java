@@ -43,16 +43,17 @@ public class SampleValue implements Cloneable {
    * Constructor for SampleValue.
    * </p>
    */
-  public SampleValue() {}
+  public SampleValue() {
+  }
 
   /**
    * <p>
    * Constructor for SampleValue.
    * </p>
    *
-   * @param sampleValue a double
+   * @param sampleValue       a double
    * @param standardDeviation a double
-   * @param dependentValues an array of type double
+   * @param dependentValues   an array of type double
    */
   public SampleValue(double sampleValue, double standardDeviation, double[] dependentValues) {
     this.dependentValues = new double[dependentValues.length];
@@ -66,9 +67,9 @@ public class SampleValue implements Cloneable {
    * Constructor for SampleValue.
    * </p>
    *
-   * @param sampleValue a double
-   * @param standardDeviation a double
-   * @param dependentValues an array of type double
+   * @param sampleValue        a double
+   * @param standardDeviation  a double
+   * @param dependentValues    an array of type double
    * @param standardDeviations an array of type double
    */
   public SampleValue(double sampleValue, double standardDeviation, double[] dependentValues,
@@ -203,7 +204,7 @@ public class SampleValue implements Cloneable {
    * setDependentValue.
    * </p>
    *
-   * @param i a int
+   * @param i   a int
    * @param val a double
    */
   public void setDependentValue(int i, double val) {

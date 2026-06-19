@@ -12,12 +12,11 @@ import neqsim.thermo.system.SystemPrEos;
  * Regression tests for the compressor's "real phase" multi-phase-check guard.
  *
  * <p>
- * Historically the guard counted {@code getNumberOfPhases()} directly, which can include a phantom
- * phase carried over from a previous flash (β &lt; 1.0e-10). The phantom phase has non-physical Z
- * and seeds NaN inside {@link neqsim.thermo.phase.PhasePrEos#molarVolumeAnalytical} when the
- * compressor's outlet PHflash is allowed to run a multi-phase check. The fix counts only phases
- * with β &gt; 1.0e-10 ("real" phases) and disables the multi-phase check when there is only one
- * real phase.
+ * Historically the guard counted {@code getNumberOfPhases()} directly, which can include a phantom phase carried over
+ * from a previous flash (β &lt; 1.0e-10). The phantom phase has non-physical Z and seeds NaN inside
+ * {@link neqsim.thermo.phase.PhasePrEos#molarVolumeAnalytical} when the compressor's outlet PHflash is allowed to run a
+ * multi-phase check. The fix counts only phases with β &gt; 1.0e-10 ("real" phases) and disables the multi-phase check
+ * when there is only one real phase.
  */
 public class CompressorRealPhaseGuardTest {
 
@@ -49,12 +48,11 @@ public class CompressorRealPhaseGuardTest {
 
     double outT = comp.getOutletStream().getTemperature("C");
     double power = comp.getPower();
-    assertTrue(Double.isFinite(outT),
-        "compressor outlet temperature must be finite (was " + outT + ")");
+    assertTrue(Double.isFinite(outT), "compressor outlet temperature must be finite (was " + outT + ")");
     assertTrue(Double.isFinite(power), "compressor shaft power must be finite (was " + power + ")");
     assertTrue(power > 0.0, "compressor power must be positive (was " + power + ")");
     assertEquals(1, comp.getOutletStream().getFluid().getNumberOfPhases(),
-        "single-phase gas inlet should produce a single-phase outlet");
+	"single-phase gas inlet should produce a single-phase outlet");
   }
 
   @Test
@@ -76,8 +74,8 @@ public class CompressorRealPhaseGuardTest {
     outFluid.initProperties();
     double outRho = outFluid.getPhase(0).getDensity();
     assertTrue(Double.isFinite(outT) && outT > 20.0 && outT < 300.0,
-        "compressor outlet temperature must be physically reasonable (was " + outT + " C)");
+	"compressor outlet temperature must be physically reasonable (was " + outT + " C)");
     assertTrue(Double.isFinite(outRho) && outRho > 0.0,
-        "compressor outlet density must be finite and positive (was " + outRho + ")");
+	"compressor outlet density must be finite and positive (was " + outRho + ")");
   }
 }

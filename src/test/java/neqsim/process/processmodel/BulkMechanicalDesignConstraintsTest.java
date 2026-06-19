@@ -9,10 +9,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Tests for the bulk {@code applyMechanicalDesignCapacityConstraints()} helpers on
- * {@link ProcessSystem} and {@link ProcessModel}. These surface the mechanical-design limits of
- * every equipment item in a single call, which is the "out of the box, then fully configurable"
- * enabler for large multi-area plants.
+ * Tests for the bulk {@code applyMechanicalDesignCapacityConstraints()} helpers on {@link ProcessSystem} and
+ * {@link ProcessModel}. These surface the mechanical-design limits of every equipment item in a single call, which is
+ * the "out of the box, then fully configurable" enabler for large multi-area plants.
  *
  * @author NeqSim Development Team
  * @version 1.0
@@ -22,13 +21,12 @@ public class BulkMechanicalDesignConstraintsTest {
   /**
    * Builds a heater with a fixed pressure drop and positive duty inside its own process system.
    *
-   * @param name the equipment and stream name prefix
-   * @param inletPressure inlet pressure in bara
+   * @param name           the equipment and stream name prefix
+   * @param inletPressure  inlet pressure in bara
    * @param outletPressure outlet pressure in bara
    * @return a run process system whose single heater is named {@code name}
    */
-  private ProcessSystem buildHeaterProcess(String name, double inletPressure,
-      double outletPressure) {
+  private ProcessSystem buildHeaterProcess(String name, double inletPressure, double outletPressure) {
     SystemInterface fluid = new SystemSrkEos(298.15, inletPressure);
     fluid.addComponent("methane", 0.9);
     fluid.addComponent("ethane", 0.1);
@@ -62,8 +60,8 @@ public class BulkMechanicalDesignConstraintsTest {
   }
 
   /**
-   * The process-system bulk helper sums derived constraints across all equipment and surfaces them
-   * in the utilization snapshot.
+   * The process-system bulk helper sums derived constraints across all equipment and surfaces them in the utilization
+   * snapshot.
    */
   @Test
   void processSystemBulkRegistersAcrossEquipment() {
@@ -78,8 +76,7 @@ public class BulkMechanicalDesignConstraintsTest {
 
     int added = process.applyMechanicalDesignCapacityConstraints();
     assertEquals(2, added, "pressure-drop and volume-flow constraints should be registered");
-    assertEquals(0.5, heater.getMaxUtilization(), 1.0e-3,
-        "max utilization should reflect the 50% loaded limits");
+    assertEquals(0.5, heater.getMaxUtilization(), 1.0e-3, "max utilization should reflect the 50% loaded limits");
 
     String snapshot = process.getUtilizationSnapshotJson();
     assertTrue(snapshot.contains("\"schemaVersion\""), "snapshot should be schema-versioned");
@@ -98,15 +95,14 @@ public class BulkMechanicalDesignConstraintsTest {
     int first = process.applyMechanicalDesignCapacityConstraints();
     int second = process.applyMechanicalDesignCapacityConstraints();
     assertEquals(first, second, "re-applying should register the same count");
-    assertEquals(1L,
-        heater.getCapacityConstraints().values().stream()
-            .filter(c -> "mechanicalDesign".equals(c.getDataSource())).count(),
-        "exactly one mechanical-design constraint should remain after re-apply");
+    assertEquals(1L, heater.getCapacityConstraints().values().stream()
+	.filter(c -> "mechanicalDesign".equals(c.getDataSource())).count(),
+	"exactly one mechanical-design constraint should remain after re-apply");
   }
 
   /**
-   * The model-level bulk helper rolls up across every process area and the multi-area snapshot
-   * carries area labels and a bottleneck.
+   * The model-level bulk helper rolls up across every process area and the multi-area snapshot carries area labels and
+   * a bottleneck.
    */
   @Test
   void processModelBulkRollsUpAcrossAreas() {

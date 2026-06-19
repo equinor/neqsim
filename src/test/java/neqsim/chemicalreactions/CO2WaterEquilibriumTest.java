@@ -13,13 +13,13 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Test class for CO2-water chemical equilibrium using the Smith & Missen algorithm.
  *
  * <p>
- * When CO2 dissolves in water, it forms carbonic acid and its dissociation products: CO2(aq) + H2O
- * <-> H2CO3 <-> HCO3- + H+ <-> CO3-- + 2H+
+ * When CO2 dissolves in water, it forms carbonic acid and its dissociation products: CO2(aq) + H2O <-> H2CO3 <-> HCO3-
+ * + H+ <-> CO3-- + 2H+
  * </p>
  *
  * <p>
- * The chemical equilibrium solver should correctly calculate the species distribution while
- * conserving mass (atoms) and charge.
+ * The chemical equilibrium solver should correctly calculate the species distribution while conserving mass (atoms) and
+ * charge.
  * </p>
  */
 public class CO2WaterEquilibriumTest {
@@ -29,9 +29,8 @@ public class CO2WaterEquilibriumTest {
    * Test basic CO2-water equilibrium at ambient conditions.
    *
    * <p>
-   * At 25°C and 1 bar, dissolved CO2 in water should produce: - pH around 4-5 (acidic due to
-   * carbonic acid) - H3O+ concentration > OH- concentration - HCO3- as the dominant carbonate
-   * species at typical pH
+   * At 25°C and 1 bar, dissolved CO2 in water should produce: - pH around 4-5 (acidic due to carbonic acid) - H3O+
+   * concentration > OH- concentration - HCO3- as the dominant carbonate species at typical pH
    * </p>
    */
   @Test
@@ -63,8 +62,7 @@ public class CO2WaterEquilibriumTest {
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       double moles = system.getPhase(0).getComponent(i).getNumberOfMolesInPhase();
       if (moles > 1e-20) {
-        logger.info(
-            "  " + system.getPhase(0).getComponent(i).getComponentName() + ": " + moles + " mol");
+	logger.info("  " + system.getPhase(0).getComponent(i).getComponentName() + ": " + moles + " mol");
       }
     }
 
@@ -89,12 +87,12 @@ public class CO2WaterEquilibriumTest {
       logger.info("\nPhase " + p + " (" + system.getPhase(p).getPhaseTypeName() + "):");
       logger.info("  Moles: " + system.getPhase(p).getNumberOfMolesInPhase());
       for (int i = 0; i < system.getPhase(p).getNumberOfComponents(); i++) {
-        double moles = system.getPhase(p).getComponent(i).getNumberOfMolesInPhase();
-        double moleFrac = system.getPhase(p).getComponent(i).getx();
-        if (moles > 1e-20) {
-          logger.info("  " + system.getPhase(p).getComponent(i).getComponentName() + ": " + moles
-              + " mol (x=" + moleFrac + ")");
-        }
+	double moles = system.getPhase(p).getComponent(i).getNumberOfMolesInPhase();
+	double moleFrac = system.getPhase(p).getComponent(i).getx();
+	if (moles > 1e-20) {
+	  logger.info("  " + system.getPhase(p).getComponent(i).getComponentName() + ": " + moles + " mol (x="
+	      + moleFrac + ")");
+	}
       }
     }
 
@@ -102,12 +100,12 @@ public class CO2WaterEquilibriumTest {
     double totalCarbon = 0.0;
     for (int p = 0; p < system.getNumberOfPhases(); p++) {
       for (int i = 0; i < system.getPhase(p).getNumberOfComponents(); i++) {
-        String name = system.getPhase(p).getComponent(i).getComponentName();
-        double moles = system.getPhase(p).getComponent(i).getNumberOfMolesInPhase();
-        // Count carbon atoms in each species
-        if (name.equals("CO2") || name.equals("HCO3-") || name.equals("CO3--")) {
-          totalCarbon += moles; // 1 carbon per molecule
-        }
+	String name = system.getPhase(p).getComponent(i).getComponentName();
+	double moles = system.getPhase(p).getComponent(i).getNumberOfMolesInPhase();
+	// Count carbon atoms in each species
+	if (name.equals("CO2") || name.equals("HCO3-") || name.equals("CO3--")) {
+	  totalCarbon += moles; // 1 carbon per molecule
+	}
       }
     }
     logger.info("\nTotal carbon: " + totalCarbon + " mol (initial: 0.01 mol)");
@@ -128,8 +126,8 @@ public class CO2WaterEquilibriumTest {
    * Test CO2-water equilibrium at slightly elevated pressure.
    *
    * <p>
-   * At higher pressure, more CO2 should dissolve in water. Note: High pressures (>5 bar) can cause
-   * numerical issues with electrolyte CPA.
+   * At higher pressure, more CO2 should dissolve in water. Note: High pressures (>5 bar) can cause numerical issues
+   * with electrolyte CPA.
    * </p>
    */
   @Test
@@ -169,11 +167,10 @@ public class CO2WaterEquilibriumTest {
     for (int p = 0; p < system.getNumberOfPhases(); p++) {
       logger.info("\nPhase " + p + " (" + system.getPhase(p).getPhaseTypeName() + "):");
       for (int i = 0; i < system.getPhase(p).getNumberOfComponents(); i++) {
-        double moles = system.getPhase(p).getComponent(i).getNumberOfMolesInPhase();
-        if (moles > 1e-20) {
-          logger.info(
-              "  " + system.getPhase(p).getComponent(i).getComponentName() + ": " + moles + " mol");
-        }
+	double moles = system.getPhase(p).getComponent(i).getNumberOfMolesInPhase();
+	if (moles > 1e-20) {
+	  logger.info("  " + system.getPhase(p).getComponent(i).getComponentName() + ": " + moles + " mol");
+	}
       }
     }
 
@@ -196,12 +193,11 @@ public class CO2WaterEquilibriumTest {
     system.setMixingRule(10);
 
     // Verify chemical reaction operations is initialized
-    assertNotNull(system.getChemicalReactionOperations(),
-        "Chemical reaction operations should be initialized");
+    assertNotNull(system.getChemicalReactionOperations(), "Chemical reaction operations should be initialized");
 
     // Verify it has reactions
     assertTrue(system.getChemicalReactionOperations().hasReactions(),
-        "Should have chemical reactions for CO2-water system");
+	"Should have chemical reactions for CO2-water system");
 
     logger.info("\n=== Chemical Reaction Operations Test ===");
     logger.info("Has reactions: " + system.getChemicalReactionOperations().hasReactions());
@@ -258,8 +254,8 @@ public class CO2WaterEquilibriumTest {
    * Test configurable solver parameters (LOW priority improvements).
    *
    * <p>
-   * Verifies that: - Convergence tolerance can be configured - Max iterations can be configured -
-   * Solver metrics (iteration count, error) are accessible after solve
+   * Verifies that: - Convergence tolerance can be configured - Max iterations can be configured - Solver metrics
+   * (iteration count, error) are accessible after solve
    * </p>
    */
   @Test
@@ -277,8 +273,7 @@ public class CO2WaterEquilibriumTest {
     system.init(0);
 
     // Get the chemical equilibrium solver
-    neqsim.chemicalreactions.ChemicalReactionOperations chemOps =
-        system.getChemicalReactionOperations();
+    neqsim.chemicalreactions.ChemicalReactionOperations chemOps = system.getChemicalReactionOperations();
     assertNotNull(chemOps, "Chemical reaction operations should not be null");
 
     // Solve chemical equilibrium

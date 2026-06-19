@@ -89,8 +89,7 @@ class ProcessSystemStreamSummaryTest {
     process.add(sep);
     process.run();
 
-    java.util.List<neqsim.process.equipment.stream.StreamInterface> streams =
-        process.getAllStreams();
+    java.util.List<neqsim.process.equipment.stream.StreamInterface> streams = process.getAllStreams();
     assertNotNull(streams, "getAllStreams should not return null");
     // Should have at least the feed stream, gas outlet, and liquid outlet
     assertTrue(streams.size() >= 1, "Should find at least 1 stream");

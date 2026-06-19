@@ -5,8 +5,8 @@ import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 
 /**
- * Phase model for an ideal gas. Compressibility is fixed to unity and thermodynamic properties are
- * calculated from ideal-gas relations.
+ * Phase model for an ideal gas. Compressibility is fixed to unity and thermodynamic properties are calculated from
+ * ideal-gas relations.
  *
  * @author esol
  */
@@ -63,8 +63,7 @@ public class PhaseIdealGas extends Phase {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
-      double beta) {
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt, double beta) {
     super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     Z = 1.0;
     updateMolarVolume();
@@ -72,7 +71,8 @@ public class PhaseIdealGas extends Phase {
 
   /** {@inheritDoc} */
   @Override
-  public void setMixingRuleGEModel(String name) {}
+  public void setMixingRuleGEModel(String name) {
+  }
 
   /**
    * <p>
@@ -82,17 +82,18 @@ public class PhaseIdealGas extends Phase {
    * @param mr a {@link neqsim.thermo.mixingrule.MixingRuleTypeInterface} object
    */
   @Override
-  public void setMixingRule(MixingRuleTypeInterface mr) {}
+  public void setMixingRule(MixingRuleTypeInterface mr) {
+  }
 
   /** {@inheritDoc} */
   @Override
-  public void resetMixingRule(MixingRuleTypeInterface mr) {}
+  public void resetMixingRule(MixingRuleTypeInterface mr) {
+  }
 
   /** {@inheritDoc} */
   @Override
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
-      throws neqsim.util.exception.IsNaNException,
-      neqsim.util.exception.TooManyIterationsException {
+      throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
     return R * temperature / pressure;
   }
 
@@ -122,12 +123,12 @@ public class PhaseIdealGas extends Phase {
   public double getDensity(String unit) {
     double rho = getDensity();
     switch (unit) {
-      case "kg/m3":
-        return rho;
-      case "mol/m3":
-        return rho / getMolarMass();
-      default:
-        throw new RuntimeException("unit not supported " + unit);
+    case "kg/m3":
+      return rho;
+    case "mol/m3":
+      return rho / getMolarMass();
+    default:
+      throw new RuntimeException("unit not supported " + unit);
     }
   }
 
@@ -167,4 +168,3 @@ public class PhaseIdealGas extends Phase {
     return 0.0;
   }
 }
-

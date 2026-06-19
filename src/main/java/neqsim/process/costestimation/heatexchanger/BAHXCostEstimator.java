@@ -9,9 +9,9 @@ import neqsim.process.mechanicaldesign.heatexchanger.BAHXMechanicalDesign;
  * Cost estimation for brazed aluminium plate-fin heat exchangers (BAHX).
  *
  * <p>
- * BAHX cost estimation uses a weight-and-area based model calibrated against published BAHX cost
- * data for LNG and air separation applications. Typical BAHX costs range from $800 to $2000 per m2
- * of heat transfer area for aluminium plate-fin construction.
+ * BAHX cost estimation uses a weight-and-area based model calibrated against published BAHX cost data for LNG and air
+ * separation applications. Typical BAHX costs range from $800 to $2000 per m2 of heat transfer area for aluminium
+ * plate-fin construction.
  * </p>
  *
  * <p>
@@ -240,7 +240,7 @@ public class BAHXCostEstimator extends UnitCostEstimateBaseClass {
   /**
    * Round a double value to the specified number of decimal places.
    *
-   * @param value the value to round
+   * @param value    the value to round
    * @param decimals number of decimal places
    * @return rounded value
    */

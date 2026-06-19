@@ -21,30 +21,29 @@ public final class ExperimentalDataPoint implements Serializable {
   /**
    * Creates an experimental data point.
    *
-   * @param measuredValue measured response value
+   * @param measuredValue     measured response value
    * @param standardDeviation positive standard deviation for the measured response
-   * @param dependentValues independent variable values used by the fitting function
-   * @throws IllegalArgumentException if values are not finite, the uncertainty is not positive, or
-   *         the dependent value array is empty
+   * @param dependentValues   independent variable values used by the fitting function
+   * @throws IllegalArgumentException if values are not finite, the uncertainty is not positive, or the dependent value
+   *                                  array is empty
    */
-  public ExperimentalDataPoint(double measuredValue, double standardDeviation,
-      double[] dependentValues) {
+  public ExperimentalDataPoint(double measuredValue, double standardDeviation, double[] dependentValues) {
     this(measuredValue, standardDeviation, dependentValues, "unknown", "unknown");
   }
 
   /**
    * Creates an experimental data point with reference metadata.
    *
-   * @param measuredValue measured response value
+   * @param measuredValue     measured response value
    * @param standardDeviation positive standard deviation for the measured response
-   * @param dependentValues independent variable values used by the fitting function
-   * @param reference source reference for the data point
-   * @param description short description of the data point
-   * @throws IllegalArgumentException if values are not finite, the uncertainty is not positive, or
-   *         the dependent value array is empty
+   * @param dependentValues   independent variable values used by the fitting function
+   * @param reference         source reference for the data point
+   * @param description       short description of the data point
+   * @throws IllegalArgumentException if values are not finite, the uncertainty is not positive, or the dependent value
+   *                                  array is empty
    */
-  public ExperimentalDataPoint(double measuredValue, double standardDeviation,
-      double[] dependentValues, String reference, String description) {
+  public ExperimentalDataPoint(double measuredValue, double standardDeviation, double[] dependentValues,
+      String reference, String description) {
     validateFinite("measuredValue", measuredValue);
     validateFinite("standardDeviation", standardDeviation);
     if (standardDeviation <= 0.0) {
@@ -140,7 +139,7 @@ public final class ExperimentalDataPoint implements Serializable {
   /**
    * Validates that a number is finite.
    *
-   * @param name value name used in error messages
+   * @param name  value name used in error messages
    * @param value value to validate
    * @throws IllegalArgumentException if value is NaN or infinite
    */

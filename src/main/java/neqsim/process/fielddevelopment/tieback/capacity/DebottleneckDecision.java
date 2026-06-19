@@ -36,16 +36,16 @@ public final class DebottleneckDecision implements Serializable, Comparable<Debo
   /**
    * Creates a debottleneck decision.
    *
-   * @param bottleneckName bottleneck or capacity category
-   * @param description decision description
-   * @param capexMusd estimated CAPEX in MUSD
+   * @param bottleneckName     bottleneck or capacity category
+   * @param description        decision description
+   * @param capexMusd          estimated CAPEX in MUSD
    * @param recoveredValueMusd recovered value in MUSD
-   * @param npvMusd net present value in MUSD
-   * @param paybackYears simple payback period in years
-   * @param recommended true if the decision is economically attractive
+   * @param npvMusd            net present value in MUSD
+   * @param paybackYears       simple payback period in years
+   * @param recommended        true if the decision is economically attractive
    */
-  public DebottleneckDecision(String bottleneckName, String description, double capexMusd,
-      double recoveredValueMusd, double npvMusd, double paybackYears, boolean recommended) {
+  public DebottleneckDecision(String bottleneckName, String description, double capexMusd, double recoveredValueMusd,
+      double npvMusd, double paybackYears, boolean recommended) {
     this.bottleneckName = bottleneckName;
     this.description = description;
     this.capexMusd = capexMusd;

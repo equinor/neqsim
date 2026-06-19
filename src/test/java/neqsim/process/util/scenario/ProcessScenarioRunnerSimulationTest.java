@@ -18,8 +18,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Test to verify that process simulation methods (run() and runTransient()) are actually being
- * called and producing thermodynamic results.
+ * Test to verify that process simulation methods (run() and runTransient()) are actually being called and producing
+ * thermodynamic results.
  */
 class ProcessScenarioRunnerSimulationTest {
   private static final Logger logger = LogManager.getLogger(ProcessScenarioRunnerSimulationTest.class);
@@ -62,8 +62,7 @@ class ProcessScenarioRunnerSimulationTest {
     Separator sep = (Separator) system.getUnit("Separator");
 
     // Initialize steady-state (should call system.run())
-    assertDoesNotThrow(() -> runner.initializeSteadyState(),
-        "initializeSteadyState should not throw exception");
+    assertDoesNotThrow(() -> runner.initializeSteadyState(), "initializeSteadyState should not throw exception");
 
     // After initialization, we should have valid thermodynamic results
     double pressure = sep.getGasOutStream().getPressure("bara");
@@ -105,7 +104,7 @@ class ProcessScenarioRunnerSimulationTest {
 
     // Verify no simulation errors occurred
     assertTrue(summary.getErrors().isEmpty() || summary.getErrors().size() < 3,
-        "Should have minimal or no simulation errors");
+	"Should have minimal or no simulation errors");
 
     logger.info("✓ Transient simulation completed:");
     logger.info("  Initial pressure: " + initialPressure + " bara");
@@ -142,18 +141,18 @@ class ProcessScenarioRunnerSimulationTest {
     runner.initializeSteadyState();
 
     // Create a scenario that might cause some issues but shouldn't crash
-    ProcessSafetyScenario scenario =
-        ProcessSafetyScenario.builder("Stress Test").customManipulator("Feed", equipment -> {
-          if (equipment instanceof Stream) {
-            // Set extreme conditions that might cause calculation challenges
-            ((Stream) equipment).setPressure(200.0, "bara");
-          }
-        }).build();
+    ProcessSafetyScenario scenario = ProcessSafetyScenario.builder("Stress Test")
+	.customManipulator("Feed", equipment -> {
+	  if (equipment instanceof Stream) {
+	    // Set extreme conditions that might cause calculation challenges
+	    ((Stream) equipment).setPressure(200.0, "bara");
+	  }
+	}).build();
 
     // Should complete without throwing exception even if there are some errors
-    ScenarioExecutionSummary summary =
-        assertDoesNotThrow(() -> runner.runScenario("Error Handling Test", scenario, 5.0, 0.5),
-            "Scenario should handle errors gracefully");
+    ScenarioExecutionSummary summary = assertDoesNotThrow(
+	() -> runner.runScenario("Error Handling Test", scenario, 5.0, 0.5),
+	"Scenario should handle errors gracefully");
 
     assertNotNull(summary, "Summary should be generated even with errors");
 

@@ -16,10 +16,9 @@ import neqsim.process.safety.compliance.StandardsComplianceReport.Status;
  * Standards-aware process design review for NeqSim process systems.
  *
  * <p>
- * The review currently orchestrates checks that have direct NeqSim model support: TR1965 gas
- * scrubber conformity and NORSOK P-002 line-sizing screening. The output is a
- * {@link StandardsComplianceReport}, so agents can combine calculated evidence with document
- * evidence from standards or technical-requirement reviews.
+ * The review currently orchestrates checks that have direct NeqSim model support: TR1965 gas scrubber conformity and
+ * NORSOK P-002 line-sizing screening. The output is a {@link StandardsComplianceReport}, so agents can combine
+ * calculated evidence with document evidence from standards or technical-requirement reviews.
  * </p>
  *
  * @author NeqSim Development Team
@@ -44,8 +43,7 @@ public class StandardsDesignReview implements Serializable {
    * @param lineSizingValidator validator for NORSOK P-002 line sizing
    */
   public StandardsDesignReview(NorsokP002LineSizingValidator lineSizingValidator) {
-    this.lineSizingValidator = lineSizingValidator == null ? new NorsokP002LineSizingValidator()
-        : lineSizingValidator;
+    this.lineSizingValidator = lineSizingValidator == null ? new NorsokP002LineSizingValidator() : lineSizingValidator;
   }
 
   /**
@@ -59,14 +57,14 @@ public class StandardsDesignReview implements Serializable {
     if (process == null) {
       throw new IllegalArgumentException("process must not be null");
     }
-    StandardsComplianceReport report = new StandardsComplianceReport(process.getName())
-        .loadSTS0131().loadTR1965().loadNORSOKP002().loadTR2237();
+    StandardsComplianceReport report = new StandardsComplianceReport(process.getName()).loadSTS0131().loadTR1965()
+	.loadNORSOKP002().loadTR2237();
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       if (unit instanceof GasScrubber) {
-        reviewGasScrubber((GasScrubber) unit, report);
+	reviewGasScrubber((GasScrubber) unit, report);
       }
       if (unit instanceof PipeLineInterface) {
-        reviewPipeline((PipeLineInterface) unit, report);
+	reviewPipeline((PipeLineInterface) unit, report);
       }
     }
     return report;
@@ -76,7 +74,7 @@ public class StandardsDesignReview implements Serializable {
    * Reviews one gas scrubber against TR1965.
    *
    * @param scrubber gas scrubber to review
-   * @param report report receiving the review requirements
+   * @param report   report receiving the review requirements
    */
   private void reviewGasScrubber(GasScrubber scrubber, StandardsComplianceReport report) {
     if (scrubber.getMechanicalDesign() == null) {
@@ -88,24 +86,23 @@ public class StandardsDesignReview implements Serializable {
     for (ConformityResult result : conformityReport.getResults()) {
       String clause = scrubber.getName() + ":" + result.getCheckName();
       report.addRequirement("TR1965", clause, result.getDescription());
-      report.setStatus("TR1965", clause, mapConformityStatus(result.getStatus()),
-          createConformityEvidence(result));
+      report.setStatus("TR1965", clause, mapConformityStatus(result.getStatus()), createConformityEvidence(result));
     }
   }
 
   /**
    * Reviews one pipeline against NORSOK P-002.
    *
-   * @param pipe pipeline to review
+   * @param pipe   pipeline to review
    * @param report report receiving the review requirements
    */
   private void reviewPipeline(PipeLineInterface pipe, StandardsComplianceReport report) {
     LineSizingResult result = lineSizingValidator.validate(pipe);
     String clause = ((ProcessEquipmentInterface) pipe).getName() + ":line-sizing";
     report.addRequirement("NORSOK P-002", clause,
-        "Line sizing velocity, pressure gradient, and erosional velocity screening");
-    report.setStatus("NORSOK P-002", clause,
-        result.isAcceptable() ? Status.COMPLIANT : Status.NON_COMPLIANT, result.toJson());
+	"Line sizing velocity, pressure gradient, and erosional velocity screening");
+    report.setStatus("NORSOK P-002", clause, result.isAcceptable() ? Status.COMPLIANT : Status.NON_COMPLIANT,
+	result.toJson());
   }
 
   /**
@@ -137,7 +134,7 @@ public class StandardsDesignReview implements Serializable {
     if (result.getStatus() == ConformityResult.Status.NOT_APPLICABLE) {
       return result.getDescription();
     }
-    return result.getDescription() + "; actual=" + result.getActualValue() + " " + result.getUnit()
-        + ", limit=" + result.getLimitValue() + " " + result.getUnit();
+    return result.getDescription() + "; actual=" + result.getActualValue() + " " + result.getUnit() + ", limit="
+	+ result.getLimitValue() + " " + result.getUnit();
   }
 }

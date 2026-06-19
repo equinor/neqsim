@@ -73,7 +73,7 @@ public class CompressorChartJsonReader {
   /**
    * Constructor for CompressorChartJsonReader from JSON string.
    *
-   * @param jsonString JSON string containing chart data
+   * @param jsonString   JSON string containing chart data
    * @param isJsonString flag to indicate this is a JSON string (not file path)
    * @throws Exception if JSON cannot be parsed
    */
@@ -82,7 +82,7 @@ public class CompressorChartJsonReader {
       parseJsonString(jsonString);
     } else {
       try (Reader reader = new FileReader(jsonString)) {
-        parseJson(reader);
+	parseJson(reader);
       }
     }
   }
@@ -131,22 +131,21 @@ public class CompressorChartJsonReader {
       JsonArray flowArray = curve.getAsJsonArray("flow_m3h");
       flowLines[i] = new double[flowArray.size()];
       for (int j = 0; j < flowArray.size(); j++) {
-        flowLines[i][j] = flowArray.get(j).getAsDouble();
+	flowLines[i][j] = flowArray.get(j).getAsDouble();
       }
 
       // Read head array (support both "head_kJkg" and "head" keys)
-      JsonArray headArray =
-          curve.has("head_kJkg") ? curve.getAsJsonArray("head_kJkg") : curve.getAsJsonArray("head");
+      JsonArray headArray = curve.has("head_kJkg") ? curve.getAsJsonArray("head_kJkg") : curve.getAsJsonArray("head");
       headLines[i] = new double[headArray.size()];
       for (int j = 0; j < headArray.size(); j++) {
-        headLines[i][j] = headArray.get(j).getAsDouble();
+	headLines[i][j] = headArray.get(j).getAsDouble();
       }
 
       // Read efficiency array
       JsonArray effArray = curve.getAsJsonArray("polytropicEfficiency_pct");
       polyEffLines[i] = new double[effArray.size()];
       for (int j = 0; j < effArray.size(); j++) {
-        polyEffLines[i][j] = effArray.get(j).getAsDouble();
+	polyEffLines[i][j] = effArray.get(j).getAsDouble();
       }
 
       // Calculate surge (min flow) and choke (max flow) points for each speed
@@ -164,7 +163,7 @@ public class CompressorChartJsonReader {
     int minIdx = 0;
     for (int i = 1; i < array.length; i++) {
       if (array[i] < array[minIdx]) {
-        minIdx = i;
+	minIdx = i;
       }
     }
     return minIdx;
@@ -174,7 +173,7 @@ public class CompressorChartJsonReader {
     int maxIdx = 0;
     for (int i = 1; i < array.length; i++) {
       if (array[i] > array[maxIdx]) {
-        maxIdx = i;
+	maxIdx = i;
       }
     }
     return maxIdx;
@@ -186,11 +185,9 @@ public class CompressorChartJsonReader {
    * @param compressor the compressor to configure
    */
   public void setCurvesToCompressor(Compressor compressor) {
-    compressor.getCompressorChart().setCurves(new double[0], speeds, flowLines, headLines,
-        polyEffLines);
+    compressor.getCompressorChart().setCurves(new double[0], speeds, flowLines, headLines, polyEffLines);
 
-    compressor.getCompressorChart()
-        .setStoneWallCurve(new SafeSplineStoneWallCurve(chokeFlow, chokeHead));
+    compressor.getCompressorChart().setStoneWallCurve(new SafeSplineStoneWallCurve(chokeFlow, chokeHead));
     compressor.getCompressorChart().setSurgeCurve(new SafeSplineSurgeCurve(surgeFlow, surgeHead));
     compressor.getCompressorChart().setHeadUnit(headUnit);
 

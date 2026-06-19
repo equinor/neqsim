@@ -5,8 +5,8 @@ package neqsim.mcp.runners;
  *
  * <p>
  * Third-party or domain-specific runners can implement this interface and register themselves via
- * {@link PluginRegistry}. Each plugin declares a unique name, a description for AI discovery, and a
- * schema string describing its input format.
+ * {@link PluginRegistry}. Each plugin declares a unique name, a description for AI discovery, and a schema string
+ * describing its input format.
  * </p>
  *
  * <p>

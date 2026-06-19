@@ -20,7 +20,7 @@ public class Problem15102009LNGfreezing {
   private static final Logger logger = LogManager.getLogger(Problem15102009LNGfreezing.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.

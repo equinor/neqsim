@@ -47,4 +47,3 @@ class MeasurementDeviceNoiseDelayTest {
     Assertions.assertEquals(2.0, trans.getMeasuredValue("u"), 1e-12);
   }
 }
-

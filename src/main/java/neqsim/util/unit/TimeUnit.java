@@ -26,7 +26,7 @@ public class TimeUnit extends neqsim.util.unit.BaseUnit {
    * </p>
    *
    * @param value Numeric value
-   * @param name Name of unit
+   * @param name  Name of unit
    */
   public TimeUnit(double value, String name) {
     super(value, name);
@@ -49,8 +49,7 @@ public class TimeUnit extends neqsim.util.unit.BaseUnit {
       return 86400.0;
     }
 
-    throw new RuntimeException(
-        new InvalidInputException(this, "getConversionFactor", name, "unit not supported"));
+    throw new RuntimeException(new InvalidInputException(this, "getConversionFactor", name, "unit not supported"));
   }
 
   /** {@inheritDoc} */

@@ -32,9 +32,8 @@ import com.google.gson.JsonParser;
  * </ul>
  *
  * <p>
- * It is intentionally deterministic and side-effect free. Simulation execution remains in the
- * existing NeqSim runners; this class provides the planning and review substrate that agents use to
- * call those runners consistently.
+ * It is intentionally deterministic and side-effect free. Simulation execution remains in the existing NeqSim runners;
+ * this class provides the planning and review substrate that agents use to call those runners consistently.
  * </p>
  *
  * @author Even Solbraa
@@ -46,13 +45,13 @@ public final class AgenticEngineeringKernel implements Serializable {
   /** JSON schema version emitted by this kernel. */
   public static final String SCHEMA_VERSION = "1.0";
 
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   /**
    * Private constructor for utility class.
    */
-  private AgenticEngineeringKernel() {}
+  private AgenticEngineeringKernel() {
+  }
 
   /**
    * Dispatches an agentic engineering action.
@@ -63,25 +62,25 @@ public final class AgenticEngineeringKernel implements Serializable {
   public static String run(String json) {
     if (json == null || json.trim().isEmpty()) {
       return errorJson("INPUT_ERROR", "Input JSON is null or empty",
-          "Provide an object with action: plan, trust, study, or readiness.");
+	  "Provide an object with action: plan, trust, study, or readiness.");
     }
     try {
       JsonObject input = JsonParser.parseString(json).getAsJsonObject();
       String action = stringValue(input, "action", "plan").toLowerCase(Locale.ROOT);
       if ("plan".equals(action) || "compile".equals(action) || "workflow".equals(action)) {
-        return planWorkflow(json);
+	return planWorkflow(json);
       }
       if ("trust".equals(action) || "evidence".equals(action) || "evaluateTrust".equals(action)) {
-        return evaluateTrust(json);
+	return evaluateTrust(json);
       }
       if ("study".equals(action) || "optimize".equals(action) || "rank".equals(action)) {
-        return runStudy(json);
+	return runStudy(json);
       }
       if ("readiness".equals(action) || "gate".equals(action) || "audit".equals(action)) {
-        return assessReadiness(json);
+	return assessReadiness(json);
       }
       return errorJson("UNKNOWN_ACTION", "Unknown agentic engineering action: " + action,
-          "Use action 'plan', 'trust', 'study', or 'readiness'.");
+	  "Use action 'plan', 'trust', 'study', or 'readiness'.");
     } catch (Exception e) {
       return errorJson("AGENTIC_KERNEL_ERROR", e.getMessage(), "Check that the input is JSON.");
     }
@@ -90,15 +89,13 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Builds an engineering intent graph and compiles it to an executable workflow plan.
    *
-   * @param json task input with task, optional objectives, constraints, standards, deliverables,
-   *        and fluids
+   * @param json task input with task, optional objectives, constraints, standards, deliverables, and fluids
    * @return JSON containing engineeringIntent, intentGraph, workflowPlan, and compiledWorkflow
    */
   public static String planWorkflow(String json) {
     try {
       JsonObject input = JsonParser.parseString(json).getAsJsonObject();
-      String task =
-          stringValue(input, "task", stringValue(input, "description", "engineering task"));
+      String task = stringValue(input, "task", stringValue(input, "description", "engineering task"));
       List<String> domains = detectDomains(task, input);
 
       JsonObject intent = buildEngineeringIntent(task, domains, input);
@@ -113,22 +110,22 @@ public final class AgenticEngineeringKernel implements Serializable {
       response.add("compiledWorkflow", compiled);
       response.add("qualityGates", workflowQualityGates(domains));
       response.add("nextActions",
-          stringArray(Arrays.asList("review intentGraph for missing scope",
-              "fetch schemas for each workflowPlan step", "validate generated runner inputs",
-              "execute compiledWorkflow only after evidence and assumptions are accepted")));
+	  stringArray(Arrays.asList("review intentGraph for missing scope", "fetch schemas for each workflowPlan step",
+	      "validate generated runner inputs",
+	      "execute compiledWorkflow only after evidence and assumptions are accepted")));
       response.add("data", response.deepCopy());
       return GSON.toJson(response);
     } catch (Exception e) {
       return errorJson("PLAN_ERROR", "Failed to plan workflow: " + e.getMessage(),
-          "Check task text and optional arrays: objectives, constraints, standards, deliverables.");
+	  "Check task text and optional arrays: objectives, constraints, standards, deliverables.");
     }
   }
 
   /**
    * Builds an evidence graph and computes a transparent trust score for a result package.
    *
-   * @param json result package with optional result, provenance, validation, qualityGate,
-   *        benchmarkTrust, assumptions, limitations, standards, and evidence arrays
+   * @param json result package with optional result, provenance, validation, qualityGate, benchmarkTrust, assumptions,
+   *             limitations, standards, and evidence arrays
    * @return JSON trust report with evidence graph, claims, score, verdict, and recommendations
    */
   public static String evaluateTrust(String json) {
@@ -156,7 +153,7 @@ public final class AgenticEngineeringKernel implements Serializable {
       return GSON.toJson(response);
     } catch (Exception e) {
       return errorJson("TRUST_ERROR", "Failed to evaluate trust: " + e.getMessage(),
-          "Provide result/provenance/validation/evidence as JSON objects or arrays.");
+	  "Provide result/provenance/validation/evidence as JSON objects or arrays.");
     }
   }
 
@@ -173,10 +170,10 @@ public final class AgenticEngineeringKernel implements Serializable {
       JsonArray constraints = arrayValue(input, "constraints");
       JsonArray candidates = arrayValue(input, "candidates");
       if (candidates.size() == 0) {
-        candidates = generateDesignVariableCandidates(input);
+	candidates = generateDesignVariableCandidates(input);
       }
       if (objectives.size() == 0) {
-        objectives = inferDefaultObjectives(candidates);
+	objectives = inferDefaultObjectives(candidates);
       }
 
       Map<String, MetricRange> ranges = metricRanges(candidates, objectives);
@@ -191,15 +188,14 @@ public final class AgenticEngineeringKernel implements Serializable {
       response.add("uncertaintySummary", buildUncertaintySummary(evaluated, objectives));
       response.add("recommendation", buildStudyRecommendation(evaluated));
       response.add("nextActions",
-          stringArray(Arrays.asList("run NeqSim simulations for pending candidates",
-              "promote the best feasible case to benchmark validation",
-              "run evidence trust evaluation",
-              "capture design snapshots before changing the process model")));
+	  stringArray(Arrays.asList("run NeqSim simulations for pending candidates",
+	      "promote the best feasible case to benchmark validation", "run evidence trust evaluation",
+	      "capture design snapshots before changing the process model")));
       response.add("data", response.deepCopy());
       return GSON.toJson(response);
     } catch (Exception e) {
       return errorJson("STUDY_ERROR", "Failed to run autonomous study: " + e.getMessage(),
-          "Provide candidates with metrics plus objectives and optional constraints.");
+	  "Provide candidates with metrics plus objectives and optional constraints.");
     }
   }
 
@@ -207,15 +203,13 @@ public final class AgenticEngineeringKernel implements Serializable {
    * Assesses whether an agentic task package is ready for execution, reporting, or design use.
    *
    * <p>
-   * This gate is designed for agents that incrementally build task folders and result packages. It
-   * accepts either a filesystem-neutral {@code artifacts} list with paths/statuses or embedded
-   * result sections such as {@code validation}, {@code benchmark_validation}, {@code uncertainty},
-   * and {@code risk_evaluation}. The response is deterministic JSON with weighted checklist items,
-   * missing critical items, and next actions.
+   * This gate is designed for agents that incrementally build task folders and result packages. It accepts either a
+   * filesystem-neutral {@code artifacts} list with paths/statuses or embedded result sections such as
+   * {@code validation}, {@code benchmark_validation}, {@code uncertainty}, and {@code risk_evaluation}. The response is
+   * deterministic JSON with weighted checklist items, missing critical items, and next actions.
    * </p>
    *
-   * @param json input JSON with optional scale, artifacts, results, workflowPlan, and evidence
-   *        sections
+   * @param json input JSON with optional scale, artifacts, results, workflowPlan, and evidence sections
    * @return JSON readiness report with score, level, checklist, and recommended next actions
    */
   public static String assessReadiness(String json) {
@@ -223,81 +217,76 @@ public final class AgenticEngineeringKernel implements Serializable {
       JsonObject input = JsonParser.parseString(json).getAsJsonObject();
       JsonObject result = objectValue(input, "result", input);
       JsonArray artifacts = arrayValue(input, "artifacts");
-      String scale = stringValue(input, "scale", stringValue(result, "scale", "standard"))
-          .toLowerCase(Locale.ROOT);
+      String scale = stringValue(input, "scale", stringValue(result, "scale", "standard")).toLowerCase(Locale.ROOT);
       boolean quick = "quick".equals(scale);
 
       ReadinessAccumulator readiness = new ReadinessAccumulator();
       addReadinessItem(readiness, "task_spec", "scope", 10.0,
-          hasArtifact(artifacts, "task_spec.md") || input.has("task_spec")
-              || result.has("task_spec"),
-          true, "Task specification defines scope, standards, deliverables, and "
-              + "acceptance criteria",
-          "Create or complete step1_scope_and_research/task_spec.md before simulations.");
+	  hasArtifact(artifacts, "task_spec.md") || input.has("task_spec") || result.has("task_spec"), true,
+	  "Task specification defines scope, standards, deliverables, and " + "acceptance criteria",
+	  "Create or complete step1_scope_and_research/task_spec.md before simulations.");
       addReadinessItem(readiness, "capability_assessment", "scope", 8.0,
-          hasArtifact(artifacts, "capability_assessment.md") || input.has("capability_assessment")
-              || result.has("capability_assessment"),
-          !quick, "Capability scout output records available NeqSim tools and gaps",
-          "Run capability scouting and save step1_scope_and_research/capability_assessment.md.");
+	  hasArtifact(artifacts, "capability_assessment.md") || input.has("capability_assessment")
+	      || result.has("capability_assessment"),
+	  !quick, "Capability scout output records available NeqSim tools and gaps",
+	  "Run capability scouting and save step1_scope_and_research/capability_assessment.md.");
       addReadinessItem(readiness, "deep_analysis", "scope", 8.0,
-          hasArtifact(artifacts, "analysis.md") || input.has("analysis") || result.has("analysis"),
-          !quick, "Deep analysis records physics, alternatives, assumptions, and estimates",
-          "Write step1_scope_and_research/analysis.md with order-of-magnitude checks.");
+	  hasArtifact(artifacts, "analysis.md") || input.has("analysis") || result.has("analysis"), !quick,
+	  "Deep analysis records physics, alternatives, assumptions, and estimates",
+	  "Write step1_scope_and_research/analysis.md with order-of-magnitude checks.");
       addReadinessItem(readiness, "neqsim_improvements", "scope", 6.0,
-          hasArtifact(artifacts, "neqsim_improvements.md") || input.has("neqsim_improvements")
-              || result.has("neqsim_improvements"),
-          false, "NeqSim gaps and proposed reusable improvements are captured",
-          "Document gaps and concrete reusable improvements in neqsim_improvements.md.");
+	  hasArtifact(artifacts, "neqsim_improvements.md") || input.has("neqsim_improvements")
+	      || result.has("neqsim_improvements"),
+	  false, "NeqSim gaps and proposed reusable improvements are captured",
+	  "Document gaps and concrete reusable improvements in neqsim_improvements.md.");
       addReadinessItem(readiness, "workflow_plan", "planning", 8.0,
-          input.has("workflowPlan") || result.has("workflowPlan") || input.has("compiledWorkflow")
-              || result.has("compiledWorkflow"),
-          true, "Executable workflow plan or compiled workflow is available",
-          "Call action=plan and review workflowPlan dependencies before running tools.");
+	  input.has("workflowPlan") || result.has("workflowPlan") || input.has("compiledWorkflow")
+	      || result.has("compiledWorkflow"),
+	  true, "Executable workflow plan or compiled workflow is available",
+	  "Call action=plan and review workflowPlan dependencies before running tools.");
       addReadinessItem(readiness, "simulation_results", "analysis", 12.0,
-          hasArtifact(artifacts, "results.json") || result.has("key_results"), true,
-          "Numerical results are captured in results.json/key_results",
-          "Run the analysis notebook and save key_results to results.json.");
+	  hasArtifact(artifacts, "results.json") || result.has("key_results"), true,
+	  "Numerical results are captured in results.json/key_results",
+	  "Run the analysis notebook and save key_results to results.json.");
       addReadinessItem(readiness, "figures_discussed", "analysis", 8.0,
-          result.has("figure_discussion") && arrayValue(result, "figure_discussion").size() > 0,
-          !quick, "Figures include engineering discussion and traceability",
-          "Add observation, mechanism, implication, and recommendation after every figure.");
-      addReadinessItem(readiness, "validation", "validation", 10.0,
-          result.has("validation") || input.has("validation"), true,
-          "Acceptance criteria and simulation validation are documented",
-          "Populate the validation section with acceptance_criteria_met and checks.");
+	  result.has("figure_discussion") && arrayValue(result, "figure_discussion").size() > 0, !quick,
+	  "Figures include engineering discussion and traceability",
+	  "Add observation, mechanism, implication, and recommendation after every figure.");
+      addReadinessItem(readiness, "validation", "validation", 10.0, result.has("validation") || input.has("validation"),
+	  true, "Acceptance criteria and simulation validation are documented",
+	  "Populate the validation section with acceptance_criteria_met and checks.");
       addReadinessItem(readiness, "benchmark_validation", "validation", 10.0,
-          result.has("benchmark_validation") || input.has("benchmark_validation")
-              || hasArtifact(artifacts, "benchmark_validation"),
-          !quick, "Independent benchmark comparison is included",
-          "Create a benchmark validation notebook with at least three reference points.");
-      addReadinessItem(readiness, "uncertainty", "risk", 8.0,
-          result.has("uncertainty") || input.has("uncertainty"), !quick,
-          "Parameter uncertainty and P10/P50/P90 outputs are available",
-          "Run uncertainty analysis with NeqSim simulations for technical drivers.");
+	  result.has("benchmark_validation") || input.has("benchmark_validation")
+	      || hasArtifact(artifacts, "benchmark_validation"),
+	  !quick, "Independent benchmark comparison is included",
+	  "Create a benchmark validation notebook with at least three reference points.");
+      addReadinessItem(readiness, "uncertainty", "risk", 8.0, result.has("uncertainty") || input.has("uncertainty"),
+	  !quick, "Parameter uncertainty and P10/P50/P90 outputs are available",
+	  "Run uncertainty analysis with NeqSim simulations for technical drivers.");
       addReadinessItem(readiness, "risk_register", "risk", 6.0,
-          result.has("risk_evaluation") || input.has("risk_evaluation"), !quick,
-          "Risk register and mitigations are available", "Add ISO 31000-style risk_evaluation.");
+	  result.has("risk_evaluation") || input.has("risk_evaluation"), !quick,
+	  "Risk register and mitigations are available", "Add ISO 31000-style risk_evaluation.");
       addReadinessItem(readiness, "consistency_check", "reporting", 6.0,
-          hasArtifact(artifacts, "consistency_report.json") || input.has("consistency_report")
-              || result.has("consistency_report"),
-          !quick, "Cross-notebook consistency report exists",
-          "Run devtools/consistency_checker.py and fix critical inconsistencies.");
+	  hasArtifact(artifacts, "consistency_report.json") || input.has("consistency_report")
+	      || result.has("consistency_report"),
+	  !quick, "Cross-notebook consistency report exists",
+	  "Run devtools/consistency_checker.py and fix critical inconsistencies.");
 
       if (quick) {
-        readiness.score = 0.0;
-        readiness.maxScore = 0.0;
-        readiness.nextActions.clear();
-        for (int i = 0; i < readiness.checklist.size(); i++) {
-          JsonObject item = readiness.checklist.get(i).getAsJsonObject();
-          boolean critical = item.get("critical").getAsBoolean();
-          if (critical) {
-            readiness.score += item.get("points").getAsDouble();
-            readiness.maxScore += item.get("maxPoints").getAsDouble();
-            if (!"PASS".equals(item.get("status").getAsString()) && item.has("remediation")) {
-              readiness.nextActions.add(item.get("remediation").getAsString());
-            }
-          }
-        }
+	readiness.score = 0.0;
+	readiness.maxScore = 0.0;
+	readiness.nextActions.clear();
+	for (int i = 0; i < readiness.checklist.size(); i++) {
+	  JsonObject item = readiness.checklist.get(i).getAsJsonObject();
+	  boolean critical = item.get("critical").getAsBoolean();
+	  if (critical) {
+	    readiness.score += item.get("points").getAsDouble();
+	    readiness.maxScore += item.get("maxPoints").getAsDouble();
+	    if (!"PASS".equals(item.get("status").getAsString()) && item.has("remediation")) {
+	      readiness.nextActions.add(item.get("remediation").getAsString());
+	    }
+	  }
+	}
       }
 
       JsonObject summary = buildReadinessSummary(readiness);
@@ -311,25 +300,24 @@ public final class AgenticEngineeringKernel implements Serializable {
       return GSON.toJson(response);
     } catch (Exception e) {
       return errorJson("READINESS_ERROR", "Failed to assess readiness: " + e.getMessage(),
-          "Provide task artifacts and/or results sections as JSON.");
+	  "Provide task artifacts and/or results sections as JSON.");
     }
   }
 
   /**
    * Adds one weighted readiness checklist item.
    *
-   * @param readiness mutable readiness accumulator
-   * @param id checklist id
-   * @param category checklist category
-   * @param maxPoints item weight
-   * @param present whether evidence is present
-   * @param critical whether failure should block design use
-   * @param evidence description of accepted evidence
+   * @param readiness   mutable readiness accumulator
+   * @param id          checklist id
+   * @param category    checklist category
+   * @param maxPoints   item weight
+   * @param present     whether evidence is present
+   * @param critical    whether failure should block design use
+   * @param evidence    description of accepted evidence
    * @param remediation recommended remediation when missing
    */
-  private static void addReadinessItem(ReadinessAccumulator readiness, String id,
-      String category, double maxPoints, boolean present, boolean critical, String evidence,
-      String remediation) {
+  private static void addReadinessItem(ReadinessAccumulator readiness, String id, String category, double maxPoints,
+      boolean present, boolean critical, String evidence, String remediation) {
     JsonObject item = new JsonObject();
     item.addProperty("id", id);
     item.addProperty("category", category);
@@ -342,7 +330,7 @@ public final class AgenticEngineeringKernel implements Serializable {
       item.addProperty("remediation", remediation);
       readiness.nextActions.add(remediation);
       if (critical) {
-        readiness.missingCritical.add(id);
+	readiness.missingCritical.add(id);
       }
     }
     readiness.score += present ? maxPoints : 0.0;
@@ -365,12 +353,9 @@ public final class AgenticEngineeringKernel implements Serializable {
     summary.addProperty("warningItems", countChecklistStatus(readiness.checklist, "WARN"));
     summary.addProperty("failedItems", countChecklistStatus(readiness.checklist, "FAIL"));
     summary.addProperty("criticalMissing", readiness.missingCritical.size());
-    summary.addProperty("executionAllowed",
-        score >= 60.0 && readiness.missingCritical.size() <= 2);
-    summary.addProperty("reportAllowed",
-        score >= 75.0 && readiness.missingCritical.size() == 0);
-    summary.addProperty("designDecisionAllowed",
-        score >= 85.0 && readiness.missingCritical.size() == 0);
+    summary.addProperty("executionAllowed", score >= 60.0 && readiness.missingCritical.size() <= 2);
+    summary.addProperty("reportAllowed", score >= 75.0 && readiness.missingCritical.size() == 0);
+    summary.addProperty("designDecisionAllowed", score >= 85.0 && readiness.missingCritical.size() == 0);
     return summary;
   }
 
@@ -384,8 +369,8 @@ public final class AgenticEngineeringKernel implements Serializable {
     JsonObject policy = new JsonObject();
     boolean designDecisionAllowed = summary.get("designDecisionAllowed").getAsBoolean();
     policy.addProperty("engineeringReviewRequired", true);
-    policy.addProperty("minimumAction", designDecisionAllowed ? "discipline approval"
-        : "close missing critical readiness items before design use");
+    policy.addProperty("minimumAction",
+	designDecisionAllowed ? "discipline approval" : "close missing critical readiness items before design use");
     policy.addProperty("canExecuteSimulations", summary.get("executionAllowed").getAsBoolean());
     policy.addProperty("canGenerateReport", summary.get("reportAllowed").getAsBoolean());
     policy.addProperty("canUseForDesignDecision", designDecisionAllowed);
@@ -395,7 +380,7 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Returns a readiness level string from score and missing critical count.
    *
-   * @param score readiness score
+   * @param score           readiness score
    * @param missingCritical number of missing critical items
    * @return readiness level
    */
@@ -416,7 +401,7 @@ public final class AgenticEngineeringKernel implements Serializable {
    * Counts checklist entries by status.
    *
    * @param checklist checklist array
-   * @param status target status
+   * @param status    target status
    * @return count of matching entries
    */
   private static int countChecklistStatus(JsonArray checklist, String status) {
@@ -424,7 +409,7 @@ public final class AgenticEngineeringKernel implements Serializable {
     for (int i = 0; i < checklist.size(); i++) {
       JsonObject item = checklist.get(i).getAsJsonObject();
       if (status.equals(item.get("status").getAsString())) {
-        count++;
+	count++;
       }
     }
     return count;
@@ -433,7 +418,7 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Checks whether an artifacts list contains a path fragment with completed-like status.
    *
-   * @param artifacts artifact objects or path strings
+   * @param artifacts    artifact objects or path strings
    * @param pathFragment path fragment to find
    * @return true when a matching artifact exists and is not marked missing/failed
    */
@@ -444,14 +429,12 @@ public final class AgenticEngineeringKernel implements Serializable {
       String path = valueLabel(element).toLowerCase(Locale.ROOT);
       String status = "present";
       if (element.isJsonObject()) {
-        JsonObject object = element.getAsJsonObject();
-        path = stringValue(object, "path", stringValue(object, "name", valueLabel(element)))
-            .toLowerCase(Locale.ROOT);
-        status = stringValue(object, "status", "present").toLowerCase(Locale.ROOT);
+	JsonObject object = element.getAsJsonObject();
+	path = stringValue(object, "path", stringValue(object, "name", valueLabel(element))).toLowerCase(Locale.ROOT);
+	status = stringValue(object, "status", "present").toLowerCase(Locale.ROOT);
       }
-      if (path.contains(needle) && !"missing".equals(status) && !"failed".equals(status)
-          && !"error".equals(status)) {
-        return true;
+      if (path.contains(needle) && !"missing".equals(status) && !"failed".equals(status) && !"error".equals(status)) {
+	return true;
       }
     }
     return false;
@@ -474,8 +457,8 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Builds an error response.
    *
-   * @param code machine-readable error code
-   * @param message human-readable error message
+   * @param code        machine-readable error code
+   * @param message     human-readable error message
    * @param remediation suggested remediation
    * @return JSON error response
    */
@@ -496,7 +479,7 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Detects engineering domains from task text and optional explicit domain input.
    *
-   * @param task task text
+   * @param task  task text
    * @param input full input object
    * @return ordered list of domains
    */
@@ -504,13 +487,12 @@ public final class AgenticEngineeringKernel implements Serializable {
     Set<String> domains = new LinkedHashSet<String>();
     if (input.has("domains") && input.get("domains").isJsonArray()) {
       for (JsonElement element : input.getAsJsonArray("domains")) {
-        domains.add(element.getAsString());
+	domains.add(element.getAsString());
       }
     }
     String lower = task == null ? "" : task.toLowerCase(Locale.ROOT);
     domains.add("thermodynamics");
-    if (containsAny(lower, "compress", "separator", "heat exchanger", "distill", "teg",
-        "process")) {
+    if (containsAny(lower, "compress", "separator", "heat exchanger", "distill", "teg", "process")) {
       domains.add("process");
     }
     if (containsAny(lower, "pipeline", "flowline", "pipe", "riser")) {
@@ -546,14 +528,14 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Returns true when a text contains any token.
    *
-   * @param text text to search
+   * @param text   text to search
    * @param tokens tokens to match
    * @return true when at least one token is present
    */
   private static boolean containsAny(String text, String... tokens) {
     for (int i = 0; i < tokens.length; i++) {
       if (text.contains(tokens[i])) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -562,30 +544,27 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Builds the engineering intent object.
    *
-   * @param task task text
+   * @param task    task text
    * @param domains detected domains
-   * @param input full input object
+   * @param input   full input object
    * @return engineering intent JSON
    */
-  private static JsonObject buildEngineeringIntent(String task, List<String> domains,
-      JsonObject input) {
+  private static JsonObject buildEngineeringIntent(String task, List<String> domains, JsonObject input) {
     JsonObject intent = new JsonObject();
     intent.addProperty("id", stableId(task));
     intent.addProperty("task", task);
     intent.addProperty("scale", stringValue(input, "scale", "standard"));
     intent.add("domains", stringArray(domains));
     intent.add("objectives", arrayOrDefault(input, "objectives",
-        Arrays.asList("produce validated engineering calculation", "quantify model risk")));
+	Arrays.asList("produce validated engineering calculation", "quantify model risk")));
     intent.add("constraints", arrayOrDefault(input, "constraints",
-        Arrays.asList("all inputs require explicit units", "engineering review required")));
-    intent.add("standards", arrayOrDefault(input, "standards", Arrays.asList(
-        "use task-specific API, ISO, NORSOK, DNV, ASME, or IEC standards where applicable")));
-    intent.add("deliverables", arrayOrDefault(input, "deliverables", Arrays.asList("workflow plan",
-        "simulation results", "validation summary", "evidence trust report")));
-    intent.add("assumptions",
-        arrayOrDefault(input, "assumptions",
-            Arrays.asList("missing plant data must be listed as a gap",
-                "screening outputs require discipline review")));
+	Arrays.asList("all inputs require explicit units", "engineering review required")));
+    intent.add("standards", arrayOrDefault(input, "standards",
+	Arrays.asList("use task-specific API, ISO, NORSOK, DNV, ASME, or IEC standards where applicable")));
+    intent.add("deliverables", arrayOrDefault(input, "deliverables",
+	Arrays.asList("workflow plan", "simulation results", "validation summary", "evidence trust report")));
+    intent.add("assumptions", arrayOrDefault(input, "assumptions",
+	Arrays.asList("missing plant data must be listed as a gap", "screening outputs require discipline review")));
     if (input.has("fluid")) {
       intent.add("fluid", input.get("fluid"));
     }
@@ -600,8 +579,7 @@ public final class AgenticEngineeringKernel implements Serializable {
    */
   private static String stableId(String task) {
     String clean = task == null ? "engineering-task"
-        : task.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "-").replaceAll("^-+", "")
-            .replaceAll("-+$", "");
+	: task.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "-").replaceAll("^-+", "").replaceAll("-+$", "");
     if (clean.length() > 48) {
       return clean.substring(0, 48);
     }
@@ -635,16 +613,16 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Adds graph nodes and edges for an intent array.
    *
-   * @param nodes graph node array
-   * @param edges graph edge array
-   * @param source source node id
-   * @param intent intent object
-   * @param field intent field name
+   * @param nodes    graph node array
+   * @param edges    graph edge array
+   * @param source   source node id
+   * @param intent   intent object
+   * @param field    intent field name
    * @param nodeType graph node type
    * @param edgeType graph edge type
    */
-  private static void addIntentArray(JsonArray nodes, JsonArray edges, String source,
-      JsonObject intent, String field, String nodeType, String edgeType) {
+  private static void addIntentArray(JsonArray nodes, JsonArray edges, String source, JsonObject intent, String field,
+      String nodeType, String edgeType) {
     JsonArray values = intent.getAsJsonArray(field);
     for (int i = 0; i < values.size(); i++) {
       String label = valueLabel(values.get(i));
@@ -658,8 +636,8 @@ public final class AgenticEngineeringKernel implements Serializable {
    * Adds a graph node.
    *
    * @param nodes graph node array
-   * @param id node id
-   * @param type node type
+   * @param id    node id
+   * @param type  node type
    * @param label node label
    */
   private static void addGraphNode(JsonArray nodes, String id, String type, String label) {
@@ -673,10 +651,10 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Adds a graph edge.
    *
-   * @param edges graph edge array
+   * @param edges  graph edge array
    * @param source source id
    * @param target target id
-   * @param type edge type
+   * @param type   edge type
    */
   private static void addGraphEdge(JsonArray edges, String source, String target, String type) {
     JsonObject edge = new JsonObject();
@@ -690,7 +668,7 @@ public final class AgenticEngineeringKernel implements Serializable {
    * Compiles a workflow plan from intent domains.
    *
    * @param intent engineering intent
-   * @param input source input
+   * @param input  source input
    * @return workflow plan JSON
    */
   private static JsonObject compileWorkflowPlan(JsonObject intent, JsonObject input) {
@@ -698,70 +676,61 @@ public final class AgenticEngineeringKernel implements Serializable {
     JsonArray steps = new JsonArray();
     List<String> domains = stringsFromArray(intent.getAsJsonArray("domains"));
     addStep(steps, "discover_capabilities", "getCapabilities", "scope",
-        "Discover available tool contracts and setup templates", new String[] {}, "schema_ready");
+	"Discover available tool contracts and setup templates", new String[] {}, "schema_ready");
     addStep(steps, "validate_inputs", "validateInput", "scope",
-        "Validate units, components, and process JSON before execution",
-        new String[] {"discover_capabilities"}, "no_blocking_input_errors");
-    addStep(steps, "flash_feed", "runFlash", "analysis",
-        "Establish fluid phase state and base properties", new String[] {"validate_inputs"},
-        "converged_flash");
+	"Validate units, components, and process JSON before execution", new String[] { "discover_capabilities" },
+	"no_blocking_input_errors");
+    addStep(steps, "flash_feed", "runFlash", "analysis", "Establish fluid phase state and base properties",
+	new String[] { "validate_inputs" }, "converged_flash");
     if (domains.contains("process") || input.has("process") || input.has("processJson")) {
-      addStep(steps, "run_process", "runProcess", "analysis",
-          "Execute steady-state process simulation", new String[] {"flash_feed"},
-          "process_converged");
+      addStep(steps, "run_process", "runProcess", "analysis", "Execute steady-state process simulation",
+	  new String[] { "flash_feed" }, "process_converged");
     }
     if (domains.contains("pipeline")) {
-      addStep(steps, "run_pipeline", "runPipeline", "analysis",
-          "Calculate pipeline hydraulics and pressure drop", new String[] {"flash_feed"},
-          "hydraulics_completed");
+      addStep(steps, "run_pipeline", "runPipeline", "analysis", "Calculate pipeline hydraulics and pressure drop",
+	  new String[] { "flash_feed" }, "hydraulics_completed");
     }
-    if (domains.contains("flow-assurance") || domains.contains("ccs")
-        || domains.contains("hydrogen")) {
+    if (domains.contains("flow-assurance") || domains.contains("ccs") || domains.contains("hydrogen")) {
       addStep(steps, "flow_assurance", "runFlowAssurance", "analysis",
-          "Screen hydrate, wax, corrosion, erosion, or special-fluid risks",
-          new String[] {"flash_feed"}, "flow_assurance_screened");
+	  "Screen hydrate, wax, corrosion, erosion, or special-fluid risks", new String[] { "flash_feed" },
+	  "flow_assurance_screened");
     }
     if (domains.contains("pvt")) {
-      addStep(steps, "pvt_study", "runPVT", "analysis", "Run PVT experiment workflow",
-          new String[] {"flash_feed"}, "pvt_completed");
+      addStep(steps, "pvt_study", "runPVT", "analysis", "Run PVT experiment workflow", new String[] { "flash_feed" },
+	  "pvt_completed");
     }
-    String processDependency =
-        domains.contains("process") || input.has("process") || input.has("processJson")
-            ? "run_process"
-            : "flash_feed";
+    String processDependency = domains.contains("process") || input.has("process") || input.has("processJson")
+	? "run_process"
+	: "flash_feed";
     if (domains.contains("dynamic")) {
-      addStep(steps, "dynamic_study", "runDynamic", "analysis",
-          "Run transient or controller response simulation", new String[] {processDependency},
-          "dynamic_completed");
+      addStep(steps, "dynamic_study", "runDynamic", "analysis", "Run transient or controller response simulation",
+	  new String[] { processDependency }, "dynamic_completed");
     }
     if (domains.contains("economics")) {
-      addStep(steps, "economics", "runFieldEconomics", "analysis",
-          "Evaluate economic metrics and uncertainty drivers", new String[] {processDependency},
-          "economics_completed");
+      addStep(steps, "economics", "runFieldEconomics", "analysis", "Evaluate economic metrics and uncertainty drivers",
+	  new String[] { processDependency }, "economics_completed");
     }
     if (domains.contains("safety")) {
       addStep(steps, "safety_screening", "runHAZOP", "validation",
-          "Generate simulation-backed hazard and safeguard evidence",
-          new String[] {processDependency}, "safety_review_required");
+	  "Generate simulation-backed hazard and safeguard evidence", new String[] { processDependency },
+	  "safety_review_required");
     }
     String primaryAnalysisStep = primaryAnalysisStep(domains, input);
-    addStep(steps, "model_risk", "crossValidateModels", "validation",
-        "Quantify EOS and model-selection sensitivity", new String[] {primaryAnalysisStep},
-        "model_risk_documented");
+    addStep(steps, "model_risk", "crossValidateModels", "validation", "Quantify EOS and model-selection sensitivity",
+	new String[] { primaryAnalysisStep }, "model_risk_documented");
     addStep(steps, "autonomous_study", "runAgenticEngineering", "optimization",
-        "Rank candidate design alternatives against objectives and constraints",
-        new String[] {primaryAnalysisStep, "model_risk"}, "best_feasible_case_identified");
+	"Rank candidate design alternatives against objectives and constraints",
+	new String[] { primaryAnalysisStep, "model_risk" }, "best_feasible_case_identified");
     addStep(steps, "evidence_trust", "runAgenticEngineering", "validation",
-        "Build evidence graph and trust score for the result package",
-        new String[] {"autonomous_study"}, "trust_score_reported");
-    addStep(steps, "report", "generateReport", "reporting",
-        "Generate reviewable engineering deliverable", new String[] {"evidence_trust"},
-        "report_has_traceability");
+	"Build evidence graph and trust score for the result package", new String[] { "autonomous_study" },
+	"trust_score_reported");
+    addStep(steps, "report", "generateReport", "reporting", "Generate reviewable engineering deliverable",
+	new String[] { "evidence_trust" }, "report_has_traceability");
     plan.addProperty("planId", intent.get("id").getAsString() + "-workflow");
     plan.addProperty("executionMode", "reviewable_dag");
     plan.add("steps", steps);
-    plan.add("requiredReview", stringArray(Arrays.asList("intent scope", "input evidence",
-        "model applicability", "validation gates", "final recommendations")));
+    plan.add("requiredReview", stringArray(Arrays.asList("intent scope", "input evidence", "model applicability",
+	"validation gates", "final recommendations")));
     return plan;
   }
 
@@ -769,7 +738,7 @@ public final class AgenticEngineeringKernel implements Serializable {
    * Selects the primary analysis step that downstream validation should depend on.
    *
    * @param domains detected engineering domains
-   * @param input source input object
+   * @param input   source input object
    * @return workflow step id for the primary calculation
    */
   private static String primaryAnalysisStep(List<String> domains, JsonObject input) {
@@ -779,8 +748,7 @@ public final class AgenticEngineeringKernel implements Serializable {
     if (domains.contains("pipeline")) {
       return "run_pipeline";
     }
-    if (domains.contains("flow-assurance") || domains.contains("ccs")
-        || domains.contains("hydrogen")) {
+    if (domains.contains("flow-assurance") || domains.contains("ccs") || domains.contains("hydrogen")) {
       return "flow_assurance";
     }
     if (domains.contains("pvt")) {
@@ -792,16 +760,16 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Adds a workflow step.
    *
-   * @param steps step array
-   * @param id step id
-   * @param tool MCP tool name
-   * @param phase workflow phase
-   * @param purpose step purpose
+   * @param steps     step array
+   * @param id        step id
+   * @param tool      MCP tool name
+   * @param phase     workflow phase
+   * @param purpose   step purpose
    * @param dependsOn dependency ids
-   * @param gate success gate
+   * @param gate      success gate
    */
-  private static void addStep(JsonArray steps, String id, String tool, String phase, String purpose,
-      String[] dependsOn, String gate) {
+  private static void addStep(JsonArray steps, String id, String tool, String phase, String purpose, String[] dependsOn,
+      String gate) {
     JsonObject step = new JsonObject();
     step.addProperty("id", id);
     step.addProperty("tool", tool);
@@ -817,12 +785,11 @@ public final class AgenticEngineeringKernel implements Serializable {
    * Builds a composeWorkflow-style payload for compatible linear execution.
    *
    * @param intent engineering intent
-   * @param plan workflow plan
-   * @param input source input
+   * @param plan   workflow plan
+   * @param input  source input
    * @return compiled workflow object
    */
-  private static JsonObject buildCompiledWorkflow(JsonObject intent, JsonObject plan,
-      JsonObject input) {
+  private static JsonObject buildCompiledWorkflow(JsonObject intent, JsonObject plan, JsonObject input) {
     JsonObject compiled = new JsonObject();
     compiled.addProperty("workflow", intent.get("id").getAsString());
     if (input.has("fluid")) {
@@ -834,22 +801,21 @@ public final class AgenticEngineeringKernel implements Serializable {
       JsonObject source = steps.get(i).getAsJsonObject();
       String runner = runnerName(source.get("tool").getAsString());
       if (runner == null) {
-        continue;
+	continue;
       }
       JsonObject step = new JsonObject();
       step.addProperty("name", source.get("id").getAsString());
       step.addProperty("runner", runner);
       JsonObject stepInput = new JsonObject();
       if ("runAgenticEngineering".equals(source.get("tool").getAsString())) {
-        stepInput.addProperty("action",
-            source.get("id").getAsString().contains("trust") ? "trust" : "study");
+	stepInput.addProperty("action", source.get("id").getAsString().contains("trust") ? "trust" : "study");
       }
       step.add("input", stepInput);
       compiledSteps.add(step);
     }
     compiled.add("steps", compiledSteps);
     compiled.addProperty("note",
-        "This is a starter payload; each step input must be completed from schemas before execution.");
+	"This is a starter payload; each step input must be completed from schemas before execution.");
     return compiled;
   }
 
@@ -899,16 +865,15 @@ public final class AgenticEngineeringKernel implements Serializable {
     if (domains.contains("safety")) {
       addGate(gates, "safety_review", "Safety outputs require independent discipline review");
     }
-    addGate(gates, "traceability",
-        "Every recommendation links to evidence, assumptions, and results");
+    addGate(gates, "traceability", "Every recommendation links to evidence, assumptions, and results");
     return gates;
   }
 
   /**
    * Adds a quality gate entry.
    *
-   * @param gates mutable gate array
-   * @param id gate id
+   * @param gates       mutable gate array
+   * @param id          gate id
    * @param description gate description
    */
   private static void addGate(JsonArray gates, String id, String description) {
@@ -922,7 +887,7 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Builds an evidence graph from input and result metadata.
    *
-   * @param input trust input object
+   * @param input  trust input object
    * @param result result object
    * @return evidence graph JSON
    */
@@ -964,10 +929,9 @@ public final class AgenticEngineeringKernel implements Serializable {
    * @param nodes graph node array
    * @param edges graph edge array
    * @param field source field name
-   * @param type node type
+   * @param type  node type
    */
-  private static void addEvidenceNodes(JsonObject input, JsonArray nodes, JsonArray edges,
-      String field, String type) {
+  private static void addEvidenceNodes(JsonObject input, JsonArray nodes, JsonArray edges, String field, String type) {
     if (!input.has(field)) {
       return;
     }
@@ -983,34 +947,30 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Builds validation claims from result metadata.
    *
-   * @param input input object
+   * @param input  input object
    * @param result result object
    * @return validation claim array
    */
   private static JsonArray buildValidationClaims(JsonObject input, JsonObject result) {
     JsonArray claims = new JsonArray();
     addClaim(claims, "provenance_present", hasObject(input, result, "provenance"),
-        "Calculation provenance is available");
-    addClaim(claims, "validation_present", hasObject(input, result, "validation"),
-        "Validation block is available");
+	"Calculation provenance is available");
+    addClaim(claims, "validation_present", hasObject(input, result, "validation"), "Validation block is available");
     addClaim(claims, "quality_gate_present", hasObject(input, result, "qualityGate"),
-        "Quality gate block is available");
-    addClaim(claims, "evidence_present", input.has("evidence"),
-        "Independent evidence references are available");
-    addClaim(claims, "assumptions_present", input.has("assumptions"),
-        "Assumptions are explicitly recorded");
-    addClaim(claims, "benchmark_trust_present",
-        input.has("benchmarkTrust") || result.has("benchmarkTrust"),
-        "Benchmark trust metadata is available");
+	"Quality gate block is available");
+    addClaim(claims, "evidence_present", input.has("evidence"), "Independent evidence references are available");
+    addClaim(claims, "assumptions_present", input.has("assumptions"), "Assumptions are explicitly recorded");
+    addClaim(claims, "benchmark_trust_present", input.has("benchmarkTrust") || result.has("benchmarkTrust"),
+	"Benchmark trust metadata is available");
     return claims;
   }
 
   /**
    * Adds a validation claim.
    *
-   * @param claims claim array
-   * @param id claim id
-   * @param passed whether the claim passed
+   * @param claims    claim array
+   * @param id        claim id
+   * @param passed    whether the claim passed
    * @param statement claim statement
    */
   private static void addClaim(JsonArray claims, String id, boolean passed, String statement) {
@@ -1024,27 +984,27 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Checks whether a metadata object exists in input or result.
    *
-   * @param input input object
+   * @param input  input object
    * @param result result object
-   * @param field field name
+   * @param field  field name
    * @return true when present as an object
    */
   private static boolean hasObject(JsonObject input, JsonObject result, String field) {
     return (input.has(field) && input.get(field).isJsonObject())
-        || (result.has(field) && result.get(field).isJsonObject());
+	|| (result.has(field) && result.get(field).isJsonObject());
   }
 
   /**
    * Calculates trust score.
    *
-   * @param input input object
+   * @param input  input object
    * @param result result object
-   * @param graph evidence graph
+   * @param graph  evidence graph
    * @param claims validation claims
    * @return trust score object
    */
-  private static TrustScore calculateTrustScore(JsonObject input, JsonObject result,
-      JsonObject graph, JsonArray claims) {
+  private static TrustScore calculateTrustScore(JsonObject input, JsonObject result, JsonObject graph,
+      JsonArray claims) {
     TrustScore trust = new TrustScore();
     trust.score = 50.0;
     if (passedClaim(claims, "provenance_present")) {
@@ -1053,21 +1013,17 @@ public final class AgenticEngineeringKernel implements Serializable {
     } else {
       trust.score -= 10.0;
       trust.negativeFactors.add("missing provenance");
-      trust.recommendations
-          .add("Attach ResultProvenance before using outputs for design decisions");
+      trust.recommendations.add("Attach ResultProvenance before using outputs for design decisions");
     }
-    if (validationPassed(
-        objectValue(input, "validation", objectValue(result, "validation", null)))) {
+    if (validationPassed(objectValue(input, "validation", objectValue(result, "validation", null)))) {
       trust.score += 15.0;
       trust.positiveFactors.add("validation passed");
     } else {
       trust.score -= 10.0;
       trust.negativeFactors.add("validation missing or not passed");
-      trust.recommendations
-          .add("Run validateResults or SimulationQualityGate on the result package");
+      trust.recommendations.add("Run validateResults or SimulationQualityGate on the result package");
     }
-    if (qualityGatePassed(
-        objectValue(input, "qualityGate", objectValue(result, "qualityGate", null)))) {
+    if (qualityGatePassed(objectValue(input, "qualityGate", objectValue(result, "qualityGate", null)))) {
       trust.score += 15.0;
       trust.positiveFactors.add("quality gate passed");
     } else {
@@ -1087,12 +1043,10 @@ public final class AgenticEngineeringKernel implements Serializable {
       trust.negativeFactors.add("limitations present: " + limitations);
     }
     trust.score = Math.max(0.0, Math.min(100.0, trust.score));
-    trust.verdict =
-        trust.score >= 80.0 ? "HIGH_TRUST" : trust.score >= 60.0 ? "REVIEW_REQUIRED" : "LOW_TRUST";
+    trust.verdict = trust.score >= 80.0 ? "HIGH_TRUST" : trust.score >= 60.0 ? "REVIEW_REQUIRED" : "LOW_TRUST";
     trust.confidence = trust.score >= 80.0 ? "high" : trust.score >= 60.0 ? "medium" : "low";
     if (trust.recommendations.isEmpty()) {
-      trust.recommendations
-          .add("Proceed with qualified engineering review and preserve evidence graph");
+      trust.recommendations.add("Proceed with qualified engineering review and preserve evidence graph");
     }
     return trust;
   }
@@ -1101,14 +1055,14 @@ public final class AgenticEngineeringKernel implements Serializable {
    * Checks a named claim.
    *
    * @param claims claim array
-   * @param id claim id
+   * @param id     claim id
    * @return true when passed
    */
   private static boolean passedClaim(JsonArray claims, String id) {
     for (int i = 0; i < claims.size(); i++) {
       JsonObject claim = claims.get(i).getAsJsonObject();
       if (id.equals(claim.get("id").getAsString())) {
-        return claim.get("passed").getAsBoolean();
+	return claim.get("passed").getAsBoolean();
       }
     }
     return false;
@@ -1127,8 +1081,7 @@ public final class AgenticEngineeringKernel implements Serializable {
     if (validation.has("valid") && validation.get("valid").getAsBoolean()) {
       return true;
     }
-    if (validation.has("acceptance_criteria_met")
-        && validation.get("acceptance_criteria_met").getAsBoolean()) {
+    if (validation.has("acceptance_criteria_met") && validation.get("acceptance_criteria_met").getAsBoolean()) {
       return true;
     }
     if (validation.has("verdict")) {
@@ -1166,21 +1119,19 @@ public final class AgenticEngineeringKernel implements Serializable {
       return Math.min(10.0, (nodes - 1) * 1.5);
     }
     trust.negativeFactors.add("sparse evidence graph");
-    trust.recommendations
-        .add("Add evidence references, assumptions, standards, and benchmark links");
+    trust.recommendations.add("Add evidence references, assumptions, standards, and benchmark links");
     return 0.0;
   }
 
   /**
    * Applies benchmark trust score adjustments.
    *
-   * @param input input object
+   * @param input  input object
    * @param result result object
-   * @param trust trust score to modify
+   * @param trust  trust score to modify
    */
   private static void applyBenchmarkTrust(JsonObject input, JsonObject result, TrustScore trust) {
-    JsonObject benchmark =
-        objectValue(input, "benchmarkTrust", objectValue(result, "benchmarkTrust", null));
+    JsonObject benchmark = objectValue(input, "benchmarkTrust", objectValue(result, "benchmarkTrust", null));
     if (benchmark == null) {
       trust.negativeFactors.add("missing benchmark trust metadata");
       trust.recommendations.add("Call getBenchmarkTrust for the producing MCP tool");
@@ -1196,8 +1147,7 @@ public final class AgenticEngineeringKernel implements Serializable {
     } else {
       trust.score -= 10.0;
       trust.negativeFactors.add("experimental benchmark maturity");
-      trust.recommendations
-          .add("Do not use experimental-maturity outputs without independent validation");
+      trust.recommendations.add("Do not use experimental-maturity outputs without independent validation");
     }
   }
 
@@ -1238,13 +1188,13 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Adds a generated study candidate.
    *
-   * @param candidates candidate array
+   * @param candidates    candidate array
    * @param candidateName candidate name
-   * @param variableName variable name
-   * @param value variable value
+   * @param variableName  variable name
+   * @param value         variable value
    */
-  private static void addGeneratedCandidate(JsonArray candidates, String candidateName,
-      String variableName, double value) {
+  private static void addGeneratedCandidate(JsonArray candidates, String candidateName, String variableName,
+      double value) {
     JsonObject candidate = new JsonObject();
     candidate.addProperty("name", candidateName);
     JsonObject variables = new JsonObject();
@@ -1266,18 +1216,17 @@ public final class AgenticEngineeringKernel implements Serializable {
     for (int i = 0; i < candidates.size(); i++) {
       JsonObject metrics = objectValue(candidates.get(i).getAsJsonObject(), "metrics", null);
       if (metrics != null) {
-        for (Map.Entry<String, JsonElement> entry : metrics.entrySet()) {
-          if (entry.getValue().isJsonPrimitive()
-              && entry.getValue().getAsJsonPrimitive().isNumber()) {
-            JsonObject objective = new JsonObject();
-            objective.addProperty("name", "maximize " + entry.getKey());
-            objective.addProperty("metric", entry.getKey());
-            objective.addProperty("goal", "maximize");
-            objective.addProperty("weight", 1.0);
-            objectives.add(objective);
-            return objectives;
-          }
-        }
+	for (Map.Entry<String, JsonElement> entry : metrics.entrySet()) {
+	  if (entry.getValue().isJsonPrimitive() && entry.getValue().getAsJsonPrimitive().isNumber()) {
+	    JsonObject objective = new JsonObject();
+	    objective.addProperty("name", "maximize " + entry.getKey());
+	    objective.addProperty("metric", entry.getKey());
+	    objective.addProperty("goal", "maximize");
+	    objective.addProperty("weight", 1.0);
+	    objectives.add(objective);
+	    return objectives;
+	  }
+	}
       }
     }
     return objectives;
@@ -1300,15 +1249,15 @@ public final class AgenticEngineeringKernel implements Serializable {
     for (int i = 0; i < candidates.size(); i++) {
       JsonObject metrics = objectValue(candidates.get(i).getAsJsonObject(), "metrics", null);
       if (metrics == null) {
-        continue;
+	continue;
       }
       for (Map.Entry<String, MetricRange> entry : ranges.entrySet()) {
-        if (metrics.has(entry.getKey()) && metrics.get(entry.getKey()).isJsonPrimitive()) {
-          JsonElement element = metrics.get(entry.getKey());
-          if (element.getAsJsonPrimitive().isNumber()) {
-            entry.getValue().include(element.getAsDouble());
-          }
-        }
+	if (metrics.has(entry.getKey()) && metrics.get(entry.getKey()).isJsonPrimitive()) {
+	  JsonElement element = metrics.get(entry.getKey());
+	  if (element.getAsJsonPrimitive().isNumber()) {
+	    entry.getValue().include(element.getAsDouble());
+	  }
+	}
       }
     }
     return ranges;
@@ -1317,14 +1266,14 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Evaluates all candidates.
    *
-   * @param candidates candidate input
-   * @param objectives objective definitions
+   * @param candidates  candidate input
+   * @param objectives  objective definitions
    * @param constraints constraint definitions
-   * @param ranges metric ranges
+   * @param ranges      metric ranges
    * @return evaluated candidate list
    */
-  private static List<JsonObject> evaluateCandidates(JsonArray candidates, JsonArray objectives,
-      JsonArray constraints, Map<String, MetricRange> ranges) {
+  private static List<JsonObject> evaluateCandidates(JsonArray candidates, JsonArray objectives, JsonArray constraints,
+      Map<String, MetricRange> ranges) {
     List<JsonObject> evaluated = new ArrayList<JsonObject>();
     for (int i = 0; i < candidates.size(); i++) {
       JsonObject candidate = candidates.get(i).getAsJsonObject();
@@ -1333,8 +1282,7 @@ public final class AgenticEngineeringKernel implements Serializable {
       ConstraintResult constraintResult = evaluateConstraints(metrics, constraints);
       double objectiveScore = evaluateObjectives(metrics, objectives, ranges, out);
       out.addProperty("feasible", constraintResult.feasible);
-      out.addProperty("score",
-          round(constraintResult.feasible ? objectiveScore : objectiveScore * 0.25, 2));
+      out.addProperty("score", round(constraintResult.feasible ? objectiveScore : objectiveScore * 0.25, 2));
       out.add("constraintFindings", stringArray(constraintResult.findings));
       evaluated.add(out);
     }
@@ -1344,14 +1292,14 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Evaluates objectives for one candidate.
    *
-   * @param metrics candidate metrics
-   * @param objectives objective array
-   * @param ranges metric ranges
+   * @param metrics      candidate metrics
+   * @param objectives   objective array
+   * @param ranges       metric ranges
    * @param candidateOut candidate output to annotate
    * @return weighted score from 0 to 100
    */
-  private static double evaluateObjectives(JsonObject metrics, JsonArray objectives,
-      Map<String, MetricRange> ranges, JsonObject candidateOut) {
+  private static double evaluateObjectives(JsonObject metrics, JsonArray objectives, Map<String, MetricRange> ranges,
+      JsonObject candidateOut) {
     double weighted = 0.0;
     double totalWeight = 0.0;
     JsonArray contributions = new JsonArray();
@@ -1362,9 +1310,9 @@ public final class AgenticEngineeringKernel implements Serializable {
       double weight = numericValue(objective, "weight", 1.0);
       double normalized = 0.0;
       if (metrics.has(metric) && metrics.get(metric).isJsonPrimitive()
-          && metrics.get(metric).getAsJsonPrimitive().isNumber()) {
-        double value = metrics.get(metric).getAsDouble();
-        normalized = normalizedObjective(value, goal, objective, ranges.get(metric));
+	  && metrics.get(metric).getAsJsonPrimitive().isNumber()) {
+	double value = metrics.get(metric).getAsDouble();
+	normalized = normalizedObjective(value, goal, objective, ranges.get(metric));
       }
       weighted += normalized * weight;
       totalWeight += weight;
@@ -1382,14 +1330,13 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Computes normalized objective score.
    *
-   * @param value metric value
-   * @param goal objective goal
+   * @param value     metric value
+   * @param goal      objective goal
    * @param objective objective object
-   * @param range metric range
+   * @param range     metric range
    * @return normalized score from 0 to 1
    */
-  private static double normalizedObjective(double value, String goal, JsonObject objective,
-      MetricRange range) {
+  private static double normalizedObjective(double value, String goal, JsonObject objective, MetricRange range) {
     if (range == null || !range.hasData() || range.max == range.min) {
       return 1.0;
     }
@@ -1407,7 +1354,7 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Evaluates constraints.
    *
-   * @param metrics candidate metrics
+   * @param metrics     candidate metrics
    * @param constraints constraints
    * @return constraint result
    */
@@ -1419,15 +1366,15 @@ public final class AgenticEngineeringKernel implements Serializable {
       String operator = stringValue(constraint, "operator", stringValue(constraint, "op", "<="));
       double limit = numericValue(constraint, "value", numericValue(constraint, "limit", 0.0));
       if (!metrics.has(metric) || !metrics.get(metric).isJsonPrimitive()
-          || !metrics.get(metric).getAsJsonPrimitive().isNumber()) {
-        result.feasible = false;
-        result.findings.add("missing metric for constraint: " + metric);
-        continue;
+	  || !metrics.get(metric).getAsJsonPrimitive().isNumber()) {
+	result.feasible = false;
+	result.findings.add("missing metric for constraint: " + metric);
+	continue;
       }
       double value = metrics.get(metric).getAsDouble();
       if (!constraintSatisfied(value, operator, limit)) {
-        result.feasible = false;
-        result.findings.add(metric + " " + value + " violates " + operator + " " + limit);
+	result.feasible = false;
+	result.findings.add(metric + " " + value + " violates " + operator + " " + limit);
       }
     }
     if (result.findings.isEmpty()) {
@@ -1439,9 +1386,9 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Checks one constraint expression.
    *
-   * @param value metric value
+   * @param value    metric value
    * @param operator operator string
-   * @param limit limit value
+   * @param limit    limit value
    * @return true if satisfied
    */
   private static boolean constraintSatisfied(double value, String operator, double limit) {
@@ -1472,14 +1419,14 @@ public final class AgenticEngineeringKernel implements Serializable {
     return new Comparator<JsonObject>() {
       @Override
       public int compare(JsonObject left, JsonObject right) {
-        boolean leftFeasible = left.has("feasible") && left.get("feasible").getAsBoolean();
-        boolean rightFeasible = right.has("feasible") && right.get("feasible").getAsBoolean();
-        if (leftFeasible != rightFeasible) {
-          return leftFeasible ? -1 : 1;
-        }
-        double leftScore = left.has("score") ? left.get("score").getAsDouble() : 0.0;
-        double rightScore = right.has("score") ? right.get("score").getAsDouble() : 0.0;
-        return Double.compare(rightScore, leftScore);
+	boolean leftFeasible = left.has("feasible") && left.get("feasible").getAsBoolean();
+	boolean rightFeasible = right.has("feasible") && right.get("feasible").getAsBoolean();
+	if (leftFeasible != rightFeasible) {
+	  return leftFeasible ? -1 : 1;
+	}
+	double leftScore = left.has("score") ? left.get("score").getAsDouble() : 0.0;
+	double rightScore = right.has("score") ? right.get("score").getAsDouble() : 0.0;
+	return Double.compare(rightScore, leftScore);
       }
     };
   }
@@ -1497,10 +1444,8 @@ public final class AgenticEngineeringKernel implements Serializable {
       JsonObject rank = new JsonObject();
       rank.addProperty("rank", i + 1);
       rank.addProperty("name", stringValue(candidate, "name", "candidate_" + (i + 1)));
-      rank.addProperty("score",
-          candidate.has("score") ? candidate.get("score").getAsDouble() : 0.0);
-      rank.addProperty("feasible",
-          candidate.has("feasible") && candidate.get("feasible").getAsBoolean());
+      rank.addProperty("score", candidate.has("score") ? candidate.get("score").getAsDouble() : 0.0);
+      rank.addProperty("feasible", candidate.has("feasible") && candidate.get("feasible").getAsBoolean());
       ranking.add(rank);
     }
     return ranking;
@@ -1509,7 +1454,7 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Builds Pareto front from evaluated candidates.
    *
-   * @param evaluated evaluated candidates
+   * @param evaluated  evaluated candidates
    * @param objectives objective definitions
    * @return Pareto front array
    */
@@ -1518,13 +1463,13 @@ public final class AgenticEngineeringKernel implements Serializable {
     for (int i = 0; i < evaluated.size(); i++) {
       JsonObject candidate = evaluated.get(i);
       if (!candidate.has("feasible") || !candidate.get("feasible").getAsBoolean()) {
-        continue;
+	continue;
       }
       if (!isDominated(candidate, evaluated, objectives)) {
-        JsonObject point = new JsonObject();
-        point.addProperty("name", stringValue(candidate, "name", "candidate_" + i));
-        point.add("metrics", objectValue(candidate, "metrics", new JsonObject()));
-        front.add(point);
+	JsonObject point = new JsonObject();
+	point.addProperty("name", stringValue(candidate, "name", "candidate_" + i));
+	point.add("metrics", objectValue(candidate, "metrics", new JsonObject()));
+	front.add(point);
       }
     }
     return front;
@@ -1533,20 +1478,19 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Checks whether a candidate is dominated.
    *
-   * @param candidate candidate under test
-   * @param evaluated all candidates
+   * @param candidate  candidate under test
+   * @param evaluated  all candidates
    * @param objectives objective array
    * @return true if dominated by another feasible candidate
    */
-  private static boolean isDominated(JsonObject candidate, List<JsonObject> evaluated,
-      JsonArray objectives) {
+  private static boolean isDominated(JsonObject candidate, List<JsonObject> evaluated, JsonArray objectives) {
     for (int i = 0; i < evaluated.size(); i++) {
       JsonObject other = evaluated.get(i);
       if (other == candidate || !other.has("feasible") || !other.get("feasible").getAsBoolean()) {
-        continue;
+	continue;
       }
       if (dominates(other, candidate, objectives)) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -1555,8 +1499,8 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Checks Pareto dominance.
    *
-   * @param left possible dominating candidate
-   * @param right possible dominated candidate
+   * @param left       possible dominating candidate
+   * @param right      possible dominated candidate
    * @param objectives objective definitions
    * @return true when left dominates right
    */
@@ -1569,17 +1513,16 @@ public final class AgenticEngineeringKernel implements Serializable {
       String metric = stringValue(objective, "metric", stringValue(objective, "name", ""));
       String goal = stringValue(objective, "goal", "maximize").toLowerCase(Locale.ROOT);
       if (!leftMetrics.has(metric) || !rightMetrics.has(metric)) {
-        return false;
+	return false;
       }
       double leftValue = leftMetrics.get(metric).getAsDouble();
       double rightValue = rightMetrics.get(metric).getAsDouble();
-      int comparison =
-          objectiveComparison(leftValue, rightValue, goal, numericValue(objective, "target", 0.0));
+      int comparison = objectiveComparison(leftValue, rightValue, goal, numericValue(objective, "target", 0.0));
       if (comparison < 0) {
-        return false;
+	return false;
       }
       if (comparison > 0) {
-        strictlyBetter = true;
+	strictlyBetter = true;
       }
     }
     return strictlyBetter;
@@ -1588,9 +1531,9 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Compares two objective values.
    *
-   * @param left left value
-   * @param right right value
-   * @param goal objective goal
+   * @param left   left value
+   * @param right  right value
+   * @param goal   objective goal
    * @param target target for target goals
    * @return positive when left is better, negative when worse, zero when equal
    */
@@ -1607,25 +1550,24 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Builds uncertainty summary from the primary objective values.
    *
-   * @param evaluated evaluated candidates
+   * @param evaluated  evaluated candidates
    * @param objectives objectives
    * @return uncertainty summary object
    */
-  private static JsonObject buildUncertaintySummary(List<JsonObject> evaluated,
-      JsonArray objectives) {
+  private static JsonObject buildUncertaintySummary(List<JsonObject> evaluated, JsonArray objectives) {
     JsonObject summary = new JsonObject();
     if (objectives.size() == 0) {
       summary.addProperty("status", "no_objective_metrics");
       return summary;
     }
     String metric = stringValue(objectives.get(0).getAsJsonObject(), "metric",
-        stringValue(objectives.get(0).getAsJsonObject(), "name", ""));
+	stringValue(objectives.get(0).getAsJsonObject(), "name", ""));
     List<Double> values = new ArrayList<Double>();
     for (int i = 0; i < evaluated.size(); i++) {
       JsonObject metrics = objectValue(evaluated.get(i), "metrics", null);
       if (metrics != null && metrics.has(metric) && metrics.get(metric).isJsonPrimitive()
-          && metrics.get(metric).getAsJsonPrimitive().isNumber()) {
-        values.add(metrics.get(metric).getAsDouble());
+	  && metrics.get(metric).getAsJsonPrimitive().isNumber()) {
+	values.add(metrics.get(metric).getAsDouble());
       }
     }
     Collections.sort(values);
@@ -1642,7 +1584,7 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Computes percentile from sorted values.
    *
-   * @param sorted sorted values
+   * @param sorted   sorted values
    * @param fraction percentile fraction from 0 to 1
    * @return percentile value
    */
@@ -1663,24 +1605,22 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Builds study plan summary.
    *
-   * @param input input object
-   * @param objectives objectives
+   * @param input       input object
+   * @param objectives  objectives
    * @param constraints constraints
-   * @param candidates candidates
+   * @param candidates  candidates
    * @return study plan object
    */
-  private static JsonObject buildStudyPlan(JsonObject input, JsonArray objectives,
-      JsonArray constraints, JsonArray candidates) {
+  private static JsonObject buildStudyPlan(JsonObject input, JsonArray objectives, JsonArray constraints,
+      JsonArray candidates) {
     JsonObject plan = new JsonObject();
-    plan.addProperty("studyName",
-        stringValue(input, "studyName", stringValue(input, "task", "agentic study")));
+    plan.addProperty("studyName", stringValue(input, "studyName", stringValue(input, "task", "agentic study")));
     plan.addProperty("candidateCount", candidates.size());
     plan.addProperty("objectiveCount", objectives.size());
     plan.addProperty("constraintCount", constraints.size());
     plan.add("objectives", objectives.deepCopy());
     plan.add("constraints", constraints.deepCopy());
-    plan.addProperty("method",
-        "deterministic feasibility filter plus weighted normalized objective ranking");
+    plan.addProperty("method", "deterministic feasibility filter plus weighted normalized objective ranking");
     return plan;
   }
 
@@ -1701,10 +1641,9 @@ public final class AgenticEngineeringKernel implements Serializable {
     recommendation.addProperty("status", "candidate_selected");
     recommendation.addProperty("candidate", stringValue(best, "name", "candidate_1"));
     recommendation.addProperty("score", best.has("score") ? best.get("score").getAsDouble() : 0.0);
-    recommendation.addProperty("feasible",
-        best.has("feasible") && best.get("feasible").getAsBoolean());
+    recommendation.addProperty("feasible", best.has("feasible") && best.get("feasible").getAsBoolean());
     recommendation.addProperty("message",
-        "Promote the highest-ranked feasible candidate to detailed NeqSim simulation, benchmark validation, and evidence trust review.");
+	"Promote the highest-ranked feasible candidate to detailed NeqSim simulation, benchmark validation, and evidence trust review.");
     return recommendation;
   }
 
@@ -1725,8 +1664,8 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Gets string value from an object.
    *
-   * @param object JSON object
-   * @param field field name
+   * @param object       JSON object
+   * @param field        field name
    * @param defaultValue fallback value
    * @return string value
    */
@@ -1734,7 +1673,7 @@ public final class AgenticEngineeringKernel implements Serializable {
     if (object != null && object.has(field) && !object.get(field).isJsonNull()) {
       JsonElement element = object.get(field);
       if (element.isJsonPrimitive()) {
-        return element.getAsString();
+	return element.getAsString();
       }
       return valueLabel(element);
     }
@@ -1744,14 +1683,14 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Gets numeric value from an object.
    *
-   * @param object JSON object
-   * @param field field name
+   * @param object       JSON object
+   * @param field        field name
    * @param defaultValue fallback value
    * @return numeric value
    */
   private static double numericValue(JsonObject object, String field, double defaultValue) {
     if (object != null && object.has(field) && object.get(field).isJsonPrimitive()
-        && object.get(field).getAsJsonPrimitive().isNumber()) {
+	&& object.get(field).getAsJsonPrimitive().isNumber()) {
       return object.get(field).getAsDouble();
     }
     return defaultValue;
@@ -1760,8 +1699,8 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Gets object value from an object.
    *
-   * @param object JSON object
-   * @param field field name
+   * @param object       JSON object
+   * @param field        field name
    * @param defaultValue fallback object
    * @return object value or fallback
    */
@@ -1776,7 +1715,7 @@ public final class AgenticEngineeringKernel implements Serializable {
    * Gets array value from an object.
    *
    * @param object JSON object
-   * @param field field name
+   * @param field  field name
    * @return array value or empty array
    */
   private static JsonArray arrayValue(JsonObject object, String field) {
@@ -1807,8 +1746,8 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Copies array field or creates a default string array.
    *
-   * @param input input object
-   * @param field field name
+   * @param input    input object
+   * @param field    field name
    * @param defaults default values
    * @return array value
    */
@@ -1863,16 +1802,16 @@ public final class AgenticEngineeringKernel implements Serializable {
     if (element.isJsonObject()) {
       JsonObject object = element.getAsJsonObject();
       if (object.has("id")) {
-        return object.get("id").getAsString();
+	return object.get("id").getAsString();
       }
       if (object.has("name")) {
-        return object.get("name").getAsString();
+	return object.get("name").getAsString();
       }
       if (object.has("code")) {
-        return object.get("code").getAsString();
+	return object.get("code").getAsString();
       }
       if (object.has("description")) {
-        return object.get("description").getAsString();
+	return object.get("description").getAsString();
       }
     }
     String json = element.toString();
@@ -1882,9 +1821,9 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Counts array fields in input or result.
    *
-   * @param input input object
+   * @param input  input object
    * @param result result object
-   * @param field field to count
+   * @param field  field to count
    * @return item count
    */
   private static int countArrayField(JsonObject input, JsonObject result, String field) {
@@ -1901,7 +1840,7 @@ public final class AgenticEngineeringKernel implements Serializable {
   /**
    * Rounds a value to a number of decimals.
    *
-   * @param value value to round
+   * @param value    value to round
    * @param decimals number of decimals
    * @return rounded value
    */

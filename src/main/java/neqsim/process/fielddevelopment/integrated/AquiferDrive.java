@@ -4,9 +4,9 @@ package neqsim.process.fielddevelopment.integrated;
  * Gas-reservoir drive with steady-state aquifer water influx (Fetkovich-style support).
  *
  * <p>
- * Pure volumetric depletion ({@link MaterialBalanceGasDrive}) overestimates pressure decline when
- * an aquifer provides pressure support. This model adds a Fetkovich steady-state influx term: the
- * water influx rate is proportional to the drawdown between the aquifer and the reservoir,
+ * Pure volumetric depletion ({@link MaterialBalanceGasDrive}) overestimates pressure decline when an aquifer provides
+ * pressure support. This model adds a Fetkovich steady-state influx term: the water influx rate is proportional to the
+ * drawdown between the aquifer and the reservoir,
  * </p>
  *
  * <p>
@@ -14,9 +14,9 @@ package neqsim.process.fielddevelopment.integrated;
  * </p>
  *
  * <p>
- * and the cumulative influx partially replaces the produced gas voidage, slowing the p/z decline.
- * The aquifer pressure itself is depleted by the cumulative influx relative to its capacity. The
- * model remains a fast linearised surrogate suitable for integrated network coupling.
+ * and the cumulative influx partially replaces the produced gas voidage, slowing the p/z decline. The aquifer pressure
+ * itself is depleted by the cumulative influx relative to its capacity. The model remains a fast linearised surrogate
+ * suitable for integrated network coupling.
  * </p>
  *
  * @author NeqSim
@@ -40,13 +40,13 @@ public class AquiferDrive implements ReservoirDrive {
    * Creates an aquifer-supported gas drive.
    *
    * @param initialPressureBara initial reservoir pressure in bara
-   * @param giipSm3 initial gas in place in surface Sm3
-   * @param averageZ average gas deviation factor (dimensionless, &gt; 0)
+   * @param giipSm3             initial gas in place in surface Sm3
+   * @param averageZ            average gas deviation factor (dimensionless, &gt; 0)
    * @param aquiferProductivity aquifer influx index in Sm3/day of gas-equivalent voidage per bar
-   * @param aquiferCapacitySm3 total gas-equivalent voidage the aquifer can supply, in Sm3
+   * @param aquiferCapacitySm3  total gas-equivalent voidage the aquifer can supply, in Sm3
    */
-  public AquiferDrive(double initialPressureBara, double giipSm3, double averageZ,
-      double aquiferProductivity, double aquiferCapacitySm3) {
+  public AquiferDrive(double initialPressureBara, double giipSm3, double averageZ, double aquiferProductivity,
+      double aquiferCapacitySm3) {
     if (initialPressureBara <= 0.0 || giipSm3 <= 0.0 || averageZ <= 0.0) {
       throw new IllegalArgumentException("pressure, GIIP and z must be positive");
     }
@@ -70,12 +70,11 @@ public class AquiferDrive implements ReservoirDrive {
     if (producedVolumeSm3 > 0.0) {
       cumulativeProduction += producedVolumeSm3;
       if (cumulativeProduction > giipSm3) {
-        cumulativeProduction = giipSm3;
+	cumulativeProduction = giipSm3;
       }
     }
     // Aquifer pressure declines as it gives up voidage.
-    double aquiferDepletion =
-        aquiferCapacitySm3 > 0.0 ? cumulativeInflux / aquiferCapacitySm3 : 1.0;
+    double aquiferDepletion = aquiferCapacitySm3 > 0.0 ? cumulativeInflux / aquiferCapacitySm3 : 1.0;
     double aquiferPressure = initialPressure * (1.0 - Math.min(1.0, aquiferDepletion));
     double drawdown = Math.max(0.0, aquiferPressure - reservoirPressure);
     double influxStep = aquiferProductivity * drawdown * Math.max(0.0, dtDays);

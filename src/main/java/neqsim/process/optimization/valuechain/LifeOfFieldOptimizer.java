@@ -8,27 +8,25 @@ import java.util.List;
  * Multi-period (life-of-field) optimizer that schedules capital investments in time.
  *
  * <p>
- * Single-period optimization tunes setpoints for one operating point; field development decisions
- * are intrinsically multi-period — <em>when</em> to install compression, drill an infill well, or
- * debottleneck a flowline changes the discounted value of the whole field. This optimizer searches
- * over the installation <em>year</em> of each candidate investment (including the option never to
- * make it) to maximise the discounted net present value of the field over its life.
+ * Single-period optimization tunes setpoints for one operating point; field development decisions are intrinsically
+ * multi-period — <em>when</em> to install compression, drill an infill well, or debottleneck a flowline changes the
+ * discounted value of the whole field. This optimizer searches over the installation <em>year</em> of each candidate
+ * investment (including the option never to make it) to maximise the discounted net present value of the field over its
+ * life.
  * </p>
  *
  * <p>
- * The per-period economics are supplied by a {@link LifeOfFieldEvaluator}: given a year and the set
- * of investments active in that year, it returns the net annual cash flow (typically obtained by
- * configuring the corresponding NeqSim flowsheet, advancing the reservoir with
- * {@code SimpleReservoir.runTransient}, running it to convergence, and pricing the result with
- * {@link ValueChainObjective}). Keeping the evaluator functional makes the search deterministic and
+ * The per-period economics are supplied by a {@link LifeOfFieldEvaluator}: given a year and the set of investments
+ * active in that year, it returns the net annual cash flow (typically obtained by configuring the corresponding NeqSim
+ * flowsheet, advancing the reservoir with {@code SimpleReservoir.runTransient}, running it to convergence, and pricing
+ * the result with {@link ValueChainObjective}). Keeping the evaluator functional makes the search deterministic and
  * unit-testable without running a flowsheet.
  * </p>
  *
  * <p>
- * The investment timeline is found by bounded enumeration: each investment may be installed in any
- * year from its earliest feasible year to the end of field life, or skipped entirely. A guard caps
- * the number of evaluated combinations so the search stays tractable for a handful of strategic
- * decisions.
+ * The investment timeline is found by bounded enumeration: each investment may be installed in any year from its
+ * earliest feasible year to the end of field life, or skipped entirely. A guard caps the number of evaluated
+ * combinations so the search stays tractable for a handful of strategic decisions.
  * </p>
  *
  * @author NeqSim Development Team
@@ -61,7 +59,7 @@ public class LifeOfFieldOptimizer implements Serializable {
     /**
      * Returns the net annual cash flow for a given year and active-investment set.
      *
-     * @param year the year index (0 = first year of production)
+     * @param year   the year index (0 = first year of production)
      * @param active a flag per registered investment, true when active in this year
      * @return the net annual cash flow for the year in the configured currency
      */
@@ -88,8 +86,8 @@ public class LifeOfFieldOptimizer implements Serializable {
     /**
      * Creates an investment.
      *
-     * @param name descriptive name
-     * @param capexNok capital cost in the configured currency (non-negative)
+     * @param name         descriptive name
+     * @param capexNok     capital cost in the configured currency (non-negative)
      * @param earliestYear earliest year the investment can be installed (>= 0)
      */
     public Investment(String name, double capexNok, int earliestYear) {
@@ -146,8 +144,8 @@ public class LifeOfFieldOptimizer implements Serializable {
     /**
      * Creates a life-of-field result.
      *
-     * @param installYears installation year per investment (-1 = skipped)
-     * @param npvNok net present value in the configured currency
+     * @param installYears   installation year per investment (-1 = skipped)
+     * @param npvNok         net present value in the configured currency
      * @param annualCashFlow net annual cash flow per year
      */
     public LifeOfFieldResult(int[] installYears, double npvNok, double[] annualCashFlow) {
@@ -188,7 +186,7 @@ public class LifeOfFieldOptimizer implements Serializable {
    * Creates a life-of-field optimizer.
    *
    * @param nYears number of production years (year indices 0..nYears-1); must be positive
-   * @param econ the economic parameters supplying the discount rate (must not be null)
+   * @param econ   the economic parameters supplying the discount rate (must not be null)
    */
   public LifeOfFieldOptimizer(int nYears, EconomicParameters econ) {
     if (nYears <= 0) {
@@ -248,41 +246,39 @@ public class LifeOfFieldOptimizer implements Serializable {
       optionCount[i] = feasibleYears + 1; // +1 for "never"
       combos *= optionCount[i];
       if (combos > maxCombinations) {
-        throw new IllegalStateException("Investment-timing combinations (" + combos
-            + ") exceed the configured cap (" + maxCombinations
-            + "); reduce investments or raise the cap.");
+	throw new IllegalStateException("Investment-timing combinations (" + combos + ") exceed the configured cap ("
+	    + maxCombinations + "); reduce investments or raise the cap.");
       }
     }
 
     int[] best = new int[n];
     int[] current = new int[n];
     double[] bestCashFlow = new double[nYears];
-    double[] bestNpv = new double[] {Double.NEGATIVE_INFINITY};
+    double[] bestNpv = new double[] { Double.NEGATIVE_INFINITY };
     enumerate(0, current, best, bestNpv, bestCashFlow, evaluator);
     return new LifeOfFieldResult(best, bestNpv[0], bestCashFlow);
   }
 
   /**
-   * Recursively enumerates investment-timing combinations and retains the best by net present
-   * value.
+   * Recursively enumerates investment-timing combinations and retains the best by net present value.
    *
-   * @param index the investment index currently being assigned
-   * @param current the working install-year assignment
-   * @param best the best install-year assignment found so far (updated in place)
-   * @param bestNpv a single-element array holding the best net present value found so far
+   * @param index        the investment index currently being assigned
+   * @param current      the working install-year assignment
+   * @param best         the best install-year assignment found so far (updated in place)
+   * @param bestNpv      a single-element array holding the best net present value found so far
    * @param bestCashFlow the cash-flow schedule of the best timeline (updated in place)
-   * @param evaluator the per-period economic evaluator
+   * @param evaluator    the per-period economic evaluator
    */
-  private void enumerate(int index, int[] current, int[] best, double[] bestNpv,
-      double[] bestCashFlow, LifeOfFieldEvaluator evaluator) {
+  private void enumerate(int index, int[] current, int[] best, double[] bestNpv, double[] bestCashFlow,
+      LifeOfFieldEvaluator evaluator) {
     int n = investments.size();
     if (index == n) {
       double[] cashFlow = new double[nYears];
       double npv = computeNpv(current, cashFlow, evaluator);
       if (npv > bestNpv[0]) {
-        bestNpv[0] = npv;
-        System.arraycopy(current, 0, best, 0, n);
-        System.arraycopy(cashFlow, 0, bestCashFlow, 0, nYears);
+	bestNpv[0] = npv;
+	System.arraycopy(current, 0, best, 0, n);
+	System.arraycopy(cashFlow, 0, bestCashFlow, 0, nYears);
       }
       return;
     }
@@ -300,18 +296,17 @@ public class LifeOfFieldOptimizer implements Serializable {
    * Computes the net present value of a fully assigned investment timeline.
    *
    * @param installYears install year per investment (-1 = skipped)
-   * @param cashFlowOut output array receiving the net annual cash flow per year
-   * @param evaluator the per-period economic evaluator
+   * @param cashFlowOut  output array receiving the net annual cash flow per year
+   * @param evaluator    the per-period economic evaluator
    * @return the discounted net present value of the timeline
    */
-  private double computeNpv(int[] installYears, double[] cashFlowOut,
-      LifeOfFieldEvaluator evaluator) {
+  private double computeNpv(int[] installYears, double[] cashFlowOut, LifeOfFieldEvaluator evaluator) {
     int n = investments.size();
     double npv = 0.0;
     for (int year = 0; year < nYears; year++) {
       boolean[] active = new boolean[n];
       for (int i = 0; i < n; i++) {
-        active[i] = installYears[i] >= 0 && year >= installYears[i];
+	active[i] = installYears[i] >= 0 && year >= installYears[i];
       }
       double value = evaluator.annualNetValueNok(year, active);
       cashFlowOut[year] = value;
@@ -319,7 +314,7 @@ public class LifeOfFieldOptimizer implements Serializable {
     }
     for (int i = 0; i < n; i++) {
       if (installYears[i] >= 0) {
-        npv -= investments.get(i).getCapexNok() * econ.discountFactor(installYears[i]);
+	npv -= investments.get(i).getCapexNok() * econ.discountFactor(installYears[i]);
       }
     }
     return npv;

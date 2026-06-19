@@ -13,10 +13,10 @@ import neqsim.process.chemistry.util.StandardsRegistry;
  * One-dimensional plug-flow packed-bed model for liquid H2S scavenger contactors.
  *
  * <p>
- * Models a vertical packed bed loaded with a solid scavenger (typically iron-oxide pellets or
- * triazine-impregnated alumina) that progressively saturates as the H2S-laden hydrocarbon stream
- * passes through it. The bed is discretised axially into {@code N} cells; each cell tracks the
- * remaining active scavenger inventory and depletes proportionally to local H2S consumption.
+ * Models a vertical packed bed loaded with a solid scavenger (typically iron-oxide pellets or triazine-impregnated
+ * alumina) that progressively saturates as the H2S-laden hydrocarbon stream passes through it. The bed is discretised
+ * axially into {@code N} cells; each cell tracks the remaining active scavenger inventory and depletes proportionally
+ * to local H2S consumption.
  *
  * <p>
  * Governing equations (per cell):
@@ -26,13 +26,13 @@ import neqsim.process.chemistry.util.StandardsRegistry;
  * dq/dt = - r * Q * C / V_cell        (scavenger depletion)
  * </pre>
  *
- * with stoichiometric ratio {@code r} (mol H2S per mol active sites, typical 1.0 for triazine,
- * 0.5-0.7 for Fe2O3) and volumetric rate constant {@code k_eff} fitted to bed geometry.
+ * with stoichiometric ratio {@code r} (mol H2S per mol active sites, typical 1.0 for triazine, 0.5-0.7 for Fe2O3) and
+ * volumetric rate constant {@code k_eff} fitted to bed geometry.
  *
  * <p>
- * Outputs the breakthrough curve C(t)/C_in at the bed outlet, the total H2S removed up to
- * breakthrough, and the cumulative bed utilisation. Breakthrough is defined as the time at which
- * outlet concentration first exceeds {@code breakthroughFraction * C_in}.
+ * Outputs the breakthrough curve C(t)/C_in at the bed outlet, the total H2S removed up to breakthrough, and the
+ * cumulative bed utilisation. Breakthrough is defined as the time at which outlet concentration first exceeds
+ * {@code breakthroughFraction * C_in}.
  *
  * <p>
  * Standards informational: NACE TM0284 (sour service), API RP 945 (amine systems).
@@ -74,7 +74,8 @@ public class PackedBedScavengerReactor implements Serializable {
   /**
    * Default constructor.
    */
-  public PackedBedScavengerReactor() {}
+  public PackedBedScavengerReactor() {
+  }
 
   // ─── Setters ────────────────────────────────────────────
 
@@ -82,8 +83,8 @@ public class PackedBedScavengerReactor implements Serializable {
    * Sets bed geometry.
    *
    * @param diameterM bed inner diameter [m]
-   * @param heightM bed packed height [m]
-   * @param voidage bed voidage (0..1)
+   * @param heightM   bed packed height [m]
+   * @param voidage   bed voidage (0..1)
    * @return this for chaining
    */
   public PackedBedScavengerReactor setGeometry(double diameterM, double heightM, double voidage) {
@@ -96,8 +97,8 @@ public class PackedBedScavengerReactor implements Serializable {
   /**
    * Sets scavenger media properties.
    *
-   * @param loadingMolPerKg active site loading [mol/kg media]
-   * @param bulkDensityKgM3 packed bulk density [kg/m3]
+   * @param loadingMolPerKg     active site loading [mol/kg media]
+   * @param bulkDensityKgM3     packed bulk density [kg/m3]
    * @param stoichiometricRatio mol H2S consumed per mol active site (~1.0 triazine, ~0.6 Fe2O3)
    * @return this for chaining
    */
@@ -124,7 +125,7 @@ public class PackedBedScavengerReactor implements Serializable {
    * Sets feed conditions.
    *
    * @param cInletMolM3 inlet H2S molar concentration [mol/m3]
-   * @param qM3PerS volumetric flow rate [m3/s]
+   * @param qM3PerS     volumetric flow rate [m3/s]
    * @return this for chaining
    */
   public PackedBedScavengerReactor setFeed(double cInletMolM3, double qM3PerS) {
@@ -136,7 +137,7 @@ public class PackedBedScavengerReactor implements Serializable {
   /**
    * Sets discretisation (axial cells, time steps).
    *
-   * @param nCells number of axial cells (10..1000)
+   * @param nCells     number of axial cells (10..1000)
    * @param nTimeSteps number of time steps for breakthrough curve
    * @return this for chaining
    */
@@ -149,7 +150,7 @@ public class PackedBedScavengerReactor implements Serializable {
   /**
    * Sets simulation horizon and breakthrough threshold.
    *
-   * @param simTimeS total simulated service time [s]
+   * @param simTimeS  total simulated service time [s]
    * @param breakFrac outlet concentration fraction defining breakthrough (0..1)
    * @return this for chaining
    */
@@ -174,8 +175,8 @@ public class PackedBedScavengerReactor implements Serializable {
     double bedVolumeM3 = Math.PI / 4.0 * bedDiameterM * bedDiameterM * bedHeightM;
     double cellVolumeM3 = bedVolumeM3 / numberOfCells;
     double mediaMassPerCellKg = cellVolumeM3 * (1.0 - bedVoidage) * scavengerBulkDensityKgM3;
-    double initialCapacityPerCellMol =
-        mediaMassPerCellKg * scavengerLoadingMolPerKg / Math.max(stoichiometricRatio, 1e-6);
+    double initialCapacityPerCellMol = mediaMassPerCellKg * scavengerLoadingMolPerKg
+	/ Math.max(stoichiometricRatio, 1e-6);
     double totalCapacityMol = initialCapacityPerCellMol * numberOfCells;
 
     // Cell residence time tau = V_cell * voidage / Q
@@ -197,42 +198,42 @@ public class PackedBedScavengerReactor implements Serializable {
       double cellOutletC = cIn;
 
       for (int i = 0; i < numberOfCells; i++) {
-        if (remainingCapacity[i] <= 0.0) {
-          // exhausted cell — no removal
-          continue;
-        }
-        double activityFraction = remainingCapacity[i] / initialCapacityPerCellMol;
-        double kLocal = rateConstantPerS * activityFraction;
-        // Plug-flow first-order: C_out = C_in * exp(-k * tau)
-        cellOutletC = cellInletC * Math.exp(-kLocal * tauPerCellS);
-        double removedMolS = volumetricFlowM3PerS * (cellInletC - cellOutletC);
-        double consumedMol = removedMolS * dtS;
-        if (consumedMol > remainingCapacity[i]) {
-          consumedMol = remainingCapacity[i];
-          // partial breakthrough through this cell
-          cellOutletC = cellInletC - consumedMol / (volumetricFlowM3PerS * dtS);
-        }
-        remainingCapacity[i] -= consumedMol;
-        totalRemovedMol += consumedMol;
-        cellInletC = cellOutletC;
+	if (remainingCapacity[i] <= 0.0) {
+	  // exhausted cell — no removal
+	  continue;
+	}
+	double activityFraction = remainingCapacity[i] / initialCapacityPerCellMol;
+	double kLocal = rateConstantPerS * activityFraction;
+	// Plug-flow first-order: C_out = C_in * exp(-k * tau)
+	cellOutletC = cellInletC * Math.exp(-kLocal * tauPerCellS);
+	double removedMolS = volumetricFlowM3PerS * (cellInletC - cellOutletC);
+	double consumedMol = removedMolS * dtS;
+	if (consumedMol > remainingCapacity[i]) {
+	  consumedMol = remainingCapacity[i];
+	  // partial breakthrough through this cell
+	  cellOutletC = cellInletC - consumedMol / (volumetricFlowM3PerS * dtS);
+	}
+	remainingCapacity[i] -= consumedMol;
+	totalRemovedMol += consumedMol;
+	cellInletC = cellOutletC;
       }
       timeSeriesS.add(tNow);
       outletConcentrationProfile.add(cellOutletC);
       double consumedTotal = 0.0;
       for (int i = 0; i < numberOfCells; i++) {
-        consumedTotal += (initialCapacityPerCellMol - remainingCapacity[i]);
+	consumedTotal += (initialCapacityPerCellMol - remainingCapacity[i]);
       }
       double util = totalCapacityMol > 0.0 ? consumedTotal / totalCapacityMol : 0.0;
       bedUtilisationProfile.add(util);
 
       if (Double.isInfinite(breakthroughTimeS) && cellOutletC >= breakthroughFraction * cIn) {
-        breakthroughTimeS = tNow;
+	breakthroughTimeS = tNow;
       }
     }
 
     totalH2sRemovedKg = totalRemovedMol * MM_H2S / 1000.0;
     finalBedUtilisation = bedUtilisationProfile.isEmpty() ? 0.0
-        : bedUtilisationProfile.get(bedUtilisationProfile.size() - 1);
+	: bedUtilisationProfile.get(bedUtilisationProfile.size() - 1);
     evaluated = true;
     return this;
   }
@@ -342,8 +343,7 @@ public class PackedBedScavengerReactor implements Serializable {
    * @return pretty-printed JSON string
    */
   public String toJson() {
-    Gson gson = new GsonBuilder().setPrettyPrinting().serializeNulls()
-        .serializeSpecialFloatingPointValues().create();
+    Gson gson = new GsonBuilder().setPrettyPrinting().serializeNulls().serializeSpecialFloatingPointValues().create();
     return gson.toJson(toMap());
   }
 }

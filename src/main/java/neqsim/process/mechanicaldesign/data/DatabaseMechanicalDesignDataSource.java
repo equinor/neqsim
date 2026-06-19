@@ -18,10 +18,9 @@ public class DatabaseMechanicalDesignDataSource implements MechanicalDesignDataS
       + "TechnicalRequirements_Process WHERE EQUIPMENTTYPE='%s' AND Company='%s'";
 
   @Override
-  public Optional<DesignLimitData> getDesignLimits(String equipmentTypeName,
-      String companyIdentifier) {
+  public Optional<DesignLimitData> getDesignLimits(String equipmentTypeName, String companyIdentifier) {
     if (equipmentTypeName == null || equipmentTypeName.isEmpty() || companyIdentifier == null
-        || companyIdentifier.isEmpty()) {
+	|| companyIdentifier.isEmpty()) {
       return Optional.empty();
     }
 
@@ -30,41 +29,41 @@ public class DatabaseMechanicalDesignDataSource implements MechanicalDesignDataS
     boolean found = false;
 
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
-        ResultSet dataSet = database.getResultSet(query)) {
+	ResultSet dataSet = database.getResultSet(query)) {
       while (dataSet.next()) {
-        String specification = dataSet.getString("SPECIFICATION");
-        double maxValue = parseDouble(dataSet.getString("MAXVALUE"));
-        double minValue = parseDouble(dataSet.getString("MINVALUE"));
-        double representative = Double.isNaN(maxValue) ? minValue
-            : Double.isNaN(minValue) ? maxValue : (maxValue + minValue) / 2.0;
-        switch (specification) {
-          case "MaxPressure":
-            builder.maxPressure(representative);
-            found = true;
-            break;
-          case "MinPressure":
-            builder.minPressure(representative);
-            found = true;
-            break;
-          case "MaxTemperature":
-            builder.maxTemperature(representative);
-            found = true;
-            break;
-          case "MinTemperature":
-            builder.minTemperature(representative);
-            found = true;
-            break;
-          case "CorrosionAllowance":
-            builder.corrosionAllowance(representative);
-            found = true;
-            break;
-          case "JointEfficiency":
-            builder.jointEfficiency(representative);
-            found = true;
-            break;
-          default:
-            break;
-        }
+	String specification = dataSet.getString("SPECIFICATION");
+	double maxValue = parseDouble(dataSet.getString("MAXVALUE"));
+	double minValue = parseDouble(dataSet.getString("MINVALUE"));
+	double representative = Double.isNaN(maxValue) ? minValue
+	    : Double.isNaN(minValue) ? maxValue : (maxValue + minValue) / 2.0;
+	switch (specification) {
+	case "MaxPressure":
+	  builder.maxPressure(representative);
+	  found = true;
+	  break;
+	case "MinPressure":
+	  builder.minPressure(representative);
+	  found = true;
+	  break;
+	case "MaxTemperature":
+	  builder.maxTemperature(representative);
+	  found = true;
+	  break;
+	case "MinTemperature":
+	  builder.minTemperature(representative);
+	  found = true;
+	  break;
+	case "CorrosionAllowance":
+	  builder.corrosionAllowance(representative);
+	  found = true;
+	  break;
+	case "JointEfficiency":
+	  builder.jointEfficiency(representative);
+	  found = true;
+	  break;
+	default:
+	  break;
+	}
       }
     } catch (Exception ex) {
       logger.error("Unable to read design limits from database", ex);

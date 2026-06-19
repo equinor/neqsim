@@ -21,7 +21,8 @@ public class InterphasePackedBed extends InterphaseReactorFlow
    * Constructor for InterphasePackedBed.
    * </p>
    */
-  public InterphasePackedBed() {}
+  public InterphasePackedBed() {
+  }
 
   /**
    * <p>
@@ -48,66 +49,56 @@ public class InterphasePackedBed extends InterphaseReactorFlow
 
   /** {@inheritDoc} */
   @Override
-  public double calcWallHeatTransferCoefficient(int phase, double prandtlNumber,
-      FlowNodeInterface node) {
+  public double calcWallHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node) {
     return 0.0;
   }
 
   /** {@inheritDoc} */
   @Override
-  public double calcInterphaseHeatTransferCoefficient(int phase, double prandtlNumber,
-      FlowNodeInterface node) {
+  public double calcInterphaseHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node) {
     PhaseInterface phaseObject = node.getBulkSystem().getPhase(phase);
     double diffusivity = getEffectiveDiffusivity(phaseObject);
     double density = getFinitePositive(phaseObject.getPhysicalProperties().getDensity(),
-        phaseObject.getDensity("kg/m3"));
+	phaseObject.getDensity("kg/m3"));
     double viscosity = getFinitePositive(phaseObject.getPhysicalProperties().getViscosity(),
-        phaseObject.getViscosity("kg/msec"));
+	phaseObject.getViscosity("kg/msec"));
     double schmidtNumber = viscosity / Math.max(density * diffusivity, 1.0e-30);
-    double massTransferCoefficient =
-        calcInterphaseMassTransferCoefficient(phase, schmidtNumber, node);
+    double massTransferCoefficient = calcInterphaseMassTransferCoefficient(phase, schmidtNumber, node);
     if (!isFinitePositive(massTransferCoefficient)) {
       return 0.0;
     }
     double heatCapacity = getHeatCapacityMass(phaseObject);
-    double correctedPrandtlNumber = getFinitePositive(prandtlNumber, heatCapacity * viscosity
-        / Math.max(phaseObject.getPhysicalProperties().getConductivity(), 1.0e-30));
+    double correctedPrandtlNumber = getFinitePositive(prandtlNumber,
+	heatCapacity * viscosity / Math.max(phaseObject.getPhysicalProperties().getConductivity(), 1.0e-30));
     return massTransferCoefficient * density * heatCapacity
-        * Math.pow(schmidtNumber / correctedPrandtlNumber, 2.0 / 3.0);
+	* Math.pow(schmidtNumber / correctedPrandtlNumber, 2.0 / 3.0);
   }
 
   /** {@inheritDoc} */
   @Override
-  public double calcWallMassTransferCoefficient(int phase, double schmidtNumber,
-      FlowNodeInterface node) {
+  public double calcWallMassTransferCoefficient(int phase, double schmidtNumber, FlowNodeInterface node) {
     return 0.0;
   }
 
   /** {@inheritDoc} */
   @Override
-  public double calcInterphaseMassTransferCoefficient(int phaseNum, double schmidtNumber,
-      FlowNodeInterface node) {
+  public double calcInterphaseMassTransferCoefficient(int phaseNum, double schmidtNumber, FlowNodeInterface node) {
     double redMassTrans = 0;
     double massTrans = 0;
     if (phaseNum == 1) {
       // massTrans = 0.0002;
-      redMassTrans =
-          0.0051 * Math.pow(node.getReynoldsNumber(phaseNum), 0.67) * Math.pow(schmidtNumber, -0.5)
-              * Math.pow(node.getGeometry().getPacking().getSurfaceAreaPrVolume()
-                  * node.getGeometry().getPacking().getSize(), 0.4);
+      redMassTrans = 0.0051 * Math.pow(node.getReynoldsNumber(phaseNum), 0.67) * Math.pow(schmidtNumber, -0.5)
+	  * Math.pow(
+	      node.getGeometry().getPacking().getSurfaceAreaPrVolume() * node.getGeometry().getPacking().getSize(),
+	      0.4);
       massTrans = redMassTrans * Math.pow(
-          node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity()
-              * gravity,
-          1.0 / 3.0);
+	  node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity() * gravity, 1.0 / 3.0);
     }
     if (phaseNum == 0) {
-      redMassTrans =
-          3.6 * Math.pow(node.getReynoldsNumber(phaseNum), 0.7) * Math.pow(schmidtNumber, 0.33)
-              * Math.pow(node.getGeometry().getPacking().getSurfaceAreaPrVolume()
-                  * node.getGeometry().getPacking().getSize(), -2.0);
+      redMassTrans = 3.6 * Math.pow(node.getReynoldsNumber(phaseNum), 0.7) * Math.pow(schmidtNumber, 0.33) * Math.pow(
+	  node.getGeometry().getPacking().getSurfaceAreaPrVolume() * node.getGeometry().getPacking().getSize(), -2.0);
       massTrans = redMassTrans * node.getGeometry().getPacking().getSurfaceAreaPrVolume()
-          * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity()
-          / schmidtNumber;
+	  * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity() / schmidtNumber;
     }
     return massTrans;
   }
@@ -123,13 +114,13 @@ public class InterphasePackedBed extends InterphaseReactorFlow
     int count = 0;
     for (int component = 0; component < phase.getNumberOfComponents(); component++) {
       try {
-        double value = phase.getPhysicalProperties().getEffectiveDiffusionCoefficient(component);
-        if (isFinitePositive(value)) {
-          sum += value;
-          count++;
-        }
+	double value = phase.getPhysicalProperties().getEffectiveDiffusionCoefficient(component);
+	if (isFinitePositive(value)) {
+	  sum += value;
+	  count++;
+	}
       } catch (RuntimeException ex) {
-        // Fallback below keeps legacy packed-bed transport robust.
+	// Fallback below keeps legacy packed-bed transport robust.
       }
     }
     if (count > 0) {
@@ -157,7 +148,7 @@ public class InterphasePackedBed extends InterphaseReactorFlow
   /**
    * Return a fallback when a value is not positive and finite.
    *
-   * @param value value to inspect
+   * @param value    value to inspect
    * @param fallback fallback value
    * @return value if finite and positive, otherwise fallback
    */

@@ -199,29 +199,29 @@ public class CompressorMechanicalLosses implements Serializable {
 
     // Account for seal type
     switch (sealType) {
-      case DRY_GAS_SINGLE:
-        K = 0.003; // Higher leakage for single seal
-        break;
-      case DRY_GAS_TANDEM:
-        K = 0.002; // Standard tandem arrangement
-        break;
-      case DRY_GAS_DOUBLE:
-        K = 0.0015; // Lower leakage for double opposed
-        break;
-      case LABYRINTH:
-        K = 0.02; // Much higher for labyrinth
-        break;
-      case OIL_FILM:
-        K = 0.0; // No gas leakage for oil seals
-        break;
-      default:
-        K = 0.002;
+    case DRY_GAS_SINGLE:
+      K = 0.003; // Higher leakage for single seal
+      break;
+    case DRY_GAS_TANDEM:
+      K = 0.002; // Standard tandem arrangement
+      break;
+    case DRY_GAS_DOUBLE:
+      K = 0.0015; // Lower leakage for double opposed
+      break;
+    case LABYRINTH:
+      K = 0.02; // Much higher for labyrinth
+      break;
+    case OIL_FILM:
+      K = 0.0; // No gas leakage for oil seals
+      break;
+    default:
+      K = 0.002;
     }
 
     // Calculate leakage per seal [Nm³/hr]
     if (deltaP > 0 && gasCompressibilityZ > 0) {
       primarySealLeakage = K * shaftDiameter
-          * Math.sqrt(deltaP * gasMolecularWeight / (temperatureK * gasCompressibilityZ));
+	  * Math.sqrt(deltaP * gasMolecularWeight / (temperatureK * gasCompressibilityZ));
     } else {
       primarySealLeakage = 0.5; // Minimum leakage estimate
     }
@@ -255,8 +255,8 @@ public class CompressorMechanicalLosses implements Serializable {
    * Calculate required buffer gas flow rate.
    *
    * <p>
-   * Buffer gas is injected between primary and secondary seals to prevent process gas contamination
-   * of the secondary seal and bearing area.
+   * Buffer gas is injected between primary and secondary seals to prevent process gas contamination of the secondary
+   * seal and bearing area.
    * </p>
    *
    * @return buffer gas flow rate in Nm³/hr (total)
@@ -293,8 +293,8 @@ public class CompressorMechanicalLosses implements Serializable {
    * Get seal gas supply pressure requirement.
    *
    * <p>
-   * Seal gas must be supplied at a pressure higher than the reference pressure (suction or
-   * discharge depending on seal location).
+   * Seal gas must be supplied at a pressure higher than the reference pressure (suction or discharge depending on seal
+   * location).
    * </p>
    *
    * @return required seal gas supply pressure in bara
@@ -354,20 +354,20 @@ public class CompressorMechanicalLosses implements Serializable {
 
     double K;
     switch (bearingType) {
-      case TILTING_PAD:
-        K = 0.00008; // Tilting pad - moderate loss
-        break;
-      case PLAIN_SLEEVE:
-        K = 0.00012; // Plain sleeve - higher loss
-        break;
-      case MAGNETIC_ACTIVE:
-        K = 0.00001; // Magnetic - very low mechanical loss (mostly electrical)
-        break;
-      case GAS_FOIL:
-        K = 0.00002; // Gas foil - low loss
-        break;
-      default:
-        K = 0.00008;
+    case TILTING_PAD:
+      K = 0.00008; // Tilting pad - moderate loss
+      break;
+    case PLAIN_SLEEVE:
+      K = 0.00012; // Plain sleeve - higher loss
+      break;
+    case MAGNETIC_ACTIVE:
+      K = 0.00001; // Magnetic - very low mechanical loss (mostly electrical)
+      break;
+    case GAS_FOIL:
+      K = 0.00002; // Gas foil - low loss
+      break;
+    default:
+      K = 0.00008;
     }
 
     // Calculate loss per bearing [kW]
@@ -395,20 +395,20 @@ public class CompressorMechanicalLosses implements Serializable {
 
     double K;
     switch (bearingType) {
-      case TILTING_PAD:
-        K = 0.00015;
-        break;
-      case PLAIN_SLEEVE:
-        K = 0.00020;
-        break;
-      case MAGNETIC_ACTIVE:
-        K = 0.00002;
-        break;
-      case GAS_FOIL:
-        K = 0.00003;
-        break;
-      default:
-        K = 0.00015;
+    case TILTING_PAD:
+      K = 0.00015;
+      break;
+    case PLAIN_SLEEVE:
+      K = 0.00020;
+      break;
+    case MAGNETIC_ACTIVE:
+      K = 0.00002;
+      break;
+    case GAS_FOIL:
+      K = 0.00003;
+      break;
+    default:
+      K = 0.00015;
     }
 
     double speedFactor = Math.pow(shaftSpeed / 1000.0, 1.8);
@@ -479,8 +479,7 @@ public class CompressorMechanicalLosses implements Serializable {
    * Calculate total mechanical power loss (bearings + seals).
    *
    * <p>
-   * This represents the additional power required beyond the gas compression power to account for
-   * mechanical friction.
+   * This represents the additional power required beyond the gas compression power to account for mechanical friction.
    * </p>
    *
    * @return total mechanical loss in kW
@@ -492,8 +491,8 @@ public class CompressorMechanicalLosses implements Serializable {
     double sealFriction = 0.0;
     if (sealType == SealType.OIL_FILM) {
       // Oil seals have significant friction
-      sealFriction = 0.0001 * shaftDiameter * shaftDiameter * Math.pow(shaftSpeed / 1000.0, 1.5)
-          / 1000.0 * numberOfSeals;
+      sealFriction = 0.0001 * shaftDiameter * shaftDiameter * Math.pow(shaftSpeed / 1000.0, 1.5) / 1000.0
+	  * numberOfSeals;
     }
 
     return bearingLoss + sealFriction;
@@ -525,14 +524,14 @@ public class CompressorMechanicalLosses implements Serializable {
   /**
    * Update operating conditions from compressor.
    *
-   * @param suctionPressure suction pressure [bara]
+   * @param suctionPressure   suction pressure [bara]
    * @param dischargePressure discharge pressure [bara]
-   * @param shaftSpeed shaft speed [rpm]
-   * @param gasMW gas molecular weight [kg/kmol]
-   * @param gasZ gas compressibility factor
+   * @param shaftSpeed        shaft speed [rpm]
+   * @param gasMW             gas molecular weight [kg/kmol]
+   * @param gasZ              gas compressibility factor
    */
-  public void setOperatingConditions(double suctionPressure, double dischargePressure,
-      double shaftSpeed, double gasMW, double gasZ) {
+  public void setOperatingConditions(double suctionPressure, double dischargePressure, double shaftSpeed, double gasMW,
+      double gasZ) {
     this.suctionPressure = suctionPressure;
     this.dischargePressure = dischargePressure;
     this.shaftSpeed = shaftSpeed;
@@ -717,29 +716,21 @@ public class CompressorMechanicalLosses implements Serializable {
     logger.info("Shaft Speed: " + shaftSpeed + " rpm");
     logger.info("");
     logger.info("--- Seal Gas Consumption ---");
-    logger.info("Primary Seal Leakage: " + String.format("%.2f", calculatePrimarySealLeakage())
-        + " Nm³/hr");
-    logger.info("Secondary Seal Leakage: " + String.format("%.2f", calculateSecondarySealLeakage())
-        + " Nm³/hr");
+    logger.info("Primary Seal Leakage: " + String.format("%.2f", calculatePrimarySealLeakage()) + " Nm³/hr");
+    logger.info("Secondary Seal Leakage: " + String.format("%.2f", calculateSecondarySealLeakage()) + " Nm³/hr");
     logger.info("Buffer Gas Flow: " + String.format("%.2f", calculateBufferGasFlow()) + " Nm³/hr");
-    logger.info(
-        "Separation Gas Flow: " + String.format("%.2f", calculateSeparationGasFlow()) + " Nm³/hr");
-    logger
-        .info("Total Seal Gas: " + String.format("%.2f", getTotalSealGasConsumption()) + " Nm³/hr");
+    logger.info("Separation Gas Flow: " + String.format("%.2f", calculateSeparationGasFlow()) + " Nm³/hr");
+    logger.info("Total Seal Gas: " + String.format("%.2f", getTotalSealGasConsumption()) + " Nm³/hr");
     logger.info("");
     logger.info("--- Bearing Losses ---");
-    logger.info(
-        "Radial Bearing Loss: " + String.format("%.2f", calculateRadialBearingLoss()) + " kW");
-    logger.info(
-        "Thrust Bearing Loss: " + String.format("%.2f", calculateThrustBearingLoss()) + " kW");
+    logger.info("Radial Bearing Loss: " + String.format("%.2f", calculateRadialBearingLoss()) + " kW");
+    logger.info("Thrust Bearing Loss: " + String.format("%.2f", calculateThrustBearingLoss()) + " kW");
     logger.info("Total Bearing Loss: " + String.format("%.2f", getTotalBearingLoss()) + " kW");
     logger.info("");
     logger.info("--- Lube Oil System ---");
     logger.info("Lube Oil Flow: " + String.format("%.1f", calculateLubeOilFlowRate()) + " L/min");
-    logger.info(
-        "Lube Oil Cooler Duty: " + String.format("%.2f", calculateLubeOilCoolerDuty()) + " kW");
+    logger.info("Lube Oil Cooler Duty: " + String.format("%.2f", calculateLubeOilCoolerDuty()) + " kW");
     logger.info("");
-    logger
-        .info("Total Mechanical Loss: " + String.format("%.2f", getTotalMechanicalLoss()) + " kW");
+    logger.info("Total Mechanical Loss: " + String.format("%.2f", getTotalMechanicalLoss()) + " kW");
   }
 }

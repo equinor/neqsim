@@ -31,9 +31,8 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   protected double trayPressure = -1.0;
 
   /**
-   * When {@code true}, the tray uses reactive flash (Modified RAND, simultaneous chemical + phase
-   * equilibrium) instead of standard VLE flash. Set via
-   * {@link DistillationColumn#setReactive(boolean)}.
+   * When {@code true}, the tray uses reactive flash (Modified RAND, simultaneous chemical + phase equilibrium) instead
+   * of standard VLE flash. Set via {@link DistillationColumn#setReactive(boolean)}.
    */
   private boolean useReactiveFlash = false;
 
@@ -135,10 +134,10 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
 
     for (int k = 0; k < streams.size(); k++) {
       if (streams.get(k).getFlowRate("kg/hr") > getMinimumFlow()) {
-        // init(2) is sufficient for getEnthalpy(); composition derivatives from init(3)
-        // are not read here, so skipping them removes dead work from the solver hot loop.
-        streams.get(k).getThermoSystem().init(2);
-        enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
+	// init(2) is sufficient for getEnthalpy(); composition derivatives from init(3)
+	// are not read here, so skipping them removes dead work from the solver hot loop.
+	streams.get(k).getThermoSystem().init(2);
+	enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
       }
       // System.out.println("total enthalpy k : " + ( ((Stream)
       // streams.get(k)).getThermoSystem()).getEnthalpy());
@@ -163,7 +162,8 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    * TPflash.
    * </p>
    */
-  public void TPflash() {}
+  public void TPflash() {
+  }
 
   /**
    * Enable or disable reactive flash on this tray.
@@ -216,55 +216,55 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
 
       mixStream();
       if (trayPressure > 0) {
-        mixedStream.setPressure(trayPressure, "bara");
+	mixedStream.setPressure(trayPressure, "bara");
       }
       enthalpy = calcMixStreamEnthalpy();
       // System.out.println("temp guess " + guessTemperature());
       if (!isSetOutTemperature()) {
-        // mixedStream.getThermoSystem().setTemperature(guessTemperature());
+	// mixedStream.getThermoSystem().setTemperature(guessTemperature());
       } else {
-        mixedStream.setTemperature(getOutTemperature(), "K");
+	mixedStream.setTemperature(getOutTemperature(), "K");
       }
       // System.out.println("filan temp " + mixedStream.getTemperature());
     }
     if (isSetOutTemperature()) {
       if (!Double.isNaN(getOutTemperature())) {
-        mixedStream.getThermoSystem().setTemperature(getOutTemperature());
+	mixedStream.getThermoSystem().setTemperature(getOutTemperature());
       }
       if (useReactiveFlash) {
-        testOps.reactiveTPflash();
+	testOps.reactiveTPflash();
       } else {
-        testOps.TPflash();
+	testOps.TPflash();
       }
       mixedStream.getThermoSystem().initProperties();
     } else {
       try {
-        if (useReactiveFlash) {
-          testOps.reactivePHflash(enthalpy, 0);
-        } else {
-          testOps.PHflash(enthalpy, 0);
-        }
-        mixedStream.getThermoSystem().initProperties();
+	if (useReactiveFlash) {
+	  testOps.reactivePHflash(enthalpy, 0);
+	} else {
+	  testOps.PHflash(enthalpy, 0);
+	}
+	mixedStream.getThermoSystem().initProperties();
       } catch (Exception ex) {
-        try {
-          if (!Double.isNaN(getOutTemperature())) {
-            mixedStream.getThermoSystem().setTemperature(getOutTemperature());
-          }
-          if (useReactiveFlash) {
-            testOps.reactiveTPflash();
-          } else {
-            testOps.TPflash();
-          }
-          mixedStream.getThermoSystem().initProperties();
-        } catch (Exception ex2) {
-          logger.warn("TPflash failed in SimpleTray: " + getName(), ex2);
-        }
+	try {
+	  if (!Double.isNaN(getOutTemperature())) {
+	    mixedStream.getThermoSystem().setTemperature(getOutTemperature());
+	  }
+	  if (useReactiveFlash) {
+	    testOps.reactiveTPflash();
+	  } else {
+	    testOps.TPflash();
+	  }
+	  mixedStream.getThermoSystem().initProperties();
+	} catch (Exception ex2) {
+	  logger.warn("TPflash failed in SimpleTray: " + getName(), ex2);
+	}
       }
     }
 
     if (Double.isNaN(mixedStream.getTemperature())) {
       if (!Double.isNaN(getOutTemperature())) {
-        mixedStream.setTemperature(getOutTemperature());
+	mixedStream.setTemperature(getOutTemperature());
       }
     }
 
@@ -282,8 +282,8 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
-   * Invalidate the cached gas and liquid output streams. Call this after modifying the tray's
-   * thermo system compositions externally (e.g. Murphree efficiency correction).
+   * Invalidate the cached gas and liquid output streams. Call this after modifying the tray's thermo system
+   * compositions externally (e.g. Murphree efficiency correction).
    */
   public void invalidateOutStreamCache() {
     cachedGasOutStream = null;
@@ -294,8 +294,8 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
-   * Set a pre-built gas out stream (e.g. Murphree-corrected) to be returned by
-   * {@link #getGasOutStream()} instead of the equilibrium result.
+   * Set a pre-built gas out stream (e.g. Murphree-corrected) to be returned by {@link #getGasOutStream()} instead of
+   * the equilibrium result.
    *
    * @param stream the corrected gas stream
    */
@@ -304,8 +304,8 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
-   * Set a pre-built liquid out stream (e.g. Murphree-corrected) to be returned by
-   * {@link #getLiquidOutStream()} instead of the equilibrium result.
+   * Set a pre-built liquid out stream (e.g. Murphree-corrected) to be returned by {@link #getLiquidOutStream()} instead
+   * of the equilibrium result.
    *
    * @param stream the corrected liquid stream
    */
@@ -336,8 +336,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    */
   public StreamInterface getLiquidOutStream() {
     if (cachedLiquidOutStream == null) {
-      cachedLiquidOutStream =
-          createLiquidOutStream(1.0 - liquidSideDrawFraction - liquidPumparoundDrawFraction);
+      cachedLiquidOutStream = createLiquidOutStream(1.0 - liquidSideDrawFraction - liquidPumparoundDrawFraction);
     }
     return cachedLiquidOutStream;
   }
@@ -407,8 +406,8 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    * Set the fraction of tray liquid withdrawn for a pumparound return.
    *
    * @param fraction fraction from zero to one
-   * @throws IllegalArgumentException if the fraction is not finite, outside zero to one, or the
-   *         total liquid withdrawal fraction exceeds one
+   * @throws IllegalArgumentException if the fraction is not finite, outside zero to one, or the total liquid withdrawal
+   *                                  fraction exceeds one
    */
   public void setLiquidPumparoundDrawFraction(double fraction) {
     validateSideDrawFraction(fraction);
@@ -447,7 +446,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   /**
    * Create the tray gas outlet from the requested phase type and normalize its inventory.
    *
-   * @param phaseTypeName phase type name to prefer
+   * @param phaseTypeName  phase type name to prefer
    * @param outletFraction fraction of the selected phase inventory to route to the outlet
    * @return stream containing the selected normalized phase
    */
@@ -500,27 +499,25 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   /**
    * Validate that liquid product and pumparound withdrawals leave non-negative tray traffic.
    *
-   * @param productFraction liquid product side-draw fraction
+   * @param productFraction    liquid product side-draw fraction
    * @param pumparoundFraction liquid pumparound draw fraction
    * @throws IllegalArgumentException if total liquid withdrawal exceeds one
    */
   private void validateLiquidSplitFractions(double productFraction, double pumparoundFraction) {
     if (productFraction + pumparoundFraction > 1.0 + 1.0e-12) {
-      throw new IllegalArgumentException(
-          "Total liquid side draw and pumparound fractions cannot exceed 1");
+      throw new IllegalArgumentException("Total liquid side draw and pumparound fractions cannot exceed 1");
     }
   }
 
   /**
    * Scale a phase outlet system by a split fraction.
    *
-   * @param phaseSystem phase outlet system to scale
+   * @param phaseSystem    phase outlet system to scale
    * @param outletFraction fraction of phase flow to keep in the stream
    */
   private void scalePhaseSystemByFraction(SystemInterface phaseSystem, double outletFraction) {
     double clampedFraction = Math.max(0.0, Math.min(1.0, outletFraction));
-    scalePhaseSystemToNormalizedMoles(phaseSystem,
-        phaseSystem.getTotalNumberOfMoles() * clampedFraction);
+    scalePhaseSystemToNormalizedMoles(phaseSystem, phaseSystem.getTotalNumberOfMoles() * clampedFraction);
   }
 
   /**
@@ -563,7 +560,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     int numberOfPhases = Math.max(1, traySystem.getNumberOfPhases());
     for (int phaseIndex = 0; phaseIndex < numberOfPhases; phaseIndex++) {
       if (phaseTypeName.equals(traySystem.getPhase(phaseIndex).getPhaseTypeName())) {
-        return phaseIndex;
+	return phaseIndex;
       }
     }
     return -1;
@@ -580,12 +577,12 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     for (int phaseIndex = 0; phaseIndex < numberOfPhases; phaseIndex++) {
       String phaseTypeName = traySystem.getPhase(phaseIndex).getPhaseTypeName();
       if ("liquid".equals(phaseTypeName) || "oil".equals(phaseTypeName)) {
-        return phaseIndex;
+	return phaseIndex;
       }
     }
     for (int phaseIndex = 0; phaseIndex < numberOfPhases; phaseIndex++) {
       if (!"gas".equals(traySystem.getPhase(phaseIndex).getPhaseTypeName())) {
-        return phaseIndex;
+	return phaseIndex;
       }
     }
     return -1;
@@ -611,12 +608,11 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     }
     if (targetMoles <= 0.0) {
       for (int phaseIndex = 0; phaseIndex < phaseSystem.getMaxNumberOfPhases(); phaseIndex++) {
-        for (int componentIndex = 0; componentIndex < phaseSystem.getPhase(phaseIndex)
-            .getNumberOfComponents(); componentIndex++) {
-          phaseSystem.getPhase(phaseIndex).getComponent(componentIndex)
-              .setNumberOfMolesInPhase(0.0);
-          phaseSystem.getPhase(phaseIndex).getComponent(componentIndex).setNumberOfmoles(0.0);
-        }
+	for (int componentIndex = 0; componentIndex < phaseSystem.getPhase(phaseIndex)
+	    .getNumberOfComponents(); componentIndex++) {
+	  phaseSystem.getPhase(phaseIndex).getComponent(componentIndex).setNumberOfMolesInPhase(0.0);
+	  phaseSystem.getPhase(phaseIndex).getComponent(componentIndex).setNumberOfmoles(0.0);
+	}
       }
       phaseSystem.setTotalNumberOfMoles(0.0);
       phaseSystem.init(0);
@@ -625,13 +621,11 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     double scaleFactor = Math.max(0.0, targetMoles) / currentMoles;
     for (int phaseIndex = 0; phaseIndex < phaseSystem.getMaxNumberOfPhases(); phaseIndex++) {
       for (int componentIndex = 0; componentIndex < phaseSystem.getPhase(phaseIndex)
-          .getNumberOfComponents(); componentIndex++) {
-        double moles =
-            phaseSystem.getPhase(phaseIndex).getComponent(componentIndex).getNumberOfMolesInPhase()
-                * scaleFactor;
-        phaseSystem.getPhase(phaseIndex).getComponent(componentIndex)
-            .setNumberOfMolesInPhase(moles);
-        phaseSystem.getPhase(phaseIndex).getComponent(componentIndex).setNumberOfmoles(moles);
+	  .getNumberOfComponents(); componentIndex++) {
+	double moles = phaseSystem.getPhase(phaseIndex).getComponent(componentIndex).getNumberOfMolesInPhase()
+	    * scaleFactor;
+	phaseSystem.getPhase(phaseIndex).getComponent(componentIndex).setNumberOfMolesInPhase(moles);
+	phaseSystem.getPhase(phaseIndex).getComponent(componentIndex).setNumberOfmoles(moles);
       }
     }
     phaseSystem.setTotalNumberOfMoles(Math.max(0.0, targetMoles));
@@ -676,9 +670,8 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     if (Double.isNaN(temperature)) {
       double gtemp = 0;
       for (int k = 0; k < streams.size(); k++) {
-        gtemp += streams.get(k).getThermoSystem().getTemperature()
-            * streams.get(k).getThermoSystem().getNumberOfMoles()
-            / mixedStream.getThermoSystem().getNumberOfMoles();
+	gtemp += streams.get(k).getThermoSystem().getTemperature() * streams.get(k).getThermoSystem().getNumberOfMoles()
+	    / mixedStream.getThermoSystem().getNumberOfMoles();
       }
       // System.out.println("guess temperature " + gtemp);
       return gtemp;

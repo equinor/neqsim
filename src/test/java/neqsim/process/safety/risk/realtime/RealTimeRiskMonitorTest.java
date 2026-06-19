@@ -90,8 +90,8 @@ class RealTimeRiskMonitorTest {
 
   @Test
   void testEquipmentRiskStatusCreation() {
-    RealTimeRiskMonitor.EquipmentRiskStatus status =
-        new RealTimeRiskMonitor.EquipmentRiskStatus("EQ-001", "Test Equipment");
+    RealTimeRiskMonitor.EquipmentRiskStatus status = new RealTimeRiskMonitor.EquipmentRiskStatus("EQ-001",
+	"Test Equipment");
 
     assertNotNull(status);
     assertEquals("EQ-001", status.getEquipmentId());
@@ -100,8 +100,7 @@ class RealTimeRiskMonitorTest {
 
   @Test
   void testEquipmentRiskStatusSetters() {
-    RealTimeRiskMonitor.EquipmentRiskStatus status =
-        new RealTimeRiskMonitor.EquipmentRiskStatus("EQ-001", "Pump");
+    RealTimeRiskMonitor.EquipmentRiskStatus status = new RealTimeRiskMonitor.EquipmentRiskStatus("EQ-001", "Pump");
 
     status.setFailureProbability(0.05);
     status.setRiskScore(3.5);
@@ -114,8 +113,7 @@ class RealTimeRiskMonitorTest {
 
   @Test
   void testEquipmentRiskStatusToMap() {
-    RealTimeRiskMonitor.EquipmentRiskStatus status =
-        new RealTimeRiskMonitor.EquipmentRiskStatus("EQ-001", "Pump");
+    RealTimeRiskMonitor.EquipmentRiskStatus status = new RealTimeRiskMonitor.EquipmentRiskStatus("EQ-001", "Pump");
     status.setFailureProbability(0.05);
 
     java.util.Map<String, Object> map = status.toMap();
@@ -128,10 +126,9 @@ class RealTimeRiskMonitorTest {
 
   @Test
   void testRiskAlertCreation() {
-    RealTimeRiskMonitor.RiskAlert alert =
-        new RealTimeRiskMonitor.RiskAlert(RealTimeRiskMonitor.RiskAlert.AlertSeverity.WARNING,
-            RealTimeRiskMonitor.RiskAlert.AlertType.RISK_THRESHOLD_EXCEEDED, "Pump-001",
-            "Risk threshold exceeded");
+    RealTimeRiskMonitor.RiskAlert alert = new RealTimeRiskMonitor.RiskAlert(
+	RealTimeRiskMonitor.RiskAlert.AlertSeverity.WARNING,
+	RealTimeRiskMonitor.RiskAlert.AlertType.RISK_THRESHOLD_EXCEEDED, "Pump-001", "Risk threshold exceeded");
 
     assertNotNull(alert);
     assertNotNull(alert.getAlertId());
@@ -144,10 +141,9 @@ class RealTimeRiskMonitorTest {
 
   @Test
   void testRiskAlertAcknowledge() {
-    RealTimeRiskMonitor.RiskAlert alert =
-        new RealTimeRiskMonitor.RiskAlert(RealTimeRiskMonitor.RiskAlert.AlertSeverity.HIGH,
-            RealTimeRiskMonitor.RiskAlert.AlertType.EQUIPMENT_DEGRADATION, "Separator-001",
-            "Equipment degradation detected");
+    RealTimeRiskMonitor.RiskAlert alert = new RealTimeRiskMonitor.RiskAlert(
+	RealTimeRiskMonitor.RiskAlert.AlertSeverity.HIGH, RealTimeRiskMonitor.RiskAlert.AlertType.EQUIPMENT_DEGRADATION,
+	"Separator-001", "Equipment degradation detected");
 
     assertFalse(alert.isAcknowledged());
     alert.acknowledge();
@@ -156,9 +152,9 @@ class RealTimeRiskMonitorTest {
 
   @Test
   void testRiskAlertToMap() {
-    RealTimeRiskMonitor.RiskAlert alert =
-        new RealTimeRiskMonitor.RiskAlert(RealTimeRiskMonitor.RiskAlert.AlertSeverity.CRITICAL,
-            RealTimeRiskMonitor.RiskAlert.AlertType.SIF_DEMAND, "SIF-001", "SIF demand detected");
+    RealTimeRiskMonitor.RiskAlert alert = new RealTimeRiskMonitor.RiskAlert(
+	RealTimeRiskMonitor.RiskAlert.AlertSeverity.CRITICAL, RealTimeRiskMonitor.RiskAlert.AlertType.SIF_DEMAND,
+	"SIF-001", "SIF demand detected");
     alert.setCurrentValue(95.0);
     alert.setThresholdValue(90.0);
 
@@ -174,28 +170,26 @@ class RealTimeRiskMonitorTest {
 
   @Test
   void testAlertSeverityEnumValues() {
-    RealTimeRiskMonitor.RiskAlert.AlertSeverity[] severities =
-        RealTimeRiskMonitor.RiskAlert.AlertSeverity.values();
+    RealTimeRiskMonitor.RiskAlert.AlertSeverity[] severities = RealTimeRiskMonitor.RiskAlert.AlertSeverity.values();
     assertEquals(4, severities.length);
     assertEquals(RealTimeRiskMonitor.RiskAlert.AlertSeverity.INFO,
-        RealTimeRiskMonitor.RiskAlert.AlertSeverity.valueOf("INFO"));
+	RealTimeRiskMonitor.RiskAlert.AlertSeverity.valueOf("INFO"));
     assertEquals(RealTimeRiskMonitor.RiskAlert.AlertSeverity.WARNING,
-        RealTimeRiskMonitor.RiskAlert.AlertSeverity.valueOf("WARNING"));
+	RealTimeRiskMonitor.RiskAlert.AlertSeverity.valueOf("WARNING"));
     assertEquals(RealTimeRiskMonitor.RiskAlert.AlertSeverity.HIGH,
-        RealTimeRiskMonitor.RiskAlert.AlertSeverity.valueOf("HIGH"));
+	RealTimeRiskMonitor.RiskAlert.AlertSeverity.valueOf("HIGH"));
     assertEquals(RealTimeRiskMonitor.RiskAlert.AlertSeverity.CRITICAL,
-        RealTimeRiskMonitor.RiskAlert.AlertSeverity.valueOf("CRITICAL"));
+	RealTimeRiskMonitor.RiskAlert.AlertSeverity.valueOf("CRITICAL"));
   }
 
   @Test
   void testAlertTypeEnumValues() {
-    RealTimeRiskMonitor.RiskAlert.AlertType[] types =
-        RealTimeRiskMonitor.RiskAlert.AlertType.values();
+    RealTimeRiskMonitor.RiskAlert.AlertType[] types = RealTimeRiskMonitor.RiskAlert.AlertType.values();
     assertEquals(6, types.length);
     assertEquals(RealTimeRiskMonitor.RiskAlert.AlertType.RISK_THRESHOLD_EXCEEDED,
-        RealTimeRiskMonitor.RiskAlert.AlertType.valueOf("RISK_THRESHOLD_EXCEEDED"));
+	RealTimeRiskMonitor.RiskAlert.AlertType.valueOf("RISK_THRESHOLD_EXCEEDED"));
     assertEquals(RealTimeRiskMonitor.RiskAlert.AlertType.ANOMALY_DETECTED,
-        RealTimeRiskMonitor.RiskAlert.AlertType.valueOf("ANOMALY_DETECTED"));
+	RealTimeRiskMonitor.RiskAlert.AlertType.valueOf("ANOMALY_DETECTED"));
   }
 
   @Test
@@ -257,8 +251,7 @@ class RealTimeRiskMonitorTest {
 
   @Test
   void testGetEquipmentStatus() {
-    java.util.Map<String, RealTimeRiskMonitor.EquipmentRiskStatus> status =
-        monitor.getEquipmentStatus();
+    java.util.Map<String, RealTimeRiskMonitor.EquipmentRiskStatus> status = monitor.getEquipmentStatus();
     assertNotNull(status);
   }
 
@@ -300,8 +293,8 @@ class RealTimeRiskMonitorTest {
 
   @Test
   void testProcessVariableStatus() {
-    RealTimeRiskAssessment.ProcessVariableStatus pvStatus =
-        new RealTimeRiskAssessment.ProcessVariableStatus("Pressure", 55.0, 50.0, "bara");
+    RealTimeRiskAssessment.ProcessVariableStatus pvStatus = new RealTimeRiskAssessment.ProcessVariableStatus("Pressure",
+	55.0, 50.0, "bara");
 
     assertEquals("Pressure", pvStatus.getVariableName());
     assertEquals(55.0, pvStatus.getCurrentValue(), 0.01);
@@ -314,16 +307,16 @@ class RealTimeRiskMonitorTest {
 
   @Test
   void testProcessVariableStatusAlarming() {
-    RealTimeRiskAssessment.ProcessVariableStatus pvStatus =
-        new RealTimeRiskAssessment.ProcessVariableStatus("Pressure", 60.0, 50.0, "bara");
+    RealTimeRiskAssessment.ProcessVariableStatus pvStatus = new RealTimeRiskAssessment.ProcessVariableStatus("Pressure",
+	60.0, 50.0, "bara");
 
     assertTrue(pvStatus.isAlarming()); // 20% deviation > 10%
   }
 
   @Test
   void testProcessVariableStatusToMap() {
-    RealTimeRiskAssessment.ProcessVariableStatus pvStatus =
-        new RealTimeRiskAssessment.ProcessVariableStatus("Temperature", 80.0, 75.0, "C");
+    RealTimeRiskAssessment.ProcessVariableStatus pvStatus = new RealTimeRiskAssessment.ProcessVariableStatus(
+	"Temperature", 80.0, 75.0, "C");
 
     java.util.Map<String, Object> map = pvStatus.toMap();
 
@@ -333,4 +326,3 @@ class RealTimeRiskMonitorTest {
     assertEquals("C", map.get("unit"));
   }
 }
-

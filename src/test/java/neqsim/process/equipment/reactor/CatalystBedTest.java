@@ -25,10 +25,8 @@ public class CatalystBedTest extends neqsim.NeqSimTest {
     // + 1.75 * rho * u^2 * (1-eps) / (dp * eps^3)
     double dp = 0.003;
     double eps = 0.40;
-    double viscousTerm =
-        150.0 * gasViscosity * velocity * Math.pow(1 - eps, 2) / (dp * dp * Math.pow(eps, 3));
-    double inertialTerm =
-        1.75 * gasDensity * velocity * velocity * (1 - eps) / (dp * Math.pow(eps, 3));
+    double viscousTerm = 150.0 * gasViscosity * velocity * Math.pow(1 - eps, 2) / (dp * dp * Math.pow(eps, 3));
+    double inertialTerm = 1.75 * gasDensity * velocity * velocity * (1 - eps) / (dp * Math.pow(eps, 3));
     double expected = viscousTerm + inertialTerm;
 
     assertEquals(expected, dPdz, expected * 0.01, "Ergun pressure drop should match formula");
@@ -45,8 +43,7 @@ public class CatalystBedTest extends neqsim.NeqSimTest {
     double bedLength = 3.0;
 
     double dPdz = bed.calculatePressureDrop(velocity, gasDensity, gasViscosity);
-    double totalDPbar =
-        bed.calculateTotalPressureDrop(velocity, gasDensity, gasViscosity, bedLength);
+    double totalDPbar = bed.calculateTotalPressureDrop(velocity, gasDensity, gasViscosity, bedLength);
 
     // Total dP (bar) = dPdz (Pa/m) * length(m) / 1e5
     assertEquals(dPdz * bedLength / 1.0e5, totalDPbar, totalDPbar * 0.01);
@@ -84,8 +81,7 @@ public class CatalystBedTest extends neqsim.NeqSimTest {
     // Full formula: eta = (1/phi) * (coth(3*phi) - 1/(3*phi))
     double threePhi = 3.0 * phi;
     double expectedEta = (1.0 / phi) * (1.0 / Math.tanh(threePhi) - 1.0 / threePhi);
-    assertEquals(expectedEta, eta, expectedEta * 0.01,
-        "Effectiveness should match generalized Thiele formula");
+    assertEquals(expectedEta, eta, expectedEta * 0.01, "Effectiveness should match generalized Thiele formula");
   }
 
   @Test

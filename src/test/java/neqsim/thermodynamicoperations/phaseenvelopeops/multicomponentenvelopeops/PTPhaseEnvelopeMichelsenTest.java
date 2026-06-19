@@ -13,21 +13,20 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Tests for the unified PTPhaseEnvelopeMichelsen implementation.
  *
  * <p>
- * These tests verify that the Michelsen continuation-based phase envelope calculation produces
- * correct results for a variety of fluid systems: simple gases, natural gas mixtures, systems with
- * TBP fractions, UMRPRU mixing rules, and trace water.
+ * These tests verify that the Michelsen continuation-based phase envelope calculation produces correct results for a
+ * variety of fluid systems: simple gases, natural gas mixtures, systems with TBP fractions, UMRPRU mixing rules, and
+ * trace water.
  * </p>
  */
 public class PTPhaseEnvelopeMichelsenTest {
 
   /**
-   * Test with a simple 3-component gas (N2/CO2/CH4). Verifies that the dew and bubble arrays have
-   * reasonable length and that cricondenbar and cricondentherm are physically meaningful.
+   * Test with a simple 3-component gas (N2/CO2/CH4). Verifies that the dew and bubble arrays have reasonable length and
+   * that cricondenbar and cricondentherm are physically meaningful.
    */
   @Test
   void testSimpleGas() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
     testSystem.addComponent("nitrogen", 0.01);
     testSystem.addComponent("CO2", 0.01);
     testSystem.addComponent("methane", 0.98);
@@ -51,10 +50,8 @@ public class PTPhaseEnvelopeMichelsenTest {
     // Cricondenbar should be reasonable for this system (~47 bar)
     double[] cricondenbar = testOps.get("cricondenbar");
     assertNotNull(cricondenbar, "cricondenbar should not be null");
-    assertTrue(cricondenbar[1] > 30.0,
-        "Cricondenbar pressure should be > 30 bar, got: " + cricondenbar[1]);
-    assertTrue(cricondenbar[1] < 100.0,
-        "Cricondenbar pressure should be < 100 bar, got: " + cricondenbar[1]);
+    assertTrue(cricondenbar[1] > 30.0, "Cricondenbar pressure should be > 30 bar, got: " + cricondenbar[1]);
+    assertTrue(cricondenbar[1] < 100.0, "Cricondenbar pressure should be < 100 bar, got: " + cricondenbar[1]);
 
     // Critical point should be reasonable
     double[] cp = testOps.get("criticalPoint1");
@@ -64,13 +61,12 @@ public class PTPhaseEnvelopeMichelsenTest {
   }
 
   /**
-   * Test with a 9-component natural gas mixture. Verifies that both dew and bubble branches produce
-   * sufficient points and that enthalpies and densities are available.
+   * Test with a 9-component natural gas mixture. Verifies that both dew and bubble branches produce sufficient points
+   * and that enthalpies and densities are available.
    */
   @Test
   void testNaturalGas() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
     testSystem.addComponent("nitrogen", 0.88);
     testSystem.addComponent("CO2", 5.7);
     testSystem.addComponent("methane", 86.89);
@@ -104,25 +100,21 @@ public class PTPhaseEnvelopeMichelsenTest {
     // Cricondenbar for this mixture should be ~60-90 bar
     double[] cricondenbar = testOps.get("cricondenbar");
     assertTrue(cricondenbar[1] > 40.0, "Cricondenbar should be > 40 bar, got: " + cricondenbar[1]);
-    assertTrue(cricondenbar[1] < 200.0,
-        "Cricondenbar should be < 200 bar, got: " + cricondenbar[1]);
+    assertTrue(cricondenbar[1] < 200.0, "Cricondenbar should be < 200 bar, got: " + cricondenbar[1]);
 
     // Cricondentherm for this mixture
     double[] cricondentherm = testOps.get("cricondentherm");
-    assertTrue(cricondentherm[0] > 200.0,
-        "Cricondentherm should be > 200 K, got: " + cricondentherm[0]);
-    assertTrue(cricondentherm[0] < 400.0,
-        "Cricondentherm should be < 400 K, got: " + cricondentherm[0]);
+    assertTrue(cricondentherm[0] > 200.0, "Cricondentherm should be > 200 K, got: " + cricondentherm[0]);
+    assertTrue(cricondentherm[0] < 400.0, "Cricondentherm should be < 400 K, got: " + cricondentherm[0]);
   }
 
   /**
-   * Test starting from bubble side (bubfirst=true). Verifies that the algorithm correctly traces
-   * from the bubble point side.
+   * Test starting from bubble side (bubfirst=true). Verifies that the algorithm correctly traces from the bubble point
+   * side.
    */
   @Test
   void testBubblePointFirst() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
     testSystem.addComponent("nitrogen", 0.01);
     testSystem.addComponent("CO2", 0.01);
     testSystem.addComponent("methane", 0.98);
@@ -137,8 +129,7 @@ public class PTPhaseEnvelopeMichelsenTest {
     // With bubfirst=true, dew/bubble naming follows convention
     assertNotNull(dewT, "dewT should not be null");
     assertNotNull(bubT, "bubT should not be null");
-    assertTrue(dewT.length + bubT.length > 10,
-        "Total points should be > 10, got: " + (dewT.length + bubT.length));
+    assertTrue(dewT.length + bubT.length > 10, "Total points should be > 10, got: " + (dewT.length + bubT.length));
   }
 
   /**
@@ -146,8 +137,7 @@ public class PTPhaseEnvelopeMichelsenTest {
    */
   @Test
   void testWithWaterTrace() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
     testSystem.addComponent("nitrogen", 0.04);
     testSystem.addComponent("CO2", 0.06);
     testSystem.addComponent("methane", 0.80);
@@ -166,8 +156,7 @@ public class PTPhaseEnvelopeMichelsenTest {
    */
   @Test
   void testWithTBPfractions() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
     testSystem.addComponent("nitrogen", 0.88);
     testSystem.addComponent("CO2", 5.7);
     testSystem.addComponent("methane", 86.89);
@@ -204,8 +193,7 @@ public class PTPhaseEnvelopeMichelsenTest {
    */
   @Test
   void testUMRPRU() {
-    neqsim.thermo.system.SystemInterface fluid =
-        new neqsim.thermo.system.SystemUMRPRUMCEos(298.0, 50.0);
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemUMRPRUMCEos(298.0, 50.0);
     fluid.addComponent("nitrogen", 2.5);
     fluid.addComponent("CO2", 4.5);
     fluid.addComponent("methane", 79.45);
@@ -237,10 +225,8 @@ public class PTPhaseEnvelopeMichelsenTest {
 
     assertTrue(dewT.length > 15, "Should have > 15 dew points with UMRPRU, got: " + dewT.length);
     assertTrue(bubT.length > 10, "Should have > 10 bubble points with UMRPRU, got: " + bubT.length);
-    assertTrue(bubH.length > 10,
-        "Should have > 10 bubble enthalpies with UMRPRU, got: " + bubH.length);
-    assertTrue(bubDens.length > 10,
-        "Should have > 10 bubble densities with UMRPRU, got: " + bubDens.length);
+    assertTrue(bubH.length > 10, "Should have > 10 bubble enthalpies with UMRPRU, got: " + bubH.length);
+    assertTrue(bubDens.length > 10, "Should have > 10 bubble densities with UMRPRU, got: " + bubDens.length);
   }
 
   /**
@@ -248,8 +234,7 @@ public class PTPhaseEnvelopeMichelsenTest {
    */
   @Test
   void testWithCustomBounds() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
     testSystem.addComponent("nitrogen", 0.01);
     testSystem.addComponent("CO2", 0.01);
     testSystem.addComponent("methane", 0.98);
@@ -268,8 +253,7 @@ public class PTPhaseEnvelopeMichelsenTest {
    */
   @Test
   void testAllGetKeys() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
     testSystem.addComponent("nitrogen", 0.01);
     testSystem.addComponent("CO2", 0.01);
     testSystem.addComponent("methane", 0.98);
@@ -279,9 +263,9 @@ public class PTPhaseEnvelopeMichelsenTest {
     testOps.calcPTphaseEnvelope();
 
     // All standard keys should return non-null
-    String[] keys = {"dewT", "dewP", "bubT", "bubP", "dewH", "dewDens", "dewS", "bubH", "bubDens",
-        "bubS", "cricondentherm", "cricondenthermX", "cricondenthermY", "cricondenbar",
-        "cricondenbarX", "cricondenbarY", "criticalPoint1", "criticalPoint2"};
+    String[] keys = { "dewT", "dewP", "bubT", "bubP", "dewH", "dewDens", "dewS", "bubH", "bubDens", "bubS",
+	"cricondentherm", "cricondenthermX", "cricondenthermY", "cricondenbar", "cricondenbarX", "cricondenbarY",
+	"criticalPoint1", "criticalPoint2" };
     for (String key : keys) {
       assertNotNull(testOps.get(key), "get(\"" + key + "\") should not be null");
     }
@@ -292,8 +276,7 @@ public class PTPhaseEnvelopeMichelsenTest {
    */
   @Test
   void testTemperatureUnits() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
     testSystem.addComponent("methane", 0.90);
     testSystem.addComponent("ethane", 0.10);
     testSystem.setMixingRule("classic");
@@ -305,7 +288,7 @@ public class PTPhaseEnvelopeMichelsenTest {
     assertTrue(dewT.length > 0, "Should have at least one dew point");
     for (double t : dewT) {
       if (Double.isNaN(t)) {
-        continue; // NaN sentinel marks branch breaks
+	continue; // NaN sentinel marks branch breaks
       }
       assertTrue(t > 100.0, "Temperature should be in Kelvin (>100 K), got: " + t);
       assertTrue(t < 500.0, "Temperature should be reasonable (<500 K), got: " + t);
@@ -317,8 +300,7 @@ public class PTPhaseEnvelopeMichelsenTest {
    */
   @Test
   void testPressureValues() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
     testSystem.addComponent("methane", 0.90);
     testSystem.addComponent("ethane", 0.10);
     testSystem.setMixingRule("classic");
@@ -330,7 +312,7 @@ public class PTPhaseEnvelopeMichelsenTest {
     assertTrue(dewP.length > 0, "Should have at least one dew point");
     for (double p : dewP) {
       if (Double.isNaN(p)) {
-        continue; // NaN sentinel marks branch breaks
+	continue; // NaN sentinel marks branch breaks
       }
       assertTrue(p > 0.0, "Pressure should be positive, got: " + p);
       assertTrue(p < 1000.0, "Pressure should be reasonable (<1000 bar), got: " + p);
@@ -342,8 +324,7 @@ public class PTPhaseEnvelopeMichelsenTest {
    */
   @Test
   void testCricondenthermCompositions() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
     testSystem.addComponent("nitrogen", 0.01);
     testSystem.addComponent("CO2", 0.01);
     testSystem.addComponent("methane", 0.98);
@@ -362,20 +343,17 @@ public class PTPhaseEnvelopeMichelsenTest {
       sumX += cricondenthermX[i];
       sumY += cricondenthermY[i];
     }
-    assertTrue(Math.abs(sumX - 1.0) < 0.01,
-        "Cricondentherm X compositions should sum to ~1, got: " + sumX);
-    assertTrue(Math.abs(sumY - 1.0) < 0.01,
-        "Cricondentherm Y compositions should sum to ~1, got: " + sumY);
+    assertTrue(Math.abs(sumX - 1.0) < 0.01, "Cricondentherm X compositions should sum to ~1, got: " + sumX);
+    assertTrue(Math.abs(sumY - 1.0) < 0.01, "Cricondentherm Y compositions should sum to ~1, got: " + sumY);
   }
 
   /**
-   * Test that calcPTphaseEnvelope produces physically valid cricondenbar and cricondentherm for a
-   * 9-component natural gas.
+   * Test that calcPTphaseEnvelope produces physically valid cricondenbar and cricondentherm for a 9-component natural
+   * gas.
    */
   @Test
   void testCricondenbarAndCricondentherm() {
-    neqsim.thermo.system.SystemInterface system =
-        new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
+    neqsim.thermo.system.SystemInterface system = new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
     system.addComponent("nitrogen", 0.88);
     system.addComponent("CO2", 5.7);
     system.addComponent("methane", 86.89);
@@ -407,8 +385,7 @@ public class PTPhaseEnvelopeMichelsenTest {
    */
   @Test
   void testIsEnvelopeClosed() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
     testSystem.addComponent("nitrogen", 0.01);
     testSystem.addComponent("CO2", 0.01);
     testSystem.addComponent("methane", 0.98);
@@ -422,14 +399,13 @@ public class PTPhaseEnvelopeMichelsenTest {
   }
 
   /**
-   * Test that dewT2, dewP2, bubT2, bubP2 keys return null for compatibility. The Michelsen method
-   * merges all points into dewT/dewP/bubT/bubP, so separate pass-2 arrays are not applicable.
-   * Returning null matches legacy PTphaseEnvelope behavior when no second pass exists.
+   * Test that dewT2, dewP2, bubT2, bubP2 keys return null for compatibility. The Michelsen method merges all points
+   * into dewT/dewP/bubT/bubP, so separate pass-2 arrays are not applicable. Returning null matches legacy
+   * PTphaseEnvelope behavior when no second pass exists.
    */
   @Test
   void testDewT2BubT2Keys() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
     testSystem.addComponent("methane", 0.90);
     testSystem.addComponent("ethane", 0.10);
     testSystem.setMixingRule("classic");
@@ -449,13 +425,12 @@ public class PTPhaseEnvelopeMichelsenTest {
   }
 
   /**
-   * Test quality line tracing with mole fractions. Verifies that quality lines are traced inside
-   * the two-phase region with temperatures between the dew and bubble curves.
+   * Test quality line tracing with mole fractions. Verifies that quality lines are traced inside the two-phase region
+   * with temperatures between the dew and bubble curves.
    */
   @Test
   void testQualityLinesMoleFraction() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
     testSystem.addComponent("nitrogen", 0.02);
     testSystem.addComponent("CO2", 0.03);
     testSystem.addComponent("methane", 0.80);
@@ -465,7 +440,7 @@ public class PTPhaseEnvelopeMichelsenTest {
     testSystem.setMixingRule("classic");
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    testOps.calcPTphaseEnvelopeWithQualityLines(new double[] {0.1, 0.25, 0.5, 0.75, 0.9});
+    testOps.calcPTphaseEnvelopeWithQualityLines(new double[] { 0.1, 0.25, 0.5, 0.75, 0.9 });
 
     // Check that quality line data is accessible via get()
     double[] qT50 = testOps.get("qualityT_0.5");
@@ -473,8 +448,7 @@ public class PTPhaseEnvelopeMichelsenTest {
 
     assertNotNull(qT50, "qualityT_0.5 should not be null");
     assertNotNull(qP50, "qualityP_0.5 should not be null");
-    assertTrue(qT50.length > 5,
-        "Should have > 5 quality line points at beta=0.5, got: " + qT50.length);
+    assertTrue(qT50.length > 5, "Should have > 5 quality line points at beta=0.5, got: " + qT50.length);
     assertEquals(qT50.length, qP50.length, "qualityT and qualityP should have same length");
 
     // Temperatures should be in Kelvin
@@ -488,14 +462,12 @@ public class PTPhaseEnvelopeMichelsenTest {
   }
 
   /**
-   * Test volume fraction and mass fraction computation on quality lines. At beta=0.5 (50% moles
-   * vapor), volume fraction should be greater than 0.5 (vapor is less dense) and mass fraction
-   * should differ from the mole fraction.
+   * Test volume fraction and mass fraction computation on quality lines. At beta=0.5 (50% moles vapor), volume fraction
+   * should be greater than 0.5 (vapor is less dense) and mass fraction should differ from the mole fraction.
    */
   @Test
   void testQualityLinesVolumeMassFraction() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
     testSystem.addComponent("methane", 0.80);
     testSystem.addComponent("ethane", 0.10);
     testSystem.addComponent("propane", 0.05);
@@ -503,15 +475,14 @@ public class PTPhaseEnvelopeMichelsenTest {
     testSystem.setMixingRule("classic");
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    testOps.calcPTphaseEnvelopeWithQualityLines(new double[] {0.5});
+    testOps.calcPTphaseEnvelopeWithQualityLines(new double[] { 0.5 });
 
     double[] volFrac = testOps.get("qualityVolFrac_0.5");
     double[] massFrac = testOps.get("qualityMassFrac_0.5");
 
     assertNotNull(volFrac, "qualityVolFrac_0.5 should not be null");
     assertNotNull(massFrac, "qualityMassFrac_0.5 should not be null");
-    assertTrue(volFrac.length > 3,
-        "Should have > 3 volume fraction points, got: " + volFrac.length);
+    assertTrue(volFrac.length > 3, "Should have > 3 volume fraction points, got: " + volFrac.length);
 
     // Volume fractions should be between 0 and 1
     for (double vf : volFrac) {
@@ -525,25 +496,22 @@ public class PTPhaseEnvelopeMichelsenTest {
     // For a gas-dominant system at beta=0.5:
     // Volume fraction should typically be > 0.5 (vapor occupies more volume per mole)
     // This may not hold at very high pressures near critical, but should hold at low P
-    assertTrue(volFrac[0] > 0.5,
-        "Volume fraction at low P should be > 0.5 for beta=0.5, got: " + volFrac[0]);
+    assertTrue(volFrac[0] > 0.5, "Volume fraction at low P should be > 0.5 for beta=0.5, got: " + volFrac[0]);
   }
 
   /**
-   * Test that multiple quality lines can be traced simultaneously and accessed via the
-   * getQualityLine() method.
+   * Test that multiple quality lines can be traced simultaneously and accessed via the getQualityLine() method.
    */
   @Test
   void testMultipleQualityLinesViaGetQualityLine() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
     testSystem.addComponent("methane", 0.80);
     testSystem.addComponent("ethane", 0.10);
     testSystem.addComponent("propane", 0.10);
     testSystem.setMixingRule("classic");
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    testOps.calcPTphaseEnvelopeWithQualityLines(new double[] {0.1, 0.5, 0.9});
+    testOps.calcPTphaseEnvelopeWithQualityLines(new double[] { 0.1, 0.5, 0.9 });
 
     PTPhaseEnvelopeMichelsen env = (PTPhaseEnvelopeMichelsen) testOps.getOperation();
 
@@ -572,15 +540,14 @@ public class PTPhaseEnvelopeMichelsenTest {
    */
   @Test
   void testQualityLinesBubbleFirst() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
     testSystem.addComponent("methane", 0.85);
     testSystem.addComponent("ethane", 0.10);
     testSystem.addComponent("propane", 0.05);
     testSystem.setMixingRule("classic");
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    testOps.calcPTphaseEnvelopeWithQualityLines(true, new double[] {0.25, 0.75});
+    testOps.calcPTphaseEnvelopeWithQualityLines(true, new double[] { 0.25, 0.75 });
 
     double[] qT25 = testOps.get("qualityT_0.25");
     double[] qT75 = testOps.get("qualityT_0.75");
@@ -592,14 +559,13 @@ public class PTPhaseEnvelopeMichelsenTest {
   }
 
   /**
-   * Test that the get(String, double[]) overload returns results when the key exists and returns
-   * the default array when the key is absent or maps to null. This enables the Python/JPype idiom
-   * {@code pe_data.get("dewT", [])} that previously threw a JPype overload resolution error.
+   * Test that the get(String, double[]) overload returns results when the key exists and returns the default array when
+   * the key is absent or maps to null. This enables the Python/JPype idiom {@code pe_data.get("dewT", [])} that
+   * previously threw a JPype overload resolution error.
    */
   @Test
   void testGetWithDefault() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
     testSystem.addComponent("nitrogen", 0.01);
     testSystem.addComponent("CO2", 0.01);
     testSystem.addComponent("methane", 0.98);
@@ -637,7 +603,6 @@ public class PTPhaseEnvelopeMichelsenTest {
     assertTrue(bubP.length > 0, "bubP should have data points");
 
     double[] missing = env.get("noSuchKey", emptyDefault);
-    assertArrayEquals(emptyDefault, missing,
-        "Absent key via operation should return the default array");
+    assertArrayEquals(emptyDefault, missing, "Absent key via operation should return the default array");
   }
 }

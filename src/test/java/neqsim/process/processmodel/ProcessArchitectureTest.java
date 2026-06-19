@@ -18,8 +18,8 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Tests for the architecture improvements: getInletStreams/getOutletStreams, controller map,
- * ProcessElementInterface, connection model, and MultiPortEquipment.
+ * Tests for the architecture improvements: getInletStreams/getOutletStreams, controller map, ProcessElementInterface,
+ * connection model, and MultiPortEquipment.
  */
 public class ProcessArchitectureTest {
 
@@ -103,7 +103,7 @@ public class ProcessArchitectureTest {
   public void testSplitterStreams() {
     Stream feed = createTestStream("splitFeed");
     Splitter splitter = new Splitter("splitter", feed, 3);
-    splitter.setSplitFactors(new double[] {0.5, 0.3, 0.2});
+    splitter.setSplitFactors(new double[] { 0.5, 0.3, 0.2 });
     splitter.run();
 
     List<StreamInterface> inlets = splitter.getInletStreams();
@@ -203,12 +203,9 @@ public class ProcessArchitectureTest {
   @Test
   public void testExplicitConnections() {
     ProcessSystem process = new ProcessSystem();
-    process.connect("HP-Sep", "gasOut", "Compressor-1", "inlet",
-        ProcessConnection.ConnectionType.MATERIAL);
-    process.connect("HP-Sep", "liquidOut", "LP-Sep", "inlet",
-        ProcessConnection.ConnectionType.MATERIAL);
-    process.connect("TIC-100", "output", "Cooler-1", "signal",
-        ProcessConnection.ConnectionType.SIGNAL);
+    process.connect("HP-Sep", "gasOut", "Compressor-1", "inlet", ProcessConnection.ConnectionType.MATERIAL);
+    process.connect("HP-Sep", "liquidOut", "LP-Sep", "inlet", ProcessConnection.ConnectionType.MATERIAL);
+    process.connect("TIC-100", "output", "Cooler-1", "signal", ProcessConnection.ConnectionType.SIGNAL);
 
     List<ProcessConnection> connections = process.getConnections();
     assertEquals(3, connections.size());
@@ -235,12 +232,9 @@ public class ProcessArchitectureTest {
 
   @Test
   public void testProcessConnectionEquality() {
-    ProcessConnection c1 =
-        new ProcessConnection("A", "out", "B", "in", ProcessConnection.ConnectionType.MATERIAL);
-    ProcessConnection c2 =
-        new ProcessConnection("A", "out", "B", "in", ProcessConnection.ConnectionType.MATERIAL);
-    ProcessConnection c3 =
-        new ProcessConnection("A", "out", "C", "in", ProcessConnection.ConnectionType.MATERIAL);
+    ProcessConnection c1 = new ProcessConnection("A", "out", "B", "in", ProcessConnection.ConnectionType.MATERIAL);
+    ProcessConnection c2 = new ProcessConnection("A", "out", "B", "in", ProcessConnection.ConnectionType.MATERIAL);
+    ProcessConnection c3 = new ProcessConnection("A", "out", "C", "in", ProcessConnection.ConnectionType.MATERIAL);
 
     assertEquals(c1, c2);
     assertNotEquals(c1, c3);

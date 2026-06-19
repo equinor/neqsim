@@ -13,9 +13,8 @@ import neqsim.process.equipment.valve.ThrottlingValve;
  * Builder class for standardized equipment design specification.
  *
  * <p>
- * This class provides a fluent API for configuring equipment design parameters in a consistent way
- * across all equipment types. It integrates with company technical requirements (TR) documents and
- * design standards.
+ * This class provides a fluent API for configuring equipment design parameters in a consistent way across all equipment
+ * types. It integrates with company technical requirements (TR) documents and design standards.
  * </p>
  *
  * <p>
@@ -23,8 +22,8 @@ import neqsim.process.equipment.valve.ThrottlingValve;
  * </p>
  *
  * <pre>
- * DesignSpecification.forSeparator("20-VA-01").setKFactor(0.08).setDiameter(3.0, "m")
- *     .setLength(8.0, "m").setMaterial("316L").setStandard("ASME-VIII").applyTo(separator);
+ * DesignSpecification.forSeparator("20-VA-01").setKFactor(0.08).setDiameter(3.0, "m").setLength(8.0, "m")
+ *     .setMaterial("316L").setStandard("ASME-VIII").applyTo(separator);
  * </pre>
  *
  * @author NeqSim Development Team
@@ -144,7 +143,7 @@ public class DesignSpecification {
    * Set the company technical requirements document.
    *
    * @param company company name (e.g., "Equinor", "Shell")
-   * @param trDoc TR document reference (e.g., "TR2000", "DEP-31.38.01.11")
+   * @param trDoc   TR document reference (e.g., "TR2000", "DEP-31.38.01.11")
    * @return this specification for chaining
    */
   public DesignSpecification setTRDocument(String company, String trDoc) {
@@ -182,7 +181,7 @@ public class DesignSpecification {
    * Set the separator internal diameter.
    *
    * @param diameter diameter value
-   * @param unit unit (e.g., "m", "mm", "inch")
+   * @param unit     unit (e.g., "m", "mm", "inch")
    * @return this specification for chaining
    */
   public DesignSpecification setDiameter(double diameter, String unit) {
@@ -195,7 +194,7 @@ public class DesignSpecification {
    * Set the separator length.
    *
    * @param length length value
-   * @param unit unit (e.g., "m", "mm", "ft")
+   * @param unit   unit (e.g., "m", "mm", "ft")
    * @return this specification for chaining
    */
   public DesignSpecification setLength(double length, String unit) {
@@ -235,7 +234,7 @@ public class DesignSpecification {
    * Set the pipeline internal diameter.
    *
    * @param diameter diameter value
-   * @param unit unit (e.g., "m", "mm", "inch")
+   * @param unit     unit (e.g., "m", "mm", "inch")
    * @return this specification for chaining
    */
   public DesignSpecification setPipeDiameter(double diameter, String unit) {
@@ -248,7 +247,7 @@ public class DesignSpecification {
    * Set the pipeline length.
    *
    * @param length length value
-   * @param unit unit (e.g., "m", "km", "ft")
+   * @param unit   unit (e.g., "m", "km", "ft")
    * @return this specification for chaining
    */
   public DesignSpecification setPipeLength(double length, String unit) {
@@ -278,7 +277,7 @@ public class DesignSpecification {
    * Set the wall thickness for the pipeline.
    *
    * @param thickness thickness value
-   * @param unit unit (e.g., "m", "mm", "inch")
+   * @param unit      unit (e.g., "m", "mm", "inch")
    * @return this specification for chaining
    */
   public DesignSpecification setWallThickness(double thickness, String unit) {
@@ -315,8 +314,8 @@ public class DesignSpecification {
    * Apply this specification to the given equipment.
    *
    * <p>
-   * This method configures the equipment with all the design parameters and operating limits
-   * defined in this specification.
+   * This method configures the equipment with all the design parameters and operating limits defined in this
+   * specification.
    * </p>
    *
    * @param equipment the equipment to configure

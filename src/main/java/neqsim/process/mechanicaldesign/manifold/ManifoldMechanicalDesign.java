@@ -23,8 +23,8 @@ import neqsim.process.mechanicaldesign.manifold.ManifoldMechanicalDesignCalculat
  * </ul>
  *
  * <p>
- * Design includes wall thickness, velocity limits, branch reinforcement, support design, and
- * vibration analysis per applicable codes.
+ * Design includes wall thickness, velocity limits, branch reinforcement, support design, and vibration analysis per
+ * applicable codes.
  * </p>
  *
  * @author ASMF
@@ -98,23 +98,22 @@ public class ManifoldMechanicalDesign extends MechanicalDesign {
     // Get flow properties from mixed stream if available
     if (manifold.getMixedStream() != null && manifold.getMixedStream().getFluid() != null) {
       try {
-        double density = manifold.getMixedStream().getFluid().getDensity("kg/m3");
-        double massFlow = manifold.getMixedStream().getFluid().getFlowRate("kg/sec");
-        double liquidFrac = manifold.getMixedStream().getFluid().getVolumeFraction(0);
+	double density = manifold.getMixedStream().getFluid().getDensity("kg/m3");
+	double massFlow = manifold.getMixedStream().getFluid().getFlowRate("kg/sec");
+	double liquidFrac = manifold.getMixedStream().getFluid().getVolumeFraction(0);
 
-        calculator.setMixtureDensity(density > 0 ? density : 100.0);
-        calculator.setMassFlowRate(massFlow > 0 ? massFlow : 10.0);
-        calculator.setLiquidFraction(liquidFrac);
+	calculator.setMixtureDensity(density > 0 ? density : 100.0);
+	calculator.setMassFlowRate(massFlow > 0 ? massFlow : 10.0);
+	calculator.setLiquidFraction(liquidFrac);
       } catch (Exception e) {
-        // Use defaults
-        calculator.setMixtureDensity(100.0);
-        calculator.setMassFlowRate(10.0);
+	// Use defaults
+	calculator.setMixtureDensity(100.0);
+	calculator.setMassFlowRate(10.0);
       }
     }
 
     // Load database parameters
-    dataSource.loadIntoCalculator(calculator, getCompanySpecificDesignStandards(),
-        designStandardCode, "Manifold");
+    dataSource.loadIntoCalculator(calculator, getCompanySpecificDesignStandards(), designStandardCode, "Manifold");
   }
 
   /** {@inheritDoc} */
@@ -154,8 +153,7 @@ public class ManifoldMechanicalDesign extends MechanicalDesign {
       JsonObject calcObj = JsonParser.parseString(calculator.toJson()).getAsJsonObject();
       jsonObj.add("designCalculations", calcObj);
 
-      return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-          .toJson(jsonObj);
+      return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(jsonObj);
     } catch (Exception e) {
       return "{\"error\": \"" + e.getMessage() + "\"}";
     }

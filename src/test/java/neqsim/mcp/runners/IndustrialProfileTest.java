@@ -19,9 +19,8 @@ import neqsim.mcp.runners.IndustrialProfile.ToolTier;
  * Tests for {@link IndustrialProfile} — proves governance enforcement in code.
  *
  * <p>
- * Verifies that tier boundaries, access control, and enforcement produce the correct behavior for
- * every deployment mode. This is the "prove it works" test suite that backs the MCP_CONTRACT.md
- * claims.
+ * Verifies that tier boundaries, access control, and enforcement produce the correct behavior for every deployment
+ * mode. This is the "prove it works" test suite that backs the MCP_CONTRACT.md claims.
  * </p>
  *
  * @author Even Solbraa
@@ -39,12 +38,10 @@ class IndustrialProfileTest {
 
   @Test
   void tierSizes_matchContract() {
-    assertEquals(22, IndustrialProfile.getIndustrialCore().size(),
-        "Tier 1 (TRUSTED_CORE) should have 22 tools");
+    assertEquals(22, IndustrialProfile.getIndustrialCore().size(), "Tier 1 (TRUSTED_CORE) should have 22 tools");
     assertEquals(30, IndustrialProfile.getEngineeringAdvanced().size(),
-        "Tier 2 (ENGINEERING_ADVANCED) should have 30 tools");
-    assertEquals(14, IndustrialProfile.getExperimentalTools().size(),
-        "Tier 3 (EXPERIMENTAL) should have 14 tools");
+	"Tier 2 (ENGINEERING_ADVANCED) should have 30 tools");
+    assertEquals(14, IndustrialProfile.getExperimentalTools().size(), "Tier 3 (EXPERIMENTAL) should have 14 tools");
   }
 
   @Test
@@ -79,8 +76,7 @@ class IndustrialProfileTest {
   void getToolCategory_governanceTools_returnAdvisory() {
     assertEquals(ToolCategory.ADVISORY, IndustrialProfile.getToolCategory("getBenchmarkTrust"));
     assertEquals(ToolCategory.ADVISORY, IndustrialProfile.getToolCategory("checkToolAccess"));
-    assertEquals(ToolCategory.ADVISORY,
-        IndustrialProfile.getToolCategory("manageIndustrialProfile"));
+    assertEquals(ToolCategory.ADVISORY, IndustrialProfile.getToolCategory("manageIndustrialProfile"));
   }
 
   @Test
@@ -88,26 +84,18 @@ class IndustrialProfileTest {
     assertEquals(ToolTier.ENGINEERING_ADVANCED, IndustrialProfile.getToolTier("runPVT"));
     assertEquals(ToolTier.ENGINEERING_ADVANCED, IndustrialProfile.getToolTier("runPipeline"));
     assertEquals(ToolTier.ENGINEERING_ADVANCED, IndustrialProfile.getToolTier("runWaterHammer"));
-    assertEquals(ToolTier.ENGINEERING_ADVANCED,
-        IndustrialProfile.getToolTier("runRootCauseAnalysis"));
+    assertEquals(ToolTier.ENGINEERING_ADVANCED, IndustrialProfile.getToolTier("runRootCauseAnalysis"));
     assertEquals(ToolTier.ENGINEERING_ADVANCED, IndustrialProfile.getToolTier("runFlowAssurance"));
     assertEquals(ToolTier.ENGINEERING_ADVANCED, IndustrialProfile.getToolTier("runChemistry"));
-    assertEquals(ToolTier.ENGINEERING_ADVANCED,
-        IndustrialProfile.getToolTier("runMaterialsReview"));
+    assertEquals(ToolTier.ENGINEERING_ADVANCED, IndustrialProfile.getToolTier("runMaterialsReview"));
     assertEquals(ToolTier.ENGINEERING_ADVANCED, IndustrialProfile.getToolTier("sizeEquipment"));
-    assertEquals(ToolTier.ENGINEERING_ADVANCED,
-        IndustrialProfile.getToolTier("setSimulationVariable"));
-    assertEquals(ToolTier.ENGINEERING_ADVANCED,
-        IndustrialProfile.getToolTier("saveSimulationState"));
-    assertEquals(ToolTier.ENGINEERING_ADVANCED,
-        IndustrialProfile.getToolTier("runSafetySystemPerformance"));
-    assertEquals(ToolTier.ENGINEERING_ADVANCED,
-        IndustrialProfile.getToolTier("runOperationalStudy"));
+    assertEquals(ToolTier.ENGINEERING_ADVANCED, IndustrialProfile.getToolTier("setSimulationVariable"));
+    assertEquals(ToolTier.ENGINEERING_ADVANCED, IndustrialProfile.getToolTier("saveSimulationState"));
+    assertEquals(ToolTier.ENGINEERING_ADVANCED, IndustrialProfile.getToolTier("runSafetySystemPerformance"));
+    assertEquals(ToolTier.ENGINEERING_ADVANCED, IndustrialProfile.getToolTier("runOperationalStudy"));
     assertEquals(ToolTier.ENGINEERING_ADVANCED, IndustrialProfile.getToolTier("runHAZOP"));
-    assertEquals(ToolTier.ENGINEERING_ADVANCED,
-        IndustrialProfile.getToolTier("runBarrierRegister"));
-    assertEquals(ToolTier.ENGINEERING_ADVANCED,
-        IndustrialProfile.getToolTier("runAgenticEngineering"));
+    assertEquals(ToolTier.ENGINEERING_ADVANCED, IndustrialProfile.getToolTier("runBarrierRegister"));
+    assertEquals(ToolTier.ENGINEERING_ADVANCED, IndustrialProfile.getToolTier("runAgenticEngineering"));
     assertEquals(ToolTier.ENGINEERING_ADVANCED, IndustrialProfile.getToolTier("runProcessLoop"));
   }
 
@@ -181,10 +169,8 @@ class IndustrialProfileTest {
   void studyTeamMode_blocksTier3() {
     IndustrialProfile.setActiveMode(DeploymentMode.STUDY_TEAM);
     assertFalse(IndustrialProfile.isToolAllowed("solveTask"), "Study team must block solveTask");
-    assertFalse(IndustrialProfile.isToolAllowed("composeWorkflow"),
-        "Study team must block composeWorkflow");
-    assertFalse(IndustrialProfile.isToolAllowed("runReservoir"),
-        "Study team must block runReservoir");
+    assertFalse(IndustrialProfile.isToolAllowed("composeWorkflow"), "Study team must block composeWorkflow");
+    assertFalse(IndustrialProfile.isToolAllowed("runReservoir"), "Study team must block runReservoir");
     assertFalse(IndustrialProfile.isToolAllowed("runDynamic"), "Study team must block runDynamic");
     assertFalse(IndustrialProfile.isToolAllowed("runPlugin"), "Study team must block runPlugin");
   }
@@ -271,10 +257,8 @@ class IndustrialProfileTest {
   void digitalTwinMode_requiresApproval_forExecution() {
     IndustrialProfile.setActiveMode(DeploymentMode.DIGITAL_TWIN);
     // Even though these are blocked, the approval flag is set per category
-    assertTrue(IndustrialProfile.requiresApproval("solveTask"),
-        "Digital twin: Execution tools require approval");
-    assertTrue(IndustrialProfile.requiresApproval("composeWorkflow"),
-        "Digital twin: Execution tools require approval");
+    assertTrue(IndustrialProfile.requiresApproval("solveTask"), "Digital twin: Execution tools require approval");
+    assertTrue(IndustrialProfile.requiresApproval("composeWorkflow"), "Digital twin: Execution tools require approval");
   }
 
   @Test
@@ -332,12 +316,10 @@ class IndustrialProfileTest {
     assertEquals("runPVT", error.get("tool").getAsString());
     assertEquals("ENTERPRISE", error.get("mode").getAsString());
     assertEquals("ENGINEERING_ADVANCED", error.get("tier").getAsString());
-    assertTrue(error.get("reason").getAsString().contains("ENTERPRISE"),
-        "Reason should mention ENTERPRISE mode");
-    assertTrue(error.get("reason").getAsString().contains("Tier 1"),
-        "Reason should reference Tier 1 restriction");
+    assertTrue(error.get("reason").getAsString().contains("ENTERPRISE"), "Reason should mention ENTERPRISE mode");
+    assertTrue(error.get("reason").getAsString().contains("Tier 1"), "Reason should reference Tier 1 restriction");
     assertTrue(error.get("remediation").getAsString().contains("DESKTOP_ENGINEER"),
-        "Remediation should suggest DESKTOP_ENGINEER");
+	"Remediation should suggest DESKTOP_ENGINEER");
 
     // Block a Tier 3 tool
     String result3 = IndustrialProfile.enforceAccess("solveTask");
@@ -365,19 +347,18 @@ class IndustrialProfileTest {
     String previousToken = System.getProperty("neqsim.mcp.adminToken");
     System.setProperty("neqsim.mcp.adminToken", "unit-test-admin");
     try {
-      String approved =
-          IndustrialProfile.approveNextInvocation("compareSimulationStates", "unit-test-admin");
+      String approved = IndustrialProfile.approveNextInvocation("compareSimulationStates", "unit-test-admin");
       JsonObject approvedJson = JsonParser.parseString(approved).getAsJsonObject();
       assertEquals("success", approvedJson.get("status").getAsString());
       assertNull(IndustrialProfile.enforceAccess("compareSimulationStates"),
-          "One-shot approval should permit the next invocation");
+	  "One-shot approval should permit the next invocation");
       assertNotNull(IndustrialProfile.enforceAccess("compareSimulationStates"),
-          "One-shot approval should be consumed after one invocation");
+	  "One-shot approval should be consumed after one invocation");
     } finally {
       if (previousToken == null) {
-        System.clearProperty("neqsim.mcp.adminToken");
+	System.clearProperty("neqsim.mcp.adminToken");
       } else {
-        System.setProperty("neqsim.mcp.adminToken", previousToken);
+	System.setProperty("neqsim.mcp.adminToken", previousToken);
       }
     }
   }
@@ -414,7 +395,7 @@ class IndustrialProfileTest {
     IndustrialProfile.setActiveMode(DeploymentMode.ENTERPRISE);
     assertTrue(IndustrialProfile.isAutoValidationEnabled());
     assertTrue(IndustrialProfile.requiresApproval("solveTask"),
-        "Enterprise: approval gate enabled for execution tools");
+	"Enterprise: approval gate enabled for execution tools");
   }
 
   // ─── solveTask is explicitly classified as EXPERIMENTAL ─────────────────────
@@ -422,13 +403,13 @@ class IndustrialProfileTest {
   @Test
   void solveTask_isExperimental() {
     assertEquals(ToolTier.EXPERIMENTAL, IndustrialProfile.getToolTier("solveTask"),
-        "solveTask MUST be Tier 3 EXPERIMENTAL");
+	"solveTask MUST be Tier 3 EXPERIMENTAL");
   }
 
   @Test
   void solveTask_isExecution() {
     assertEquals(ToolCategory.EXECUTION, IndustrialProfile.getToolCategory("solveTask"),
-        "solveTask MUST be classified as EXECUTION");
+	"solveTask MUST be classified as EXECUTION");
   }
 
   @Test

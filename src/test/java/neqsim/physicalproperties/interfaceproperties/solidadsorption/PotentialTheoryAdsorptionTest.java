@@ -16,8 +16,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Unit tests for PotentialTheoryAdsorption (DRA model).
  *
  * <p>
- * Tests the Dubinin-Radushkevich-Astakhov potential theory implementation which is the primary
- * adsorption model integrated into the NeqSim pipeline.
+ * Tests the Dubinin-Radushkevich-Astakhov potential theory implementation which is the primary adsorption model
+ * integrated into the NeqSim pipeline.
  * </p>
  *
  * @author ESOL

@@ -17,8 +17,8 @@ import neqsim.process.util.optimizer.ProductionOptimizer;
  * Orchestrates field-level production scheduling and forecasting.
  *
  * <p>
- * The {@code FieldProductionScheduler} integrates multiple reservoirs, wells, and surface
- * facilities to create production schedules that respect:
+ * The {@code FieldProductionScheduler} integrates multiple reservoirs, wells, and surface facilities to create
+ * production schedules that respect:
  * </p>
  * <ul>
  * <li>Reservoir deliverability (pressure depletion, GOR evolution)</li>
@@ -180,8 +180,8 @@ public class FieldProductionScheduler implements Serializable {
       this.reservoir = Objects.requireNonNull(reservoir, "Reservoir is required");
       this.fluidType = Objects.requireNonNull(fluidType, "Fluid type is required");
       if (reservoir.getReservoirFluid() != null) {
-        this.initialPressure = reservoir.getReservoirFluid().getPressure("bara");
-        this.currentPressure = this.initialPressure;
+	this.initialPressure = reservoir.getReservoirFluid().getPressure("bara");
+	this.currentPressure = this.initialPressure;
       }
     }
 
@@ -203,7 +203,7 @@ public class FieldProductionScheduler implements Serializable {
 
     void updateCurrentPressure() {
       if (reservoir.getReservoirFluid() != null) {
-        this.currentPressure = reservoir.getReservoirFluid().getPressure("bara");
+	this.currentPressure = reservoir.getReservoirFluid().getPressure("bara");
       }
     }
   }
@@ -232,25 +232,25 @@ public class FieldProductionScheduler implements Serializable {
     /**
      * Creates a schedule step.
      *
-     * @param date step date
-     * @param timeYears time from start in years
-     * @param gasRate gas production rate (Sm3/day)
-     * @param oilRate oil production rate (Sm3/day)
-     * @param waterRate water production rate (Sm3/day)
-     * @param cumulativeGas cumulative gas produced (Sm3)
-     * @param cumulativeOil cumulative oil produced (Sm3)
-     * @param cumulativeWater cumulative water produced (Sm3)
-     * @param reservoirPressure average reservoir pressure (bara)
+     * @param date                step date
+     * @param timeYears           time from start in years
+     * @param gasRate             gas production rate (Sm3/day)
+     * @param oilRate             oil production rate (Sm3/day)
+     * @param waterRate           water production rate (Sm3/day)
+     * @param cumulativeGas       cumulative gas produced (Sm3)
+     * @param cumulativeOil       cumulative oil produced (Sm3)
+     * @param cumulativeWater     cumulative water produced (Sm3)
+     * @param reservoirPressure   average reservoir pressure (bara)
      * @param facilityUtilization facility utilization fraction
-     * @param limitingFactor what limits production
-     * @param revenue period revenue (currency)
-     * @param discountedRevenue discounted revenue (currency)
-     * @param wellRates map of well name to rate
+     * @param limitingFactor      what limits production
+     * @param revenue             period revenue (currency)
+     * @param discountedRevenue   discounted revenue (currency)
+     * @param wellRates           map of well name to rate
      */
-    public ScheduleStep(LocalDate date, double timeYears, double gasRate, double oilRate,
-        double waterRate, double cumulativeGas, double cumulativeOil, double cumulativeWater,
-        double reservoirPressure, double facilityUtilization, String limitingFactor, double revenue,
-        double discountedRevenue, Map<String, Double> wellRates) {
+    public ScheduleStep(LocalDate date, double timeYears, double gasRate, double oilRate, double waterRate,
+	double cumulativeGas, double cumulativeOil, double cumulativeWater, double reservoirPressure,
+	double facilityUtilization, String limitingFactor, double revenue, double discountedRevenue,
+	Map<String, Double> wellRates) {
       this.date = date;
       this.timeYears = timeYears;
       this.gasRate = gasRate;
@@ -343,7 +343,7 @@ public class FieldProductionScheduler implements Serializable {
      *
      * @param fieldName field name
      * @param startDate schedule start date
-     * @param rateUnit rate unit for display
+     * @param rateUnit  rate unit for display
      */
     public ProductionSchedule(String fieldName, LocalDate startDate, String rateUnit) {
       this.fieldName = fieldName;
@@ -392,18 +392,18 @@ public class FieldProductionScheduler implements Serializable {
      */
     public double getCumulativeGas(String unit) {
       if (steps.isEmpty()) {
-        return 0.0;
+	return 0.0;
       }
       double sm3 = steps.get(steps.size() - 1).getCumulativeGas();
       switch (unit) {
-        case "MSm3":
-          return sm3 / 1.0e6;
-        case "GSm3":
-          return sm3 / 1.0e9;
-        case "Bcf":
-          return sm3 / 1.0e9 * 35.3147; // 1 GSm3 ≈ 35.3 Bcf
-        default:
-          return sm3;
+      case "MSm3":
+	return sm3 / 1.0e6;
+      case "GSm3":
+	return sm3 / 1.0e9;
+      case "Bcf":
+	return sm3 / 1.0e9 * 35.3147; // 1 GSm3 ≈ 35.3 Bcf
+      default:
+	return sm3;
       }
     }
 
@@ -415,18 +415,18 @@ public class FieldProductionScheduler implements Serializable {
      */
     public double getCumulativeOil(String unit) {
       if (steps.isEmpty()) {
-        return 0.0;
+	return 0.0;
       }
       double sm3 = steps.get(steps.size() - 1).getCumulativeOil();
       switch (unit) {
-        case "MSm3":
-          return sm3 / 1.0e6;
-        case "Mbbl":
-          return sm3 * 6.2898 / 1000.0; // 1 m3 ≈ 6.29 bbl
-        case "MMbbl":
-          return sm3 * 6.2898 / 1.0e6;
-        default:
-          return sm3;
+      case "MSm3":
+	return sm3 / 1.0e6;
+      case "Mbbl":
+	return sm3 * 6.2898 / 1000.0; // 1 m3 ≈ 6.29 bbl
+      case "MMbbl":
+	return sm3 * 6.2898 / 1.0e6;
+      default:
+	return sm3;
       }
     }
 
@@ -438,12 +438,12 @@ public class FieldProductionScheduler implements Serializable {
      */
     public double getFieldLife(String unit) {
       switch (unit) {
-        case "months":
-          return fieldLifeYears * 12.0;
-        case "days":
-          return fieldLifeYears * DAYS_PER_YEAR;
-        default:
-          return fieldLifeYears;
+      case "months":
+	return fieldLifeYears * 12.0;
+      case "days":
+	return fieldLifeYears * DAYS_PER_YEAR;
+      default:
+	return fieldLifeYears;
       }
     }
 
@@ -467,11 +467,9 @@ public class FieldProductionScheduler implements Serializable {
       sb.append("|------|-------|----------|----------|---------|---------|----------|-------|\n");
 
       for (ScheduleStep step : steps) {
-        sb.append(
-            String.format("| %s | %.1f | %.2f | %.2f | %.2f | %.2f | %.1f | %s |\n", step.getDate(),
-                step.getTimeYears(), step.getGasRate() / 1.0e6, step.getOilRate() / 1000.0,
-                step.getCumulativeGas() / 1.0e9, step.getCumulativeOil() / 1.0e6,
-                step.getReservoirPressure(), step.getLimitingFactor()));
+	sb.append(String.format("| %s | %.1f | %.2f | %.2f | %.2f | %.2f | %.1f | %s |\n", step.getDate(),
+	    step.getTimeYears(), step.getGasRate() / 1.0e6, step.getOilRate() / 1000.0, step.getCumulativeGas() / 1.0e9,
+	    step.getCumulativeOil() / 1.0e6, step.getReservoirPressure(), step.getLimitingFactor()));
       }
 
       sb.append("\n**Summary:**\n");
@@ -479,8 +477,8 @@ public class FieldProductionScheduler implements Serializable {
       sb.append(String.format("- Cumulative Oil: %.2f MSm3\n", getCumulativeOil("MSm3")));
       sb.append(String.format("- Field Life: %.1f years\n", fieldLifeYears));
       if (totalGrossRevenue > 0) {
-        sb.append(String.format("- Gross Revenue: $%.1f B\n", totalGrossRevenue / 1.0e9));
-        sb.append(String.format("- NPV (10%%): $%.1f M\n", totalNPV / 1.0e6));
+	sb.append(String.format("- Gross Revenue: $%.1f B\n", totalGrossRevenue / 1.0e9));
+	sb.append(String.format("- NPV (10%%): $%.1f M\n", totalNPV / 1.0e6));
       }
 
       return sb.toString();
@@ -497,11 +495,10 @@ public class FieldProductionScheduler implements Serializable {
       sb.append("CumGas_GSm3,CumOil_MSm3,Pressure_bara,Utilization,LimitingFactor,Revenue\n");
 
       for (ScheduleStep step : steps) {
-        sb.append(String.format("%s,%.3f,%.4f,%.2f,%.2f,%.6f,%.6f,%.2f,%.3f,%s,%.0f\n",
-            step.getDate(), step.getTimeYears(), step.getGasRate() / 1.0e6, step.getOilRate(),
-            step.getWaterRate(), step.getCumulativeGas() / 1.0e9, step.getCumulativeOil() / 1.0e6,
-            step.getReservoirPressure(), step.getFacilityUtilization(), step.getLimitingFactor(),
-            step.getRevenue()));
+	sb.append(String.format("%s,%.3f,%.4f,%.2f,%.2f,%.6f,%.6f,%.2f,%.3f,%s,%.0f\n", step.getDate(),
+	    step.getTimeYears(), step.getGasRate() / 1.0e6, step.getOilRate(), step.getWaterRate(),
+	    step.getCumulativeGas() / 1.0e9, step.getCumulativeOil() / 1.0e6, step.getReservoirPressure(),
+	    step.getFacilityUtilization(), step.getLimitingFactor(), step.getRevenue()));
       }
 
       return sb.toString();
@@ -582,19 +579,19 @@ public class FieldProductionScheduler implements Serializable {
    * Sets the plateau duration.
    *
    * @param duration duration value
-   * @param unit "years", "months", or "days"
+   * @param unit     "years", "months", or "days"
    * @return this scheduler for chaining
    */
   public FieldProductionScheduler setPlateauDuration(double duration, String unit) {
     switch (unit.toLowerCase()) {
-      case "months":
-        this.plateauDuration = duration / 12.0;
-        break;
-      case "days":
-        this.plateauDuration = duration / DAYS_PER_YEAR;
-        break;
-      default:
-        this.plateauDuration = duration;
+    case "months":
+      this.plateauDuration = duration / 12.0;
+      break;
+    case "days":
+      this.plateauDuration = duration / DAYS_PER_YEAR;
+      break;
+    default:
+      this.plateauDuration = duration;
     }
     return this;
   }
@@ -616,7 +613,7 @@ public class FieldProductionScheduler implements Serializable {
    * Sets the gas price for economic calculations.
    *
    * @param price gas price
-   * @param unit price unit (e.g., "USD/MMBtu", "USD/Sm3")
+   * @param unit  price unit (e.g., "USD/MMBtu", "USD/Sm3")
    * @return this scheduler for chaining
    */
   public FieldProductionScheduler setGasPrice(double price, String unit) {
@@ -629,7 +626,7 @@ public class FieldProductionScheduler implements Serializable {
    * Sets the oil price for economic calculations.
    *
    * @param price oil price
-   * @param unit price unit (e.g., "USD/bbl", "USD/Sm3")
+   * @param unit  price unit (e.g., "USD/bbl", "USD/Sm3")
    * @return this scheduler for chaining
    */
   public FieldProductionScheduler setOilPrice(double price, String unit) {
@@ -697,13 +694,12 @@ public class FieldProductionScheduler implements Serializable {
   /**
    * Generates a production schedule for the field.
    *
-   * @param startDate schedule start date
+   * @param startDate     schedule start date
    * @param durationYears forecast duration in years
-   * @param timeStepDays time step in days
+   * @param timeStepDays  time step in days
    * @return production schedule
    */
-  public ProductionSchedule generateSchedule(LocalDate startDate, double durationYears,
-      double timeStepDays) {
+  public ProductionSchedule generateSchedule(LocalDate startDate, double durationYears, double timeStepDays) {
     ProductionSchedule schedule = new ProductionSchedule(name, startDate, plateauRateUnit);
 
     double cumulativeGas = 0.0;
@@ -730,16 +726,16 @@ public class FieldProductionScheduler implements Serializable {
       boolean allDepleted = true;
       double avgPressure = 0.0;
       for (ReservoirRecord record : reservoirs) {
-        record.updateCurrentPressure();
-        avgPressure += record.getCurrentPressure();
-        if (record.getCurrentPressure() > lowPressureLimit) {
-          allDepleted = false;
-        }
+	record.updateCurrentPressure();
+	avgPressure += record.getCurrentPressure();
+	if (record.getCurrentPressure() > lowPressureLimit) {
+	  allDepleted = false;
+	}
       }
       avgPressure /= reservoirs.size();
 
       if (allDepleted) {
-        break; // End schedule if all reservoirs depleted
+	break; // End schedule if all reservoirs depleted
       }
 
       // Calculate production rates
@@ -752,28 +748,28 @@ public class FieldProductionScheduler implements Serializable {
 
       // Aggregate from all reservoirs
       for (ReservoirRecord record : reservoirs) {
-        SimpleReservoir res = record.getReservoir();
-        gasRate += res.getGasProdution("Sm3/day");
-        oilRate += res.getOilProdution("Sm3/day");
-        waterRate += res.getWaterProdution("Sm3/day");
+	SimpleReservoir res = record.getReservoir();
+	gasRate += res.getGasProdution("Sm3/day");
+	oilRate += res.getOilProdution("Sm3/day");
+	waterRate += res.getWaterProdution("Sm3/day");
       }
 
       // Check plateau constraint
       if (!Double.isNaN(plateauRate) && timeYears < plateauDuration) {
-        double targetRate = convertRate(plateauRate, plateauRateUnit, "Sm3/day");
-        if (gasRate > targetRate) {
-          // Reduce to plateau rate
-          double factor = targetRate / gasRate;
-          gasRate = targetRate;
-          oilRate *= factor;
-          limitingFactor = "Plateau";
-        }
+	double targetRate = convertRate(plateauRate, plateauRateUnit, "Sm3/day");
+	if (gasRate > targetRate) {
+	  // Reduce to plateau rate
+	  double factor = targetRate / gasRate;
+	  gasRate = targetRate;
+	  oilRate *= factor;
+	  limitingFactor = "Plateau";
+	}
       }
 
       // Check minimum rate
       double minRateSm3 = convertRate(minimumRate, minimumRateUnit, "Sm3/day");
       if (gasRate < minRateSm3 && gasRate > 0) {
-        break; // End schedule when below economic limit
+	break; // End schedule when below economic limit
       }
 
       // Update cumulative production
@@ -789,16 +785,16 @@ public class FieldProductionScheduler implements Serializable {
       totalDiscountedRevenue += discountedRevenue;
 
       // Create schedule step
-      ScheduleStep scheduleStep = new ScheduleStep(stepDate, timeYears, gasRate, oilRate, waterRate,
-          cumulativeGas, cumulativeOil, cumulativeWater, avgPressure, facilityUtilization,
-          limitingFactor, periodRevenue, discountedRevenue, wellRates);
+      ScheduleStep scheduleStep = new ScheduleStep(stepDate, timeYears, gasRate, oilRate, waterRate, cumulativeGas,
+	  cumulativeOil, cumulativeWater, avgPressure, facilityUtilization, limitingFactor, periodRevenue,
+	  discountedRevenue, wellRates);
       schedule.addStep(scheduleStep);
 
       // Run transient for next step
       if (trackReservoirDepletion) {
-        for (ReservoirRecord record : reservoirs) {
-          record.getReservoir().runTransient(timeStepSeconds, calcId);
-        }
+	for (ReservoirRecord record : reservoirs) {
+	  record.getReservoir().runTransient(timeStepSeconds, calcId);
+	}
       }
     }
 
@@ -806,8 +802,7 @@ public class FieldProductionScheduler implements Serializable {
     schedule.setTotalGrossRevenue(totalRevenue);
     schedule.setTotalNPV(totalDiscountedRevenue);
     if (!schedule.getSteps().isEmpty()) {
-      schedule.setFieldLifeYears(
-          schedule.getSteps().get(schedule.getSteps().size() - 1).getTimeYears());
+      schedule.setFieldLifeYears(schedule.getSteps().get(schedule.getSteps().size() - 1).getTimeYears());
     }
 
     return schedule;
@@ -816,9 +811,9 @@ public class FieldProductionScheduler implements Serializable {
   /**
    * Converts rate between units.
    *
-   * @param value rate value
+   * @param value    rate value
    * @param fromUnit source unit
-   * @param toUnit target unit
+   * @param toUnit   target unit
    * @return converted rate
    */
   private double convertRate(double value, String fromUnit, String toUnit) {
@@ -847,7 +842,7 @@ public class FieldProductionScheduler implements Serializable {
    *
    * @param gasRate gas rate (Sm3/day)
    * @param oilRate oil rate (Sm3/day)
-   * @param days period duration in days
+   * @param days    period duration in days
    * @return revenue in currency units
    */
   private double calculateRevenue(double gasRate, double oilRate, double days) {
@@ -858,9 +853,9 @@ public class FieldProductionScheduler implements Serializable {
       double gasVolume = gasRate * days;
       double mmBtu = gasVolume * 0.0353147; // Sm3 to MMBtu (approximate)
       if (gasPriceUnit.contains("MMBtu")) {
-        revenue += gasVolume * gasPrice * 0.0353147;
+	revenue += gasVolume * gasPrice * 0.0353147;
       } else {
-        revenue += gasVolume * gasPrice;
+	revenue += gasVolume * gasPrice;
       }
     }
 
@@ -869,9 +864,9 @@ public class FieldProductionScheduler implements Serializable {
       double oilVolume = oilRate * days;
       double bbl = oilVolume * 6.2898; // m3 to bbl
       if (oilPriceUnit.contains("bbl")) {
-        revenue += bbl * oilPrice;
+	revenue += bbl * oilPrice;
       } else {
-        revenue += oilVolume * oilPrice;
+	revenue += oilVolume * oilPrice;
       }
     }
 
@@ -917,4 +912,3 @@ public class FieldProductionScheduler implements Serializable {
     return wellScheduler;
   }
 }
-

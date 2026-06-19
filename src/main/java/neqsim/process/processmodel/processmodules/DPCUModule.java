@@ -129,7 +129,7 @@ public class DPCUModule extends ProcessModuleBaseClass {
     LTseparator = new Separator("LTseparator", expander.getOutletStream());
 
     Splitter splitter = new Splitter("LTsplitter", LTseparator.getGasOutStream(), 2);
-    splitter.setSplitFactors(new double[] {0.9, 0.1});
+    splitter.setSplitFactors(new double[] { 0.9, 0.1 });
 
     heatExchanger1.addInStream(splitter.getSplitStream(0));
 
@@ -178,42 +178,33 @@ public class DPCUModule extends ProcessModuleBaseClass {
      * oilPump = new Pump("liquid pump", inletSeparator.getLiquidOutStream());
      * oilPump.setOutletPressure(liquidPumpPressure);
      *
-     * Separator gasScrubber = new Separator("HC dew point control scrubber",
-     * gasCooler.getOutStream());
+     * Separator gasScrubber = new Separator("HC dew point control scrubber", gasCooler.getOutStream());
      *
      * Recycle HPliquidRecycle = new Recycle("Recycle"); double tolerance = 1e-2;
-     * HPliquidRecycle.setTolerance(tolerance);
-     * HPliquidRecycle.addStream(gasScrubber.getLiquidOutStream());
+     * HPliquidRecycle.setTolerance(tolerance); HPliquidRecycle.addStream(gasScrubber.getLiquidOutStream());
      * inletSeparator.addStream(HPliquidRecycle.getOutStream());
      *
-     * Compressor firstStageCompressor = new Compressor("1st stage compressor",
-     * gasScrubber.getGasOutStream());
+     * Compressor firstStageCompressor = new Compressor("1st stage compressor", gasScrubber.getGasOutStream());
      * firstStageCompressor.setOutletPressure(firstStageOutPressure);
      *
      * glycolFeedStream.getThermoSystem().setPressure(firstStageOutPressure);
      *
      * Mixer glycolMixer = new Mixer("glycol injection mixer");
-     * glycolMixer.addStream(firstStageCompressor.getOutStream());
-     * glycolMixer.addStream(glycolFeedStream);
+     * glycolMixer.addStream(firstStageCompressor.getOutStream()); glycolMixer.addStream(glycolFeedStream);
      *
-     * Cooler mixerAfterCooler = new Cooler("glycol mixer after cooler",
-     * glycolMixer.getOutStream()); mixerAfterCooler.setOutTemperature(glycolScrubberTemperature +
-     * 273.15);
+     * Cooler mixerAfterCooler = new Cooler("glycol mixer after cooler", glycolMixer.getOutStream());
+     * mixerAfterCooler.setOutTemperature(glycolScrubberTemperature + 273.15);
      *
-     * glycolScrubber = new Separator("Water dew point control scrubber",
-     * mixerAfterCooler.getOutStream());
+     * glycolScrubber = new Separator("Water dew point control scrubber", mixerAfterCooler.getOutStream());
      *
-     * secondStageCompressor = new Compressor("2nd stage compressor",
-     * glycolScrubber.getGasOutStream());
+     * secondStageCompressor = new Compressor("2nd stage compressor", glycolScrubber.getGasOutStream());
      * secondStageCompressor.setOutletPressure(secondStageOutPressure);
      *
-     * secondStageAfterCooler = new Cooler("second stage after cooler",
-     * secondStageCompressor.getOutStream());
+     * secondStageAfterCooler = new Cooler("second stage after cooler", secondStageCompressor.getOutStream());
      * secondStageAfterCooler.setOutTemperature(exportGasTemperature + 273.15);
      *
-     * getOperations().add(inletCooler); getOperations().add(inletSeparator);
-     * getOperations().add(gasCooler); getOperations().add(oilPump);
-     * getOperations().add(gasScrubber); getOperations().add(HPliquidRecycle);
+     * getOperations().add(inletCooler); getOperations().add(inletSeparator); getOperations().add(gasCooler);
+     * getOperations().add(oilPump); getOperations().add(gasScrubber); getOperations().add(HPliquidRecycle);
      * getOperations().add(firstStageCompressor); getOperations().add(glycolMixer);
      * getOperations().add(mixerAfterCooler); getOperations().add(glycolScrubber);
      * getOperations().add(secondStageCompressor); getOperations().add(secondStageAfterCooler);
@@ -288,8 +279,7 @@ public class DPCUModule extends ProcessModuleBaseClass {
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos(273.15 + 7.5, 110.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(273.15 + 7.5, 110.0);
 
     testSystem.addComponent("CO2", 0.0218295567233988);
     testSystem.addComponent("nitrogen", 0.00739237702184805);
@@ -316,8 +306,7 @@ public class DPCUModule extends ProcessModuleBaseClass {
     dpcuModule.addInputStream("feed stream", feedStream);
     dpcuModule.setSpecification("pressure after reduction valve", 108.0);
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(feedStream);
     operations.add(dpcuModule);
     operations.run();

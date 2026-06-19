@@ -26,9 +26,8 @@ import neqsim.process.electricaldesign.components.ElectricalMotor;
  * </ul>
  *
  * <p>
- * This class is designed to work alongside the {@link ElectricalDesign} which handles the
- * electrical sizing (power, voltage, current, efficiency class). Together they provide a complete
- * motor specification.
+ * This class is designed to work alongside the {@link ElectricalDesign} which handles the electrical sizing (power,
+ * voltage, current, efficiency class). Together they provide a complete motor specification.
  * </p>
  *
  * <p>
@@ -99,8 +98,8 @@ public class MotorMechanicalDesign implements java.io.Serializable {
   /** Sound power limits for small motors in dB(A). */
   private static final double[][] NOISE_LIMITS_4P_50HZ = {
       // {maxPowerKW, soundPowerLevelDbA}
-      {1.1, 73}, {2.2, 78}, {5.5, 83}, {11, 87}, {22, 90}, {37, 93}, {55, 95}, {90, 97}, {132, 99},
-      {200, 101}, {315, 103}, {500, 105}, {1000, 108}, {5000, 113}, {10000, 116}};
+      { 1.1, 73 }, { 2.2, 78 }, { 5.5, 83 }, { 11, 87 }, { 22, 90 }, { 37, 93 }, { 55, 95 }, { 90, 97 }, { 132, 99 },
+      { 200, 101 }, { 315, 103 }, { 500, 105 }, { 1000, 108 }, { 5000, 113 }, { 10000, 116 } };
 
   // ============================================================================
   // ISO 10816-3 Vibration Severity Zones
@@ -296,7 +295,8 @@ public class MotorMechanicalDesign implements java.io.Serializable {
   /**
    * Default constructor.
    */
-  public MotorMechanicalDesign() {}
+  public MotorMechanicalDesign() {
+  }
 
   /**
    * Constructor with shaft power.
@@ -327,8 +327,8 @@ public class MotorMechanicalDesign implements java.io.Serializable {
    * Run all mechanical design calculations.
    *
    * <p>
-   * Calculates foundation loads, vibration limits, cooling requirements, bearing selection, noise
-   * assessment, enclosure selection, and environmental derating.
+   * Calculates foundation loads, vibration limits, cooling requirements, bearing selection, noise assessment, enclosure
+   * selection, and environmental derating.
    * </p>
    */
   public void calcDesign() {
@@ -372,8 +372,8 @@ public class MotorMechanicalDesign implements java.io.Serializable {
    * Calculate environmental derating per IEC 60034-1.
    *
    * <p>
-   * Standard rating is for ambient max 40 deg C at altitudes up to 1000m. Above these limits, the
-   * motor output must be derated.
+   * Standard rating is for ambient max 40 deg C at altitudes up to 1000m. Above these limits, the motor output must be
+   * derated.
    * </p>
    */
   private void calcDerating() {
@@ -392,8 +392,7 @@ public class MotorMechanicalDesign implements java.io.Serializable {
     if (ambientTemperatureC > 40.0) {
       temperatureDeratingFactor = 1.0 - 0.025 * (ambientTemperatureC - 40.0);
       temperatureDeratingFactor = Math.max(temperatureDeratingFactor, 0.6);
-      designNotes
-          .add("Motor derated for ambient " + ambientTemperatureC + " deg C per IEC 60034-1");
+      designNotes.add("Motor derated for ambient " + ambientTemperatureC + " deg C per IEC 60034-1");
     } else {
       temperatureDeratingFactor = 1.0;
     }
@@ -487,8 +486,7 @@ public class MotorMechanicalDesign implements java.io.Serializable {
       foundationType = "Concrete block foundation";
     } else {
       foundationType = "Reinforced concrete block with dynamic analysis";
-      designNotes
-          .add("Large motor (" + shaftPowerKW + " kW) — dynamic foundation analysis recommended");
+      designNotes.add("Large motor (" + shaftPowerKW + " kW) — dynamic foundation analysis recommended");
     }
   }
 
@@ -530,8 +528,7 @@ public class MotorMechanicalDesign implements java.io.Serializable {
 
     // VFD operation reduces fan cooling at low speed
     if (hasVFD && "IC411".equals(coolingCode)) {
-      designNotes
-          .add("VFD operation — consider independent fan (IC416) for operation below 50% speed");
+      designNotes.add("VFD operation — consider independent fan (IC416) for operation below 50% speed");
     }
   }
 
@@ -571,8 +568,8 @@ public class MotorMechanicalDesign implements java.io.Serializable {
 
     // Check against IEEE 841 minimum (3 years = 26280 hours)
     if (bearingL10LifeHours < minBearingLifeHours) {
-      designNotes.add("Bearing L10 life (" + (int) bearingL10LifeHours
-          + " h) below IEEE 841 minimum (" + (int) minBearingLifeHours + " h)");
+      designNotes.add("Bearing L10 life (" + (int) bearingL10LifeHours + " h) below IEEE 841 minimum ("
+	  + (int) minBearingLifeHours + " h)");
     }
 
     // Re-greasing interval (rule of thumb)
@@ -588,7 +585,7 @@ public class MotorMechanicalDesign implements java.io.Serializable {
   /**
    * Estimate ball bearing designation based on motor power.
    *
-   * @param powerKW motor power in kW
+   * @param powerKW    motor power in kW
    * @param isDriveEnd true for drive end, false for non-drive end
    * @return bearing designation string
    */
@@ -662,24 +659,24 @@ public class MotorMechanicalDesign implements java.io.Serializable {
     if (shaftPowerKW <= 300) {
       // Group 2: 15-300 kW
       if (maxVibrationMmS <= VIB_GROUP2_ZONE_AB) {
-        vibrationZone = "A";
+	vibrationZone = "A";
       } else if (maxVibrationMmS <= VIB_GROUP2_ZONE_BC) {
-        vibrationZone = "B";
+	vibrationZone = "B";
       } else if (maxVibrationMmS <= VIB_GROUP2_ZONE_CD) {
-        vibrationZone = "C";
+	vibrationZone = "C";
       } else {
-        vibrationZone = "D";
+	vibrationZone = "D";
       }
     } else {
       // Group 1: above 300 kW
       if (maxVibrationMmS <= VIB_GROUP1_ZONE_AB) {
-        vibrationZone = "A";
+	vibrationZone = "A";
       } else if (maxVibrationMmS <= VIB_GROUP1_ZONE_BC) {
-        vibrationZone = "B";
+	vibrationZone = "B";
       } else if (maxVibrationMmS <= VIB_GROUP1_ZONE_CD) {
-        vibrationZone = "C";
+	vibrationZone = "C";
       } else {
-        vibrationZone = "D";
+	vibrationZone = "D";
       }
     }
 
@@ -694,8 +691,8 @@ public class MotorMechanicalDesign implements java.io.Serializable {
     noiseLimitDbA = 73.0;
     for (double[] entry : NOISE_LIMITS_4P_50HZ) {
       if (shaftPowerKW <= entry[0]) {
-        noiseLimitDbA = entry[1];
-        break;
+	noiseLimitDbA = entry[1];
+	break;
       }
     }
 
@@ -722,12 +719,12 @@ public class MotorMechanicalDesign implements java.io.Serializable {
 
     if (!noiseWithinNorsokLimit) {
       designNotes.add("Noise level (" + String.format("%.0f", soundPressureLevelAt1mDbA)
-          + " dB(A) at 1m) exceeds NORSOK S-002 limit of 83 dB(A)");
+	  + " dB(A) at 1m) exceeds NORSOK S-002 limit of 83 dB(A)");
     }
 
     if (hasVFD) {
       designNotes.add("VFD may increase motor noise by 3-8 dB(A) due to harmonic excitation "
-          + "— consider output filter or dU/dt reactor");
+	  + "— consider output filter or dU/dt reactor");
     }
   }
 
@@ -773,8 +770,7 @@ public class MotorMechanicalDesign implements java.io.Serializable {
    */
   public String toJson() {
     Map<String, Object> map = toMap();
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(map);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(map);
   }
 
   /**

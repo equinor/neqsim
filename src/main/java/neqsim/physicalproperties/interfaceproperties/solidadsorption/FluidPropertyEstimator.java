@@ -6,8 +6,8 @@ import neqsim.thermo.system.SystemInterface;
  * Utility class for estimating fluid properties needed by adsorption models.
  *
  * <p>
- * Provides methods for estimating saturation pressure, liquid molar volume, and surface tension
- * using generalized correlations based on critical properties and acentric factor.
+ * Provides methods for estimating saturation pressure, liquid molar volume, and surface tension using generalized
+ * correlations based on critical properties and acentric factor.
  * </p>
  *
  * <p>
@@ -40,13 +40,12 @@ public final class FluidPropertyEstimator {
    * $$\ln(P_r^{sat}) = f^{(0)}(T_r) + \omega \cdot f^{(1)}(T_r)$$
    *
    * @param temperature the temperature in K
-   * @param tc critical temperature in K
-   * @param pc critical pressure in bara
-   * @param omega acentric factor (dimensionless)
+   * @param tc          critical temperature in K
+   * @param pc          critical pressure in bara
+   * @param omega       acentric factor (dimensionless)
    * @return saturation pressure in bara
    */
-  public static double estimateSaturationPressure(double temperature, double tc, double pc,
-      double omega) {
+  public static double estimateSaturationPressure(double temperature, double tc, double pc, double omega) {
     if (temperature >= tc) {
       return pc;
     }
@@ -59,13 +58,12 @@ public final class FluidPropertyEstimator {
   /**
    * Estimate saturation pressure for a component in a system.
    *
-   * @param system the thermodynamic system
+   * @param system   the thermodynamic system
    * @param phaseNum the phase number
-   * @param compNum the component index
+   * @param compNum  the component index
    * @return saturation pressure in bara
    */
-  public static double estimateSaturationPressure(SystemInterface system, int phaseNum,
-      int compNum) {
+  public static double estimateSaturationPressure(SystemInterface system, int phaseNum, int compNum) {
     double tc = system.getPhase(phaseNum).getComponent(compNum).getTC();
     double pc = system.getPhase(phaseNum).getComponent(compNum).getPC();
     double omega = system.getPhase(phaseNum).getComponent(compNum).getAcentricFactor();
@@ -86,13 +84,12 @@ public final class FluidPropertyEstimator {
    * </p>
    *
    * @param temperature the temperature in K
-   * @param tc critical temperature in K
-   * @param vc critical volume in cm3/mol
-   * @param omega acentric factor (dimensionless)
+   * @param tc          critical temperature in K
+   * @param vc          critical volume in cm3/mol
+   * @param omega       acentric factor (dimensionless)
    * @return liquid molar volume in m3/mol
    */
-  public static double estimateLiquidMolarVolume(double temperature, double tc, double vc,
-      double omega) {
+  public static double estimateLiquidMolarVolume(double temperature, double tc, double vc, double omega) {
     double zra = 0.29056 - 0.08775 * omega;
     double tr = temperature / tc;
     if (tr < 1.0) {
@@ -105,13 +102,12 @@ public final class FluidPropertyEstimator {
   /**
    * Estimate liquid molar volume for a component in a system.
    *
-   * @param system the thermodynamic system
+   * @param system   the thermodynamic system
    * @param phaseNum the phase number
-   * @param compNum the component index
+   * @param compNum  the component index
    * @return liquid molar volume in m3/mol
    */
-  public static double estimateLiquidMolarVolume(SystemInterface system, int phaseNum,
-      int compNum) {
+  public static double estimateLiquidMolarVolume(SystemInterface system, int phaseNum, int compNum) {
     double tc = system.getPhase(phaseNum).getComponent(compNum).getTC();
     double vc = system.getPhase(phaseNum).getComponent(compNum).getCriticalVolume();
     double omega = system.getPhase(phaseNum).getComponent(compNum).getAcentricFactor();
@@ -132,9 +128,9 @@ public final class FluidPropertyEstimator {
    * </p>
    * $$\sigma = 0.02 \cdot (1 - T_r)^{1.26}$$
    *
-   * @param temperature the temperature in K
-   * @param tc critical temperature in K
-   * @param parachor the parachor parameter
+   * @param temperature       the temperature in K
+   * @param tc                critical temperature in K
+   * @param parachor          the parachor parameter
    * @param liquidMolarVolume liquid molar volume in m3/mol
    * @return surface tension in N/m
    */
@@ -152,9 +148,9 @@ public final class FluidPropertyEstimator {
   /**
    * Estimate surface tension for a component in a system.
    *
-   * @param system the thermodynamic system
-   * @param phaseNum the phase number
-   * @param compNum the component index
+   * @param system            the thermodynamic system
+   * @param phaseNum          the phase number
+   * @param compNum           the component index
    * @param liquidMolarVolume the liquid molar volume in m3/mol
    * @return surface tension in N/m
    */
@@ -170,26 +166,25 @@ public final class FluidPropertyEstimator {
    * Estimate all fluid properties for a component at once.
    *
    * <p>
-   * Returns an array of [saturationPressure (bar), liquidMolarVolume (m3/mol), surfaceTension
-   * (N/m)].
+   * Returns an array of [saturationPressure (bar), liquidMolarVolume (m3/mol), surfaceTension (N/m)].
    * </p>
    *
-   * @param system the thermodynamic system
+   * @param system   the thermodynamic system
    * @param phaseNum the phase number
-   * @param compNum the component index
+   * @param compNum  the component index
    * @return double array with [pSat, Vm_liquid, sigma]
    */
   public static double[] estimateAllProperties(SystemInterface system, int phaseNum, int compNum) {
     double pSat = estimateSaturationPressure(system, phaseNum, compNum);
     double vm = estimateLiquidMolarVolume(system, phaseNum, compNum);
     double sigma = estimateSurfaceTension(system, phaseNum, compNum, vm);
-    return new double[] {pSat, vm, sigma};
+    return new double[] { pSat, vm, sigma };
   }
 
   /**
    * Estimate saturation pressures for all components in a phase.
    *
-   * @param system the thermodynamic system
+   * @param system   the thermodynamic system
    * @param phaseNum the phase number
    * @return array of saturation pressures in bara
    */

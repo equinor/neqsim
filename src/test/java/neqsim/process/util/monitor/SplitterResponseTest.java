@@ -37,7 +37,7 @@ public class SplitterResponseTest {
     inletStream.run();
 
     splitter = new Splitter("splitter", inletStream, 3);
-    splitter.setSplitFactors(new double[] {0.8, 0.15, 0.05});
+    splitter.setSplitFactors(new double[] { 0.8, 0.15, 0.05 });
     splitter.run();
   }
 
@@ -104,7 +104,6 @@ public class SplitterResponseTest {
     SplitterResponse response = new SplitterResponse(splitter);
     assertNotNull(response, "Response should be created");
     assertTrue(response.data.size() > 0, "Response should contain data");
-    assertTrue(response.data.containsKey("inlet mass flow"),
-        "Response should contain inlet mass flow");
+    assertTrue(response.data.containsKey("inlet mass flow"), "Response should contain inlet mass flow");
   }
 }

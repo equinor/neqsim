@@ -121,14 +121,13 @@ public class CDFTSurfaceTensionTest {
     }
     system.getInterphaseProperties().setInterfacialTensionModel("gas", "oil", "cDFT");
     double sigmaCDFT = system.getInterphaseProperties().getSurfaceTension(0, 1);
-    system.getInterphaseProperties().setInterfacialTensionModel("gas", "oil",
-        "Full Gradient Theory");
+    system.getInterphaseProperties().setInterfacialTensionModel("gas", "oil", "Full Gradient Theory");
     double sigmaGT = system.getInterphaseProperties().getSurfaceTension(0, 1);
     assertTrue(sigmaCDFT > 0, "cDFT IFT should be positive, got " + sigmaCDFT);
     if (sigmaGT > 0) {
       double ratio = sigmaCDFT / sigmaGT;
       assertTrue(ratio > 0.05 && ratio < 20.0,
-          "cDFT/GT ratio=" + ratio + " cDFT=" + (sigmaCDFT * 1000) + " GT=" + (sigmaGT * 1000));
+	  "cDFT/GT ratio=" + ratio + " cDFT=" + (sigmaCDFT * 1000) + " GT=" + (sigmaGT * 1000));
     }
   }
 }

@@ -16,7 +16,6 @@ import org.apache.logging.log4j.Logger;
 public class EmissionsCalculatorTest {
   private static final Logger logger = LogManager.getLogger(EmissionsCalculatorTest.class);
 
-
   @Test
   void testBasicEmissionsCalculation() {
     // Create a simple gas stream with known composition
@@ -62,8 +61,8 @@ public class EmissionsCalculatorTest {
     system.setSalinity(10.0, "wt%");
 
     // Set gas composition (typical Gudrun)
-    system.setDissolvedGasComposition(new String[] {"CO2", "methane", "ethane", "propane"},
-        new double[] {0.51, 0.44, 0.04, 0.01});
+    system.setDissolvedGasComposition(new String[] { "CO2", "methane", "ethane", "propane" },
+	new double[] { 0.51, 0.44, 0.04, 0.01 });
 
     // Run simulation
     system.run();
@@ -115,8 +114,7 @@ public class EmissionsCalculatorTest {
 
     // Gas composition should show emissions
     Map<String, Double> composition = calc.getGasCompositionMass();
-    assertTrue(composition.size() > 0 || calc.getTotalGasRate("kg/hr") == 0,
-        "Should have composition or no gas");
+    assertTrue(composition.size() > 0 || calc.getTotalGasRate("kg/hr") == 0, "Should have composition or no gas");
   }
 
   @Test
@@ -209,27 +207,24 @@ public class EmissionsCalculatorTest {
 
     // Expected CH4: 14 * 100,000 * 50 = 70,000,000 g = 70 tonnes/year
     double expectedCH4 = 70.0;
-    double calculatedCH4 =
-        EmissionsCalculator.calculateConventionalCH4(annualWaterVolume, pressureDrop);
+    double calculatedCH4 = EmissionsCalculator.calculateConventionalCH4(annualWaterVolume, pressureDrop);
     assertEquals(expectedCH4, calculatedCH4, 0.1, "Conventional CH4 calculation");
 
     // Expected nmVOC: 3.5 * 100,000 * 50 = 17,500,000 g = 17.5 tonnes/year
     double expectedNMVOC = 17.5;
-    double calculatedNMVOC =
-        EmissionsCalculator.calculateConventionalNMVOC(annualWaterVolume, pressureDrop);
+    double calculatedNMVOC = EmissionsCalculator.calculateConventionalNMVOC(annualWaterVolume, pressureDrop);
     assertEquals(expectedNMVOC, calculatedNMVOC, 0.1, "Conventional nmVOC calculation");
 
     // Test combined emissions calculation
-    Map<String, Double> convEmissions =
-        EmissionsCalculator.calculateConventionalEmissions(annualWaterVolume, pressureDrop);
+    Map<String, Double> convEmissions = EmissionsCalculator.calculateConventionalEmissions(annualWaterVolume,
+	pressureDrop);
     assertEquals(expectedCH4, convEmissions.get("CH4_tonnes"), 0.1);
     assertEquals(expectedNMVOC, convEmissions.get("nmVOC_tonnes"), 0.1);
 
     // CO2 equivalents: CH4 * 28 + nmVOC * 2.2
     // = 70 * 28 + 17.5 * 2.2 = 1960 + 38.5 = 1998.5 tonnes/year
     double expectedCO2eq = 1998.5;
-    assertEquals(expectedCO2eq, convEmissions.get("CO2eq_tonnes"), 1.0,
-        "Conventional CO2eq calculation");
+    assertEquals(expectedCO2eq, convEmissions.get("CO2eq_tonnes"), 1.0, "Conventional CO2eq calculation");
   }
 
   /**
@@ -265,8 +260,8 @@ public class EmissionsCalculatorTest {
     system.setDegasserPressure(4.0, "bara");
     system.setCFUPressure(1.2, "bara");
     system.setSalinity(3.5, "wt%");
-    system.setDissolvedGasComposition(new String[] {"CO2", "methane", "ethane", "propane"},
-        new double[] {0.50, 0.45, 0.04, 0.01});
+    system.setDissolvedGasComposition(new String[] { "CO2", "methane", "ethane", "propane" },
+	new double[] { 0.50, 0.45, 0.04, 0.01 });
 
     // Enable tuned kij parameters
     system.setTunedInteractionParameters(true);
@@ -280,8 +275,7 @@ public class EmissionsCalculatorTest {
     Map<String, Object> validation = system.getValidationResults();
     assertTrue(validation != null, "Validation results should be available");
     assertTrue(validation.containsKey("GWR"), "Should have GWR results");
-    assertTrue(validation.containsKey("passesRegulatoryCriteria"),
-        "Should have pass/fail assessment");
+    assertTrue(validation.containsKey("passesRegulatoryCriteria"), "Should have pass/fail assessment");
     assertTrue(validation.containsKey("regulatoryTolerancePercent"), "Should have tolerance info");
 
     // Check GWR details
@@ -310,8 +304,8 @@ public class EmissionsCalculatorTest {
     system.setCFUPressure(1.2, "bara");
     system.setCaissonPressure(1.013, "bara");
     system.setSalinity(3.5, "wt%");
-    system.setDissolvedGasComposition(new String[] {"CO2", "methane", "ethane", "propane"},
-        new double[] {0.50, 0.45, 0.04, 0.01});
+    system.setDissolvedGasComposition(new String[] { "CO2", "methane", "ethane", "propane" },
+	new double[] { 0.50, 0.45, 0.04, 0.01 });
 
     // Run
     system.run();

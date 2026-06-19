@@ -44,10 +44,10 @@ public class PhaseGEUniquac extends PhaseGE {
    * Constructor for PhaseGEUniquac.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param alpha an array of type double
-   * @param Dij an array of type double
-   * @param mixRule an array of {@link java.lang.String} objects
+   * @param phase    a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param alpha    an array of type double
+   * @param Dij      an array of type double
+   * @param mixRule  an array of {@link java.lang.String} objects
    * @param intparam an array of type double
    */
   public PhaseGEUniquac(PhaseInterface phase, double[][] alpha, double[][] Dij, String[][] mixRule,
@@ -63,8 +63,8 @@ public class PhaseGEUniquac extends PhaseGE {
     }
     for (int i = 0; i < numberOfComponents; i++) {
       componentArray[i] = new ComponentGEUniquac(phase.getComponent(i).getName(),
-          phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
-          phase.getComponent(i).getComponentNumber());
+	  phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
+	  phase.getComponent(i).getComponentNumber());
     }
   }
 
@@ -109,13 +109,12 @@ public class PhaseGEUniquac extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, PhaseType pt) {
+  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+      PhaseType pt) {
     GE = 0;
     for (int i = 0; i < numberOfComponents; i++) {
-      GE += phase.getComponent(i).getx()
-          * Math.log(((ComponentGEInterface) componentArray[i]).getGamma(phase, numberOfComponents,
-              temperature, pressure, pt, alpha, Dij, intparam, mixRule));
+      GE += phase.getComponent(i).getx() * Math.log(((ComponentGEInterface) componentArray[i]).getGamma(phase,
+	  numberOfComponents, temperature, pressure, pt, alpha, Dij, intparam, mixRule));
     }
 
     return R * temperature * numberOfMolesInPhase * GE;

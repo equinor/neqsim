@@ -9,17 +9,17 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Tests for the fused UMR-CPA equation of state on multicomponent associating mixtures.
  *
  * <p>
- * These tests exercise the combination of the Peng-Robinson physical term, the UMR universal mixing
- * rule (UNIFAC group contribution), the 3-parameter Mathias-Copeman alpha and the CPA association
- * term on systems relevant to natural-gas dehydration (water, methane, glycols).
+ * These tests exercise the combination of the Peng-Robinson physical term, the UMR universal mixing rule (UNIFAC group
+ * contribution), the 3-parameter Mathias-Copeman alpha and the CPA association term on systems relevant to natural-gas
+ * dehydration (water, methane, glycols).
  * </p>
  *
  * @author NeqSim
  */
 class SystemUMRCPAEoSMixtureTest extends neqsim.NeqSimTest {
   /**
-   * Two-phase water + methane flash should converge and place almost all methane in the gas phase
-   * and almost all water in the aqueous liquid phase.
+   * Two-phase water + methane flash should converge and place almost all methane in the gas phase and almost all water
+   * in the aqueous liquid phase.
    */
   @Test
   void testWaterMethaneFlash() {
@@ -45,20 +45,19 @@ class SystemUMRCPAEoSMixtureTest extends neqsim.NeqSimTest {
 
     // Water content in the gas phase should be a small positive mole fraction.
     double waterInGas = fluid.getPhase(gasPhase).getComponent("water").getx();
-    assertTrue(waterInGas > 0.0 && waterInGas < 0.01,
-        "gas-phase water content out of physical range: " + waterInGas);
+    assertTrue(waterInGas > 0.0 && waterInGas < 0.01, "gas-phase water content out of physical range: " + waterInGas);
   }
 
   /**
-   * The dissolved water content of the gas should increase with temperature at fixed pressure, a
-   * basic physical requirement for any dehydration model.
+   * The dissolved water content of the gas should increase with temperature at fixed pressure, a basic physical
+   * requirement for any dehydration model.
    */
   @Test
   void testGasWaterContentIncreasesWithTemperature() {
     double waterLowT = gasWaterMoleFraction(283.15, 70.0);
     double waterHighT = gasWaterMoleFraction(313.15, 70.0);
     assertTrue(waterHighT > waterLowT,
-        "gas water content should increase with temperature: " + waterLowT + " -> " + waterHighT);
+	"gas water content should increase with temperature: " + waterLowT + " -> " + waterHighT);
   }
 
   /**
@@ -69,12 +68,12 @@ class SystemUMRCPAEoSMixtureTest extends neqsim.NeqSimTest {
     double waterLowP = gasWaterMoleFraction(298.15, 30.0);
     double waterHighP = gasWaterMoleFraction(298.15, 120.0);
     assertTrue(waterHighP < waterLowP,
-        "gas water content should decrease with pressure: " + waterLowP + " -> " + waterHighP);
+	"gas water content should decrease with pressure: " + waterLowP + " -> " + waterHighP);
   }
 
   /**
-   * Triethylene glycol + water should mix as a single associating liquid phase and the CPA
-   * association term should converge.
+   * Triethylene glycol + water should mix as a single associating liquid phase and the CPA association term should
+   * converge.
    */
   @Test
   void testTegWaterLiquid() {
@@ -89,13 +88,12 @@ class SystemUMRCPAEoSMixtureTest extends neqsim.NeqSimTest {
 
     assertEquals(1, fluid.getNumberOfPhases(), "TEG/water should be a single liquid phase");
     double density = fluid.getPhase(0).getDensity("kg/m3");
-    assertTrue(density > 900.0 && density < 1200.0,
-        "TEG/water liquid density out of expected range: " + density);
+    assertTrue(density > 900.0 && density < 1200.0, "TEG/water liquid density out of expected range: " + density);
   }
 
   /**
-   * Helper that returns the gas-phase water mole fraction for a water saturated methane stream at
-   * the requested temperature and pressure.
+   * Helper that returns the gas-phase water mole fraction for a water saturated methane stream at the requested
+   * temperature and pressure.
    *
    * @param temperatureK temperature in Kelvin
    * @param pressureBara pressure in bara

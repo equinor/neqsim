@@ -11,9 +11,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Utility for calculating mass flow rates from differential pressure devices using NeqSim
- * thermodynamic properties. The implementation mirrors the calculation logic used in the
- * tilstandomatic flow calculation tool.
+ * Utility for calculating mass flow rates from differential pressure devices using NeqSim thermodynamic properties. The
+ * implementation mirrors the calculation logic used in the tilstandomatic flow calculation tool.
  */
 public final class DifferentialPressureFlowCalculator {
 
@@ -33,10 +32,10 @@ public final class DifferentialPressureFlowCalculator {
     DEFAULT_DISCHARGE_COEFFICIENTS = Collections.unmodifiableMap(coefficients);
   }
 
-  private static final String[] DEFAULT_COMPONENTS =
-      {"H2O", "N2", "CO2", "C1", "C2", "C3", "iC4", "nC4", "iC5", "nC5", "C6"};
+  private static final String[] DEFAULT_COMPONENTS = { "H2O", "N2", "CO2", "C1", "C2", "C3", "iC4", "nC4", "iC5", "nC5",
+      "C6" };
 
-  private static final double[] DEFAULT_FRACTIONS = {0, 0, 0, 80, 10, 10, 0, 0, 0, 0, 0};
+  private static final double[] DEFAULT_FRACTIONS = { 0, 0, 0, 80, 10, 10, 0, 0, 0, 0, 0 };
 
   private DifferentialPressureFlowCalculator() {
     // Utility class
@@ -51,8 +50,8 @@ public final class DifferentialPressureFlowCalculator {
     private final double[] standardFlowMSm3PerDay;
     private final double[] molecularWeightGPerMol;
 
-    FlowCalculationResult(double[] massFlowKgPerHour, double[] volumetricFlowM3PerHour,
-        double[] standardFlowMSm3PerDay, double[] molecularWeightGPerMol) {
+    FlowCalculationResult(double[] massFlowKgPerHour, double[] volumetricFlowM3PerHour, double[] standardFlowMSm3PerDay,
+	double[] molecularWeightGPerMol) {
       this.massFlowKgPerHour = massFlowKgPerHour;
       this.volumetricFlowM3PerHour = volumetricFlowM3PerHour;
       this.standardFlowMSm3PerDay = standardFlowMSm3PerDay;
@@ -99,38 +98,35 @@ public final class DifferentialPressureFlowCalculator {
   /**
    * Calculates flow rates for the provided operating conditions.
    *
-   * @param pressureBarg pressure values in barg
-   * @param temperatureC temperature values in degrees Celsius
+   * @param pressureBarg             pressure values in barg
+   * @param temperatureC             temperature values in degrees Celsius
    * @param differentialPressureMbar differential pressure across restriction in mbar
-   * @param flowType device type (Venturi, Orifice, ISA1932, V-Cone, DallTube, Annubar, Nozzle,
-   *        Simplified, Perrys-Orifice)
-   * @param flowData geometry parameters (see individual calculation methods)
-   * @param components gas component names
-   * @param fractions component fractions (mole basis)
-   * @param normalizeFractions whether to normalise the composition fractions
+   * @param flowType                 device type (Venturi, Orifice, ISA1932, V-Cone, DallTube, Annubar, Nozzle,
+   *                                 Simplified, Perrys-Orifice)
+   * @param flowData                 geometry parameters (see individual calculation methods)
+   * @param components               gas component names
+   * @param fractions                component fractions (mole basis)
+   * @param normalizeFractions       whether to normalise the composition fractions
    * @return flow calculation result
    */
   public static FlowCalculationResult calculate(double[] pressureBarg, double[] temperatureC,
-      double[] differentialPressureMbar, String flowType, double[] flowData,
-      List<String> components, double[] fractions, boolean normalizeFractions) {
+      double[] differentialPressureMbar, String flowType, double[] flowData, List<String> components,
+      double[] fractions, boolean normalizeFractions) {
     Objects.requireNonNull(pressureBarg, "pressureBarg");
     Objects.requireNonNull(temperatureC, "temperatureC");
     Objects.requireNonNull(differentialPressureMbar, "differentialPressureMbar");
 
-    if (pressureBarg.length != temperatureC.length
-        || pressureBarg.length != differentialPressureMbar.length) {
-      throw new IllegalArgumentException(
-          "Pressure, temperature and dp arrays must have same length");
+    if (pressureBarg.length != temperatureC.length || pressureBarg.length != differentialPressureMbar.length) {
+      throw new IllegalArgumentException("Pressure, temperature and dp arrays must have same length");
     }
 
     double[] validatedFlowData = flowData != null ? Arrays.copyOf(flowData, flowData.length)
-        : new double[] {300.0, 200.0, 0.9};
+	: new double[] { 300.0, 200.0, 0.9 };
 
     List<String> componentList = components != null && !components.isEmpty() ? components
-        : Arrays.asList(DEFAULT_COMPONENTS.clone());
-    double[] fractionArray =
-        fractions != null && fractions.length > 0 ? Arrays.copyOf(fractions, fractions.length)
-            : Arrays.copyOf(DEFAULT_FRACTIONS, DEFAULT_FRACTIONS.length);
+	: Arrays.asList(DEFAULT_COMPONENTS.clone());
+    double[] fractionArray = fractions != null && fractions.length > 0 ? Arrays.copyOf(fractions, fractions.length)
+	: Arrays.copyOf(DEFAULT_FRACTIONS, DEFAULT_FRACTIONS.length);
 
     if (componentList.size() != fractionArray.length) {
       throw new IllegalArgumentException("Component and fraction list must have same length");
@@ -174,73 +170,67 @@ public final class DifferentialPressureFlowCalculator {
       molecularWeightGPerMol[i] = molecularWeight;
     }
 
-    double[] calculatedMassFlow =
-        calculateMassFlow(flowType, validatedFlowData, pressurePa, density, viscosity, kappa, dpPa);
+    double[] calculatedMassFlow = calculateMassFlow(flowType, validatedFlowData, pressurePa, density, viscosity, kappa,
+	dpPa);
 
     for (int i = 0; i < pressureBarg.length; i++) {
       massFlowKgPerHour[i] = calculatedMassFlow[i];
-      volumetricFlowM3PerHour[i] =
-          density[i] != 0.0 ? calculatedMassFlow[i] / density[i] : Double.NaN;
-      standardFlowMSm3PerDay[i] =
-          standardDensity != 0.0 ? calculatedMassFlow[i] / standardDensity * 24.0 / 1.0e6
-              : Double.NaN;
+      volumetricFlowM3PerHour[i] = density[i] != 0.0 ? calculatedMassFlow[i] / density[i] : Double.NaN;
+      standardFlowMSm3PerDay[i] = standardDensity != 0.0 ? calculatedMassFlow[i] / standardDensity * 24.0 / 1.0e6
+	  : Double.NaN;
     }
 
-    return new FlowCalculationResult(massFlowKgPerHour, volumetricFlowM3PerHour,
-        standardFlowMSm3PerDay, molecularWeightGPerMol);
+    return new FlowCalculationResult(massFlowKgPerHour, volumetricFlowM3PerHour, standardFlowMSm3PerDay,
+	molecularWeightGPerMol);
   }
 
   /**
    * Convenience overload using default composition and normalisation.
    *
-   * @param pressureBarg pressure values in barg
-   * @param temperatureC temperature values in degrees Celsius
+   * @param pressureBarg             pressure values in barg
+   * @param temperatureC             temperature values in degrees Celsius
    * @param differentialPressureMbar differential pressure across restriction in mbar
-   * @param flowType device type (Venturi, Orifice, ISA1932, V-Cone, DallTube, Annubar, Nozzle,
-   *        Simplified, Perrys-Orifice)
-   * @param flowData geometry parameters (see individual calculation methods)
+   * @param flowType                 device type (Venturi, Orifice, ISA1932, V-Cone, DallTube, Annubar, Nozzle,
+   *                                 Simplified, Perrys-Orifice)
+   * @param flowData                 geometry parameters (see individual calculation methods)
    * @return flow calculation result
    */
   public static FlowCalculationResult calculate(double[] pressureBarg, double[] temperatureC,
       double[] differentialPressureMbar, String flowType, double[] flowData) {
-    return calculate(pressureBarg, temperatureC, differentialPressureMbar, flowType, flowData, null,
-        null, true);
+    return calculate(pressureBarg, temperatureC, differentialPressureMbar, flowType, flowData, null, null, true);
   }
 
   /**
    * Convenience overload with default flow data and composition.
    *
-   * @param pressureBarg pressure values in barg
-   * @param temperatureC temperature values in degrees Celsius
+   * @param pressureBarg             pressure values in barg
+   * @param temperatureC             temperature values in degrees Celsius
    * @param differentialPressureMbar differential pressure across restriction in mbar
-   * @param flowType device type (Venturi, Orifice, ISA1932, V-Cone, DallTube, Annubar, Nozzle,
-   *        Simplified, Perrys-Orifice)
+   * @param flowType                 device type (Venturi, Orifice, ISA1932, V-Cone, DallTube, Annubar, Nozzle,
+   *                                 Simplified, Perrys-Orifice)
    * @return flow calculation result
    */
   public static FlowCalculationResult calculate(double[] pressureBarg, double[] temperatureC,
       double[] differentialPressureMbar, String flowType) {
-    return calculate(pressureBarg, temperatureC, differentialPressureMbar, flowType, null, null,
-        null, true);
+    return calculate(pressureBarg, temperatureC, differentialPressureMbar, flowType, null, null, null, true);
   }
 
-  private static SystemInterface createBaseSystem(List<String> components, double[] fractions,
-      boolean normalize) {
+  private static SystemInterface createBaseSystem(List<String> components, double[] fractions, boolean normalize) {
     double[] composition = Arrays.copyOf(fractions, fractions.length);
     if (normalize) {
       double sum = 0.0;
       for (double value : composition) {
-        sum += value;
+	sum += value;
       }
       if (sum <= 0.0) {
-        throw new IllegalArgumentException("Composition sum must be greater than zero");
+	throw new IllegalArgumentException("Composition sum must be greater than zero");
       }
       for (int i = 0; i < composition.length; i++) {
-        composition[i] = composition[i] / sum;
+	composition[i] = composition[i] / sum;
       }
     }
 
-    SystemInterface system =
-        new SystemSrkEos(DEFAULT_STANDARD_TEMPERATURE_K, DEFAULT_STANDARD_PRESSURE_BARA);
+    SystemInterface system = new SystemSrkEos(DEFAULT_STANDARD_TEMPERATURE_K, DEFAULT_STANDARD_PRESSURE_BARA);
     for (int i = 0; i < components.size(); i++) {
       system.addComponent(components.get(i), composition[i]);
     }
@@ -267,44 +257,41 @@ public final class DifferentialPressureFlowCalculator {
     system.initPhysicalProperties();
   }
 
-  private static double[] calculateMassFlow(String flowTypeRaw, double[] flowData, double[] p,
-      double[] rho, double[] mu, double[] kappa, double[] dp) {
+  private static double[] calculateMassFlow(String flowTypeRaw, double[] flowData, double[] p, double[] rho,
+      double[] mu, double[] kappa, double[] dp) {
     String flowType = normaliseFlowType(flowTypeRaw);
     double dischargeCoefficient = resolveDischargeCoefficient(flowType, flowData);
 
     double[] result;
     switch (flowType) {
-      case "Venturi":
-        result = calcVenturi(dp, p, rho, kappa, flowData[0] / 1000.0, flowData[1] / 1000.0,
-            dischargeCoefficient);
-        break;
-      case "Orifice":
-        result = calcOrifice(dp, p, rho, kappa, mu, flowData[0] / 1000.0, flowData[1] / 1000.0);
-        break;
-      case "V-Cone":
-        result = calcVCone(dp, p, rho, kappa, flowData[0] / 1000.0, flowData[1] / 1000.0,
-            dischargeCoefficient);
-        break;
-      case "DallTube":
-        result = calcDallTube(dp, p, rho, kappa, flowData[0] / 1000.0, flowData[1] / 1000.0);
-        break;
-      case "Annubar":
-        result = calcAnnubar(dp, p, rho, kappa, flowData[0], flowData[1]);
-        break;
-      case "Nozzle":
-        result = calcNozzle(dp, p, rho, kappa, mu, flowData[0] / 1000.0, flowData[1] / 1000.0);
-        break;
-      case "Simplified":
-        result = calcSimplified(dp, rho, flowData);
-        break;
-      case "Perrys-Orifice":
-        result = calcPerrysOrifice(p, dp, rho, flowData[0] / 1000.0, flowData[1] / 1000.0, kappa);
-        break;
-      case "ISA1932":
-        throw new UnsupportedOperationException(
-            "ISA1932 calculation is not implemented in this calculator");
-      default:
-        throw new IllegalArgumentException("Unsupported flow type: " + flowTypeRaw);
+    case "Venturi":
+      result = calcVenturi(dp, p, rho, kappa, flowData[0] / 1000.0, flowData[1] / 1000.0, dischargeCoefficient);
+      break;
+    case "Orifice":
+      result = calcOrifice(dp, p, rho, kappa, mu, flowData[0] / 1000.0, flowData[1] / 1000.0);
+      break;
+    case "V-Cone":
+      result = calcVCone(dp, p, rho, kappa, flowData[0] / 1000.0, flowData[1] / 1000.0, dischargeCoefficient);
+      break;
+    case "DallTube":
+      result = calcDallTube(dp, p, rho, kappa, flowData[0] / 1000.0, flowData[1] / 1000.0);
+      break;
+    case "Annubar":
+      result = calcAnnubar(dp, p, rho, kappa, flowData[0], flowData[1]);
+      break;
+    case "Nozzle":
+      result = calcNozzle(dp, p, rho, kappa, mu, flowData[0] / 1000.0, flowData[1] / 1000.0);
+      break;
+    case "Simplified":
+      result = calcSimplified(dp, rho, flowData);
+      break;
+    case "Perrys-Orifice":
+      result = calcPerrysOrifice(p, dp, rho, flowData[0] / 1000.0, flowData[1] / 1000.0, kappa);
+      break;
+    case "ISA1932":
+      throw new UnsupportedOperationException("ISA1932 calculation is not implemented in this calculator");
+    default:
+      throw new IllegalArgumentException("Unsupported flow type: " + flowTypeRaw);
     }
 
     return result;
@@ -343,8 +330,8 @@ public final class DifferentialPressureFlowCalculator {
     return DEFAULT_DISCHARGE_COEFFICIENTS.getOrDefault(flowType, 0.985);
   }
 
-  private static double[] calcVenturi(double[] dp, double[] p, double[] rho, double[] kappa,
-      double D, double d, double C) {
+  private static double[] calcVenturi(double[] dp, double[] p, double[] rho, double[] kappa, double D, double d,
+      double C) {
     double beta = d / D;
     double beta4 = Math.pow(beta, 4.0);
     double betaTerm = Math.sqrt(Math.max(1.0 - beta4, 1e-30));
@@ -354,7 +341,7 @@ public final class DifferentialPressureFlowCalculator {
       double k = kappa[i];
       double tau2k = Math.pow(tau, 2.0 / k);
       double numerator = k * tau2k / (k - 1.0) * (1.0 - beta4) / (1.0 - beta4 * tau2k)
-          * (1.0 - Math.pow(tau, (k - 1.0) / k)) / (1.0 - tau);
+	  * (1.0 - Math.pow(tau, (k - 1.0) / k)) / (1.0 - tau);
       double eps = Math.sqrt(Math.max(numerator, 0.0));
       double rootTerm = Math.sqrt(Math.max(dp[i] * rho[i] * 2.0, 0.0));
       double value = C / betaTerm * eps * Math.PI / 4.0 * d * d * rootTerm;
@@ -363,8 +350,8 @@ public final class DifferentialPressureFlowCalculator {
     return massFlow;
   }
 
-  private static double[] calcOrifice(double[] dp, double[] p, double[] rho, double[] kappa,
-      double[] mu, double D, double d) {
+  private static double[] calcOrifice(double[] dp, double[] p, double[] rho, double[] kappa, double[] mu, double D,
+      double d) {
     double beta = d / D;
     double beta2 = beta * beta;
     double beta4 = beta2 * beta2;
@@ -375,8 +362,7 @@ public final class DifferentialPressureFlowCalculator {
     double[] eps = new double[dp.length];
     for (int i = 0; i < dp.length; i++) {
       double pressureRatio = (p[i] - dp[i]) / p[i];
-      eps[i] = 1.0 - (0.351 + 0.256 * beta4 + 0.93 * beta8)
-          * (1.0 - Math.pow(pressureRatio, 1.0 / kappa[i]));
+      eps[i] = 1.0 - (0.351 + 0.256 * beta4 + 0.93 * beta8) * (1.0 - Math.pow(pressureRatio, 1.0 / kappa[i]));
     }
 
     double[] m = new double[dp.length];
@@ -388,24 +374,23 @@ public final class DifferentialPressureFlowCalculator {
     while (count < 100) {
       double maxDiff = 0.0;
       for (int i = 0; i < dp.length; i++) {
-        double prev = m[i];
-        double ReD = Math.max(4.0 * m[i] / (Math.PI * mu[i] * D), 500.0);
-        double A = Math.pow(19000.0 * beta / ReD, 0.8);
-        double C =
-            0.5961 + 0.0261 * beta2 - 0.216 * beta8 + 0.000521 * Math.pow(1.0e7 * beta / ReD, 0.7)
-                + (0.0188 + 0.0063 * A) * Math.pow(beta, 3.5) * Math.pow(1.0e7 / ReD, 0.3)
-                + (0.043 + 0.080 * Math.exp(-10.0 * L1) - 0.123 * Math.exp(-7.0 * L1))
-                    * (1.0 - 0.22 * A) * beta4 / (1.0 - beta4)
-                - 0.031 * (M2 - 0.8 * Math.pow(M2, 1.1)) * Math.pow(beta, 1.3);
-        if (D < 71.12 / 1000.0) {
-          C += 0.011 * (0.75 - beta) * (2.8 - d / 0.0254);
-        }
-        double rootTerm = Math.sqrt(Math.max(dp[i] * rho[i] * 2.0, 0.0));
-        m[i] = C / Math.sqrt(1.0 - beta4) * eps[i] * Math.PI / 4.0 * d * d * rootTerm;
-        maxDiff = Math.max(maxDiff, Math.abs(m[i] - prev));
+	double prev = m[i];
+	double ReD = Math.max(4.0 * m[i] / (Math.PI * mu[i] * D), 500.0);
+	double A = Math.pow(19000.0 * beta / ReD, 0.8);
+	double C = 0.5961 + 0.0261 * beta2 - 0.216 * beta8 + 0.000521 * Math.pow(1.0e7 * beta / ReD, 0.7)
+	    + (0.0188 + 0.0063 * A) * Math.pow(beta, 3.5) * Math.pow(1.0e7 / ReD, 0.3)
+	    + (0.043 + 0.080 * Math.exp(-10.0 * L1) - 0.123 * Math.exp(-7.0 * L1)) * (1.0 - 0.22 * A) * beta4
+		/ (1.0 - beta4)
+	    - 0.031 * (M2 - 0.8 * Math.pow(M2, 1.1)) * Math.pow(beta, 1.3);
+	if (D < 71.12 / 1000.0) {
+	  C += 0.011 * (0.75 - beta) * (2.8 - d / 0.0254);
+	}
+	double rootTerm = Math.sqrt(Math.max(dp[i] * rho[i] * 2.0, 0.0));
+	m[i] = C / Math.sqrt(1.0 - beta4) * eps[i] * Math.PI / 4.0 * d * d * rootTerm;
+	maxDiff = Math.max(maxDiff, Math.abs(m[i] - prev));
       }
       if (maxDiff <= 0.01) {
-        break;
+	break;
       }
       count++;
     }
@@ -416,21 +401,20 @@ public final class DifferentialPressureFlowCalculator {
     return m;
   }
 
-  private static double[] calcVCone(double[] dp, double[] p, double[] rho, double[] kappa, double D,
-      double d, double C) {
+  private static double[] calcVCone(double[] dp, double[] p, double[] rho, double[] kappa, double D, double d,
+      double C) {
     double[] massFlow = new double[dp.length];
     for (int i = 0; i < dp.length; i++) {
       double beta = Math.sqrt(1.0 - (d * d) / (D * D));
       double eps = 1.0 - (0.649 + 0.696 * Math.pow(beta, 4.0)) * dp[i] / (kappa[i] * p[i]);
       double rootTerm = Math.sqrt(Math.max(dp[i] * rho[i] * 2.0, 0.0));
-      massFlow[i] = C / Math.sqrt(1.0 - Math.pow(beta, 4.0)) * eps * Math.PI / 4.0
-          * Math.pow(D * beta, 2.0) * rootTerm * 3600.0;
+      massFlow[i] = C / Math.sqrt(1.0 - Math.pow(beta, 4.0)) * eps * Math.PI / 4.0 * Math.pow(D * beta, 2.0) * rootTerm
+	  * 3600.0;
     }
     return massFlow;
   }
 
-  private static double[] calcDallTube(double[] dp, double[] p, double[] rho, double[] kappa,
-      double D, double d) {
+  private static double[] calcDallTube(double[] dp, double[] p, double[] rho, double[] kappa, double D, double d) {
     double[] massFlow = new double[dp.length];
     double beta = (d * 1000.0) / (D * 1000.0);
     double E = 1.0 / Math.sqrt(1.0 - Math.pow(beta, 4.0));
@@ -439,8 +423,7 @@ public final class DifferentialPressureFlowCalculator {
     double C3 = 0.04518228;
     double C4 = 0.664843419;
     double C5 = 0.273529;
-    double C = 0.5
-        * (C1 + Math.sqrt(C2 - 4.0 * (C3 * (Math.pow(beta * beta + 0.08, 2.0) / C4 - 1.0) + C5)));
+    double C = 0.5 * (C1 + Math.sqrt(C2 - 4.0 * (C3 * (Math.pow(beta * beta + 0.08, 2.0) / C4 - 1.0) + C5)));
     double N = 0.1264467;
     double Fa = 1.0;
     double A = N * Fa * C * E * beta * beta * Math.pow(D * 1000.0, 2.0);
@@ -452,8 +435,8 @@ public final class DifferentialPressureFlowCalculator {
     return massFlow;
   }
 
-  private static double[] calcAnnubar(double[] dp, double[] p, double[] rho, double[] kappa,
-      double D, double elementSize) {
+  private static double[] calcAnnubar(double[] dp, double[] p, double[] rho, double[] kappa, double D,
+      double elementSize) {
     double[] massFlow = new double[dp.length];
     double Y1 = 0.31424;
     double Y2 = 0.09484;
@@ -493,8 +476,8 @@ public final class DifferentialPressureFlowCalculator {
     return massFlow;
   }
 
-  private static double[] calcNozzle(double[] dp, double[] p, double[] rho, double[] kappa,
-      double[] mu, double D, double d) {
+  private static double[] calcNozzle(double[] dp, double[] p, double[] rho, double[] kappa, double[] mu, double D,
+      double d) {
     double beta = d / D;
     double beta4 = Math.pow(beta, 4.0);
     double[] massFlow = new double[dp.length];
@@ -507,25 +490,25 @@ public final class DifferentialPressureFlowCalculator {
     while (count < CONVERGING_MASS_COUNT_MAX) {
       double maxDiff = 0.0;
       for (int i = 0; i < dp.length; i++) {
-        double tau = p[i] / (p[i] + dp[i]);
-        double k = kappa[i];
-        double tau2k = Math.pow(tau, 2.0 / k);
-        double numerator = k * tau2k / (k - 1.0) * (1.0 - beta4) / (1.0 - beta4 * tau2k)
-            * (1.0 - Math.pow(tau, (k - 1.0) / k)) / (1.0 - tau);
-        double eps = Math.sqrt(Math.max(numerator, 0.0));
-        double ReD = Math.max(4.0 * m[i] / (Math.PI * mu[i] * D), 500.0);
-        double C = 0.99 - 0.2262 * Math.pow(beta, 4.1)
-            - (0.00175 * beta * beta - 0.0033 * Math.pow(beta, 4.15)) * Math.pow(1.0e7 / ReD, 1.15);
-        double rootTerm = Math.sqrt(Math.max(dp[i] * rho[i] * 2.0, 0.0));
-        double newM = C / Math.sqrt(1.0 - beta4) * eps * Math.PI / 4.0 * d * d * rootTerm;
-        if (tau == 1.0) {
-          newM = 0.0;
-        }
-        maxDiff = Math.max(maxDiff, Math.abs(newM - m[i]));
-        m[i] = newM;
+	double tau = p[i] / (p[i] + dp[i]);
+	double k = kappa[i];
+	double tau2k = Math.pow(tau, 2.0 / k);
+	double numerator = k * tau2k / (k - 1.0) * (1.0 - beta4) / (1.0 - beta4 * tau2k)
+	    * (1.0 - Math.pow(tau, (k - 1.0) / k)) / (1.0 - tau);
+	double eps = Math.sqrt(Math.max(numerator, 0.0));
+	double ReD = Math.max(4.0 * m[i] / (Math.PI * mu[i] * D), 500.0);
+	double C = 0.99 - 0.2262 * Math.pow(beta, 4.1)
+	    - (0.00175 * beta * beta - 0.0033 * Math.pow(beta, 4.15)) * Math.pow(1.0e7 / ReD, 1.15);
+	double rootTerm = Math.sqrt(Math.max(dp[i] * rho[i] * 2.0, 0.0));
+	double newM = C / Math.sqrt(1.0 - beta4) * eps * Math.PI / 4.0 * d * d * rootTerm;
+	if (tau == 1.0) {
+	  newM = 0.0;
+	}
+	maxDiff = Math.max(maxDiff, Math.abs(newM - m[i]));
+	m[i] = newM;
       }
       if (maxDiff <= 0.01) {
-        break;
+	break;
       }
       count++;
     }
@@ -536,9 +519,9 @@ public final class DifferentialPressureFlowCalculator {
 
     for (int i = 0; i < m.length; i++) {
       if (!Double.isNaN(m[i])) {
-        massFlow[i] = m[i] * 3600.0;
+	massFlow[i] = m[i] * 3600.0;
       } else {
-        massFlow[i] = Double.NaN;
+	massFlow[i] = Double.NaN;
       }
     }
     return massFlow;
@@ -550,8 +533,7 @@ public final class DifferentialPressureFlowCalculator {
     }
     double Cv = flowData[0];
     if (Cv <= 0.0) {
-      throw new IllegalArgumentException(
-          "FlowData[0] must be greater than 0 when FlowType=Simplified");
+      throw new IllegalArgumentException("FlowData[0] must be greater than 0 when FlowType=Simplified");
     }
     double[] massFlow = new double[dp.length];
     for (int i = 0; i < dp.length; i++) {
@@ -560,8 +542,8 @@ public final class DifferentialPressureFlowCalculator {
     return massFlow;
   }
 
-  private static double[] calcPerrysOrifice(double[] p1, double[] dp, double[] rho, double D,
-      double d, double[] kappa) {
+  private static double[] calcPerrysOrifice(double[] p1, double[] dp, double[] rho, double D, double d,
+      double[] kappa) {
     double[] massFlow = new double[dp.length];
     double beta = d / D;
     double beta2 = beta * beta;
@@ -573,12 +555,10 @@ public final class DifferentialPressureFlowCalculator {
       double rc = Math.pow(2.0 / (kappa[i] + 1.0), kappa[i] / (kappa[i] - 1.0));
       double CdSub = 0.62;
       double YSub = 1.0 - ((1.0 - rp) / kappa[i]) * (0.41 + 0.35 * beta4);
-      double flowSub =
-          CdSub * YSub * Math.PI / 4.0 * d * d * Math.sqrt(2.0 * dp[i] * rho[i] / (1.0 - beta4));
+      double flowSub = CdSub * YSub * Math.PI / 4.0 * d * d * Math.sqrt(2.0 * dp[i] * rho[i] / (1.0 - beta4));
       double CdCrit = 0.84 - (0.84 - 0.75) * rp / rc;
-      double flowCrit = Math.PI / 4.0 * d * d
-          * (CdCrit * p1Bar * BAR_TO_PA * Math.sqrt(kappa[i] * (rho[i] / (p1Bar * BAR_TO_PA))
-              * Math.pow(2.0 / (kappa[i] + 1.0), (kappa[i] + 1.0) / (kappa[i] - 1.0))));
+      double flowCrit = Math.PI / 4.0 * d * d * (CdCrit * p1Bar * BAR_TO_PA * Math.sqrt(kappa[i]
+	  * (rho[i] / (p1Bar * BAR_TO_PA)) * Math.pow(2.0 / (kappa[i] + 1.0), (kappa[i] + 1.0) / (kappa[i] - 1.0))));
       double flow = rp > rc ? flowSub : flowCrit;
       massFlow[i] = flow * 3600.0;
     }
@@ -589,23 +569,22 @@ public final class DifferentialPressureFlowCalculator {
    * Calculates differential pressure from mass flow rate for a Venturi meter.
    *
    * <p>
-   * This is the inverse of the flow calculation. Given the mass flow rate and fluid properties, it
-   * calculates the differential pressure across the Venturi. Uses an iterative approach since the
-   * expansibility factor depends on the pressure ratio.
+   * This is the inverse of the flow calculation. Given the mass flow rate and fluid properties, it calculates the
+   * differential pressure across the Venturi. Uses an iterative approach since the expansibility factor depends on the
+   * pressure ratio.
    * </p>
    *
-   * @param massFlowKgPerHour mass flow rate in kg/h
-   * @param pressureBara upstream pressure in bara
-   * @param density fluid density in kg/m³
-   * @param kappa isentropic exponent (Cp/Cv)
-   * @param pipeDiameterMm pipe diameter in mm
-   * @param throatDiameterMm throat diameter in mm
+   * @param massFlowKgPerHour    mass flow rate in kg/h
+   * @param pressureBara         upstream pressure in bara
+   * @param density              fluid density in kg/m³
+   * @param kappa                isentropic exponent (Cp/Cv)
+   * @param pipeDiameterMm       pipe diameter in mm
+   * @param throatDiameterMm     throat diameter in mm
    * @param dischargeCoefficient discharge coefficient (default 0.985 for Venturi)
    * @return differential pressure in mbar
    */
-  public static double calculateDpFromFlowVenturi(double massFlowKgPerHour, double pressureBara,
-      double density, double kappa, double pipeDiameterMm, double throatDiameterMm,
-      double dischargeCoefficient) {
+  public static double calculateDpFromFlowVenturi(double massFlowKgPerHour, double pressureBara, double density,
+      double kappa, double pipeDiameterMm, double throatDiameterMm, double dischargeCoefficient) {
     double D = pipeDiameterMm / 1000.0;
     double d = throatDiameterMm / 1000.0;
     double C = dischargeCoefficient;
@@ -629,15 +608,15 @@ public final class DifferentialPressureFlowCalculator {
       double tau = pPa / (pPa + dpPa);
       double tau2k = Math.pow(tau, 2.0 / kappa);
       double numerator = kappa * tau2k / (kappa - 1.0) * (1.0 - beta4) / (1.0 - beta4 * tau2k)
-          * (1.0 - Math.pow(tau, (kappa - 1.0) / kappa)) / (1.0 - tau);
+	  * (1.0 - Math.pow(tau, (kappa - 1.0) / kappa)) / (1.0 - tau);
       double eps = Math.sqrt(Math.max(numerator, 1e-30));
 
       // Recalculate dp with the expansibility factor
       double dpNew = Math.pow(massFlowKgPerSec * betaTerm / (C * eps * A), 2) / (2.0 * density);
 
       if (Math.abs(dpNew - dpPa) < 0.01) {
-        dpPa = dpNew;
-        break;
+	dpPa = dpNew;
+	break;
       }
       dpPa = dpNew;
     }
@@ -647,48 +626,45 @@ public final class DifferentialPressureFlowCalculator {
   }
 
   /**
-   * Calculates differential pressure from mass flow rate for a Venturi meter using default
-   * discharge coefficient.
+   * Calculates differential pressure from mass flow rate for a Venturi meter using default discharge coefficient.
    *
    * @param massFlowKgPerHour mass flow rate in kg/h
-   * @param pressureBara upstream pressure in bara
-   * @param density fluid density in kg/m³
-   * @param kappa isentropic exponent (Cp/Cv)
-   * @param pipeDiameterMm pipe diameter in mm
-   * @param throatDiameterMm throat diameter in mm
+   * @param pressureBara      upstream pressure in bara
+   * @param density           fluid density in kg/m³
+   * @param kappa             isentropic exponent (Cp/Cv)
+   * @param pipeDiameterMm    pipe diameter in mm
+   * @param throatDiameterMm  throat diameter in mm
    * @return differential pressure in mbar
    */
-  public static double calculateDpFromFlowVenturi(double massFlowKgPerHour, double pressureBara,
-      double density, double kappa, double pipeDiameterMm, double throatDiameterMm) {
-    return calculateDpFromFlowVenturi(massFlowKgPerHour, pressureBara, density, kappa,
-        pipeDiameterMm, throatDiameterMm, 0.985);
+  public static double calculateDpFromFlowVenturi(double massFlowKgPerHour, double pressureBara, double density,
+      double kappa, double pipeDiameterMm, double throatDiameterMm) {
+    return calculateDpFromFlowVenturi(massFlowKgPerHour, pressureBara, density, kappa, pipeDiameterMm, throatDiameterMm,
+	0.985);
   }
 
   /**
    * Calculates differential pressure from mass flow rate using NeqSim thermodynamic properties.
    *
-   * @param massFlowKgPerHour mass flow rate in kg/h
-   * @param pressureBarg pressure in barg
-   * @param temperatureC temperature in degrees Celsius
-   * @param flowType device type (currently only "Venturi" supported)
-   * @param flowData geometry parameters [pipeDiameterMm, throatDiameterMm, dischargeCoefficient]
-   * @param components gas component names
-   * @param fractions component fractions (mole basis)
+   * @param massFlowKgPerHour  mass flow rate in kg/h
+   * @param pressureBarg       pressure in barg
+   * @param temperatureC       temperature in degrees Celsius
+   * @param flowType           device type (currently only "Venturi" supported)
+   * @param flowData           geometry parameters [pipeDiameterMm, throatDiameterMm, dischargeCoefficient]
+   * @param components         gas component names
+   * @param fractions          component fractions (mole basis)
    * @param normalizeFractions whether to normalise the composition fractions
    * @return differential pressure in mbar
    */
-  public static double calculateDpFromFlow(double massFlowKgPerHour, double pressureBarg,
-      double temperatureC, String flowType, double[] flowData, List<String> components,
-      double[] fractions, boolean normalizeFractions) {
+  public static double calculateDpFromFlow(double massFlowKgPerHour, double pressureBarg, double temperatureC,
+      String flowType, double[] flowData, List<String> components, double[] fractions, boolean normalizeFractions) {
     Objects.requireNonNull(flowData, "flowData");
 
     double[] validatedFlowData = Arrays.copyOf(flowData, flowData.length);
 
     List<String> componentList = components != null && !components.isEmpty() ? components
-        : Arrays.asList(DEFAULT_COMPONENTS.clone());
-    double[] fractionArray =
-        fractions != null && fractions.length > 0 ? Arrays.copyOf(fractions, fractions.length)
-            : Arrays.copyOf(DEFAULT_FRACTIONS, DEFAULT_FRACTIONS.length);
+	: Arrays.asList(DEFAULT_COMPONENTS.clone());
+    double[] fractionArray = fractions != null && fractions.length > 0 ? Arrays.copyOf(fractions, fractions.length)
+	: Arrays.copyOf(DEFAULT_FRACTIONS, DEFAULT_FRACTIONS.length);
 
     if (componentList.size() != fractionArray.length) {
       throw new IllegalArgumentException("Component and fraction list must have same length");
@@ -707,16 +683,13 @@ public final class DifferentialPressureFlowCalculator {
     double kappa = zeroPressureSystem.getGamma();
 
     String normalizedFlowType = normaliseFlowType(flowType);
-    double dischargeCoefficient =
-        resolveDischargeCoefficient(normalizedFlowType, validatedFlowData);
+    double dischargeCoefficient = resolveDischargeCoefficient(normalizedFlowType, validatedFlowData);
 
     if ("Venturi".equals(normalizedFlowType)) {
-      return calculateDpFromFlowVenturi(massFlowKgPerHour, pressureAbar, density, kappa,
-          validatedFlowData[0], validatedFlowData[1], dischargeCoefficient);
+      return calculateDpFromFlowVenturi(massFlowKgPerHour, pressureAbar, density, kappa, validatedFlowData[0],
+	  validatedFlowData[1], dischargeCoefficient);
     } else {
-      throw new UnsupportedOperationException(
-          "Inverse dp calculation not yet implemented for flow type: " + flowType);
+      throw new UnsupportedOperationException("Inverse dp calculation not yet implemented for flow type: " + flowType);
     }
   }
 }
-

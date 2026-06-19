@@ -24,5 +24,6 @@ public class ExperimentalEquipmentData {
    * Constructor for ExperimentalEquipmentData.
    * </p>
    */
-  public ExperimentalEquipmentData() {}
+  public ExperimentalEquipmentData() {
+  }
 }

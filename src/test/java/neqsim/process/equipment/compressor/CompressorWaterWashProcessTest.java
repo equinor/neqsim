@@ -20,8 +20,7 @@ import neqsim.thermo.system.SystemPrEos;
  * Two scenarios are tested:
  * <ul>
  * <li>Prior to wash test: dry gas compression with outlet temperature specified</li>
- * <li>During wash test: wet gas compression with water injection and polytropic efficiency
- * specified</li>
+ * <li>During wash test: wet gas compression with water injection and polytropic efficiency specified</li>
  * </ul>
  *
  * @author NeqSim
@@ -84,8 +83,8 @@ class CompressorWaterWashProcessTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * Test compressor operation prior to water wash test. Outlet temperature is specified and
-   * polytropic efficiency is back-calculated.
+   * Test compressor operation prior to water wash test. Outlet temperature is specified and polytropic efficiency is
+   * back-calculated.
    */
   @Test
   void testPriorToWashTest() {
@@ -147,14 +146,14 @@ class CompressorWaterWashProcessTest extends neqsim.NeqSimTest {
     assertTrue(power > 0, "Compressor power should be positive");
     assertTrue(polytropicHead > 0, "Polytropic head should be positive");
     assertTrue(polytropicEfficiency > 0.5 && polytropicEfficiency < 1.0,
-        "Polytropic efficiency should be between 50% and 100%");
+	"Polytropic efficiency should be between 50% and 100%");
     assertEquals(COMP_POUT, outletPressure, 1.0, "Outlet pressure should match setpoint");
     assertEquals(COMP_TOUT, outletTemperature, 2.0, "Outlet temperature should match setpoint");
   }
 
   /**
-   * Test compressor operation during water wash test. Water is injected into the gas feed and
-   * polytropic efficiency is specified.
+   * Test compressor operation during water wash test. Water is injected into the gas feed and polytropic efficiency is
+   * specified.
    */
   @Test
   void testDuringWashTest() {
@@ -214,10 +213,8 @@ class CompressorWaterWashProcessTest extends neqsim.NeqSimTest {
     double outletPressure = compressor1.getOutletStream().getPressure("bara");
     double outletTemperature = compressor1.getOutletStream().getTemperature("C");
     double totalFlow = compressor1.getOutletStream().getThermoSystem().getFlowRate("kg/hr");
-    double waterMassFraction =
-        feedAqStream.getThermoSystem().getFlowRate("kg/hr") * 100.0 / totalFlow;
-    boolean hasAqueousOutlet =
-        compressor1.getOutletStream().getThermoSystem().hasPhaseType("aqueous");
+    double waterMassFraction = feedAqStream.getThermoSystem().getFlowRate("kg/hr") * 100.0 / totalFlow;
+    boolean hasAqueousOutlet = compressor1.getOutletStream().getThermoSystem().hasPhaseType("aqueous");
 
     logger.info("=== During wash test ===");
     logger.info("Power: " + power + " MW");
@@ -232,30 +229,25 @@ class CompressorWaterWashProcessTest extends neqsim.NeqSimTest {
     // Sanity checks
     assertTrue(power > 0, "Compressor power should be positive");
     assertTrue(polytropicHead > 0, "Polytropic head should be positive");
-    assertEquals(polytropicEfficiency, actualEfficiency, 0.01,
-        "Polytropic efficiency should match specified value");
+    assertEquals(polytropicEfficiency, actualEfficiency, 0.01, "Polytropic efficiency should match specified value");
     assertEquals(COMP_POUT, outletPressure, 1.0, "Outlet pressure should match setpoint");
     // With water injection, evaporative cooling limits temperature rise
     // Expect modest temperature increase (>inlet, but not necessarily >100C)
-    assertTrue(outletTemperature > COMP_TIN - 273.15,
-        "Outlet temperature should be above inlet temperature");
-    assertTrue(waterMassFraction > 0.0 && waterMassFraction < 10.0,
-        "Water mass fraction should be reasonable");
+    assertTrue(outletTemperature > COMP_TIN - 273.15, "Outlet temperature should be above inlet temperature");
+    assertTrue(waterMassFraction > 0.0 && waterMassFraction < 10.0, "Water mass fraction should be reasonable");
 
     // Regression test: property profile length must equal numberOfCompressorCalcSteps.
     // Previously, when PSflash diverged inside a step (common with water/MEG on cubic
     // EOS), the loop did 'continue' and skipped propertyProfile.addFluid(), producing
     // a profile shorter than requested and breaking index-based access in user code.
     int profileLength = compressor1.getPropertyProfile().getFluid().size();
-    assertEquals(10, profileLength,
-        "Property profile must contain exactly numberOfCompressorCalcSteps fluids");
+    assertEquals(10, profileLength, "Property profile must contain exactly numberOfCompressorCalcSteps fluids");
 
     // Pressure must increase monotonically across the profile.
     double pPrev = feedStream.getPressure("bara");
     for (int i = 0; i < profileLength; i++) {
       double pStep = compressor1.getPropertyProfile().getFluid().get(i).getPressure("bara");
-      assertTrue(pStep >= pPrev - 1e-6,
-          "Profile pressure must be monotonically increasing (step " + i + ")");
+      assertTrue(pStep >= pPrev - 1e-6, "Profile pressure must be monotonically increasing (step " + i + ")");
       pPrev = pStep;
     }
   }
@@ -266,7 +258,7 @@ class CompressorWaterWashProcessTest extends neqsim.NeqSimTest {
   @Test
   void testVaryingWashRate() {
     double polytropicEfficiency = 64.66 * 0.933 / 100.0;
-    double[] washRates = {0.0, 2000.0, 5000.0};
+    double[] washRates = { 0.0, 2000.0, 5000.0 };
     double[] outletTemperatures = new double[washRates.length];
 
     for (int i = 0; i < washRates.length; i++) {
@@ -287,12 +279,12 @@ class CompressorWaterWashProcessTest extends neqsim.NeqSimTest {
       Mixer mixerFeed = new Mixer("feedMix");
 
       if (washRates[i] > 0.0) {
-        Stream feedAqStream = new Stream("WashLiquid", washFluid.clone());
-        feedAqStream.setFlowRate(washRates[i], "kg/hr");
-        feedAqStream.setTemperature(COMP_TIN, "K");
-        feedAqStream.setPressure(COMP_PIN, "bara");
-        processOps.add(feedAqStream);
-        mixerFeed.addStream(feedAqStream);
+	Stream feedAqStream = new Stream("WashLiquid", washFluid.clone());
+	feedAqStream.setFlowRate(washRates[i], "kg/hr");
+	feedAqStream.setTemperature(COMP_TIN, "K");
+	feedAqStream.setPressure(COMP_PIN, "bara");
+	processOps.add(feedAqStream);
+	mixerFeed.addStream(feedAqStream);
       }
       mixerFeed.addStream(feedGasStream);
       processOps.add(mixerFeed);
@@ -311,24 +303,21 @@ class CompressorWaterWashProcessTest extends neqsim.NeqSimTest {
       processOps.run();
 
       outletTemperatures[i] = compressor1.getOutletStream().getTemperature("C");
-      logger.info(
-          "Wash rate " + washRates[i] + " kg/hr -> outlet T = " + outletTemperatures[i] + " C");
+      logger.info("Wash rate " + washRates[i] + " kg/hr -> outlet T = " + outletTemperatures[i] + " C");
     }
 
     // More water should reduce outlet temperature (evaporative cooling)
-    assertTrue(outletTemperatures[2] < outletTemperatures[0],
-        "Higher wash rate should reduce outlet temperature");
+    assertTrue(outletTemperatures[2] < outletTemperatures[0], "Higher wash rate should reduce outlet temperature");
   }
 
   /**
    * Regression test for pure-associating-fluid robustness on a cubic EOS.
    *
    * <p>
-   * Pure MEG on PR EOS makes the PSflash Newton ill-conditioned (single component, strong
-   * association). Before the Newton-fallback fix, the detailed polytropic loop produced
-   * non-physical outlet conditions (T &lt; -200 C, density &gt; 10000 kg/m3). After the fix the
-   * recovery path solves S(T,P)=S_target via 1D Newton on T at fixed P (using TPflash, which is
-   * robust for these fluids), so the outlet must be physical for any EOS.
+   * Pure MEG on PR EOS makes the PSflash Newton ill-conditioned (single component, strong association). Before the
+   * Newton-fallback fix, the detailed polytropic loop produced non-physical outlet conditions (T &lt; -200 C, density
+   * &gt; 10000 kg/m3). After the fix the recovery path solves S(T,P)=S_target via 1D Newton on T at fixed P (using
+   * TPflash, which is robust for these fluids), so the outlet must be physical for any EOS.
    */
   @Test
   void testPureMEGCompressionOnPREos() {
@@ -365,8 +354,7 @@ class CompressorWaterWashProcessTest extends neqsim.NeqSimTest {
     assertTrue(tOut > 20.0, "Outlet T must be above inlet (26.85 C) — got " + tOut + " C");
     assertTrue(tOut < 500.0, "Outlet T must be physically bounded — got " + tOut + " C");
     assertTrue(Double.isFinite(rhoOut) && rhoOut > 0.0 && rhoOut < 5000.0,
-        "Outlet density must be in physical range — got " + rhoOut + " kg/m3");
-    assertEquals(10, profileLength,
-        "Property profile must contain exactly numberOfCompressorCalcSteps fluids");
+	"Outlet density must be in physical range — got " + rhoOut + " kg/m3");
+    assertEquals(10, profileLength, "Property profile must contain exactly numberOfCompressorCalcSteps fluids");
   }
 }

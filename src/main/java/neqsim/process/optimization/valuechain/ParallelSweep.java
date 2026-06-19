@@ -13,18 +13,17 @@ import java.util.concurrent.Future;
  * Evaluates a batch of decision vectors in parallel, preserving input order.
  *
  * <p>
- * The agentic optimizer evaluates candidates one at a time; for parameter sweeps, Latin-hypercube
- * sampling or population-based search the trials are independent and can run concurrently. This
- * utility maps a list of decision vectors over a thread pool and returns the results in the same
- * order as the inputs, turning an expensive sequential sweep into a parallel one.
+ * The agentic optimizer evaluates candidates one at a time; for parameter sweeps, Latin-hypercube sampling or
+ * population-based search the trials are independent and can run concurrently. This utility maps a list of decision
+ * vectors over a thread pool and returns the results in the same order as the inputs, turning an expensive sequential
+ * sweep into a parallel one.
  * </p>
  *
  * <p>
- * Each trial is scored by a caller-supplied {@link SweepEvaluator}. Because NeqSim flowsheet objects
- * are not thread-safe, the evaluator must give every trial its own state — the canonical pattern is
- * to call {@code ProcessSystem.copy()} (or rebuild the flowsheet) inside the evaluator so each
- * worker thread owns an independent model. Evaluators that only read immutable inputs and return a
- * fresh result object are safe as written.
+ * Each trial is scored by a caller-supplied {@link SweepEvaluator}. Because NeqSim flowsheet objects are not
+ * thread-safe, the evaluator must give every trial its own state — the canonical pattern is to call
+ * {@code ProcessSystem.copy()} (or rebuild the flowsheet) inside the evaluator so each worker thread owns an
+ * independent model. Evaluators that only read immutable inputs and return a fresh result object are safe as written.
  * </p>
  *
  * @author NeqSim Development Team
@@ -48,8 +47,8 @@ public class ParallelSweep implements Serializable {
      * Scores one decision vector.
      *
      * <p>
-     * Implementations must be safe to call concurrently from multiple threads; give each trial its
-     * own flowsheet state (e.g. via {@code ProcessSystem.copy()}).
+     * Implementations must be safe to call concurrently from multiple threads; give each trial its own flowsheet state
+     * (e.g. via {@code ProcessSystem.copy()}).
      * </p>
      *
      * @param input the decision vector to evaluate
@@ -59,10 +58,10 @@ public class ParallelSweep implements Serializable {
   }
 
   /**
-   * Creates a parallel sweep using a default thread count equal to the number of available
-   * processors.
+   * Creates a parallel sweep using a default thread count equal to the number of available processors.
    */
-  public ParallelSweep() {}
+  public ParallelSweep() {
+  }
 
   /**
    * Sets the number of worker threads.
@@ -90,8 +89,8 @@ public class ParallelSweep implements Serializable {
   /**
    * Evaluates all decision vectors in parallel and returns the results in input order.
    *
-   * @param <R> the result type produced for each decision vector
-   * @param inputs the decision vectors to evaluate (must not be null)
+   * @param <R>       the result type produced for each decision vector
+   * @param inputs    the decision vectors to evaluate (must not be null)
    * @param evaluator the per-trial evaluator (must not be null and must be thread-safe)
    * @return a list of results in the same order as {@code inputs}
    */
@@ -111,22 +110,22 @@ public class ParallelSweep implements Serializable {
     try {
       List<Future<R>> futures = new ArrayList<Future<R>>(inputs.size());
       for (final double[] input : inputs) {
-        futures.add(pool.submit(new Callable<R>() {
-          @Override
-          public R call() {
-            return evaluator.evaluate(input);
-          }
-        }));
+	futures.add(pool.submit(new Callable<R>() {
+	  @Override
+	  public R call() {
+	    return evaluator.evaluate(input);
+	  }
+	}));
       }
       for (Future<R> future : futures) {
-        try {
-          results.add(future.get());
-        } catch (InterruptedException ex) {
-          Thread.currentThread().interrupt();
-          throw new RuntimeException("Parallel sweep interrupted", ex);
-        } catch (ExecutionException ex) {
-          throw new RuntimeException("Parallel sweep evaluation failed", ex.getCause());
-        }
+	try {
+	  results.add(future.get());
+	} catch (InterruptedException ex) {
+	  Thread.currentThread().interrupt();
+	  throw new RuntimeException("Parallel sweep interrupted", ex);
+	} catch (ExecutionException ex) {
+	  throw new RuntimeException("Parallel sweep evaluation failed", ex.getCause());
+	}
       }
     } finally {
       pool.shutdownNow();

@@ -8,8 +8,8 @@ import java.util.Objects;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 
 /**
- * Represents a node in the process flowsheet graph. Each node corresponds to a
- * {@link ProcessEquipmentInterface} unit operation.
+ * Represents a node in the process flowsheet graph. Each node corresponds to a {@link ProcessEquipmentInterface} unit
+ * operation.
  *
  * <p>
  * This class provides:
@@ -53,7 +53,7 @@ public class ProcessNode implements Serializable {
   /**
    * Creates a new process node.
    *
-   * @param index unique index of this node in the graph
+   * @param index     unique index of this node in the graph
    * @param equipment the process equipment this node represents
    */
   public ProcessNode(int index, ProcessEquipmentInterface equipment) {
@@ -211,7 +211,7 @@ public class ProcessNode implements Serializable {
    * </ul>
    *
    * @param typeMapping mapping of equipment types to indices
-   * @param numTypes total number of equipment types
+   * @param numTypes    total number of equipment types
    * @return feature vector
    */
   public double[] getFeatureVector(java.util.Map<String, Integer> typeMapping, int numTypes) {
@@ -247,8 +247,8 @@ public class ProcessNode implements Serializable {
 
     try {
       if (equipment.getThermoSystem() != null) {
-        double flow = equipment.getThermoSystem().getFlowRate("kg/hr");
-        features[numTypes + 4] = Math.min(1.0, flow / 100000.0); // Normalize to ~100 t/hr
+	double flow = equipment.getThermoSystem().getFlowRate("kg/hr");
+	features[numTypes + 4] = Math.min(1.0, flow / 100000.0); // Normalize to ~100 t/hr
       }
     } catch (Exception e) {
       features[numTypes + 4] = 0.0;
@@ -303,8 +303,8 @@ public class ProcessNode implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("ProcessNode[%d: %s (%s), in=%d, out=%d]", index, getName(),
-        getEquipmentType(), getInDegree(), getOutDegree());
+    return String.format("ProcessNode[%d: %s (%s), in=%d, out=%d]", index, getName(), getEquipmentType(), getInDegree(),
+	getOutDegree());
   }
 
   @Override

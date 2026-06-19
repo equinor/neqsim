@@ -21,8 +21,8 @@ import neqsim.process.equipment.stream.StreamInterface;
  * </ul>
  *
  * <p>
- * Designed for integration with AI optimization platforms that require real-time production
- * allocation for reservoir management.
+ * Designed for integration with AI optimization platforms that require real-time production allocation for reservoir
+ * management.
  * </p>
  *
  * @author ESOL
@@ -187,7 +187,7 @@ public class WellProductionAllocator implements Serializable {
   public WellData getWell(String wellName) {
     for (WellData well : wells) {
       if (well.getWellName().equals(wellName)) {
-        return well;
+	return well;
       }
     }
     return null;
@@ -214,13 +214,12 @@ public class WellProductionAllocator implements Serializable {
   /**
    * Allocates total production to individual wells.
    *
-   * @param totalOilRate total oil rate at separator (Sm3/day)
-   * @param totalGasRate total gas rate at separator (Sm3/day)
+   * @param totalOilRate   total oil rate at separator (Sm3/day)
+   * @param totalGasRate   total gas rate at separator (Sm3/day)
    * @param totalWaterRate total water rate at separator (Sm3/day)
    * @return allocation result
    */
-  public AllocationResult allocate(double totalOilRate, double totalGasRate,
-      double totalWaterRate) {
+  public AllocationResult allocate(double totalOilRate, double totalGasRate, double totalWaterRate) {
     Map<String, Double> oilRates = new HashMap<>();
     Map<String, Double> gasRates = new HashMap<>();
     Map<String, Double> waterRates = new HashMap<>();
@@ -228,18 +227,18 @@ public class WellProductionAllocator implements Serializable {
 
     // Calculate initial allocation based on method
     switch (method) {
-      case WELL_TEST:
-        allocateByWellTest(oilRates, gasRates, waterRates, uncertainties);
-        break;
-      case VFM_BASED:
-        allocateByVFM(oilRates, gasRates, waterRates, uncertainties);
-        break;
-      case CHOKE_MODEL:
-        allocateByChokeModel(oilRates, gasRates, waterRates, uncertainties);
-        break;
-      case COMBINED:
-        allocateCombined(oilRates, gasRates, waterRates, uncertainties);
-        break;
+    case WELL_TEST:
+      allocateByWellTest(oilRates, gasRates, waterRates, uncertainties);
+      break;
+    case VFM_BASED:
+      allocateByVFM(oilRates, gasRates, waterRates, uncertainties);
+      break;
+    case CHOKE_MODEL:
+      allocateByChokeModel(oilRates, gasRates, waterRates, uncertainties);
+      break;
+    case COMBINED:
+      allocateCombined(oilRates, gasRates, waterRates, uncertainties);
+      break;
     }
 
     // Reconcile to match totals
@@ -257,9 +256,9 @@ public class WellProductionAllocator implements Serializable {
   /**
    * Allocates based on well test data.
    *
-   * @param oilRates map to store allocated oil rates by well name
-   * @param gasRates map to store allocated gas rates by well name
-   * @param waterRates map to store allocated water rates by well name
+   * @param oilRates      map to store allocated oil rates by well name
+   * @param gasRates      map to store allocated gas rates by well name
+   * @param waterRates    map to store allocated water rates by well name
    * @param uncertainties map to store allocation uncertainties by well name
    */
   private void allocateByWellTest(Map<String, Double> oilRates, Map<String, Double> gasRates,
@@ -286,13 +285,13 @@ public class WellProductionAllocator implements Serializable {
   /**
    * Allocates based on VFM estimates.
    *
-   * @param oilRates map to store allocated oil rates by well name
-   * @param gasRates map to store allocated gas rates by well name
-   * @param waterRates map to store allocated water rates by well name
+   * @param oilRates      map to store allocated oil rates by well name
+   * @param gasRates      map to store allocated gas rates by well name
+   * @param waterRates    map to store allocated water rates by well name
    * @param uncertainties map to store uncertainty values by well name
    */
-  private void allocateByVFM(Map<String, Double> oilRates, Map<String, Double> gasRates,
-      Map<String, Double> waterRates, Map<String, Double> uncertainties) {
+  private void allocateByVFM(Map<String, Double> oilRates, Map<String, Double> gasRates, Map<String, Double> waterRates,
+      Map<String, Double> uncertainties) {
     for (WellData well : wells) {
       String name = well.getWellName();
       oilRates.put(name, well.getVfmOilRate());
@@ -305,9 +304,9 @@ public class WellProductionAllocator implements Serializable {
   /**
    * Allocates based on choke model.
    *
-   * @param oilRates map to store allocated oil rates by well name
-   * @param gasRates map to store allocated gas rates by well name
-   * @param waterRates map to store allocated water rates by well name
+   * @param oilRates      map to store allocated oil rates by well name
+   * @param gasRates      map to store allocated gas rates by well name
+   * @param waterRates    map to store allocated water rates by well name
    * @param uncertainties map to store uncertainty values by well name
    */
   private void allocateByChokeModel(Map<String, Double> oilRates, Map<String, Double> gasRates,
@@ -315,15 +314,13 @@ public class WellProductionAllocator implements Serializable {
     // Simple choke-based allocation using position and PI
     double totalCapacity = 0;
     for (WellData well : wells) {
-      double capacity =
-          well.getChokePosition() * well.getProductivityIndex() * well.getReservoirPressure();
+      double capacity = well.getChokePosition() * well.getProductivityIndex() * well.getReservoirPressure();
       totalCapacity += capacity;
     }
 
     for (WellData well : wells) {
       String name = well.getWellName();
-      double capacity =
-          well.getChokePosition() * well.getProductivityIndex() * well.getReservoirPressure();
+      double capacity = well.getChokePosition() * well.getProductivityIndex() * well.getReservoirPressure();
       double fraction = (totalCapacity > 0) ? capacity / totalCapacity : 0;
 
       // Use fraction of test rates
@@ -337,9 +334,9 @@ public class WellProductionAllocator implements Serializable {
   /**
    * Allocates using weighted combination of methods.
    *
-   * @param oilRates map to store allocated oil rates by well name
-   * @param gasRates map to store allocated gas rates by well name
-   * @param waterRates map to store allocated water rates by well name
+   * @param oilRates      map to store allocated oil rates by well name
+   * @param gasRates      map to store allocated gas rates by well name
+   * @param waterRates    map to store allocated water rates by well name
    * @param uncertainties map to store uncertainty values by well name
    */
   private void allocateCombined(Map<String, Double> oilRates, Map<String, Double> gasRates,
@@ -357,10 +354,9 @@ public class WellProductionAllocator implements Serializable {
       double oilChoke = well.getTestOilRate(); // Simplified
 
       oilRates.put(name, wVFM * oilVFM + wTest * oilTest + wChoke * oilChoke);
-      gasRates.put(name, wVFM * well.getVfmGasRate() + wTest * well.getTestGasRate()
-          + wChoke * well.getTestGasRate());
-      waterRates.put(name, wVFM * well.getVfmWaterRate() + wTest * well.getTestWaterRate()
-          + wChoke * well.getTestWaterRate());
+      gasRates.put(name, wVFM * well.getVfmGasRate() + wTest * well.getTestGasRate() + wChoke * well.getTestGasRate());
+      waterRates.put(name,
+	  wVFM * well.getVfmWaterRate() + wTest * well.getTestWaterRate() + wChoke * well.getTestWaterRate());
       uncertainties.put(name, 0.07); // Combined has ~7% uncertainty
     }
   }
@@ -377,7 +373,7 @@ public class WellProductionAllocator implements Serializable {
     if (sum > 0 && Math.abs(sum - total) > reconciliationTolerance * total) {
       double factor = total / sum;
       for (String key : rates.keySet()) {
-        rates.put(key, rates.get(key) * factor);
+	rates.put(key, rates.get(key) * factor);
       }
     }
   }

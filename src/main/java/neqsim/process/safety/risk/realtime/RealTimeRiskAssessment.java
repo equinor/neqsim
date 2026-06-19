@@ -13,9 +13,8 @@ import neqsim.process.safety.risk.RiskMatrix;
  * Real-time Risk Assessment Result.
  *
  * <p>
- * Contains the results of a single real-time risk assessment, including overall risk metrics,
- * equipment-specific status, and trend information. Designed for integration with dashboards and
- * digital twin platforms.
+ * Contains the results of a single real-time risk assessment, including overall risk metrics, equipment-specific
+ * status, and trend information. Designed for integration with dashboards and digital twin platforms.
  * </p>
  *
  * @author NeqSim Development Team
@@ -307,7 +306,7 @@ public class RealTimeRiskAssessment implements Serializable {
     List<ProcessVariableStatus> alarming = new ArrayList<>();
     for (ProcessVariableStatus pv : processVariables.values()) {
       if (pv.isAlarming()) {
-        alarming.add(pv);
+	alarming.add(pv);
       }
     }
     return alarming;
@@ -365,8 +364,7 @@ public class RealTimeRiskAssessment implements Serializable {
    * @return JSON representation
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   /**
@@ -381,8 +379,8 @@ public class RealTimeRiskAssessment implements Serializable {
     sb.append("═══════════════════════════════════════════════════════════\n");
     sb.append(String.format("Timestamp: %s%n", timestamp));
     sb.append(String.format("Risk Score: %.1f/10 [%s] %s%n", overallRiskScore,
-        riskCategory != null ? riskCategory.name() : "N/A",
-        riskTrend.equals("INCREASING") ? "↑" : riskTrend.equals("DECREASING") ? "↓" : "→"));
+	riskCategory != null ? riskCategory.name() : "N/A",
+	riskTrend.equals("INCREASING") ? "↑" : riskTrend.equals("DECREASING") ? "↓" : "→"));
     sb.append(String.format("Availability: %.1f%%%n", availability * 100));
     sb.append(String.format("Expected Production Loss: %.2f%%%n", expectedProductionLoss));
     sb.append("───────────────────────────────────────────────────────────\n");
@@ -390,8 +388,8 @@ public class RealTimeRiskAssessment implements Serializable {
     if (!getAlarmingVariables().isEmpty()) {
       sb.append("ALARMING VARIABLES:\n");
       for (ProcessVariableStatus pv : getAlarmingVariables()) {
-        sb.append(String.format("  • %s: %.1f%s (%.1f%% deviation)%n", pv.getVariableName(),
-            pv.getCurrentValue(), pv.getUnit(), pv.getDeviationPercent()));
+	sb.append(String.format("  • %s: %.1f%s (%.1f%% deviation)%n", pv.getVariableName(), pv.getCurrentValue(),
+	    pv.getUnit(), pv.getDeviationPercent()));
       }
     }
 
@@ -400,7 +398,7 @@ public class RealTimeRiskAssessment implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("RealTimeRiskAssessment[%s: score=%.1f, category=%s, trend=%s]", timestamp,
-        overallRiskScore, riskCategory, riskTrend);
+    return String.format("RealTimeRiskAssessment[%s: score=%.1f, category=%s, trend=%s]", timestamp, overallRiskScore,
+	riskCategory, riskTrend);
   }
 }

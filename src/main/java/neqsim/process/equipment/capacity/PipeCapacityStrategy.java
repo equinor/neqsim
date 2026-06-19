@@ -46,17 +46,17 @@ public class PipeCapacityStrategy implements EquipmentCapacityStrategy {
   /**
    * Default constructor.
    */
-  public PipeCapacityStrategy() {}
+  public PipeCapacityStrategy() {
+  }
 
   /**
    * Constructor with custom velocity limits.
    *
-   * @param maxGasVelocity maximum gas velocity in m/s
-   * @param maxLiquidVelocity maximum liquid velocity in m/s
+   * @param maxGasVelocity        maximum gas velocity in m/s
+   * @param maxLiquidVelocity     maximum liquid velocity in m/s
    * @param maxMultiphaseVelocity maximum multiphase velocity in m/s
    */
-  public PipeCapacityStrategy(double maxGasVelocity, double maxLiquidVelocity,
-      double maxMultiphaseVelocity) {
+  public PipeCapacityStrategy(double maxGasVelocity, double maxLiquidVelocity, double maxMultiphaseVelocity) {
     this.maxGasVelocity = maxGasVelocity;
     this.maxLiquidVelocity = maxLiquidVelocity;
     this.maxMultiphaseVelocity = maxMultiphaseVelocity;
@@ -66,7 +66,7 @@ public class PipeCapacityStrategy implements EquipmentCapacityStrategy {
   @Override
   public boolean supports(ProcessEquipmentInterface equipment) {
     return equipment instanceof AdiabaticPipe || equipment instanceof PipeBeggsAndBrills
-        || equipment instanceof OnePhasePipeLine;
+	|| equipment instanceof OnePhasePipeLine;
   }
 
   /** {@inheritDoc} */
@@ -121,12 +121,12 @@ public class PipeCapacityStrategy implements EquipmentCapacityStrategy {
       // Try to get velocity from outlet stream
       AdiabaticPipe pipe = (AdiabaticPipe) equipment;
       if (pipe.getOutletStream() != null && pipe.getOutletStream().getThermoSystem() != null) {
-        double flowRate = pipe.getOutletStream().getThermoSystem().getFlowRate("m3/hr");
-        double diameter = pipe.getDiameter();
-        if (diameter > 0) {
-          double area = Math.PI * diameter * diameter / 4.0;
-          return flowRate / 3600.0 / area;
-        }
+	double flowRate = pipe.getOutletStream().getThermoSystem().getFlowRate("m3/hr");
+	double diameter = pipe.getDiameter();
+	if (diameter > 0) {
+	  double area = Math.PI * diameter * diameter / 4.0;
+	  return flowRate / 3600.0 / area;
+	}
       }
     }
     return 0.0;
@@ -144,7 +144,7 @@ public class PipeCapacityStrategy implements EquipmentCapacityStrategy {
       PipeBeggsAndBrills pipe = (PipeBeggsAndBrills) equipment;
       double designVel = pipe.getMechanicalDesign().getMaxDesignVelocity();
       if (designVel > 0) {
-        return designVel;
+	return designVel;
       }
     }
 
@@ -161,9 +161,9 @@ public class PipeCapacityStrategy implements EquipmentCapacityStrategy {
     double maxVel = getApplicableMaxVelocity(equipment);
 
     CapacityConstraint velocityConstraint = new CapacityConstraint("velocity")
-        .setDesignValue(maxVel * maxErosionalRatio).setMaxValue(maxVel).setUnit("m/s")
-        .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT).setWarningThreshold(0.85)
-        .setValueSupplier(() -> getSuperficialVelocity(equipment));
+	.setDesignValue(maxVel * maxErosionalRatio).setMaxValue(maxVel).setUnit("m/s")
+	.setSeverity(CapacityConstraint.ConstraintSeverity.SOFT).setWarningThreshold(0.85)
+	.setValueSupplier(() -> getSuperficialVelocity(equipment));
     constraints.put("velocity", velocityConstraint);
 
     // Pressure drop constraint (if available)
@@ -173,12 +173,12 @@ public class PipeCapacityStrategy implements EquipmentCapacityStrategy {
       // Assume 10% of inlet pressure as allowable DP
       double maxDP = inletP * 0.1;
       CapacityConstraint dpConstraint = new CapacityConstraint("pressureDrop").setDesignValue(maxDP)
-          .setMaxValue(maxDP * 1.5).setUnit("bar")
-          .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT).setValueSupplier(() -> {
-            double inP = pipe.getInletStream().getPressure("bara");
-            double outP = pipe.getOutletStream().getPressure("bara");
-            return inP - outP;
-          });
+	  .setMaxValue(maxDP * 1.5).setUnit("bar").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
+	  .setValueSupplier(() -> {
+	    double inP = pipe.getInletStream().getPressure("bara");
+	    double outP = pipe.getOutletStream().getPressure("bara");
+	    return inP - outP;
+	  });
       constraints.put("pressureDrop", dpConstraint);
     }
 
@@ -193,7 +193,7 @@ public class PipeCapacityStrategy implements EquipmentCapacityStrategy {
 
     for (CapacityConstraint constraint : constraints.values()) {
       if (constraint.isViolated()) {
-        violations.add(constraint);
+	violations.add(constraint);
       }
     }
 
@@ -211,8 +211,8 @@ public class PipeCapacityStrategy implements EquipmentCapacityStrategy {
     for (CapacityConstraint constraint : constraints.values()) {
       double util = constraint.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
-        maxUtil = util;
-        bottleneck = constraint;
+	maxUtil = util;
+	bottleneck = constraint;
       }
     }
 
@@ -226,10 +226,10 @@ public class PipeCapacityStrategy implements EquipmentCapacityStrategy {
 
     for (CapacityConstraint constraint : constraints.values()) {
       if (constraint.getSeverity() == CapacityConstraint.ConstraintSeverity.HARD
-          || constraint.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL) {
-        if (constraint.isHardLimitExceeded()) {
-          return false;
-        }
+	  || constraint.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL) {
+	if (constraint.isHardLimitExceeded()) {
+	  return false;
+	}
       }
     }
 
@@ -243,7 +243,7 @@ public class PipeCapacityStrategy implements EquipmentCapacityStrategy {
 
     for (CapacityConstraint constraint : constraints.values()) {
       if (constraint.getUtilization() > 1.0) {
-        return false;
+	return false;
       }
     }
 

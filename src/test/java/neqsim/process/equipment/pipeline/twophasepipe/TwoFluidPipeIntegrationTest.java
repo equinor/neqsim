@@ -17,8 +17,8 @@ import org.apache.logging.log4j.Logger;
  * Integration tests for TwoFluidPipe transient multiphase flow solver.
  *
  * <p>
- * These tests validate the complete solver workflow including initialization, steady-state solving,
- * and transient simulation with thermodynamic coupling.
+ * These tests validate the complete solver workflow including initialization, steady-state solving, and transient
+ * simulation with thermodynamic coupling.
  * </p>
  */
 class TwoFluidPipeIntegrationTest {
@@ -253,9 +253,8 @@ class TwoFluidPipeIntegrationTest {
    * Test that liquid accumulation increases at lower flow rates.
    *
    * <p>
-   * At low gas velocities, the gas phase cannot efficiently carry the liquid, resulting in
-   * increased liquid holdup. This test verifies that the velocity-dependent slip model correctly
-   * predicts higher holdup at lower flow rates.
+   * At low gas velocities, the gas phase cannot efficiently carry the liquid, resulting in increased liquid holdup.
+   * This test verifies that the velocity-dependent slip model correctly predicts higher holdup at lower flow rates.
    * </p>
    */
   @Test
@@ -323,12 +322,10 @@ class TwoFluidPipeIntegrationTest {
     avgHighVG /= highVG.length;
 
     // Debug output
-    logger.printf(org.apache.logging.log4j.Level.INFO,
-        "Low flow: vG=%.2f m/s, holdup=%.4f (%.2f%%)%n", avgLowVG, avgLowHoldup,
-        avgLowHoldup * 100);
-    logger.printf(org.apache.logging.log4j.Level.INFO,
-        "High flow: vG=%.2f m/s, holdup=%.4f (%.2f%%)%n", avgHighVG, avgHighHoldup,
-        avgHighHoldup * 100);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Low flow: vG=%.2f m/s, holdup=%.4f (%.2f%%)%n", avgLowVG,
+	avgLowHoldup, avgLowHoldup * 100);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "High flow: vG=%.2f m/s, holdup=%.4f (%.2f%%)%n", avgHighVG,
+	avgHighHoldup, avgHighHoldup * 100);
 
     // Get flow regimes
     PipeSection.FlowRegime[] lowRegimes = lowFlowPipe.getFlowRegimeProfile();
@@ -342,17 +339,15 @@ class TwoFluidPipeIntegrationTest {
 
     // For now, just verify both have reasonable holdups
     assertTrue(avgLowHoldup > 0 && avgLowHoldup < 0.5,
-        String.format("Low flow holdup should be reasonable: %.4f", avgLowHoldup));
+	String.format("Low flow holdup should be reasonable: %.4f", avgLowHoldup));
     assertTrue(avgHighHoldup > 0 && avgHighHoldup < 0.5,
-        String.format("High flow holdup should be reasonable: %.4f", avgHighHoldup));
+	String.format("High flow holdup should be reasonable: %.4f", avgHighHoldup));
 
     // Check liquid inventory is positive and reasonable
     double lowInventory = lowFlowPipe.getLiquidInventory("m3");
     double highInventory = highFlowPipe.getLiquidInventory("m3");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Low flow inventory: %.2f m³%n",
-        lowInventory);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "High flow inventory: %.2f m³%n",
-        highInventory);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Low flow inventory: %.2f m³%n", lowInventory);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "High flow inventory: %.2f m³%n", highInventory);
 
     assertTrue(lowInventory > 0, "Low flow inventory should be positive");
     assertTrue(highInventory > 0, "High flow inventory should be positive");
@@ -387,15 +382,13 @@ class TwoFluidPipeIntegrationTest {
 
     // Configure subsea thermal model with 50mm PU foam insulation
     thermalPipe.configureSubseaThermalModel(0.050, 0.040,
-        neqsim.process.equipment.pipeline.RadialThermalLayer.MaterialType.PU_FOAM);
+	neqsim.process.equipment.pipeline.RadialThermalLayer.MaterialType.PU_FOAM);
 
     // Verify multi-layer model is enabled
-    assertTrue(thermalPipe.isUseMultilayerThermalModel(),
-        "Multi-layer thermal model should be enabled");
+    assertTrue(thermalPipe.isUseMultilayerThermalModel(), "Multi-layer thermal model should be enabled");
 
     // Get thermal calculator and verify configuration
-    neqsim.process.equipment.pipeline.MultilayerThermalCalculator calc =
-        thermalPipe.getThermalCalculator();
+    neqsim.process.equipment.pipeline.MultilayerThermalCalculator calc = thermalPipe.getThermalCalculator();
     assertNotNull(calc, "Thermal calculator should not be null");
 
     // Should have 4 layers: steel, FBE, PU foam, concrete
@@ -406,7 +399,7 @@ class TwoFluidPipeIntegrationTest {
     double uValue = calc.calculateOverallUValue();
     logger.printf(org.apache.logging.log4j.Level.INFO, "Overall U-value: %.2f W/(m²·K)%n", uValue);
     assertTrue(uValue > 0.3 && uValue < 20.0,
-        String.format("U-value should be reasonable for insulated pipe: %.2f", uValue));
+	String.format("U-value should be reasonable for insulated pipe: %.2f", uValue));
 
     // Run and verify temperature drops along pipe
     thermalPipe.run();
@@ -418,9 +411,8 @@ class TwoFluidPipeIntegrationTest {
     // Temperature should decrease along pipe
     double inletTemp = tempProfile[0];
     double outletTemp = tempProfile[tempProfile.length - 1];
-    logger.printf(org.apache.logging.log4j.Level.INFO,
-        "Inlet temp: %.1f K (%.1f °C), Outlet temp: %.1f K (%.1f °C)%n", inletTemp,
-        inletTemp - 273.15, outletTemp, outletTemp - 273.15);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Inlet temp: %.1f K (%.1f °C), Outlet temp: %.1f K (%.1f °C)%n",
+	inletTemp, inletTemp - 273.15, outletTemp, outletTemp - 273.15);
 
     assertTrue(outletTemp <= inletTemp, "Temperature should decrease or stay constant along pipe");
   }
@@ -454,15 +446,14 @@ class TwoFluidPipeIntegrationTest {
 
     // Configure with good insulation (60mm PU foam, 40mm concrete)
     subseaPipe.configureSubseaThermalModel(0.060, 0.040,
-        neqsim.process.equipment.pipeline.RadialThermalLayer.MaterialType.PU_FOAM);
+	neqsim.process.equipment.pipeline.RadialThermalLayer.MaterialType.PU_FOAM);
 
     // Set hydrate formation temperature (typical: 20°C at 100 bar for this composition)
     subseaPipe.setHydrateFormationTemperature(20.0, "C");
 
     // Calculate cooldown time to hydrate temperature
     double cooldownHours = subseaPipe.calculateHydrateCooldownTime();
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Cooldown time to hydrate: %.1f hours%n",
-        cooldownHours);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Cooldown time to hydrate: %.1f hours%n", cooldownHours);
 
     // Should have reasonable cooldown time (typically 8-24 hours for well-insulated pipe)
     assertTrue(cooldownHours > 0, "Cooldown time should be positive");
@@ -514,19 +505,17 @@ class TwoFluidPipeIntegrationTest {
     insulatedPipe.setNumberOfSections(10);
     insulatedPipe.setSurfaceTemperature(4.0, "C");
     insulatedPipe.configureSubseaThermalModel(0.050, 0,
-        neqsim.process.equipment.pipeline.RadialThermalLayer.MaterialType.PU_FOAM);
+	neqsim.process.equipment.pipeline.RadialThermalLayer.MaterialType.PU_FOAM);
 
     // Compare U-values
     double uBare = barePipe.getThermalCalculator().calculateOverallUValue();
     double uInsulated = insulatedPipe.getThermalCalculator().calculateOverallUValue();
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "Bare pipe U-value: %.1f W/(m²·K)%n", uBare);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Insulated pipe U-value: %.1f W/(m²·K)%n",
-        uInsulated);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Insulated pipe U-value: %.1f W/(m²·K)%n", uInsulated);
 
     // Bare pipe should have much higher U-value (faster heat transfer)
-    assertTrue(uBare > uInsulated * 2,
-        "Bare pipe U-value should be at least 2x higher than insulated");
+    assertTrue(uBare > uInsulated * 2, "Bare pipe U-value should be at least 2x higher than insulated");
 
     // Run both pipes
     barePipe.run();
@@ -540,11 +529,9 @@ class TwoFluidPipeIntegrationTest {
     double insulatedOutlet = insulatedTemp[insulatedTemp.length - 1] - 273.15;
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "Bare pipe outlet: %.1f °C%n", bareOutlet);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Insulated pipe outlet: %.1f °C%n",
-        insulatedOutlet);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Insulated pipe outlet: %.1f °C%n", insulatedOutlet);
 
     // Insulated pipe should have warmer outlet
-    assertTrue(insulatedOutlet >= bareOutlet,
-        "Insulated pipe should have warmer or equal outlet temperature");
+    assertTrue(insulatedOutlet >= bareOutlet, "Insulated pipe should have warmer or equal outlet temperature");
   }
 }

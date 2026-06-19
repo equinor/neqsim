@@ -135,8 +135,7 @@ class ZFactorCorrelationsTest {
     assertTrue(results.containsKey("Papay"));
 
     for (Map.Entry<String, Double> entry : results.entrySet()) {
-      assertTrue(entry.getValue() > 0.0,
-          entry.getKey() + " Z should be positive, got " + entry.getValue());
+      assertTrue(entry.getValue() > 0.0, entry.getKey() + " Z should be positive, got " + entry.getValue());
     }
   }
 }

@@ -9,9 +9,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * ASTM D445 - Standard Test Method for Kinematic Viscosity of Transparent and Opaque Liquids.
  *
  * <p>
- * Calculates kinematic viscosity at standard reference temperatures (typically 40 C and 100 C) by
- * performing a thermodynamic flash and extracting the liquid phase viscosity. Also computes the
- * Viscosity Index (VI) per ASTM D2270.
+ * Calculates kinematic viscosity at standard reference temperatures (typically 40 C and 100 C) by performing a
+ * thermodynamic flash and extracting the liquid phase viscosity. Also computes the Viscosity Index (VI) per ASTM D2270.
  * </p>
  *
  * <p>
@@ -79,8 +78,7 @@ public class Standard_ASTM_D445 extends neqsim.standards.Standard {
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object representing the oil
    */
   public Standard_ASTM_D445(SystemInterface thermoSystem) {
-    super("Standard_ASTM_D445", "ASTM D445 - Kinematic Viscosity of Transparent and Opaque Liquids",
-        thermoSystem);
+    super("Standard_ASTM_D445", "ASTM D445 - Kinematic Viscosity of Transparent and Opaque Liquids", thermoSystem);
   }
 
   /** {@inheritDoc} */
@@ -102,7 +100,7 @@ public class Standard_ASTM_D445 extends neqsim.standards.Standard {
    * Performs flash at specified temperature and extracts liquid viscosity and density.
    *
    * @param temperatureC temperature in degrees Celsius
-   * @param is40C true if storing results for 40 C, false for 100 C
+   * @param is40C        true if storing results for 40 C, false for 100 C
    */
   private void calculateAtTemperature(double temperatureC, boolean is40C) {
     try {
@@ -116,37 +114,37 @@ public class Standard_ASTM_D445 extends neqsim.standards.Standard {
       // Find oil/liquid phase
       int liquidPhaseIndex = -1;
       for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-        String phaseType = fluid.getPhase(i).getType().toString();
-        if ("oil".equals(phaseType) || "liquid".equals(phaseType)) {
-          liquidPhaseIndex = i;
-          break;
-        }
+	String phaseType = fluid.getPhase(i).getType().toString();
+	if ("oil".equals(phaseType) || "liquid".equals(phaseType)) {
+	  liquidPhaseIndex = i;
+	  break;
+	}
       }
 
       if (liquidPhaseIndex < 0 && fluid.getNumberOfPhases() > 0) {
-        // Fall back to first phase if no liquid found (single phase)
-        liquidPhaseIndex = 0;
+	// Fall back to first phase if no liquid found (single phase)
+	liquidPhaseIndex = 0;
       }
 
       if (liquidPhaseIndex >= 0) {
-        // Dynamic viscosity in Pa.s from NeqSim, convert to mPa.s (cP)
-        double dynVisc = fluid.getPhase(liquidPhaseIndex).getViscosity("kg/msec") * 1000.0;
-        // Density in kg/m3
-        double dens = fluid.getPhase(liquidPhaseIndex).getDensity("kg/m3");
-        // Kinematic viscosity = dynamic / density, convert to mm2/s
-        // dynVisc in mPa.s = 1e-3 Pa.s, density in kg/m3
-        // KV [mm2/s] = (dynVisc [mPa.s] / density [kg/m3]) * 1000
-        double kinVisc = (dynVisc / dens) * 1000.0;
+	// Dynamic viscosity in Pa.s from NeqSim, convert to mPa.s (cP)
+	double dynVisc = fluid.getPhase(liquidPhaseIndex).getViscosity("kg/msec") * 1000.0;
+	// Density in kg/m3
+	double dens = fluid.getPhase(liquidPhaseIndex).getDensity("kg/m3");
+	// Kinematic viscosity = dynamic / density, convert to mm2/s
+	// dynVisc in mPa.s = 1e-3 Pa.s, density in kg/m3
+	// KV [mm2/s] = (dynVisc [mPa.s] / density [kg/m3]) * 1000
+	double kinVisc = (dynVisc / dens) * 1000.0;
 
-        if (is40C) {
-          dynamicViscosity40C = dynVisc;
-          density40C = dens;
-          kinematicViscosity40C = kinVisc;
-        } else {
-          dynamicViscosity100C = dynVisc;
-          density100C = dens;
-          kinematicViscosity100C = kinVisc;
-        }
+	if (is40C) {
+	  dynamicViscosity40C = dynVisc;
+	  density40C = dens;
+	  kinematicViscosity40C = kinVisc;
+	} else {
+	  dynamicViscosity100C = dynVisc;
+	  density100C = dens;
+	  kinematicViscosity100C = kinVisc;
+	}
       }
     } catch (Exception ex) {
       logger.error("Viscosity calculation failed at {} C: {}", temperatureC, ex.getMessage());
@@ -157,11 +155,11 @@ public class Standard_ASTM_D445 extends neqsim.standards.Standard {
    * Calculates the Viscosity Index per ASTM D2270.
    *
    * <p>
-   * For KV100 between 2 and 70 mm2/s, uses the standard L and H reference oils lookup. This is a
-   * simplified calculation using the empirical correlation.
+   * For KV100 between 2 and 70 mm2/s, uses the standard L and H reference oils lookup. This is a simplified calculation
+   * using the empirical correlation.
    * </p>
    *
-   * @param kv40 kinematic viscosity at 40 C in mm2/s
+   * @param kv40  kinematic viscosity at 40 C in mm2/s
    * @param kv100 kinematic viscosity at 100 C in mm2/s
    * @return viscosity index
    */
@@ -204,23 +202,23 @@ public class Standard_ASTM_D445 extends neqsim.standards.Standard {
   @Override
   public double getValue(String returnParameter) {
     switch (returnParameter) {
-      case "KV40":
-        return kinematicViscosity40C;
-      case "KV100":
-        return kinematicViscosity100C;
-      case "dynamicViscosity40C":
-        return dynamicViscosity40C;
-      case "dynamicViscosity100C":
-        return dynamicViscosity100C;
-      case "density40C":
-        return density40C;
-      case "density100C":
-        return density100C;
-      case "VI":
-        return viscosityIndex;
-      default:
-        logger.error("Unsupported parameter: {}", returnParameter);
-        return Double.NaN;
+    case "KV40":
+      return kinematicViscosity40C;
+    case "KV100":
+      return kinematicViscosity100C;
+    case "dynamicViscosity40C":
+      return dynamicViscosity40C;
+    case "dynamicViscosity100C":
+      return dynamicViscosity100C;
+    case "density40C":
+      return density40C;
+    case "density100C":
+      return density100C;
+    case "VI":
+      return viscosityIndex;
+    default:
+      logger.error("Unsupported parameter: {}", returnParameter);
+      return Double.NaN;
     }
   }
 
@@ -234,19 +232,19 @@ public class Standard_ASTM_D445 extends neqsim.standards.Standard {
   @Override
   public String getUnit(String returnParameter) {
     switch (returnParameter) {
-      case "KV40":
-      case "KV100":
-        return "mm2/s";
-      case "dynamicViscosity40C":
-      case "dynamicViscosity100C":
-        return "mPa.s";
-      case "density40C":
-      case "density100C":
-        return "kg/m3";
-      case "VI":
-        return "-";
-      default:
-        return "";
+    case "KV40":
+    case "KV100":
+      return "mm2/s";
+    case "dynamicViscosity40C":
+    case "dynamicViscosity100C":
+      return "mPa.s";
+    case "density40C":
+    case "density100C":
+      return "kg/m3";
+    case "VI":
+      return "-";
+    default:
+      return "";
     }
   }
 

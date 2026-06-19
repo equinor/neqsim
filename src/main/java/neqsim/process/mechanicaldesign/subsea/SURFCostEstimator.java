@@ -20,9 +20,8 @@ import com.google.gson.GsonBuilder;
  * </ul>
  *
  * <p>
- * Cost estimates are based on industry benchmarks for the Norwegian Continental Shelf (NCS) and can
- * be adjusted for other regions using the {@link SubseaCostEstimator.Region} parameter. All costs
- * are in USD unless converted.
+ * Cost estimates are based on industry benchmarks for the Norwegian Continental Shelf (NCS) and can be adjusted for
+ * other regions using the {@link SubseaCostEstimator.Region} parameter. All costs are in USD unless converted.
  * </p>
  *
  * @author ESOL
@@ -179,17 +178,17 @@ public class SURFCostEstimator {
   /**
    * Default constructor.
    */
-  public SURFCostEstimator() {}
+  public SURFCostEstimator() {
+  }
 
   /**
    * Constructor with basic field parameters.
    *
    * @param numberOfWells number of production wells
-   * @param waterDepthM water depth in meters
-   * @param region cost estimation region
+   * @param waterDepthM   water depth in meters
+   * @param region        cost estimation region
    */
-  public SURFCostEstimator(int numberOfWells, double waterDepthM,
-      SubseaCostEstimator.Region region) {
+  public SURFCostEstimator(int numberOfWells, double waterDepthM, SubseaCostEstimator.Region region) {
     this.numberOfWells = numberOfWells;
     this.waterDepthM = waterDepthM;
     this.region = region;
@@ -201,8 +200,8 @@ public class SURFCostEstimator {
    * Calculate complete SURF CAPEX breakdown.
    *
    * <p>
-   * Estimates costs for all SURF components using industry benchmark rates and scales for water
-   * depth, number of wells, and region.
+   * Estimates costs for all SURF components using industry benchmark rates and scales for water depth, number of wells,
+   * and region.
    * </p>
    *
    * @return total SURF cost in USD
@@ -231,22 +230,20 @@ public class SURFCostEstimator {
     SubseaCostEstimator est = new SubseaCostEstimator(region);
 
     // Christmas trees
-    est.calculateTreeCost(treePressureRatingPsi, treeBoreSizeInches, waterDepthM, horizontalTrees,
-        dualBoreTrees);
+    est.calculateTreeCost(treePressureRatingPsi, treeBoreSizeInches, waterDepthM, horizontalTrees, dualBoreTrees);
     double treeCost = est.getTotalCost();
     double totalTreeCost = treeCost * numberOfWells;
     subseaCostUSD += totalTreeCost;
     addLineItem("S", "Christmas Trees", numberOfWells, "ea", treeCost, totalTreeCost,
-        est.getVesselDays() * numberOfWells);
+	est.getVesselDays() * numberOfWells);
 
     // Manifold
     est = new SubseaCostEstimator(region);
-    est.calculateManifoldCost(manifoldSlots, manifoldWeightTonnes, waterDepthM,
-        manifoldHasTestHeader);
+    est.calculateManifoldCost(manifoldSlots, manifoldWeightTonnes, waterDepthM, manifoldHasTestHeader);
     double manifoldCost = est.getTotalCost();
     subseaCostUSD += manifoldCost;
-    addLineItem("S", "Subsea Manifold (" + manifoldSlots + "-slot)", 1, "ea", manifoldCost,
-        manifoldCost, est.getVesselDays());
+    addLineItem("S", "Subsea Manifold (" + manifoldSlots + "-slot)", 1, "ea", manifoldCost, manifoldCost,
+	est.getVesselDays());
 
     // PLETs
     if (numberOfPLETs > 0) {
@@ -255,8 +252,7 @@ public class SURFCostEstimator {
       double pletCost = est.getTotalCost();
       double totalPletCost = pletCost * numberOfPLETs;
       subseaCostUSD += totalPletCost;
-      addLineItem("S", "PLETs", numberOfPLETs, "ea", pletCost, totalPletCost,
-          est.getVesselDays() * numberOfPLETs);
+      addLineItem("S", "PLETs", numberOfPLETs, "ea", pletCost, totalPletCost, est.getVesselDays() * numberOfPLETs);
     }
 
     // Jumpers (well to manifold)
@@ -266,8 +262,8 @@ public class SURFCostEstimator {
       double jumperCost = est.getTotalCost();
       double totalJumperCost = jumperCost * numberOfJumpers;
       subseaCostUSD += totalJumperCost;
-      addLineItem("S", "Jumpers (well-manifold)", numberOfJumpers, "ea", jumperCost,
-          totalJumperCost, est.getVesselDays() * numberOfJumpers);
+      addLineItem("S", "Jumpers (well-manifold)", numberOfJumpers, "ea", jumperCost, totalJumperCost,
+	  est.getVesselDays() * numberOfJumpers);
     }
   }
 
@@ -277,10 +273,10 @@ public class SURFCostEstimator {
   private void calculateUmbilicals() {
     SubseaCostEstimator est = new SubseaCostEstimator(region);
     est.calculateUmbilicalCost(umbilicalLengthKm, umbilicalHydraulicLines, umbilicalChemicalLines,
-        umbilicalElectricalCables, waterDepthM, umbilicalDynamic);
+	umbilicalElectricalCables, waterDepthM, umbilicalDynamic);
     umbilicalCostUSD = est.getTotalCost();
-    addLineItem("U", "Control Umbilical (" + String.format("%.0f", umbilicalLengthKm) + " km)", 1,
-        "ea", umbilicalCostUSD, umbilicalCostUSD, est.getVesselDays());
+    addLineItem("U", "Control Umbilical (" + String.format("%.0f", umbilicalLengthKm) + " km)", 1, "ea",
+	umbilicalCostUSD, umbilicalCostUSD, est.getVesselDays());
   }
 
   /**
@@ -296,18 +292,15 @@ public class SURFCostEstimator {
     for (int i = 0; i < numberOfProductionRisers; i++) {
       SubseaCostEstimator est = new SubseaCostEstimator(region);
       if (flexibleRiser) {
-        est.calculateFlexiblePipeCost(effectiveRiserLength, riserDiameterInches, waterDepthM, true,
-            riserHasBuoyancy);
+	est.calculateFlexiblePipeCost(effectiveRiserLength, riserDiameterInches, waterDepthM, true, riserHasBuoyancy);
       } else {
-        // Rigid riser treated as rigid jumper with vertical orientation
-        est.calculateJumperCost(effectiveRiserLength, riserDiameterInches, true, waterDepthM);
+	// Rigid riser treated as rigid jumper with vertical orientation
+	est.calculateJumperCost(effectiveRiserLength, riserDiameterInches, true, waterDepthM);
       }
       double riserCost = est.getTotalCost();
       riserCostUSD += riserCost;
-      addLineItem("R",
-          (flexibleRiser ? "Flexible" : "Rigid") + " Production Riser "
-              + String.format("%.0f", riserDiameterInches) + "\"",
-          1, "ea", riserCost, riserCost, est.getVesselDays());
+      addLineItem("R", (flexibleRiser ? "Flexible" : "Rigid") + " Production Riser "
+	  + String.format("%.0f", riserDiameterInches) + "\"", 1, "ea", riserCost, riserCost, est.getVesselDays());
     }
   }
 
@@ -319,34 +312,34 @@ public class SURFCostEstimator {
     if (infieldFlowlineLengthKm > 0) {
       double infieldCost;
       if (infieldFlowlineFlexible) {
-        SubseaCostEstimator est = new SubseaCostEstimator(region);
-        est.calculateFlexiblePipeCost(infieldFlowlineLengthKm * 1000, infieldFlowlineDiameterInches,
-            waterDepthM, false, false);
-        infieldCost = est.getTotalCost();
-        flowlineCostUSD += infieldCost;
-        addLineItem("F",
-            "Infield Flowline " + String.format("%.0f", infieldFlowlineDiameterInches) + "\" ("
-                + String.format("%.0f", infieldFlowlineLengthKm) + " km, flexible)",
-            1, "ea", infieldCost, infieldCost, est.getVesselDays());
+	SubseaCostEstimator est = new SubseaCostEstimator(region);
+	est.calculateFlexiblePipeCost(infieldFlowlineLengthKm * 1000, infieldFlowlineDiameterInches, waterDepthM, false,
+	    false);
+	infieldCost = est.getTotalCost();
+	flowlineCostUSD += infieldCost;
+	addLineItem("F",
+	    "Infield Flowline " + String.format("%.0f", infieldFlowlineDiameterInches) + "\" ("
+		+ String.format("%.0f", infieldFlowlineLengthKm) + " km, flexible)",
+	    1, "ea", infieldCost, infieldCost, est.getVesselDays());
       } else {
-        infieldCost = calculateRigidPipelineCost(infieldFlowlineLengthKm,
-            infieldFlowlineDiameterInches, "Infield Flowline");
+	infieldCost = calculateRigidPipelineCost(infieldFlowlineLengthKm, infieldFlowlineDiameterInches,
+	    "Infield Flowline");
       }
     }
 
     // Export pipeline
     if (exportPipelineLengthKm > 0) {
-      double exportCost = calculateRigidPipelineCost(exportPipelineLengthKm,
-          exportPipelineDiameterInches, "Export Pipeline");
+      double exportCost = calculateRigidPipelineCost(exportPipelineLengthKm, exportPipelineDiameterInches,
+	  "Export Pipeline");
     }
   }
 
   /**
    * Calculate cost for a rigid steel pipeline.
    *
-   * @param lengthKm pipeline length in km
+   * @param lengthKm       pipeline length in km
    * @param diameterInches outer diameter in inches
-   * @param label description label
+   * @param label          description label
    * @return total cost in USD
    */
   private double calculateRigidPipelineCost(double lengthKm, double diameterInches, String label) {
@@ -363,8 +356,7 @@ public class SURFCostEstimator {
       double designFactor = 0.72; // ASME B31.8 Location Class 1
       double jointFactor = 1.0;
       double designPressureMPa = pipelineDesignPressureBar / 10.0;
-      wallThicknessM =
-          designPressureMPa * outerDiameterM / (2.0 * smys * designFactor * jointFactor);
+      wallThicknessM = designPressureMPa * outerDiameterM / (2.0 * smys * designFactor * jointFactor);
       // Add corrosion allowance (3mm) and fabrication tolerance (12.5%)
       wallThicknessM = (wallThicknessM + 0.003) / (1.0 - 0.125);
       // Round up to nearest 0.5mm
@@ -373,8 +365,7 @@ public class SURFCostEstimator {
 
     // Steel weight per meter
     double innerDiameterM = outerDiameterM - 2.0 * wallThicknessM;
-    double steelAreaM2 =
-        Math.PI * (outerDiameterM * outerDiameterM - innerDiameterM * innerDiameterM) / 4.0;
+    double steelAreaM2 = Math.PI * (outerDiameterM * outerDiameterM - innerDiameterM * innerDiameterM) / 4.0;
     double steelWeightPerM = steelAreaM2 * 7850.0; // kg/m
     double totalSteelWeight = steelWeightPerM * lengthM;
 
@@ -386,8 +377,7 @@ public class SURFCostEstimator {
     double coatingCostUSD = externalSurfaceM2 * coatingPricePerM2;
 
     // Installation cost per meter (varies by method and diameter)
-    double installCostPerM =
-        getInstallationCostPerMeter(pipelineInstallMethod, outerDiameterM, waterDepthM);
+    double installCostPerM = getInstallationCostPerMeter(pipelineInstallMethod, outerDiameterM, waterDepthM);
     double installCostUSD = installCostPerM * lengthM;
 
     // Welding cost
@@ -421,10 +411,9 @@ public class SURFCostEstimator {
     double vesselDays = lengthKm / layRateKmPerDay + 5; // Plus mob/demob
 
     addLineItem("F",
-        label + " " + String.format("%.0f", diameterInches) + "\" x "
-            + String.format("%.1f", wallThicknessM * 1000) + "mm WT ("
-            + String.format("%.0f", lengthKm) + " km, " + pipelineMaterialGrade + ")",
-        1, "ea", totalCost, totalCost, vesselDays);
+	label + " " + String.format("%.0f", diameterInches) + "\" x " + String.format("%.1f", wallThicknessM * 1000)
+	    + "mm WT (" + String.format("%.0f", lengthKm) + " km, " + pipelineMaterialGrade + ")",
+	1, "ea", totalCost, totalCost, vesselDays);
 
     return totalCost;
   }
@@ -454,13 +443,12 @@ public class SURFCostEstimator {
   /**
    * Get installation cost per meter for pipeline.
    *
-   * @param method installation method (S-lay, J-lay, Reel-lay)
+   * @param method         installation method (S-lay, J-lay, Reel-lay)
    * @param outerDiameterM outer diameter in meters
-   * @param waterDepth water depth in meters
+   * @param waterDepth     water depth in meters
    * @return cost per meter in USD
    */
-  private double getInstallationCostPerMeter(String method, double outerDiameterM,
-      double waterDepth) {
+  private double getInstallationCostPerMeter(String method, double outerDiameterM, double waterDepth) {
     double baseCost;
     double depthFactor;
 
@@ -494,34 +482,34 @@ public class SURFCostEstimator {
    */
   private double getRegionFactor() {
     switch (region) {
-      case NORWAY:
-        return 1.35;
-      case UK:
-        return 1.25;
-      case GOM:
-        return 1.0;
-      case BRAZIL:
-        return 0.85;
-      case WEST_AFRICA:
-        return 1.1;
-      default:
-        return 1.0;
+    case NORWAY:
+      return 1.35;
+    case UK:
+      return 1.25;
+    case GOM:
+      return 1.0;
+    case BRAZIL:
+      return 0.85;
+    case WEST_AFRICA:
+      return 1.1;
+    default:
+      return 1.0;
     }
   }
 
   /**
    * Add a line item to the cost breakdown.
    *
-   * @param category SURF category (S, U, R, F)
-   * @param description item description
-   * @param quantity quantity
-   * @param unit unit of measure
-   * @param unitCostUSD unit cost in USD
+   * @param category     SURF category (S, U, R, F)
+   * @param description  item description
+   * @param quantity     quantity
+   * @param unit         unit of measure
+   * @param unitCostUSD  unit cost in USD
    * @param totalCostUSD total cost in USD
-   * @param vesselDays vessel days required
+   * @param vesselDays   vessel days required
    */
-  private void addLineItem(String category, String description, int quantity, String unit,
-      double unitCostUSD, double totalCostUSD, double vesselDays) {
+  private void addLineItem(String category, String description, int quantity, String unit, double unitCostUSD,
+      double totalCostUSD, double vesselDays) {
     Map<String, Object> item = new LinkedHashMap<String, Object>();
     item.put("category", category);
     item.put("description", description);
@@ -576,7 +564,7 @@ public class SURFCostEstimator {
     for (Map<String, Object> item : lineItems) {
       Object vd = item.get("vesselDays");
       if (vd instanceof Number) {
-        totalVesselDays += ((Number) vd).doubleValue();
+	totalVesselDays += ((Number) vd).doubleValue();
       }
     }
     result.put("totalVesselDays", totalVesselDays);
@@ -594,7 +582,7 @@ public class SURFCostEstimator {
     List<Map<String, Object>> items = new ArrayList<Map<String, Object>>();
     for (Map<String, Object> item : lineItems) {
       if (category.equals(item.get("category"))) {
-        items.add(item);
+	items.add(item);
       }
     }
     return items;
@@ -617,7 +605,7 @@ public class SURFCostEstimator {
    */
   public String toJson() {
     return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(getCostBreakdown());
+	.toJson(getCostBreakdown());
   }
 
   // ============ Getters for cost results ============

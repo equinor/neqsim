@@ -15,9 +15,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * Test harness for validating parameter estimation systems before deployment.
  *
  * <p>
- * This class provides a framework for testing estimation algorithms (EnKF, Gauss-Newton, etc.)
- * using synthetic data with known ground truth, ensuring the estimator works correctly before being
- * deployed with real plant data.
+ * This class provides a framework for testing estimation algorithms (EnKF, Gauss-Newton, etc.) using synthetic data
+ * with known ground truth, ensuring the estimator works correctly before being deployed with real plant data.
  * </p>
  *
  * <p>
@@ -135,16 +134,16 @@ public class EstimationTestHarness implements Serializable {
     /**
      * Constructor.
      *
-     * @param testName the name of the test
-     * @param numSteps the number of estimation steps
-     * @param finalEstimates the final parameter estimates
-     * @param trueValues the true parameter values
+     * @param testName           the name of the test
+     * @param numSteps           the number of estimation steps
+     * @param finalEstimates     the final parameter estimates
+     * @param trueValues         the true parameter values
      * @param finalUncertainties the final uncertainties
-     * @param estimateHistory history of estimates at each step
-     * @param rmseHistory history of RMSE values at each step
+     * @param estimateHistory    history of estimates at each step
+     * @param rmseHistory        history of RMSE values at each step
      */
     public TestReport(String testName, int numSteps, double[] finalEstimates, double[] trueValues,
-        double[] finalUncertainties, List<double[]> estimateHistory, List<double[]> rmseHistory) {
+	double[] finalUncertainties, List<double[]> estimateHistory, List<double[]> rmseHistory) {
       this.testName = testName;
       this.numSteps = numSteps;
       this.finalEstimates = finalEstimates.clone();
@@ -160,16 +159,16 @@ public class EstimationTestHarness implements Serializable {
       int inCI = 0;
 
       for (int i = 0; i < finalEstimates.length; i++) {
-        double error = Math.abs(finalEstimates[i] - trueValues[i]);
-        sumAbsError += error;
-        sumSqError += error * error;
-        maxErr = Math.max(maxErr, error);
+	double error = Math.abs(finalEstimates[i] - trueValues[i]);
+	sumAbsError += error;
+	sumSqError += error * error;
+	maxErr = Math.max(maxErr, error);
 
-        // Check if true value is within 95% CI
-        double ci95 = 1.96 * finalUncertainties[i];
-        if (error <= ci95) {
-          inCI++;
-        }
+	// Check if true value is within 95% CI
+	double ci95 = 1.96 * finalUncertainties[i];
+	if (error <= ci95) {
+	  inCI++;
+	}
       }
 
       this.meanAbsoluteError = sumAbsError / finalEstimates.length;
@@ -183,16 +182,16 @@ public class EstimationTestHarness implements Serializable {
 
     private int findConvergenceStep(double threshold) {
       for (int step = 0; step < estimateHistory.size(); step++) {
-        double[] est = estimateHistory.get(step);
-        double maxRelError = 0;
-        for (int i = 0; i < est.length; i++) {
-          if (Math.abs(trueValues[i]) > 1e-10) {
-            maxRelError = Math.max(maxRelError, Math.abs(est[i] - trueValues[i]) / trueValues[i]);
-          }
-        }
-        if (maxRelError < threshold) {
-          return step + 1;
-        }
+	double[] est = estimateHistory.get(step);
+	double maxRelError = 0;
+	for (int i = 0; i < est.length; i++) {
+	  if (Math.abs(trueValues[i]) > 1e-10) {
+	    maxRelError = Math.max(maxRelError, Math.abs(est[i] - trueValues[i]) / trueValues[i]);
+	  }
+	}
+	if (maxRelError < threshold) {
+	  return step + 1;
+	}
       }
       return numSteps; // Didn't converge
     }
@@ -272,14 +271,13 @@ public class EstimationTestHarness implements Serializable {
     /**
      * Checks if test passes given criteria.
      *
-     * @param maxRMSE maximum allowed RMSE
-     * @param minCoverage minimum coverage rate
+     * @param maxRMSE             maximum allowed RMSE
+     * @param minCoverage         minimum coverage rate
      * @param maxConvergenceSteps maximum steps to converge
      * @return true if all criteria pass
      */
     public boolean passes(double maxRMSE, double minCoverage, int maxConvergenceSteps) {
-      return rmse <= maxRMSE && coverageRate >= minCoverage
-          && stepsToConverge <= maxConvergenceSteps;
+      return rmse <= maxRMSE && coverageRate >= minCoverage && stepsToConverge <= maxConvergenceSteps;
     }
 
     /**
@@ -288,22 +286,19 @@ public class EstimationTestHarness implements Serializable {
     public void printSummary() {
       System.out.println("\n=== Test Report: " + testName + " ===");
       System.out.printf("Steps: %d, Converged at: %d%n", numSteps, stepsToConverge);
-      System.out.printf("RMSE: %.4f, MAE: %.4f, Max Error: %.4f%n", rmse, meanAbsoluteError,
-          maxError);
+      System.out.printf("RMSE: %.4f, MAE: %.4f, Max Error: %.4f%n", rmse, meanAbsoluteError, maxError);
       System.out.printf("Coverage (95%% CI): %.1f%%%n", coverageRate * 100);
 
       System.out.println("\nPer-parameter results:");
-      System.out.printf("%-30s %10s %10s %10s %10s%n", "Parameter", "True", "Estimate", "Error%",
-          "In CI?");
+      System.out.printf("%-30s %10s %10s %10s %10s%n", "Parameter", "True", "Estimate", "Error%", "In CI?");
       System.out.println(StringUtils.repeat("-", 75));
 
       for (int i = 0; i < finalEstimates.length; i++) {
-        double errorPct =
-            100 * Math.abs(finalEstimates[i] - trueValues[i]) / Math.max(1e-10, trueValues[i]);
-        double ci95 = 1.96 * finalUncertainties[i];
-        boolean inCI = Math.abs(finalEstimates[i] - trueValues[i]) <= ci95;
-        System.out.printf("%-30s %10.3f %10.3f %9.1f%% %10s%n", "Param " + (i + 1), trueValues[i],
-            finalEstimates[i], errorPct, inCI ? "Yes" : "No");
+	double errorPct = 100 * Math.abs(finalEstimates[i] - trueValues[i]) / Math.max(1e-10, trueValues[i]);
+	double ci95 = 1.96 * finalUncertainties[i];
+	boolean inCI = Math.abs(finalEstimates[i] - trueValues[i]) <= ci95;
+	System.out.printf("%-30s %10.3f %10.3f %9.1f%% %10s%n", "Param " + (i + 1), trueValues[i], finalEstimates[i],
+	    errorPct, inCI ? "Yes" : "No");
       }
     }
   }
@@ -333,7 +328,7 @@ public class EstimationTestHarness implements Serializable {
   /**
    * Adds a parameter with known true value.
    *
-   * @param path variable path
+   * @param path      variable path
    * @param trueValue ground truth value
    * @return this harness for chaining
    */
@@ -344,14 +339,13 @@ public class EstimationTestHarness implements Serializable {
   /**
    * Adds a parameter with known true value and bounds.
    *
-   * @param path variable path
+   * @param path      variable path
    * @param trueValue ground truth value
-   * @param minBound minimum bound
-   * @param maxBound maximum bound
+   * @param minBound  minimum bound
+   * @param maxBound  maximum bound
    * @return this harness for chaining
    */
-  public EstimationTestHarness addParameter(String path, double trueValue, double minBound,
-      double maxBound) {
+  public EstimationTestHarness addParameter(String path, double trueValue, double minBound, double maxBound) {
     parameters.add(new ParameterWithTruth(path, trueValue, minBound, maxBound));
     return this;
   }
@@ -359,8 +353,8 @@ public class EstimationTestHarness implements Serializable {
   /**
    * Adds a measurement variable.
    *
-   * @param path variable path
-   * @param unit unit of measurement
+   * @param path     variable path
+   * @param unit     unit of measurement
    * @param noiseStd measurement noise standard deviation
    * @return this harness for chaining
    */
@@ -399,7 +393,7 @@ public class EstimationTestHarness implements Serializable {
    * Runs a convergence test.
    *
    * @param estimator the estimator to test
-   * @param numSteps number of update steps
+   * @param numSteps  number of update steps
    * @return test report
    */
   public TestReport runConvergenceTest(EnKFParameterEstimator estimator, int numSteps) {
@@ -409,14 +403,14 @@ public class EstimationTestHarness implements Serializable {
   /**
    * Runs a convergence test with optional progress callback.
    *
-   * @param estimator the estimator to test
-   * @param numSteps number of update steps
-   * @param noiseMultiplier noise level multiplier
+   * @param estimator        the estimator to test
+   * @param numSteps         number of update steps
+   * @param noiseMultiplier  noise level multiplier
    * @param progressCallback optional callback for progress updates
    * @return test report
    */
-  public TestReport runConvergenceTest(EnKFParameterEstimator estimator, int numSteps,
-      double noiseMultiplier, Consumer<Integer> progressCallback) {
+  public TestReport runConvergenceTest(EnKFParameterEstimator estimator, int numSteps, double noiseMultiplier,
+      Consumer<Integer> progressCallback) {
     List<double[]> estimateHistory = new ArrayList<>();
     List<double[]> rmseHistory = new ArrayList<>();
 
@@ -429,10 +423,10 @@ public class EstimationTestHarness implements Serializable {
 
       // Record history
       estimateHistory.add(result.getEstimates());
-      rmseHistory.add(new double[] {result.getRMSE()});
+      rmseHistory.add(new double[] { result.getRMSE() });
 
       if (progressCallback != null) {
-        progressCallback.accept(step);
+	progressCallback.accept(step);
       }
     }
 
@@ -440,19 +434,19 @@ public class EstimationTestHarness implements Serializable {
     double[] trueValues = parameters.stream().mapToDouble(p -> p.trueValue).toArray();
 
     return new TestReport("Convergence Test", numSteps, estimator.getEstimates(), trueValues,
-        estimator.getUncertainties(), estimateHistory, rmseHistory);
+	estimator.getUncertainties(), estimateHistory, rmseHistory);
   }
 
   /**
    * Runs a noise robustness test at multiple noise levels.
    *
-   * @param estimator the estimator to test
+   * @param estimator     the estimator to test
    * @param stepsPerLevel steps at each noise level
-   * @param noiseLevels array of noise multipliers to test
+   * @param noiseLevels   array of noise multipliers to test
    * @return map of noise level to test report
    */
-  public Map<Double, TestReport> runNoiseRobustnessTest(EnKFParameterEstimator estimator,
-      int stepsPerLevel, double[] noiseLevels) {
+  public Map<Double, TestReport> runNoiseRobustnessTest(EnKFParameterEstimator estimator, int stepsPerLevel,
+      double[] noiseLevels) {
     Map<Double, TestReport> reports = new HashMap<>();
 
     for (double noiseLevel : noiseLevels) {
@@ -468,14 +462,14 @@ public class EstimationTestHarness implements Serializable {
   /**
    * Runs a parameter drift tracking test.
    *
-   * @param estimator the estimator to test
-   * @param numSteps number of steps
+   * @param estimator          the estimator to test
+   * @param numSteps           number of steps
    * @param driftingParamIndex which parameter drifts
-   * @param driftRate rate of drift per step
+   * @param driftRate          rate of drift per step
    * @return test report with tracking accuracy
    */
-  public TestReport runDriftTrackingTest(EnKFParameterEstimator estimator, int numSteps,
-      int driftingParamIndex, double driftRate) {
+  public TestReport runDriftTrackingTest(EnKFParameterEstimator estimator, int numSteps, int driftingParamIndex,
+      double driftRate) {
     List<double[]> estimateHistory = new ArrayList<>();
     List<double[]> rmseHistory = new ArrayList<>();
 
@@ -488,40 +482,39 @@ public class EstimationTestHarness implements Serializable {
 
       // Set drifting parameters
       for (int i = 0; i < parameters.size(); i++) {
-        variableAccessor.setValue(parameters.get(i).path, currentTrueValues[i]);
+	variableAccessor.setValue(parameters.get(i).path, currentTrueValues[i]);
       }
 
       // Generate measurement
       processSystem.run();
       Map<String, Double> meas = new HashMap<>();
       for (MeasurementSpec spec : measurements) {
-        double value = variableAccessor.getValue(spec.path, spec.unit);
-        value += spec.noiseStd * rng.nextGaussian();
-        meas.put(spec.path, value);
+	double value = variableAccessor.getValue(spec.path, spec.unit);
+	value += spec.noiseStd * rng.nextGaussian();
+	meas.put(spec.path, value);
       }
 
       // Update estimator
       EnKFParameterEstimator.EnKFResult result = estimator.update(meas);
 
       estimateHistory.add(result.getEstimates());
-      rmseHistory.add(new double[] {result.getRMSE()});
+      rmseHistory.add(new double[] { result.getRMSE() });
     }
 
-    return new TestReport("Drift Tracking Test", numSteps, estimator.getEstimates(),
-        currentTrueValues, estimator.getUncertainties(), estimateHistory, rmseHistory);
+    return new TestReport("Drift Tracking Test", numSteps, estimator.getEstimates(), currentTrueValues,
+	estimator.getUncertainties(), estimateHistory, rmseHistory);
   }
 
   /**
    * Runs Monte Carlo validation with multiple trials.
    *
    * @param estimatorFactory factory to create fresh estimator instances
-   * @param numTrials number of Monte Carlo trials
-   * @param stepsPerTrial steps per trial
+   * @param numTrials        number of Monte Carlo trials
+   * @param stepsPerTrial    steps per trial
    * @return summary statistics across all trials
    */
-  public MonteCarloReport runMonteCarloValidation(
-      java.util.function.Supplier<EnKFParameterEstimator> estimatorFactory, int numTrials,
-      int stepsPerTrial) {
+  public MonteCarloReport runMonteCarloValidation(java.util.function.Supplier<EnKFParameterEstimator> estimatorFactory,
+      int numTrials, int stepsPerTrial) {
     List<Double> rmseValues = new ArrayList<>();
     List<Double> coverageValues = new ArrayList<>();
     int successCount = 0;
@@ -539,7 +532,7 @@ public class EstimationTestHarness implements Serializable {
       coverageValues.add(report.getCoverageRate());
 
       if (report.getCoverageRate() >= 0.9) {
-        successCount++;
+	successCount++;
       }
     }
 
@@ -560,21 +553,21 @@ public class EstimationTestHarness implements Serializable {
     private final double meanCoverage;
     private final double successRate;
 
-    public MonteCarloReport(int numTrials, int stepsPerTrial, List<Double> rmseValues,
-        List<Double> coverageValues, int successCount) {
+    public MonteCarloReport(int numTrials, int stepsPerTrial, List<Double> rmseValues, List<Double> coverageValues,
+	int successCount) {
       this.numTrials = numTrials;
       this.stepsPerTrial = stepsPerTrial;
 
       // Calculate RMSE statistics
       double sumRMSE = 0;
       for (Double r : rmseValues) {
-        sumRMSE += r;
+	sumRMSE += r;
       }
       this.meanRMSE = sumRMSE / numTrials;
 
       double sumSqRMSE = 0;
       for (Double r : rmseValues) {
-        sumSqRMSE += (r - meanRMSE) * (r - meanRMSE);
+	sumSqRMSE += (r - meanRMSE) * (r - meanRMSE);
       }
       this.stdRMSE = Math.sqrt(sumSqRMSE / numTrials);
 
@@ -587,7 +580,7 @@ public class EstimationTestHarness implements Serializable {
       // Coverage statistics
       double sumCov = 0;
       for (Double c : coverageValues) {
-        sumCov += c;
+	sumCov += c;
       }
       this.meanCoverage = sumCov / numTrials;
       this.successRate = (double) successCount / numTrials;

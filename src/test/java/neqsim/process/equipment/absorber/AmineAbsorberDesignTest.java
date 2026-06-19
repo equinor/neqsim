@@ -106,8 +106,8 @@ public class AmineAbsorberDesignTest {
 
     // Typical MDEA: density ~1050, molar mass ~0.119 kg/mol
     double rate = absorber.calcRequiredCirculationRate(10.0, // mol/s acid gas to remove
-        1050.0, // kg/m3
-        0.119); // kg/mol
+	1050.0, // kg/m3
+	0.119); // kg/mol
 
     assertTrue(rate > 0);
     assertEquals(rate, absorber.getRequiredCirculationRate(), 1e-10);
@@ -256,8 +256,7 @@ public class AmineAbsorberDesignTest {
     assertNotNull(sweetGas);
     assertNotNull(sweetGas.getThermoSystem());
 
-    double feedCO2 =
-        sourGasStream.getThermoSystem().getPhase(0).getComponent("CO2").getNumberOfmoles();
+    double feedCO2 = sourGasStream.getThermoSystem().getPhase(0).getComponent("CO2").getNumberOfmoles();
     double sweetCO2 = sweetGas.getThermoSystem().getPhase(0).getComponent("CO2").getNumberOfmoles();
     assertTrue(sweetCO2 < feedCO2 * 0.15, "CO2 in sweet gas should be <15% of feed CO2");
   }

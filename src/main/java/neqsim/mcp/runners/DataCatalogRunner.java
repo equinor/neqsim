@@ -19,9 +19,9 @@ import neqsim.util.database.NeqSimProcessDesignDataBase;
  * Read-only data catalog runner that exposes NeqSim databases as browsable resources.
  *
  * <p>
- * Provides structured access to the component database, design standards tables, thermodynamic
- * property data, and material properties without running simulations. Agents can discover available
- * data before deciding what tools to invoke.
+ * Provides structured access to the component database, design standards tables, thermodynamic property data, and
+ * material properties without running simulations. Agents can discover available data before deciding what tools to
+ * invoke.
  * </p>
  *
  * @author Even Solbraa
@@ -29,13 +29,13 @@ import neqsim.util.database.NeqSimProcessDesignDataBase;
  */
 public final class DataCatalogRunner {
 
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   /**
    * Private constructor — all methods are static.
    */
-  private DataCatalogRunner() {}
+  private DataCatalogRunner() {
+  }
 
   /**
    * Main entry point for data catalog operations.
@@ -49,31 +49,28 @@ public final class DataCatalogRunner {
       String action = input.has("action") ? input.get("action").getAsString() : "";
 
       switch (action) {
-        case "listComponentFamilies":
-          return listComponentFamilies();
-        case "getComponentProperties":
-          return getComponentProperties(
-              input.has("componentName") ? input.get("componentName").getAsString() : "");
-        case "listEOSModels":
-          return listEOSModels();
-        case "listMaterials":
-          return listMaterials(
-              input.has("materialType") ? input.get("materialType").getAsString() : "pipe");
-        case "listDesignStandards":
-          return listDesignStandards();
-        case "queryStandard":
-          return queryStandard(input.has("code") ? input.get("code").getAsString() : "",
-              input.has("equipmentType") ? input.get("equipmentType").getAsString() : "");
-        case "listDataTables":
-          return listDataTables();
-        default:
-          JsonObject error = new JsonObject();
-          error.addProperty("status", "error");
-          error.addProperty("message", "Unknown data catalog action: " + action);
-          error.addProperty("remediation",
-              "Use: listComponentFamilies, getComponentProperties, listEOSModels, "
-                  + "listMaterials, listDesignStandards, queryStandard, listDataTables");
-          return GSON.toJson(error);
+      case "listComponentFamilies":
+	return listComponentFamilies();
+      case "getComponentProperties":
+	return getComponentProperties(input.has("componentName") ? input.get("componentName").getAsString() : "");
+      case "listEOSModels":
+	return listEOSModels();
+      case "listMaterials":
+	return listMaterials(input.has("materialType") ? input.get("materialType").getAsString() : "pipe");
+      case "listDesignStandards":
+	return listDesignStandards();
+      case "queryStandard":
+	return queryStandard(input.has("code") ? input.get("code").getAsString() : "",
+	    input.has("equipmentType") ? input.get("equipmentType").getAsString() : "");
+      case "listDataTables":
+	return listDataTables();
+      default:
+	JsonObject error = new JsonObject();
+	error.addProperty("status", "error");
+	error.addProperty("message", "Unknown data catalog action: " + action);
+	error.addProperty("remediation", "Use: listComponentFamilies, getComponentProperties, listEOSModels, "
+	    + "listMaterials, listDesignStandards, queryStandard, listDataTables");
+	return GSON.toJson(error);
       }
     } catch (Exception e) {
       JsonObject error = new JsonObject();
@@ -93,10 +90,8 @@ public final class DataCatalogRunner {
     result.addProperty("status", "success");
 
     Map<String, List<String>> families = new LinkedHashMap<String, List<String>>();
-    families.put("hydrocarbons",
-        Arrays.asList("methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
-            "n-pentane", "n-hexane", "n-heptane", "n-octane", "n-nonane", "n-decane", "benzene",
-            "toluene", "cyclohexane"));
+    families.put("hydrocarbons", Arrays.asList("methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
+	"n-pentane", "n-hexane", "n-heptane", "n-octane", "n-nonane", "n-decane", "benzene", "toluene", "cyclohexane"));
     families.put("acid_gases", Arrays.asList("CO2", "H2S", "COS", "SO2"));
     families.put("inerts", Arrays.asList("nitrogen", "helium", "argon", "oxygen"));
     families.put("water_and_hydrates", Arrays.asList("water", "MEG", "DEG", "TEG", "methanol"));
@@ -109,13 +104,13 @@ public final class DataCatalogRunner {
     for (Map.Entry<String, List<String>> entry : families.entrySet()) {
       JsonArray arr = new JsonArray();
       for (String comp : entry.getValue()) {
-        arr.add(comp);
+	arr.add(comp);
       }
       fam.add(entry.getKey(), arr);
     }
     result.add("families", fam);
     result.addProperty("note", "Use searchComponents tool for full database search. "
-        + "Use getComponentProperties for detailed thermodynamic data.");
+	+ "Use getComponentProperties for detailed thermodynamic data.");
     return GSON.toJson(result);
   }
 
@@ -129,40 +124,40 @@ public final class DataCatalogRunner {
     JsonObject result = new JsonObject();
     try {
       try (NeqSimDataBase database = new NeqSimDataBase()) {
-        try (PreparedStatement statement =
-            database.getConnection().prepareStatement("SELECT * FROM comp WHERE NAME=?")) {
-          String safeComponentName = sanitize(componentName);
-          statement.setString(1, safeComponentName);
-          try (ResultSet rs = statement.executeQuery()) {
-            if (rs.next()) {
-              result.addProperty("status", "success");
-              result.addProperty("component", safeComponentName);
-              ResultSetMetaData meta = rs.getMetaData();
-              JsonObject props = new JsonObject();
-              for (int i = 1; i <= meta.getColumnCount(); i++) {
-                String col = meta.getColumnName(i);
-                String val = rs.getString(i);
-                if (val != null && !val.isEmpty()) {
-                  try {
-                    double numVal = Double.parseDouble(val);
-                    props.addProperty(col, numVal);
-                  } catch (NumberFormatException e) {
-                    props.addProperty(col, val);
-                  }
-                }
-              }
-              result.add("properties", props);
-            } else {
-              result.addProperty("status", "error");
-              result.addProperty("message", "Component '" + componentName + "' not found");
-              // Try fuzzy match
-              String closest = ComponentQuery.closestMatch(componentName);
-              if (closest != null) {
-                result.addProperty("suggestion", closest);
-              }
-            }
-          }
-        }
+	try (PreparedStatement statement = database.getConnection()
+	    .prepareStatement("SELECT * FROM comp WHERE NAME=?")) {
+	  String safeComponentName = sanitize(componentName);
+	  statement.setString(1, safeComponentName);
+	  try (ResultSet rs = statement.executeQuery()) {
+	    if (rs.next()) {
+	      result.addProperty("status", "success");
+	      result.addProperty("component", safeComponentName);
+	      ResultSetMetaData meta = rs.getMetaData();
+	      JsonObject props = new JsonObject();
+	      for (int i = 1; i <= meta.getColumnCount(); i++) {
+		String col = meta.getColumnName(i);
+		String val = rs.getString(i);
+		if (val != null && !val.isEmpty()) {
+		  try {
+		    double numVal = Double.parseDouble(val);
+		    props.addProperty(col, numVal);
+		  } catch (NumberFormatException e) {
+		    props.addProperty(col, val);
+		  }
+		}
+	      }
+	      result.add("properties", props);
+	    } else {
+	      result.addProperty("status", "error");
+	      result.addProperty("message", "Component '" + componentName + "' not found");
+	      // Try fuzzy match
+	      String closest = ComponentQuery.closestMatch(componentName);
+	      if (closest != null) {
+		result.addProperty("suggestion", closest);
+	      }
+	    }
+	  }
+	}
       }
     } catch (Exception e) {
       result.addProperty("status", "error");
@@ -180,44 +175,43 @@ public final class DataCatalogRunner {
     JsonObject result = new JsonObject();
     try {
       try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase()) {
-        ResultSet rs = database.getResultSet("SELECT * FROM standards_index WHERE ACTIVE='true'");
-        JsonArray standards = new JsonArray();
-        while (rs.next()) {
-          JsonObject std = new JsonObject();
-          std.addProperty("code", rs.getString("STANDARD_CODE"));
-          std.addProperty("version", rs.getString("VERSION"));
-          std.addProperty("name", rs.getString("NAME"));
-          std.addProperty("equipmentTypes", rs.getString("EQUIPMENT_TYPES"));
-          std.addProperty("dataFile", rs.getString("DATA_FILE"));
-          standards.add(std);
-        }
-        result.addProperty("status", "success");
-        result.addProperty("count", standards.size());
-        result.add("standards", standards);
+	ResultSet rs = database.getResultSet("SELECT * FROM standards_index WHERE ACTIVE='true'");
+	JsonArray standards = new JsonArray();
+	while (rs.next()) {
+	  JsonObject std = new JsonObject();
+	  std.addProperty("code", rs.getString("STANDARD_CODE"));
+	  std.addProperty("version", rs.getString("VERSION"));
+	  std.addProperty("name", rs.getString("NAME"));
+	  std.addProperty("equipmentTypes", rs.getString("EQUIPMENT_TYPES"));
+	  std.addProperty("dataFile", rs.getString("DATA_FILE"));
+	  standards.add(std);
+	}
+	result.addProperty("status", "success");
+	result.addProperty("count", standards.size());
+	result.add("standards", standards);
       }
     } catch (Exception e) {
       result.addProperty("status", "success");
       // Provide static fallback if DB query fails
       JsonArray standards = new JsonArray();
-      String[][] stdData = {{"ASME-VIII-Div1", "Pressure Vessels", "Separator,Vessel,Column"},
-          {"ASME-B31.3", "Process Piping", "Pipeline,Pipe"},
-          {"API-617", "Axial and Centrifugal Compressors", "Compressor"},
-          {"API-650", "Welded Tanks for Oil Storage", "Tank,StorageTank"},
-          {"DNV-ST-F101", "Submarine Pipeline Systems", "Pipeline,SubseaPipeline"},
-          {"DNV-OS-F101", "Submarine Pipeline Systems (legacy)", "Pipeline"},
-          {"NORSOK-L-001", "Piping and Valves", "Pipeline,Valve"},
-          {"NORSOK-P-001", "Process Design", "All"},
-          {"ISO-6976", "Natural Gas - Calorific Value", "Gas"},
-          {"TEMA", "Heat Exchangers", "HeatExchanger,Cooler,Heater"},
-          {"API-RP-14E", "Pipeline Velocity Limits", "Pipeline"},
-          {"API-5CT", "Casing and Tubing", "Well,SubseaWell"},
-          {"NORSOK-D-010", "Well Integrity", "Well,SubseaWell"}};
+      String[][] stdData = { { "ASME-VIII-Div1", "Pressure Vessels", "Separator,Vessel,Column" },
+	  { "ASME-B31.3", "Process Piping", "Pipeline,Pipe" },
+	  { "API-617", "Axial and Centrifugal Compressors", "Compressor" },
+	  { "API-650", "Welded Tanks for Oil Storage", "Tank,StorageTank" },
+	  { "DNV-ST-F101", "Submarine Pipeline Systems", "Pipeline,SubseaPipeline" },
+	  { "DNV-OS-F101", "Submarine Pipeline Systems (legacy)", "Pipeline" },
+	  { "NORSOK-L-001", "Piping and Valves", "Pipeline,Valve" }, { "NORSOK-P-001", "Process Design", "All" },
+	  { "ISO-6976", "Natural Gas - Calorific Value", "Gas" },
+	  { "TEMA", "Heat Exchangers", "HeatExchanger,Cooler,Heater" },
+	  { "API-RP-14E", "Pipeline Velocity Limits", "Pipeline" },
+	  { "API-5CT", "Casing and Tubing", "Well,SubseaWell" },
+	  { "NORSOK-D-010", "Well Integrity", "Well,SubseaWell" } };
       for (String[] s : stdData) {
-        JsonObject std = new JsonObject();
-        std.addProperty("code", s[0]);
-        std.addProperty("name", s[1]);
-        std.addProperty("equipmentTypes", s[2]);
-        standards.add(std);
+	JsonObject std = new JsonObject();
+	std.addProperty("code", s[0]);
+	std.addProperty("name", s[1]);
+	std.addProperty("equipmentTypes", s[2]);
+	standards.add(std);
       }
       result.addProperty("count", standards.size());
       result.add("standards", standards);
@@ -228,7 +222,7 @@ public final class DataCatalogRunner {
   /**
    * Queries a specific standards table for parameters applicable to an equipment type.
    *
-   * @param standardCode the standard code (e.g., "ASME-VIII-Div1")
+   * @param standardCode  the standard code (e.g., "ASME-VIII-Div1")
    * @param equipmentType the equipment type to filter by (optional)
    * @return JSON with standard parameters
    */
@@ -238,35 +232,35 @@ public final class DataCatalogRunner {
       // Map standard code to table
       String table = mapStandardToTable(standardCode);
       if (table == null) {
-        result.addProperty("status", "error");
-        result.addProperty("message", "Unknown standard code: " + standardCode
-            + ". Use listDesignStandards for available codes.");
-        return GSON.toJson(result);
+	result.addProperty("status", "error");
+	result.addProperty("message",
+	    "Unknown standard code: " + standardCode + ". Use listDesignStandards for available codes.");
+	return GSON.toJson(result);
       }
 
       try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase()) {
-        String sql = "SELECT * FROM " + table;
-        String safeEquipmentType = sanitize(equipmentType);
-        if (equipmentType != null && !equipmentType.isEmpty()) {
-          sql += " WHERE EQUIPMENT_TYPE LIKE ?";
-        }
-        sql += " FETCH FIRST 100 ROWS ONLY";
+	String sql = "SELECT * FROM " + table;
+	String safeEquipmentType = sanitize(equipmentType);
+	if (equipmentType != null && !equipmentType.isEmpty()) {
+	  sql += " WHERE EQUIPMENT_TYPE LIKE ?";
+	}
+	sql += " FETCH FIRST 100 ROWS ONLY";
 
-        if (equipmentType != null && !equipmentType.isEmpty()) {
-          try (PreparedStatement statement = database.getConnection().prepareStatement(sql)) {
-            statement.setString(1, "%" + safeEquipmentType + "%");
-            try (ResultSet rs = statement.executeQuery()) {
-              addStandardQueryRows(rs, result);
-            }
-          }
-        } else {
-          try (ResultSet rs = database.getResultSet(sql)) {
-            addStandardQueryRows(rs, result);
-          }
-        }
-        result.addProperty("status", "success");
-        result.addProperty("standard", standardCode);
-        result.addProperty("table", table);
+	if (equipmentType != null && !equipmentType.isEmpty()) {
+	  try (PreparedStatement statement = database.getConnection().prepareStatement(sql)) {
+	    statement.setString(1, "%" + safeEquipmentType + "%");
+	    try (ResultSet rs = statement.executeQuery()) {
+	      addStandardQueryRows(rs, result);
+	    }
+	  }
+	} else {
+	  try (ResultSet rs = database.getResultSet(sql)) {
+	    addStandardQueryRows(rs, result);
+	  }
+	}
+	result.addProperty("status", "success");
+	result.addProperty("standard", standardCode);
+	result.addProperty("table", table);
       }
     } catch (Exception e) {
       result.addProperty("status", "error");
@@ -286,43 +280,43 @@ public final class DataCatalogRunner {
     try {
       String table;
       switch (materialType != null ? materialType.toLowerCase() : "pipe") {
-        case "plate":
-          table = "MaterialPlateProperties";
-          break;
-        case "casing":
-          table = "CasingProperties";
-          break;
-        case "compressor":
-          table = "CompressorCasingMaterials";
-          break;
-        case "heatexchanger":
-        case "heat_exchanger":
-          table = "HeatExchangerTubeMaterials";
-          break;
-        default:
-          table = "MaterialPipeProperties";
-          break;
+      case "plate":
+	table = "MaterialPlateProperties";
+	break;
+      case "casing":
+	table = "CasingProperties";
+	break;
+      case "compressor":
+	table = "CompressorCasingMaterials";
+	break;
+      case "heatexchanger":
+      case "heat_exchanger":
+	table = "HeatExchangerTubeMaterials";
+	break;
+      default:
+	table = "MaterialPipeProperties";
+	break;
       }
 
       try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase()) {
-        ResultSet rs = database.getResultSet("SELECT * FROM " + table);
-        ResultSetMetaData meta = rs.getMetaData();
-        JsonArray materials = new JsonArray();
-        while (rs.next()) {
-          JsonObject mat = new JsonObject();
-          for (int i = 1; i <= meta.getColumnCount(); i++) {
-            String val = rs.getString(i);
-            if (val != null && !val.isEmpty()) {
-              mat.addProperty(meta.getColumnName(i), val);
-            }
-          }
-          materials.add(mat);
-        }
-        result.addProperty("status", "success");
-        result.addProperty("materialType", materialType);
-        result.addProperty("table", table);
-        result.addProperty("count", materials.size());
-        result.add("materials", materials);
+	ResultSet rs = database.getResultSet("SELECT * FROM " + table);
+	ResultSetMetaData meta = rs.getMetaData();
+	JsonArray materials = new JsonArray();
+	while (rs.next()) {
+	  JsonObject mat = new JsonObject();
+	  for (int i = 1; i <= meta.getColumnCount(); i++) {
+	    String val = rs.getString(i);
+	    if (val != null && !val.isEmpty()) {
+	      mat.addProperty(meta.getColumnName(i), val);
+	    }
+	  }
+	  materials.add(mat);
+	}
+	result.addProperty("status", "success");
+	result.addProperty("materialType", materialType);
+	result.addProperty("table", table);
+	result.addProperty("count", materials.size());
+	result.add("materials", materials);
       }
     } catch (Exception e) {
       result.addProperty("status", "error");
@@ -343,30 +337,25 @@ public final class DataCatalogRunner {
     JsonArray models = new JsonArray();
 
     addEOS(models, "SRK", "Soave-Redlich-Kwong",
-        "General-purpose cubic EOS. Good for gas-phase and vapor-liquid equilibria.",
-        "Natural gas, hydrocarbons, light gases", "1972");
-    addEOS(models, "PR", "Peng-Robinson",
-        "Cubic EOS widely used in oil and gas. Better liquid density than SRK.",
-        "Oil systems, heavy hydrocarbons, gas processing", "1976");
+	"General-purpose cubic EOS. Good for gas-phase and vapor-liquid equilibria.",
+	"Natural gas, hydrocarbons, light gases", "1972");
+    addEOS(models, "PR", "Peng-Robinson", "Cubic EOS widely used in oil and gas. Better liquid density than SRK.",
+	"Oil systems, heavy hydrocarbons, gas processing", "1976");
     addEOS(models, "CPA", "CPA-SRK (Cubic Plus Association)",
-        "Handles associating fluids (water, alcohols, glycols, acids).",
-        "Water+hydrocarbon, MEG/DEG/TEG, methanol injection, CO2+water", "2006");
-    addEOS(models, "GERG2008", "GERG-2008",
-        "High-accuracy multi-parameter EOS for natural gas custody transfer.",
-        "Sales gas, pipeline gas, custody metering (ISO 20765)", "2008");
+	"Handles associating fluids (water, alcohols, glycols, acids).",
+	"Water+hydrocarbon, MEG/DEG/TEG, methanol injection, CO2+water", "2006");
+    addEOS(models, "GERG2008", "GERG-2008", "High-accuracy multi-parameter EOS for natural gas custody transfer.",
+	"Sales gas, pipeline gas, custody metering (ISO 20765)", "2008");
     addEOS(models, "PCSAFT", "PC-SAFT", "Statistical mechanics-based EOS for complex fluids.",
-        "Polymers, deep eutectic solvents, complex mixtures", "2001");
-    addEOS(models, "UMRPRU", "UMR-PRU",
-        "PR with UNIFAC mixing rules and Mathias-Copeman alpha function.",
-        "Polar mixtures, asymmetric systems", "2004");
-    addEOS(models, "Electrolyte-CPA", "Electrolyte CPA",
-        "CPA with electrolyte term for salt-containing systems.",
-        "Produced water, brines, scale prediction, desalination", "2010");
+	"Polymers, deep eutectic solvents, complex mixtures", "2001");
+    addEOS(models, "UMRPRU", "UMR-PRU", "PR with UNIFAC mixing rules and Mathias-Copeman alpha function.",
+	"Polar mixtures, asymmetric systems", "2004");
+    addEOS(models, "Electrolyte-CPA", "Electrolyte CPA", "CPA with electrolyte term for salt-containing systems.",
+	"Produced water, brines, scale prediction, desalination", "2010");
 
     result.add("models", models);
-    result.addProperty("recommendation",
-        "SRK for general gas work, PR for oil, CPA for water/glycol systems, "
-            + "GERG2008 for custody transfer metering.");
+    result.addProperty("recommendation", "SRK for general gas work, PR for oil, CPA for water/glycol systems, "
+	+ "GERG2008 for custody transfer metering.");
     return GSON.toJson(result);
   }
 
@@ -400,8 +389,7 @@ public final class DataCatalogRunner {
     JsonObject designDb = new JsonObject();
     designDb.addProperty("name", "Process Design Database");
     JsonArray designTables = new JsonArray();
-    addTable(designTables, "TechnicalRequirements_Process",
-        "Company-specific process design requirements");
+    addTable(designTables, "TechnicalRequirements_Process", "Company-specific process design requirements");
     addTable(designTables, "TechnicalRequirements_Piping", "Piping design requirements");
     addTable(designTables, "TechnicalRequirements_Material", "Material requirements");
     addTable(designTables, "MaterialPipeProperties", "Pipe material grades and SMYS/SMTS");
@@ -472,12 +460,11 @@ public final class DataCatalogRunner {
   /**
    * Adds rows from a standards query result set to a JSON response.
    *
-   * @param rs result set to read
+   * @param rs     result set to read
    * @param result JSON response to populate
    * @throws java.sql.SQLException if reading the result set fails
    */
-  private static void addStandardQueryRows(ResultSet rs, JsonObject result)
-      throws java.sql.SQLException {
+  private static void addStandardQueryRows(ResultSet rs, JsonObject result) throws java.sql.SQLException {
     ResultSetMetaData meta = rs.getMetaData();
     JsonArray rows = new JsonArray();
     JsonArray columns = new JsonArray();
@@ -487,10 +474,10 @@ public final class DataCatalogRunner {
     while (rs.next()) {
       JsonObject row = new JsonObject();
       for (int i = 1; i <= meta.getColumnCount(); i++) {
-        String val = rs.getString(i);
-        if (val != null) {
-          row.addProperty(meta.getColumnName(i), val);
-        }
+	String val = rs.getString(i);
+	if (val != null) {
+	  row.addProperty(meta.getColumnName(i), val);
+	}
       }
       rows.add(row);
     }
@@ -502,15 +489,15 @@ public final class DataCatalogRunner {
   /**
    * Adds an EOS model entry to the models array.
    *
-   * @param models the array to add to
-   * @param code the short code
-   * @param fullName the full name
-   * @param description the description
+   * @param models        the array to add to
+   * @param code          the short code
+   * @param fullName      the full name
+   * @param description   the description
    * @param applicability when to use this model
-   * @param year the year introduced
+   * @param year          the year introduced
    */
-  private static void addEOS(JsonArray models, String code, String fullName, String description,
-      String applicability, String year) {
+  private static void addEOS(JsonArray models, String code, String fullName, String description, String applicability,
+      String year) {
     JsonObject m = new JsonObject();
     m.addProperty("code", code);
     m.addProperty("name", fullName);
@@ -523,8 +510,8 @@ public final class DataCatalogRunner {
   /**
    * Adds a table description entry.
    *
-   * @param tables the array to add to
-   * @param name the table name
+   * @param tables      the array to add to
+   * @param name        the table name
    * @param description the description
    */
   private static void addTable(JsonArray tables, String name, String description) {

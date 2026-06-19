@@ -33,14 +33,15 @@ public class NewtonSolveABCD implements java.io.Serializable {
    * Constructor for NewtonSolveABCD.
    * </p>
    */
-  public NewtonSolveABCD() {}
+  public NewtonSolveABCD() {
+  }
 
   /**
    * <p>
    * Constructor for NewtonSolveABCD.
    * </p>
    *
-   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   * @param system            a {@link neqsim.thermo.system.SystemInterface} object
    * @param characterizeClass a {@link neqsim.thermo.characterization.TBPCharacterize} object
    */
   public NewtonSolveABCD(SystemInterface system, TBPCharacterize characterizeClass) {
@@ -65,18 +66,19 @@ public class NewtonSolveABCD implements java.io.Serializable {
   public void setfvec() {
     for (int i = 0; i < characterizeClass.getLength(); i++) {
       fvec.set(i, 0, Math.log(characterizeClass.getTBPfractions(i)) - characterizeClass.getCoef(0)
-          - characterizeClass.getCoef(1) * (i + characterizeClass.getFirstPlusFractionNumber()));
+	  - characterizeClass.getCoef(1) * (i + characterizeClass.getFirstPlusFractionNumber()));
     }
 
     for (int i = characterizeClass.getLength(); i < 2 * characterizeClass.getLength(); i++) {
-      fvec.set(i, 0, characterizeClass.getTBPdens(i - characterizeClass.getLength())
-          - characterizeClass.getCoef(2) - characterizeClass.getCoef(3) * Math.log((i
-              + characterizeClass.getFirstPlusFractionNumber() - characterizeClass.getLength())));
+      fvec.set(i, 0,
+	  characterizeClass.getTBPdens(i - characterizeClass.getLength()) - characterizeClass.getCoef(2)
+	      - characterizeClass.getCoef(3)
+		  * Math.log((i + characterizeClass.getFirstPlusFractionNumber() - characterizeClass.getLength())));
     }
 
     for (int i = 0; i < characterizeClass.getLength(); i++) {
       calcTPBfraction[i] = Math.exp(characterizeClass.getCoef(0)
-          + characterizeClass.getCoef(1) * (i + characterizeClass.getFirstPlusFractionNumber()));
+	  + characterizeClass.getCoef(1) * (i + characterizeClass.getFirstPlusFractionNumber()));
     }
     characterizeClass.setCalcTBPfractions(calcTPBfraction);
   }
@@ -93,28 +95,27 @@ public class NewtonSolveABCD implements java.io.Serializable {
 
     for (int i = 0; i < characterizeClass.getLength(); i++) {
       for (int j = 0; j < 4; j++) {
-        if (j == 0) {
-          tempJ = -1.0;
-        } else if (j == 1) {
-          tempJ = -(i + characterizeClass.getFirstPlusFractionNumber());
-        } else {
-          tempJ = 0.0;
-        }
-        Jac.set(i, j, tempJ);
+	if (j == 0) {
+	  tempJ = -1.0;
+	} else if (j == 1) {
+	  tempJ = -(i + characterizeClass.getFirstPlusFractionNumber());
+	} else {
+	  tempJ = 0.0;
+	}
+	Jac.set(i, j, tempJ);
       }
     }
 
     for (int i = characterizeClass.getLength(); i < 2 * characterizeClass.getLength(); i++) {
       for (int j = 0; j < 4; j++) {
-        if (j == 2) {
-          tempJ = -1.0;
-        } else if (j == 3) {
-          tempJ = -Math.log(
-              i + characterizeClass.getFirstPlusFractionNumber() - characterizeClass.getLength());
-        } else {
-          tempJ = 0.0;
-        }
-        Jac.set(i, j, tempJ);
+	if (j == 2) {
+	  tempJ = -1.0;
+	} else if (j == 3) {
+	  tempJ = -Math.log(i + characterizeClass.getFirstPlusFractionNumber() - characterizeClass.getLength());
+	} else {
+	  tempJ = 0.0;
+	}
+	Jac.set(i, j, tempJ);
       }
     }
   }

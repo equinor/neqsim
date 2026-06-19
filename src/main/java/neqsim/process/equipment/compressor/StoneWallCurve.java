@@ -56,4 +56,3 @@ public class StoneWallCurve extends BoundaryCurve {
     return getFlow(head) < flow;
   }
 }
-

@@ -17,8 +17,7 @@ import java.util.function.Function;
  * Registry for managing trained surrogate (machine learning) models.
  *
  * <p>
- * Surrogate models are fast approximations of computationally expensive physics models. This
- * registry provides:
+ * Surrogate models are fast approximations of computationally expensive physics models. This registry provides:
  * <ul>
  * <li><b>Model Caching:</b> Keep frequently-used models in memory</li>
  * <li><b>Persistence:</b> Save/load models to disk for reuse</li>
@@ -41,8 +40,7 @@ import java.util.function.Function;
  * });
  *
  * // Use with automatic fallback to physics
- * double[] result =
- *     registry.predictWithFallback("flash-separator-1", input, physicsModel::calculate);
+ * double[] result = registry.predictWithFallback("flash-separator-1", input, physicsModel::calculate);
  * </pre>
  *
  * @author ESOL
@@ -72,9 +70,9 @@ public class SurrogateModelRegistry implements Serializable {
   public static SurrogateModelRegistry getInstance() {
     if (instance == null) {
       synchronized (SurrogateModelRegistry.class) {
-        if (instance == null) {
-          instance = new SurrogateModelRegistry();
-        }
+	if (instance == null) {
+	  instance = new SurrogateModelRegistry();
+	}
       }
     }
     return instance;
@@ -84,7 +82,7 @@ public class SurrogateModelRegistry implements Serializable {
    * Registers a surrogate model.
    *
    * @param modelId unique identifier for the model
-   * @param model the surrogate model implementation
+   * @param model   the surrogate model implementation
    */
   public void register(String modelId, SurrogateModel model) {
     register(modelId, model, new SurrogateMetadata());
@@ -93,8 +91,8 @@ public class SurrogateModelRegistry implements Serializable {
   /**
    * Registers a surrogate model with metadata.
    *
-   * @param modelId unique identifier for the model
-   * @param model the surrogate model implementation
+   * @param modelId  unique identifier for the model
+   * @param model    the surrogate model implementation
    * @param metadata model metadata (training info, validity, etc.)
    */
   public void register(String modelId, SurrogateModel model, SurrogateMetadata metadata) {
@@ -137,17 +135,15 @@ public class SurrogateModelRegistry implements Serializable {
    * Predicts using a surrogate model with automatic fallback.
    *
    * <p>
-   * If the surrogate model fails or is outside its validity range, the physics model will be used
-   * as a fallback.
+   * If the surrogate model fails or is outside its validity range, the physics model will be used as a fallback.
    * </p>
    *
-   * @param modelId the surrogate model identifier
-   * @param input input vector
+   * @param modelId         the surrogate model identifier
+   * @param input           input vector
    * @param physicsFallback fallback physics calculation
    * @return prediction result
    */
-  public double[] predictWithFallback(String modelId, double[] input,
-      Function<double[], double[]> physicsFallback) {
+  public double[] predictWithFallback(String modelId, double[] input, Function<double[], double[]> physicsFallback) {
     SurrogateModelEntry entry = models.get(modelId);
 
     if (entry == null) {
@@ -159,7 +155,7 @@ public class SurrogateModelRegistry implements Serializable {
     if (!entry.metadata.isInputValid(input)) {
       entry.metadata.recordExtrapolation();
       if (enableFallback) {
-        return physicsFallback.apply(input);
+	return physicsFallback.apply(input);
       }
     }
 
@@ -170,7 +166,7 @@ public class SurrogateModelRegistry implements Serializable {
     } catch (Exception e) {
       entry.metadata.recordFailure();
       if (enableFallback) {
-        return physicsFallback.apply(input);
+	return physicsFallback.apply(input);
       }
       throw new RuntimeException("Surrogate model failed and fallback is disabled", e);
     }
@@ -179,7 +175,7 @@ public class SurrogateModelRegistry implements Serializable {
   /**
    * Saves a model to disk.
    *
-   * @param modelId the model identifier
+   * @param modelId  the model identifier
    * @param filePath output file path
    * @throws IOException if save fails
    */
@@ -197,13 +193,12 @@ public class SurrogateModelRegistry implements Serializable {
   /**
    * Loads a model from disk.
    *
-   * @param modelId identifier to register the model under
+   * @param modelId  identifier to register the model under
    * @param filePath input file path
-   * @throws IOException if load fails
+   * @throws IOException            if load fails
    * @throws ClassNotFoundException if model class not found
    */
-  public void loadModel(String modelId, String filePath)
-      throws IOException, ClassNotFoundException {
+  public void loadModel(String modelId, String filePath) throws IOException, ClassNotFoundException {
     try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(filePath))) {
       SurrogateModelEntry entry = (SurrogateModelEntry) in.readObject();
       models.put(modelId, entry);
@@ -328,13 +323,13 @@ public class SurrogateModelRegistry implements Serializable {
      */
     public boolean isInputValid(double[] input) {
       if (inputMin == null || inputMax == null) {
-        return true; // No bounds defined
+	return true; // No bounds defined
       }
 
       for (int i = 0; i < Math.min(input.length, inputMin.length); i++) {
-        if (input[i] < inputMin[i] || input[i] > inputMax[i]) {
-          return false;
-        }
+	if (input[i] < inputMin[i] || input[i] > inputMax[i]) {
+	  return false;
+	}
       }
       return true;
     }
@@ -359,7 +354,7 @@ public class SurrogateModelRegistry implements Serializable {
      */
     public double getFailureRate() {
       if (predictionCount == 0) {
-        return 0.0;
+	return 0.0;
       }
       return (double) failureCount / predictionCount;
     }
@@ -371,7 +366,7 @@ public class SurrogateModelRegistry implements Serializable {
      */
     public double getExtrapolationRate() {
       if (predictionCount == 0) {
-        return 0.0;
+	return 0.0;
       }
       return (double) extrapolationCount / predictionCount;
     }

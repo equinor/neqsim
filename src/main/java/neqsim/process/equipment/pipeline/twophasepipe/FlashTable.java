@@ -8,8 +8,8 @@ import neqsim.thermo.system.SystemInterface;
  * Pre-computed flash property table for fast interpolation.
  *
  * <p>
- * Stores thermodynamic properties on a P-T grid for rapid lookup during transient simulations.
- * Avoids expensive flash calculations at each time step by using bilinear interpolation.
+ * Stores thermodynamic properties on a P-T grid for rapid lookup during transient simulations. Avoids expensive flash
+ * calculations at each time step by using bilinear interpolation.
  * </p>
  *
  * <h2>Usage</h2>
@@ -85,22 +85,22 @@ public class FlashTable implements Serializable {
   /**
    * Default constructor.
    */
-  public FlashTable() {}
+  public FlashTable() {
+  }
 
   /**
    * Build the flash table from a reference fluid.
    *
-   * @param referenceFluid Fluid system to use for flash calculations
-   * @param pressureMin Minimum pressure (Pa)
-   * @param pressureMax Maximum pressure (Pa)
-   * @param numPressurePoints Number of pressure grid points
-   * @param temperatureMin Minimum temperature (K)
-   * @param temperatureMax Maximum temperature (K)
+   * @param referenceFluid       Fluid system to use for flash calculations
+   * @param pressureMin          Minimum pressure (Pa)
+   * @param pressureMax          Maximum pressure (Pa)
+   * @param numPressurePoints    Number of pressure grid points
+   * @param temperatureMin       Minimum temperature (K)
+   * @param temperatureMax       Maximum temperature (K)
    * @param numTemperaturePoints Number of temperature grid points
    */
-  public void build(SystemInterface referenceFluid, double pressureMin, double pressureMax,
-      int numPressurePoints, double temperatureMin, double temperatureMax,
-      int numTemperaturePoints) {
+  public void build(SystemInterface referenceFluid, double pressureMin, double pressureMax, int numPressurePoints,
+      double temperatureMin, double temperatureMax, int numTemperaturePoints) {
     this.pMin = pressureMin;
     this.pMax = pressureMax;
     this.tMin = temperatureMin;
@@ -145,22 +145,22 @@ public class FlashTable implements Serializable {
     // Fill the table
     for (int i = 0; i < nP; i++) {
       for (int j = 0; j < nT; j++) {
-        ThermoProperties props = coupling.flashPT(pressures[i], temperatures[j]);
+	ThermoProperties props = coupling.flashPT(pressures[i], temperatures[j]);
 
-        gasDensity[i][j] = props.gasDensity;
-        liquidDensity[i][j] = props.liquidDensity;
-        gasViscosity[i][j] = props.gasViscosity;
-        liquidViscosity[i][j] = props.liquidViscosity;
-        gasEnthalpy[i][j] = props.gasEnthalpy;
-        liquidEnthalpy[i][j] = props.liquidEnthalpy;
-        gasSoundSpeed[i][j] = props.gasSoundSpeed;
-        liquidSoundSpeed[i][j] = props.liquidSoundSpeed;
-        surfaceTension[i][j] = props.surfaceTension;
-        gasVaporFraction[i][j] = props.gasVaporFraction;
-        gasCp[i][j] = props.gasCp;
-        liquidCp[i][j] = props.liquidCp;
-        gasCompressibility[i][j] = props.gasCompressibility;
-        liquidCompressibility[i][j] = props.liquidCompressibility;
+	gasDensity[i][j] = props.gasDensity;
+	liquidDensity[i][j] = props.liquidDensity;
+	gasViscosity[i][j] = props.gasViscosity;
+	liquidViscosity[i][j] = props.liquidViscosity;
+	gasEnthalpy[i][j] = props.gasEnthalpy;
+	liquidEnthalpy[i][j] = props.liquidEnthalpy;
+	gasSoundSpeed[i][j] = props.gasSoundSpeed;
+	liquidSoundSpeed[i][j] = props.liquidSoundSpeed;
+	surfaceTension[i][j] = props.surfaceTension;
+	gasVaporFraction[i][j] = props.gasVaporFraction;
+	gasCp[i][j] = props.gasCp;
+	liquidCp[i][j] = props.liquidCp;
+	gasCompressibility[i][j] = props.gasCompressibility;
+	liquidCompressibility[i][j] = props.liquidCompressibility;
       }
     }
 
@@ -170,7 +170,7 @@ public class FlashTable implements Serializable {
   /**
    * Interpolate properties at given P-T conditions.
    *
-   * @param pressure Pressure (Pa)
+   * @param pressure    Pressure (Pa)
    * @param temperature Temperature (K)
    * @return Interpolated thermodynamic properties
    */
@@ -229,10 +229,10 @@ public class FlashTable implements Serializable {
    * Bilinear interpolation helper.
    *
    * @param table 2D interpolation table
-   * @param iP pressure index
-   * @param iT temperature index
-   * @param wP pressure weight
-   * @param wT temperature weight
+   * @param iP    pressure index
+   * @param iT    temperature index
+   * @param wP    pressure weight
+   * @param wT    temperature weight
    * @return interpolated value
    */
   private double bilinearInterp(double[][] table, int iP, int iT, double wP, double wT) {
@@ -250,8 +250,8 @@ public class FlashTable implements Serializable {
   /**
    * Get a specific property value using bilinear interpolation.
    *
-   * @param property Property name
-   * @param pressure Pressure (Pa)
+   * @param property    Property name
+   * @param pressure    Pressure (Pa)
    * @param temperature Temperature (K)
    * @return Interpolated property value
    */
@@ -259,28 +259,28 @@ public class FlashTable implements Serializable {
     ThermoProperties props = interpolate(pressure, temperature);
 
     switch (property.toLowerCase()) {
-      case "gasdensity":
-        return props.gasDensity;
-      case "liquiddensity":
-        return props.liquidDensity;
-      case "gasviscosity":
-        return props.gasViscosity;
-      case "liquidviscosity":
-        return props.liquidViscosity;
-      case "gasenthalpy":
-        return props.gasEnthalpy;
-      case "liquidenthalpy":
-        return props.liquidEnthalpy;
-      case "gassoundspeed":
-        return props.gasSoundSpeed;
-      case "liquidsoundspeed":
-        return props.liquidSoundSpeed;
-      case "surfacetension":
-        return props.surfaceTension;
-      case "gasvaporfraction":
-        return props.gasVaporFraction;
-      default:
-        return Double.NaN;
+    case "gasdensity":
+      return props.gasDensity;
+    case "liquiddensity":
+      return props.liquidDensity;
+    case "gasviscosity":
+      return props.gasViscosity;
+    case "liquidviscosity":
+      return props.liquidViscosity;
+    case "gasenthalpy":
+      return props.gasEnthalpy;
+    case "liquidenthalpy":
+      return props.liquidEnthalpy;
+    case "gassoundspeed":
+      return props.gasSoundSpeed;
+    case "liquidsoundspeed":
+      return props.liquidSoundSpeed;
+    case "surfacetension":
+      return props.surfaceTension;
+    case "gasvaporfraction":
+      return props.gasVaporFraction;
+    default:
+      return Double.NaN;
     }
   }
 

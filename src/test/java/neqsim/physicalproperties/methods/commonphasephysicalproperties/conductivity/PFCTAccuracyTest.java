@@ -10,8 +10,8 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Comprehensive accuracy test for PFCT thermal conductivity method. Compares against NIST WebBook
- * reference data (Huber et al. correlations).
+ * Comprehensive accuracy test for PFCT thermal conductivity method. Compares against NIST WebBook reference data (Huber
+ * et al. correlations).
  *
  * <p>
  * Expected accuracy for PFCT corresponding states method:
@@ -36,24 +36,23 @@ public class PFCTAccuracyTest {
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       String phType = system.getPhase(i).getType().toString();
       if (phType.contains("LIQUID") || phType.contains("OIL")) {
-        return i;
+	return i;
       }
     }
     return -1;
   }
 
   /**
-   * PFCT methane gas at 300 K, various pressures. Since methane is the reference substance, PFCT
-   * should be most accurate here.
+   * PFCT methane gas at 300 K, various pressures. Since methane is the reference substance, PFCT should be most
+   * accurate here.
    */
   @Test
   void testPFCTMethaneGasPressureSeries() {
-    double[][] cases = {{300.0, 1.0, 0.03437}, {300.0, 10.0, 0.03530}, {300.0, 50.0, 0.03823},
-        {300.0, 100.0, 0.04436}, {300.0, 200.0, 0.05915}};
+    double[][] cases = { { 300.0, 1.0, 0.03437 }, { 300.0, 10.0, 0.03530 }, { 300.0, 50.0, 0.03823 },
+	{ 300.0, 100.0, 0.04436 }, { 300.0, 200.0, 0.05915 } };
 
     logger.info("\n=== PFCT Methane Gas at 300 K ===");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s %-12s %-12s %-10s%n", "P(bar)", "PFCT",
-        "NIST", "Error%");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s %-12s %-12s %-10s%n", "P(bar)", "PFCT", "NIST", "Error%");
 
     for (double[] c : cases) {
       SystemInterface system = new SystemSrkEos(c[0], c[1]);
@@ -66,11 +65,10 @@ public class PFCTAccuracyTest {
       double lambda = getConductivity(system, 0);
       double nist = c[2];
       double errPct = (lambda - nist) / nist * 100.0;
-      logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.0f %-12.5f %-12.5f %-10.1f%n", c[1],
-          lambda, nist, errPct);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.0f %-12.5f %-12.5f %-10.1f%n", c[1], lambda, nist,
+	  errPct);
 
-      assertEquals(nist, lambda, nist * 0.10,
-          "CH4 at 300K/" + c[1] + "bar: PFCT=" + lambda + " vs NIST=" + nist);
+      assertEquals(nist, lambda, nist * 0.10, "CH4 at 300K/" + c[1] + "bar: PFCT=" + lambda + " vs NIST=" + nist);
     }
   }
 
@@ -79,12 +77,11 @@ public class PFCTAccuracyTest {
    */
   @Test
   void testPFCTMethaneGasTemperatureSeries() {
-    double[][] cases = {{200.0, 1.0, 0.02168}, {250.0, 1.0, 0.02809}, {300.0, 1.0, 0.03437},
-        {350.0, 1.0, 0.04042}, {400.0, 1.0, 0.04624}};
+    double[][] cases = { { 200.0, 1.0, 0.02168 }, { 250.0, 1.0, 0.02809 }, { 300.0, 1.0, 0.03437 },
+	{ 350.0, 1.0, 0.04042 }, { 400.0, 1.0, 0.04624 } };
 
     logger.info("\n=== PFCT Methane Gas Temperature Series at 1 bar ===");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s %-12s %-12s %-10s%n", "T(K)", "PFCT",
-        "NIST", "Error%");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s %-12s %-12s %-10s%n", "T(K)", "PFCT", "NIST", "Error%");
 
     for (double[] c : cases) {
       SystemInterface system = new SystemSrkEos(c[0], c[1]);
@@ -97,11 +94,10 @@ public class PFCTAccuracyTest {
       double lambda = getConductivity(system, 0);
       double nist = c[2];
       double errPct = (lambda - nist) / nist * 100.0;
-      logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.0f %-12.5f %-12.5f %-10.1f%n", c[0],
-          lambda, nist, errPct);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.0f %-12.5f %-12.5f %-10.1f%n", c[0], lambda, nist,
+	  errPct);
 
-      assertEquals(nist, lambda, nist * 0.10,
-          "CH4 at " + c[0] + "K/1bar: PFCT=" + lambda + " vs NIST=" + nist);
+      assertEquals(nist, lambda, nist * 0.10, "CH4 at " + c[0] + "K/1bar: PFCT=" + lambda + " vs NIST=" + nist);
     }
   }
 
@@ -111,10 +107,10 @@ public class PFCTAccuracyTest {
   @Test
   void testPFCTMethaneLiquid() {
     logger.info("\n=== PFCT Methane Liquid ===");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s %-8s %-12s %-12s %-10s%n", "T(K)",
-        "P(bar)", "PFCT", "NIST", "Error%");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s %-8s %-12s %-12s %-10s%n", "T(K)", "P(bar)", "PFCT",
+	"NIST", "Error%");
 
-    double[][] cases = {{120.0, 10.0, 0.1857}, {120.0, 50.0, 0.1890}, {110.0, 10.0, 0.1996}};
+    double[][] cases = { { 120.0, 10.0, 0.1857 }, { 120.0, 50.0, 0.1890 }, { 110.0, 10.0, 0.1996 } };
 
     for (double[] c : cases) {
       SystemInterface system = new SystemSrkEos(c[0], c[1]);
@@ -130,29 +126,29 @@ public class PFCTAccuracyTest {
       double lambda = getConductivity(system, liqIdx);
       double nist = c[2];
       double errPct = (lambda - nist) / nist * 100.0;
-      logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.0f %-8.0f %-12.5f %-12.5f %-10.1f%n",
-          c[0], c[1], lambda, nist, errPct);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.0f %-8.0f %-12.5f %-12.5f %-10.1f%n", c[0], c[1], lambda,
+	  nist, errPct);
 
       assertEquals(nist, lambda, nist * 0.15,
-          "CH4 liquid at " + c[0] + "K/" + c[1] + "bar: PFCT=" + lambda + " vs NIST=" + nist);
+	  "CH4 liquid at " + c[0] + "K/" + c[1] + "bar: PFCT=" + lambda + " vs NIST=" + nist);
     }
   }
 
   /**
-   * PFCT pure HC gases at 300 K, 1 bar. Known systematic overprediction that increases with
-   * molecular weight: ethane ~16%, propane ~22%, n-butane ~30%. This is a fundamental limitation of
-   * corresponding states with methane reference for dilute gas conductivity.
+   * PFCT pure HC gases at 300 K, 1 bar. Known systematic overprediction that increases with molecular weight: ethane
+   * ~16%, propane ~22%, n-butane ~30%. This is a fundamental limitation of corresponding states with methane reference
+   * for dilute gas conductivity.
    */
   @Test
   void testPFCTPureGases() {
     logger.info("\n=== PFCT Pure Gases at 300 K, 1 bar ===");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-12s %-12s %-10s%n", "Component",
-        "PFCT", "NIST", "Error%");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-12s %-12s %-10s%n", "Component", "PFCT", "NIST",
+	"Error%");
 
-    String[] names = {"ethane", "propane", "n-butane"};
-    double[] nistValues = {0.02122, 0.01787, 0.01589};
+    String[] names = { "ethane", "propane", "n-butane" };
+    double[] nistValues = { 0.02122, 0.01787, 0.01589 };
     // Tolerance increases with MW: ethane 20%, propane 25%, butane 35%
-    double[] tolerances = {0.20, 0.25, 0.35};
+    double[] tolerances = { 0.20, 0.25, 0.35 };
 
     for (int k = 0; k < names.length; k++) {
       SystemInterface system = new SystemSrkEos(300.0, 1.0);
@@ -165,11 +161,10 @@ public class PFCTAccuracyTest {
       double lambda = getConductivity(system, 0);
       double nist = nistValues[k];
       double errPct = (lambda - nist) / nist * 100.0;
-      logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-12.5f %-12.5f %-10.1f%n",
-          names[k], lambda, nist, errPct);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-12.5f %-12.5f %-10.1f%n", names[k], lambda, nist,
+	  errPct);
 
-      assertEquals(nist, lambda, nist * tolerances[k],
-          names[k] + " at 300K/1bar: PFCT=" + lambda + " vs NIST=" + nist);
+      assertEquals(nist, lambda, nist * tolerances[k], names[k] + " at 300K/1bar: PFCT=" + lambda + " vs NIST=" + nist);
     }
   }
 
@@ -179,11 +174,11 @@ public class PFCTAccuracyTest {
   @Test
   void testPFCTNonHydrocarbonGases() {
     logger.info("\n=== PFCT Non-hydrocarbon Gases at 300 K, 1 bar ===");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-12s %-12s %-10s%n", "Component",
-        "PFCT", "NIST", "Error%");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-12s %-12s %-10s%n", "Component", "PFCT", "NIST",
+	"Error%");
 
-    String[] names = {"nitrogen", "CO2"};
-    double[] nistValues = {0.02583, 0.01662};
+    String[] names = { "nitrogen", "CO2" };
+    double[] nistValues = { 0.02583, 0.01662 };
 
     for (int k = 0; k < names.length; k++) {
       SystemInterface system = new SystemSrkEos(300.0, 1.0);
@@ -196,11 +191,10 @@ public class PFCTAccuracyTest {
       double lambda = getConductivity(system, 0);
       double nist = nistValues[k];
       double errPct = (lambda - nist) / nist * 100.0;
-      logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-12.5f %-12.5f %-10.1f%n",
-          names[k], lambda, nist, errPct);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-12.5f %-12.5f %-10.1f%n", names[k], lambda, nist,
+	  errPct);
 
-      assertEquals(nist, lambda, nist * 0.15,
-          names[k] + " at 300K/1bar: PFCT=" + lambda + " vs NIST=" + nist);
+      assertEquals(nist, lambda, nist * 0.15, names[k] + " at 300K/1bar: PFCT=" + lambda + " vs NIST=" + nist);
     }
   }
 
@@ -210,11 +204,11 @@ public class PFCTAccuracyTest {
   @Test
   void testPFCTLiquidAlkanes() {
     logger.info("\n=== PFCT Liquid Alkanes at 300 K, 10 bar ===");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-12s %-12s %-10s%n", "Component",
-        "PFCT", "NIST", "Error%");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-12s %-12s %-10s%n", "Component", "PFCT", "NIST",
+	"Error%");
 
-    String[] names = {"n-pentane", "n-hexane", "n-heptane", "n-octane"};
-    double[] nistValues = {0.1127, 0.1191, 0.1232, 0.1274};
+    String[] names = { "n-pentane", "n-hexane", "n-heptane", "n-octane" };
+    double[] nistValues = { 0.1127, 0.1191, 0.1232, 0.1274 };
 
     for (int k = 0; k < names.length; k++) {
       SystemInterface system = new SystemSrkEos(300.0, 10.0);
@@ -230,11 +224,10 @@ public class PFCTAccuracyTest {
       double lambda = getConductivity(system, liqIdx);
       double nist = nistValues[k];
       double errPct = (lambda - nist) / nist * 100.0;
-      logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-12.5f %-12.5f %-10.1f%n",
-          names[k], lambda, nist, errPct);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-12.5f %-12.5f %-10.1f%n", names[k], lambda, nist,
+	  errPct);
 
-      assertEquals(nist, lambda, nist * 0.15,
-          names[k] + " liquid at 300K/10bar: PFCT=" + lambda + " vs NIST=" + nist);
+      assertEquals(nist, lambda, nist * 0.15, names[k] + " liquid at 300K/10bar: PFCT=" + lambda + " vs NIST=" + nist);
     }
   }
 
@@ -246,7 +239,7 @@ public class PFCTAccuracyTest {
     logger.info("\n=== PFCT Natural Gas Mixture at 300 K ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s %-12s%n", "P(bar)", "PFCT");
 
-    double[] pressures = {1.0, 10.0, 50.0, 100.0, 200.0};
+    double[] pressures = { 1.0, 10.0, 50.0, 100.0, 200.0 };
     double prevLambda = 0;
 
     for (double p : pressures) {
@@ -265,12 +258,10 @@ public class PFCTAccuracyTest {
       double lambda = getConductivity(system, 0);
       logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.0f %-12.5f%n", p, lambda);
 
-      assertTrue(lambda > 0.01 && lambda < 0.15,
-          "Conductivity out of range at P=" + p + ": " + lambda);
+      assertTrue(lambda > 0.01 && lambda < 0.15, "Conductivity out of range at P=" + p + ": " + lambda);
 
       if (p > 1.0) {
-        assertTrue(lambda >= prevLambda * 0.98,
-            "Conductivity should not decrease with pressure: P=" + p);
+	assertTrue(lambda >= prevLambda * 0.98, "Conductivity should not decrease with pressure: P=" + p);
       }
       prevLambda = lambda;
     }
@@ -282,10 +273,9 @@ public class PFCTAccuracyTest {
   @Test
   void testPFCTMethaneHighTemperature() {
     logger.info("\n=== PFCT Methane High Temperature (known limitation) ===");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s %-12s %-12s %-10s%n", "T(K)", "PFCT",
-        "NIST", "Error%");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s %-12s %-12s %-10s%n", "T(K)", "PFCT", "NIST", "Error%");
 
-    double[][] cases = {{500.0, 1.0, 0.05722}, {600.0, 1.0, 0.06810}};
+    double[][] cases = { { 500.0, 1.0, 0.05722 }, { 600.0, 1.0, 0.06810 } };
 
     for (double[] c : cases) {
       SystemInterface system = new SystemSrkEos(c[0], c[1]);
@@ -298,12 +288,11 @@ public class PFCTAccuracyTest {
       double lambda = getConductivity(system, 0);
       double nist = c[2];
       double errPct = (lambda - nist) / nist * 100.0;
-      logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.0f %-12.5f %-12.5f %-10.1f%n", c[0],
-          lambda, nist, errPct);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.0f %-12.5f %-12.5f %-10.1f%n", c[0], lambda, nist,
+	  errPct);
 
       // High-T: larger tolerance - known limitation of methane reference correlation
-      assertEquals(nist, lambda, nist * 0.30,
-          "CH4 high-T at " + c[0] + "K: PFCT=" + lambda + " vs NIST=" + nist);
+      assertEquals(nist, lambda, nist * 0.30, "CH4 high-T at " + c[0] + "K: PFCT=" + lambda + " vs NIST=" + nist);
     }
   }
 }

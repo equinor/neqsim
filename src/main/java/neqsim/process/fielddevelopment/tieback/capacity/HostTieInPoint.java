@@ -6,10 +6,9 @@ import java.io.Serializable;
  * Mapping between production-profile rates and an attached host process model stream.
  *
  * <p>
- * The tie-in planner uses this object when a {@code HostFacility} has an attached process model.
- * The configured stream is scaled to the base-plus-accepted-satellite load, the process is run, and
- * equipment capacity constraints are inspected. Conversion factors translate field-production units
- * into the flow unit used by the NeqSim stream.
+ * The tie-in planner uses this object when a {@code HostFacility} has an attached process model. The configured stream
+ * is scaled to the base-plus-accepted-satellite load, the process is run, and equipment capacity constraints are
+ * inspected. Conversion factors translate field-production units into the flow unit used by the NeqSim stream.
  * </p>
  *
  * @author ESOL
@@ -44,12 +43,11 @@ public final class HostTieInPoint implements Serializable {
    * Creates a tie-in point for a process stream.
    *
    * @param processStreamReference stream reference resolved by {@code ProcessSystem}
-   * @param processRateUnit flow unit used by the target stream
+   * @param processRateUnit        flow unit used by the target stream
    */
   public HostTieInPoint(String processStreamReference, String processRateUnit) {
     this.processStreamReference = processStreamReference;
-    this.processRateUnit =
-        processRateUnit == null || processRateUnit.trim().isEmpty() ? "kg/hr" : processRateUnit;
+    this.processRateUnit = processRateUnit == null || processRateUnit.trim().isEmpty() ? "kg/hr" : processRateUnit;
   }
 
   /**
@@ -144,9 +142,7 @@ public final class HostTieInPoint implements Serializable {
     if (load == null) {
       return 0.0;
     }
-    return load.getGasRateMSm3d() * gasToProcessRateFactor
-        + load.getOilRateBopd() * oilToProcessRateFactor
-        + load.getWaterRateM3d() * waterToProcessRateFactor
-        + load.getTotalLiquidRateM3d() * liquidToProcessRateFactor;
+    return load.getGasRateMSm3d() * gasToProcessRateFactor + load.getOilRateBopd() * oilToProcessRateFactor
+	+ load.getWaterRateM3d() * waterToProcessRateFactor + load.getTotalLiquidRateM3d() * liquidToProcessRateFactor;
   }
 }

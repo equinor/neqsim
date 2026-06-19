@@ -20,7 +20,7 @@ public class LNGfreezingTestSolid1 {
   private static final Logger logger = LogManager.getLogger(LNGfreezingTestSolid1.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.

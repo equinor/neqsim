@@ -12,18 +12,15 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * Catalogue-driven gas turbine unit used for dispatch, right-sizing and lifecycle CO2 / fuel
- * studies.
+ * Catalogue-driven gas turbine unit used for dispatch, right-sizing and lifecycle CO2 / fuel studies.
  *
  * <p>
- * Unlike {@link neqsim.process.equipment.powergeneration.GasTurbine} (which builds a full
- * Brayton-cycle air/combustion/expansion thermo model), this class is an engineering-level energy
- * accounting wrapper: it takes a fuel gas inlet stream and a list of {@link Compressor} power
- * consumers (or arbitrary {@link PowerDemandConsumer}s), computes load fraction against the
- * supplied {@link GasTurbineSpec}, looks up effective heat rate from a
- * {@link GasTurbinePerformanceMap}, applies optional {@link GasTurbineDegradation} penalties, sizes
- * the fuel gas mass flow, and reports CO2 / NOx / methane-slip emissions via
- * {@link GasTurbineEmissions}.
+ * Unlike {@link neqsim.process.equipment.powergeneration.GasTurbine} (which builds a full Brayton-cycle
+ * air/combustion/expansion thermo model), this class is an engineering-level energy accounting wrapper: it takes a fuel
+ * gas inlet stream and a list of {@link Compressor} power consumers (or arbitrary {@link PowerDemandConsumer}s),
+ * computes load fraction against the supplied {@link GasTurbineSpec}, looks up effective heat rate from a
+ * {@link GasTurbinePerformanceMap}, applies optional {@link GasTurbineDegradation} penalties, sizes the fuel gas mass
+ * flow, and reports CO2 / NOx / methane-slip emissions via {@link GasTurbineEmissions}.
  * </p>
  *
  * <p>
@@ -95,9 +92,9 @@ public class GasTurbineUnit extends TwoPortEquipment {
   /**
    * Construct a unit with an inlet fuel stream and a catalog spec.
    *
-   * @param name unit name
+   * @param name       unit name
    * @param fuelStream fuel gas inlet stream
-   * @param spec catalog spec (use {@link GasTurbineCatalog#get(String)})
+   * @param spec       catalog spec (use {@link GasTurbineCatalog#get(String)})
    */
   public GasTurbineUnit(String name, StreamInterface fuelStream, GasTurbineSpec spec) {
     super(name, fuelStream);
@@ -105,8 +102,8 @@ public class GasTurbineUnit extends TwoPortEquipment {
   }
 
   /**
-   * Set the catalog spec. Re-initialises the performance map and degradation model from the spec
-   * defaults if they have not been overridden.
+   * Set the catalog spec. Re-initialises the performance map and degradation model from the spec defaults if they have
+   * not been overridden.
    *
    * @param spec catalog spec
    */
@@ -160,8 +157,8 @@ public class GasTurbineUnit extends TwoPortEquipment {
   }
 
   /**
-   * Convenience setter for ambient temperature only. Leaves ambient pressure at its current value
-   * (defaults to ISO sea-level, 1.01325 bara).
+   * Convenience setter for ambient temperature only. Leaves ambient pressure at its current value (defaults to ISO
+   * sea-level, 1.01325 bara).
    *
    * @param temperatureK ambient temperature [K]
    */
@@ -170,8 +167,8 @@ public class GasTurbineUnit extends TwoPortEquipment {
   }
 
   /**
-   * Convenience setter for ambient pressure only. Leaves ambient temperature unchanged (defaults to
-   * ISO 15 °C = 288.15 K).
+   * Convenience setter for ambient pressure only. Leaves ambient temperature unchanged (defaults to ISO 15 °C = 288.15
+   * K).
    *
    * @param pressureBara ambient pressure [bara]
    */
@@ -192,12 +189,12 @@ public class GasTurbineUnit extends TwoPortEquipment {
     consumers.add(new PowerDemandConsumer() {
       @Override
       public double getDemandedPowerW() {
-        return compressor.getPower();
+	return compressor.getPower();
       }
 
       @Override
       public String getConsumerName() {
-        return compressor.getName();
+	return compressor.getName();
       }
     });
   }
@@ -251,7 +248,7 @@ public class GasTurbineUnit extends TwoPortEquipment {
 
     // 1) Available power at site conditions, with degradation derate
     double sitePower = performanceMap.getAvailablePower(spec.getRatedPowerW(), ambientTemperatureK,
-        ambientPressureBara);
+	ambientPressureBara);
     this.availablePowerW = sitePower * degradation.getPowerDerateFactor();
 
     // 2) Demanded power
@@ -260,10 +257,10 @@ public class GasTurbineUnit extends TwoPortEquipment {
     } else {
       double sum = 0.0;
       for (PowerDemandConsumer c : consumers) {
-        double p = c.getDemandedPowerW();
-        if (p > 0.0) {
-          sum += p;
-        }
+	double p = c.getDemandedPowerW();
+	if (p > 0.0) {
+	  sum += p;
+	}
       }
       this.demandedPowerW = sum;
     }
@@ -275,15 +272,13 @@ public class GasTurbineUnit extends TwoPortEquipment {
       this.loadFraction = this.demandedPowerW / this.availablePowerW;
     }
     this.overloaded = this.loadFraction > 1.0;
-    this.belowMinLoad =
-        this.loadFraction > 0.0 && this.loadFraction < performanceMap.getMinLoadFraction();
+    this.belowMinLoad = this.loadFraction > 0.0 && this.loadFraction < performanceMap.getMinLoadFraction();
 
     if (enforcePowerLimit) {
       applyAvailablePowerLimitToCompressors();
       if (this.overloaded) {
-        logger.warn(
-            "GasTurbineUnit {} overloaded: demanded {} W exceeds available {} W (shortfall {} W)",
-            getName(), this.demandedPowerW, this.availablePowerW, getPowerShortfallW());
+	logger.warn("GasTurbineUnit {} overloaded: demanded {} W exceeds available {} W (shortfall {} W)", getName(),
+	    this.demandedPowerW, this.availablePowerW, getPowerShortfallW());
       }
     }
 
@@ -302,10 +297,8 @@ public class GasTurbineUnit extends TwoPortEquipment {
     }
 
     // 4) Heat rate with part-load + ambient + degradation
-    double loadForMap =
-        Math.max(performanceMap.getMinLoadFraction() * 0.5, Math.min(1.10, this.loadFraction));
-    double baseHeatRate =
-        performanceMap.getHeatRate(spec.getHeatRateKJPerKWh(), loadForMap, ambientTemperatureK);
+    double loadForMap = Math.max(performanceMap.getMinLoadFraction() * 0.5, Math.min(1.10, this.loadFraction));
+    double baseHeatRate = performanceMap.getHeatRate(spec.getHeatRateKJPerKWh(), loadForMap, ambientTemperatureK);
     this.effectiveHeatRateKJPerKWh = baseHeatRate * (1.0 + degradation.getTotalHeatRatePenalty());
 
     // 5) Fuel mass flow from heat-rate definition (LHV basis)
@@ -327,17 +320,13 @@ public class GasTurbineUnit extends TwoPortEquipment {
     this.fuelMolarFlowMolPerS = this.fuelMassFlowKgPerS / (meanMW * 1.0e-3);
 
     // 6) Exhaust at part-load
-    double exhaustScale =
-        performanceMap.getAvailablePower(1.0, ambientTemperatureK, ambientPressureBara);
-    this.exhaustMassFlowKgPerS =
-        performanceMap.getExhaustFlow(spec.getExhaustFlowKgPerS() * exhaustScale, loadForMap);
-    this.exhaustTemperatureK =
-        performanceMap.getExhaustTemperature(spec.getExhaustTemperatureK(), loadForMap);
+    double exhaustScale = performanceMap.getAvailablePower(1.0, ambientTemperatureK, ambientPressureBara);
+    this.exhaustMassFlowKgPerS = performanceMap.getExhaustFlow(spec.getExhaustFlowKgPerS() * exhaustScale, loadForMap);
+    this.exhaustTemperatureK = performanceMap.getExhaustTemperature(spec.getExhaustTemperatureK(), loadForMap);
 
     // 7) Emissions
     this.co2KgPerS = emissions.computeCO2KgPerS(fuel, this.fuelMolarFlowMolPerS);
-    this.noxKgPerS =
-        emissions.computeNOxKgPerS(spec.getNoxPpmDLE(), this.exhaustMassFlowKgPerS, 28.7);
+    this.noxKgPerS = emissions.computeNOxKgPerS(spec.getNoxPpmDLE(), this.exhaustMassFlowKgPerS, 28.7);
     this.methaneSlipKgPerS = emissions.computeMethaneSlipKgPerS(fuel, this.fuelMolarFlowMolPerS);
 
     copyInletToOutlet();
@@ -373,10 +362,10 @@ public class GasTurbineUnit extends TwoPortEquipment {
       // not J/mol. To get J/kg we compute ISO 6976 directly on a mass basis.
       SystemInterface fluid = getInletStream().getFluid();
       if (fluid == null) {
-        return 0.0;
+	return 0.0;
       }
-      neqsim.standards.gasquality.Standard_ISO6976 iso6976 =
-          new neqsim.standards.gasquality.Standard_ISO6976(fluid.clone(), 0, 15.55, "mass");
+      neqsim.standards.gasquality.Standard_ISO6976 iso6976 = new neqsim.standards.gasquality.Standard_ISO6976(
+	  fluid.clone(), 0, 15.55, "mass");
       iso6976.setReferenceState("real");
       iso6976.calculate();
       // getValue returns kJ/kg on a mass basis; convert to J/kg.
@@ -579,12 +568,11 @@ public class GasTurbineUnit extends TwoPortEquipment {
    * Enable or disable feeding an available-power limit back to the driven compressors.
    *
    * <p>
-   * When enabled (opt-in; default {@code false} preserves the historical one-way snapshot
-   * behaviour), each {@link #run()} distributes {@link #getAvailablePowerW()} across the
-   * compressors attached via {@link #addPowerConsumer(Compressor)} and installs the share on each
-   * compressor as a {@link GasTurbineDriver} performance curve. The per-compressor caps sum to the
-   * turbine available power, so the capacity / bottleneck framework enforces &Sigma; compressor
-   * power &le; turbine available power.
+   * When enabled (opt-in; default {@code false} preserves the historical one-way snapshot behaviour), each
+   * {@link #run()} distributes {@link #getAvailablePowerW()} across the compressors attached via
+   * {@link #addPowerConsumer(Compressor)} and installs the share on each compressor as a {@link GasTurbineDriver}
+   * performance curve. The per-compressor caps sum to the turbine available power, so the capacity / bottleneck
+   * framework enforces &Sigma; compressor power &le; turbine available power.
    * </p>
    *
    * @param enforcePowerLimit true to feed the available-power limit back to driven compressors
@@ -616,10 +604,9 @@ public class GasTurbineUnit extends TwoPortEquipment {
    * Get the available-power allocation across the driven compressors.
    *
    * <p>
-   * Each driven compressor receives a share of {@link #getAvailablePowerW()} proportional to its
-   * current power demand (equal split when no demand is registered). The shares sum to the turbine
-   * available power. This is the distribution applied to the compressors when
-   * {@link #isEnforcePowerLimit()} is true.
+   * Each driven compressor receives a share of {@link #getAvailablePowerW()} proportional to its current power demand
+   * (equal split when no demand is registered). The shares sum to the turbine available power. This is the distribution
+   * applied to the compressors when {@link #isEnforcePowerLimit()} is true.
    * </p>
    *
    * @return ordered map of compressor name to allocated available power [W]
@@ -633,17 +620,17 @@ public class GasTurbineUnit extends TwoPortEquipment {
     for (Compressor c : drivenCompressors) {
       double p = c.getPower();
       if (p > 0.0) {
-        totalDemand += p;
+	totalDemand += p;
       }
     }
     int count = drivenCompressors.size();
     for (Compressor c : drivenCompressors) {
       double shareW;
       if (totalDemand > 0.0) {
-        double p = Math.max(0.0, c.getPower());
-        shareW = availablePowerW * (p / totalDemand);
+	double p = Math.max(0.0, c.getPower());
+	shareW = availablePowerW * (p / totalDemand);
       } else {
-        shareW = availablePowerW / count;
+	shareW = availablePowerW / count;
       }
       allocation.put(c.getName(), shareW);
     }
@@ -651,15 +638,14 @@ public class GasTurbineUnit extends TwoPortEquipment {
   }
 
   /**
-   * Distribute the turbine available shaft power across the driven compressors and feed each one an
-   * available-power limit via
-   * {@link Compressor#setDriverCurve(neqsim.process.equipment.compressor.driver.DriverCurve)}.
+   * Distribute the turbine available shaft power across the driven compressors and feed each one an available-power
+   * limit via {@link Compressor#setDriverCurve(neqsim.process.equipment.compressor.driver.DriverCurve)}.
    *
    * <p>
-   * The share is installed as a {@link GasTurbineDriver} performance curve evaluated at ISO ambient
-   * conditions so that each compressor's {@link Compressor#getCapacityMax()} reports exactly its
-   * allocation. The per-compressor caps sum to {@link #getAvailablePowerW()}, enforcing &Sigma;
-   * compressor power &le; turbine available power in the capacity / bottleneck framework.
+   * The share is installed as a {@link GasTurbineDriver} performance curve evaluated at ISO ambient conditions so that
+   * each compressor's {@link Compressor#getCapacityMax()} reports exactly its allocation. The per-compressor caps sum
+   * to {@link #getAvailablePowerW()}, enforcing &Sigma; compressor power &le; turbine available power in the capacity /
+   * bottleneck framework.
    * </p>
    */
   private void applyAvailablePowerLimitToCompressors() {
@@ -670,7 +656,7 @@ public class GasTurbineUnit extends TwoPortEquipment {
     for (Compressor c : drivenCompressors) {
       Double shareW = allocation.get(c.getName());
       if (shareW == null || shareW <= 0.0) {
-        continue;
+	continue;
       }
       GasTurbineDriver curve = new GasTurbineDriver(shareW / 1000.0, 0.35);
       curve.setAmbientTemperature(15.0); // ISO so the allocation maps 1:1 to available power

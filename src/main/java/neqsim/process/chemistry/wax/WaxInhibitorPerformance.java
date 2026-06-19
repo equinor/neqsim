@@ -17,17 +17,16 @@ import neqsim.process.chemistry.util.StandardsRegistry.StandardReference;
  * The model captures the two effects measured in field trials:
  * </p>
  * <ul>
- * <li><strong>Pour-point depression (PPD).</strong> The reduction of the pour point achieved by an
- * EVA / poly-acrylate / vinyl-acetate-class inhibitor at a given dose. Linear dose response
- * saturating at the maximum efficacy.</li>
- * <li><strong>Yield-stress reduction.</strong> Fraction by which the cold-restart yield stress is
- * reduced — typically 60–95% for a well-fit inhibitor.</li>
+ * <li><strong>Pour-point depression (PPD).</strong> The reduction of the pour point achieved by an EVA / poly-acrylate
+ * / vinyl-acetate-class inhibitor at a given dose. Linear dose response saturating at the maximum efficacy.</li>
+ * <li><strong>Yield-stress reduction.</strong> Fraction by which the cold-restart yield stress is reduced — typically
+ * 60–95% for a well-fit inhibitor.</li>
  * </ul>
  *
  * <p>
- * Inputs come from the user (lab data preferred) or default literature ranges. The class is
- * intentionally light-weight; for rigorous wax appearance temperature use NeqSim's
- * {@code WaxCurveCalculator}, then bridge here for the dose response.
+ * Inputs come from the user (lab data preferred) or default literature ranges. The class is intentionally light-weight;
+ * for rigorous wax appearance temperature use NeqSim's {@code WaxCurveCalculator}, then bridge here for the dose
+ * response.
  * </p>
  *
  * @author ESOL
@@ -72,7 +71,8 @@ public class WaxInhibitorPerformance implements Serializable {
   /**
    * Default constructor.
    */
-  public WaxInhibitorPerformance() {}
+  public WaxInhibitorPerformance() {
+  }
 
   /**
    * Sets the inhibitor chemistry.
@@ -141,8 +141,7 @@ public class WaxInhibitorPerformance implements Serializable {
     // Yield-stress reduction empirically follows 0.6 + 0.35 * efficacy
     yieldStressReductionFraction = Math.min(0.95, 0.6 * efficacyFraction + 0.35 * efficacyFraction);
     if (efficacyFraction < 0.4) {
-      warnings.add(
-          "Dose below 50% efficacy — consider increasing or switching to a different chemistry");
+      warnings.add("Dose below 50% efficacy — consider increasing or switching to a different chemistry");
     }
     if (chemistry == InhibitorChemistry.EVA && baseWaxAppearanceTemperatureC > 60.0) {
       warnings.add("EVA chemistry typically loses efficacy at WAT > 60 C");
@@ -220,10 +219,8 @@ public class WaxInhibitorPerformance implements Serializable {
    */
   public List<Map<String, Object>> getStandardsApplied() {
     return StandardsRegistry.toMapList(
-        new StandardReference("ASTM D97", "ASTM",
-            "Standard test method for pour point of petroleum products"),
-        new StandardReference("ASTM D7346", "ASTM",
-            "No-flow point and pour point of petroleum products"));
+	new StandardReference("ASTM D97", "ASTM", "Standard test method for pour point of petroleum products"),
+	new StandardReference("ASTM D7346", "ASTM", "No-flow point and pour point of petroleum products"));
   }
 
   /**

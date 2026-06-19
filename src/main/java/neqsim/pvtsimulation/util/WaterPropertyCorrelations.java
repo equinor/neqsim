@@ -7,14 +7,14 @@ import java.util.Map;
  * Water and brine property correlations for reservoir engineering.
  *
  * <p>
- * Provides empirical correlations for water/brine thermodynamic and transport properties commonly
- * needed in reservoir simulation and production engineering. All public methods use Kelvin for
- * temperature and bara for pressure by default.
+ * Provides empirical correlations for water/brine thermodynamic and transport properties commonly needed in reservoir
+ * simulation and production engineering. All public methods use Kelvin for temperature and bara for pressure by
+ * default.
  *
  * <p>
- * <b>Default units:</b> temperature in Kelvin (K), pressure in bara, salinity in ppm (mg/L)
- * unless otherwise noted. Correlations are computed internally in their published unit systems
- * (typically Fahrenheit / psia) and converted at the API boundary.
+ * <b>Default units:</b> temperature in Kelvin (K), pressure in bara, salinity in ppm (mg/L) unless otherwise noted.
+ * Correlations are computed internally in their published unit systems (typically Fahrenheit / psia) and converted at
+ * the API boundary.
  *
  * <p>
  * <b>Correlations included:</b>
@@ -73,8 +73,7 @@ public final class WaterPropertyCorrelations {
    * McCain (1991) water formation volume factor.
    *
    * <p>
-   * Calculates Bw (res bbl/STB) for pure water (no salinity correction).
-   * Internally uses Fahrenheit/psia coefficients.
+   * Calculates Bw (res bbl/STB) for pure water (no salinity correction). Internally uses Fahrenheit/psia coefficients.
    *
    * $$ B_w = (1 + \Delta V_{wT})(1 + \Delta V_{wP}) $$
    *
@@ -87,8 +86,7 @@ public final class WaterPropertyCorrelations {
     double pp = toPsia(pressureBara);
 
     double dvwt = -1.0001e-2 + 1.33391e-4 * tf + 5.50654e-7 * tf * tf;
-    double dvwp = -1.95301e-9 * pp * tf - 1.72834e-13 * pp * pp * tf
-        - 3.58922e-7 * pp - 2.25341e-10 * pp * pp;
+    double dvwp = -1.95301e-9 * pp * tf - 1.72834e-13 * pp * pp * tf - 3.58922e-7 * pp - 2.25341e-10 * pp * pp;
     return (1.0 + dvwt) * (1.0 + dvwp);
   }
 
@@ -98,23 +96,21 @@ public final class WaterPropertyCorrelations {
    * <p>
    * Includes salinity effects on water FVF.
    *
-   * $$ B_w = \left[1 + \frac{a_1 (T-60) + a_2 (T-60)^2
-   *   - a_3 P - a_4 P^2 + a_5 P (T-60)}{a_6}\right] $$
+   * $$ B_w = \left[1 + \frac{a_1 (T-60) + a_2 (T-60)^2 - a_3 P - a_4 P^2 + a_5 P (T-60)}{a_6}\right] $$
    *
    * @param temperatureK Temperature (Kelvin). Valid: 275 - 475 K
    * @param pressureBara Pressure (bara). Valid: 1 - 350 bara
    * @param salinityPpm  Total dissolved solids (ppm NaCl equivalent)
    * @return Water formation volume factor (res bbl/STB), dimensionless
    */
-  public static double waterFVFOsif(double temperatureK, double pressureBara,
-      double salinityPpm) {
+  public static double waterFVFOsif(double temperatureK, double pressureBara, double salinityPpm) {
     double tf = toF(temperatureK);
     double pp = toPsia(pressureBara);
 
     double s = salinityPpm / 1.0e6;
     double tShift = tf - 60.0;
-    double numerator = 5.1e-8 * pp + (tf - 60.0) * (5.47e-6 - 1.95e-10 * pp)
-        + (tShift * tShift) * (-3.23e-8) + 8.5e-13 * pp * pp;
+    double numerator = 5.1e-8 * pp + (tf - 60.0) * (5.47e-6 - 1.95e-10 * pp) + (tShift * tShift) * (-3.23e-8)
+	+ 8.5e-13 * pp * pp;
     return 1.0 + numerator - s * (0.0840655 * s * Math.sqrt(tf) + 0.0);
   }
 
@@ -143,8 +139,7 @@ public final class WaterPropertyCorrelations {
 
     double s = salinityPpm / 1.0e4;
     double a = 109.574 - 8.40564 * s + 0.313314 * s * s + 8.72213e-3 * s * s * s;
-    double b = -1.12166 + 2.63951e-2 * s - 6.79461e-4 * s * s
-        - 5.47119e-5 * s * s * s + 1.55586e-6 * s * s * s * s;
+    double b = -1.12166 + 2.63951e-2 * s - 6.79461e-4 * s * s - 5.47119e-5 * s * s * s + 1.55586e-6 * s * s * s * s;
     return a * Math.pow(tf, b);
   }
 
@@ -154,16 +149,14 @@ public final class WaterPropertyCorrelations {
    * <p>
    * Applies Meehan (1980) pressure correction to the dead water viscosity.
    *
-   * $$ \mu_w = \mu_{w,dead} \times [0.9994 + 4.0295 \times 10^{-5} P
-   *     + 3.1062 \times 10^{-9} P^2] $$
+   * $$ \mu_w = \mu_{w,dead} \times [0.9994 + 4.0295 \times 10^{-5} P + 3.1062 \times 10^{-9} P^2] $$
    *
    * @param temperatureK Temperature (Kelvin)
    * @param pressureBara Pressure (bara)
    * @param salinityPpm  Total dissolved solids (ppm NaCl equivalent)
    * @return Water viscosity at P and T (cP)
    */
-  public static double waterViscosityMcCain(double temperatureK, double pressureBara,
-      double salinityPpm) {
+  public static double waterViscosityMcCain(double temperatureK, double pressureBara, double salinityPpm) {
     double pp = toPsia(pressureBara);
     double muDead = deadWaterViscosityMcCain(temperatureK, salinityPpm);
     double factor = 0.9994 + 4.0295e-5 * pp + 3.1062e-9 * pp * pp;
@@ -176,23 +169,21 @@ public final class WaterPropertyCorrelations {
    * McCain (1991) water compressibility.
    *
    * <p>
-   * Calculates isothermal compressibility of water or brine. Returns result in 1/bara.
-   * Internal calculation in 1/psi, converted to 1/bara at the boundary.
+   * Calculates isothermal compressibility of water or brine. Returns result in 1/bara. Internal calculation in 1/psi,
+   * converted to 1/bara at the boundary.
    *
    * @param temperatureK Temperature (Kelvin). Valid: 275 - 450 K
    * @param pressureBara Pressure (bara). Valid: 7 - 350 bara
    * @param salinityPpm  Total dissolved solids (ppm NaCl equivalent)
    * @return Water compressibility (1/bara)
    */
-  public static double waterCompressibilityMcCain(double temperatureK, double pressureBara,
-      double salinityPpm) {
+  public static double waterCompressibilityMcCain(double temperatureK, double pressureBara, double salinityPpm) {
     double tf = toF(temperatureK);
     double pp = toPsia(pressureBara);
     double s = salinityPpm / 1.0e6;
 
-    double cwPureInvPsi = (3.8546 - 0.000134 * pp)
-        + (-(0.01052 + 4.77e-7 * pp)) * tf
-        + (3.9267e-5 + 8.8e-10 * pp) * tf * tf;
+    double cwPureInvPsi = (3.8546 - 0.000134 * pp) + (-(0.01052 + 4.77e-7 * pp)) * tf
+	+ (3.9267e-5 + 8.8e-10 * pp) * tf * tf;
     cwPureInvPsi = cwPureInvPsi * 1.0e-6;
 
     double salCorr = 1.0 + s * 0.7;
@@ -208,30 +199,27 @@ public final class WaterPropertyCorrelations {
    * Batzle and Wang (1992) brine density correlation.
    *
    * <p>
-   * Calculates brine density from temperature and pressure. Uses the Batzle-Wang
-   * formulation with temperature in Celsius and pressure in MPa internally.
+   * Calculates brine density from temperature and pressure. Uses the Batzle-Wang formulation with temperature in
+   * Celsius and pressure in MPa internally.
    *
-   * @param temperatureK     Temperature (Kelvin). Valid: 275 - 475 K
-   * @param pressureBara     Pressure (bara). Valid: 1 - 1000 bara
-   * @param salinityWtFrac   Salinity as weight fraction [0, 0.3]
+   * @param temperatureK   Temperature (Kelvin). Valid: 275 - 475 K
+   * @param pressureBara   Pressure (bara). Valid: 1 - 1000 bara
+   * @param salinityWtFrac Salinity as weight fraction [0, 0.3]
    * @return Brine density (kg/m3)
    */
-  public static double brineDensityBatzleWang(double temperatureK, double pressureBara,
-      double salinityWtFrac) {
+  public static double brineDensityBatzleWang(double temperatureK, double pressureBara, double salinityWtFrac) {
     double tc = temperatureK - 273.15;
     double pMPa = pressureBara * BARA_TO_MPA;
     double s = salinityWtFrac;
 
-    double rhoW = 1.0 + 1.0e-6
-        * (-80.0 * tc - 3.3 * tc * tc + 0.00175 * tc * tc * tc + 489.0 * pMPa
-            - 2.0 * tc * pMPa + 0.016 * tc * tc * pMPa - 1.3e-5 * tc * tc * tc * pMPa
-            - 0.333 * pMPa * pMPa - 0.002 * tc * pMPa * pMPa);
+    double rhoW = 1.0 + 1.0e-6 * (-80.0 * tc - 3.3 * tc * tc + 0.00175 * tc * tc * tc + 489.0 * pMPa - 2.0 * tc * pMPa
+	+ 0.016 * tc * tc * pMPa - 1.3e-5 * tc * tc * tc * pMPa - 0.333 * pMPa * pMPa - 0.002 * tc * pMPa * pMPa);
     rhoW = rhoW * 1000.0;
 
-    double rhoBrine = rhoW + s * (0.668 + 0.44 * s
-        + 1.0e-6 * (300.0 * pMPa - 2400.0 * pMPa * s + tc
-            * (80.0 + 3.0 * tc - 3300.0 * s - 13.0 * pMPa + 47.0 * pMPa * s)))
-        * 1000.0;
+    double rhoBrine = rhoW + s
+	* (0.668 + 0.44 * s + 1.0e-6
+	    * (300.0 * pMPa - 2400.0 * pMPa * s + tc * (80.0 + 3.0 * tc - 3300.0 * s - 13.0 * pMPa + 47.0 * pMPa * s)))
+	* 1000.0;
     return rhoBrine;
   }
 
@@ -252,22 +240,20 @@ public final class WaterPropertyCorrelations {
    * Culberson and McKetta (1951) solution gas-water ratio.
    *
    * <p>
-   * Estimates the volume of gas dissolved in water at reservoir conditions.
-   * Returns Rsw in Sm3/Sm3 (standard cubic metres of gas per standard cubic metre of water).
+   * Estimates the volume of gas dissolved in water at reservoir conditions. Returns Rsw in Sm3/Sm3 (standard cubic
+   * metres of gas per standard cubic metre of water).
    *
    * @param temperatureK Temperature (Kelvin). Valid: 290 - 510 K
    * @param pressureBara Pressure (bara). Valid: 7 - 700 bara
    * @param salinityPpm  Total dissolved solids (ppm NaCl equivalent)
    * @return Solution gas-water ratio (Sm3/Sm3)
    */
-  public static double solutionGasWaterRatioCulberson(double temperatureK, double pressureBara,
-      double salinityPpm) {
+  public static double solutionGasWaterRatioCulberson(double temperatureK, double pressureBara, double salinityPpm) {
     double tf = toF(temperatureK);
     double pp = toPsia(pressureBara);
 
     double a = 8.15839 - 6.12265e-2 * tf + 1.91663e-4 * tf * tf - 2.1654e-7 * tf * tf * tf;
-    double b = 1.01021e-2 - 7.44241e-5 * tf + 3.05553e-7 * tf * tf
-        - 2.94883e-10 * tf * tf * tf;
+    double b = 1.01021e-2 - 7.44241e-5 * tf + 3.05553e-7 * tf * tf - 2.94883e-10 * tf * tf * tf;
     double rswPure = a + b * pp;
 
     double s = salinityPpm / 1.0e4;
@@ -284,8 +270,8 @@ public final class WaterPropertyCorrelations {
    * Jennings and Newman (1971) water-gas surface tension.
    *
    * <p>
-   * Estimates the interfacial tension (IFT) between water and gas. Pressure correction
-   * applied above 74 bara (approximately 1000 psig).
+   * Estimates the interfacial tension (IFT) between water and gas. Pressure correction applied above 74 bara
+   * (approximately 1000 psig).
    *
    * @param temperatureK Temperature (Kelvin). Valid: 290 - 450 K
    * @param pressureBara Pressure (bara). Valid: 1 - 700 bara
@@ -320,22 +306,19 @@ public final class WaterPropertyCorrelations {
    * @param salinityPpm  Total dissolved solids (ppm NaCl equivalent)
    * @return Map of property name to value (SI units)
    */
-  public static Map<String, Double> waterPropertiesSummary(double temperatureK,
-      double pressureBara, double salinityPpm) {
+  public static Map<String, Double> waterPropertiesSummary(double temperatureK, double pressureBara,
+      double salinityPpm) {
     Map<String, Double> props = new LinkedHashMap<String, Double>();
     props.put("temperature_K", temperatureK);
     props.put("pressure_bara", pressureBara);
     props.put("salinity_ppm", salinityPpm);
     props.put("Bw_McCain_resBblPerSTB", waterFVFMcCain(temperatureK, pressureBara));
-    props.put("Bw_Osif_resBblPerSTB",
-        waterFVFOsif(temperatureK, pressureBara, salinityPpm));
+    props.put("Bw_Osif_resBblPerSTB", waterFVFOsif(temperatureK, pressureBara, salinityPpm));
     props.put("muW_dead_cP", deadWaterViscosityMcCain(temperatureK, salinityPpm));
     props.put("muW_cP", waterViscosityMcCain(temperatureK, pressureBara, salinityPpm));
-    props.put("cw_invBara",
-        waterCompressibilityMcCain(temperatureK, pressureBara, salinityPpm));
+    props.put("cw_invBara", waterCompressibilityMcCain(temperatureK, pressureBara, salinityPpm));
     props.put("rhoW_kgPerM3", waterDensity(temperatureK, pressureBara));
-    props.put("Rsw_Sm3PerSm3",
-        solutionGasWaterRatioCulberson(temperatureK, pressureBara, salinityPpm));
+    props.put("Rsw_Sm3PerSm3", solutionGasWaterRatioCulberson(temperatureK, pressureBara, salinityPpm));
     props.put("sigma_wg_dynePerCm", waterGasSurfaceTension(temperatureK, pressureBara));
     return props;
   }

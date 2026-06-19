@@ -15,10 +15,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Plug flow reactor (PFR) for rigorous kinetic modeling of chemical reactions.
  *
  * <p>
- * Models chemical transformation along a tubular reactor by solving coupled ordinary differential
- * equations for species molar flows, temperature, and pressure as a function of axial position. The
- * reactor supports homogeneous gas-phase and heterogeneous catalytic reactions with multiple
- * reaction types (power-law, LHHW, reversible).
+ * Models chemical transformation along a tubular reactor by solving coupled ordinary differential equations for species
+ * molar flows, temperature, and pressure as a function of axial position. The reactor supports homogeneous gas-phase
+ * and heterogeneous catalytic reactions with multiple reaction types (power-law, LHHW, reversible).
  * </p>
  *
  * <h2>Governing Equations</h2>
@@ -211,7 +210,7 @@ public class PlugFlowReactor extends TwoPortEquipment {
   /**
    * Constructor for PlugFlowReactor with inlet stream.
    *
-   * @param name equipment name
+   * @param name        equipment name
    * @param inletStream the inlet feed stream
    */
   public PlugFlowReactor(String name, StreamInterface inletStream) {
@@ -267,29 +266,29 @@ public class PlugFlowReactor extends TwoPortEquipment {
     int keyCompIndex = -1;
     if (keyComponent != null) {
       for (int i = 0; i < nComp; i++) {
-        if (compNames[i].equals(keyComponent)) {
-          keyCompIndex = i;
-          initialKeyMoles = molFlows[i];
-          break;
-        }
+	if (compNames[i].equals(keyComponent)) {
+	  keyCompIndex = i;
+	  initialKeyMoles = molFlows[i];
+	  break;
+	}
       }
     }
     if (keyCompIndex < 0 && nComp > 0) {
       // Default to first reactant of first reaction
       for (Map.Entry<String, Double> entry : reactions.get(0).getStoichiometry().entrySet()) {
-        if (entry.getValue() < 0) {
-          for (int i = 0; i < nComp; i++) {
-            if (compNames[i].equals(entry.getKey())) {
-              keyCompIndex = i;
-              initialKeyMoles = molFlows[i];
-              keyComponent = compNames[i];
-              break;
-            }
-          }
-          if (keyCompIndex >= 0) {
-            break;
-          }
-        }
+	if (entry.getValue() < 0) {
+	  for (int i = 0; i < nComp; i++) {
+	    if (compNames[i].equals(entry.getKey())) {
+	      keyCompIndex = i;
+	      initialKeyMoles = molFlows[i];
+	      keyComponent = compNames[i];
+	      break;
+	    }
+	  }
+	  if (keyCompIndex >= 0) {
+	    break;
+	  }
+	}
       }
     }
 
@@ -315,69 +314,68 @@ public class PlugFlowReactor extends TwoPortEquipment {
 
       // Re-flash properties periodically to update Cp, density, etc.
       if (step % propertyUpdateFrequency == 0 && step > 0) {
-        updateSystemState(system, molFlows, currentT, currentP);
-        ops = new ThermodynamicOperations(system);
-        try {
-          ops.TPflash();
-        } catch (Exception ex) {
-          logger.debug("Property update flash failed at z={}: {}", z, ex.getMessage());
-        }
-        system.initProperties();
+	updateSystemState(system, molFlows, currentT, currentP);
+	ops = new ThermodynamicOperations(system);
+	try {
+	  ops.TPflash();
+	} catch (Exception ex) {
+	  logger.debug("Property update flash failed at z={}: {}", z, ex.getMessage());
+	}
+	system.initProperties();
       }
 
       if (integrationMethod == IntegrationMethod.RK4) {
-        // RK4 integration
-        double[] state = packState(molFlows, currentT, currentP);
-        double[] k1 = calculateDerivatives(system, state, nComp, totalArea, perimeter, compNames);
-        double[] s2 = addScaled(state, k1, 0.5 * dz);
-        double[] k2 = calculateDerivatives(system, s2, nComp, totalArea, perimeter, compNames);
-        double[] s3 = addScaled(state, k2, 0.5 * dz);
-        double[] k3 = calculateDerivatives(system, s3, nComp, totalArea, perimeter, compNames);
-        double[] s4 = addScaled(state, k3, dz);
-        double[] k4 = calculateDerivatives(system, s4, nComp, totalArea, perimeter, compNames);
+	// RK4 integration
+	double[] state = packState(molFlows, currentT, currentP);
+	double[] k1 = calculateDerivatives(system, state, nComp, totalArea, perimeter, compNames);
+	double[] s2 = addScaled(state, k1, 0.5 * dz);
+	double[] k2 = calculateDerivatives(system, s2, nComp, totalArea, perimeter, compNames);
+	double[] s3 = addScaled(state, k2, 0.5 * dz);
+	double[] k3 = calculateDerivatives(system, s3, nComp, totalArea, perimeter, compNames);
+	double[] s4 = addScaled(state, k3, dz);
+	double[] k4 = calculateDerivatives(system, s4, nComp, totalArea, perimeter, compNames);
 
-        for (int i = 0; i < state.length; i++) {
-          state[i] += dz / 6.0 * (k1[i] + 2.0 * k2[i] + 2.0 * k3[i] + k4[i]);
-        }
+	for (int i = 0; i < state.length; i++) {
+	  state[i] += dz / 6.0 * (k1[i] + 2.0 * k2[i] + 2.0 * k3[i] + k4[i]);
+	}
 
-        unpackState(state, molFlows, nComp);
-        currentT = state[nComp];
-        currentP = state[nComp + 1];
+	unpackState(state, molFlows, nComp);
+	currentT = state[nComp];
+	currentP = state[nComp + 1];
 
       } else {
-        // Euler integration
-        double[] state = packState(molFlows, currentT, currentP);
-        double[] derivs =
-            calculateDerivatives(system, state, nComp, totalArea, perimeter, compNames);
-        for (int i = 0; i < state.length; i++) {
-          state[i] += derivs[i] * dz;
-        }
-        unpackState(state, molFlows, nComp);
-        currentT = state[nComp];
-        currentP = state[nComp + 1];
+	// Euler integration
+	double[] state = packState(molFlows, currentT, currentP);
+	double[] derivs = calculateDerivatives(system, state, nComp, totalArea, perimeter, compNames);
+	for (int i = 0; i < state.length; i++) {
+	  state[i] += derivs[i] * dz;
+	}
+	unpackState(state, molFlows, nComp);
+	currentT = state[nComp];
+	currentP = state[nComp + 1];
       }
 
       // Enforce non-negative molar flows and minimum pressure
       for (int i = 0; i < nComp; i++) {
-        molFlows[i] = Math.max(molFlows[i], 0.0);
+	molFlows[i] = Math.max(molFlows[i], 0.0);
       }
       currentP = Math.max(currentP, 0.1);
 
       // Isothermal mode: override temperature back to inlet
       if (energyMode == EnergyMode.ISOTHERMAL) {
-        currentT = inStream.getThermoSystem().getTemperature();
+	currentT = inStream.getThermoSystem().getTemperature();
       }
 
       // Calculate conversion
       if (keyCompIndex >= 0 && initialKeyMoles > 1e-30) {
-        currentConversion = 1.0 - molFlows[keyCompIndex] / initialKeyMoles;
-        currentConversion = Math.max(0.0, Math.min(1.0, currentConversion));
+	currentConversion = 1.0 - molFlows[keyCompIndex] / initialKeyMoles;
+	currentConversion = Math.max(0.0, Math.min(1.0, currentConversion));
       }
 
       // Store axial profile
       double totalReactionRate = calculateTotalReactionRate(system, compNames);
-      axialProfile.setData(step + 1, (step + 1) * dz, currentT, currentP, currentConversion,
-          totalReactionRate, molFlows);
+      axialProfile.setData(step + 1, (step + 1) * dz, currentT, currentP, currentConversion, totalReactionRate,
+	  molFlows);
     }
 
     // Calculate overall results
@@ -412,16 +410,16 @@ public class PlugFlowReactor extends TwoPortEquipment {
   /**
    * Calculate derivatives dF/dz, dT/dz, dP/dz for the state vector.
    *
-   * @param system thermodynamic system for property evaluation
-   * @param state packed state [F1..Fn, T, P]
-   * @param nComp number of components
+   * @param system    thermodynamic system for property evaluation
+   * @param state     packed state [F1..Fn, T, P]
+   * @param nComp     number of components
    * @param totalArea total cross-sectional area of all tubes [m2]
    * @param perimeter tube perimeter [m] (single tube)
    * @param compNames component names
    * @return derivative vector [dF1/dz..dFn/dz, dT/dz, dP/dz]
    */
-  private double[] calculateDerivatives(SystemInterface system, double[] state, int nComp,
-      double totalArea, double perimeter, String[] compNames) {
+  private double[] calculateDerivatives(SystemInterface system, double[] state, int nComp, double totalArea,
+      double perimeter, String[] compNames) {
     double[] derivs = new double[nComp + 2];
 
     double temperature = state[nComp];
@@ -444,7 +442,7 @@ public class PlugFlowReactor extends TwoPortEquipment {
 
       // Apply catalyst effectiveness and activity if heterogeneous
       if (catalystBed != null) {
-        rate *= catalystBed.getActivityFactor();
+	rate *= catalystBed.getActivityFactor();
       }
 
       // Convert rate to volumetric basis if needed
@@ -452,14 +450,14 @@ public class PlugFlowReactor extends TwoPortEquipment {
 
       // Species balances: dFi/dz = Ac * sum(nu_ij * r_j)
       for (Map.Entry<String, Double> entry : rxn.getStoichiometry().entrySet()) {
-        String compName = entry.getKey();
-        double stoichCoeff = entry.getValue();
-        for (int i = 0; i < nComp; i++) {
-          if (compNames[i].equals(compName)) {
-            derivs[i] += totalArea * stoichCoeff * volumetricRate;
-            break;
-          }
-        }
+	String compName = entry.getKey();
+	double stoichCoeff = entry.getValue();
+	for (int i = 0; i < nComp; i++) {
+	  if (compNames[i].equals(compName)) {
+	    derivs[i] += totalArea * stoichCoeff * volumetricRate;
+	    break;
+	  }
+	}
       }
 
       // Heat generation from reaction
@@ -470,14 +468,14 @@ public class PlugFlowReactor extends TwoPortEquipment {
     if (energyMode == EnergyMode.ADIABATIC) {
       double sumFiCpi = estimateTotalHeatCapacityFlow(system, state, nComp);
       if (Math.abs(sumFiCpi) > 1e-20) {
-        derivs[nComp] = -totalHeatGeneration * totalArea / sumFiCpi;
+	derivs[nComp] = -totalHeatGeneration * totalArea / sumFiCpi;
       }
     } else if (energyMode == EnergyMode.COOLANT) {
       double sumFiCpi = estimateTotalHeatCapacityFlow(system, state, nComp);
       double heatTransfer = overallHeatTransferCoefficient * perimeter * numberOfTubes
-          * (coolantTemperature - temperature);
+	  * (coolantTemperature - temperature);
       if (Math.abs(sumFiCpi) > 1e-20) {
-        derivs[nComp] = (-totalHeatGeneration * totalArea + heatTransfer) / sumFiCpi;
+	derivs[nComp] = (-totalHeatGeneration * totalArea + heatTransfer) / sumFiCpi;
       }
     }
     // ISOTHERMAL: dT/dz = 0 (handled by overriding T after integration)
@@ -487,16 +485,14 @@ public class PlugFlowReactor extends TwoPortEquipment {
       double gasDensity = getGasDensity(system);
       double gasViscosity = getGasViscosity(system);
       double superficialVelocity = getSuperVelocity(system, totalArea);
-      double dPdz =
-          catalystBed.calculatePressureDrop(superficialVelocity, gasDensity, gasViscosity);
+      double dPdz = catalystBed.calculatePressureDrop(superficialVelocity, gasDensity, gasViscosity);
       derivs[nComp + 1] = -dPdz / 1.0e5; // Pa/m to bar/m
     } else {
       // Empty tube friction loss (Darcy-Weisbach simplified)
       double gasDensity = getGasDensity(system);
       double superficialVelocity = getSuperVelocity(system, totalArea);
       double frictionFactor = 0.01; // simplified
-      double dPdz = frictionFactor * gasDensity * superficialVelocity * superficialVelocity
-          / (2.0 * diameter);
+      double dPdz = frictionFactor * gasDensity * superficialVelocity * superficialVelocity / (2.0 * diameter);
       derivs[nComp + 1] = -dPdz / 1.0e5;
     }
 
@@ -507,15 +503,14 @@ public class PlugFlowReactor extends TwoPortEquipment {
    * Convert reaction rate from its native basis to volumetric basis [mol/(m3_reactor * s)].
    *
    * @param rate rate in native units
-   * @param rxn the kinetic reaction
+   * @param rxn  the kinetic reaction
    * @return volumetric rate [mol/(m3_reactor * s)]
    */
   private double convertRateToVolumetric(double rate, KineticReaction rxn) {
     if (rxn.getRateBasis() == KineticReaction.RateBasis.CATALYST_MASS && catalystBed != null) {
       // mol/(kg_cat * s) -> mol/(m3_reactor * s) by multiplying with bulk density
       return rate * catalystBed.getBulkDensity();
-    } else if (rxn.getRateBasis() == KineticReaction.RateBasis.CATALYST_AREA
-        && catalystBed != null) {
+    } else if (rxn.getRateBasis() == KineticReaction.RateBasis.CATALYST_AREA && catalystBed != null) {
       // mol/(m2_cat * s) -> mol/(m3_reactor * s)
       return rate * catalystBed.getSpecificSurfaceArea() * catalystBed.getBulkDensity();
     }
@@ -527,8 +522,8 @@ public class PlugFlowReactor extends TwoPortEquipment {
    * Estimate total heat capacity flow sum(Fi * Cp_i) [J/(s*K)].
    *
    * @param system thermodynamic system
-   * @param state current state vector
-   * @param nComp number of components
+   * @param state  current state vector
+   * @param nComp  number of components
    * @return total heat capacity flow [J/(s*K)]
    */
   private double estimateTotalHeatCapacityFlow(SystemInterface system, double[] state, int nComp) {
@@ -537,14 +532,14 @@ public class PlugFlowReactor extends TwoPortEquipment {
       double cpMolar = system.getCp("J/mol/K");
       double totalMolFlow = 0.0;
       for (int i = 0; i < nComp; i++) {
-        totalMolFlow += Math.max(state[i], 0.0);
+	totalMolFlow += Math.max(state[i], 0.0);
       }
       return cpMolar * totalMolFlow;
     } catch (Exception ex) {
       // Fallback: estimate Cp ~ 30 J/(mol*K) for gas
       double totalMolFlow = 0.0;
       for (int i = 0; i < nComp; i++) {
-        totalMolFlow += Math.max(state[i], 0.0);
+	totalMolFlow += Math.max(state[i], 0.0);
       }
       return 30.0 * totalMolFlow;
     }
@@ -573,7 +568,7 @@ public class PlugFlowReactor extends TwoPortEquipment {
   private double getGasViscosity(SystemInterface system) {
     try {
       if (system.hasPhaseType("gas")) {
-        return system.getPhase("gas").getViscosity("kg/msec");
+	return system.getPhase("gas").getViscosity("kg/msec");
       }
       return system.getPhase(0).getViscosity("kg/msec");
     } catch (Exception ex) {
@@ -584,14 +579,13 @@ public class PlugFlowReactor extends TwoPortEquipment {
   /**
    * Calculate superficial velocity through the reactor tubes.
    *
-   * @param system thermodynamic system
+   * @param system    thermodynamic system
    * @param totalArea total cross-sectional area [m2]
    * @return superficial velocity [m/s]
    */
   private double getSuperVelocity(SystemInterface system, double totalArea) {
     try {
-      double volumeFlow =
-          system.getVolume("m3") / system.getNumberOfMoles() * system.getTotalNumberOfMoles();
+      double volumeFlow = system.getVolume("m3") / system.getNumberOfMoles() * system.getTotalNumberOfMoles();
       return volumeFlow / totalArea;
     } catch (Exception ex) {
       return 1.0; // fallback
@@ -601,7 +595,7 @@ public class PlugFlowReactor extends TwoPortEquipment {
   /**
    * Calculate total reaction rate for profile storage.
    *
-   * @param system thermodynamic system
+   * @param system    thermodynamic system
    * @param compNames component names
    * @return total absolute reaction rate [mol/(m3*s)]
    */
@@ -616,38 +610,36 @@ public class PlugFlowReactor extends TwoPortEquipment {
   /**
    * Calculate isothermal heat duty by summing reaction enthalpies over the reactor.
    *
-   * @param system thermodynamic system
-   * @param molFlows current molar flows
+   * @param system    thermodynamic system
+   * @param molFlows  current molar flows
    * @param compNames component names
    * @return heat duty [W]
    */
-  private double calculateIsothermalHeatDuty(SystemInterface system, double[] molFlows,
-      String[] compNames) {
+  private double calculateIsothermalHeatDuty(SystemInterface system, double[] molFlows, String[] compNames) {
     double duty = 0.0;
     for (KineticReaction rxn : reactions) {
       // Estimate total moles reacted from change in key component
       String firstReactant = null;
       double firstCoeff = 1.0;
       for (Map.Entry<String, Double> entry : rxn.getStoichiometry().entrySet()) {
-        if (entry.getValue() < 0) {
-          firstReactant = entry.getKey();
-          firstCoeff = entry.getValue();
-          break;
-        }
+	if (entry.getValue() < 0) {
+	  firstReactant = entry.getKey();
+	  firstCoeff = entry.getValue();
+	  break;
+	}
       }
       if (firstReactant != null) {
-        double initialMoles = 0.0;
-        double currentMoles = 0.0;
-        for (int i = 0; i < compNames.length; i++) {
-          if (compNames[i].equals(firstReactant)) {
-            initialMoles =
-                inStream.getThermoSystem().getComponent(firstReactant).getNumberOfmoles();
-            currentMoles = molFlows[i];
-            break;
-          }
-        }
-        double molesReacted = initialMoles - currentMoles;
-        duty += -rxn.getHeatOfReaction() * molesReacted / Math.abs(firstCoeff);
+	double initialMoles = 0.0;
+	double currentMoles = 0.0;
+	for (int i = 0; i < compNames.length; i++) {
+	  if (compNames[i].equals(firstReactant)) {
+	    initialMoles = inStream.getThermoSystem().getComponent(firstReactant).getNumberOfmoles();
+	    currentMoles = molFlows[i];
+	    break;
+	  }
+	}
+	double molesReacted = initialMoles - currentMoles;
+	duty += -rxn.getHeatOfReaction() * molesReacted / Math.abs(firstCoeff);
       }
     }
     return duty;
@@ -656,17 +648,16 @@ public class PlugFlowReactor extends TwoPortEquipment {
   /**
    * Calculate mean residence time.
    *
-   * @param system thermodynamic system
+   * @param system    thermodynamic system
    * @param totalArea total cross-sectional area [m2]
    * @return residence time [s]
    */
   private double calculateResidenceTime(SystemInterface system, double totalArea) {
     double reactorVolume = totalArea * length;
     try {
-      double volumetricFlowRate =
-          system.getVolume("m3") / system.getNumberOfMoles() * system.getTotalNumberOfMoles();
+      double volumetricFlowRate = system.getVolume("m3") / system.getNumberOfMoles() * system.getTotalNumberOfMoles();
       if (volumetricFlowRate > 0) {
-        return reactorVolume / volumetricFlowRate;
+	return reactorVolume / volumetricFlowRate;
       }
     } catch (Exception ex) {
       // ignore
@@ -677,9 +668,9 @@ public class PlugFlowReactor extends TwoPortEquipment {
   /**
    * Pack molar flows, temperature, and pressure into a state vector.
    *
-   * @param molFlows molar flows [mol/s]
+   * @param molFlows    molar flows [mol/s]
    * @param temperature temperature [K]
-   * @param pressure pressure [bara]
+   * @param pressure    pressure [bara]
    * @return state vector [F1..Fn, T, P]
    */
   private double[] packState(double[] molFlows, double temperature, double pressure) {
@@ -694,9 +685,9 @@ public class PlugFlowReactor extends TwoPortEquipment {
   /**
    * Unpack molar flows from state vector.
    *
-   * @param state state vector
+   * @param state    state vector
    * @param molFlows output molar flows array
-   * @param nComp number of components
+   * @param nComp    number of components
    */
   private void unpackState(double[] state, double[] molFlows, int nComp) {
     System.arraycopy(state, 0, molFlows, 0, nComp);
@@ -705,7 +696,7 @@ public class PlugFlowReactor extends TwoPortEquipment {
   /**
    * Add scaled vector: result[i] = base[i] + scale * delta[i].
    *
-   * @param base base vector
+   * @param base  base vector
    * @param delta delta vector
    * @param scale scaling factor
    * @return result vector
@@ -721,13 +712,12 @@ public class PlugFlowReactor extends TwoPortEquipment {
   /**
    * Update the thermodynamic system to reflect current molar flows, T, and P.
    *
-   * @param system thermodynamic system
-   * @param molFlows current molar flows [mol/s]
+   * @param system      thermodynamic system
+   * @param molFlows    current molar flows [mol/s]
    * @param temperature current temperature [K]
-   * @param pressure current pressure [bara]
+   * @param pressure    current pressure [bara]
    */
-  private void updateSystemState(SystemInterface system, double[] molFlows, double temperature,
-      double pressure) {
+  private void updateSystemState(SystemInterface system, double[] molFlows, double temperature, double pressure) {
     int nComp = system.getNumberOfComponents();
     for (int i = 0; i < nComp; i++) {
       double currentMoles = system.getComponent(i).getNumberOfmoles();
@@ -748,14 +738,14 @@ public class PlugFlowReactor extends TwoPortEquipment {
   private void ensureProductComponentsExist(SystemInterface system) {
     for (KineticReaction rxn : reactions) {
       for (Map.Entry<String, Double> entry : rxn.getStoichiometry().entrySet()) {
-        String compName = entry.getKey();
-        if (!system.hasComponent(compName)) {
-          try {
-            system.addComponent(compName, 1.0e-20);
-          } catch (Exception ex) {
-            logger.warn("Could not add product component '{}': {}", compName, ex.getMessage());
-          }
-        }
+	String compName = entry.getKey();
+	if (!system.hasComponent(compName)) {
+	  try {
+	    system.addComponent(compName, 1.0e-20);
+	  } catch (Exception ex) {
+	    logger.warn("Could not add product component '{}': {}", compName, ex.getMessage());
+	  }
+	}
       }
     }
     system.createDatabase(true);
@@ -806,7 +796,7 @@ public class PlugFlowReactor extends TwoPortEquipment {
    * Set reactor tube length.
    *
    * @param length length value
-   * @param unit "m", "cm", "ft"
+   * @param unit   "m", "cm", "ft"
    */
   public void setLength(double length, String unit) {
     if ("cm".equals(unit)) {
@@ -831,7 +821,7 @@ public class PlugFlowReactor extends TwoPortEquipment {
    * Set reactor tube inner diameter.
    *
    * @param diameter diameter value
-   * @param unit "m", "mm", "cm", "in"
+   * @param unit     "m", "mm", "cm", "in"
    */
   public void setDiameter(double diameter, String unit) {
     if ("mm".equals(unit)) {
@@ -894,7 +884,7 @@ public class PlugFlowReactor extends TwoPortEquipment {
    * Set coolant temperature for COOLANT energy mode.
    *
    * @param temperature temperature value
-   * @param unit "K", "C", "F"
+   * @param unit        "K", "C", "F"
    */
   public void setCoolantTemperature(double temperature, String unit) {
     if ("C".equals(unit)) {
@@ -1095,9 +1085,8 @@ public class PlugFlowReactor extends TwoPortEquipment {
       return 0.0;
     }
     try {
-      double volumetricFlowRate =
-          inStream.getThermoSystem().getVolume("m3") / inStream.getThermoSystem().getNumberOfMoles()
-              * inStream.getThermoSystem().getTotalNumberOfMoles() * 3600.0;
+      double volumetricFlowRate = inStream.getThermoSystem().getVolume("m3")
+	  / inStream.getThermoSystem().getNumberOfMoles() * inStream.getThermoSystem().getTotalNumberOfMoles() * 3600.0;
       return volumetricFlowRate / reactorVolume;
     } catch (Exception ex) {
       return 0.0;

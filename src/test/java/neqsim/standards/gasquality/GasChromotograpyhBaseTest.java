@@ -52,8 +52,7 @@ class GasChromotograpyhBaseTest extends neqsim.NeqSimTest {
     GasChromotograpyhBase gc = new GasChromotograpyhBase(testSystem);
     gc.calculate();
     double ethane = gc.getValue("ethane");
-    assertTrue(ethane > 0.04 && ethane < 0.06,
-        "Ethane mol fraction should be ~0.05 but was " + ethane);
+    assertTrue(ethane > 0.04 && ethane < 0.06, "Ethane mol fraction should be ~0.05 but was " + ethane);
   }
 
   /**

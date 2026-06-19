@@ -220,8 +220,8 @@ public class SubseaJumperMechanicalDesign extends MechanicalDesign {
     if (materialGrade.startsWith("X")) {
       // API 5L grades
       try {
-        int grade = Integer.parseInt(materialGrade.substring(1));
-        return grade * 6.895; // Convert ksi to MPa
+	int grade = Integer.parseInt(materialGrade.substring(1));
+	return grade * 6.895; // Convert ksi to MPa
       } catch (NumberFormatException e) {
       }
     } else if (materialGrade.contains("316")) {
@@ -275,12 +275,12 @@ public class SubseaJumperMechanicalDesign extends MechanicalDesign {
     }
 
     boolean isRigid = jumper.getJumperType() == SubseaJumper.JumperType.RIGID_M_SHAPE
-        || jumper.getJumperType() == SubseaJumper.JumperType.RIGID_Z_SHAPE
-        || jumper.getJumperType() == SubseaJumper.JumperType.RIGID_INVERTED_U
-        || jumper.getJumperType() == SubseaJumper.JumperType.RIGID_STRAIGHT;
+	|| jumper.getJumperType() == SubseaJumper.JumperType.RIGID_Z_SHAPE
+	|| jumper.getJumperType() == SubseaJumper.JumperType.RIGID_INVERTED_U
+	|| jumper.getJumperType() == SubseaJumper.JumperType.RIGID_STRAIGHT;
 
     costEstimator.calculateJumperCost(jumper.getLength(), jumper.getNominalBoreInches(), isRigid,
-        jumper.getWaterDepth());
+	jumper.getWaterDepth());
 
     totalCostUSD = costEstimator.getTotalCost();
     equipmentCostUSD = costEstimator.getEquipmentCost();
@@ -427,8 +427,7 @@ public class SubseaJumperMechanicalDesign extends MechanicalDesign {
     }
     jsonObj.add("costEstimation", cost);
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(jsonObj);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(jsonObj);
   }
 
   /**

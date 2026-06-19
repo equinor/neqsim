@@ -6,13 +6,13 @@ import java.io.Serializable;
  * Represents a single well barrier element per NORSOK D-010 Section 4.
  *
  * <p>
- * A barrier element is an independent physical component that prevents uncontrolled flow of
- * formation fluids. Examples include casing, cement, packer, DHSV, wellhead, and tubing.
+ * A barrier element is an independent physical component that prevents uncontrolled flow of formation fluids. Examples
+ * include casing, cement, packer, DHSV, wellhead, and tubing.
  * </p>
  *
  * <p>
- * Each barrier element has a type, a functional status (intact or degraded), and a verification
- * status indicating the last test result.
+ * Each barrier element has a type, a functional status (intact or degraded), and a verification status indicating the
+ * last test result.
  * </p>
  *
  * @author ESOL
@@ -115,8 +115,8 @@ public class BarrierElement implements Serializable {
   /**
    * Create a barrier element with depth.
    *
-   * @param type element type
-   * @param name element identifier
+   * @param type    element type
+   * @param name    element identifier
    * @param depthMD depth in meters MD
    */
   public BarrierElement(ElementType type, String name, double depthMD) {

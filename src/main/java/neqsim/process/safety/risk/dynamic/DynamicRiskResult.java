@@ -206,20 +206,19 @@ public class DynamicRiskResult extends OperationalRiskResult implements Serializ
   /**
    * Calculates statistics from raw simulation data.
    *
-   * @param totalProductions production totals per iteration
-   * @param transientLosses transient losses per iteration
+   * @param totalProductions  production totals per iteration
+   * @param transientLosses   transient losses per iteration
    * @param steadyStateLosses steady-state losses per iteration
-   * @param availabilities availability per iteration
-   * @param failureCounts failure counts per iteration
-   * @param transientCounts transient event counts per iteration
+   * @param availabilities    availability per iteration
+   * @param failureCounts     failure counts per iteration
+   * @param transientCounts   transient event counts per iteration
    */
-  public void calculateStatistics(double[] totalProductions, double[] transientLosses,
-      double[] steadyStateLosses, double[] availabilities, int[] failureCounts,
-      int[] transientCounts) {
+  public void calculateStatistics(double[] totalProductions, double[] transientLosses, double[] steadyStateLosses,
+      double[] availabilities, int[] failureCounts, int[] transientCounts) {
 
     // Call parent to calculate base statistics
-    super.calculateStatistics(totalProductions, availabilities, failureCounts,
-        new double[totalProductions.length]); // downtime placeholder
+    super.calculateStatistics(totalProductions, availabilities, failureCounts, new double[totalProductions.length]); // downtime
+														     // placeholder
 
     // Store raw data
     this.transientLosses = transientLosses.clone();
@@ -274,8 +273,7 @@ public class DynamicRiskResult extends OperationalRiskResult implements Serializ
     comparison.put("staticMeanLoss_kg", staticLoss);
     comparison.put("dynamicMeanLoss_kg", dynamicLoss);
     comparison.put("additionalLoss_kg", dynamicLoss - staticLoss);
-    comparison.put("additionalLossPercent",
-        staticLoss > 0 ? (dynamicLoss - staticLoss) / staticLoss * 100 : 0);
+    comparison.put("additionalLossPercent", staticLoss > 0 ? (dynamicLoss - staticLoss) / staticLoss * 100 : 0);
     comparison.put("transientContribution_kg", meanTransientLoss);
     comparison.put("transientContributionPercent", transientLossFraction * 100);
 
@@ -332,15 +330,13 @@ public class DynamicRiskResult extends OperationalRiskResult implements Serializ
    */
   @Override
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   @Override
   public String toString() {
     return String.format(
-        "DynamicRiskResult[availability=%.1f%%, totalLoss=%.0f kg, "
-            + "transientFraction=%.1f%%, transients=%s]",
-        getMeanAvailability(), getTotalMeanLoss(), transientLossFraction * 100, simulateTransients);
+	"DynamicRiskResult[availability=%.1f%%, totalLoss=%.0f kg, " + "transientFraction=%.1f%%, transients=%s]",
+	getMeanAvailability(), getTotalMeanLoss(), transientLossFraction * 100, simulateTransients);
   }
 }

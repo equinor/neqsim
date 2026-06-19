@@ -6,8 +6,8 @@ import java.io.Serializable;
  * MUSCL (Monotone Upstream-centered Schemes for Conservation Laws) reconstruction.
  *
  * <p>
- * Provides second-order spatial accuracy by reconstructing cell-interface values from cell-average
- * values using slope limiters to prevent spurious oscillations near discontinuities.
+ * Provides second-order spatial accuracy by reconstructing cell-interface values from cell-average values using slope
+ * limiters to prevent spurious oscillations near discontinuities.
  * </p>
  *
  * <h2>Reconstruction Formula</h2>
@@ -84,7 +84,8 @@ public class MUSCLReconstructor implements Serializable {
   /**
    * Default constructor using Van Leer limiter.
    */
-  public MUSCLReconstructor() {}
+  public MUSCLReconstructor() {
+  }
 
   /**
    * Constructor with specified limiter.
@@ -98,14 +99,13 @@ public class MUSCLReconstructor implements Serializable {
   /**
    * Reconstruct interface values between cells i and i+1.
    *
-   * @param uLeft Value at cell i-1 (or i for boundary)
-   * @param uCenter Value at cell i
-   * @param uRight Value at cell i+1
+   * @param uLeft     Value at cell i-1 (or i for boundary)
+   * @param uCenter   Value at cell i
+   * @param uRight    Value at cell i+1
    * @param uFarRight Value at cell i+2 (or i+1 for boundary)
    * @return Reconstructed left and right states at interface i+1/2
    */
-  public ReconstructedPair reconstruct(double uLeft, double uCenter, double uRight,
-      double uFarRight) {
+  public ReconstructedPair reconstruct(double uLeft, double uCenter, double uRight, double uFarRight) {
     ReconstructedPair result = new ReconstructedPair();
 
     // Calculate slopes
@@ -158,7 +158,7 @@ public class MUSCLReconstructor implements Serializable {
   /**
    * Calculate limited slope using current limiter.
    *
-   * @param deltaLeft Left difference (U_i - U_{i-1})
+   * @param deltaLeft  Left difference (U_i - U_{i-1})
    * @param deltaRight Right difference (U_{i+1} - U_i)
    * @return Limited slope
    */
@@ -171,7 +171,7 @@ public class MUSCLReconstructor implements Serializable {
     double r;
     if (Math.abs(deltaRight) < EPSILON) {
       if (Math.abs(deltaLeft) < EPSILON) {
-        return 0; // Both gradients zero
+	return 0; // Both gradients zero
       }
       r = deltaLeft > 0 ? 1e10 : -1e10; // Large ratio
     } else {
@@ -193,19 +193,19 @@ public class MUSCLReconstructor implements Serializable {
    */
   public double calcLimiter(double r) {
     switch (limiterType) {
-      case MINMOD:
-        return minmod(r);
-      case VAN_LEER:
-        return vanLeer(r);
-      case VAN_ALBADA:
-        return vanAlbada(r);
-      case SUPERBEE:
-        return superbee(r);
-      case MC:
-        return mc(r);
-      case NONE:
-      default:
-        return 0;
+    case MINMOD:
+      return minmod(r);
+    case VAN_LEER:
+      return vanLeer(r);
+    case VAN_ALBADA:
+      return vanAlbada(r);
+    case SUPERBEE:
+      return superbee(r);
+    case MC:
+      return mc(r);
+    case NONE:
+    default:
+      return 0;
     }
   }
 

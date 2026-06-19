@@ -22,5 +22,6 @@ public class OnePhaseFlowNodeVisualization extends FlowNodeVisualization {
    * Constructor for OnePhaseFlowNodeVisualization.
    * </p>
    */
-  public OnePhaseFlowNodeVisualization() {}
+  public OnePhaseFlowNodeVisualization() {
+  }
 }

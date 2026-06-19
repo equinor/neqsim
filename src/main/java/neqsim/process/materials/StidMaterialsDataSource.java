@@ -9,10 +9,9 @@ import com.google.gson.JsonParser;
  * Normalized STID or technical-database JSON bridge for the materials review engine.
  *
  * <p>
- * This class intentionally does not connect to STID directly. Retrieval and document parsing remain
- * in the existing Python/devtools layer. The Java core consumes the normalized JSON extract so the
- * same engine can be used with STID, P&amp;ID, line-list, equipment-register, material-certificate,
- * and inspection-data sources.
+ * This class intentionally does not connect to STID directly. Retrieval and document parsing remain in the existing
+ * Python/devtools layer. The Java core consumes the normalized JSON extract so the same engine can be used with STID,
+ * P&amp;ID, line-list, equipment-register, material-certificate, and inspection-data sources.
  * </p>
  *
  * @author NeqSim contributors
@@ -76,7 +75,7 @@ public class StidMaterialsDataSource implements MaterialsReviewDataSource {
    * Adds all records from a named array.
    *
    * @param input input object receiving records
-   * @param key array key in the source object
+   * @param key   array key in the source object
    */
   private void addArray(MaterialsReviewInput input, String key) {
     if (!source.has(key) || !source.get(key).isJsonArray()) {
@@ -86,7 +85,7 @@ public class StidMaterialsDataSource implements MaterialsReviewDataSource {
     for (int i = 0; i < array.size(); i++) {
       JsonElement element = array.get(i);
       if (element.isJsonObject()) {
-        mergeItem(input, fromRecord(element.getAsJsonObject(), key));
+	mergeItem(input, fromRecord(element.getAsJsonObject(), key));
       }
     }
   }
@@ -95,7 +94,7 @@ public class StidMaterialsDataSource implements MaterialsReviewDataSource {
    * Merges one parsed record into the input by tag.
    *
    * @param input input to update
-   * @param item parsed item
+   * @param item  parsed item
    */
   private void mergeItem(MaterialsReviewInput input, MaterialReviewItem item) {
     MaterialsReviewInput single = new MaterialsReviewInput();
@@ -106,17 +105,16 @@ public class StidMaterialsDataSource implements MaterialsReviewDataSource {
   /**
    * Converts one STID-like record to a material review item.
    *
-   * @param record record object from a normalized STID extract
+   * @param record    record object from a normalized STID extract
    * @param sourceKey name of the source array
    * @return material review item
    */
   private MaterialReviewItem fromRecord(JsonObject record, String sourceKey) {
     MaterialReviewItem item = new MaterialReviewItem();
-    item.setTag(
-        firstString(record, "tag", "lineNumber", "lineNo", "equipmentTag", "assetTag", "name"));
+    item.setTag(firstString(record, "tag", "lineNumber", "lineNo", "equipmentTag", "assetTag", "name"));
     item.setEquipmentType(firstString(record, "equipmentType", "type", "assetType", "service"));
-    item.setExistingMaterial(firstString(record, "existingMaterial", "material", "materialGrade",
-        "materialClass", "pipingMaterialClass", "mds"));
+    item.setExistingMaterial(firstString(record, "existingMaterial", "material", "materialGrade", "materialClass",
+	"pipingMaterialClass", "mds"));
     item.addSourceReference(sourceKey);
     if (record.has("sourceDocument")) {
       item.addSourceReference(record.get("sourceDocument").getAsString());
@@ -142,21 +140,20 @@ public class StidMaterialsDataSource implements MaterialsReviewDataSource {
   /**
    * Copies one field under a normalized target key.
    *
-   * @param record source record
-   * @param envelope target envelope
+   * @param record    source record
+   * @param envelope  target envelope
    * @param sourceKey source key
    * @param targetKey target key
    */
-  private void copyDirect(JsonObject record, MaterialServiceEnvelope envelope, String sourceKey,
-      String targetKey) {
+  private void copyDirect(JsonObject record, MaterialServiceEnvelope envelope, String sourceKey, String targetKey) {
     if (record.has(sourceKey) && !record.get(sourceKey).isJsonNull()) {
       JsonElement value = record.get(sourceKey);
       if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isBoolean()) {
-        envelope.set(targetKey, Boolean.valueOf(value.getAsBoolean()));
+	envelope.set(targetKey, Boolean.valueOf(value.getAsBoolean()));
       } else if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isNumber()) {
-        envelope.set(targetKey, Double.valueOf(value.getAsDouble()));
+	envelope.set(targetKey, Double.valueOf(value.getAsDouble()));
       } else {
-        envelope.set(targetKey, value.getAsString());
+	envelope.set(targetKey, value.getAsString());
       }
     }
   }
@@ -164,8 +161,8 @@ public class StidMaterialsDataSource implements MaterialsReviewDataSource {
   /**
    * Merges a nested JSON object into a service envelope.
    *
-   * @param record source record
-   * @param envelope target envelope
+   * @param record    source record
+   * @param envelope  target envelope
    * @param objectKey nested object key
    */
   private void mergeObject(JsonObject record, MaterialServiceEnvelope envelope, String objectKey) {
@@ -176,11 +173,11 @@ public class StidMaterialsDataSource implements MaterialsReviewDataSource {
     for (java.util.Map.Entry<String, JsonElement> entry : object.entrySet()) {
       JsonElement value = entry.getValue();
       if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isBoolean()) {
-        envelope.set(entry.getKey(), Boolean.valueOf(value.getAsBoolean()));
+	envelope.set(entry.getKey(), Boolean.valueOf(value.getAsBoolean()));
       } else if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isNumber()) {
-        envelope.set(entry.getKey(), Double.valueOf(value.getAsDouble()));
+	envelope.set(entry.getKey(), Double.valueOf(value.getAsDouble()));
       } else if (!value.isJsonNull()) {
-        envelope.set(entry.getKey(), value.getAsString());
+	envelope.set(entry.getKey(), value.getAsString());
       }
     }
   }
@@ -189,13 +186,13 @@ public class StidMaterialsDataSource implements MaterialsReviewDataSource {
    * Returns the first available string for a set of keys.
    *
    * @param object JSON object
-   * @param keys keys to test
+   * @param keys   keys to test
    * @return first available value, or empty string
    */
   private String firstString(JsonObject object, String... keys) {
     for (String key : keys) {
       if (object.has(key) && !object.get(key).isJsonNull()) {
-        return object.get(key).getAsString();
+	return object.get(key).getAsString();
       }
     }
     return "";

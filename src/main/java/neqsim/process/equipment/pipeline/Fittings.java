@@ -11,15 +11,15 @@ import org.apache.logging.log4j.Logger;
  * Collection of pipe fittings for equivalent length pressure drop calculations.
  *
  * <p>
- * This class manages a collection of pipe fittings (bends, valves, tees, reducers, etc.) and
- * calculates their contribution to pressure drop using the equivalent length method.
+ * This class manages a collection of pipe fittings (bends, valves, tees, reducers, etc.) and calculates their
+ * contribution to pressure drop using the equivalent length method.
  * </p>
  *
  * <h2>Equivalent Length Method</h2>
  * <p>
- * The equivalent length method converts the pressure loss through a fitting into an equivalent
- * length of straight pipe that would produce the same pressure drop. This is expressed as an L/D
- * ratio (equivalent length divided by pipe diameter).
+ * The equivalent length method converts the pressure loss through a fitting into an equivalent length of straight pipe
+ * that would produce the same pressure drop. This is expressed as an L/D ratio (equivalent length divided by pipe
+ * diameter).
  * </p>
  *
  * <h3>Mathematical Basis</h3>
@@ -184,18 +184,18 @@ public class Fittings implements Serializable {
   /**
    * Default constructor for Fittings.
    */
-  public Fittings() {}
+  public Fittings() {
+  }
 
   /**
    * Add a fitting with a specified L/D ratio.
    *
    * <p>
-   * The L/D ratio represents the equivalent length of the fitting in terms of pipe diameters. For
-   * example, an L/D of 30 means the fitting causes the same pressure drop as 30 diameters of
-   * straight pipe.
+   * The L/D ratio represents the equivalent length of the fitting in terms of pipe diameters. For example, an L/D of 30
+   * means the fitting causes the same pressure drop as 30 diameters of straight pipe.
    * </p>
    *
-   * @param name descriptive name for the fitting
+   * @param name  descriptive name for the fitting
    * @param LdivD equivalent length ratio (L/D), dimensionless
    */
   public void add(String name, double LdivD) {
@@ -206,8 +206,8 @@ public class Fittings implements Serializable {
    * Add a fitting by name, loading L/D from database.
    *
    * <p>
-   * The fitting name must exist in the 'fittings' database table. If not found, falls back to
-   * standard values or logs an error.
+   * The fitting name must exist in the 'fittings' database table. If not found, falls back to standard values or logs
+   * an error.
    * </p>
    *
    * @param name fitting name as stored in database
@@ -241,8 +241,7 @@ public class Fittings implements Serializable {
       fittingList.add(new Fitting(type, ldValue));
       return true;
     }
-    logger.warn("Unknown standard fitting type: {}. Use add(name, LdivD) for custom fittings.",
-        type);
+    logger.warn("Unknown standard fitting type: {}. Use add(name, LdivD) for custom fittings.", type);
     return false;
   }
 
@@ -253,7 +252,7 @@ public class Fittings implements Serializable {
    * Convenience method for adding several fittings of the same type.
    * </p>
    *
-   * @param name fitting name
+   * @param name  fitting name
    * @param LdivD L/D ratio for each fitting
    * @param count number of fittings to add
    */
@@ -266,7 +265,7 @@ public class Fittings implements Serializable {
   /**
    * Add multiple standard fittings of the same type.
    *
-   * @param type standard fitting type
+   * @param type  standard fitting type
    * @param count number of fittings to add
    * @return true if all fittings were added, false if type not recognized
    */
@@ -274,7 +273,7 @@ public class Fittings implements Serializable {
     Double ldValue = STANDARD_LD_VALUES.get(type.toLowerCase());
     if (ldValue != null) {
       for (int i = 0; i < count; i++) {
-        fittingList.add(new Fitting(type + "_" + (i + 1), ldValue));
+	fittingList.add(new Fitting(type + "_" + (i + 1), ldValue));
       }
       return true;
     }
@@ -365,13 +364,11 @@ public class Fittings implements Serializable {
     StringBuilder sb = new StringBuilder();
     sb.append("Fittings Summary:\n");
     sb.append(String.format("%-40s %10s%n", "Fitting Name", "L/D"));
-    sb.append(
-        String.format("%-40s %10s%n", "----------------------------------------", "----------"));
+    sb.append(String.format("%-40s %10s%n", "----------------------------------------", "----------"));
     for (Fitting fitting : fittingList) {
       sb.append(String.format("%-40s %10.1f%n", fitting.getFittingName(), fitting.getLtoD()));
     }
-    sb.append(
-        String.format("%-40s %10s%n", "----------------------------------------", "----------"));
+    sb.append(String.format("%-40s %10s%n", "----------------------------------------", "----------"));
     sb.append(String.format("%-40s %10.1f%n", "TOTAL L/D", getTotalLdRatio()));
     return sb.toString();
   }
@@ -380,8 +377,8 @@ public class Fittings implements Serializable {
    * Inner class representing a single pipe fitting.
    *
    * <p>
-   * Each fitting has a name and an L/D ratio that defines its equivalent length contribution to
-   * pressure drop calculations.
+   * Each fitting has a name and an L/D ratio that defines its equivalent length contribution to pressure drop
+   * calculations.
    * </p>
    */
   public class Fitting implements Serializable {
@@ -400,7 +397,7 @@ public class Fittings implements Serializable {
     /**
      * Constructor with explicit L/D ratio.
      *
-     * @param name fitting name
+     * @param name  fitting name
      * @param LdivD equivalent length ratio (L/D)
      */
     public Fitting(String name, double LdivD) {
@@ -412,8 +409,8 @@ public class Fittings implements Serializable {
      * Constructor that loads L/D from database.
      *
      * <p>
-     * Attempts to load the fitting data from the 'fittings' database table. If not found, attempts
-     * to match against standard fitting types.
+     * Attempts to load the fitting data from the 'fittings' database table. If not found, attempts to match against
+     * standard fitting types.
      * </p>
      *
      * @param name fitting name as stored in database
@@ -422,30 +419,28 @@ public class Fittings implements Serializable {
       this.fittingName = name;
 
       try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-          java.sql.ResultSet dataSet =
-              database.getResultSet(("SELECT * FROM fittings WHERE name='" + name + "'"))) {
-        if (dataSet.next()) {
-          LtoD = Double.parseDouble(dataSet.getString("LtoD"));
-          logger.debug("Loaded fitting '{}' with L/D = {}", name, LtoD);
-        } else {
-          // Try standard values as fallback
-          Double stdValue = STANDARD_LD_VALUES.get(name.toLowerCase());
-          if (stdValue != null) {
-            LtoD = stdValue;
-            logger.debug("Using standard L/D value for '{}': {}", name, LtoD);
-          } else {
-            logger.warn("Fitting '{}' not found in database or standard values. Using L/D = 1.0",
-                name);
-            LtoD = 1.0;
-          }
-        }
+	  java.sql.ResultSet dataSet = database.getResultSet(("SELECT * FROM fittings WHERE name='" + name + "'"))) {
+	if (dataSet.next()) {
+	  LtoD = Double.parseDouble(dataSet.getString("LtoD"));
+	  logger.debug("Loaded fitting '{}' with L/D = {}", name, LtoD);
+	} else {
+	  // Try standard values as fallback
+	  Double stdValue = STANDARD_LD_VALUES.get(name.toLowerCase());
+	  if (stdValue != null) {
+	    LtoD = stdValue;
+	    logger.debug("Using standard L/D value for '{}': {}", name, LtoD);
+	  } else {
+	    logger.warn("Fitting '{}' not found in database or standard values. Using L/D = 1.0", name);
+	    LtoD = 1.0;
+	  }
+	}
       } catch (Exception ex) {
-        logger.error("Error loading fitting '{}': {}", name, ex.getMessage());
-        // Try standard values as fallback
-        Double stdValue = STANDARD_LD_VALUES.get(name.toLowerCase());
-        if (stdValue != null) {
-          LtoD = stdValue;
-        }
+	logger.error("Error loading fitting '{}': {}", name, ex.getMessage());
+	// Try standard values as fallback
+	Double stdValue = STANDARD_LD_VALUES.get(name.toLowerCase());
+	if (stdValue != null) {
+	  LtoD = stdValue;
+	}
       }
     }
 

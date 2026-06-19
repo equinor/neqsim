@@ -19,9 +19,8 @@ import neqsim.process.fielddevelopment.economics.ProductionProfileGenerator.Decl
  * Stateless field development economics runner for MCP integration.
  *
  * <p>
- * Supports cash flow analysis with multiple fiscal regimes (Norwegian NCS, UK, Brazil, US-GOM),
- * production profile generation with exponential/hyperbolic/harmonic decline, and breakeven
- * analysis.
+ * Supports cash flow analysis with multiple fiscal regimes (Norwegian NCS, UK, Brazil, US-GOM), production profile
+ * generation with exponential/hyperbolic/harmonic decline, and breakeven analysis.
  * </p>
  *
  * @author Even Solbraa
@@ -29,13 +28,13 @@ import neqsim.process.fielddevelopment.economics.ProductionProfileGenerator.Decl
  */
 public class FieldDevelopmentRunner {
 
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   /**
    * Private constructor — all methods are static.
    */
-  private FieldDevelopmentRunner() {}
+  private FieldDevelopmentRunner() {
+  }
 
   /**
    * Runs a field development economics calculation from a JSON input.
@@ -54,25 +53,24 @@ public class FieldDevelopmentRunner {
   public static String run(String json) {
     if (json == null || json.trim().isEmpty()) {
       return errorJson("INPUT_ERROR", "JSON input is null or empty",
-          "Provide a valid JSON field development specification");
+	  "Provide a valid JSON field development specification");
     }
 
     JsonObject input;
     try {
       input = JsonParser.parseString(json).getAsJsonObject();
     } catch (Exception e) {
-      return errorJson("JSON_PARSE_ERROR", "Failed to parse JSON: " + e.getMessage(),
-          "Ensure the JSON is well-formed");
+      return errorJson("JSON_PARSE_ERROR", "Failed to parse JSON: " + e.getMessage(), "Ensure the JSON is well-formed");
     }
 
     String mode = input.has("mode") ? input.get("mode").getAsString().toLowerCase() : "cashflow";
 
     switch (mode) {
-      case "productionprofile":
-        return runProductionProfile(input);
-      case "cashflow":
-      default:
-        return runCashFlow(input);
+    case "productionprofile":
+      return runProductionProfile(input);
+    case "cashflow":
+    default:
+      return runCashFlow(input);
     }
   }
 
@@ -91,67 +89,63 @@ public class FieldDevelopmentRunner {
 
       // --- CAPEX ---
       if (input.has("capex")) {
-        JsonObject capex = input.getAsJsonObject("capex");
-        if (capex.has("schedule")) {
-          Map<Integer, Double> schedule = new HashMap<Integer, Double>();
-          JsonObject sched = capex.getAsJsonObject("schedule");
-          for (Map.Entry<String, JsonElement> entry : sched.entrySet()) {
-            schedule.put(Integer.parseInt(entry.getKey()), entry.getValue().getAsDouble());
-          }
-          engine.setCapexSchedule(schedule);
-        } else if (capex.has("totalMusd") && capex.has("year")) {
-          engine.setCapex(capex.get("totalMusd").getAsDouble(), capex.get("year").getAsInt());
-        }
+	JsonObject capex = input.getAsJsonObject("capex");
+	if (capex.has("schedule")) {
+	  Map<Integer, Double> schedule = new HashMap<Integer, Double>();
+	  JsonObject sched = capex.getAsJsonObject("schedule");
+	  for (Map.Entry<String, JsonElement> entry : sched.entrySet()) {
+	    schedule.put(Integer.parseInt(entry.getKey()), entry.getValue().getAsDouble());
+	  }
+	  engine.setCapexSchedule(schedule);
+	} else if (capex.has("totalMusd") && capex.has("year")) {
+	  engine.setCapex(capex.get("totalMusd").getAsDouble(), capex.get("year").getAsInt());
+	}
       }
 
       // --- OPEX ---
       if (input.has("opex")) {
-        JsonObject opex = input.getAsJsonObject("opex");
-        if (opex.has("percentOfCapex")) {
-          engine.setOpexPercentOfCapex(opex.get("percentOfCapex").getAsDouble());
-        }
-        if (opex.has("fixedPerYearMusd")) {
-          engine.setFixedOpexPerYear(opex.get("fixedPerYearMusd").getAsDouble());
-        }
-        if (opex.has("variablePerBoe")) {
-          engine.setVariableOpexPerBoe(opex.get("variablePerBoe").getAsDouble());
-        }
+	JsonObject opex = input.getAsJsonObject("opex");
+	if (opex.has("percentOfCapex")) {
+	  engine.setOpexPercentOfCapex(opex.get("percentOfCapex").getAsDouble());
+	}
+	if (opex.has("fixedPerYearMusd")) {
+	  engine.setFixedOpexPerYear(opex.get("fixedPerYearMusd").getAsDouble());
+	}
+	if (opex.has("variablePerBoe")) {
+	  engine.setVariableOpexPerBoe(opex.get("variablePerBoe").getAsDouble());
+	}
       }
 
       // --- Prices ---
       if (input.has("oilPrice_usdPerBbl")) {
-        engine.setOilPrice(input.get("oilPrice_usdPerBbl").getAsDouble());
+	engine.setOilPrice(input.get("oilPrice_usdPerBbl").getAsDouble());
       }
       if (input.has("gasPrice_usdPerSm3")) {
-        engine.setGasPrice(input.get("gasPrice_usdPerSm3").getAsDouble());
+	engine.setGasPrice(input.get("gasPrice_usdPerSm3").getAsDouble());
       }
       if (input.has("nglPrice_usdPerBbl")) {
-        engine.setNglPrice(input.get("nglPrice_usdPerBbl").getAsDouble());
+	engine.setNglPrice(input.get("nglPrice_usdPerBbl").getAsDouble());
       }
       if (input.has("gasTariff_usdPerSm3")) {
-        engine.setGasTariff(input.get("gasTariff_usdPerSm3").getAsDouble());
+	engine.setGasTariff(input.get("gasTariff_usdPerSm3").getAsDouble());
       }
       if (input.has("oilTariff_usdPerBbl")) {
-        engine.setOilTariff(input.get("oilTariff_usdPerBbl").getAsDouble());
+	engine.setOilTariff(input.get("oilTariff_usdPerBbl").getAsDouble());
       }
 
       // --- Production ---
       if (input.has("production")) {
-        JsonObject prod = input.getAsJsonObject("production");
-        if (prod.has("oil") || prod.has("gas")) {
-          Map<Integer, Double> oilProfile =
-              prod.has("oil") ? parseYearProfile(prod.getAsJsonObject("oil")) : null;
-          Map<Integer, Double> gasProfile =
-              prod.has("gas") ? parseYearProfile(prod.getAsJsonObject("gas")) : null;
-          Map<Integer, Double> nglProfile =
-              prod.has("ngl") ? parseYearProfile(prod.getAsJsonObject("ngl")) : null;
-          engine.setProductionProfile(oilProfile, gasProfile, nglProfile);
-        }
+	JsonObject prod = input.getAsJsonObject("production");
+	if (prod.has("oil") || prod.has("gas")) {
+	  Map<Integer, Double> oilProfile = prod.has("oil") ? parseYearProfile(prod.getAsJsonObject("oil")) : null;
+	  Map<Integer, Double> gasProfile = prod.has("gas") ? parseYearProfile(prod.getAsJsonObject("gas")) : null;
+	  Map<Integer, Double> nglProfile = prod.has("ngl") ? parseYearProfile(prod.getAsJsonObject("ngl")) : null;
+	  engine.setProductionProfile(oilProfile, gasProfile, nglProfile);
+	}
       }
 
       // --- Discount rate ---
-      double discountRate =
-          input.has("discountRate") ? input.get("discountRate").getAsDouble() : 0.08;
+      double discountRate = input.has("discountRate") ? input.get("discountRate").getAsDouble() : 0.08;
 
       // --- Calculate ---
       CashFlowResult result = engine.calculate(discountRate);
@@ -171,36 +165,34 @@ public class FieldDevelopmentRunner {
       // Annual cash flows
       JsonArray cashflows = new JsonArray();
       for (AnnualCashFlow acf : result.getAnnualCashFlows()) {
-        JsonObject row = new JsonObject();
-        row.addProperty("year", acf.getYear());
-        row.addProperty("grossRevenue_Musd", acf.getGrossRevenue());
-        row.addProperty("capex_Musd", acf.getCapex());
-        row.addProperty("opex_Musd", acf.getOpex());
-        row.addProperty("depreciation_Musd", acf.getDepreciation());
-        row.addProperty("corporateTax_Musd", acf.getCorporateTax());
-        row.addProperty("petroleumTax_Musd", acf.getPetroleumTax());
-        row.addProperty("totalTax_Musd", acf.getTotalTax());
-        row.addProperty("afterTaxCashFlow_Musd", acf.getAfterTaxCashFlow());
-        row.addProperty("cumulativeCashFlow_Musd", acf.getCumulativeCashFlow());
-        row.addProperty("discountedCashFlow_Musd", acf.getDiscountedCashFlow());
-        cashflows.add(row);
+	JsonObject row = new JsonObject();
+	row.addProperty("year", acf.getYear());
+	row.addProperty("grossRevenue_Musd", acf.getGrossRevenue());
+	row.addProperty("capex_Musd", acf.getCapex());
+	row.addProperty("opex_Musd", acf.getOpex());
+	row.addProperty("depreciation_Musd", acf.getDepreciation());
+	row.addProperty("corporateTax_Musd", acf.getCorporateTax());
+	row.addProperty("petroleumTax_Musd", acf.getPetroleumTax());
+	row.addProperty("totalTax_Musd", acf.getTotalTax());
+	row.addProperty("afterTaxCashFlow_Musd", acf.getAfterTaxCashFlow());
+	row.addProperty("cumulativeCashFlow_Musd", acf.getCumulativeCashFlow());
+	row.addProperty("discountedCashFlow_Musd", acf.getDiscountedCashFlow());
+	cashflows.add(row);
       }
       data.add("annualCashFlows", cashflows);
 
       // --- Breakeven prices ---
       if (input.has("calculateBreakeven") && input.get("calculateBreakeven").getAsBoolean()) {
-        try {
-          data.addProperty("breakevenOilPrice_usdPerBbl",
-              engine.calculateBreakevenOilPrice(discountRate));
-        } catch (Exception ignored) {
-          // breakeven may not converge in all cases
-        }
-        try {
-          data.addProperty("breakevenGasPrice_usdPerSm3",
-              engine.calculateBreakevenGasPrice(discountRate));
-        } catch (Exception ignored) {
-          // not always applicable
-        }
+	try {
+	  data.addProperty("breakevenOilPrice_usdPerBbl", engine.calculateBreakevenOilPrice(discountRate));
+	} catch (Exception ignored) {
+	  // breakeven may not converge in all cases
+	}
+	try {
+	  data.addProperty("breakevenGasPrice_usdPerSm3", engine.calculateBreakevenGasPrice(discountRate));
+	} catch (Exception ignored) {
+	  // not always applicable
+	}
       }
 
       JsonObject response = new JsonObject();
@@ -216,7 +208,7 @@ public class FieldDevelopmentRunner {
       return GSON.toJson(response);
     } catch (Exception e) {
       return errorJson("ECONOMICS_ERROR", "Cash flow calculation failed: " + e.getMessage(),
-          "Check CAPEX, production, and price inputs");
+	  "Check CAPEX, production, and price inputs");
     }
   }
 
@@ -230,59 +222,53 @@ public class FieldDevelopmentRunner {
     long startTime = System.currentTimeMillis();
     try {
       ProductionProfileGenerator gen = new ProductionProfileGenerator();
-      String declineTypeStr =
-          input.has("declineType") ? input.get("declineType").getAsString().toUpperCase()
-              : "EXPONENTIAL";
-      double initialRate =
-          input.has("initialRate_bblPerDay") ? input.get("initialRate_bblPerDay").getAsDouble()
-              : 10000.0;
-      double declineRate =
-          input.has("annualDeclineRate") ? input.get("annualDeclineRate").getAsDouble() : 0.10;
+      String declineTypeStr = input.has("declineType") ? input.get("declineType").getAsString().toUpperCase()
+	  : "EXPONENTIAL";
+      double initialRate = input.has("initialRate_bblPerDay") ? input.get("initialRate_bblPerDay").getAsDouble()
+	  : 10000.0;
+      double declineRate = input.has("annualDeclineRate") ? input.get("annualDeclineRate").getAsDouble() : 0.10;
       int startYear = input.has("startYear") ? input.get("startYear").getAsInt() : 2025;
       int totalYears = input.has("totalYears") ? input.get("totalYears").getAsInt() : 20;
-      double economicLimit =
-          input.has("economicLimit_bblPerDay") ? input.get("economicLimit_bblPerDay").getAsDouble()
-              : 100.0;
+      double economicLimit = input.has("economicLimit_bblPerDay") ? input.get("economicLimit_bblPerDay").getAsDouble()
+	  : 100.0;
 
       // Plateau
       boolean hasPlateau = input.has("plateauYears") && input.get("plateauYears").getAsInt() > 0;
 
       DeclineType declineType;
       switch (declineTypeStr) {
-        case "HYPERBOLIC":
-          declineType = DeclineType.HYPERBOLIC;
-          break;
-        case "HARMONIC":
-          declineType = DeclineType.HARMONIC;
-          break;
-        default:
-          declineType = DeclineType.EXPONENTIAL;
-          break;
+      case "HYPERBOLIC":
+	declineType = DeclineType.HYPERBOLIC;
+	break;
+      case "HARMONIC":
+	declineType = DeclineType.HARMONIC;
+	break;
+      default:
+	declineType = DeclineType.EXPONENTIAL;
+	break;
       }
 
       Map<Integer, Double> profile;
       if (hasPlateau) {
-        int plateauYears = input.get("plateauYears").getAsInt();
-        double bFactor = input.has("bFactor") ? input.get("bFactor").getAsDouble() : 0.5;
-        profile = gen.generateWithPlateau(initialRate, plateauYears, declineRate, bFactor,
-            declineType, startYear, totalYears, economicLimit);
+	int plateauYears = input.get("plateauYears").getAsInt();
+	double bFactor = input.has("bFactor") ? input.get("bFactor").getAsDouble() : 0.5;
+	profile = gen.generateWithPlateau(initialRate, plateauYears, declineRate, bFactor, declineType, startYear,
+	    totalYears, economicLimit);
       } else {
-        switch (declineTypeStr) {
-          case "HYPERBOLIC": {
-            double bFactor = input.has("bFactor") ? input.get("bFactor").getAsDouble() : 0.5;
-            profile = gen.generateHyperbolicDecline(initialRate, declineRate, bFactor, startYear,
-                totalYears, economicLimit);
-            break;
-          }
-          case "HARMONIC":
-            profile = gen.generateHarmonicDecline(initialRate, declineRate, startYear, totalYears,
-                economicLimit);
-            break;
-          default:
-            profile = gen.generateExponentialDecline(initialRate, declineRate, startYear,
-                totalYears, economicLimit);
-            break;
-        }
+	switch (declineTypeStr) {
+	case "HYPERBOLIC": {
+	  double bFactor = input.has("bFactor") ? input.get("bFactor").getAsDouble() : 0.5;
+	  profile = gen.generateHyperbolicDecline(initialRate, declineRate, bFactor, startYear, totalYears,
+	      economicLimit);
+	  break;
+	}
+	case "HARMONIC":
+	  profile = gen.generateHarmonicDecline(initialRate, declineRate, startYear, totalYears, economicLimit);
+	  break;
+	default:
+	  profile = gen.generateExponentialDecline(initialRate, declineRate, startYear, totalYears, economicLimit);
+	  break;
+	}
       }
 
       // Build result
@@ -295,9 +281,9 @@ public class FieldDevelopmentRunner {
       JsonArray volumes = new JsonArray();
       double totalVolume = 0;
       for (Map.Entry<Integer, Double> entry : profile.entrySet()) {
-        years.add(entry.getKey());
-        volumes.add(entry.getValue());
-        totalVolume += entry.getValue();
+	years.add(entry.getKey());
+	volumes.add(entry.getValue());
+	totalVolume += entry.getValue();
       }
       data.add("years", years);
       data.add("annualVolumes_bbl", volumes);
@@ -317,7 +303,7 @@ public class FieldDevelopmentRunner {
       return GSON.toJson(response);
     } catch (Exception e) {
       return errorJson("PROFILE_ERROR", "Production profile generation failed: " + e.getMessage(),
-          "Check decline parameters");
+	  "Check decline parameters");
     }
   }
 
@@ -338,8 +324,8 @@ public class FieldDevelopmentRunner {
   /**
    * Creates a standard error JSON string.
    *
-   * @param code the error code
-   * @param message the error message
+   * @param code        the error code
+   * @param message     the error message
    * @param remediation the fix suggestion
    * @return the error JSON string
    */

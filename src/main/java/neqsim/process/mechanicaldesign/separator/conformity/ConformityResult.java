@@ -6,11 +6,9 @@ import java.io.Serializable;
  * Result of a single conformity check against a design standard.
  *
  * <p>
- * Each check evaluates an actual operating value against a limit from a named
- * standard (e.g.,
- * TR3500). The result includes the check name, the internal it applies to (if
- * any), the actual
- * value, the limit, and a pass/warning/fail status.
+ * Each check evaluates an actual operating value against a limit from a named standard (e.g., TR3500). The result
+ * includes the check name, the internal it applies to (if any), the actual value, the limit, and a pass/warning/fail
+ * status.
  * </p>
  *
  * @author NeqSim Development Team
@@ -59,21 +57,18 @@ public class ConformityResult implements Serializable {
   /**
    * Constructs a ConformityResult.
    *
-   * @param checkName    short identifier for the check (e.g., "k-factor",
-   *                     "inlet-momentum")
+   * @param checkName    short identifier for the check (e.g., "k-factor", "inlet-momentum")
    * @param standard     the conformity standard (e.g., "TR3500", "API-12J")
-   * @param internalType the internal this check applies to (e.g., "mesh-pad",
-   *                     "demisting-cyclones")
-   *                     or empty string for vessel-level checks
+   * @param internalType the internal this check applies to (e.g., "mesh-pad", "demisting-cyclones") or empty string for
+   *                     vessel-level checks
    * @param actualValue  the calculated actual value
    * @param limitValue   the acceptance limit from the standard
    * @param unit         the engineering unit (e.g., "m/s", "Pa", "mm")
    * @param direction    whether the limit is a maximum or minimum
    * @param description  human-readable description of the check
    */
-  public ConformityResult(String checkName, String standard, String internalType,
-      double actualValue, double limitValue, String unit, LimitDirection direction,
-      String description) {
+  public ConformityResult(String checkName, String standard, String internalType, double actualValue, double limitValue,
+      String unit, LimitDirection direction, String description) {
     this.checkName = checkName;
     this.standard = standard;
     this.internalType = internalType;
@@ -94,15 +89,14 @@ public class ConformityResult implements Serializable {
    * @return a ConformityResult with NOT_APPLICABLE status
    */
   public static ConformityResult notApplicable(String checkName, String standard, String reason) {
-    ConformityResult result = new ConformityResult(checkName, standard, "", Double.NaN, Double.NaN,
-        "", LimitDirection.MAXIMUM, reason);
-    return new ConformityResult(checkName, standard, "", Double.NaN, Double.NaN, "",
-        LimitDirection.MAXIMUM, reason) {
+    ConformityResult result = new ConformityResult(checkName, standard, "", Double.NaN, Double.NaN, "",
+	LimitDirection.MAXIMUM, reason);
+    return new ConformityResult(checkName, standard, "", Double.NaN, Double.NaN, "", LimitDirection.MAXIMUM, reason) {
       private static final long serialVersionUID = 1L;
 
       @Override
       public Status getStatus() {
-        return Status.NOT_APPLICABLE;
+	return Status.NOT_APPLICABLE;
       }
     };
   }
@@ -122,17 +116,17 @@ public class ConformityResult implements Serializable {
     double warningThreshold = 0.9;
     if (dir == LimitDirection.MAXIMUM) {
       if (actual > limit) {
-        return Status.FAIL;
+	return Status.FAIL;
       } else if (actual > limit * warningThreshold) {
-        return Status.WARNING;
+	return Status.WARNING;
       }
       return Status.PASS;
     } else {
       // MINIMUM: actual must be >= limit
       if (actual < limit) {
-        return Status.FAIL;
+	return Status.FAIL;
       } else if (actual < limit * (1.0 + (1.0 - warningThreshold))) {
-        return Status.WARNING;
+	return Status.WARNING;
       }
       return Status.PASS;
     }
@@ -231,7 +225,7 @@ public class ConformityResult implements Serializable {
   /** {@inheritDoc} */
   @Override
   public String toString() {
-    return String.format("%-25s %10.4f %10.4f %-6s %-4s  %s",
-        checkName, actualValue, limitValue, unit, status, description);
+    return String.format("%-25s %10.4f %10.4f %-6s %-4s  %s", checkName, actualValue, limitValue, unit, status,
+	description);
   }
 }

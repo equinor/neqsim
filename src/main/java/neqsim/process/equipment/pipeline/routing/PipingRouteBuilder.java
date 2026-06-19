@@ -18,16 +18,15 @@ import neqsim.process.processmodel.ProcessSystem;
  * Builds a serial route-level piping hydraulics model from structured line-list data.
  *
  * <p>
- * The builder stores route segments with from/to nodes, hydraulic diameter, straight length,
- * optional wall thickness, roughness, elevation change, and K-value minor losses. Calling
- * {@link #build(StreamInterface)} creates a {@link ProcessSystem} containing the inlet stream and
- * one {@link PipeBeggsAndBrills} unit per segment, wired in the same order as the line-list rows.
+ * The builder stores route segments with from/to nodes, hydraulic diameter, straight length, optional wall thickness,
+ * roughness, elevation change, and K-value minor losses. Calling {@link #build(StreamInterface)} creates a
+ * {@link ProcessSystem} containing the inlet stream and one {@link PipeBeggsAndBrills} unit per segment, wired in the
+ * same order as the line-list rows.
  * </p>
  *
  * <p>
- * Minor losses are converted from resistance coefficient K to equivalent length ratio L/D using a
- * configurable Darcy friction factor assumption. The default assumption is 0.02, a typical
- * turbulent screening value.
+ * Minor losses are converted from resistance coefficient K to equivalent length ratio L/D using a configurable Darcy
+ * friction factor assumption. The default assumption is 0.02, a typical turbulent screening value.
  * </p>
  *
  * @author Even Solbraa
@@ -43,60 +42,55 @@ public class PipingRouteBuilder implements Serializable {
   private double defaultPipeWallRoughnessMeters = 1.0e-5;
   private int defaultNumberOfIncrements = 5;
   private double minorLossFrictionFactor = DEFAULT_MINOR_LOSS_FRICTION_FACTOR;
-  private PipeBeggsAndBrills.HeatTransferMode defaultHeatTransferMode =
-      PipeBeggsAndBrills.HeatTransferMode.ISOTHERMAL;
+  private PipeBeggsAndBrills.HeatTransferMode defaultHeatTransferMode = PipeBeggsAndBrills.HeatTransferMode.ISOTHERMAL;
 
   /**
    * Creates an empty piping route builder.
    */
-  public PipingRouteBuilder() {}
+  public PipingRouteBuilder() {
+  }
 
   /**
    * Adds one route segment and assigns a generated segment id such as {@code S1}.
    *
-   * @param fromNode upstream node name from the line list
-   * @param toNode downstream node name from the line list
-   * @param length straight pipe length, must be positive
-   * @param lengthUnit unit for {@code length}, for example {@code m}, {@code km}, {@code ft}
+   * @param fromNode        upstream node name from the line list
+   * @param toNode          downstream node name from the line list
+   * @param length          straight pipe length, must be positive
+   * @param lengthUnit      unit for {@code length}, for example {@code m}, {@code km}, {@code ft}
    * @param nominalDiameter hydraulic diameter used by the pipe model, must be positive
-   * @param diameterUnit unit for {@code nominalDiameter}, for example {@code m}, {@code mm},
-   *        {@code inch}
+   * @param diameterUnit    unit for {@code nominalDiameter}, for example {@code m}, {@code mm}, {@code inch}
    * @return this builder for chaining
    * @throws IllegalArgumentException if inputs are blank, non-positive, duplicated, or unsupported
    */
-  public PipingRouteBuilder addSegment(String fromNode, String toNode, double length,
-      String lengthUnit, double nominalDiameter, String diameterUnit) {
+  public PipingRouteBuilder addSegment(String fromNode, String toNode, double length, String lengthUnit,
+      double nominalDiameter, String diameterUnit) {
     String generatedId = "S" + (segments.size() + 1);
-    return addSegment(generatedId, fromNode, toNode, length, lengthUnit, nominalDiameter,
-        diameterUnit);
+    return addSegment(generatedId, fromNode, toNode, length, lengthUnit, nominalDiameter, diameterUnit);
   }
 
   /**
    * Adds one route segment with an explicit segment id.
    *
-   * @param segmentId unique segment id, for example a line number or {@code S1}
-   * @param fromNode upstream node name from the line list
-   * @param toNode downstream node name from the line list
-   * @param length straight pipe length, must be positive
-   * @param lengthUnit unit for {@code length}, for example {@code m}, {@code km}, {@code ft}
+   * @param segmentId       unique segment id, for example a line number or {@code S1}
+   * @param fromNode        upstream node name from the line list
+   * @param toNode          downstream node name from the line list
+   * @param length          straight pipe length, must be positive
+   * @param lengthUnit      unit for {@code length}, for example {@code m}, {@code km}, {@code ft}
    * @param nominalDiameter hydraulic diameter used by the pipe model, must be positive
-   * @param diameterUnit unit for {@code nominalDiameter}, for example {@code m}, {@code mm},
-   *        {@code inch}
+   * @param diameterUnit    unit for {@code nominalDiameter}, for example {@code m}, {@code mm}, {@code inch}
    * @return this builder for chaining
    * @throws IllegalArgumentException if inputs are blank, non-positive, duplicated, or unsupported
    */
-  public PipingRouteBuilder addSegment(String segmentId, String fromNode, String toNode,
-      double length, String lengthUnit, double nominalDiameter, String diameterUnit) {
+  public PipingRouteBuilder addSegment(String segmentId, String fromNode, String toNode, double length,
+      String lengthUnit, double nominalDiameter, String diameterUnit) {
     String cleanSegmentId = requireText(segmentId, "segmentId");
     if (findSegment(cleanSegmentId) != null) {
       throw new IllegalArgumentException("Route segment already exists: " + cleanSegmentId);
     }
 
     RouteSegment segment = new RouteSegment(cleanSegmentId, requireText(fromNode, "fromNode"),
-        requireText(toNode, "toNode"), requirePositive(length, "length"),
-        convertLengthToMeters(length, lengthUnit),
-        requirePositive(nominalDiameter, "nominalDiameter"),
-        convertLengthToMeters(nominalDiameter, diameterUnit));
+	requireText(toNode, "toNode"), requirePositive(length, "length"), convertLengthToMeters(length, lengthUnit),
+	requirePositive(nominalDiameter, "nominalDiameter"), convertLengthToMeters(nominalDiameter, diameterUnit));
     segments.add(segment);
     return this;
   }
@@ -104,14 +98,13 @@ public class PipingRouteBuilder implements Serializable {
   /**
    * Sets segment wall thickness metadata and pipe wall thickness on the generated pipe.
    *
-   * @param segmentId segment id or {@code fromNode->toNode} route reference
+   * @param segmentId     segment id or {@code fromNode->toNode} route reference
    * @param wallThickness wall thickness, must be non-negative
-   * @param unit unit for {@code wallThickness}, for example {@code m}, {@code mm}, {@code inch}
+   * @param unit          unit for {@code wallThickness}, for example {@code m}, {@code mm}, {@code inch}
    * @return this builder for chaining
    * @throws IllegalArgumentException if the segment cannot be found or the value/unit is invalid
    */
-  public PipingRouteBuilder setSegmentWallThickness(String segmentId, double wallThickness,
-      String unit) {
+  public PipingRouteBuilder setSegmentWallThickness(String segmentId, double wallThickness, String unit) {
     RouteSegment segment = findSegmentOrThrow(segmentId);
     requireNonNegative(wallThickness, "wallThickness");
     segment.wallThicknessMeters = convertLengthToMeters(wallThickness, unit);
@@ -121,14 +114,13 @@ public class PipingRouteBuilder implements Serializable {
   /**
    * Sets segment elevation change from inlet to outlet.
    *
-   * @param segmentId segment id or {@code fromNode->toNode} route reference
+   * @param segmentId       segment id or {@code fromNode->toNode} route reference
    * @param elevationChange elevation change, positive for uphill and negative for downhill
-   * @param unit unit for {@code elevationChange}, for example {@code m}, {@code ft}
+   * @param unit            unit for {@code elevationChange}, for example {@code m}, {@code ft}
    * @return this builder for chaining
    * @throws IllegalArgumentException if the segment cannot be found or the unit is invalid
    */
-  public PipingRouteBuilder setSegmentElevationChange(String segmentId, double elevationChange,
-      String unit) {
+  public PipingRouteBuilder setSegmentElevationChange(String segmentId, double elevationChange, String unit) {
     RouteSegment segment = findSegmentOrThrow(segmentId);
     requireFinite(elevationChange, "elevationChange");
     segment.elevationChangeMeters = convertLengthToMeters(elevationChange, unit);
@@ -140,12 +132,11 @@ public class PipingRouteBuilder implements Serializable {
    *
    * @param segmentId segment id or {@code fromNode->toNode} route reference
    * @param roughness roughness, must be non-negative
-   * @param unit unit for {@code roughness}, for example {@code m}, {@code mm}, {@code micrometer}
+   * @param unit      unit for {@code roughness}, for example {@code m}, {@code mm}, {@code micrometer}
    * @return this builder for chaining
    * @throws IllegalArgumentException if the segment cannot be found or the value/unit is invalid
    */
-  public PipingRouteBuilder setSegmentPipeWallRoughness(String segmentId, double roughness,
-      String unit) {
+  public PipingRouteBuilder setSegmentPipeWallRoughness(String segmentId, double roughness, String unit) {
     RouteSegment segment = findSegmentOrThrow(segmentId);
     requireNonNegative(roughness, "roughness");
     segment.pipeWallRoughnessMeters = convertLengthToMeters(roughness, unit);
@@ -155,9 +146,9 @@ public class PipingRouteBuilder implements Serializable {
   /**
    * Adds one K-value minor loss to a segment.
    *
-   * @param segmentId segment id or {@code fromNode->toNode} route reference
+   * @param segmentId   segment id or {@code fromNode->toNode} route reference
    * @param fittingType fitting, valve, strainer, bend, or equipment-loss description
-   * @param kValue resistance coefficient K, must be non-negative
+   * @param kValue      resistance coefficient K, must be non-negative
    * @return this builder for chaining
    * @throws IllegalArgumentException if the segment cannot be found or the K value is invalid
    */
@@ -165,8 +156,7 @@ public class PipingRouteBuilder implements Serializable {
     RouteSegment segment = findSegmentOrThrow(segmentId);
     requireNonNegative(kValue, "kValue");
     String cleanFittingType = requireText(fittingType, "fittingType");
-    segment.minorLosses
-        .add(new MinorLoss(cleanFittingType, kValue, kValue / minorLossFrictionFactor));
+    segment.minorLosses.add(new MinorLoss(cleanFittingType, kValue, kValue / minorLossFrictionFactor));
     return this;
   }
 
@@ -174,7 +164,7 @@ public class PipingRouteBuilder implements Serializable {
    * Sets the default wall roughness used for segments without explicit roughness.
    *
    * @param roughness roughness, must be non-negative
-   * @param unit unit for {@code roughness}, for example {@code m}, {@code mm}, {@code micrometer}
+   * @param unit      unit for {@code roughness}, for example {@code m}, {@code mm}, {@code micrometer}
    * @return this builder for chaining
    * @throws IllegalArgumentException if the roughness or unit is invalid
    */
@@ -206,8 +196,7 @@ public class PipingRouteBuilder implements Serializable {
    */
   public PipingRouteBuilder setDefaultNumberOfIncrements(int numberOfIncrements) {
     if (numberOfIncrements <= 0) {
-      throw new IllegalArgumentException(
-          "numberOfIncrements must be positive, got: " + numberOfIncrements);
+      throw new IllegalArgumentException("numberOfIncrements must be positive, got: " + numberOfIncrements);
     }
     defaultNumberOfIncrements = numberOfIncrements;
     return this;
@@ -220,8 +209,7 @@ public class PipingRouteBuilder implements Serializable {
    * @return this builder for chaining
    * @throws NullPointerException if {@code heatTransferMode} is null
    */
-  public PipingRouteBuilder setDefaultHeatTransferMode(
-      PipeBeggsAndBrills.HeatTransferMode heatTransferMode) {
+  public PipingRouteBuilder setDefaultHeatTransferMode(PipeBeggsAndBrills.HeatTransferMode heatTransferMode) {
     defaultHeatTransferMode = Objects.requireNonNull(heatTransferMode, "heatTransferMode");
     return this;
   }
@@ -232,7 +220,7 @@ public class PipingRouteBuilder implements Serializable {
    * @param inletStream inlet stream for the first pipe segment, must not be null
    * @return process system containing the inlet stream and route pipe units
    * @throws IllegalArgumentException if no route segments have been added
-   * @throws NullPointerException if {@code inletStream} is null
+   * @throws NullPointerException     if {@code inletStream} is null
    */
   public ProcessSystem build(StreamInterface inletStream) {
     Objects.requireNonNull(inletStream, "inletStream");
@@ -244,20 +232,20 @@ public class PipingRouteBuilder implements Serializable {
   }
 
   /**
-   * Adds the route pipe units to an existing {@link ProcessSystem} and returns the outlet stream of
-   * the final generated pipe.
+   * Adds the route pipe units to an existing {@link ProcessSystem} and returns the outlet stream of the final generated
+   * pipe.
    *
    * <p>
-   * Use this method when a line-list route is only one section of a larger flowsheet. The caller is
-   * responsible for adding the upstream feed stream or upstream equipment to the process system.
-   * The returned stream can be passed directly to downstream equipment constructors.
+   * Use this method when a line-list route is only one section of a larger flowsheet. The caller is responsible for
+   * adding the upstream feed stream or upstream equipment to the process system. The returned stream can be passed
+   * directly to downstream equipment constructors.
    * </p>
    *
-   * @param process process system that will receive the generated pipe units, must not be null
+   * @param process     process system that will receive the generated pipe units, must not be null
    * @param inletStream stream connected to the first generated pipe, must not be null
    * @return outlet stream from the last generated pipe
    * @throws IllegalArgumentException if no route segments have been added
-   * @throws NullPointerException if {@code process} or {@code inletStream} is null
+   * @throws NullPointerException     if {@code process} or {@code inletStream} is null
    */
   public StreamInterface addToProcessSystem(ProcessSystem process, StreamInterface inletStream) {
     Objects.requireNonNull(inletStream, "inletStream");
@@ -265,23 +253,22 @@ public class PipingRouteBuilder implements Serializable {
   }
 
   /**
-   * Adds the route pipe units to an existing {@link ProcessSystem} with explicit source-equipment
-   * metadata for the first route connection.
+   * Adds the route pipe units to an existing {@link ProcessSystem} with explicit source-equipment metadata for the
+   * first route connection.
    *
    * <p>
-   * This overload is useful when {@code inletStream} is the outlet stream of an upstream equipment
-   * item. The stream object performs the actual process wiring, while {@code sourceEquipmentName}
-   * and {@code sourcePortName} preserve the topology metadata in {@link ProcessConnection} records.
+   * This overload is useful when {@code inletStream} is the outlet stream of an upstream equipment item. The stream
+   * object performs the actual process wiring, while {@code sourceEquipmentName} and {@code sourcePortName} preserve
+   * the topology metadata in {@link ProcessConnection} records.
    * </p>
    *
-   * @param process process system that will receive the generated pipe units, must not be null
-   * @param inletStream stream connected to the first generated pipe, must not be null
+   * @param process             process system that will receive the generated pipe units, must not be null
+   * @param inletStream         stream connected to the first generated pipe, must not be null
    * @param sourceEquipmentName upstream equipment name for the first material connection
-   * @param sourcePortName upstream port name for the first material connection
+   * @param sourcePortName      upstream port name for the first material connection
    * @return outlet stream from the last generated pipe
-   * @throws IllegalArgumentException if no route segments have been added or source metadata is
-   *         blank
-   * @throws NullPointerException if {@code process} or {@code inletStream} is null
+   * @throws IllegalArgumentException if no route segments have been added or source metadata is blank
+   * @throws NullPointerException     if {@code process} or {@code inletStream} is null
    */
   public StreamInterface addToProcessSystem(ProcessSystem process, StreamInterface inletStream,
       String sourceEquipmentName, String sourcePortName) {
@@ -298,7 +285,7 @@ public class PipingRouteBuilder implements Serializable {
       PipeBeggsAndBrills pipe = createPipe(segment, currentStream);
       process.add(pipe);
       process.connect(currentEquipmentName, currentPortName, pipe.getName(), "inlet",
-          ProcessConnection.ConnectionType.MATERIAL);
+	  ProcessConnection.ConnectionType.MATERIAL);
       currentStream = pipe.getOutletStream();
       currentEquipmentName = pipe.getName();
       currentPortName = "outlet";
@@ -331,14 +318,13 @@ public class PipingRouteBuilder implements Serializable {
    * @return pretty-printed JSON route definition
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   /**
    * Creates and configures one Beggs-and-Brill pipe for a route segment.
    *
-   * @param segment route segment definition
+   * @param segment     route segment definition
    * @param inletStream inlet stream connected to the pipe
    * @return configured pipe unit
    */
@@ -368,7 +354,7 @@ public class PipingRouteBuilder implements Serializable {
   private void recalculateMinorLossEquivalentLengths() {
     for (RouteSegment segment : segments) {
       for (MinorLoss minorLoss : segment.minorLosses) {
-        minorLoss.equivalentLengthRatio = minorLoss.kValue / minorLossFrictionFactor;
+	minorLoss.equivalentLengthRatio = minorLoss.kValue / minorLossFrictionFactor;
       }
     }
   }
@@ -401,8 +387,8 @@ public class PipingRouteBuilder implements Serializable {
     String reference = segmentId.trim();
     for (RouteSegment segment : segments) {
       if (segment.segmentId.equals(reference) || segment.getArrowReference().equals(reference)
-          || segment.getTextReference().equals(reference)) {
-        return segment;
+	  || segment.getTextReference().equals(reference)) {
+	return segment;
       }
     }
     return null;
@@ -434,7 +420,7 @@ public class PipingRouteBuilder implements Serializable {
   /**
    * Requires a non-empty text value.
    *
-   * @param value text value to validate
+   * @param value     text value to validate
    * @param fieldName field name used in error messages
    * @return trimmed text value
    * @throws IllegalArgumentException if the value is null or blank
@@ -449,7 +435,7 @@ public class PipingRouteBuilder implements Serializable {
   /**
    * Requires a finite positive value.
    *
-   * @param value numeric value to validate
+   * @param value     numeric value to validate
    * @param fieldName field name used in error messages
    * @return validated value
    * @throws IllegalArgumentException if the value is not finite and positive
@@ -465,7 +451,7 @@ public class PipingRouteBuilder implements Serializable {
   /**
    * Requires a finite non-negative value.
    *
-   * @param value numeric value to validate
+   * @param value     numeric value to validate
    * @param fieldName field name used in error messages
    * @return validated value
    * @throws IllegalArgumentException if the value is not finite or is negative
@@ -481,7 +467,7 @@ public class PipingRouteBuilder implements Serializable {
   /**
    * Requires a finite value.
    *
-   * @param value numeric value to validate
+   * @param value     numeric value to validate
    * @param fieldName field name used in error messages
    * @return validated value
    * @throws IllegalArgumentException if the value is NaN or infinite
@@ -497,32 +483,28 @@ public class PipingRouteBuilder implements Serializable {
    * Converts a length-like value to meters.
    *
    * @param value value to convert
-   * @param unit source unit, for example {@code m}, {@code km}, {@code mm}, {@code inch},
-   *        {@code ft}, or {@code micrometer}
+   * @param unit  source unit, for example {@code m}, {@code km}, {@code mm}, {@code inch}, {@code ft}, or
+   *              {@code micrometer}
    * @return value converted to meters
    * @throws IllegalArgumentException if the unit is blank or unsupported
    */
   private static double convertLengthToMeters(double value, String unit) {
     String cleanUnit = requireText(unit, "unit").toLowerCase(Locale.ROOT);
-    if ("m".equals(cleanUnit) || "meter".equals(cleanUnit) || "meters".equals(cleanUnit)
-        || "metre".equals(cleanUnit) || "metres".equals(cleanUnit)) {
+    if ("m".equals(cleanUnit) || "meter".equals(cleanUnit) || "meters".equals(cleanUnit) || "metre".equals(cleanUnit)
+	|| "metres".equals(cleanUnit)) {
       return value;
-    } else if ("km".equals(cleanUnit) || "kilometer".equals(cleanUnit)
-        || "kilometers".equals(cleanUnit) || "kilometre".equals(cleanUnit)
-        || "kilometres".equals(cleanUnit)) {
+    } else if ("km".equals(cleanUnit) || "kilometer".equals(cleanUnit) || "kilometers".equals(cleanUnit)
+	|| "kilometre".equals(cleanUnit) || "kilometres".equals(cleanUnit)) {
       return value * 1000.0;
-    } else if ("cm".equals(cleanUnit) || "centimeter".equals(cleanUnit)
-        || "centimeters".equals(cleanUnit) || "centimetre".equals(cleanUnit)
-        || "centimetres".equals(cleanUnit)) {
+    } else if ("cm".equals(cleanUnit) || "centimeter".equals(cleanUnit) || "centimeters".equals(cleanUnit)
+	|| "centimetre".equals(cleanUnit) || "centimetres".equals(cleanUnit)) {
       return value * 0.01;
-    } else if ("mm".equals(cleanUnit) || "millimeter".equals(cleanUnit)
-        || "millimeters".equals(cleanUnit) || "millimetre".equals(cleanUnit)
-        || "millimetres".equals(cleanUnit)) {
+    } else if ("mm".equals(cleanUnit) || "millimeter".equals(cleanUnit) || "millimeters".equals(cleanUnit)
+	|| "millimetre".equals(cleanUnit) || "millimetres".equals(cleanUnit)) {
       return value * 1.0e-3;
-    } else if ("um".equals(cleanUnit) || "micrometer".equals(cleanUnit)
-        || "micrometers".equals(cleanUnit) || "micrometre".equals(cleanUnit)
-        || "micrometres".equals(cleanUnit) || "micron".equals(cleanUnit)
-        || "microns".equals(cleanUnit)) {
+    } else if ("um".equals(cleanUnit) || "micrometer".equals(cleanUnit) || "micrometers".equals(cleanUnit)
+	|| "micrometre".equals(cleanUnit) || "micrometres".equals(cleanUnit) || "micron".equals(cleanUnit)
+	|| "microns".equals(cleanUnit)) {
       return value * 1.0e-6;
     } else if ("in".equals(cleanUnit) || "inch".equals(cleanUnit) || "inches".equals(cleanUnit)) {
       return value * 0.0254;
@@ -557,16 +539,16 @@ public class PipingRouteBuilder implements Serializable {
     /**
      * Creates one route segment.
      *
-     * @param segmentId unique segment id
-     * @param fromNode upstream node name
-     * @param toNode downstream node name
-     * @param sourceLength original length value before unit conversion
-     * @param lengthMeters converted length in meters
+     * @param segmentId             unique segment id
+     * @param fromNode              upstream node name
+     * @param toNode                downstream node name
+     * @param sourceLength          original length value before unit conversion
+     * @param lengthMeters          converted length in meters
      * @param sourceNominalDiameter original diameter value before unit conversion
      * @param nominalDiameterMeters converted hydraulic diameter in meters
      */
-    private RouteSegment(String segmentId, String fromNode, String toNode, double sourceLength,
-        double lengthMeters, double sourceNominalDiameter, double nominalDiameterMeters) {
+    private RouteSegment(String segmentId, String fromNode, String toNode, double sourceLength, double lengthMeters,
+	double sourceNominalDiameter, double nominalDiameterMeters) {
       this.segmentId = segmentId;
       this.fromNode = fromNode;
       this.toNode = toNode;
@@ -665,7 +647,7 @@ public class PipingRouteBuilder implements Serializable {
     public double getTotalKValue() {
       double totalKValue = 0.0;
       for (MinorLoss minorLoss : minorLosses) {
-        totalKValue += minorLoss.kValue;
+	totalKValue += minorLoss.kValue;
       }
       return totalKValue;
     }
@@ -678,7 +660,7 @@ public class PipingRouteBuilder implements Serializable {
     public double getTotalEquivalentLengthRatio() {
       double totalLengthRatio = 0.0;
       for (MinorLoss minorLoss : minorLosses) {
-        totalLengthRatio += minorLoss.equivalentLengthRatio;
+	totalLengthRatio += minorLoss.equivalentLengthRatio;
       }
       return totalLengthRatio;
     }
@@ -717,8 +699,7 @@ public class PipingRouteBuilder implements Serializable {
      * @return roughness in meters
      */
     private double getPipeWallRoughness(double defaultRoughnessMeters) {
-      return Double.isNaN(pipeWallRoughnessMeters) ? defaultRoughnessMeters
-          : pipeWallRoughnessMeters;
+      return Double.isNaN(pipeWallRoughnessMeters) ? defaultRoughnessMeters : pipeWallRoughnessMeters;
     }
 
     /**
@@ -745,7 +726,7 @@ public class PipingRouteBuilder implements Serializable {
 
       List<Map<String, Object>> lossMaps = new ArrayList<Map<String, Object>>();
       for (MinorLoss minorLoss : minorLosses) {
-        lossMaps.add(minorLoss.toMap());
+	lossMaps.add(minorLoss.toMap());
       }
       map.put("minorLosses", lossMaps);
       return map;
@@ -769,8 +750,8 @@ public class PipingRouteBuilder implements Serializable {
     /**
      * Creates one minor loss.
      *
-     * @param fittingType fitting or valve description
-     * @param kValue resistance coefficient K
+     * @param fittingType           fitting or valve description
+     * @param kValue                resistance coefficient K
      * @param equivalentLengthRatio equivalent length ratio L/D
      */
     private MinorLoss(String fittingType, double kValue, double equivalentLengthRatio) {

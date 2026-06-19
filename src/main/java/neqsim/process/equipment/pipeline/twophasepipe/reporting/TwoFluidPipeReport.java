@@ -18,7 +18,8 @@ import neqsim.process.equipment.pipeline.twophasepipe.validation.TwoFluidBenchma
  * Reporting helpers for {@link TwoFluidPipe} profiles, summaries, and benchmark comparisons.
  */
 public final class TwoFluidPipeReport {
-  private TwoFluidPipeReport() {}
+  private TwoFluidPipeReport() {
+  }
 
   /**
    * Immutable snapshot of the profile arrays at one simulation time.
@@ -91,13 +92,13 @@ public final class TwoFluidPipeReport {
     for (ProfileSnapshot snapshot : snapshots) {
       String rows = toProfileCsvRows(snapshot, true);
       if (!headerWritten) {
-        csv.append(rows);
-        headerWritten = true;
+	csv.append(rows);
+	headerWritten = true;
       } else {
-        int firstNewline = rows.indexOf('\n');
-        if (firstNewline >= 0 && firstNewline + 1 < rows.length()) {
-          csv.append(rows.substring(firstNewline + 1));
-        }
+	int firstNewline = rows.indexOf('\n');
+	if (firstNewline >= 0 && firstNewline + 1 < rows.length()) {
+	  csv.append(rows.substring(firstNewline + 1));
+	}
       }
     }
     return csv.toString();
@@ -115,22 +116,15 @@ public final class TwoFluidPipeReport {
     sb.append(String.format(Locale.ROOT, "Simulation time: %.3f s%n", pipe.getSimulationTime()));
     sb.append(String.format(Locale.ROOT, "Inlet pressure: %.3f bara%n", pipe.getInletPressure()));
     sb.append(String.format(Locale.ROOT, "Outlet pressure: %.3f bara%n", pipe.getOutletPressure()));
-    sb.append(String.format(Locale.ROOT, "Average liquid holdup: %.5f%n",
-        pipe.getAverageLiquidHoldup()));
-    sb.append("Dominant flow regime: ").append(pipe.getDominantFlowRegime())
-        .append(System.lineSeparator());
-    sb.append(String.format(Locale.ROOT, "Liquid inventory: %.5f m3%n",
-        pipe.getLiquidInventory("m3")));
-    sb.append(String.format(Locale.ROOT, "Maximum mixture velocity: %.5f m/s%n",
-        pipe.getMaxMixtureVelocity()));
-    sb.append(String.format(Locale.ROOT, "Erosional velocity margin: %.5f%n",
-        pipe.getErosionalVelocityMargin(122.0)));
-    sb.append(String.format(Locale.ROOT, "Hydrate risk sections: %d%n",
-        pipe.getHydrateRiskSectionCount()));
+    sb.append(String.format(Locale.ROOT, "Average liquid holdup: %.5f%n", pipe.getAverageLiquidHoldup()));
+    sb.append("Dominant flow regime: ").append(pipe.getDominantFlowRegime()).append(System.lineSeparator());
+    sb.append(String.format(Locale.ROOT, "Liquid inventory: %.5f m3%n", pipe.getLiquidInventory("m3")));
+    sb.append(String.format(Locale.ROOT, "Maximum mixture velocity: %.5f m/s%n", pipe.getMaxMixtureVelocity()));
+    sb.append(String.format(Locale.ROOT, "Erosional velocity margin: %.5f%n", pipe.getErosionalVelocityMargin(122.0)));
+    sb.append(String.format(Locale.ROOT, "Hydrate risk sections: %d%n", pipe.getHydrateRiskSectionCount()));
     sb.append("Wax risk: ").append(pipe.hasWaxRisk()).append(System.lineSeparator());
     sb.append(String.format(Locale.ROOT, "Outlet slug count: %d%n", pipe.getOutletSlugCount()));
-    sb.append(String.format(Locale.ROOT, "Total outlet slug volume: %.5f m3%n",
-        pipe.getTotalSlugVolumeAtOutlet()));
+    sb.append(String.format(Locale.ROOT, "Total outlet slug volume: %.5f m3%n", pipe.getTotalSlugVolumeAtOutlet()));
     return sb.toString();
   }
 
@@ -158,8 +152,7 @@ public final class TwoFluidPipeReport {
     summary.put("totalSlugVolumeAtOutletM3", pipe.getTotalSlugVolumeAtOutlet());
     summary.put("maxSlugLengthAtOutletM", pipe.getMaxSlugLengthAtOutlet());
     summary.put("maxSlugVolumeAtOutletM3", pipe.getMaxSlugVolumeAtOutlet());
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(summary);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(summary);
   }
 
   /**
@@ -172,24 +165,21 @@ public final class TwoFluidPipeReport {
     StringBuilder csv = new StringBuilder();
     csv.append("event_type,position_m,value,unit,description\n");
     csv.append(csvRow("slug_count", "", pipe.getOutletSlugCount(), "count", "Outlet slug count"));
-    csv.append(csvRow("slug_volume_total", "", pipe.getTotalSlugVolumeAtOutlet(), "m3",
-        "Total outlet slug volume"));
-    csv.append(csvRow("slug_length_max", "", pipe.getMaxSlugLengthAtOutlet(), "m",
-        "Maximum outlet slug length"));
-    csv.append(csvRow("slug_volume_max", "", pipe.getMaxSlugVolumeAtOutlet(), "m3",
-        "Maximum outlet slug volume"));
+    csv.append(csvRow("slug_volume_total", "", pipe.getTotalSlugVolumeAtOutlet(), "m3", "Total outlet slug volume"));
+    csv.append(csvRow("slug_length_max", "", pipe.getMaxSlugLengthAtOutlet(), "m", "Maximum outlet slug length"));
+    csv.append(csvRow("slug_volume_max", "", pipe.getMaxSlugVolumeAtOutlet(), "m3", "Maximum outlet slug volume"));
 
     double hydrateDistance = pipe.getDistanceToHydrateRisk();
     if (hydrateDistance >= 0.0) {
-      csv.append(csvRow("hydrate_risk_first", hydrateDistance, 1.0, "flag",
-          "First section below hydrate risk temperature"));
+      csv.append(
+	  csvRow("hydrate_risk_first", hydrateDistance, 1.0, "flag", "First section below hydrate risk temperature"));
     }
     csv.append(csvRow("hydrate_risk_count", "", pipe.getHydrateRiskSectionCount(), "count",
-        "Number of hydrate risk sections"));
+	"Number of hydrate risk sections"));
     csv.append(csvRow("wax_risk", "", pipe.hasWaxRisk() ? 1.0 : 0.0, "flag",
-        "At least one section below wax appearance temperature"));
+	"At least one section below wax appearance temperature"));
     csv.append(csvRow("erosion_margin", "", pipe.getErosionalVelocityMargin(122.0), "ratio",
-        "Maximum mixture velocity divided by API 14E erosional velocity"));
+	"Maximum mixture velocity divided by API 14E erosional velocity"));
     return csv.toString();
   }
 
@@ -204,16 +194,11 @@ public final class TwoFluidPipeReport {
     csv.append("case,time_s,position_m,variable,reference,model,abs_error,rel_error,passed,source\n");
     for (TwoFluidBenchmarkHarness.ComparisonRow row : comparison.getRows()) {
       TwoFluidBenchmarkHarness.BenchmarkPoint point = row.getReference();
-      csv.append(escape(point.getCaseName())).append(',')
-          .append(format(point.getTimeSeconds())).append(',')
-          .append(format(point.getPositionMeters())).append(',')
-          .append(escape(point.getVariable())).append(',')
-          .append(format(point.getValue())).append(',')
-          .append(format(row.getModelValue())).append(',')
-          .append(format(row.getAbsoluteError())).append(',')
-          .append(format(row.getRelativeError())).append(',')
-          .append(row.isPassed()).append(',')
-          .append(escape(point.getSource())).append('\n');
+      csv.append(escape(point.getCaseName())).append(',').append(format(point.getTimeSeconds())).append(',')
+	  .append(format(point.getPositionMeters())).append(',').append(escape(point.getVariable())).append(',')
+	  .append(format(point.getValue())).append(',').append(format(row.getModelValue())).append(',')
+	  .append(format(row.getAbsoluteError())).append(',').append(format(row.getRelativeError())).append(',')
+	  .append(row.isPassed()).append(',').append(escape(point.getSource())).append('\n');
     }
     return csv.toString();
   }
@@ -222,8 +207,7 @@ public final class TwoFluidPipeReport {
     write(path, toSteadyStateProfileCsv(pipe));
   }
 
-  public static void writeTransientProfileCsv(List<ProfileSnapshot> snapshots, Path path)
-      throws IOException {
+  public static void writeTransientProfileCsv(List<ProfileSnapshot> snapshots, Path path) throws IOException {
     write(path, toTransientProfileCsv(snapshots));
   }
 
@@ -239,8 +223,7 @@ public final class TwoFluidPipeReport {
     write(path, toSlugAndFlowAssuranceCsv(pipe));
   }
 
-  public static void writeComparisonCsv(TwoFluidBenchmarkHarness.Comparison comparison, Path path)
-      throws IOException {
+  public static void writeComparisonCsv(TwoFluidBenchmarkHarness.Comparison comparison, Path path) throws IOException {
     write(path, toComparisonCsv(comparison));
   }
 
@@ -251,36 +234,30 @@ public final class TwoFluidPipeReport {
       csv.append("time_s,");
     }
     csv.append("position_m,pressure_bara,temperature_C,liquid_holdup,water_cut,oil_holdup,")
-        .append("water_holdup,gas_velocity_m_s,liquid_velocity_m_s,oil_velocity_m_s,")
-        .append("water_velocity_m_s,flow_regime\n");
+	.append("water_holdup,gas_velocity_m_s,liquid_velocity_m_s,oil_velocity_m_s,")
+	.append("water_velocity_m_s,flow_regime\n");
 
     for (int i = 0; i < snapshot.positionMeters.length; i++) {
       if (includeTime) {
-        csv.append(format(snapshot.timeSeconds)).append(',');
+	csv.append(format(snapshot.timeSeconds)).append(',');
       }
-      csv.append(format(snapshot.positionMeters[i])).append(',')
-          .append(format(snapshot.pressurePa[i] * 1.0e-5)).append(',')
-          .append(format(snapshot.temperatureK[i] - 273.15)).append(',')
-          .append(format(snapshot.liquidHoldup[i])).append(',')
-          .append(format(valueAt(snapshot.waterCut, i))).append(',')
-          .append(format(valueAt(snapshot.oilHoldup, i))).append(',')
-          .append(format(valueAt(snapshot.waterHoldup, i))).append(',')
-          .append(format(valueAt(snapshot.gasVelocity, i))).append(',')
-          .append(format(valueAt(snapshot.liquidVelocity, i))).append(',')
-          .append(format(valueAt(snapshot.oilVelocity, i))).append(',')
-          .append(format(valueAt(snapshot.waterVelocity, i))).append(',')
-          .append(snapshot.flowRegime.length > i && snapshot.flowRegime[i] != null
-              ? snapshot.flowRegime[i].name()
-              : "")
-          .append('\n');
+      csv.append(format(snapshot.positionMeters[i])).append(',').append(format(snapshot.pressurePa[i] * 1.0e-5))
+	  .append(',').append(format(snapshot.temperatureK[i] - 273.15)).append(',')
+	  .append(format(snapshot.liquidHoldup[i])).append(',').append(format(valueAt(snapshot.waterCut, i)))
+	  .append(',').append(format(valueAt(snapshot.oilHoldup, i))).append(',')
+	  .append(format(valueAt(snapshot.waterHoldup, i))).append(',').append(format(valueAt(snapshot.gasVelocity, i)))
+	  .append(',').append(format(valueAt(snapshot.liquidVelocity, i))).append(',')
+	  .append(format(valueAt(snapshot.oilVelocity, i))).append(',')
+	  .append(format(valueAt(snapshot.waterVelocity, i))).append(',')
+	  .append(snapshot.flowRegime.length > i && snapshot.flowRegime[i] != null ? snapshot.flowRegime[i].name() : "")
+	  .append('\n');
     }
     return csv.toString();
   }
 
   private static void validateProfileLengths(ProfileSnapshot snapshot) {
     int n = snapshot.positionMeters.length;
-    if (snapshot.pressurePa.length != n || snapshot.temperatureK.length != n
-        || snapshot.liquidHoldup.length != n) {
+    if (snapshot.pressurePa.length != n || snapshot.temperatureK.length != n || snapshot.liquidHoldup.length != n) {
       throw new IllegalStateException("Core TwoFluidPipe profile lengths differ");
     }
   }
@@ -289,10 +266,9 @@ public final class TwoFluidPipeReport {
     return values.length > index ? values[index] : Double.NaN;
   }
 
-  private static String csvRow(String type, Object position, double value, String unit,
-      String description) {
-    return escape(type) + "," + escape(String.valueOf(position)) + "," + format(value) + ","
-        + escape(unit) + "," + escape(description) + "\n";
+  private static String csvRow(String type, Object position, double value, String unit, String description) {
+    return escape(type) + "," + escape(String.valueOf(position)) + "," + format(value) + "," + escape(unit) + ","
+	+ escape(description) + "\n";
   }
 
   private static String escape(String value) {

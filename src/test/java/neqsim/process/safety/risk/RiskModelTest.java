@@ -25,8 +25,8 @@ class RiskModelTest {
   @DisplayName("Test RiskEvent creation and properties")
   void testRiskEvent() {
     RiskEvent event = RiskEvent.builder().name("Small Leak").description("5mm hole in HP separator")
-        .initiatingEvent(InitiatingEvent.LEAK_SMALL).frequency(1e-3)
-        .consequenceCategory(ConsequenceCategory.MINOR).build();
+	.initiatingEvent(InitiatingEvent.LEAK_SMALL).frequency(1e-3).consequenceCategory(ConsequenceCategory.MINOR)
+	.build();
 
     assertEquals("Small Leak", event.getName());
     assertEquals(InitiatingEvent.LEAK_SMALL, event.getInitiatingEvent());
@@ -39,12 +39,11 @@ class RiskModelTest {
   @Test
   @DisplayName("Test conditional event chain")
   void testConditionalEvents() {
-    RiskEvent initiating = RiskEvent.builder().name("Gas Release")
-        .initiatingEvent(InitiatingEvent.LEAK_MEDIUM).frequency(1e-4).build();
+    RiskEvent initiating = RiskEvent.builder().name("Gas Release").initiatingEvent(InitiatingEvent.LEAK_MEDIUM)
+	.frequency(1e-4).build();
 
-    RiskEvent ignition = RiskEvent.builder().name("Delayed Ignition")
-        .initiatingEvent(InitiatingEvent.FIRE_EXPOSURE).parentEvent(initiating)
-        .conditionalProbability(0.1).consequenceCategory(ConsequenceCategory.MAJOR).build();
+    RiskEvent ignition = RiskEvent.builder().name("Delayed Ignition").initiatingEvent(InitiatingEvent.FIRE_EXPOSURE)
+	.parentEvent(initiating).conditionalProbability(0.1).consequenceCategory(ConsequenceCategory.MAJOR).build();
 
     assertEquals(1e-4, initiating.getAbsoluteFrequency(), 1e-12);
     assertEquals(1e-5, ignition.getAbsoluteFrequency(), 1e-12);
@@ -55,7 +54,7 @@ class RiskModelTest {
   @DisplayName("Test risk index calculation")
   void testRiskIndex() {
     RiskEvent event = RiskEvent.builder().name("Major Leak").frequency(1e-4)
-        .consequenceCategory(ConsequenceCategory.MAJOR).build();
+	.consequenceCategory(ConsequenceCategory.MAJOR).build();
 
     double expectedRisk = 1e-4 * ConsequenceCategory.MAJOR.getSeverity();
     assertEquals(expectedRisk, event.getRiskIndex(), 1e-12);
@@ -150,8 +149,7 @@ class RiskModelTest {
   @Test
   @DisplayName("Test builder pattern")
   void testBuilderPattern() {
-    RiskModel model = RiskModel.builder().name("Custom Study").seed(12345)
-        .frequencyUncertaintyFactor(2.0).build();
+    RiskModel model = RiskModel.builder().name("Custom Study").seed(12345).frequencyUncertaintyFactor(2.0).build();
 
     assertNotNull(model);
     assertEquals("Custom Study", model.getName());

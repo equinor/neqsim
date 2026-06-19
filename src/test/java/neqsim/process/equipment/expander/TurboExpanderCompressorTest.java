@@ -11,8 +11,7 @@ import neqsim.process.processmodel.ProcessSystem;
 public class TurboExpanderCompressorTest {
   @Test
   void testRun() {
-    neqsim.thermo.system.SystemInterface feedGas =
-        new neqsim.thermo.system.SystemSrkEos(273.15 + 42.0, 10.00);
+    neqsim.thermo.system.SystemInterface feedGas = new neqsim.thermo.system.SystemSrkEos(273.15 + 42.0, 10.00);
     feedGas.addComponent("nitrogen", 0.006);
     feedGas.addComponent("CO2", 0.014);
     feedGas.addComponent("methane", 0.862);
@@ -36,29 +35,27 @@ public class TurboExpanderCompressorTest {
     feedStream2.setPressure(42.0, "bara");
     feedStream2.run();
 
-    TurboExpanderCompressor turboExpander =
-        new TurboExpanderCompressor("TurboExpander", feedStream);
+    TurboExpanderCompressor turboExpander = new TurboExpanderCompressor("TurboExpander", feedStream);
     turboExpander.setCompressorFeedStream(feedStream2);
     /*
-     * double designSpeed = 6850.0; // rpm double designIsentropicEfficiency = 0.88; double designUC
-     * = 0.7; double bearingloww = 0.25; double impeller_diamater = 0.424; double
-     * compressor_polytropicEfficiency = 0.85; double compressor_polytropichead = 20.47; // kJ/kg
-     * double qn_design = 0.0; // kJ/kg turboExpander.setDesignParameters(designSpeed,
-     * designIsentropicEfficiency, designUC, bearingloww, impeller_diamater,
-     * compressor_polytropicEfficiency, compressor_polytropichead, qn_design);
+     * double designSpeed = 6850.0; // rpm double designIsentropicEfficiency = 0.88; double designUC = 0.7; double
+     * bearingloww = 0.25; double impeller_diamater = 0.424; double compressor_polytropicEfficiency = 0.85; double
+     * compressor_polytropichead = 20.47; // kJ/kg double qn_design = 0.0; // kJ/kg
+     * turboExpander.setDesignParameters(designSpeed, designIsentropicEfficiency, designUC, bearingloww,
+     * impeller_diamater, compressor_polytropicEfficiency, compressor_polytropichead, qn_design);
      */
 
     turboExpander.setUCcurve(
-        new double[] {0.9964751359624449, 0.7590835113213541, 0.984295619176559, 0.8827799803397821,
-            0.9552460269880922, 1.0},
-        new double[] {0.984090909090909, 0.796590909090909, 0.9931818181818183, 0.9363636363636364,
-            0.9943181818181818, 1.0});
+	new double[] { 0.9964751359624449, 0.7590835113213541, 0.984295619176559, 0.8827799803397821,
+	    0.9552460269880922, 1.0 },
+	new double[] { 0.984090909090909, 0.796590909090909, 0.9931818181818183, 0.9363636363636364, 0.9943181818181818,
+	    1.0 });
 
-    turboExpander.setQNEfficiencycurve(new double[] {0.5, 0.7, 0.85, 1.0, 1.2, 1.4, 1.6},
-        new double[] {0.88, 0.91, 0.95, 1.0, 0.97, 0.85, 0.6});
+    turboExpander.setQNEfficiencycurve(new double[] { 0.5, 0.7, 0.85, 1.0, 1.2, 1.4, 1.6 },
+	new double[] { 0.88, 0.91, 0.95, 1.0, 0.97, 0.85, 0.6 });
 
-    turboExpander.setQNHeadcurve(new double[] {0.5, 0.8, 1.0, 1.2, 1.4, 1.6},
-        new double[] {1.1, 1.05, 1.0, 0.9, 0.7, 0.4});
+    turboExpander.setQNHeadcurve(new double[] { 0.5, 0.8, 1.0, 1.2, 1.4, 1.6 },
+	new double[] { 1.1, 1.05, 1.0, 0.9, 0.7, 0.4 });
 
     turboExpander.setImpellerDiameter(0.424); // m
     turboExpander.setDesignSpeed(6850.0); // rpm
@@ -77,8 +74,7 @@ public class TurboExpanderCompressorTest {
     Stream outStream = new Stream("outstream", turboExpander.getOutletStream());
     outStream.run();
 
-    Assertions.assertEquals(49.7730176,
-        turboExpander.getCompressorOutletStream().getPressure("bara"), 0.5);
+    Assertions.assertEquals(49.7730176, turboExpander.getCompressorOutletStream().getPressure("bara"), 0.5);
 
     Assertions.assertEquals(6614.447912, turboExpander.getSpeed(), 0.5);
     Assertions.assertEquals(3001861.63337, turboExpander.getPowerExpander(), 500);
@@ -90,14 +86,12 @@ public class TurboExpanderCompressorTest {
     Assertions.assertEquals(19.774925264, turboExpander.getCompressorPolytropicHead(), 0.5);
     Assertions.assertEquals(0.88071122465, turboExpander.getUCratioexpander(), 1e-2);
     Assertions.assertEquals(0.869368201, turboExpander.getQNratiocompressor(), 1e-2);
-    Assertions.assertEquals(-40.8000256,
-        turboExpander.getExpanderOutletStream().getTemperature("C"), 0.1);
+    Assertions.assertEquals(-40.8000256, turboExpander.getExpanderOutletStream().getTemperature("C"), 0.1);
   }
 
   @Test
   void testRun2() {
-    neqsim.thermo.system.SystemInterface feedGas =
-        new neqsim.thermo.system.SystemSrkEos(273.15 + 42.0, 10.00);
+    neqsim.thermo.system.SystemInterface feedGas = new neqsim.thermo.system.SystemSrkEos(273.15 + 42.0, 10.00);
     feedGas.addComponent("nitrogen", 0.006);
     feedGas.addComponent("CO2", 0.014);
     feedGas.addComponent("methane", 0.862);
@@ -115,28 +109,26 @@ public class TurboExpanderCompressorTest {
     feedStream.setPressure(60.95, "bara");
     feedStream.run();
 
-    TurboExpanderCompressor turboExpander =
-        new TurboExpanderCompressor("TurboExpander", feedStream);
+    TurboExpanderCompressor turboExpander = new TurboExpanderCompressor("TurboExpander", feedStream);
     /*
-     * double designSpeed = 6850.0; // rpm double designIsentropicEfficiency = 0.88; double designUC
-     * = 0.7; double bearingloww = 0.25; double impeller_diamater = 0.424; double
-     * compressor_polytropicEfficiency = 0.85; double compressor_polytropichead = 20.47; // kJ/kg
-     * double qn_design = 0.0; // kJ/kg turboExpander.setDesignParameters(designSpeed,
-     * designIsentropicEfficiency, designUC, bearingloww, impeller_diamater,
-     * compressor_polytropicEfficiency, compressor_polytropichead, qn_design);
+     * double designSpeed = 6850.0; // rpm double designIsentropicEfficiency = 0.88; double designUC = 0.7; double
+     * bearingloww = 0.25; double impeller_diamater = 0.424; double compressor_polytropicEfficiency = 0.85; double
+     * compressor_polytropichead = 20.47; // kJ/kg double qn_design = 0.0; // kJ/kg
+     * turboExpander.setDesignParameters(designSpeed, designIsentropicEfficiency, designUC, bearingloww,
+     * impeller_diamater, compressor_polytropicEfficiency, compressor_polytropichead, qn_design);
      */
 
     turboExpander.setUCcurve(
-        new double[] {0.9964751359624449, 0.7590835113213541, 0.984295619176559, 0.8827799803397821,
-            0.9552460269880922, 1.0},
-        new double[] {0.984090909090909, 0.796590909090909, 0.9931818181818183, 0.9363636363636364,
-            0.9943181818181818, 1.0});
+	new double[] { 0.9964751359624449, 0.7590835113213541, 0.984295619176559, 0.8827799803397821,
+	    0.9552460269880922, 1.0 },
+	new double[] { 0.984090909090909, 0.796590909090909, 0.9931818181818183, 0.9363636363636364, 0.9943181818181818,
+	    1.0 });
 
-    turboExpander.setQNEfficiencycurve(new double[] {0.5, 0.7, 0.85, 1.0, 1.2, 1.4, 1.6},
-        new double[] {0.88, 0.91, 0.95, 1.0, 0.97, 0.85, 0.6});
+    turboExpander.setQNEfficiencycurve(new double[] { 0.5, 0.7, 0.85, 1.0, 1.2, 1.4, 1.6 },
+	new double[] { 0.88, 0.91, 0.95, 1.0, 0.97, 0.85, 0.6 });
 
-    turboExpander.setQNHeadcurve(new double[] {0.5, 0.8, 1.0, 1.2, 1.4, 1.6},
-        new double[] {1.1, 1.05, 1.0, 0.9, 0.7, 0.4});
+    turboExpander.setQNHeadcurve(new double[] { 0.5, 0.8, 1.0, 1.2, 1.4, 1.6 },
+	new double[] { 1.1, 1.05, 1.0, 0.9, 0.7, 0.4 });
 
     turboExpander.setImpellerDiameter(0.424); // m
     turboExpander.setDesignSpeed(6850.0); // rpm
@@ -177,8 +169,7 @@ public class TurboExpanderCompressorTest {
     Stream outStream = new Stream("outstream", turboExpander.getOutletStream());
     outStream.run();
 
-    Assertions.assertEquals(49.60010, turboExpander.getCompressorOutletStream().getPressure("bara"),
-        0.5);
+    Assertions.assertEquals(49.60010, turboExpander.getCompressorOutletStream().getPressure("bara"), 0.5);
 
     Assertions.assertEquals(6707.09019, turboExpander.getSpeed(), 0.5);
     Assertions.assertEquals(3033276.91507, turboExpander.getPowerExpander(), 500);
@@ -189,14 +180,12 @@ public class TurboExpanderCompressorTest {
     Assertions.assertEquals(0.893046, turboExpander.getUCratioexpander(), 1e-2);
     Assertions.assertEquals(0.8924806818, turboExpander.getQNratiocompressor(), 1e-2);
     Assertions.assertEquals(6707.09019, turboExpander.getSpeed(), 0.5);
-    Assertions.assertEquals(-40.858226753,
-        turboExpander.getExpanderOutletStream().getTemperature("C"), 0.1);
+    Assertions.assertEquals(-40.858226753, turboExpander.getExpanderOutletStream().getTemperature("C"), 0.1);
   }
 
   @Test
   void testRun3() {
-    neqsim.thermo.system.SystemInterface feedGas =
-        new neqsim.thermo.system.SystemSrkEos(273.15 + 42.0, 10.00);
+    neqsim.thermo.system.SystemInterface feedGas = new neqsim.thermo.system.SystemSrkEos(273.15 + 42.0, 10.00);
     feedGas.addComponent("nitrogen", 0.006);
     feedGas.addComponent("CO2", 0.014);
     feedGas.addComponent("methane", 0.862);
@@ -214,28 +203,26 @@ public class TurboExpanderCompressorTest {
     feedStream.setPressure(55.95, "bara");
     feedStream.run();
 
-    TurboExpanderCompressor turboExpander =
-        new TurboExpanderCompressor("TurboExpander", feedStream);
+    TurboExpanderCompressor turboExpander = new TurboExpanderCompressor("TurboExpander", feedStream);
     /*
-     * double designSpeed = 6850.0; // rpm double designIsentropicEfficiency = 0.88; double designUC
-     * = 0.7; double bearingloww = 0.25; double impeller_diamater = 0.424; double
-     * compressor_polytropicEfficiency = 0.85; double compressor_polytropichead = 20.47; // kJ/kg
-     * double qn_design = 0.0; // kJ/kg turboExpander.setDesignParameters(designSpeed,
-     * designIsentropicEfficiency, designUC, bearingloww, impeller_diamater,
-     * compressor_polytropicEfficiency, compressor_polytropichead, qn_design);
+     * double designSpeed = 6850.0; // rpm double designIsentropicEfficiency = 0.88; double designUC = 0.7; double
+     * bearingloww = 0.25; double impeller_diamater = 0.424; double compressor_polytropicEfficiency = 0.85; double
+     * compressor_polytropichead = 20.47; // kJ/kg double qn_design = 0.0; // kJ/kg
+     * turboExpander.setDesignParameters(designSpeed, designIsentropicEfficiency, designUC, bearingloww,
+     * impeller_diamater, compressor_polytropicEfficiency, compressor_polytropichead, qn_design);
      */
 
     turboExpander.setUCcurve(
-        new double[] {0.9964751359624449, 0.7590835113213541, 0.984295619176559, 0.8827799803397821,
-            0.9552460269880922, 1.0},
-        new double[] {0.984090909090909, 0.796590909090909, 0.9931818181818183, 0.9363636363636364,
-            0.9943181818181818, 1.0});
+	new double[] { 0.9964751359624449, 0.7590835113213541, 0.984295619176559, 0.8827799803397821,
+	    0.9552460269880922, 1.0 },
+	new double[] { 0.984090909090909, 0.796590909090909, 0.9931818181818183, 0.9363636363636364, 0.9943181818181818,
+	    1.0 });
 
-    turboExpander.setQNEfficiencycurve(new double[] {0.5, 0.7, 0.85, 1.0, 1.2, 1.4, 1.6},
-        new double[] {0.88, 0.91, 0.95, 1.0, 0.97, 0.85, 0.6});
+    turboExpander.setQNEfficiencycurve(new double[] { 0.5, 0.7, 0.85, 1.0, 1.2, 1.4, 1.6 },
+	new double[] { 0.88, 0.91, 0.95, 1.0, 0.97, 0.85, 0.6 });
 
-    turboExpander.setQNHeadcurve(new double[] {0.5, 0.8, 1.0, 1.2, 1.4, 1.6},
-        new double[] {1.1, 1.05, 1.0, 0.9, 0.7, 0.4});
+    turboExpander.setQNHeadcurve(new double[] { 0.5, 0.8, 1.0, 1.2, 1.4, 1.6 },
+	new double[] { 1.1, 1.05, 1.0, 0.9, 0.7, 0.4 });
 
     turboExpander.setImpellerDiameter(0.424); // m
     turboExpander.setDesignSpeed(6850.0); // rpm
@@ -276,20 +263,17 @@ public class TurboExpanderCompressorTest {
     Stream outStream = new Stream("outstream", turboExpander.getOutletStream());
     outStream.run();
     Assertions.assertEquals(6043.804353, turboExpander.getSpeed(), 0.5);
-    Assertions.assertEquals(48.0958031,
-        turboExpander.getCompressorOutletStream().getPressure("bara"), 0.5);
+    Assertions.assertEquals(48.0958031, turboExpander.getCompressorOutletStream().getPressure("bara"), 0.5);
     Assertions.assertEquals(2281735.34701, turboExpander.getPowerExpander(), 500);
     Assertions.assertEquals(2281727.56235, turboExpander.getPowerCompressor(), 500);
     Assertions.assertEquals(0.79709017011, turboExpander.getCompressorPolytropicEfficiency(), 1e-2);
 
-    Assertions.assertEquals(-37.03361130,
-        turboExpander.getExpanderOutletStream().getTemperature("C"), 0.1);
+    Assertions.assertEquals(-37.03361130, turboExpander.getExpanderOutletStream().getTemperature("C"), 0.1);
   }
 
   @Test
   void testMassBalance() {
-    neqsim.thermo.system.SystemInterface feedGas =
-        new neqsim.thermo.system.SystemSrkEos(273.15 + 20.0, 50.0);
+    neqsim.thermo.system.SystemInterface feedGas = new neqsim.thermo.system.SystemSrkEos(273.15 + 20.0, 50.0);
     feedGas.addComponent("methane", 0.95);
     feedGas.addComponent("ethane", 0.05);
     feedGas.setMixingRule(2);
@@ -307,8 +291,7 @@ public class TurboExpanderCompressorTest {
     compressorFeed.setPressure(30.0, "bara");
     compressorFeed.run();
 
-    TurboExpanderCompressor turboExpander =
-        new TurboExpanderCompressor("TurboExpander", expanderFeed);
+    TurboExpanderCompressor turboExpander = new TurboExpanderCompressor("TurboExpander", expanderFeed);
     turboExpander.setCompressorFeedStream(compressorFeed);
     turboExpander.setExpanderOutPressure(25.0);
     turboExpander.setCompressorDesignPolytropicEfficiency(0.8);
@@ -327,15 +310,14 @@ public class TurboExpanderCompressorTest {
   }
 
   /**
-   * Build a fully configured TurboExpanderCompressor matching the reference test cases (curves,
-   * impeller, speed, design efficiencies). The expander feed and compressor feed streams are
-   * created internally so each invocation is independent.
+   * Build a fully configured TurboExpanderCompressor matching the reference test cases (curves, impeller, speed, design
+   * efficiencies). The expander feed and compressor feed streams are created internally so each invocation is
+   * independent.
    *
    * @return a configured TurboExpanderCompressor ready to run
    */
   private TurboExpanderCompressor buildReferenceMachine() {
-    neqsim.thermo.system.SystemInterface feedGas =
-        new neqsim.thermo.system.SystemSrkEos(273.15 + 42.0, 10.00);
+    neqsim.thermo.system.SystemInterface feedGas = new neqsim.thermo.system.SystemSrkEos(273.15 + 42.0, 10.00);
     feedGas.addComponent("nitrogen", 0.006);
     feedGas.addComponent("CO2", 0.014);
     feedGas.addComponent("methane", 0.862);
@@ -359,21 +341,20 @@ public class TurboExpanderCompressorTest {
     feedStream2.setPressure(42.0, "bara");
     feedStream2.run();
 
-    TurboExpanderCompressor turboExpander =
-        new TurboExpanderCompressor("TurboExpander", feedStream);
+    TurboExpanderCompressor turboExpander = new TurboExpanderCompressor("TurboExpander", feedStream);
     turboExpander.setCompressorFeedStream(feedStream2);
 
     turboExpander.setUCcurve(
-        new double[] {0.9964751359624449, 0.7590835113213541, 0.984295619176559, 0.8827799803397821,
-            0.9552460269880922, 1.0},
-        new double[] {0.984090909090909, 0.796590909090909, 0.9931818181818183, 0.9363636363636364,
-            0.9943181818181818, 1.0});
+	new double[] { 0.9964751359624449, 0.7590835113213541, 0.984295619176559, 0.8827799803397821,
+	    0.9552460269880922, 1.0 },
+	new double[] { 0.984090909090909, 0.796590909090909, 0.9931818181818183, 0.9363636363636364, 0.9943181818181818,
+	    1.0 });
 
-    turboExpander.setQNEfficiencycurve(new double[] {0.5, 0.7, 0.85, 1.0, 1.2, 1.4, 1.6},
-        new double[] {0.88, 0.91, 0.95, 1.0, 0.97, 0.85, 0.6});
+    turboExpander.setQNEfficiencycurve(new double[] { 0.5, 0.7, 0.85, 1.0, 1.2, 1.4, 1.6 },
+	new double[] { 0.88, 0.91, 0.95, 1.0, 0.97, 0.85, 0.6 });
 
-    turboExpander.setQNHeadcurve(new double[] {0.5, 0.8, 1.0, 1.2, 1.4, 1.6},
-        new double[] {1.1, 1.05, 1.0, 0.9, 0.7, 0.4});
+    turboExpander.setQNHeadcurve(new double[] { 0.5, 0.8, 1.0, 1.2, 1.4, 1.6 },
+	new double[] { 1.1, 1.05, 1.0, 0.9, 0.7, 0.4 });
 
     turboExpander.setImpellerDiameter(0.424); // m
     turboExpander.setDesignSpeed(6850.0); // rpm
@@ -391,10 +372,9 @@ public class TurboExpanderCompressorTest {
    * Round-trip consistency test for the expander outlet-temperature specification.
    *
    * <p>
-   * First the machine is run in the standard mode with a fixed design isentropic efficiency,
-   * yielding an outlet temperature and an actual (off-design) isentropic efficiency. Then a second
-   * identical machine is run with the outlet temperature specified to exactly that value. The
-   * solver must:
+   * First the machine is run in the standard mode with a fixed design isentropic efficiency, yielding an outlet
+   * temperature and an actual (off-design) isentropic efficiency. Then a second identical machine is run with the
+   * outlet temperature specified to exactly that value. The solver must:
    * </p>
    *
    * <ul>
@@ -415,8 +395,7 @@ public class TurboExpanderCompressorTest {
     double speed = machineA.getSpeed();
     double powerExp = machineA.getPowerExpander();
 
-    Assertions.assertEquals(0.88, designEta, 1e-9,
-        "Forward run should keep the specified design efficiency");
+    Assertions.assertEquals(0.88, designEta, 1e-9, "Forward run should keep the specified design efficiency");
 
     // --- Inverse run: outlet temperature specified, design efficiency is back-calculated ---
     TurboExpanderCompressor machineB = buildReferenceMachine();
@@ -425,12 +404,12 @@ public class TurboExpanderCompressorTest {
     machineB.run();
 
     // 1) Outlet temperature must match the requested target.
-    Assertions.assertEquals(targetOutT, machineB.getExpanderOutletStream().getTemperature("C"),
-        1e-2, "Specified outlet temperature must be reproduced");
+    Assertions.assertEquals(targetOutT, machineB.getExpanderOutletStream().getTemperature("C"), 1e-2,
+	"Specified outlet temperature must be reproduced");
 
     // 2) Back-calculated design efficiency must equal the original design efficiency.
     Assertions.assertEquals(designEta, machineB.getExpanderDesignIsentropicEfficiency(), 1e-3,
-        "Back-calculated design efficiency must match the forward design efficiency");
+	"Back-calculated design efficiency must match the forward design efficiency");
 
     // 3) Actual efficiency, speed and power must be the same in both directions.
     Assertions.assertEquals(actualEta, machineB.getExpanderIsentropicEfficiency(), 1e-3);
@@ -443,9 +422,9 @@ public class TurboExpanderCompressorTest {
   }
 
   /**
-   * Verify that requesting a different outlet temperature changes the implied design efficiency in
-   * the physically expected direction: a warmer outlet temperature (less cooling) corresponds to a
-   * lower expander efficiency, and a colder outlet temperature corresponds to a higher efficiency.
+   * Verify that requesting a different outlet temperature changes the implied design efficiency in the physically
+   * expected direction: a warmer outlet temperature (less cooling) corresponds to a lower expander efficiency, and a
+   * colder outlet temperature corresponds to a higher efficiency.
    */
   @Test
   void testOutletTemperatureSpecMonotonic() {
@@ -458,20 +437,16 @@ public class TurboExpanderCompressorTest {
     TurboExpanderCompressor warmer = buildReferenceMachine();
     warmer.setExpanderOutTemperature(baseOutT + 3.0, "C");
     warmer.run();
-    Assertions.assertEquals(baseOutT + 3.0, warmer.getExpanderOutletStream().getTemperature("C"),
-        1e-2);
+    Assertions.assertEquals(baseOutT + 3.0, warmer.getExpanderOutletStream().getTemperature("C"), 1e-2);
     Assertions.assertTrue(warmer.getExpanderDesignIsentropicEfficiency() < baseDesignEta,
-        "Warmer outlet must imply a lower design efficiency");
+	"Warmer outlet must imply a lower design efficiency");
 
     // Colder outlet (more work extracted) -> higher efficiency.
     TurboExpanderCompressor colder = buildReferenceMachine();
     colder.setExpanderOutTemperature(baseOutT - 3.0, "C");
     colder.run();
-    Assertions.assertEquals(baseOutT - 3.0, colder.getExpanderOutletStream().getTemperature("C"),
-        1e-2);
+    Assertions.assertEquals(baseOutT - 3.0, colder.getExpanderOutletStream().getTemperature("C"), 1e-2);
     Assertions.assertTrue(colder.getExpanderDesignIsentropicEfficiency() > baseDesignEta,
-        "Colder outlet must imply a higher design efficiency");
+	"Colder outlet must imply a higher design efficiency");
   }
 }
-
-

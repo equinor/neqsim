@@ -20,7 +20,7 @@ public class HydrateFlash2 {
   private static final Logger logger = LogManager.getLogger(HydrateFlash2.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.
@@ -118,23 +118,22 @@ public class HydrateFlash2 {
     // ThermodynamicOperations testOps2 = new ThermodynamicOperations(testSystem2);
 
     /*
-     * try{ // testOps2.TPflash(); //testSystem2.display(); //
-     * testOps2.hydrateFormationTemperature(2); //testOps2.dewPointTemperatureFlash();
-     * //testOps.freezingPointTemperatureFlash(); //testOps.bubblePointPressureFlash(false);
-     * //testOps.hydrateFormationPressure(); //testOps2.hydrateFormationTemperature(2); //
-     * testOps.TPflash(); // testSystem.display(); } catch(Exception ex){
-     * logger.error(ex.getMessage(), ex); logger.info(ex.toString()); } /* //testSystem2.display();
-     * int phase = 0; double x1 = testSystem2.getPhase(0).getMolarVolume()*testSystem2.getBeta(0);
-     * double x2 = testSystem2.getPhase(1).getMolarVolume()*testSystem2.getBeta(1);
+     * try{ // testOps2.TPflash(); //testSystem2.display(); // testOps2.hydrateFormationTemperature(2);
+     * //testOps2.dewPointTemperatureFlash(); //testOps.freezingPointTemperatureFlash();
+     * //testOps.bubblePointPressureFlash(false); //testOps.hydrateFormationPressure();
+     * //testOps2.hydrateFormationTemperature(2); // testOps.TPflash(); // testSystem.display(); } catch(Exception ex){
+     * logger.error(ex.getMessage(), ex); logger.info(ex.toString()); } /* //testSystem2.display(); int phase = 0;
+     * double x1 = testSystem2.getPhase(0).getMolarVolume()*testSystem2.getBeta(0); double x2 =
+     * testSystem2.getPhase(1).getMolarVolume()*testSystem2.getBeta(1);
      *
-     * double x3 = x1/(x1+x2); double x4 = x2/(x1+x2); logger.info("vol gas % " + x3*100);
-     * logger.info("vol liq % " + x4*100); int n = testSystem.getNumberOfPhases()-1; double
-     * megwtfracInit = testSystem.getPhase(n).getComponent("MEG").getMolarMass()*testSystem.getPhase
-     * (n).getComponent("MEG").getx()/testSystem.getPhase(n).getMolarMass();
-     * logger.info("wt % MEG init " + megwtfracInit*100); n = testSystem2.getNumberOfPhases()-1;
-     * double megwtfrac = testSystem2.getPhase(n).getComponent("MEG").getMolarMass()*testSystem2.
-     * getPhase(n).getComponent("MEG").getx()/testSystem2.getPhase(n).getMolarMass() ;
-     * logger.info("wt % MEG " + megwtfrac*100); testSystem2.display();
+     * double x3 = x1/(x1+x2); double x4 = x2/(x1+x2); logger.info("vol gas % " + x3*100); logger.info("vol liq % " +
+     * x4*100); int n = testSystem.getNumberOfPhases()-1; double megwtfracInit =
+     * testSystem.getPhase(n).getComponent("MEG").getMolarMass()*testSystem.getPhase
+     * (n).getComponent("MEG").getx()/testSystem.getPhase(n).getMolarMass(); logger.info("wt % MEG init " +
+     * megwtfracInit*100); n = testSystem2.getNumberOfPhases()-1; double megwtfrac =
+     * testSystem2.getPhase(n).getComponent("MEG").getMolarMass()*testSystem2.
+     * getPhase(n).getComponent("MEG").getx()/testSystem2.getPhase(n).getMolarMass() ; logger.info("wt % MEG " +
+     * megwtfrac*100); testSystem2.display();
      */
   }
 }

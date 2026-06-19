@@ -14,9 +14,9 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  * Base class for electrical design of process equipment.
  *
  * <p>
- * Mirrors the {@link neqsim.process.mechanicaldesign.MechanicalDesign} pattern. Each piece of
- * process equipment can have an associated electrical design that sizes motors, VFDs, cables,
- * switchgear, and transformers based on the process duty.
+ * Mirrors the {@link neqsim.process.mechanicaldesign.MechanicalDesign} pattern. Each piece of process equipment can
+ * have an associated electrical design that sizes motors, VFDs, cables, switchgear, and transformers based on the
+ * process duty.
  * </p>
  *
  * @author Even Solbraa
@@ -80,8 +80,7 @@ public class ElectricalDesign implements java.io.Serializable {
    * Run the electrical design calculation.
    *
    * <p>
-   * Sizes the motor, optional VFD, cables, and switchgear based on the process equipment's shaft
-   * power requirement.
+   * Sizes the motor, optional VFD, cables, and switchgear based on the process equipment's shaft power requirement.
    * </p>
    */
   public void calcDesign() {
@@ -100,7 +99,7 @@ public class ElectricalDesign implements java.io.Serializable {
     // 2. Size VFD if applicable
     if (useVFD) {
       if (vfd == null) {
-        vfd = new VariableFrequencyDrive();
+	vfd = new VariableFrequencyDrive();
       }
       vfd.sizeVFD(motor);
     }
@@ -137,14 +136,15 @@ public class ElectricalDesign implements java.io.Serializable {
    * Subclasses can override to load equipment-specific electrical specifications.
    * </p>
    */
-  public void readDesignSpecifications() {}
+  public void readDesignSpecifications() {
+  }
 
   /**
    * Get shaft power from the process equipment.
    *
    * <p>
-   * Default returns the manually set shaftPowerKW value. Equipment-specific subclasses should
-   * override this to read from the process equipment directly.
+   * Default returns the manually set shaftPowerKW value. Equipment-specific subclasses should override this to read
+   * from the process equipment directly.
    * </p>
    *
    * @return shaft power in kW
@@ -198,7 +198,7 @@ public class ElectricalDesign implements java.io.Serializable {
   public String toJson() {
     ElectricalDesignResponse response = new ElectricalDesignResponse(this);
     return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(JsonParser.parseString(response.toJson()));
+	.toJson(JsonParser.parseString(response.toJson()));
   }
 
   // === Getters and Setters ===

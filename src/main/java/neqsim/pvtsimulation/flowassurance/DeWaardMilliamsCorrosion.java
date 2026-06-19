@@ -12,9 +12,9 @@ import com.google.gson.GsonBuilder;
  * CO2 corrosion rate prediction using the de Waard-Milliams (1975/1991) model.
  *
  * <p>
- * The de Waard-Milliams model is the industry-standard empirical correlation for estimating
- * internal CO2 corrosion rates in carbon steel pipelines carrying wet gas or multiphase fluids. It
- * is referenced in NORSOK M-506 and widely used in subsea pipeline flow assurance studies.
+ * The de Waard-Milliams model is the industry-standard empirical correlation for estimating internal CO2 corrosion
+ * rates in carbon steel pipelines carrying wet gas or multiphase fluids. It is referenced in NORSOK M-506 and widely
+ * used in subsea pipeline flow assurance studies.
  * </p>
  *
  * <p>
@@ -106,12 +106,13 @@ public class DeWaardMilliamsCorrosion implements Serializable {
   /**
    * Creates a new DeWaardMilliamsCorrosion with default parameters.
    */
-  public DeWaardMilliamsCorrosion() {}
+  public DeWaardMilliamsCorrosion() {
+  }
 
   /**
    * Creates a new DeWaardMilliamsCorrosion with specified conditions.
    *
-   * @param temperatureC temperature in Celsius
+   * @param temperatureC          temperature in Celsius
    * @param co2PartialPressureBar CO2 partial pressure in bar
    */
   public DeWaardMilliamsCorrosion(double temperatureC, double co2PartialPressureBar) {
@@ -204,9 +205,8 @@ public class DeWaardMilliamsCorrosion implements Serializable {
    * Sets the elemental sulfur (S8) mass deposition rate on the pipe wall.
    *
    * <p>
-   * Elemental sulfur reacts directly with carbon steel: S8 + 8Fe = 8FeS. This provides an
-   * additional corrosion mechanism beyond CO2 and H2S. The reaction rate depends on the mass flux
-   * of sulfur particles reaching the wall.
+   * Elemental sulfur reacts directly with carbon steel: S8 + 8Fe = 8FeS. This provides an additional corrosion
+   * mechanism beyond CO2 and H2S. The reaction rate depends on the mass flux of sulfur particles reaching the wall.
    * </p>
    *
    * @param rateKgM2Yr sulfur deposition rate in kg/(m2*yr)
@@ -239,8 +239,8 @@ public class DeWaardMilliamsCorrosion implements Serializable {
    * Calculates the pH correction factor.
    *
    * <p>
-   * The pH correction from de Waard-Lotz (1993) reduces the corrosion rate at higher pH due to
-   * protective FeCO3 film formation:
+   * The pH correction from de Waard-Lotz (1993) reduces the corrosion rate at higher pH due to protective FeCO3 film
+   * formation:
    * </p>
    *
    * <pre>
@@ -250,8 +250,8 @@ public class DeWaardMilliamsCorrosion implements Serializable {
    * </pre>
    *
    * <p>
-   * where pH_sat is the saturation pH for FeCO3 at the given conditions. For pH above approximately
-   * 5.0 and temperature above 60 C, significant protection occurs.
+   * where pH_sat is the saturation pH for FeCO3 at the given conditions. For pH above approximately 5.0 and temperature
+   * above 60 C, significant protection occurs.
    * </p>
    *
    * @return pH correction factor (less than or equal to 1 when pH is high)
@@ -284,9 +284,8 @@ public class DeWaardMilliamsCorrosion implements Serializable {
    * Calculates the protective scale correction factor.
    *
    * <p>
-   * At temperatures above approximately 60-80 C and adequate pH, protective FeCO3 scale forms which
-   * reduces corrosion rate. The maximum corrosion rate occurs around 60-80 C; above this the scale
-   * becomes protective.
+   * At temperatures above approximately 60-80 C and adequate pH, protective FeCO3 scale forms which reduces corrosion
+   * rate. The maximum corrosion rate occurs around 60-80 C; above this the scale becomes protective.
    * </p>
    *
    * @return scale correction factor (less than 1 at high temperature/pH)
@@ -307,9 +306,8 @@ public class DeWaardMilliamsCorrosion implements Serializable {
    * Calculates the glycol correction factor.
    *
    * <p>
-   * Glycol in the aqueous phase reduces water activity and thus corrosion rate. The correction is
-   * approximately (1 - glycol fraction) for low glycol concentrations; for high glycol (above 80
-   * wt%), the rate drops significantly.
+   * Glycol in the aqueous phase reduces water activity and thus corrosion rate. The correction is approximately (1 -
+   * glycol fraction) for low glycol concentrations; for high glycol (above 80 wt%), the rate drops significantly.
    * </p>
    *
    * @return glycol correction factor (0 to 1)
@@ -329,9 +327,8 @@ public class DeWaardMilliamsCorrosion implements Serializable {
    * Calculates the flow velocity correction factor.
    *
    * <p>
-   * At higher flow velocities, mass transfer of CO2 to the steel surface increases and protective
-   * scale (FeCO3) can be removed by wall shear stress. Based on the de Waard-Lotz flow-dependent
-   * factor using wall shear stress.
+   * At higher flow velocities, mass transfer of CO2 to the steel surface increases and protective scale (FeCO3) can be
+   * removed by wall shear stress. Based on the de Waard-Lotz flow-dependent factor using wall shear stress.
    * </p>
    *
    * @return flow correction factor (greater than or equal to 1)
@@ -350,10 +347,9 @@ public class DeWaardMilliamsCorrosion implements Serializable {
    * Calculates the corrosion rate contribution from elemental sulfur (S8) deposition.
    *
    * <p>
-   * Elemental sulfur reacts directly with carbon steel: S8 + 8Fe = 8FeS + products. The corrosion
-   * rate depends on the mass flux of sulfur particles reaching the pipe wall. The stoichiometric
-   * ratio is 1 mol S8 (256.5 g) reacts with 8 mol Fe (447 g), giving a mass conversion factor of
-   * approximately 1.74 kg Fe corroded per kg S8 deposited.
+   * Elemental sulfur reacts directly with carbon steel: S8 + 8Fe = 8FeS + products. The corrosion rate depends on the
+   * mass flux of sulfur particles reaching the pipe wall. The stoichiometric ratio is 1 mol S8 (256.5 g) reacts with 8
+   * mol Fe (447 g), giving a mass conversion factor of approximately 1.74 kg Fe corroded per kg S8 deposited.
    * </p>
    *
    * @return sulfur-induced corrosion rate in mm/yr
@@ -376,8 +372,8 @@ public class DeWaardMilliamsCorrosion implements Serializable {
    * Estimates the FeCO3 (siderite) scale formation tendency.
    *
    * <p>
-   * FeCO3 forms when the ionic product of Fe2+ and CO3-2 exceeds the solubility product. At higher
-   * temperatures (&gt; 60 C) and pH (&gt; 5), the scale is protective and slows corrosion.
+   * FeCO3 forms when the ionic product of Fe2+ and CO3-2 exceeds the solubility product. At higher temperatures (&gt;
+   * 60 C) and pH (&gt; 5), the scale is protective and slows corrosion.
    * </p>
    *
    * @return FeCO3 saturation index estimate (greater than 1 indicates scale-forming conditions)
@@ -398,8 +394,8 @@ public class DeWaardMilliamsCorrosion implements Serializable {
    * Estimates the FeS (iron sulfide) corrosion rate from H2S.
    *
    * <p>
-   * Uses the simplified Smith-de Waard sour corrosion model: ln(CR) = 7.96 - 2320/T + 0.67 *
-   * ln(pH2S) where CR is in mm/yr, T in K, pH2S in bar.
+   * Uses the simplified Smith-de Waard sour corrosion model: ln(CR) = 7.96 - 2320/T + 0.67 * ln(pH2S) where CR is in
+   * mm/yr, T in K, pH2S in bar.
    * </p>
    *
    * @return H2S/FeS corrosion rate in mm/yr
@@ -465,8 +461,7 @@ public class DeWaardMilliamsCorrosion implements Serializable {
    * Calculates the fully corrected corrosion rate.
    *
    * <p>
-   * The corrected rate is: Vcor_corrected = Vcor_base * f_pH * f_scale * f_glycol * f_flow * (1 -
-   * IE) + Vcor_sulfur
+   * The corrected rate is: Vcor_corrected = Vcor_base * f_pH * f_scale * f_glycol * f_flow * (1 - IE) + Vcor_sulfur
    * </p>
    *
    * @return corrected corrosion rate in mm/yr
@@ -498,11 +493,10 @@ public class DeWaardMilliamsCorrosion implements Serializable {
    *
    * @param minTempC minimum temperature in Celsius
    * @param maxTempC maximum temperature in Celsius
-   * @param steps number of temperature steps
+   * @param steps    number of temperature steps
    * @return list of maps containing temperature and corrosion rate
    */
-  public List<Map<String, Object>> calculateOverTemperatureRange(double minTempC, double maxTempC,
-      int steps) {
+  public List<Map<String, Object>> calculateOverTemperatureRange(double minTempC, double maxTempC, int steps) {
     List<Map<String, Object>> results = new ArrayList<Map<String, Object>>();
     double savedTemp = this.temperatureC;
 
@@ -563,8 +557,8 @@ public class DeWaardMilliamsCorrosion implements Serializable {
    * Checks whether H2S content exceeds sweet/sour threshold.
    *
    * <p>
-   * NACE MR0175 / ISO 15156 defines sour service when H2S partial pressure exceeds 0.003 bar (0.05
-   * psia) at total pressure, or H2S concentration exceeds 50 mg/L in water.
+   * NACE MR0175 / ISO 15156 defines sour service when H2S partial pressure exceeds 0.003 bar (0.05 psia) at total
+   * pressure, or H2S concentration exceeds 50 mg/L in water.
    * </p>
    *
    * @return true if service is sour per NACE MR0175
@@ -619,15 +613,13 @@ public class DeWaardMilliamsCorrosion implements Serializable {
     // Model info
     Map<String, Object> model = new LinkedHashMap<String, Object>();
     model.put("name", "de Waard-Milliams (1991)");
-    model.put("reference",
-        "de Waard, C. and Milliams, D.E., Carbonic acid corrosion of steel, Corrosion 31(5), 1975");
+    model.put("reference", "de Waard, C. and Milliams, D.E., Carbonic acid corrosion of steel, Corrosion 31(5), 1975");
     model.put("revisedReference",
-        "de Waard, C., Lotz, U., and Milliams, D.E., Predictive model for CO2 corrosion, CORROSION/91, Paper 577, NACE, 1991");
+	"de Waard, C., Lotz, U., and Milliams, D.E., Predictive model for CO2 corrosion, CORROSION/91, Paper 577, NACE, 1991");
     model.put("applicableStandards", "NORSOK M-506, NACE SP0775");
     result.put("modelInfo", model);
 
-    Gson gson =
-        new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
+    Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
     return gson.toJson(result);
   }
 }

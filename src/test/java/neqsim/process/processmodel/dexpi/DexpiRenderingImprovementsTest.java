@@ -25,9 +25,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Tests for the DEXPI rendering improvements: orthogonal pipe-routing that places the vertical
- * riser near the target column to reduce line crossings, and presence of the standard ISO 10628
- * symbol stencils in the {@code <ShapeCatalogue>}.
+ * Tests for the DEXPI rendering improvements: orthogonal pipe-routing that places the vertical riser near the target
+ * column to reduce line crossings, and presence of the standard ISO 10628 symbol stencils in the
+ * {@code <ShapeCatalogue>}.
  *
  * @author NeqSim
  * @version 1.0
@@ -35,8 +35,8 @@ import neqsim.thermo.system.SystemSrkEos;
 public class DexpiRenderingImprovementsTest extends NeqSimTest {
 
   /**
-   * Horizontal approach distance (mm) used by {@code DexpiLayoutEngine.computeBranchRiserX}. Must
-   * match the {@code BRANCH_APPROACH} constant in the layout engine.
+   * Horizontal approach distance (mm) used by {@code DexpiLayoutEngine.computeBranchRiserX}. Must match the
+   * {@code BRANCH_APPROACH} constant in the layout engine.
    */
   private static final double BRANCH_APPROACH = 18.0;
 
@@ -69,8 +69,8 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
   }
 
   /**
-   * A forward branch with horizontal room places its riser one approach distance before the target,
-   * not at the segment midpoint. This keeps the long horizontal run on the source line.
+   * A forward branch with horizontal room places its riser one approach distance before the target, not at the segment
+   * midpoint. This keeps the long horizontal run on the source line.
    *
    * @throws Exception if XML construction fails
    */
@@ -85,13 +85,12 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
     DexpiLayoutEngine.appendConnectionLine(doc, parent, fromX, 150.0, toX, 90.0);
 
     double riserX = riserXOf(parent);
-    assertEquals(toX - BRANCH_APPROACH, riserX, 1e-6,
-        "Riser should sit one approach distance before the target");
+    assertEquals(toX - BRANCH_APPROACH, riserX, 1e-6, "Riser should sit one approach distance before the target");
   }
 
   /**
-   * Two branches to targets in different columns get distinct riser channels, which is what reduces
-   * line crossings on multi-branch diagrams (e.g. a three-phase separator).
+   * Two branches to targets in different columns get distinct riser channels, which is what reduces line crossings on
+   * multi-branch diagrams (e.g. a three-phase separator).
    *
    * @throws Exception if XML construction fails
    */
@@ -118,14 +117,14 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
 
     // Gas and water targets are in different columns, so their risers must differ.
     assertTrue(Math.abs(gasRiser - waterRiser) > 1.0,
-        "Risers for different target columns must be distinct to avoid overlap");
+	"Risers for different target columns must be distinct to avoid overlap");
     assertEquals(280.0 - BRANCH_APPROACH, gasRiser, 1e-6);
     assertEquals(480.0 - BRANCH_APPROACH, waterRiser, 1e-6);
   }
 
   /**
-   * A short or backward (recycle) connection with no horizontal room falls back to the segment
-   * midpoint so the riser stays inside the available span.
+   * A short or backward (recycle) connection with no horizontal room falls back to the segment midpoint so the riser
+   * stays inside the available span.
    *
    * @throws Exception if XML construction fails
    */
@@ -140,13 +139,12 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
     DexpiLayoutEngine.appendConnectionLine(doc, parent, fromX, 150.0, toX, 90.0);
 
     double riserX = riserXOf(parent);
-    assertEquals((fromX + toX) / 2.0, riserX, 1e-6,
-        "Backward connection should fall back to the segment midpoint");
+    assertEquals((fromX + toX) / 2.0, riserX, 1e-6, "Backward connection should fall back to the segment midpoint");
   }
 
   /**
-   * The static ShapeCatalogue must always contain the standard ISO 10628 / ISA-5.1 stencils, so a
-   * future fall-through (e.g. a new equipment type silently rendered as a box) is caught.
+   * The static ShapeCatalogue must always contain the standard ISO 10628 / ISA-5.1 stencils, so a future fall-through
+   * (e.g. a new equipment type silently rendered as a box) is caught.
    *
    * @throws IOException if writing fails
    */
@@ -197,8 +195,8 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
   }
 
   /**
-   * ISA-5.1 signal line kinds must be encoded as distinct DEXPI line types so the measurement and
-   * command sides of an instrument loop are visually different.
+   * ISA-5.1 signal line kinds must be encoded as distinct DEXPI line types so the measurement and command sides of an
+   * instrument loop are visually different.
    *
    * @throws Exception if XML construction fails
    */
@@ -215,20 +213,18 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
     doc.appendChild(root);
 
     DexpiLayoutEngine.appendSignalLine(doc, electric, 100.0, 200.0, 100.0, 150.0,
-        DexpiLayoutEngine.SignalLineKind.ELECTRIC);
+	DexpiLayoutEngine.SignalLineKind.ELECTRIC);
     DexpiLayoutEngine.appendSignalLine(doc, pneumatic, 100.0, 200.0, 100.0, 150.0,
-        DexpiLayoutEngine.SignalLineKind.PNEUMATIC);
+	DexpiLayoutEngine.SignalLineKind.PNEUMATIC);
     DexpiLayoutEngine.appendSignalLine(doc, software, 100.0, 200.0, 100.0, 150.0,
-        DexpiLayoutEngine.SignalLineKind.SOFTWARE);
+	DexpiLayoutEngine.SignalLineKind.SOFTWARE);
 
     String electricType = lineTypeOf(electric, "CenterLine");
     String pneumaticType = lineTypeOf(pneumatic, "CenterLine");
     String softwareType = lineTypeOf(software, "CenterLine");
 
-    assertTrue(!electricType.equals(pneumaticType),
-        "Electric and pneumatic signals must use different line types");
-    assertTrue(!pneumaticType.equals(softwareType),
-        "Pneumatic and software signals must use different line types");
+    assertTrue(!electricType.equals(pneumaticType), "Electric and pneumatic signals must use different line types");
+    assertTrue(!pneumaticType.equals(softwareType), "Pneumatic and software signals must use different line types");
   }
 
   /**
@@ -245,21 +241,17 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
   }
 
   /**
-   * ISO 10628-2 service styles: streams named as flare, drain and utility get non-solid line types,
-   * while process streams stay solid.
+   * ISO 10628-2 service styles: streams named as flare, drain and utility get non-solid line types, while process
+   * streams stay solid.
    */
   @Test
   public void testServiceClassificationByName() {
-    assertEquals(DexpiServiceClassifier.ServiceType.MAIN_PROCESS,
-        DexpiServiceClassifier.classifyByName("export gas"));
-    assertEquals(DexpiServiceClassifier.ServiceType.FLARE,
-        DexpiServiceClassifier.classifyByName("HP flare header"));
-    assertEquals(DexpiServiceClassifier.ServiceType.DRAIN,
-        DexpiServiceClassifier.classifyByName("closed drain"));
-    assertEquals(DexpiServiceClassifier.ServiceType.UTILITY,
-        DexpiServiceClassifier.classifyByName("LP steam supply"));
+    assertEquals(DexpiServiceClassifier.ServiceType.MAIN_PROCESS, DexpiServiceClassifier.classifyByName("export gas"));
+    assertEquals(DexpiServiceClassifier.ServiceType.FLARE, DexpiServiceClassifier.classifyByName("HP flare header"));
+    assertEquals(DexpiServiceClassifier.ServiceType.DRAIN, DexpiServiceClassifier.classifyByName("closed drain"));
+    assertEquals(DexpiServiceClassifier.ServiceType.UTILITY, DexpiServiceClassifier.classifyByName("LP steam supply"));
     assertEquals(DexpiServiceClassifier.ServiceType.FUEL_GAS,
-        DexpiServiceClassifier.classifyByName("fuel gas to turbine"));
+	DexpiServiceClassifier.classifyByName("fuel gas to turbine"));
     // Process lines remain solid (line type 0).
     assertEquals(0, DexpiServiceClassifier.ServiceType.MAIN_PROCESS.getLineType());
     // Utility lines are dashed (line type 1).
@@ -267,10 +259,9 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
   }
 
   /**
-   * A styled service connection line carries the service line type and weight. The piping run must
-   * be emitted as a {@code <CenterLine>} (not a bare {@code <PolyLine>}) so DEXPI consumers such as
-   * pyDEXPI, which only render {@code <CenterLine>} children of a {@code PipingNetworkSegment},
-   * actually draw the stream line between equipment.
+   * A styled service connection line carries the service line type and weight. The piping run must be emitted as a
+   * {@code <CenterLine>} (not a bare {@code <PolyLine>}) so DEXPI consumers such as pyDEXPI, which only render
+   * {@code <CenterLine>} children of a {@code PipingNetworkSegment}, actually draw the stream line between equipment.
    *
    * @throws Exception if XML construction fails
    */
@@ -281,26 +272,25 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
     doc.appendChild(parent);
 
     DexpiLayoutEngine.appendServiceConnectionLine(doc, parent, 80.0, 150.0, 280.0, 150.0,
-        DexpiServiceClassifier.ServiceType.UTILITY);
+	DexpiServiceClassifier.ServiceType.UTILITY);
 
     // The renderable piping run is a CenterLine, never a bare PolyLine.
     NodeList centerLines = parent.getElementsByTagName("CenterLine");
     assertEquals(1, centerLines.getLength(),
-        "Styled service connection must emit exactly one CenterLine so pyDEXPI renders it");
+	"Styled service connection must emit exactly one CenterLine so pyDEXPI renders it");
     assertEquals(0, parent.getElementsByTagName("PolyLine").getLength(),
-        "Styled service connection must not use a bare PolyLine for the piping run");
-    Element pres =
-        (Element) ((Element) centerLines.item(0)).getElementsByTagName("Presentation").item(0);
+	"Styled service connection must not use a bare PolyLine for the piping run");
+    Element pres = (Element) ((Element) centerLines.item(0)).getElementsByTagName("Presentation").item(0);
     assertEquals("1", pres.getAttribute("LineType"), "Utility line must be dashed");
     assertEquals(String.valueOf(DexpiServiceClassifier.ServiceType.UTILITY.getLineWeight()),
-        pres.getAttribute("LineWeight"), "Utility line must use the utility weight");
+	pres.getAttribute("LineWeight"), "Utility line must use the utility weight");
   }
 
   /**
-   * Regression for missing stream lines in pyDEXPI renders: every styled service connection (the
-   * common case for process streams between equipment) must place a renderable {@code <CenterLine>}
-   * inside its {@code PipingNetworkSegment}. A bare {@code <PolyLine>} child of a segment is
-   * silently dropped by pyDEXPI's segment parser, leaving equipment symbols unconnected.
+   * Regression for missing stream lines in pyDEXPI renders: every styled service connection (the common case for
+   * process streams between equipment) must place a renderable {@code <CenterLine>} inside its
+   * {@code PipingNetworkSegment}. A bare {@code <PolyLine>} child of a segment is silently dropped by pyDEXPI's segment
+   * parser, leaving equipment symbols unconnected.
    *
    * @throws IOException if writing fails
    */
@@ -343,14 +333,14 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
     int segmentCount = countOccurrences(xml, "<PipingNetworkSegment");
     int centerLineCount = countOccurrences(xml, "<CenterLine");
     assertTrue(centerLineCount >= segmentCount,
-        "Each piping segment must carry at least one renderable CenterLine (segments="
-            + segmentCount + ", centerLines=" + centerLineCount + ")");
+	"Each piping segment must carry at least one renderable CenterLine (segments=" + segmentCount + ", centerLines="
+	    + centerLineCount + ")");
   }
 
   /**
    * Counts non-overlapping occurrences of a literal token in a string.
    *
-   * @param text the text to scan
+   * @param text  the text to scan
    * @param token the literal token to count
    * @return the number of occurrences
    */
@@ -380,11 +370,9 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
     doc.appendChild(root);
 
     // Horizontal line y=150 from x=100..300; vertical line x=200 from y=120..180 -> crosses.
-    boolean drewCrossing = DexpiLayoutEngine.appendCrossingHop(doc, crossing, 100.0, 300.0, 150.0,
-        200.0, 120.0, 180.0);
+    boolean drewCrossing = DexpiLayoutEngine.appendCrossingHop(doc, crossing, 100.0, 300.0, 150.0, 200.0, 120.0, 180.0);
     // Vertical line touches the horizontal endpoint at x=300 -> not an interior crossing.
-    boolean drewTee =
-        DexpiLayoutEngine.appendCrossingHop(doc, tee, 100.0, 300.0, 150.0, 300.0, 120.0, 180.0);
+    boolean drewTee = DexpiLayoutEngine.appendCrossingHop(doc, tee, 100.0, 300.0, 150.0, 300.0, 120.0, 180.0);
 
     assertTrue(drewCrossing, "A true crossing must draw a hop");
     assertTrue(!drewTee, "A junction at the endpoint must not draw a hop");
@@ -408,13 +396,13 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
     NodeList polys = parent.getElementsByTagName("PolyLine");
     assertEquals(1, polys.getLength());
     assertEquals("6", ((Element) polys.item(0)).getAttribute("NumPoints"),
-        "Pentagon must be a closed 6-point polyline");
+	"Pentagon must be a closed 6-point polyline");
 
     NodeList texts = parent.getElementsByTagName("Text");
     boolean hasRef = false;
     for (int i = 0; i < texts.getLength(); i++) {
       if ("To D-200".equals(((Element) texts.item(i)).getAttribute("String"))) {
-        hasRef = true;
+	hasRef = true;
       }
     }
     assertTrue(hasRef, "Off-page connector must carry its cross-reference text");
@@ -428,28 +416,24 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
     assertTrue(IsaTagValidator.isValid("PT-101"), "PT-101 is a valid pressure transmitter tag");
     assertTrue(IsaTagValidator.isValid("FIC-204"), "FIC-204 is a valid flow controller tag");
     assertTrue(IsaTagValidator.isValid("LSHH-330"), "LSHH-330 is a valid level switch tag");
-    assertTrue(IsaTagValidator.isValid("PDT 415"),
-        "PDT-415 is a valid differential pressure transmitter tag");
+    assertTrue(IsaTagValidator.isValid("PDT 415"), "PDT-415 is a valid differential pressure transmitter tag");
     // Invalid: no loop number.
     assertTrue(!IsaTagValidator.isValid("PT"), "Tag with no loop number must be rejected");
     // Invalid: unknown first letter.
     assertTrue(!IsaTagValidator.isValid("@T-101"), "Tag with bad character must be rejected");
     // Description includes the measured variable.
     IsaTagValidator.ValidationResult res = IsaTagValidator.validate("PT-101");
-    assertTrue(res.getMessage().contains("Pressure"),
-        "Validation message should describe the measured variable");
+    assertTrue(res.getMessage().contains("Pressure"), "Validation message should describe the measured variable");
   }
 
   /**
-   * NORSOK Z-003 line number composes size, fluid code, sequence, piping class and insulation, and
-   * omits empty fields.
+   * NORSOK Z-003 line number composes size, fluid code, sequence, piping class and insulation, and omits empty fields.
    */
   @Test
   public void testNorsokLineNumberComposition() {
-    String full = new NorsokLineNumber().size("6").fluidCode("PG").sequence("1001")
-        .pipingClass("A1B").insulation("H25").build();
-    assertEquals("6\"-PG-1001-A1B-H25", full,
-        "Full NORSOK line number must concatenate all fields");
+    String full = new NorsokLineNumber().size("6").fluidCode("PG").sequence("1001").pipingClass("A1B").insulation("H25")
+	.build();
+    assertEquals("6\"-PG-1001-A1B-H25", full, "Full NORSOK line number must concatenate all fields");
 
     String partial = new NorsokLineNumber().size("4\"").fluidCode("HC").sequence("200").build();
     assertEquals("4\"-HC-200", partial, "Missing fields must be omitted without trailing hyphens");
@@ -459,8 +443,8 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
   }
 
   /**
-   * The exported drawing must include the ISO 7200 title-block fields (owner/originator and
-   * document type / scale / sheet).
+   * The exported drawing must include the ISO 7200 title-block fields (owner/originator and document type / scale /
+   * sheet).
    *
    * @throws IOException if writing fails
    */
@@ -491,8 +475,8 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
   }
 
   /**
-   * Builds a small flowsheet (feed stream into a three-phase separator whose gas outlet feeds a
-   * downstream throttling valve) so genuine equipment-to-equipment wiring is present.
+   * Builds a small flowsheet (feed stream into a three-phase separator whose gas outlet feeds a downstream throttling
+   * valve) so genuine equipment-to-equipment wiring is present.
    *
    * @param name the process system name
    * @return a runnable process system
@@ -510,8 +494,8 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
     feed.setTemperature(30.0, "C");
     feed.setFlowRate(1.0, "MSm3/day");
     ThreePhaseSeparator sep = new ThreePhaseSeparator("Sep", feed);
-    neqsim.process.equipment.valve.ThrottlingValve gasValve =
-        new neqsim.process.equipment.valve.ThrottlingValve("GasValve", sep.getGasOutStream());
+    neqsim.process.equipment.valve.ThrottlingValve gasValve = new neqsim.process.equipment.valve.ThrottlingValve(
+	"GasValve", sep.getGasOutStream());
     gasValve.setOutletPressure(30.0, "bara");
     ProcessSystem process = new ProcessSystem();
     process.setName(name);
@@ -535,8 +519,8 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
   }
 
   /**
-   * Improvement #1: a whole {@link ProcessModel} exports in a single call, flattening all process
-   * areas into one drawing that contains equipment from every area.
+   * Improvement #1: a whole {@link ProcessModel} exports in a single call, flattening all process areas into one
+   * drawing that contains equipment from every area.
    *
    * @throws IOException if writing fails
    */
@@ -557,13 +541,12 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
     assertNotNull(xml);
     assertTrue(xml.contains("PlantModel"), "Flattened model must be a valid PlantModel drawing");
     assertTrue(xml.contains("Sep") && xml.contains("Sep2"),
-        "Both process areas' equipment must appear in the single export");
+	"Both process areas' equipment must appear in the single export");
   }
 
   /**
-   * Improvement #3: the pyDEXPI-friendly writer omits the default {@code xmlns} namespace so the
-   * Proteus reader can resolve unqualified element names, while still producing the PlantModel
-   * root.
+   * Improvement #3: the pyDEXPI-friendly writer omits the default {@code xmlns} namespace so the Proteus reader can
+   * resolve unqualified element names, while still producing the PlantModel root.
    *
    * @throws IOException if writing fails
    */
@@ -580,17 +563,16 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
     String stdXml = standard.toString(StandardCharsets.UTF_8.name());
 
     assertTrue(pyXml.contains("PlantModel"), "pyDEXPI export must still have a PlantModel root");
-    assertTrue(pyXml.contains("PlantInformation"),
-        "pyDEXPI export must contain the PlantInformation element");
+    assertTrue(pyXml.contains("PlantInformation"), "pyDEXPI export must contain the PlantInformation element");
     assertTrue(!pyXml.contains("xmlns=\"http://sandbox.dexpi.org/xml\""),
-        "pyDEXPI export must omit the default xmlns namespace");
+	"pyDEXPI export must omit the default xmlns namespace");
     assertTrue(stdXml.contains("xmlns=\"http://sandbox.dexpi.org/xml\""),
-        "Standard export should keep the default xmlns namespace");
+	"Standard export should keep the default xmlns namespace");
   }
 
   /**
-   * Improvement #4: equipment elements carry an RDL {@code ComponentClassURI} so no symbol falls
-   * through to an unclassified default.
+   * Improvement #4: equipment elements carry an RDL {@code ComponentClassURI} so no symbol falls through to an
+   * unclassified default.
    *
    * @throws IOException if writing fails
    */
@@ -603,12 +585,12 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
     String xml = out.toString(StandardCharsets.UTF_8.name());
 
     assertTrue(xml.contains("ComponentClassURI=\"http://sandbox.dexpi.org/rdl/"),
-        "Equipment must reference a DEXPI RDL component-class URI");
+	"Equipment must reference a DEXPI RDL component-class URI");
   }
 
   /**
-   * Improvement #6 and #8: each piping connection carries operating line data (fluid code and
-   * operating pressure) and a NORSOK line-identification label.
+   * Improvement #6 and #8: each piping connection carries operating line data (fluid code and operating pressure) and a
+   * NORSOK line-identification label.
    *
    * @throws IOException if writing fails
    */
@@ -621,17 +603,16 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
     DexpiXmlWriter.write(process, out);
     String xml = out.toString(StandardCharsets.UTF_8.name());
 
-    assertTrue(xml.contains(DexpiMetadata.FLUID_CODE),
-        "Connection lines must carry a FluidCode generic attribute");
+    assertTrue(xml.contains(DexpiMetadata.FLUID_CODE), "Connection lines must carry a FluidCode generic attribute");
     assertTrue(xml.contains(DexpiMetadata.OPERATING_PRESSURE_VALUE),
-        "Connection lines must carry the operating pressure value");
+	"Connection lines must carry the operating pressure value");
     assertTrue(xml.contains("PG-0") || xml.contains("PL-0"),
-        "Connection lines must carry a NORSOK line-identification label");
+	"Connection lines must carry a NORSOK line-identification label");
   }
 
   /**
-   * Improvement #2 and #5: battery-limit feeds and products are marked with off-page connector
-   * cross references (FEED / PRODUCT).
+   * Improvement #2 and #5: battery-limit feeds and products are marked with off-page connector cross references (FEED /
+   * PRODUCT).
    *
    * @throws IOException if writing fails
    */
@@ -644,12 +625,12 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
     String xml = out.toString(StandardCharsets.UTF_8.name());
 
     assertTrue(xml.contains("FEED") || xml.contains("PRODUCT"),
-        "Boundary feeds/products must be marked with off-page connector references");
+	"Boundary feeds/products must be marked with off-page connector references");
   }
 
   /**
-   * Improvement #7: a drawing written by {@link DexpiXmlWriter} can be read back by
-   * {@link DexpiXmlReader} and yields a process system with at least one unit operation.
+   * Improvement #7: a drawing written by {@link DexpiXmlWriter} can be read back by {@link DexpiXmlReader} and yields a
+   * process system with at least one unit operation.
    *
    * @throws Exception if writing or reading fails
    */
@@ -664,12 +645,12 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
     ProcessSystem readBack = DexpiXmlReader.read(tmp);
     assertNotNull(readBack, "Reader must return a process system");
     assertTrue(readBack.getUnitOperations().size() > 0,
-        "Round-tripped process must contain at least one unit operation");
+	"Round-tripped process must contain at least one unit operation");
   }
 
   /**
-   * Improvement #9: the {@code DexpiDiagramBridge.exportForPyDexpi} convenience method writes a
-   * pyDEXPI-friendly file (default namespace omitted) that the reader can load back.
+   * Improvement #9: the {@code DexpiDiagramBridge.exportForPyDexpi} convenience method writes a pyDEXPI-friendly file
+   * (default namespace omitted) that the reader can load back.
    *
    * @throws Exception if writing, parsing or reading fails
    */
@@ -684,17 +665,17 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
     String xml = new String(java.nio.file.Files.readAllBytes(tmp.toPath()), StandardCharsets.UTF_8);
     assertTrue(xml.contains("<PlantModel"), "Bridge export must produce a PlantModel root");
     assertTrue(!xml.contains("xmlns=\"http://sandbox.dexpi.org/xml\""),
-        "Bridge export must omit the default DEXPI namespace for pyDEXPI");
+	"Bridge export must omit the default DEXPI namespace for pyDEXPI");
 
     ProcessSystem readBack = DexpiXmlReader.read(tmp);
     assertNotNull(readBack, "Reader must load the bridge-exported file");
     assertTrue(readBack.getUnitOperations().size() > 0,
-        "Bridge-exported process must contain at least one unit operation");
+	"Bridge-exported process must contain at least one unit operation");
   }
 
   /**
-   * Improvement #8 schema gate: the emitted drawing is well-formed XML with a PlantModel root,
-   * PlantInformation metadata and at least one Equipment and one PipingNetworkSystem.
+   * Improvement #8 schema gate: the emitted drawing is well-formed XML with a PlantModel root, PlantInformation
+   * metadata and at least one Equipment and one PipingNetworkSystem.
    *
    * @throws Exception if writing or parsing fails
    */
@@ -707,14 +688,12 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
     String xml = out.toString(StandardCharsets.UTF_8.name());
 
     Document doc = parseXml(xml);
-    assertEquals("PlantModel", doc.getDocumentElement().getNodeName(),
-        "Root element must be PlantModel");
-    assertTrue(doc.getElementsByTagName("PlantInformation").getLength() >= 1,
-        "Drawing must declare PlantInformation");
+    assertEquals("PlantModel", doc.getDocumentElement().getNodeName(), "Root element must be PlantModel");
+    assertTrue(doc.getElementsByTagName("PlantInformation").getLength() >= 1, "Drawing must declare PlantInformation");
     assertTrue(doc.getElementsByTagName("Equipment").getLength() >= 1,
-        "Drawing must contain at least one Equipment element");
+	"Drawing must contain at least one Equipment element");
     assertTrue(doc.getElementsByTagName("PipingNetworkSystem").getLength() >= 1,
-        "Drawing must contain at least one PipingNetworkSystem");
+	"Drawing must contain at least one PipingNetworkSystem");
   }
 
   /**
@@ -731,8 +710,8 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
   }
 
   /**
-   * Improvement #2: {@code routeConnection} returns the orthogonal H-V-H points used by the
-   * crossing-hop pass; a straight horizontal run returns two points and an offset returns four.
+   * Improvement #2: {@code routeConnection} returns the orthogonal H-V-H points used by the crossing-hop pass; a
+   * straight horizontal run returns two points and an offset returns four.
    */
   @Test
   public void testRouteConnectionPoints() {
@@ -746,7 +725,7 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
   /**
    * Reads the LineType attribute of the first child element of the given tag.
    *
-   * @param parent the parent element
+   * @param parent  the parent element
    * @param tagName the child element tag name (e.g. "CenterLine" or "PolyLine")
    * @return the LineType attribute value
    */
@@ -757,10 +736,10 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
   }
 
   /**
-   * ISO 10628 layout convention: a separator's gas/overhead branch routes to the upper part of the
-   * sheet and the liquid/bottoms branch to the lower part. With the DEXPI Y axis pointing up, the
-   * gas-fed compressor must end up at a higher Y than the separator while the oil-fed valve ends up
-   * at a lower Y, so the bottoms line no longer crosses the gas equipment.
+   * ISO 10628 layout convention: a separator's gas/overhead branch routes to the upper part of the sheet and the
+   * liquid/bottoms branch to the lower part. With the DEXPI Y axis pointing up, the gas-fed compressor must end up at a
+   * higher Y than the separator while the oil-fed valve ends up at a lower Y, so the bottoms line no longer crosses the
+   * gas equipment.
    */
   @Test
   public void testGasUpLiquidDownLayout() {
@@ -776,11 +755,11 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
     feed.setTemperature(30.0, "C");
     feed.setFlowRate(1.0, "MSm3/day");
     ThreePhaseSeparator sep = new ThreePhaseSeparator("Sep", feed);
-    neqsim.process.equipment.compressor.Compressor gasComp =
-        new neqsim.process.equipment.compressor.Compressor("GasComp", sep.getGasOutStream());
+    neqsim.process.equipment.compressor.Compressor gasComp = new neqsim.process.equipment.compressor.Compressor(
+	"GasComp", sep.getGasOutStream());
     gasComp.setOutletPressure(80.0, "bara");
-    neqsim.process.equipment.valve.ThrottlingValve oilValve =
-        new neqsim.process.equipment.valve.ThrottlingValve("OilValve", sep.getOilOutStream());
+    neqsim.process.equipment.valve.ThrottlingValve oilValve = new neqsim.process.equipment.valve.ThrottlingValve(
+	"OilValve", sep.getOilOutStream());
     oilValve.setOutletPressure(30.0, "bara");
     ProcessSystem process = new ProcessSystem();
     process.add(feed);
@@ -788,8 +767,7 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
     process.add(gasComp);
     process.add(oilValve);
 
-    java.util.Map<String, DexpiLayoutEngine.EquipmentPosition> positions =
-        DexpiLayoutEngine.computeLayout(process);
+    java.util.Map<String, DexpiLayoutEngine.EquipmentPosition> positions = DexpiLayoutEngine.computeLayout(process);
 
     DexpiLayoutEngine.EquipmentPosition sepPos = positions.get("Sep");
     DexpiLayoutEngine.EquipmentPosition gasPos = positions.get("GasComp");
@@ -798,9 +776,7 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
     assertNotNull(gasPos, "Gas compressor must have a layout position");
     assertNotNull(oilPos, "Oil valve must have a layout position");
 
-    assertTrue(gasPos.y > sepPos.y,
-        "Gas/overhead branch must route to the upper part (higher Y than the separator)");
-    assertTrue(oilPos.y < sepPos.y,
-        "Liquid/bottoms branch must route to the lower part (lower Y than the separator)");
+    assertTrue(gasPos.y > sepPos.y, "Gas/overhead branch must route to the upper part (higher Y than the separator)");
+    assertTrue(oilPos.y < sepPos.y, "Liquid/bottoms branch must route to the lower part (lower Y than the separator)");
   }
 }

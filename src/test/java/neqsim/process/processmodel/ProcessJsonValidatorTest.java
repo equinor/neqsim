@@ -7,8 +7,7 @@ import org.junit.jupiter.api.Test;
 class ProcessJsonValidatorTest {
   @Test
   void validJsonShouldPass() {
-    String json =
-        "{\"process\":[{\"type\":\"Stream\",\"name\":\"feed\"},{\"type\":\"Separator\",\"name\":\"sep\",\"inlet\":\"feed\"}]}";
+    String json = "{\"process\":[{\"type\":\"Stream\",\"name\":\"feed\"},{\"type\":\"Separator\",\"name\":\"sep\",\"inlet\":\"feed\"}]}";
     ProcessJsonValidator.ValidationReport report = ProcessJsonValidator.validate(json);
     assertTrue(report.isValid());
     assertTrue(report.getWarningCount() == 0);
@@ -22,8 +21,7 @@ class ProcessJsonValidatorTest {
 
   @Test
   void duplicateNamesShouldFail() {
-    String json =
-        "{\"process\":[{\"type\":\"Stream\",\"name\":\"A\"},{\"type\":\"Stream\",\"name\":\"A\"}]}";
+    String json = "{\"process\":[{\"type\":\"Stream\",\"name\":\"A\"},{\"type\":\"Stream\",\"name\":\"A\"}]}";
     ProcessJsonValidator.ValidationReport report = ProcessJsonValidator.validate(json);
     assertFalse(report.isValid());
   }
@@ -71,8 +69,7 @@ class ProcessJsonValidatorTest {
 
   @Test
   void unknownReferenceInStreamsObjectShouldWarn() {
-    String json =
-        "{\"process\":[{\"type\":\"Separator\",\"name\":\"sep\",\"streams\":{\"inlet\":\"ghost\"}}]}";
+    String json = "{\"process\":[{\"type\":\"Separator\",\"name\":\"sep\",\"streams\":{\"inlet\":\"ghost\"}}]}";
     ProcessJsonValidator.ValidationReport report = ProcessJsonValidator.validate(json);
     assertTrue(report.isValid());
     assertTrue(report.getWarningCount() > 0);
@@ -80,26 +77,23 @@ class ProcessJsonValidatorTest {
 
   @Test
   void e300FluidDefinitionShouldValidate() {
-    String json =
-        "{\"fluid\":{\"model\":\"PR_LK\",\"temperature\":310.15,\"pressure\":50.0,\"e300FilePath\":\"/tmp/fluid.e300\"},\"process\":[{\"type\":\"Stream\",\"name\":\"feed\"}]}";
+    String json = "{\"fluid\":{\"model\":\"PR_LK\",\"temperature\":310.15,\"pressure\":50.0,\"e300FilePath\":\"/tmp/fluid.e300\"},\"process\":[{\"type\":\"Stream\",\"name\":\"feed\"}]}";
     ProcessJsonValidator.ValidationReport report = ProcessJsonValidator.validate(json);
     assertTrue(report.isValid());
   }
 
   @Test
   void namedFluidsWithFluidRefShouldValidate() {
-    String json =
-        "{\"fluids\":{\"gas\":{\"model\":\"SRK\",\"temperature\":298.15,\"pressure\":50.0,\"components\":{\"methane\":1.0}}},\"process\":[{\"type\":\"Stream\",\"name\":\"gasFeed\",\"fluidRef\":\"gas\"}]}";
+    String json = "{\"fluids\":{\"gas\":{\"model\":\"SRK\",\"temperature\":298.15,\"pressure\":50.0,\"components\":{\"methane\":1.0}}},\"process\":[{\"type\":\"Stream\",\"name\":\"gasFeed\",\"fluidRef\":\"gas\"}]}";
     ProcessJsonValidator.ValidationReport report = ProcessJsonValidator.validate(json);
     assertTrue(report.isValid());
   }
 
   @Test
   void processModelAreasShouldValidate() {
-    String json =
-        "{\"areas\":{\"separation\":{\"process\":[{\"type\":\"Stream\",\"name\":\"feed\"}]},"
-            + "\"compression\":{\"process\":[{\"type\":\"Stream\",\"name\":\"gas\"},"
-            + "{\"type\":\"Compressor\",\"name\":\"comp\",\"inlet\":\"gas.outlet\"}]}}}";
+    String json = "{\"areas\":{\"separation\":{\"process\":[{\"type\":\"Stream\",\"name\":\"feed\"}]},"
+	+ "\"compression\":{\"process\":[{\"type\":\"Stream\",\"name\":\"gas\"},"
+	+ "{\"type\":\"Compressor\",\"name\":\"comp\",\"inlet\":\"gas.outlet\"}]}}}";
     ProcessJsonValidator.ValidationReport report = ProcessJsonValidator.validate(json);
     assertTrue(report.isValid());
   }

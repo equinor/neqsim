@@ -17,9 +17,9 @@ import org.apache.logging.log4j.Logger;
  * Comprehensive sensitivity analyzer for process simulations.
  *
  * <p>
- * This class provides a fluent API for computing sensitivities of any output property with respect
- * to any input property. It intelligently leverages available Jacobians from Broyden convergence
- * when possible, falling back to finite differences only when necessary.
+ * This class provides a fluent API for computing sensitivities of any output property with respect to any input
+ * property. It intelligently leverages available Jacobians from Broyden convergence when possible, falling back to
+ * finite differences only when necessary.
  * </p>
  *
  * <p>
@@ -40,8 +40,8 @@ import org.apache.logging.log4j.Logger;
  * ProcessSensitivityAnalyzer analyzer = new ProcessSensitivityAnalyzer(process);
  *
  * // Define what we want to compute
- * analyzer.withInput("feed", "flowRate").withInput("feed", "temperature")
- *     .withOutput("product", "temperature").withOutput("product", "pressure");
+ * analyzer.withInput("feed", "flowRate").withInput("feed", "temperature").withOutput("product", "temperature")
+ *     .withOutput("product", "pressure");
  *
  * // Compute sensitivities (uses Broyden Jacobian if available)
  * SensitivityMatrix result = analyzer.compute();
@@ -97,7 +97,7 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
      * Creates a variable specification.
      *
      * @param equipmentName name of the equipment
-     * @param propertyName name of the property (e.g., "temperature", "pressure", "flowRate")
+     * @param propertyName  name of the property (e.g., "temperature", "pressure", "flowRate")
      */
     public VariableSpec(String equipmentName, String propertyName) {
       this(equipmentName, propertyName, null);
@@ -107,8 +107,8 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
      * Creates a variable specification with unit.
      *
      * @param equipmentName name of the equipment
-     * @param propertyName name of the property
-     * @param unit unit for the property (used for setting values)
+     * @param propertyName  name of the property
+     * @param unit          unit for the property (used for setting values)
      */
     public VariableSpec(String equipmentName, String propertyName, String unit) {
       this.equipmentName = equipmentName;
@@ -176,7 +176,7 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
    * Adds an input variable for sensitivity analysis.
    *
    * @param equipmentName name of the equipment
-   * @param propertyName name of the property to perturb
+   * @param propertyName  name of the property to perturb
    * @return this analyzer for chaining
    */
   public ProcessSensitivityAnalyzer withInput(String equipmentName, String propertyName) {
@@ -188,12 +188,11 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
    * Adds an input variable with unit specification.
    *
    * @param equipmentName name of the equipment
-   * @param propertyName name of the property
-   * @param unit unit for the property
+   * @param propertyName  name of the property
+   * @param unit          unit for the property
    * @return this analyzer for chaining
    */
-  public ProcessSensitivityAnalyzer withInput(String equipmentName, String propertyName,
-      String unit) {
+  public ProcessSensitivityAnalyzer withInput(String equipmentName, String propertyName, String unit) {
     inputSpecs.add(new VariableSpec(equipmentName, propertyName, unit));
     return this;
   }
@@ -202,7 +201,7 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
    * Adds an output variable for sensitivity analysis.
    *
    * @param equipmentName name of the equipment
-   * @param propertyName name of the property to monitor
+   * @param propertyName  name of the property to monitor
    * @return this analyzer for chaining
    */
   public ProcessSensitivityAnalyzer withOutput(String equipmentName, String propertyName) {
@@ -214,12 +213,11 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
    * Adds an output variable with unit specification.
    *
    * @param equipmentName name of the equipment
-   * @param propertyName name of the property
-   * @param unit unit for the property
+   * @param propertyName  name of the property
+   * @param unit          unit for the property
    * @return this analyzer for chaining
    */
-  public ProcessSensitivityAnalyzer withOutput(String equipmentName, String propertyName,
-      String unit) {
+  public ProcessSensitivityAnalyzer withOutput(String equipmentName, String propertyName, String unit) {
     outputSpecs.add(new VariableSpec(equipmentName, propertyName, unit));
     return this;
   }
@@ -349,15 +347,15 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
     // Look for recycle equipment and get its controller
     for (Object unit : processSystem.getUnitOperations()) {
       if (unit instanceof Recycle) {
-        // RecycleController is typically managed by ProcessSystem
-        // For now, check if there's a getRecycleController() method
-        try {
-          Method method = processSystem.getClass().getMethod("getRecycleController");
-          return (RecycleController) method.invoke(processSystem);
-        } catch (Exception e) {
-          // Try to create one from recycles
-          return createRecycleController();
-        }
+	// RecycleController is typically managed by ProcessSystem
+	// For now, check if there's a getRecycleController() method
+	try {
+	  Method method = processSystem.getClass().getMethod("getRecycleController");
+	  return (RecycleController) method.invoke(processSystem);
+	} catch (Exception e) {
+	  // Try to create one from recycles
+	  return createRecycleController();
+	}
       }
     }
     return null;
@@ -372,7 +370,7 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
     RecycleController controller = new RecycleController();
     for (Object unit : processSystem.getUnitOperations()) {
       if (unit instanceof Recycle) {
-        controller.addRecycle((Recycle) unit);
+	controller.addRecycle((Recycle) unit);
       }
     }
     if (controller.getRecycleCount() > 0) {
@@ -385,7 +383,7 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
   /**
    * Computes sensitivities directly from Broyden Jacobian.
    *
-   * @param result the sensitivity matrix to populate
+   * @param result   the sensitivity matrix to populate
    * @param computed boolean matrix tracking which entries have been computed
    */
   private void computeFromBroyden(SensitivityMatrix result, boolean[][] computed) {
@@ -400,23 +398,23 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
       String outName = outputSpecs.get(i).getFullName();
       Integer outIdx = varToIndex.get(outName);
       if (outIdx == null) {
-        continue;
+	continue;
       }
 
       for (int j = 0; j < inputSpecs.size(); j++) {
-        String inName = inputSpecs.get(j).getFullName();
-        Integer inIdx = varToIndex.get(inName);
-        if (inIdx == null) {
-          continue;
-        }
+	String inName = inputSpecs.get(j).getFullName();
+	Integer inIdx = varToIndex.get(inName);
+	if (inIdx == null) {
+	  continue;
+	}
 
-        // Get sensitivity from Broyden Jacobian
-        if (outIdx < cachedBroydenJacobian.length && inIdx < cachedBroydenJacobian[outIdx].length) {
-          double sensitivity = -cachedBroydenJacobian[outIdx][inIdx];
-          result.setSensitivity(outName, inName, sensitivity);
-          computed[i][j] = true;
-          logger.debug("Used Broyden Jacobian for {} -> {}", inName, outName);
-        }
+	// Get sensitivity from Broyden Jacobian
+	if (outIdx < cachedBroydenJacobian.length && inIdx < cachedBroydenJacobian[outIdx].length) {
+	  double sensitivity = -cachedBroydenJacobian[outIdx][inIdx];
+	  result.setSensitivity(outName, inName, sensitivity);
+	  computed[i][j] = true;
+	  logger.debug("Used Broyden Jacobian for {} -> {}", inName, outName);
+	}
       }
     }
   }
@@ -424,7 +422,7 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
   /**
    * Computes sensitivities using chain rule through tear streams.
    *
-   * @param result the sensitivity matrix to populate
+   * @param result   the sensitivity matrix to populate
    * @param computed boolean matrix tracking which entries have been computed
    */
   private void computeViaChainRule(SensitivityMatrix result, boolean[][] computed) {
@@ -445,44 +443,44 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
     for (int i = 0; i < outputSpecs.size(); i++) {
       String outName = outputSpecs.get(i).getFullName();
       if (varToIndex.containsKey(outName)) {
-        continue; // Already handled by direct Broyden
+	continue; // Already handled by direct Broyden
       }
 
       // Find inputs that ARE tear stream variables
       for (int j = 0; j < inputSpecs.size(); j++) {
-        if (computed[i][j]) {
-          continue;
-        }
+	if (computed[i][j]) {
+	  continue;
+	}
 
-        String inName = inputSpecs.get(j).getFullName();
-        Integer inIdx = varToIndex.get(inName);
-        if (inIdx == null) {
-          continue; // Input is not a tear stream variable
-        }
+	String inName = inputSpecs.get(j).getFullName();
+	Integer inIdx = varToIndex.get(inName);
+	if (inIdx == null) {
+	  continue; // Input is not a tear stream variable
+	}
 
-        // Compute dy/dt for each tear stream variable t
-        // Then use chain rule: dy/dx = sum_t (dy/dt) * (dt/dx)
-        double sensitivity = 0.0;
-        boolean usedChainRule = false;
+	// Compute dy/dt for each tear stream variable t
+	// Then use chain rule: dy/dx = sum_t (dy/dt) * (dt/dx)
+	double sensitivity = 0.0;
+	boolean usedChainRule = false;
 
-        for (int k = 0; k < cachedTearStreamVars.size(); k++) {
-          String tearVar = cachedTearStreamVars.get(k);
+	for (int k = 0; k < cachedTearStreamVars.size(); k++) {
+	  String tearVar = cachedTearStreamVars.get(k);
 
-          // Get dt_k/dx from Broyden (for tear variable k w.r.t. input x)
-          if (inIdx < cachedBroydenJacobian.length && k < cachedBroydenJacobian[inIdx].length) {
-            double dtdx = -cachedBroydenJacobian[k][inIdx];
+	  // Get dt_k/dx from Broyden (for tear variable k w.r.t. input x)
+	  if (inIdx < cachedBroydenJacobian.length && k < cachedBroydenJacobian[inIdx].length) {
+	    double dtdx = -cachedBroydenJacobian[k][inIdx];
 
-            // Would need dy/dt_k - this requires FD unless output is also tear variable
-            // For now, mark as needing FD if chain rule isn't directly applicable
-            // In future: cache dy/dt from process Jacobian structure
-          }
-        }
+	    // Would need dy/dt_k - this requires FD unless output is also tear variable
+	    // For now, mark as needing FD if chain rule isn't directly applicable
+	    // In future: cache dy/dt from process Jacobian structure
+	  }
+	}
 
-        // If we can't use chain rule effectively, leave for FD
-        if (usedChainRule) {
-          result.setSensitivity(outName, inName, sensitivity);
-          computed[i][j] = true;
-        }
+	// If we can't use chain rule effectively, leave for FD
+	if (usedChainRule) {
+	  result.setSensitivity(outName, inName, sensitivity);
+	  computed[i][j] = true;
+	}
       }
     }
   }
@@ -490,7 +488,7 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
   /**
    * Computes remaining sensitivities via finite differences.
    *
-   * @param result the sensitivity matrix to populate
+   * @param result   the sensitivity matrix to populate
    * @param computed boolean matrix tracking which entries have been computed
    */
   private void computeViaFiniteDifferences(SensitivityMatrix result, boolean[][] computed) {
@@ -505,17 +503,17 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
     boolean[] needsPerturbation = new boolean[inputSpecs.size()];
     for (int j = 0; j < inputSpecs.size(); j++) {
       for (int i = 0; i < outputSpecs.size(); i++) {
-        if (!computed[i][j]) {
-          needsPerturbation[j] = true;
-          break;
-        }
+	if (!computed[i][j]) {
+	  needsPerturbation[j] = true;
+	  break;
+	}
       }
     }
 
     // Perturb each needed input
     for (int j = 0; j < inputSpecs.size(); j++) {
       if (!needsPerturbation[j]) {
-        continue;
+	continue;
       }
 
       VariableSpec input = inputSpecs.get(j);
@@ -525,44 +523,44 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
       double[] sensitivities;
 
       if (useCentralDifferences) {
-        // Central differences: (f(x+h) - f(x-h)) / (2h)
-        setPropertyValue(input, baseValue + perturbation);
-        processSystem.run();
-        double[] plusOutputs = new double[outputSpecs.size()];
-        for (int i = 0; i < outputSpecs.size(); i++) {
-          plusOutputs[i] = getPropertyValue(outputSpecs.get(i));
-        }
+	// Central differences: (f(x+h) - f(x-h)) / (2h)
+	setPropertyValue(input, baseValue + perturbation);
+	processSystem.run();
+	double[] plusOutputs = new double[outputSpecs.size()];
+	for (int i = 0; i < outputSpecs.size(); i++) {
+	  plusOutputs[i] = getPropertyValue(outputSpecs.get(i));
+	}
 
-        setPropertyValue(input, baseValue - perturbation);
-        processSystem.run();
-        double[] minusOutputs = new double[outputSpecs.size()];
-        for (int i = 0; i < outputSpecs.size(); i++) {
-          minusOutputs[i] = getPropertyValue(outputSpecs.get(i));
-        }
+	setPropertyValue(input, baseValue - perturbation);
+	processSystem.run();
+	double[] minusOutputs = new double[outputSpecs.size()];
+	for (int i = 0; i < outputSpecs.size(); i++) {
+	  minusOutputs[i] = getPropertyValue(outputSpecs.get(i));
+	}
 
-        sensitivities = new double[outputSpecs.size()];
-        for (int i = 0; i < outputSpecs.size(); i++) {
-          sensitivities[i] = (plusOutputs[i] - minusOutputs[i]) / (2 * perturbation);
-        }
+	sensitivities = new double[outputSpecs.size()];
+	for (int i = 0; i < outputSpecs.size(); i++) {
+	  sensitivities[i] = (plusOutputs[i] - minusOutputs[i]) / (2 * perturbation);
+	}
       } else {
-        // Forward differences: (f(x+h) - f(x)) / h
-        setPropertyValue(input, baseValue + perturbation);
-        processSystem.run();
+	// Forward differences: (f(x+h) - f(x)) / h
+	setPropertyValue(input, baseValue + perturbation);
+	processSystem.run();
 
-        sensitivities = new double[outputSpecs.size()];
-        for (int i = 0; i < outputSpecs.size(); i++) {
-          double perturbedOutput = getPropertyValue(outputSpecs.get(i));
-          sensitivities[i] = (perturbedOutput - baselineOutputs[i]) / perturbation;
-        }
+	sensitivities = new double[outputSpecs.size()];
+	for (int i = 0; i < outputSpecs.size(); i++) {
+	  double perturbedOutput = getPropertyValue(outputSpecs.get(i));
+	  sensitivities[i] = (perturbedOutput - baselineOutputs[i]) / perturbation;
+	}
       }
 
       // Store sensitivities
       String inName = input.getFullName();
       for (int i = 0; i < outputSpecs.size(); i++) {
-        if (!computed[i][j]) {
-          result.setSensitivity(outputSpecs.get(i).getFullName(), inName, sensitivities[i]);
-          computed[i][j] = true;
-        }
+	if (!computed[i][j]) {
+	  result.setSensitivity(outputSpecs.get(i).getFullName(), inName, sensitivities[i]);
+	  computed[i][j] = true;
+	}
       }
 
       // Restore
@@ -599,7 +597,7 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
   /**
    * Sets a property value on equipment using reflection.
    *
-   * @param spec the variable specification
+   * @param spec  the variable specification
    * @param value the value to set
    */
   private void setPropertyValue(VariableSpec spec, double value) {
@@ -621,10 +619,10 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
   private ProcessEquipmentInterface findEquipment(String name) {
     for (Object unit : processSystem.getUnitOperations()) {
       if (unit instanceof ProcessEquipmentInterface) {
-        ProcessEquipmentInterface equip = (ProcessEquipmentInterface) unit;
-        if (name.equals(equip.getName())) {
-          return equip;
-        }
+	ProcessEquipmentInterface equip = (ProcessEquipmentInterface) unit;
+	if (name.equals(equip.getName())) {
+	  return equip;
+	}
       }
     }
     return null;
@@ -634,14 +632,13 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
    * Gets a property value from equipment using reflection.
    *
    * @param equipment the process equipment to read from
-   * @param property the property name
-   * @param unit the unit string, or null
+   * @param property  the property name
+   * @param unit      the unit string, or null
    * @return the property value, or NaN if not found
    */
-  private double getPropertyFromEquipment(ProcessEquipmentInterface equipment, String property,
-      String unit) {
+  private double getPropertyFromEquipment(ProcessEquipmentInterface equipment, String property, String unit) {
     // Try standard getter patterns
-    String[] getterPrefixes = {"get", "is"};
+    String[] getterPrefixes = { "get", "is" };
     String capitalizedProperty = property.substring(0, 1).toUpperCase() + property.substring(1);
 
     for (String prefix : getterPrefixes) {
@@ -649,30 +646,30 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
 
       // Try with unit parameter
       if (unit != null) {
-        try {
-          Method method = findMethod(equipment.getClass(), methodName, String.class);
-          if (method != null) {
-            Object result = method.invoke(equipment, unit);
-            if (result instanceof Number) {
-              return ((Number) result).doubleValue();
-            }
-          }
-        } catch (Exception e) {
-          // Try without unit
-        }
+	try {
+	  Method method = findMethod(equipment.getClass(), methodName, String.class);
+	  if (method != null) {
+	    Object result = method.invoke(equipment, unit);
+	    if (result instanceof Number) {
+	      return ((Number) result).doubleValue();
+	    }
+	  }
+	} catch (Exception e) {
+	  // Try without unit
+	}
       }
 
       // Try without parameters
       try {
-        Method method = findMethod(equipment.getClass(), methodName);
-        if (method != null) {
-          Object result = method.invoke(equipment);
-          if (result instanceof Number) {
-            return ((Number) result).doubleValue();
-          }
-        }
+	Method method = findMethod(equipment.getClass(), methodName);
+	if (method != null) {
+	  Object result = method.invoke(equipment);
+	  if (result instanceof Number) {
+	    return ((Number) result).doubleValue();
+	  }
+	}
       } catch (Exception e) {
-        logger.trace("Method {} not found on {}", methodName, equipment.getClass().getSimpleName());
+	logger.trace("Method {} not found on {}", methodName, equipment.getClass().getSimpleName());
       }
     }
 
@@ -684,37 +681,35 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
    * Gets standard properties that are common across equipment types.
    *
    * @param equipment the process equipment to read from
-   * @param property the property name (e.g., temperature, pressure, flowrate)
-   * @param unit the unit string, or null for default units
+   * @param property  the property name (e.g., temperature, pressure, flowrate)
+   * @param unit      the unit string, or null for default units
    * @return the property value, or NaN if not found
    */
-  private double getStandardProperty(ProcessEquipmentInterface equipment, String property,
-      String unit) {
+  private double getStandardProperty(ProcessEquipmentInterface equipment, String property, String unit) {
     try {
       switch (property.toLowerCase()) {
-        case "temperature":
-          return callMethodWithOptionalUnit(equipment, "getTemperature", unit, "C");
-        case "pressure":
-          return callMethodWithOptionalUnit(equipment, "getPressure", unit, "bara");
-        case "flowrate":
-          return callMethodWithOptionalUnit(equipment, "getFlowRate", unit, "kg/hr");
-        case "entropyproduction":
-          return callMethodWithOptionalUnit(equipment, "getEntropyProduction", unit, "J/K");
-        case "exergychange":
-          return callMethodWithOptionalUnit(equipment, "getExergyChange", unit, "J");
-        default:
-          // Try generic property access
-          Method getProp = findMethod(equipment.getClass(), "getProperty", String.class);
-          if (getProp != null) {
-            Object result = getProp.invoke(equipment, property);
-            if (result instanceof Number) {
-              return ((Number) result).doubleValue();
-            }
-          }
+      case "temperature":
+	return callMethodWithOptionalUnit(equipment, "getTemperature", unit, "C");
+      case "pressure":
+	return callMethodWithOptionalUnit(equipment, "getPressure", unit, "bara");
+      case "flowrate":
+	return callMethodWithOptionalUnit(equipment, "getFlowRate", unit, "kg/hr");
+      case "entropyproduction":
+	return callMethodWithOptionalUnit(equipment, "getEntropyProduction", unit, "J/K");
+      case "exergychange":
+	return callMethodWithOptionalUnit(equipment, "getExergyChange", unit, "J");
+      default:
+	// Try generic property access
+	Method getProp = findMethod(equipment.getClass(), "getProperty", String.class);
+	if (getProp != null) {
+	  Object result = getProp.invoke(equipment, property);
+	  if (result instanceof Number) {
+	    return ((Number) result).doubleValue();
+	  }
+	}
       }
     } catch (Exception e) {
-      logger.debug("Could not get property {} from {}: {}", property, equipment.getName(),
-          e.getMessage());
+      logger.debug("Could not get property {} from {}: {}", property, equipment.getName(), e.getMessage());
     }
     return Double.NaN;
   }
@@ -722,22 +717,22 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
   /**
    * Calls a method with optional unit parameter.
    *
-   * @param equipment the process equipment to call the method on
-   * @param methodName the name of the method to invoke
-   * @param unit the unit string to pass, or null to use default
+   * @param equipment   the process equipment to call the method on
+   * @param methodName  the name of the method to invoke
+   * @param unit        the unit string to pass, or null to use default
    * @param defaultUnit the default unit if unit is null
    * @return the result of the method call as a double
    * @throws Exception if the method invocation fails
    */
-  private double callMethodWithOptionalUnit(ProcessEquipmentInterface equipment, String methodName,
-      String unit, String defaultUnit) throws Exception {
+  private double callMethodWithOptionalUnit(ProcessEquipmentInterface equipment, String methodName, String unit,
+      String defaultUnit) throws Exception {
     // Try with unit
     String actualUnit = (unit != null) ? unit : defaultUnit;
     Method method = findMethod(equipment.getClass(), methodName, String.class);
     if (method != null) {
       Object result = method.invoke(equipment, actualUnit);
       if (result instanceof Number) {
-        return ((Number) result).doubleValue();
+	return ((Number) result).doubleValue();
       }
     }
 
@@ -746,7 +741,7 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
     if (method != null) {
       Object result = method.invoke(equipment);
       if (result instanceof Number) {
-        return ((Number) result).doubleValue();
+	return ((Number) result).doubleValue();
       }
     }
 
@@ -757,25 +752,24 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
    * Sets a property value on equipment using reflection.
    *
    * @param equipment the process equipment to set the property on
-   * @param property the property name to set
-   * @param value the value to set
-   * @param unit the unit string for the value, or null
+   * @param property  the property name to set
+   * @param value     the value to set
+   * @param unit      the unit string for the value, or null
    */
-  private void setPropertyOnEquipment(ProcessEquipmentInterface equipment, String property,
-      double value, String unit) {
+  private void setPropertyOnEquipment(ProcessEquipmentInterface equipment, String property, double value, String unit) {
     String capitalizedProperty = property.substring(0, 1).toUpperCase() + property.substring(1);
     String methodName = "set" + capitalizedProperty;
 
     // Try with unit parameter
     if (unit != null) {
       try {
-        Method method = findMethod(equipment.getClass(), methodName, double.class, String.class);
-        if (method != null) {
-          method.invoke(equipment, value, unit);
-          return;
-        }
+	Method method = findMethod(equipment.getClass(), methodName, double.class, String.class);
+	if (method != null) {
+	  method.invoke(equipment, value, unit);
+	  return;
+	}
       } catch (Exception e) {
-        // Try without unit
+	// Try without unit
       }
     }
 
@@ -783,12 +777,11 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
     try {
       Method method = findMethod(equipment.getClass(), methodName, double.class);
       if (method != null) {
-        method.invoke(equipment, value);
-        return;
+	method.invoke(equipment, value);
+	return;
       }
     } catch (Exception e) {
-      logger.debug("Could not set property {} on {}: {}", property, equipment.getName(),
-          e.getMessage());
+      logger.debug("Could not set property {} on {}: {}", property, equipment.getName(), e.getMessage());
     }
 
     // Try standard property patterns
@@ -799,49 +792,46 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
    * Sets standard properties common across equipment types.
    *
    * @param equipment equipment whose property should be set
-   * @param property standard or generic property name
-   * @param value value to assign to the property
-   * @param unit unit for the value, or null to use the default for the property
+   * @param property  standard or generic property name
+   * @param value     value to assign to the property
+   * @param unit      unit for the value, or null to use the default for the property
    */
-  private void setStandardProperty(ProcessEquipmentInterface equipment, String property,
-      double value, String unit) {
+  private void setStandardProperty(ProcessEquipmentInterface equipment, String property, double value, String unit) {
     try {
       switch (property.toLowerCase()) {
-        case "temperature":
-          callSetterWithOptionalUnit(equipment, "setTemperature", value, unit, "C");
-          break;
-        case "pressure":
-          callSetterWithOptionalUnit(equipment, "setPressure", value, unit, "bara");
-          break;
-        case "flowrate":
-          callSetterWithOptionalUnit(equipment, "setFlowRate", value, unit, "kg/hr");
-          break;
-        default:
-          // Try generic property setter
-          Method setProp =
-              findMethod(equipment.getClass(), "setProperty", String.class, double.class);
-          if (setProp != null) {
-            setProp.invoke(equipment, property, value);
-          }
+      case "temperature":
+	callSetterWithOptionalUnit(equipment, "setTemperature", value, unit, "C");
+	break;
+      case "pressure":
+	callSetterWithOptionalUnit(equipment, "setPressure", value, unit, "bara");
+	break;
+      case "flowrate":
+	callSetterWithOptionalUnit(equipment, "setFlowRate", value, unit, "kg/hr");
+	break;
+      default:
+	// Try generic property setter
+	Method setProp = findMethod(equipment.getClass(), "setProperty", String.class, double.class);
+	if (setProp != null) {
+	  setProp.invoke(equipment, property, value);
+	}
       }
     } catch (Exception e) {
-      logger.debug("Could not set property {} on {}: {}", property, equipment.getName(),
-          e.getMessage());
+      logger.debug("Could not set property {} on {}: {}", property, equipment.getName(), e.getMessage());
     }
   }
 
   /**
    * Calls a setter with optional unit parameter.
    *
-   * @param equipment equipment containing the setter
-   * @param methodName setter method name to call
-   * @param value numeric value to pass to the setter
-   * @param unit requested unit, or null to use {@code defaultUnit}
+   * @param equipment   equipment containing the setter
+   * @param methodName  setter method name to call
+   * @param value       numeric value to pass to the setter
+   * @param unit        requested unit, or null to use {@code defaultUnit}
    * @param defaultUnit fallback unit used when {@code unit} is null
    * @throws Exception if reflective method invocation fails
    */
-  private void callSetterWithOptionalUnit(ProcessEquipmentInterface equipment, String methodName,
-      double value, String unit, String defaultUnit) throws Exception {
+  private void callSetterWithOptionalUnit(ProcessEquipmentInterface equipment, String methodName, double value,
+      String unit, String defaultUnit) throws Exception {
     String actualUnit = (unit != null) ? unit : defaultUnit;
 
     // Try with unit
@@ -861,8 +851,8 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
   /**
    * Finds a method on a class, searching up the hierarchy.
    *
-   * @param clazz class where the search starts
-   * @param name method name to find
+   * @param clazz      class where the search starts
+   * @param name       method name to find
    * @param paramTypes ordered parameter types for the method signature
    * @return matching method, or null if no matching method exists
    */
@@ -873,13 +863,13 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
       // Try declared methods (including private)
       Class<?> current = clazz;
       while (current != null) {
-        try {
-          Method method = current.getDeclaredMethod(name, paramTypes);
-          method.setAccessible(true);
-          return method;
-        } catch (NoSuchMethodException ex) {
-          current = current.getSuperclass();
-        }
+	try {
+	  Method method = current.getDeclaredMethod(name, paramTypes);
+	  method.setAccessible(true);
+	  return method;
+	} catch (NoSuchMethodException ex) {
+	  current = current.getSuperclass();
+	}
       }
     }
     return null;
@@ -901,7 +891,7 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
     for (VariableSpec input : inputSpecs) {
       sb.append("  - ").append(input.getFullName());
       if (input.getUnit() != null) {
-        sb.append(" [").append(input.getUnit()).append("]");
+	sb.append(" [").append(input.getUnit()).append("]");
       }
       sb.append("\n");
     }
@@ -910,7 +900,7 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
     for (VariableSpec output : outputSpecs) {
       sb.append("  - ").append(output.getFullName());
       if (output.getUnit() != null) {
-        sb.append(" [").append(output.getUnit()).append("]");
+	sb.append(" [").append(output.getUnit()).append("]");
       }
       sb.append("\n");
     }
@@ -928,8 +918,8 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
     for (VariableSpec output : outputSpecs) {
       sb.append(String.format("%30s", truncate(output.getFullName(), 30)));
       for (VariableSpec input : inputSpecs) {
-        double sens = matrix.getSensitivity(output.getFullName(), input.getFullName());
-        sb.append(String.format(" %15.4e", sens));
+	double sens = matrix.getSensitivity(output.getFullName(), input.getFullName());
+	sb.append(String.format(" %15.4e", sens));
       }
       sb.append("\n");
     }
@@ -941,8 +931,8 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
       String outName = output.getFullName();
       String mostInfluential = influential.get(outName);
       if (mostInfluential != null) {
-        double sens = matrix.getSensitivity(outName, mostInfluential);
-        sb.append(String.format("  %s: %s (sensitivity: %.4e)\n", outName, mostInfluential, sens));
+	double sens = matrix.getSensitivity(outName, mostInfluential);
+	sb.append(String.format("  %s: %s (sensitivity: %.4e)\n", outName, mostInfluential, sens));
       }
     }
 

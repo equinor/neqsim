@@ -11,9 +11,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Cryogenic separator model with solid formation and freeze-out safety checks.
  *
  * <p>
- * Extends the standard {@link Separator} for operation at cryogenic temperatures (below -50 C).
- * Adds safety checks for CO2 freeze-out, heavy hydrocarbon freeze-out, and ice formation that can
- * block equipment in LNG plants.
+ * Extends the standard {@link Separator} for operation at cryogenic temperatures (below -50 C). Adds safety checks for
+ * CO2 freeze-out, heavy hydrocarbon freeze-out, and ice formation that can block equipment in LNG plants.
  * </p>
  *
  * <p>
@@ -66,7 +65,7 @@ public class CryogenicSeparator extends Separator {
   /**
    * Constructor for CryogenicSeparator with inlet stream.
    *
-   * @param name name of the cryogenic separator
+   * @param name        name of the cryogenic separator
    * @param inletStream inlet stream
    */
   public CryogenicSeparator(String name, StreamInterface inletStream) {
@@ -185,17 +184,15 @@ public class CryogenicSeparator extends Separator {
 
     // Log warnings
     if (co2FreezeOutRisk) {
-      logger.warn(
-          String.format("CryogenicSeparator '%s': CO2 freeze-out risk at %.1f K, CO2=%.6f mol frac",
-              getName(), operatingTemp, co2MolFrac));
+      logger.warn(String.format("CryogenicSeparator '%s': CO2 freeze-out risk at %.1f K, CO2=%.6f mol frac", getName(),
+	  operatingTemp, co2MolFrac));
     }
     if (waterIceRisk) {
-      logger.warn(String.format("CryogenicSeparator '%s': Water ice formation risk at %.1f K",
-          getName(), operatingTemp));
+      logger
+	  .warn(String.format("CryogenicSeparator '%s': Water ice formation risk at %.1f K", getName(), operatingTemp));
     }
     if (solidPhaseDetected) {
-      logger.warn(String.format(
-          "CryogenicSeparator '%s': Solid phase detected by thermodynamic flash", getName()));
+      logger.warn(String.format("CryogenicSeparator '%s': Solid phase detected by thermodynamic flash", getName()));
     }
 
     setCalculationIdentifier(id);
@@ -204,14 +201,14 @@ public class CryogenicSeparator extends Separator {
   /**
    * Check CO2 content against freeze-out limits.
    *
-   * @param system fluid system
+   * @param system         fluid system
    * @param operatingTempK operating temperature in Kelvin
    */
   private void checkCO2Content(SystemInterface system, double operatingTempK) {
     co2MolFrac = 0.0;
     try {
       if (system.getPhase(0).hasComponent("CO2")) {
-        co2MolFrac = system.getPhase(0).getComponent("CO2").getz();
+	co2MolFrac = system.getPhase(0).getComponent("CO2").getz();
       }
     } catch (Exception ex) {
       logger.debug("CO2 component check failed", ex);
@@ -228,14 +225,14 @@ public class CryogenicSeparator extends Separator {
   /**
    * Check water content against ice formation limits.
    *
-   * @param system fluid system
+   * @param system         fluid system
    * @param operatingTempK operating temperature in Kelvin
    */
   private void checkWaterContent(SystemInterface system, double operatingTempK) {
     double waterFrac = 0.0;
     try {
       if (system.getPhase(0).hasComponent("water")) {
-        waterFrac = system.getPhase(0).getComponent("water").getz();
+	waterFrac = system.getPhase(0).getComponent("water").getz();
       }
     } catch (Exception ex) {
       logger.debug("Water component check failed", ex);
@@ -259,8 +256,8 @@ public class CryogenicSeparator extends Separator {
       ThermodynamicOperations ops = new ThermodynamicOperations(checkSystem);
       ops.TPSolidflash();
       if (checkSystem.hasPhaseType("solid")) {
-        solidPhaseDetected = true;
-        heavyHCFreezeOutRisk = true;
+	solidPhaseDetected = true;
+	heavyHCFreezeOutRisk = true;
       }
     } catch (Exception ex) {
       logger.debug("Solid flash check failed for cryogenic separator", ex);

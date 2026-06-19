@@ -6,14 +6,12 @@ import java.util.List;
 import neqsim.process.equipment.stream.StreamInterface;
 
 /**
- * Abstract base class for process equipment with multiple inlet and/or outlet streams. Subclasses
- * such as heat exchanger networks, manifolds, or custom multi-port units can extend this instead of
- * wiring their own stream lists.
+ * Abstract base class for process equipment with multiple inlet and/or outlet streams. Subclasses such as heat
+ * exchanger networks, manifolds, or custom multi-port units can extend this instead of wiring their own stream lists.
  *
  * <p>
- * Existing equipment (Separator, Mixer, Splitter) is <em>not</em> refactored to extend this class
- * to preserve backward compatibility. They already override {@code getInletStreams()} and
- * {@code getOutletStreams()} individually.
+ * Existing equipment (Separator, Mixer, Splitter) is <em>not</em> refactored to extend this class to preserve backward
+ * compatibility. They already override {@code getInletStreams()} and {@code getOutletStreams()} individually.
  * </p>
  *
  * @author Even Solbraa

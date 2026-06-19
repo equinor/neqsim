@@ -21,8 +21,7 @@ public class MethaneViscosityMethodTest {
     testOps.TPflash();
     testSystem.getPhase("gas").getPhysicalProperties().setViscosityModel("MethaneModel");
     testSystem.initProperties();
-    assertEquals(2.1165726278971833E-5,
-        testSystem.getPhase(0).getPhysicalProperties().getViscosity(), 0.5e-10);
+    assertEquals(2.1165726278971833E-5, testSystem.getPhase(0).getPhysicalProperties().getViscosity(), 0.5e-10);
     // double viscosity = testSystem.getPhase(0).getPhysicalProperties().getViscosity();
     // logger.info("Viscosity_LBC_MethaneMod: " + viscosity + "[Pa*s]");
   }

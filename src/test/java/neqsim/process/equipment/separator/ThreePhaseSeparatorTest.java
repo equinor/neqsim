@@ -58,8 +58,7 @@ class ThreePhaseSeparatorTest {
   @Disabled
   @Test
   void testRun() {
-    neqsim.thermo.system.SystemInterface fluid1 =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
+    neqsim.thermo.system.SystemInterface fluid1 = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
 
     fluid1.addComponent("nitrogen", 0.110282450914383);
     fluid1.addComponent("CO2", 8.92014980316162);
@@ -80,16 +79,16 @@ class ThreePhaseSeparatorTest {
 
     testOps.TPflash();
 
-    double[] intParameter = {-0.24, // "CO2"
-        -0.721, // "methane"
-        0.11, // "ethane"
-        0.205, // "propane"
-        0.081, // "i-butane"
-        0.17, // "n-butane"
-        0.051, // "i-pentane"
-        0.1135, // "n-pentane"
-        0.0832, // "n-hexane"
-        0.0535 // "n-heptane"
+    double[] intParameter = { -0.24, // "CO2"
+	-0.721, // "methane"
+	0.11, // "ethane"
+	0.205, // "propane"
+	0.081, // "i-butane"
+	0.17, // "n-butane"
+	0.051, // "i-pentane"
+	0.1135, // "n-pentane"
+	0.0832, // "n-hexane"
+	0.0535 // "n-heptane"
     };
 
     String[] componentNames = fluid1.getComponentNames();
@@ -100,11 +99,11 @@ class ThreePhaseSeparatorTest {
       int waterIndex = findComponentIndex(componentNames, "water");
 
       if (componentIndex != -1 && waterIndex != -1) {
-        ((PhaseEosInterface) fluid1.getPhases()[0]).getEosMixingRule()
-            .setBinaryInteractionParameter(componentIndex, waterIndex, intParameter[i]);
+	((PhaseEosInterface) fluid1.getPhases()[0]).getEosMixingRule().setBinaryInteractionParameter(componentIndex,
+	    waterIndex, intParameter[i]);
 
-        ((PhaseEosInterface) fluid1.getPhases()[1]).getEosMixingRule()
-            .setBinaryInteractionParameter(componentIndex, waterIndex, intParameter[i]);
+	((PhaseEosInterface) fluid1.getPhases()[1]).getEosMixingRule().setBinaryInteractionParameter(componentIndex,
+	    waterIndex, intParameter[i]);
       } else {
       }
     }
@@ -126,8 +125,7 @@ class ThreePhaseSeparatorTest {
     molarComposition.add(2.732003176453634);
     molarComposition.add(27.978388438425913);
 
-    double[] molarCompositionArray =
-        molarComposition.stream().mapToDouble(Double::doubleValue).toArray();
+    double[] molarCompositionArray = molarComposition.stream().mapToDouble(Double::doubleValue).toArray();
 
     neqsim.thermo.system.SystemInterface fluid_test_separator = fluid1.clone();
     fluid_test_separator.setMolarComposition(molarCompositionArray);
@@ -138,13 +136,12 @@ class ThreePhaseSeparatorTest {
     inlet_stream_test_sep.setFlowRate(721.3143271348611, "kg/hr");
     inlet_stream_test_sep.run();
 
-    ThreePhaseSeparator test_separator =
-        new ThreePhaseSeparator("TEST_SEPARATOR", inlet_stream_test_sep);
+    ThreePhaseSeparator test_separator = new ThreePhaseSeparator("TEST_SEPARATOR", inlet_stream_test_sep);
     test_separator.run();
     test_separator.getWaterOutStream().getThermoSystem().prettyPrint();
 
     Heater heater_TP_setter_test_stream = new Heater("TP_SETTER_FOR_THE_DEGASSER_TEST_SEP_STREAM",
-        test_separator.getWaterOutStream());
+	test_separator.getWaterOutStream());
     heater_TP_setter_test_stream.setOutPressure(5.9061164855957 - 0.01, "bara");
     heater_TP_setter_test_stream.setOutTemperature(79.8487854003906, "C");
     heater_TP_setter_test_stream.run();
@@ -154,7 +151,7 @@ class ThreePhaseSeparatorTest {
     heater_TP_setter_test_stream.getOutletStream().getThermoSystem().prettyPrint();
 
     Heater heater_TP_setter_test_stream2 = new Heater("TP_SETTER_FOR_THE_DEGASSER_TEST_SEP_STREAM",
-        test_separator.getWaterOutStream());
+	test_separator.getWaterOutStream());
     heater_TP_setter_test_stream2.setOutPressure(5.9061164855957, "bara");
     heater_TP_setter_test_stream2.setOutTemperature(79.8487854003906, "C");
     heater_TP_setter_test_stream2.run();
@@ -167,7 +164,7 @@ class ThreePhaseSeparatorTest {
   private int findComponentIndex(String[] componentNames, String componentName) {
     for (int i = 0; i < componentNames.length; i++) {
       if (componentNames[i].equals(componentName)) {
-        return i;
+	return i;
       }
     }
 
@@ -180,37 +177,33 @@ class ThreePhaseSeparatorTest {
   @Disabled
   void testRun2() {
     /*
-     * XStream xstream = new XStream(); xstream.addPermission(AnyTypePermission.ANY); // Specify the
-     * file path to read Path filePath = Paths.get(
-     * "/workspaces/neqsim/src/test/java/neqsim/thermodynamicOperations/flashOps/my_process.xml" );
-     * String xmlContents = ""; try { xmlContents = new String(Files.readAllBytes(filePath),
-     * StandardCharsets.UTF_8); } catch (IOException e) { logger.error(e.getMessage()); }
+     * XStream xstream = new XStream(); xstream.addPermission(AnyTypePermission.ANY); // Specify the file path to read
+     * Path filePath = Paths.get(
+     * "/workspaces/neqsim/src/test/java/neqsim/thermodynamicOperations/flashOps/my_process.xml" ); String xmlContents =
+     * ""; try { xmlContents = new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8); } catch (IOException e)
+     * { logger.error(e.getMessage()); }
      *
      * // Deserialize from xml neqsim.processSimulation.processSystem.ProcessSystem operationsCopy =
-     * (neqsim.processSimulation.processSystem.ProcessSystem) xstream.fromXML(xmlContents);
-     * operationsCopy.run(); neqsim.processSimulation.processEquipment.separator.Separator
-     * VD02Separator = (neqsim.processSimulation.processEquipment.separator.Separator)
-     * operationsCopy .getUnit("Separator after CFU gas");
-     * neqsim.processSimulation.processEquipment.separator.Separator VD01Separator =
+     * (neqsim.processSimulation.processSystem.ProcessSystem) xstream.fromXML(xmlContents); operationsCopy.run();
+     * neqsim.processSimulation.processEquipment.separator.Separator VD02Separator =
      * (neqsim.processSimulation.processEquipment.separator.Separator) operationsCopy
-     * .getUnit("Separator after degasser gas");
-     * neqsim.processSimulation.processEquipment.separator.Separator Degasser =
-     * (neqsim.processSimulation.processEquipment.separator.Separator) operationsCopy
-     * .getUnit("Degasser"); System.out.
-     * println("The gas flow rate should be < 200 kg/hr, the actual value is " +
+     * .getUnit("Separator after CFU gas"); neqsim.processSimulation.processEquipment.separator.Separator VD01Separator
+     * = (neqsim.processSimulation.processEquipment.separator.Separator) operationsCopy
+     * .getUnit("Separator after degasser gas"); neqsim.processSimulation.processEquipment.separator.Separator Degasser
+     * = (neqsim.processSimulation.processEquipment.separator.Separator) operationsCopy .getUnit("Degasser");
+     * System.out. println("The gas flow rate should be < 200 kg/hr, the actual value is " +
      * Degasser.getGasOutStream().getFlowRate("kg/hr")); System.out.
      * println("The gas flow rate should be < 200 kg/hr, the actual value is " +
-     * VD01Separator.getGasOutStream().getFlowRate("kg/hr")); VD02Separator.getGasOutStream().run();
-     * System.out. println("The gas flow rate should be < 200 kg/hr, the actual value is " +
+     * VD01Separator.getGasOutStream().getFlowRate("kg/hr")); VD02Separator.getGasOutStream().run(); System.out.
+     * println("The gas flow rate should be < 200 kg/hr, the actual value is " +
      * VD02Separator.getGasOutStream().getFlowRate("kg/hr"));
      */
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"volume", "mass", "mole"})
+  @ValueSource(strings = { "volume", "mass", "mole" })
   void testEntrainmentSep(String specification) {
-    neqsim.thermo.system.SystemInterface fluid1 =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
+    neqsim.thermo.system.SystemInterface fluid1 = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
 
     fluid1.addComponent("methane", 72.3870849609375);
     fluid1.addComponent("n-heptane", 13.90587639808655);
@@ -224,15 +217,14 @@ class ThreePhaseSeparatorTest {
     inlet_stream_test_sep.setFlowRate(721.3143271348611, "kg/hr");
     inlet_stream_test_sep.run();
 
-    ThreePhaseSeparator test_separator =
-        new ThreePhaseSeparator("TEST_SEPARATOR", inlet_stream_test_sep);
+    ThreePhaseSeparator test_separator = new ThreePhaseSeparator("TEST_SEPARATOR", inlet_stream_test_sep);
     test_separator.setEntrainment(0.05, specification, "product", "aqueous", "oil");
     test_separator.run();
     // test_separator.getFluid().prettyPrint();
 
     double aqueousFraction = getPhaseBasisFraction(specification,
-        test_separator.getOilOutStream().getFluid().getPhase("aqueous"),
-        test_separator.getOilOutStream().getFluid().getPhase("oil"));
+	test_separator.getOilOutStream().getFluid().getPhase("aqueous"),
+	test_separator.getOilOutStream().getFluid().getPhase("oil"));
     Assertions.assertEquals(5.0, aqueousFraction * 100, 0.1);
     /*
      * logger.info("water in oil % " + (test_separator.getOilOutStream().getFluid()
@@ -243,8 +235,7 @@ class ThreePhaseSeparatorTest {
     // test_separator.getOilOutStream().getThermoSystem().prettyPrint();
   }
 
-  private double getPhaseBasisFraction(String specification, PhaseInterface aqueousPhase,
-      PhaseInterface oilPhase) {
+  private double getPhaseBasisFraction(String specification, PhaseInterface aqueousPhase, PhaseInterface oilPhase) {
     double aqueousBasis = getPhaseBasis(specification, aqueousPhase);
     double oilBasis = getPhaseBasis(specification, oilPhase);
     return aqueousBasis / (aqueousBasis + oilBasis);
@@ -252,26 +243,24 @@ class ThreePhaseSeparatorTest {
 
   private double getPhaseBasis(String specification, PhaseInterface phase) {
     switch (specification) {
-      case "mole":
-        return phase.getNumberOfMolesInPhase();
-      case "mass":
-        return phase.getMass();
-      case "volume":
-        return phase.getVolume("m3");
-      default:
-        throw new IllegalArgumentException("Unsupported specification: " + specification);
+    case "mole":
+      return phase.getNumberOfMolesInPhase();
+    case "mass":
+      return phase.getMass();
+    case "volume":
+      return phase.getVolume("m3");
+    default:
+      throw new IllegalArgumentException("Unsupported specification: " + specification);
     }
   }
 
   /**
-   * Test that three-phase separator entrainment correctly transfers material between all six
-   * phase-to-phase paths. Verifies mass balance and that the specified fractions appear in the
-   * correct outlet streams.
+   * Test that three-phase separator entrainment correctly transfers material between all six phase-to-phase paths.
+   * Verifies mass balance and that the specified fractions appear in the correct outlet streams.
    */
   @Test
   void testThreePhaseSeparatorEntrainmentAllPaths() {
-    neqsim.thermo.system.SystemInterface fluid =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.0);
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.0);
     fluid.addComponent("methane", 72.0);
     fluid.addComponent("n-heptane", 14.0);
     fluid.addComponent("water", 40.0);
@@ -310,27 +299,22 @@ class ThreePhaseSeparatorTest {
 
     // Verify aqueous phase is present in oil outlet stream
     Assertions.assertTrue(entrainSep1.getOilOutStream().getFluid().hasPhaseType("aqueous"),
-        "Oil outlet should contain entrained aqueous phase");
+	"Oil outlet should contain entrained aqueous phase");
 
     // Verify oil phase is present in water outlet stream
     Assertions.assertTrue(entrainSep1.getOilOutStream().getFluid().hasPhaseType("oil"),
-        "Oil outlet should still contain oil phase");
+	"Oil outlet should still contain oil phase");
 
     // Check aqueous fraction in oil outlet is approximately 5%
-    double aqMolesInOil =
-        entrainSep1.getOilOutStream().getFluid().getPhase("aqueous").getNumberOfMolesInPhase();
-    double oilMolesInOil =
-        entrainSep1.getOilOutStream().getFluid().getPhase("oil").getNumberOfMolesInPhase();
+    double aqMolesInOil = entrainSep1.getOilOutStream().getFluid().getPhase("aqueous").getNumberOfMolesInPhase();
+    double oilMolesInOil = entrainSep1.getOilOutStream().getFluid().getPhase("oil").getNumberOfMolesInPhase();
     double aqFractionInOilOut = aqMolesInOil / (aqMolesInOil + oilMolesInOil);
-    Assertions.assertEquals(0.05, aqFractionInOilOut, 0.005,
-        "Aqueous mole fraction in oil outlet should be ~5%");
+    Assertions.assertEquals(0.05, aqFractionInOilOut, 0.005, "Aqueous mole fraction in oil outlet should be ~5%");
 
     // Mass balance: total outlet mass should match inlet
     double totalOutMass1 = entrainSep1.getGasOutStream().getFlowRate("kg/hr")
-        + entrainSep1.getOilOutStream().getFlowRate("kg/hr")
-        + entrainSep1.getWaterOutStream().getFlowRate("kg/hr");
-    Assertions.assertEquals(720.0, totalOutMass1, 1.0,
-        "Total outlet mass flow should match inlet within 1 kg/hr");
+	+ entrainSep1.getOilOutStream().getFlowRate("kg/hr") + entrainSep1.getWaterOutStream().getFlowRate("kg/hr");
+    Assertions.assertEquals(720.0, totalOutMass1, 1.0, "Total outlet mass flow should match inlet within 1 kg/hr");
 
     // --- With entrainment: oil into gas and gas into oil ---
     Stream entrainFeed2 = new Stream("entrainFeed2", fluid.clone());
@@ -345,19 +329,15 @@ class ThreePhaseSeparatorTest {
     entrainSep2.run();
 
     // Gas outlet should have oil-origin components entrained
-    double gasOutMoles2 =
-        entrainSep2.getGasOutStream().getFluid().getPhase("gas").getNumberOfMolesInPhase();
+    double gasOutMoles2 = entrainSep2.getGasOutStream().getFluid().getPhase("gas").getNumberOfMolesInPhase();
     // Oil outlet should still have flow
     double oilOutMass2 = entrainSep2.getOilOutStream().getFlowRate("kg/hr");
-    Assertions.assertTrue(oilOutMass2 > 0.0,
-        "Oil outlet should have flow when gas is entrained into oil");
+    Assertions.assertTrue(oilOutMass2 > 0.0, "Oil outlet should have flow when gas is entrained into oil");
 
     // Mass balance
     double gasOutMass2 = entrainSep2.getGasOutStream().getFlowRate("kg/hr");
-    double totalOutMass2 =
-        gasOutMass2 + oilOutMass2 + entrainSep2.getWaterOutStream().getFlowRate("kg/hr");
-    Assertions.assertEquals(720.0, totalOutMass2, 1.0,
-        "Total outlet mass flow should match inlet within 1 kg/hr");
+    double totalOutMass2 = gasOutMass2 + oilOutMass2 + entrainSep2.getWaterOutStream().getFlowRate("kg/hr");
+    Assertions.assertEquals(720.0, totalOutMass2, 1.0, "Total outlet mass flow should match inlet within 1 kg/hr");
 
     // --- With entrainment: aqueous into gas and gas into aqueous ---
     Stream entrainFeed3 = new Stream("entrainFeed3", fluid.clone());
@@ -373,25 +353,21 @@ class ThreePhaseSeparatorTest {
 
     // Water outlet should still have flow with entrained gas
     double waterOutMass3 = entrainSep3.getWaterOutStream().getFlowRate("kg/hr");
-    Assertions.assertTrue(waterOutMass3 > 0.0,
-        "Water outlet should have flow when gas is entrained into aqueous");
+    Assertions.assertTrue(waterOutMass3 > 0.0, "Water outlet should have flow when gas is entrained into aqueous");
 
     // Mass balance
     double gasOutMass3 = entrainSep3.getGasOutStream().getFlowRate("kg/hr");
-    double totalOutMass3 =
-        gasOutMass3 + entrainSep3.getOilOutStream().getFlowRate("kg/hr") + waterOutMass3;
-    Assertions.assertEquals(720.0, totalOutMass3, 1.0,
-        "Total outlet mass flow should match inlet within 1 kg/hr");
+    double totalOutMass3 = gasOutMass3 + entrainSep3.getOilOutStream().getFlowRate("kg/hr") + waterOutMass3;
+    Assertions.assertEquals(720.0, totalOutMass3, 1.0, "Total outlet mass flow should match inlet within 1 kg/hr");
   }
 
   /**
-   * Test that all six entrainment paths work together and mass balance holds for the three-phase
-   * separator with simultaneous entrainment on every phase pair.
+   * Test that all six entrainment paths work together and mass balance holds for the three-phase separator with
+   * simultaneous entrainment on every phase pair.
    */
   @Test
   void testThreePhaseSeparatorFullEntrainmentMassBalance() {
-    neqsim.thermo.system.SystemInterface fluid =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.0);
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.0);
     fluid.addComponent("methane", 72.0);
     fluid.addComponent("n-heptane", 14.0);
     fluid.addComponent("water", 40.0);
@@ -427,17 +403,16 @@ class ThreePhaseSeparatorTest {
     // Mass balance
     double totalOutMass = gasMass + oilMass + waterMass;
     Assertions.assertEquals(720.0, totalOutMass, 1.0,
-        "Total outlet mass flow should match inlet (720 kg/hr) within 1 kg/hr");
+	"Total outlet mass flow should match inlet (720 kg/hr) within 1 kg/hr");
   }
 
   /**
-   * Test that zero entrainment on a three-phase separator matches a separator with no entrainment
-   * set (perfect separation baseline).
+   * Test that zero entrainment on a three-phase separator matches a separator with no entrainment set (perfect
+   * separation baseline).
    */
   @Test
   void testThreePhaseSeparatorZeroEntrainmentMatchesBaseline() {
-    neqsim.thermo.system.SystemInterface fluid =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.0);
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.0);
     fluid.addComponent("methane", 72.0);
     fluid.addComponent("n-heptane", 14.0);
     fluid.addComponent("water", 40.0);
@@ -473,39 +448,32 @@ class ThreePhaseSeparatorTest {
     double tolerance = 1e-6;
 
     // Gas outlet moles should match
-    double baseGasMoles =
-        baselineSep.getGasOutStream().getFluid().getPhase("gas").getNumberOfMolesInPhase();
-    double zeroGasMoles =
-        zeroSep.getGasOutStream().getFluid().getPhase("gas").getNumberOfMolesInPhase();
+    double baseGasMoles = baselineSep.getGasOutStream().getFluid().getPhase("gas").getNumberOfMolesInPhase();
+    double zeroGasMoles = zeroSep.getGasOutStream().getFluid().getPhase("gas").getNumberOfMolesInPhase();
     Assertions.assertEquals(baseGasMoles, zeroGasMoles, tolerance,
-        "Gas outlet moles should match baseline when entrainment is zero");
+	"Gas outlet moles should match baseline when entrainment is zero");
 
     // Oil outlet moles should match
-    double baseOilMoles =
-        baselineSep.getOilOutStream().getFluid().getPhase("oil").getNumberOfMolesInPhase();
-    double zeroOilMoles =
-        zeroSep.getOilOutStream().getFluid().getPhase("oil").getNumberOfMolesInPhase();
+    double baseOilMoles = baselineSep.getOilOutStream().getFluid().getPhase("oil").getNumberOfMolesInPhase();
+    double zeroOilMoles = zeroSep.getOilOutStream().getFluid().getPhase("oil").getNumberOfMolesInPhase();
     Assertions.assertEquals(baseOilMoles, zeroOilMoles, tolerance,
-        "Oil outlet moles should match baseline when entrainment is zero");
+	"Oil outlet moles should match baseline when entrainment is zero");
 
     // Water outlet moles should match
-    double baseWaterMoles =
-        baselineSep.getWaterOutStream().getFluid().getPhase("aqueous").getNumberOfMolesInPhase();
-    double zeroWaterMoles =
-        zeroSep.getWaterOutStream().getFluid().getPhase("aqueous").getNumberOfMolesInPhase();
+    double baseWaterMoles = baselineSep.getWaterOutStream().getFluid().getPhase("aqueous").getNumberOfMolesInPhase();
+    double zeroWaterMoles = zeroSep.getWaterOutStream().getFluid().getPhase("aqueous").getNumberOfMolesInPhase();
     Assertions.assertEquals(baseWaterMoles, zeroWaterMoles, tolerance,
-        "Water outlet moles should match baseline when entrainment is zero");
+	"Water outlet moles should match baseline when entrainment is zero");
   }
 
   /**
-   * Test entrainment with mass and volume specification types on three-phase separator and verify
-   * the specified fractions are achieved.
+   * Test entrainment with mass and volume specification types on three-phase separator and verify the specified
+   * fractions are achieved.
    */
   @ParameterizedTest
-  @ValueSource(strings = {"mole", "mass", "volume"})
+  @ValueSource(strings = { "mole", "mass", "volume" })
   void testThreePhaseSeparatorEntrainmentSpecTypes(String specType) {
-    neqsim.thermo.system.SystemInterface fluid =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.0);
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.0);
     fluid.addComponent("methane", 72.0);
     fluid.addComponent("n-heptane", 14.0);
     fluid.addComponent("water", 40.0);
@@ -531,8 +499,8 @@ class ThreePhaseSeparatorTest {
     double oilBasis = getPhaseBasis(specType, oilPhase);
     double actualFraction = aqBasis / (aqBasis + oilBasis);
 
-    Assertions.assertEquals(targetFraction, actualFraction, 0.005, "Aqueous " + specType
-        + " fraction in oil outlet should be ~" + (targetFraction * 100) + "%");
+    Assertions.assertEquals(targetFraction, actualFraction, 0.005,
+	"Aqueous " + specType + " fraction in oil outlet should be ~" + (targetFraction * 100) + "%");
   }
 
   /**
@@ -540,8 +508,7 @@ class ThreePhaseSeparatorTest {
    */
   @Test
   void testRunTransient() {
-    neqsim.thermo.system.SystemInterface fluid1 =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
+    neqsim.thermo.system.SystemInterface fluid1 = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
 
     fluid1.addComponent("methane", 72.3870849609375);
     fluid1.addComponent("n-heptane", 13.90587639808655);
@@ -555,8 +522,7 @@ class ThreePhaseSeparatorTest {
     inlet_stream_test_sep.setFlowRate(721.3143271348611, "kg/hr");
     inlet_stream_test_sep.run();
 
-    ThreePhaseSeparator test_separator =
-        new ThreePhaseSeparator("TEST_SEPARATOR", inlet_stream_test_sep);
+    ThreePhaseSeparator test_separator = new ThreePhaseSeparator("TEST_SEPARATOR", inlet_stream_test_sep);
     test_separator.setInternalDiameter(1.0);
     test_separator.setSeparatorLength(3.0);
     test_separator.setLiquidLevel(0.5);
@@ -595,14 +561,13 @@ class ThreePhaseSeparatorTest {
   }
 
   /**
-   * Test method for transient/dynamic calculation with valve opening/closing and tracking water and
-   * oil levels over time.
+   * Test method for transient/dynamic calculation with valve opening/closing and tracking water and oil levels over
+   * time.
    */
   @Test
   void testRunTransientWithValveOperations() {
     // Create a three-phase fluid system
-    neqsim.thermo.system.SystemInterface fluid1 =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
+    neqsim.thermo.system.SystemInterface fluid1 = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
 
     fluid1.addComponent("methane", 72.3870849609375);
     fluid1.addComponent("n-heptane", 13.90587639808655);
@@ -617,8 +582,7 @@ class ThreePhaseSeparatorTest {
     inlet_stream_test_sep.run();
 
     // Create and configure the separator
-    ThreePhaseSeparator test_separator =
-        new ThreePhaseSeparator("TEST_SEPARATOR", inlet_stream_test_sep);
+    ThreePhaseSeparator test_separator = new ThreePhaseSeparator("TEST_SEPARATOR", inlet_stream_test_sep);
     test_separator.setInternalDiameter(2.0);
     test_separator.setSeparatorLength(5.0);
     test_separator.setOrientation("horizontal");
@@ -661,24 +625,24 @@ class ThreePhaseSeparatorTest {
       // - From t=80 to t=100: all valves open again
 
       if (currentTime >= 20 && currentTime < 40) {
-        // Oil valve 90% closed
-        test_separator.setOilOutletFlowFraction(0.1);
+	// Oil valve 90% closed
+	test_separator.setOilOutletFlowFraction(0.1);
       } else {
-        test_separator.setOilOutletFlowFraction(1.0);
+	test_separator.setOilOutletFlowFraction(1.0);
       }
 
       if (currentTime >= 40 && currentTime < 60) {
-        // Water valve 90% closed
-        test_separator.setWaterOutletFlowFraction(0.1);
+	// Water valve 90% closed
+	test_separator.setWaterOutletFlowFraction(0.1);
       } else {
-        test_separator.setWaterOutletFlowFraction(1.0);
+	test_separator.setWaterOutletFlowFraction(1.0);
       }
 
       if (currentTime >= 60 && currentTime < 80) {
-        // Gas valve 90% closed
-        test_separator.setGasOutletFlowFraction(0.1);
+	// Gas valve 90% closed
+	test_separator.setGasOutletFlowFraction(0.1);
       } else {
-        test_separator.setGasOutletFlowFraction(1.0);
+	test_separator.setGasOutletFlowFraction(1.0);
       }
 
       // Run transient calculation
@@ -696,34 +660,27 @@ class ThreePhaseSeparatorTest {
 
     // Print results for analysis
     logger.info("\n=== Three-Phase Separator Dynamic Simulation with Valve Operations ===");
-    logger.info(
-        "Time(s)\tWaterLvl(m)\tOilLvl(m)\tOilThick(m)\tGas(kg/hr)\tOil(kg/hr)\tWater(kg/hr)\tPressure(bara)");
+    logger.info("Time(s)\tWaterLvl(m)\tOilLvl(m)\tOilThick(m)\tGas(kg/hr)\tOil(kg/hr)\tWater(kg/hr)\tPressure(bara)");
     for (int i = 0; i < timePoints.size(); i += 10) { // Print every 10th point
-      logger.printf(org.apache.logging.log4j.Level.INFO,
-          "%.1f\t%.4f\t\t%.4f\t\t%.4f\t\t%.2f\t\t%.2f\t\t%.2f\t\t%.4f%n", timePoints.get(i),
-          waterLevels.get(i), oilLevels.get(i), oilLevels.get(i) - waterLevels.get(i),
-          gasFlowRates.get(i), oilFlowRates.get(i), waterFlowRates.get(i), pressures.get(i));
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%.1f\t%.4f\t\t%.4f\t\t%.4f\t\t%.2f\t\t%.2f\t\t%.2f\t\t%.4f%n",
+	  timePoints.get(i), waterLevels.get(i), oilLevels.get(i), oilLevels.get(i) - waterLevels.get(i),
+	  gasFlowRates.get(i), oilFlowRates.get(i), waterFlowRates.get(i), pressures.get(i));
     }
 
     // Verify basic constraints
     for (int i = 0; i < timePoints.size(); i++) {
       // Water level should always be less than or equal to oil level
       Assertions.assertTrue(waterLevels.get(i) <= oilLevels.get(i),
-          "Water level should be <= oil level at time " + timePoints.get(i));
+	  "Water level should be <= oil level at time " + timePoints.get(i));
 
       // Levels should be non-negative
-      Assertions.assertTrue(waterLevels.get(i) >= 0.0,
-          "Water level should be >= 0 at time " + timePoints.get(i));
-      Assertions.assertTrue(oilLevels.get(i) >= 0.0,
-          "Oil level should be >= 0 at time " + timePoints.get(i));
+      Assertions.assertTrue(waterLevels.get(i) >= 0.0, "Water level should be >= 0 at time " + timePoints.get(i));
+      Assertions.assertTrue(oilLevels.get(i) >= 0.0, "Oil level should be >= 0 at time " + timePoints.get(i));
 
       // Flow rates should be non-negative
-      Assertions.assertTrue(gasFlowRates.get(i) >= 0.0,
-          "Gas flow should be >= 0 at time " + timePoints.get(i));
-      Assertions.assertTrue(oilFlowRates.get(i) >= 0.0,
-          "Oil flow should be >= 0 at time " + timePoints.get(i));
-      Assertions.assertTrue(waterFlowRates.get(i) >= 0.0,
-          "Water flow should be >= 0 at time " + timePoints.get(i));
+      Assertions.assertTrue(gasFlowRates.get(i) >= 0.0, "Gas flow should be >= 0 at time " + timePoints.get(i));
+      Assertions.assertTrue(oilFlowRates.get(i) >= 0.0, "Oil flow should be >= 0 at time " + timePoints.get(i));
+      Assertions.assertTrue(waterFlowRates.get(i) >= 0.0, "Water flow should be >= 0 at time " + timePoints.get(i));
     }
 
     // Verify level changes during valve closure periods
@@ -731,28 +688,25 @@ class ThreePhaseSeparatorTest {
     double oilLevelAt20 = oilLevels.get(20);
     double oilLevelAt39 = oilLevels.get(39);
     logger.printf(org.apache.logging.log4j.Level.INFO,
-        "\nOil level at t=20s: %.4f m, at t=39s: %.4f m (oil valve closed)%n", oilLevelAt20,
-        oilLevelAt39);
+	"\nOil level at t=20s: %.4f m, at t=39s: %.4f m (oil valve closed)%n", oilLevelAt20, oilLevelAt39);
 
     // When water valve is closed (t=40-60), water level should increase
     double waterLevelAt40 = waterLevels.get(40);
     double waterLevelAt59 = waterLevels.get(59);
     logger.printf(org.apache.logging.log4j.Level.INFO,
-        "Water level at t=40s: %.4f m, at t=59s: %.4f m (water valve closed)%n", waterLevelAt40,
-        waterLevelAt59);
+	"Water level at t=40s: %.4f m, at t=59s: %.4f m (water valve closed)%n", waterLevelAt40, waterLevelAt59);
 
     // When gas valve is closed (t=60-80), pressure should rise
     double pressureAt60 = pressures.get(60);
     double pressureAt79 = pressures.get(79);
     logger.printf(org.apache.logging.log4j.Level.INFO,
-        "Pressure at t=60s: %.4f bara, at t=79s: %.4f bara (gas valve closed)%n", pressureAt60,
-        pressureAt79);
+	"Pressure at t=60s: %.4f bara, at t=79s: %.4f bara (gas valve closed)%n", pressureAt60, pressureAt79);
 
     // Verify pressure increases when gas valve is closed
     // The flow restriction should cause accumulation of gas, increasing pressure
-    Assertions.assertTrue(pressureAt79 > pressureAt60, String.format(
-        "Pressure should increase when gas valve is closed. At t=60s: %.4f bara, at t=79s: %.4f bara",
-        pressureAt60, pressureAt79));
+    Assertions.assertTrue(pressureAt79 > pressureAt60,
+	String.format("Pressure should increase when gas valve is closed. At t=60s: %.4f bara, at t=79s: %.4f bara",
+	    pressureAt60, pressureAt79));
 
     logger.info("\n=== End of Dynamic Simulation ===\n");
   }
@@ -763,8 +717,8 @@ class ThreePhaseSeparatorTest {
   @Test
   void testSingleAndTwoPhaseInlet() {
     // Test 1: Single-phase gas inlet
-    neqsim.thermo.system.SystemInterface gasOnlyFluid =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 80.0, 50.00);
+    neqsim.thermo.system.SystemInterface gasOnlyFluid = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 80.0,
+	50.00);
     gasOnlyFluid.addComponent("methane", 90.0);
     gasOnlyFluid.addComponent("ethane", 10.0);
     gasOnlyFluid.setMixingRule(10);
@@ -776,31 +730,30 @@ class ThreePhaseSeparatorTest {
     gasOnlyStream.setFlowRate(1000.0, "kg/hr");
     gasOnlyStream.run();
 
-    ThreePhaseSeparator gasOnlySeparator =
-        new ThreePhaseSeparator("GAS_ONLY_SEPARATOR", gasOnlyStream);
+    ThreePhaseSeparator gasOnlySeparator = new ThreePhaseSeparator("GAS_ONLY_SEPARATOR", gasOnlyStream);
     gasOnlySeparator.run();
 
     // Verify gas phase is present with normal flow
     Assertions.assertTrue(gasOnlySeparator.getGasOutStream().getFlowRate("kg/hr") > 100.0,
-        "Gas stream should have significant flow");
+	"Gas stream should have significant flow");
 
     // Verify oil and water streams have very low flow (1e-20)
     Assertions.assertTrue(gasOnlySeparator.getOilOutStream().getFlowRate("kg/hr") < 1e-15,
-        "Oil stream should have negligible flow for gas-only inlet");
+	"Oil stream should have negligible flow for gas-only inlet");
     Assertions.assertTrue(gasOnlySeparator.getWaterOutStream().getFlowRate("kg/hr") < 1e-15,
-        "Water stream should have negligible flow for gas-only inlet");
+	"Water stream should have negligible flow for gas-only inlet");
 
     logger.info("\nTest 1: Single-phase gas inlet");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Gas flow: %.6f kg/hr%n",
-        gasOnlySeparator.getGasOutStream().getFlowRate("kg/hr"));
+	gasOnlySeparator.getGasOutStream().getFlowRate("kg/hr"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Oil flow: %.6e kg/hr%n",
-        gasOnlySeparator.getOilOutStream().getFlowRate("kg/hr"));
+	gasOnlySeparator.getOilOutStream().getFlowRate("kg/hr"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Water flow: %.6e kg/hr%n",
-        gasOnlySeparator.getWaterOutStream().getFlowRate("kg/hr"));
+	gasOnlySeparator.getWaterOutStream().getFlowRate("kg/hr"));
 
     // Test 2: Two-phase gas-oil inlet (no water)
-    neqsim.thermo.system.SystemInterface gasOilFluid =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 40.0, 10.00);
+    neqsim.thermo.system.SystemInterface gasOilFluid = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 40.0,
+	10.00);
     gasOilFluid.addComponent("methane", 70.0);
     gasOilFluid.addComponent("n-heptane", 30.0);
     gasOilFluid.setMixingRule(10);
@@ -812,31 +765,30 @@ class ThreePhaseSeparatorTest {
     gasOilStream.setFlowRate(1000.0, "kg/hr");
     gasOilStream.run();
 
-    ThreePhaseSeparator gasOilSeparator =
-        new ThreePhaseSeparator("GAS_OIL_SEPARATOR", gasOilStream);
+    ThreePhaseSeparator gasOilSeparator = new ThreePhaseSeparator("GAS_OIL_SEPARATOR", gasOilStream);
     gasOilSeparator.run();
 
     // Verify gas and oil phases are present with normal flow
     Assertions.assertTrue(gasOilSeparator.getGasOutStream().getFlowRate("kg/hr") > 10.0,
-        "Gas stream should have significant flow");
+	"Gas stream should have significant flow");
     Assertions.assertTrue(gasOilSeparator.getOilOutStream().getFlowRate("kg/hr") > 10.0,
-        "Oil stream should have significant flow");
+	"Oil stream should have significant flow");
 
     // Verify water stream has very low flow (1e-20)
     Assertions.assertTrue(gasOilSeparator.getWaterOutStream().getFlowRate("kg/hr") < 1e-15,
-        "Water stream should have negligible flow for gas-oil inlet");
+	"Water stream should have negligible flow for gas-oil inlet");
 
     logger.info("\nTest 2: Two-phase gas-oil inlet");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Gas flow: %.6f kg/hr%n",
-        gasOilSeparator.getGasOutStream().getFlowRate("kg/hr"));
+	gasOilSeparator.getGasOutStream().getFlowRate("kg/hr"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Oil flow: %.6f kg/hr%n",
-        gasOilSeparator.getOilOutStream().getFlowRate("kg/hr"));
+	gasOilSeparator.getOilOutStream().getFlowRate("kg/hr"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Water flow: %.6e kg/hr%n",
-        gasOilSeparator.getWaterOutStream().getFlowRate("kg/hr"));
+	gasOilSeparator.getWaterOutStream().getFlowRate("kg/hr"));
 
     // Test 3: Two-phase gas-water inlet (no oil)
-    neqsim.thermo.system.SystemInterface gasWaterFluid =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 40.0, 10.00);
+    neqsim.thermo.system.SystemInterface gasWaterFluid = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 40.0,
+	10.00);
     gasWaterFluid.addComponent("methane", 70.0);
     gasWaterFluid.addComponent("water", 30.0);
     gasWaterFluid.setMixingRule(10);
@@ -848,46 +800,42 @@ class ThreePhaseSeparatorTest {
     gasWaterStream.setFlowRate(1000.0, "kg/hr");
     gasWaterStream.run();
 
-    ThreePhaseSeparator gasWaterSeparator =
-        new ThreePhaseSeparator("GAS_WATER_SEPARATOR", gasWaterStream);
+    ThreePhaseSeparator gasWaterSeparator = new ThreePhaseSeparator("GAS_WATER_SEPARATOR", gasWaterStream);
     gasWaterSeparator.run();
 
     // Verify gas and water phases are present with normal flow
     Assertions.assertTrue(gasWaterSeparator.getGasOutStream().getFlowRate("kg/hr") > 10.0,
-        "Gas stream should have significant flow");
+	"Gas stream should have significant flow");
     Assertions.assertTrue(gasWaterSeparator.getWaterOutStream().getFlowRate("kg/hr") > 10.0,
-        "Water stream should have significant flow");
+	"Water stream should have significant flow");
 
     // Verify oil stream has very low flow (1e-20)
     Assertions.assertTrue(gasWaterSeparator.getOilOutStream().getFlowRate("kg/hr") < 1e-15,
-        "Oil stream should have negligible flow for gas-water inlet");
+	"Oil stream should have negligible flow for gas-water inlet");
 
     logger.info("\nTest 3: Two-phase gas-water inlet");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Gas flow: %.6f kg/hr%n",
-        gasWaterSeparator.getGasOutStream().getFlowRate("kg/hr"));
+	gasWaterSeparator.getGasOutStream().getFlowRate("kg/hr"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Oil flow: %.6e kg/hr%n",
-        gasWaterSeparator.getOilOutStream().getFlowRate("kg/hr"));
+	gasWaterSeparator.getOilOutStream().getFlowRate("kg/hr"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Water flow: %.6f kg/hr%n",
-        gasWaterSeparator.getWaterOutStream().getFlowRate("kg/hr"));
+	gasWaterSeparator.getWaterOutStream().getFlowRate("kg/hr"));
   }
 
   /**
-   * Test method demonstrating three-phase separator with level and pressure control using PID
-   * controllers. This example shows:
+   * Test method demonstrating three-phase separator with level and pressure control using PID controllers. This example
+   * shows:
    * <ul>
-   * <li>Water level control using level measurements and manual valve manipulation on water
-   * outlet</li>
+   * <li>Water level control using level measurements and manual valve manipulation on water outlet</li>
    * <li>Oil level control using level measurements and manual valve manipulation on oil outlet</li>
-   * <li>Pressure control using pressure measurements and manual valve manipulation on gas
-   * outlet</li>
+   * <li>Pressure control using pressure measurements and manual valve manipulation on gas outlet</li>
    * </ul>
    */
   @Test
   void testThreePhaseSeparatorWithPIDControl() {
     // ===== PROCESS SETUP =====
     // Create three-phase fluid system (gas + oil + water)
-    neqsim.thermo.system.SystemInterface fluid =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 50.0, 15.00);
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 50.0, 15.00);
 
     fluid.addComponent("methane", 85.0);
     fluid.addComponent("ethane", 5.0);
@@ -918,19 +866,17 @@ class ThreePhaseSeparatorTest {
 
     logger.info("Initial Conditions:");
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Separator Pressure: %.2f bara%n",
-        separator.getThermoSystem().getPressure("bara"));
-    logger.printf(org.apache.logging.log4j.Level.INFO, "  Water Level: %.3f m%n",
-        separator.getWaterLevel());
-    logger.printf(org.apache.logging.log4j.Level.INFO, "  Oil Level: %.3f m%n",
-        separator.getOilLevel());
+	separator.getThermoSystem().getPressure("bara"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Water Level: %.3f m%n", separator.getWaterLevel());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Oil Level: %.3f m%n", separator.getOilLevel());
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Oil Thickness: %.3f m%n",
-        separator.getOilLevel() - separator.getWaterLevel());
+	separator.getOilLevel() - separator.getWaterLevel());
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Gas Flow: %.1f kg/hr%n",
-        separator.getGasOutStream().getFlowRate("kg/hr"));
+	separator.getGasOutStream().getFlowRate("kg/hr"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Oil Flow: %.1f kg/hr%n",
-        separator.getOilOutStream().getFlowRate("kg/hr"));
+	separator.getOilOutStream().getFlowRate("kg/hr"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Water Flow: %.1f kg/hr%n",
-        separator.getWaterOutStream().getFlowRate("kg/hr"));
+	separator.getWaterOutStream().getFlowRate("kg/hr"));
 
     // ===== CONTROL SETUP =====
 
@@ -958,19 +904,14 @@ class ThreePhaseSeparatorTest {
     double gasValveOpening = 50.0;
 
     logger.info("\nControl Set Points:");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "  Water Level (LC-01): %.2f m%n",
-        waterLevelSP);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Water Level (LC-01): %.2f m%n", waterLevelSP);
     logger.printf(org.apache.logging.log4j.Level.INFO, "  Oil Level (LC-02): %.2f m%n", oilLevelSP);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "  Pressure (PC-01): %.2f bara%n",
-        pressureSP);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Pressure (PC-01): %.2f bara%n", pressureSP);
 
     logger.info("\nPID Parameters:");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "  LC-01: Kp=%.1f, Ti=%.1f s%n",
-        waterLevelKp, waterLevelTi);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "  LC-02: Kp=%.1f, Ti=%.1f s%n", oilLevelKp,
-        oilLevelTi);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "  PC-01: Kp=%.1f, Ti=%.1f s%n", pressureKp,
-        pressureTi);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  LC-01: Kp=%.1f, Ti=%.1f s%n", waterLevelKp, waterLevelTi);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  LC-02: Kp=%.1f, Ti=%.1f s%n", oilLevelKp, oilLevelTi);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  PC-01: Kp=%.1f, Ti=%.1f s%n", pressureKp, pressureTi);
 
     // ===== TRANSIENT SIMULATION WITH CONTROL =====
 
@@ -1000,16 +941,16 @@ class ThreePhaseSeparatorTest {
 
       // Simulate disturbance at t=400s: increase inlet flow rate
       if (i == 40) {
-        logger.info("\n*** Disturbance at t=400s: Inlet flow increased to 6000 kg/hr ***");
-        inletStream.setFlowRate(6000.0, "kg/hr");
-        inletStream.run();
+	logger.info("\n*** Disturbance at t=400s: Inlet flow increased to 6000 kg/hr ***");
+	inletStream.setFlowRate(6000.0, "kg/hr");
+	inletStream.run();
       }
 
       // Simulate disturbance at t=800s: decrease inlet flow rate
       if (i == 80) {
-        logger.info("\n*** Disturbance at t=800s: Inlet flow decreased to 4000 kg/hr ***");
-        inletStream.setFlowRate(4000.0, "kg/hr");
-        inletStream.run();
+	logger.info("\n*** Disturbance at t=800s: Inlet flow decreased to 4000 kg/hr ***");
+	inletStream.setFlowRate(4000.0, "kg/hr");
+	inletStream.run();
       }
 
       // === PID CONTROL LOGIC ===
@@ -1030,12 +971,9 @@ class ThreePhaseSeparatorTest {
       pressureIntegral += pressureError * timeStep;
 
       // Calculate PID outputs (reverse acting for levels, direct acting for pressure)
-      waterValveOpening = 100.0
-          - (waterLevelKp * waterLevelError + waterLevelKp / waterLevelTi * waterLevelIntegral);
-      oilValveOpening =
-          100.0 - (oilLevelKp * oilLevelError + oilLevelKp / oilLevelTi * oilLevelIntegral);
-      gasValveOpening =
-          50.0 + (pressureKp * pressureError + pressureKp / pressureTi * pressureIntegral);
+      waterValveOpening = 100.0 - (waterLevelKp * waterLevelError + waterLevelKp / waterLevelTi * waterLevelIntegral);
+      oilValveOpening = 100.0 - (oilLevelKp * oilLevelError + oilLevelKp / oilLevelTi * oilLevelIntegral);
+      gasValveOpening = 50.0 + (pressureKp * pressureError + pressureKp / pressureTi * pressureIntegral);
 
       // Limit outputs to 0-100%
       waterValveOpening = Math.max(0.0, Math.min(100.0, waterValveOpening));
@@ -1061,28 +999,24 @@ class ThreePhaseSeparatorTest {
 
       // Print status every 10 steps
       if (i % 10 == 0) {
-        logger.printf(org.apache.logging.log4j.Level.INFO,
-            "\nt=%.0fs | P=%.2f bara (err=%.2f) | WLvl=%.3fm (err=%.3f) | OLvl=%.3fm (err=%.3f)%n",
-            currentTime, pressureData.get(i), pressureError, waterLevelData.get(i), waterLevelError,
-            oilLevelData.get(i), oilLevelError);
-        logger.printf(org.apache.logging.log4j.Level.INFO,
-            "       | LCV-01=%.1f%% | LCV-02=%.1f%% | PCV-01=%.1f%%%n", waterValveData.get(i),
-            oilValveData.get(i), gasValveData.get(i));
+	logger.printf(org.apache.logging.log4j.Level.INFO,
+	    "\nt=%.0fs | P=%.2f bara (err=%.2f) | WLvl=%.3fm (err=%.3f) | OLvl=%.3fm (err=%.3f)%n", currentTime,
+	    pressureData.get(i), pressureError, waterLevelData.get(i), waterLevelError, oilLevelData.get(i),
+	    oilLevelError);
+	logger.printf(org.apache.logging.log4j.Level.INFO, "       | LCV-01=%.1f%% | LCV-02=%.1f%% | PCV-01=%.1f%%%n",
+	    waterValveData.get(i), oilValveData.get(i), gasValveData.get(i));
       }
 
       // Verify physical constraints
       Assertions.assertTrue(separator.getWaterLevel() >= 0.0, "Water level should be non-negative");
-      Assertions.assertTrue(separator.getOilLevel() >= separator.getWaterLevel(),
-          "Oil level should be >= water level");
-      Assertions.assertTrue(separator.getThermoSystem().getPressure("bara") > 0.0,
-          "Pressure should be positive");
+      Assertions.assertTrue(separator.getOilLevel() >= separator.getWaterLevel(), "Oil level should be >= water level");
+      Assertions.assertTrue(separator.getThermoSystem().getPressure("bara") > 0.0, "Pressure should be positive");
     }
 
     // ===== FINAL RESULTS =====
 
     logger.info("\n\n=== Simulation Results Summary ===");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Total simulation time: %.0f seconds%n",
-        currentTime);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Total simulation time: %.0f seconds%n", currentTime);
 
     // Final values
     double finalPressure = pressureData.get(pressureData.size() - 1);
@@ -1090,25 +1024,20 @@ class ThreePhaseSeparatorTest {
     double finalOilLevel = oilLevelData.get(oilLevelData.size() - 1);
 
     logger.info("\nFinal Conditions:");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "  Pressure: %.2f bara (SP: %.2f bara)%n",
-        finalPressure, pressureSP);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "  Water Level: %.3f m (SP: %.2f m)%n",
-        finalWaterLevel, waterLevelSP);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "  Oil Level: %.3f m (SP: %.2f m)%n",
-        finalOilLevel, oilLevelSP);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "  Oil Thickness: %.3f m%n",
-        finalOilLevel - finalWaterLevel);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Pressure: %.2f bara (SP: %.2f bara)%n", finalPressure,
+	pressureSP);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Water Level: %.3f m (SP: %.2f m)%n", finalWaterLevel,
+	waterLevelSP);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Oil Level: %.3f m (SP: %.2f m)%n", finalOilLevel, oilLevelSP);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Oil Thickness: %.3f m%n", finalOilLevel - finalWaterLevel);
 
     logger.info("\nFinal Valve Positions:");
-    logger.printf(org.apache.logging.log4j.Level.INFO,
-        "  LCV-01 (Water): %.1f%%  (Flow Fraction: %.3f)%n",
-        waterValveData.get(waterValveData.size() - 1), separator.getWaterOutletFlowFraction());
-    logger.printf(org.apache.logging.log4j.Level.INFO,
-        "  LCV-02 (Oil): %.1f%%  (Flow Fraction: %.3f)%n",
-        oilValveData.get(oilValveData.size() - 1), separator.getOilOutletFlowFraction());
-    logger.printf(org.apache.logging.log4j.Level.INFO,
-        "  PCV-01 (Gas): %.1f%%  (Flow Fraction: %.3f)%n",
-        gasValveData.get(gasValveData.size() - 1), separator.getGasOutletFlowFraction());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  LCV-01 (Water): %.1f%%  (Flow Fraction: %.3f)%n",
+	waterValveData.get(waterValveData.size() - 1), separator.getWaterOutletFlowFraction());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  LCV-02 (Oil): %.1f%%  (Flow Fraction: %.3f)%n",
+	oilValveData.get(oilValveData.size() - 1), separator.getOilOutletFlowFraction());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  PCV-01 (Gas): %.1f%%  (Flow Fraction: %.3f)%n",
+	gasValveData.get(gasValveData.size() - 1), separator.getGasOutletFlowFraction());
 
     // Verify control performance
     double pressureError = Math.abs(finalPressure - pressureSP);
@@ -1116,12 +1045,9 @@ class ThreePhaseSeparatorTest {
     double oilLevelError = Math.abs(finalOilLevel - oilLevelSP);
 
     logger.info("\nControl Errors:");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "  Pressure Error: %.3f bara%n",
-        pressureError);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "  Water Level Error: %.3f m%n",
-        waterLevelError);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "  Oil Level Error: %.3f m%n",
-        oilLevelError);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Pressure Error: %.3f bara%n", pressureError);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Water Level Error: %.3f m%n", waterLevelError);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Oil Level Error: %.3f m%n", oilLevelError);
 
     // Basic assertions - controllers should help manage the system
     // Allow wide tolerance since this is a demonstration of the concept
@@ -1132,27 +1058,23 @@ class ThreePhaseSeparatorTest {
 
     // Verify the system remained stable throughout
     for (int i = 0; i < pressureData.size(); i++) {
-      Assertions.assertTrue(Double.isFinite(pressureData.get(i)),
-          "Pressure should remain finite at step " + i);
-      Assertions.assertTrue(Double.isFinite(waterLevelData.get(i)),
-          "Water level should remain finite at step " + i);
-      Assertions.assertTrue(Double.isFinite(oilLevelData.get(i)),
-          "Oil level should remain finite at step " + i);
+      Assertions.assertTrue(Double.isFinite(pressureData.get(i)), "Pressure should remain finite at step " + i);
+      Assertions.assertTrue(Double.isFinite(waterLevelData.get(i)), "Water level should remain finite at step " + i);
+      Assertions.assertTrue(Double.isFinite(oilLevelData.get(i)), "Oil level should remain finite at step " + i);
     }
 
     logger.info("\n=== End of PID Control Example ===\n");
   }
 
   /**
-   * Test method demonstrating the use of WaterLevelTransmitter and OilLevelTransmitter with
-   * three-phase separator and PID controllers.
+   * Test method demonstrating the use of WaterLevelTransmitter and OilLevelTransmitter with three-phase separator and
+   * PID controllers.
    */
   @Test
   void testThreePhaseSeparatorWithLevelTransmitters() {
     // ===== PROCESS SETUP =====
     // Create three-phase fluid system (gas + oil + water)
-    neqsim.thermo.system.SystemInterface fluid =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 50.0, 15.00);
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 50.0, 15.00);
 
     fluid.addComponent("methane", 85.0);
     fluid.addComponent("ethane", 5.0);
@@ -1195,21 +1117,19 @@ class ThreePhaseSeparatorTest {
 
     logger.info("Transmitters Created:");
     logger.printf(org.apache.logging.log4j.Level.INFO, "  LT-01 (Water Level): Range %.1f-%.1f m%n",
-        lt01.getMinimumValue(), lt01.getMaximumValue());
+	lt01.getMinimumValue(), lt01.getMaximumValue());
     logger.printf(org.apache.logging.log4j.Level.INFO, "  LT-02 (Oil Level): Range %.1f-%.1f m%n",
-        lt02.getMinimumValue(), lt02.getMaximumValue());
+	lt02.getMinimumValue(), lt02.getMaximumValue());
     logger.printf(org.apache.logging.log4j.Level.INFO, "  PT-01 (Pressure): Range %.1f-%.1f bara%n",
-        pt01.getMinimumValue(), pt01.getMaximumValue());
+	pt01.getMinimumValue(), pt01.getMaximumValue());
 
     logger.info("\nInitial Measurements:");
     logger.printf(org.apache.logging.log4j.Level.INFO, "  LT-01 Reading: %.3f m (water level)%n",
-        lt01.getMeasuredValue("m"));
+	lt01.getMeasuredValue("m"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "  LT-02 Reading: %.3f m (oil level)%n",
-        lt02.getMeasuredValue("m"));
-    logger.printf(org.apache.logging.log4j.Level.INFO, "  Oil Thickness: %.3f m%n",
-        lt02.getOilThickness());
-    logger.printf(org.apache.logging.log4j.Level.INFO, "  PT-01 Reading: %.2f bara%n",
-        pt01.getMeasuredValue("bara"));
+	lt02.getMeasuredValue("m"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Oil Thickness: %.3f m%n", lt02.getOilThickness());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  PT-01 Reading: %.2f bara%n", pt01.getMeasuredValue("bara"));
 
     // ===== PID CONTROLLERS WITH SPECIALIZED TRANSMITTERS =====
 
@@ -1243,15 +1163,12 @@ class ThreePhaseSeparatorTest {
     pc01.setOutputLimits(0.0, 100.0);
 
     logger.info("\nController Configuration:");
-    logger.printf(org.apache.logging.log4j.Level.INFO,
-        "  LC-01: SP=%.2f m, Kp=%.1f, Ti=%.1f s (Water Level Control)%n",
-        lc01.getControllerSetPoint(), 15.0, 500.0);
-    logger.printf(org.apache.logging.log4j.Level.INFO,
-        "  LC-02: SP=%.2f m, Kp=%.1f, Ti=%.1f s (Oil Level Control)%n",
-        lc02.getControllerSetPoint(), 15.0, 500.0);
-    logger.printf(org.apache.logging.log4j.Level.INFO,
-        "  PC-01: SP=%.2f bara, Kp=%.1f, Ti=%.1f s (Pressure Control)%n",
-        pc01.getControllerSetPoint(), 3.0, 350.0);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  LC-01: SP=%.2f m, Kp=%.1f, Ti=%.1f s (Water Level Control)%n",
+	lc01.getControllerSetPoint(), 15.0, 500.0);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  LC-02: SP=%.2f m, Kp=%.1f, Ti=%.1f s (Oil Level Control)%n",
+	lc02.getControllerSetPoint(), 15.0, 500.0);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  PC-01: SP=%.2f bara, Kp=%.1f, Ti=%.1f s (Pressure Control)%n",
+	pc01.getControllerSetPoint(), 3.0, 350.0);
 
     // ===== TRANSIENT SIMULATION =====
 
@@ -1278,9 +1195,9 @@ class ThreePhaseSeparatorTest {
 
       // Apply disturbance at t=200s
       if (i == 20) {
-        logger.info("\n*** Disturbance: Inlet flow increased to 5500 kg/hr ***");
-        inletStream.setFlowRate(5500.0, "kg/hr");
-        inletStream.run();
+	logger.info("\n*** Disturbance: Inlet flow increased to 5500 kg/hr ***");
+	inletStream.setFlowRate(5500.0, "kg/hr");
+	inletStream.run();
       }
 
       // Controllers automatically read from their transmitters
@@ -1310,12 +1227,11 @@ class ThreePhaseSeparatorTest {
 
       // Print every 10 steps
       if (i % 10 == 0) {
-        logger.printf(org.apache.logging.log4j.Level.INFO,
-            "\nt=%.0fs | WLvl=%.3fm | OLvl=%.3fm | OilThick=%.3fm | P=%.2f bara%n", currentTime,
-            waterLevel, oilLevel, oilThickness, pressure);
-        logger.printf(org.apache.logging.log4j.Level.INFO,
-            "       | LC-01=%.1f%% | LC-02=%.1f%% | PC-01=%.1f%%%n", lc01.getResponse(),
-            lc02.getResponse(), pc01.getResponse());
+	logger.printf(org.apache.logging.log4j.Level.INFO,
+	    "\nt=%.0fs | WLvl=%.3fm | OLvl=%.3fm | OilThick=%.3fm | P=%.2f bara%n", currentTime, waterLevel, oilLevel,
+	    oilThickness, pressure);
+	logger.printf(org.apache.logging.log4j.Level.INFO, "       | LC-01=%.1f%% | LC-02=%.1f%% | PC-01=%.1f%%%n",
+	    lc01.getResponse(), lc02.getResponse(), pc01.getResponse());
       }
     }
 
@@ -1330,14 +1246,10 @@ class ThreePhaseSeparatorTest {
     double finalPressure = pressureData.get(pressureData.size() - 1);
 
     logger.info("\nFinal Transmitter Readings:");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "  LT-01 (Water Level): %.3f m%n",
-        finalWaterLevel);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "  LT-02 (Oil Level): %.3f m%n",
-        finalOilLevel);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "  Oil Thickness: %.3f m%n",
-        finalOilThickness);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "  PT-01 (Pressure): %.2f bara%n",
-        finalPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  LT-01 (Water Level): %.3f m%n", finalWaterLevel);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  LT-02 (Oil Level): %.3f m%n", finalOilLevel);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Oil Thickness: %.3f m%n", finalOilThickness);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  PT-01 (Pressure): %.2f bara%n", finalPressure);
 
     logger.info("\nControl Setpoints:");
     logger.printf(org.apache.logging.log4j.Level.INFO, "  LC-01: %.2f m%n", waterLevelSP);
@@ -1345,32 +1257,25 @@ class ThreePhaseSeparatorTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "  PC-01: %.2f bara%n", pressureSP);
 
     logger.info("\nFinal Controller Outputs:");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "  LC-01: %.1f%% (Water valve)%n",
-        lc01.getResponse());
-    logger.printf(org.apache.logging.log4j.Level.INFO, "  LC-02: %.1f%% (Oil valve)%n",
-        lc02.getResponse());
-    logger.printf(org.apache.logging.log4j.Level.INFO, "  PC-01: %.1f%% (Gas valve)%n",
-        pc01.getResponse());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  LC-01: %.1f%% (Water valve)%n", lc01.getResponse());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  LC-02: %.1f%% (Oil valve)%n", lc02.getResponse());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  PC-01: %.1f%% (Gas valve)%n", pc01.getResponse());
 
     // Assertions
-    Assertions.assertTrue(lt01.getMeasuredValue("m") >= 0.0,
-        "Water level transmitter should read non-negative");
+    Assertions.assertTrue(lt01.getMeasuredValue("m") >= 0.0, "Water level transmitter should read non-negative");
     Assertions.assertTrue(lt02.getMeasuredValue("m") >= lt01.getMeasuredValue("m"),
-        "Oil level should be >= water level");
+	"Oil level should be >= water level");
     Assertions.assertTrue(lt02.getOilThickness() >= 0.0, "Oil thickness should be non-negative");
-    Assertions.assertTrue(pt01.getMeasuredValue("bara") > 0.0,
-        "Pressure transmitter should read positive");
+    Assertions.assertTrue(pt01.getMeasuredValue("bara") > 0.0, "Pressure transmitter should read positive");
 
     // Verify data consistency
     for (int i = 0; i < timeData.size(); i++) {
       Assertions.assertTrue(oilLevelData.get(i) >= waterLevelData.get(i),
-          "Oil level must be >= water level at all times");
-      Assertions.assertTrue(
-          Math.abs(oilThicknessData.get(i) - (oilLevelData.get(i) - waterLevelData.get(i))) < 0.001,
-          "Oil thickness should equal oilLevel - waterLevel");
+	  "Oil level must be >= water level at all times");
+      Assertions.assertTrue(Math.abs(oilThicknessData.get(i) - (oilLevelData.get(i) - waterLevelData.get(i))) < 0.001,
+	  "Oil thickness should equal oilLevel - waterLevel");
     }
 
     logger.info("\n=== End of Level Transmitters Example ===\n");
   }
 }
-

@@ -6,9 +6,8 @@ import java.io.Serializable;
  * Oil-water flow regime detector for three-phase pipe flow.
  *
  * <p>
- * Predicts the oil-water flow configuration (stratified, dispersed oil-in-water, dispersed
- * water-in-oil, or dual dispersion) based on phase velocities, fluid properties, and pipe geometry.
- * This is critical for:
+ * Predicts the oil-water flow configuration (stratified, dispersed oil-in-water, dispersed water-in-oil, or dual
+ * dispersion) based on phase velocities, fluid properties, and pipe geometry. This is critical for:
  * </p>
  * <ul>
  * <li>Corrosion prediction (water wetting vs oil wetting of pipe wall)</li>
@@ -32,14 +31,13 @@ import java.io.Serializable;
  *
  * <h2>References</h2>
  * <ul>
- * <li>Trallero, J.L. (1995). Oil-Water Flow Patterns in Horizontal Pipes. PhD Thesis, U. Tulsa.
- * </li>
- * <li>Brauner, N. (2003). Liquid-Liquid Two-Phase Flow Systems. In Modelling and Experimentation in
- * Two-Phase Flow, Springer, pp. 221-279.</li>
- * <li>Angeli, P. and Hewitt, G.F. (2000). Flow structure in horizontal oil-water flow. Int. J.
- * Multiphase Flow, 26(7), 1117-1140.</li>
- * <li>Decarre, S. and Fabre, J. (1997). Phase inversion prediction study. Oil &amp; Gas Science and
- * Technology, 52(4), 415-424.</li>
+ * <li>Trallero, J.L. (1995). Oil-Water Flow Patterns in Horizontal Pipes. PhD Thesis, U. Tulsa.</li>
+ * <li>Brauner, N. (2003). Liquid-Liquid Two-Phase Flow Systems. In Modelling and Experimentation in Two-Phase Flow,
+ * Springer, pp. 221-279.</li>
+ * <li>Angeli, P. and Hewitt, G.F. (2000). Flow structure in horizontal oil-water flow. Int. J. Multiphase Flow, 26(7),
+ * 1117-1140.</li>
+ * <li>Decarre, S. and Fabre, J. (1997). Phase inversion prediction study. Oil &amp; Gas Science and Technology, 52(4),
+ * 415-424.</li>
  * </ul>
  *
  * @author Even Solbraa
@@ -98,18 +96,18 @@ public class OilWaterFlowRegimeDetector implements Serializable {
     /**
      * Constructor for OilWaterResult.
      *
-     * @param regime the detected flow regime
-     * @param waterWetting whether water wets the pipe wall
-     * @param effectiveViscosity effective emulsion viscosity (Pa.s)
-     * @param inversionWaterFraction phase inversion water fraction
+     * @param regime                     the detected flow regime
+     * @param waterWetting               whether water wets the pipe wall
+     * @param effectiveViscosity         effective emulsion viscosity (Pa.s)
+     * @param inversionWaterFraction     phase inversion water fraction
      * @param criticalDispersionVelocity critical velocity for full dispersion (m/s)
-     * @param maxDropletDiameter maximum stable droplet diameter (m)
-     * @param oilContinuous whether oil is the continuous phase
-     * @param waterDropoutRisk whether there is risk of water dropout
+     * @param maxDropletDiameter         maximum stable droplet diameter (m)
+     * @param oilContinuous              whether oil is the continuous phase
+     * @param waterDropoutRisk           whether there is risk of water dropout
      */
-    public OilWaterResult(OilWaterFlowRegime regime, boolean waterWetting,
-        double effectiveViscosity, double inversionWaterFraction, double criticalDispersionVelocity,
-        double maxDropletDiameter, boolean oilContinuous, boolean waterDropoutRisk) {
+    public OilWaterResult(OilWaterFlowRegime regime, boolean waterWetting, double effectiveViscosity,
+	double inversionWaterFraction, double criticalDispersionVelocity, double maxDropletDiameter,
+	boolean oilContinuous, boolean waterDropoutRisk) {
       this.regime = regime;
       this.waterWetting = waterWetting;
       this.effectiveViscosity = effectiveViscosity;
@@ -130,34 +128,32 @@ public class OilWaterFlowRegimeDetector implements Serializable {
   /**
    * Default constructor.
    */
-  public OilWaterFlowRegimeDetector() {}
+  public OilWaterFlowRegimeDetector() {
+  }
 
   /**
    * Detect oil-water flow regime and compute associated properties.
    *
-   * @param waterCut water volume fraction in liquid (0-1)
+   * @param waterCut        water volume fraction in liquid (0-1)
    * @param mixtureVelocity superficial mixture liquid velocity (m/s)
-   * @param rhoOil oil density (kg/m3)
-   * @param rhoWater water density (kg/m3)
-   * @param muOil oil dynamic viscosity (Pa.s)
-   * @param muWater water dynamic viscosity (Pa.s)
-   * @param sigmaOW oil-water interfacial tension (N/m)
-   * @param pipeDiameter pipe internal diameter (m)
-   * @param inclination pipe inclination (radians, positive = uphill)
+   * @param rhoOil          oil density (kg/m3)
+   * @param rhoWater        water density (kg/m3)
+   * @param muOil           oil dynamic viscosity (Pa.s)
+   * @param muWater         water dynamic viscosity (Pa.s)
+   * @param sigmaOW         oil-water interfacial tension (N/m)
+   * @param pipeDiameter    pipe internal diameter (m)
+   * @param inclination     pipe inclination (radians, positive = uphill)
    * @return OilWaterResult with regime classification and properties
    */
-  public OilWaterResult detect(double waterCut, double mixtureVelocity, double rhoOil,
-      double rhoWater, double muOil, double muWater, double sigmaOW, double pipeDiameter,
-      double inclination) {
+  public OilWaterResult detect(double waterCut, double mixtureVelocity, double rhoOil, double rhoWater, double muOil,
+      double muWater, double sigmaOW, double pipeDiameter, double inclination) {
 
     // Handle trivial cases
     if (waterCut < 0.005) {
-      return new OilWaterResult(OilWaterFlowRegime.SINGLE_PHASE, false, muOil, 0.5, 0.0, 0.0, true,
-          false);
+      return new OilWaterResult(OilWaterFlowRegime.SINGLE_PHASE, false, muOil, 0.5, 0.0, 0.0, true, false);
     }
     if (waterCut > 0.995) {
-      return new OilWaterResult(OilWaterFlowRegime.SINGLE_PHASE, true, muWater, 0.5, 0.0, 0.0,
-          false, false);
+      return new OilWaterResult(OilWaterFlowRegime.SINGLE_PHASE, true, muWater, 0.5, 0.0, 0.0, false, false);
     }
 
     // 1. Calculate phase inversion point (Decarre and Fabre, 1997)
@@ -176,8 +172,7 @@ public class OilWaterFlowRegimeDetector implements Serializable {
     double rhoCont = oilContinuous ? rhoOil : rhoWater;
 
     // Critical velocity for transition from stratified to dispersed (Brauner, 2003)
-    double criticalVelocity =
-        calcCriticalDispersionVelocity(waterCut, rhoOil, rhoWater, muCont, sigmaOW, pipeDiameter);
+    double criticalVelocity = calcCriticalDispersionVelocity(waterCut, rhoOil, rhoWater, muCont, sigmaOW, pipeDiameter);
 
     // 4. Maximum stable droplet diameter (Hinze, 1955)
     double dMax = calcMaxDropletDiameter(mixtureVelocity, rhoCont, sigmaOW, pipeDiameter, muCont);
@@ -202,26 +197,26 @@ public class OilWaterFlowRegimeDetector implements Serializable {
     } else if (absVel < criticalVelocity) {
       // Transition: near-inversion, dual dispersion possible
       if (Math.abs(waterCut - inversionWC) < 0.1) {
-        regime = OilWaterFlowRegime.DUAL_DISPERSION;
-        waterWetting = true; // Conservative for corrosion
-        waterDropoutRisk = false;
+	regime = OilWaterFlowRegime.DUAL_DISPERSION;
+	waterWetting = true; // Conservative for corrosion
+	waterDropoutRisk = false;
       } else if (oilContinuous) {
-        regime = OilWaterFlowRegime.DISPERSED_WATER_IN_OIL;
-        waterWetting = false; // Oil wets the wall
-        waterDropoutRisk = dMax > 0.5 * pipeDiameter; // Droplets too large to suspend
+	regime = OilWaterFlowRegime.DISPERSED_WATER_IN_OIL;
+	waterWetting = false; // Oil wets the wall
+	waterDropoutRisk = dMax > 0.5 * pipeDiameter; // Droplets too large to suspend
       } else {
-        regime = OilWaterFlowRegime.DISPERSED_OIL_IN_WATER;
-        waterWetting = true;
-        waterDropoutRisk = false;
+	regime = OilWaterFlowRegime.DISPERSED_OIL_IN_WATER;
+	waterWetting = true;
+	waterDropoutRisk = false;
       }
     } else {
       // High velocity: fully dispersed
       if (oilContinuous) {
-        regime = OilWaterFlowRegime.DISPERSED_WATER_IN_OIL;
-        waterWetting = false;
+	regime = OilWaterFlowRegime.DISPERSED_WATER_IN_OIL;
+	waterWetting = false;
       } else {
-        regime = OilWaterFlowRegime.DISPERSED_OIL_IN_WATER;
-        waterWetting = true;
+	regime = OilWaterFlowRegime.DISPERSED_OIL_IN_WATER;
+	waterWetting = true;
       }
       waterDropoutRisk = false;
     }
@@ -234,21 +229,20 @@ public class OilWaterFlowRegimeDetector implements Serializable {
     // 6. Effective viscosity
     double muEff = calcEffectiveViscosity(waterCut, muOil, muWater, oilContinuous);
 
-    return new OilWaterResult(regime, waterWetting, muEff, inversionWC, criticalVelocity, dMax,
-        oilContinuous, waterDropoutRisk);
+    return new OilWaterResult(regime, waterWetting, muEff, inversionWC, criticalVelocity, dMax, oilContinuous,
+	waterDropoutRisk);
   }
 
   /**
    * Calculate the phase inversion water fraction.
    *
    * <p>
-   * Uses the model of Decarre and Fabre (1997) where inversion occurs when the
-   * surface-energy-weighted viscosity ratio reaches equilibrium. For equal viscosity fluids,
-   * inversion is near 50%.
+   * Uses the model of Decarre and Fabre (1997) where inversion occurs when the surface-energy-weighted viscosity ratio
+   * reaches equilibrium. For equal viscosity fluids, inversion is near 50%.
    * </p>
    *
-   * @param muRatio oil-to-water viscosity ratio (mu_o/mu_w)
-   * @param rhoOil oil density (kg/m3)
+   * @param muRatio  oil-to-water viscosity ratio (mu_o/mu_w)
+   * @param rhoOil   oil density (kg/m3)
    * @param rhoWater water density (kg/m3)
    * @return water volume fraction at inversion point (0-1)
    */
@@ -267,24 +261,24 @@ public class OilWaterFlowRegimeDetector implements Serializable {
   }
 
   /**
-   * Calculate the critical mixture velocity for transition from stratified to fully dispersed
-   * oil-water flow (Brauner, 2003).
+   * Calculate the critical mixture velocity for transition from stratified to fully dispersed oil-water flow (Brauner,
+   * 2003).
    *
    * <p>
-   * Below this velocity, gravity dominates and the phases stratify. Above this velocity, turbulent
-   * mixing disperses one phase into the other.
+   * Below this velocity, gravity dominates and the phases stratify. Above this velocity, turbulent mixing disperses one
+   * phase into the other.
    * </p>
    *
    * @param waterCut water volume fraction (0-1)
-   * @param rhoOil oil density (kg/m3)
+   * @param rhoOil   oil density (kg/m3)
    * @param rhoWater water density (kg/m3)
-   * @param muCont viscosity of continuous phase (Pa.s)
-   * @param sigmaOW oil-water interfacial tension (N/m)
+   * @param muCont   viscosity of continuous phase (Pa.s)
+   * @param sigmaOW  oil-water interfacial tension (N/m)
    * @param diameter pipe diameter (m)
    * @return critical mixture velocity (m/s)
    */
-  public double calcCriticalDispersionVelocity(double waterCut, double rhoOil, double rhoWater,
-      double muCont, double sigmaOW, double diameter) {
+  public double calcCriticalDispersionVelocity(double waterCut, double rhoOil, double rhoWater, double muCont,
+      double sigmaOW, double diameter) {
 
     double deltaRho = Math.abs(rhoWater - rhoOil);
     if (deltaRho < 1.0 || sigmaOW < 1e-6 || diameter < 0.01) {
@@ -312,19 +306,19 @@ public class OilWaterFlowRegimeDetector implements Serializable {
    * Calculate the maximum stable droplet diameter using the Hinze (1955) criterion.
    *
    * <p>
-   * d_max = We_crit^{3/5} * (sigma / rho_c)^{3/5} * epsilon^{-2/5} where epsilon is the turbulent
-   * energy dissipation rate estimated from the mixture velocity.
+   * d_max = We_crit^{3/5} * (sigma / rho_c)^{3/5} * epsilon^{-2/5} where epsilon is the turbulent energy dissipation
+   * rate estimated from the mixture velocity.
    * </p>
    *
    * @param velocity mixture velocity (m/s)
-   * @param rhoCont density of continuous phase (kg/m3)
-   * @param sigmaOW oil-water interfacial tension (N/m)
+   * @param rhoCont  density of continuous phase (kg/m3)
+   * @param sigmaOW  oil-water interfacial tension (N/m)
    * @param diameter pipe diameter (m)
-   * @param muCont viscosity of continuous phase (Pa.s)
+   * @param muCont   viscosity of continuous phase (Pa.s)
    * @return maximum stable droplet diameter (m)
    */
-  public double calcMaxDropletDiameter(double velocity, double rhoCont, double sigmaOW,
-      double diameter, double muCont) {
+  public double calcMaxDropletDiameter(double velocity, double rhoCont, double sigmaOW, double diameter,
+      double muCont) {
     double absVel = Math.abs(velocity);
     if (absVel < 0.01 || rhoCont < 0.1 || sigmaOW < 1e-8) {
       return diameter; // At zero flow, droplets can be as large as the pipe
@@ -350,8 +344,8 @@ public class OilWaterFlowRegimeDetector implements Serializable {
    * Calculate effective viscosity of the oil-water mixture.
    *
    * <p>
-   * Uses the Brinkman (1952) equation for dilute dispersions and the Pal and Rhodes (1989) model
-   * for concentrated dispersions:
+   * Uses the Brinkman (1952) equation for dilute dispersions and the Pal and Rhodes (1989) model for concentrated
+   * dispersions:
    * </p>
    * <ul>
    * <li>Dilute (phi &lt; 0.3): mu_eff = mu_c * (1 - phi)^{-2.5}</li>
@@ -359,14 +353,13 @@ public class OilWaterFlowRegimeDetector implements Serializable {
    * </ul>
    * where phi is the dispersed phase volume fraction and phi_max ~ 0.74 is maximum packing.
    *
-   * @param waterCut water volume fraction (0-1)
-   * @param muOil oil viscosity (Pa.s)
-   * @param muWater water viscosity (Pa.s)
+   * @param waterCut      water volume fraction (0-1)
+   * @param muOil         oil viscosity (Pa.s)
+   * @param muWater       water viscosity (Pa.s)
    * @param oilContinuous true if oil is the continuous phase
    * @return effective mixture viscosity (Pa.s)
    */
-  public double calcEffectiveViscosity(double waterCut, double muOil, double muWater,
-      boolean oilContinuous) {
+  public double calcEffectiveViscosity(double waterCut, double muOil, double muWater, boolean oilContinuous) {
     double muCont;
     double phiDisp; // volume fraction of dispersed phase
     double phiMax = 0.74; // maximum packing fraction (random close packing spheres)
@@ -396,8 +389,8 @@ public class OilWaterFlowRegimeDetector implements Serializable {
    * Check if water dropout is likely in a low-point section.
    *
    * <p>
-   * Water dropout occurs when the settling velocity of water droplets exceeds the turbulent
-   * re-entrainment capacity. This is particularly relevant in:
+   * Water dropout occurs when the settling velocity of water droplets exceeds the turbulent re-entrainment capacity.
+   * This is particularly relevant in:
    * </p>
    * <ul>
    * <li>Low-velocity sections (turndown conditions)</li>
@@ -405,17 +398,17 @@ public class OilWaterFlowRegimeDetector implements Serializable {
    * <li>After uphill sections where water may slide back</li>
    * </ul>
    *
-   * @param waterCut water volume fraction (0-1)
+   * @param waterCut        water volume fraction (0-1)
    * @param mixtureVelocity mixture velocity (m/s)
-   * @param rhoOil oil density (kg/m3)
-   * @param rhoWater water density (kg/m3)
-   * @param muOil oil viscosity (Pa.s)
-   * @param diameter pipe diameter (m)
+   * @param rhoOil          oil density (kg/m3)
+   * @param rhoWater        water density (kg/m3)
+   * @param muOil           oil viscosity (Pa.s)
+   * @param diameter        pipe diameter (m)
    * @param dropletDiameter water droplet diameter (m)
    * @return true if water dropout is likely
    */
-  public boolean isWaterDropoutLikely(double waterCut, double mixtureVelocity, double rhoOil,
-      double rhoWater, double muOil, double diameter, double dropletDiameter) {
+  public boolean isWaterDropoutLikely(double waterCut, double mixtureVelocity, double rhoOil, double rhoWater,
+      double muOil, double diameter, double dropletDiameter) {
 
     if (waterCut < 0.005 || waterCut > 0.995) {
       return false; // No two-phase liquid present

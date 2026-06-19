@@ -8,9 +8,9 @@ import neqsim.thermo.system.SystemInterface;
  * Implementation of EN 16726 - Gas infrastructure - Quality of gas - Group H.
  *
  * <p>
- * EN 16726 defines the quality requirements for high-calorific natural gas (Group H) in the
- * European gas grid. It specifies limits for Wobbe index, relative density, total sulfur, H2S,
- * mercaptan sulfur, oxygen, CO2, water dew point, hydrocarbon dew point, and hydrogen content.
+ * EN 16726 defines the quality requirements for high-calorific natural gas (Group H) in the European gas grid. It
+ * specifies limits for Wobbe index, relative density, total sulfur, H2S, mercaptan sulfur, oxygen, CO2, water dew
+ * point, hydrocarbon dew point, and hydrogen content.
  * </p>
  *
  * <p>
@@ -177,7 +177,7 @@ public class Standard_EN16726 extends neqsim.standards.Standard {
       totalSulfur = h2sContent;
       double cosMolFrac = getMoleFraction("COS");
       if (cosMolFrac > 0.0) {
-        totalSulfur += cosMolFrac * 60.07 / molarVolumeStd * 1e6;
+	totalSulfur += cosMolFrac * 60.07 / molarVolumeStd * 1e6;
       }
 
       // Water content in mg/m3
@@ -231,19 +231,17 @@ public class Standard_EN16726 extends neqsim.standards.Standard {
   /** {@inheritDoc} */
   @Override
   public String getUnit(String returnParameter) {
-    if ("WobbeIndex".equals(returnParameter) || "WI".equals(returnParameter)
-        || "GCV".equals(returnParameter) || "grossCalorificValue".equals(returnParameter)) {
+    if ("WobbeIndex".equals(returnParameter) || "WI".equals(returnParameter) || "GCV".equals(returnParameter)
+	|| "grossCalorificValue".equals(returnParameter)) {
       return "MJ/m3";
     }
     if ("relativeDensity".equals(returnParameter)) {
       return "-";
     }
-    if ("CO2".equals(returnParameter) || "O2".equals(returnParameter)
-        || "H2".equals(returnParameter)) {
+    if ("CO2".equals(returnParameter) || "O2".equals(returnParameter) || "H2".equals(returnParameter)) {
       return "mol%";
     }
-    if ("H2S".equals(returnParameter) || "totalSulfur".equals(returnParameter)
-        || "water".equals(returnParameter)) {
+    if ("H2S".equals(returnParameter) || "totalSulfur".equals(returnParameter) || "water".equals(returnParameter)) {
       return "mg/m3";
     }
     return "MJ/m3";

@@ -11,8 +11,8 @@ import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
- * Tests for the subsurface capacity constraints on {@link WellFlow} and the multi-area
- * bottleneck/utilization API on {@link ProcessModel}.
+ * Tests for the subsurface capacity constraints on {@link WellFlow} and the multi-area bottleneck/utilization API on
+ * {@link ProcessModel}.
  *
  * @author NeqSim Development Team
  * @version 1.0
@@ -22,13 +22,12 @@ public class WellFlowCapacityConstraintTest {
   /**
    * Builds a reservoir + well subsurface area and adds both to the supplied process.
    *
-   * @param pi the well production index (MSm3/day/bar^2)
+   * @param pi      the well production index (MSm3/day/bar^2)
    * @param process the process system the reservoir and well are added to
    * @return the configured well flow unit (its outlet stream is the area export)
    */
   private WellFlow buildWell(double pi, ProcessSystem process) {
-    neqsim.thermo.system.SystemInterface fluid =
-        new neqsim.thermo.system.SystemPrEos(373.15, 100.0);
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemPrEos(373.15, 100.0);
     fluid.addComponent("water", 3.599);
     fluid.addComponent("nitrogen", 0.599);
     fluid.addComponent("CO2", 0.51);
@@ -52,8 +51,7 @@ public class WellFlowCapacityConstraintTest {
   }
 
   /**
-   * Verifies that the drawdown constraint is disabled by default and reports a live, non-zero
-   * utilization once enabled.
+   * Verifies that the drawdown constraint is disabled by default and reports a live, non-zero utilization once enabled.
    */
   @Test
   void testWellDrawdownConstraint() {
@@ -85,8 +83,7 @@ public class WellFlowCapacityConstraintTest {
   }
 
   /**
-   * Verifies that the minimum-BHP constraint reports rising utilization as Pwf approaches the lower
-   * limit.
+   * Verifies that the minimum-BHP constraint reports rising utilization as Pwf approaches the lower limit.
    */
   @Test
   void testWellMinBhpConstraint() {
@@ -105,8 +102,8 @@ public class WellFlowCapacityConstraintTest {
   }
 
   /**
-   * Verifies the plant-wide bottleneck ranking across two areas (subsurface + topside) using the
-   * new {@link ProcessModel} capacity API.
+   * Verifies the plant-wide bottleneck ranking across two areas (subsurface + topside) using the new
+   * {@link ProcessModel} capacity API.
    */
   @Test
   void testProcessModelGlobalBottleneck() {
@@ -142,7 +139,7 @@ public class WellFlowCapacityConstraintTest {
 
     java.util.Map<String, Double> summary = plant.getCapacityUtilizationSummary();
     assertTrue(summary.containsKey("Subsurface::well"),
-        "area-qualified summary should contain the well: " + summary.keySet());
+	"area-qualified summary should contain the well: " + summary.keySet());
 
     java.util.List<String> ranking = plant.getBottleneckRanking();
     assertFalse(ranking.isEmpty(), "ranking should not be empty");

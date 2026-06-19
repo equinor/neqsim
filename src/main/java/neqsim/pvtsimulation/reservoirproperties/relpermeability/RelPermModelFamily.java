@@ -5,8 +5,8 @@ package neqsim.pvtsimulation.reservoirproperties.relpermeability;
  *
  * <ul>
  * <li>{@link #COREY} - Corey power-law model (1954). Uses exponents no, nw, ng.</li>
- * <li>{@link #LET} - LET three-parameter model (Lomeland-Ebeltoft-Thomas, 2005). Uses L, E, T shape
- * parameters for each phase.</li>
+ * <li>{@link #LET} - LET three-parameter model (Lomeland-Ebeltoft-Thomas, 2005). Uses L, E, T shape parameters for each
+ * phase.</li>
  * </ul>
  *
  * @author ESOL
@@ -31,8 +31,8 @@ public enum RelPermModelFamily {
    * LET three-parameter relative permeability model.
    *
    * <p>
-   * Provides greater flexibility than Corey for matching laboratory core-flood data. Each phase
-   * curve uses three parameters (L, E, T) controlling the shape of the relative permeability curve:
+   * Provides greater flexibility than Corey for matching laboratory core-flood data. Each phase curve uses three
+   * parameters (L, E, T) controlling the shape of the relative permeability curve:
    *
    * $$ K_r = K_{r,max} \cdot \frac{S_n^L}{S_n^L + E \cdot (1 - S_n)^T} $$
    *

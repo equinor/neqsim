@@ -14,8 +14,7 @@ public class PTPhaseEnvelopeTest {
   @Test
   void testWithTBPfraction() {
     // Test addTBPfraction functionality
-    neqsim.thermo.system.SystemInterface feedGas =
-        new neqsim.thermo.system.SystemUMRPRUMCEos(280.0, 10.0);
+    neqsim.thermo.system.SystemInterface feedGas = new neqsim.thermo.system.SystemUMRPRUMCEos(280.0, 10.0);
     java.util.Map<String, Double> compoundData = new java.util.LinkedHashMap<>();
     compoundData.put("ethane", 2.45516);
     compoundData.put("methane", 89.26002);
@@ -34,8 +33,8 @@ public class PTPhaseEnvelopeTest {
     feedGas.setPressure(140.0, "bara");
     feedGas.setTemperature(0.0, "C");
 
-    neqsim.thermodynamicoperations.ThermodynamicOperations ops =
-        new neqsim.thermodynamicoperations.ThermodynamicOperations(feedGas);
+    neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+	feedGas);
     ops.TPflash();
 
     // Print summary of the system (replace with assertions as needed)
@@ -55,8 +54,7 @@ public class PTPhaseEnvelopeTest {
   }
 
   /**
-   * Test method for
-   * {@link neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTphaseEnvelope}.
+   * Test method for {@link neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTphaseEnvelope}.
    */
   @Test
   void testDewP() {
@@ -72,19 +70,18 @@ public class PTPhaseEnvelopeTest {
     double[] dewPointPressures = testOps.get("dewP");
     // Verify dew point pressures are physically reasonable
     assertNotNull(dewPointPressures, "dewP should not be null");
-    assertTrue(dewPointPressures.length > 10,
-        "Should have > 10 dew points, got: " + dewPointPressures.length);
+    assertTrue(dewPointPressures.length > 10, "Should have > 10 dew points, got: " + dewPointPressures.length);
     // Cricondenbar should be ~47 bar for N2/CO2/methane
     double maxP = 0.0;
     for (double p : dewPointPressures) {
       if (Double.isNaN(p)) {
-        // NaN is a branch-break sentinel inserted by the tracer when the
-        // dew curve crosses a critical point or a restart pass begins.
-        continue;
+	// NaN is a branch-break sentinel inserted by the tracer when the
+	// dew curve crosses a critical point or a restart pass begins.
+	continue;
       }
       assertTrue(p > 0.0, "Pressure should be positive, got: " + p);
       if (p > maxP) {
-        maxP = p;
+	maxP = p;
       }
     }
     assertTrue(maxP > 30.0, "Max dew pressure should be > 30 bar, got: " + maxP);
@@ -179,8 +176,7 @@ public class PTPhaseEnvelopeTest {
   void testFailingCase2() {
     // testSystem.setTemperature(40, "C");
     // testSystem.setPressure(50, "bara");
-    neqsim.thermo.system.SystemInterface fluid0_HC =
-        new neqsim.thermo.system.SystemUMRPRUMCEos(298.0, 50.0);
+    neqsim.thermo.system.SystemInterface fluid0_HC = new neqsim.thermo.system.SystemUMRPRUMCEos(298.0, 50.0);
     fluid0_HC.addComponent("nitrogen", 2.5);
     fluid0_HC.addComponent("CO2", 4.5);
     fluid0_HC.addComponent("methane", 79.45);
@@ -221,8 +217,7 @@ public class PTPhaseEnvelopeTest {
 
   @Test
   void testFailingCase3() {
-    neqsim.thermo.system.SystemInterface fluid =
-        new neqsim.thermo.system.SystemUMRPRUMCEos(298.0, 50.0);
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemUMRPRUMCEos(298.0, 50.0);
     fluid.addComponent("ethane", 2.45516);
     fluid.addComponent("methane", 89.26002);
     fluid.addComponent("propane", 0.38468);
@@ -291,19 +286,14 @@ public class PTPhaseEnvelopeTest {
     testOps.calcPTphaseEnvelopeNew3(1.0, 250, -50, 150, 15, 5);
     Object op = testOps.getOperation();
     List<Double> pressurePhaseEnvelope = ((PTphaseEnvelopeNew3) op).getPressurePhaseEnvelope();
-    List<Double> temperaturePhaseEnvelope =
-        ((PTphaseEnvelopeNew3) op).getTemperaturePhaseEnvelope();
-    assertTrue(pressurePhaseEnvelope.size() > 5,
-        "pressurePhaseEnvelope should have more than 5 points");
-    assertTrue(temperaturePhaseEnvelope.size() > 5,
-        "temperaturePhaseEnvelope should have more than 5 points");
+    List<Double> temperaturePhaseEnvelope = ((PTphaseEnvelopeNew3) op).getTemperaturePhaseEnvelope();
+    assertTrue(pressurePhaseEnvelope.size() > 5, "pressurePhaseEnvelope should have more than 5 points");
+    assertTrue(temperaturePhaseEnvelope.size() > 5, "temperaturePhaseEnvelope should have more than 5 points");
 
     double cricondenbar = ((PTphaseEnvelopeNew3) op).getCricondenbar();
     double cricondentherm = ((PTphaseEnvelopeNew3) op).getCricondentherm();
-    assertTrue(Math.abs(cricondenbar - 211) <= 5,
-        "cricondenbar should be within 211±5, got: " + cricondenbar);
-    assertTrue(Math.abs(cricondentherm - 93) <= 3,
-        "cricondentherm should be within 93±3, got: " + cricondentherm);
+    assertTrue(Math.abs(cricondenbar - 211) <= 5, "cricondenbar should be within 211±5, got: " + cricondenbar);
+    assertTrue(Math.abs(cricondentherm - 93) <= 3, "cricondentherm should be within 93±3, got: " + cricondentherm);
 
     // Optionally, add assertions or print statements to check bettaMatrix
 
@@ -321,14 +311,13 @@ public class PTPhaseEnvelopeTest {
   }
 
   /**
-   * Test that calcPTphaseEnvelope traces both dew-point and bubble-point branches for a rich
-   * natural gas. Previously only the dew-point branch was traced because the restart mechanism
-   * failed to initialize the second branch properly after crashing near the cricondenbar.
+   * Test that calcPTphaseEnvelope traces both dew-point and bubble-point branches for a rich natural gas. Previously
+   * only the dew-point branch was traced because the restart mechanism failed to initialize the second branch properly
+   * after crashing near the cricondenbar.
    */
   @Test
   void testRichGasBubblePointBranch() {
-    neqsim.thermo.system.SystemInterface fluid =
-        new neqsim.thermo.system.SystemSrkEos(273.15, 50.0);
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(273.15, 50.0);
     fluid.addComponent("nitrogen", 3.43);
     fluid.addComponent("CO2", 0.34);
     fluid.addComponent("methane", 62.51);
@@ -351,36 +340,33 @@ public class PTPhaseEnvelopeTest {
     int totalPoints = 0;
     for (int idx = 0; idx < data.length; idx += 2) {
       if (data[idx] != null) {
-        totalPoints += data[idx].length;
+	totalPoints += data[idx].length;
       }
     }
 
     // The complete phase envelope should have significantly more than 31 points
     // (the old dew-only result). Both branches together should yield > 40.
     assertTrue(totalPoints > 40,
-        "Phase envelope should have both dew and bubble branches (> 40 points), got: "
-            + totalPoints);
+	"Phase envelope should have both dew and bubble branches (> 40 points), got: " + totalPoints);
 
     // Also verify using the named accessors
     double[] dewT = ops.get("dewT");
     double[] bubT = ops.get("bubT");
 
     assertTrue(dewT != null && dewT.length > 10,
-        "Dew-point branch should have > 10 points, got: " + (dewT != null ? dewT.length : 0));
+	"Dew-point branch should have > 10 points, got: " + (dewT != null ? dewT.length : 0));
     assertTrue(bubT != null && bubT.length > 5,
-        "Bubble-point branch should have > 5 points, got: " + (bubT != null ? bubT.length : 0));
+	"Bubble-point branch should have > 5 points, got: " + (bubT != null ? bubT.length : 0));
 
     // Cricondenbar should be around 105 bar
     double[] cricondenbar = ops.get("cricondenbar");
     assertTrue(cricondenbar != null && cricondenbar[1] > 80.0,
-        "Cricondenbar pressure should be > 80 bar, got: "
-            + (cricondenbar != null ? cricondenbar[1] : 0));
+	"Cricondenbar pressure should be > 80 bar, got: " + (cricondenbar != null ? cricondenbar[1] : 0));
   }
 
   @Test
   void testFailingCase4() {
-    neqsim.thermo.system.SystemInterface fluid =
-        new neqsim.thermo.system.SystemUMRPRUMCEos(298.0, 50.0);
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemUMRPRUMCEos(298.0, 50.0);
     fluid.addComponent("ethane", 2.45516);
     fluid.addComponent("methane", 89.26002);
     fluid.addComponent("propane", 0.38468);

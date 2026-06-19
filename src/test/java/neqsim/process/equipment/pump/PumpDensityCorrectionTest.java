@@ -11,8 +11,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * Test class for verifying pump density correction.
  *
  * <p>
- * Pump curves are typically measured with water at standard conditions (~998 kg/m³). When pumping
- * fluids with different densities, the head must be corrected:
+ * Pump curves are typically measured with water at standard conditions (~998 kg/m³). When pumping fluids with different
+ * densities, the head must be corrected:
  * </p>
  * <p>
  * H_actual = H_chart × (ρ_chart / ρ_actual)
@@ -28,14 +28,14 @@ public class PumpDensityCorrectionTest extends neqsim.NeqSimTest {
     pumpChart = new PumpChart();
 
     // Set up pump curve at reference speed
-    double[] speed = new double[] {1000.0};
-    double[][] flow = new double[][] {{10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0}};
-    double[][] head = new double[][] {{120.0, 118.0, 115.0, 110.0, 103.0, 94.0, 83.0, 70.0}};
-    double[][] efficiency = new double[][] {{60.0, 70.0, 78.0, 82.0, 81.0, 76.0, 68.0, 55.0}};
+    double[] speed = new double[] { 1000.0 };
+    double[][] flow = new double[][] { { 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0 } };
+    double[][] head = new double[][] { { 120.0, 118.0, 115.0, 110.0, 103.0, 94.0, 83.0, 70.0 } };
+    double[][] efficiency = new double[][] { { 60.0, 70.0, 78.0, 82.0, 81.0, 76.0, 68.0, 55.0 } };
 
     // chartConditions: [refMW, refTemp, refPressure, refZ, refDensity]
     // Set reference density to 998 kg/m³ (water)
-    double[] chartConditions = new double[] {18.0, 298.15, 1.0, 1.0, 998.0};
+    double[] chartConditions = new double[] { 18.0, 298.15, 1.0, 1.0, 998.0 };
 
     pumpChart.setCurves(chartConditions, speed, flow, head, efficiency);
     pumpChart.setHeadUnit("meter");
@@ -44,8 +44,7 @@ public class PumpDensityCorrectionTest extends neqsim.NeqSimTest {
   @Test
   void testReferenceDensityFromChartConditions() {
     // Reference density should be set from chartConditions[4]
-    Assertions.assertEquals(998.0, pumpChart.getReferenceDensity(), 0.01,
-        "Reference density should be 998 kg/m³");
+    Assertions.assertEquals(998.0, pumpChart.getReferenceDensity(), 0.01, "Reference density should be 998 kg/m³");
     Assertions.assertTrue(pumpChart.hasDensityCorrection(), "Density correction should be enabled");
   }
 
@@ -59,8 +58,7 @@ public class PumpDensityCorrectionTest extends neqsim.NeqSimTest {
     double chartHead = pumpChart.getHead(flow, speed);
     double correctedHead = pumpChart.getCorrectedHead(flow, speed, actualDensity);
 
-    Assertions.assertEquals(chartHead, correctedHead, 0.01,
-        "Head should be unchanged when density matches reference");
+    Assertions.assertEquals(chartHead, correctedHead, 0.01, "Head should be unchanged when density matches reference");
   }
 
   @Test
@@ -75,10 +73,8 @@ public class PumpDensityCorrectionTest extends neqsim.NeqSimTest {
     double correctedHead = pumpChart.getCorrectedHead(flow, speed, lighterDensity);
 
     double expectedHead = chartHead * (998.0 / 800.0);
-    Assertions.assertEquals(expectedHead, correctedHead, 0.01,
-        "Head should increase for lighter fluid");
-    Assertions.assertTrue(correctedHead > chartHead,
-        "Corrected head should be higher for lighter fluid");
+    Assertions.assertEquals(expectedHead, correctedHead, 0.01, "Head should increase for lighter fluid");
+    Assertions.assertTrue(correctedHead > chartHead, "Corrected head should be higher for lighter fluid");
   }
 
   @Test
@@ -92,10 +88,8 @@ public class PumpDensityCorrectionTest extends neqsim.NeqSimTest {
     double correctedHead = pumpChart.getCorrectedHead(flow, speed, heavierDensity);
 
     double expectedHead = chartHead * (998.0 / 1200.0);
-    Assertions.assertEquals(expectedHead, correctedHead, 0.01,
-        "Head should decrease for heavier fluid");
-    Assertions.assertTrue(correctedHead < chartHead,
-        "Corrected head should be lower for heavier fluid");
+    Assertions.assertEquals(expectedHead, correctedHead, 0.01, "Head should decrease for heavier fluid");
+    Assertions.assertTrue(correctedHead < chartHead, "Corrected head should be lower for heavier fluid");
   }
 
   @Test
@@ -103,28 +97,28 @@ public class PumpDensityCorrectionTest extends neqsim.NeqSimTest {
     // Test that charts without density in chartConditions work as before
     PumpChart chartNoDensity = new PumpChart();
 
-    double[] speed = new double[] {1000.0};
-    double[][] flow = new double[][] {{10.0, 20.0, 30.0, 40.0, 50.0}};
-    double[][] head = new double[][] {{120.0, 118.0, 115.0, 110.0, 103.0}};
-    double[][] efficiency = new double[][] {{60.0, 70.0, 78.0, 82.0, 81.0}};
+    double[] speed = new double[] { 1000.0 };
+    double[][] flow = new double[][] { { 10.0, 20.0, 30.0, 40.0, 50.0 } };
+    double[][] head = new double[][] { { 120.0, 118.0, 115.0, 110.0, 103.0 } };
+    double[][] efficiency = new double[][] { { 60.0, 70.0, 78.0, 82.0, 81.0 } };
 
     // Only 4 elements - no density
-    double[] chartConditions = new double[] {18.0, 298.15, 1.0, 1.0};
+    double[] chartConditions = new double[] { 18.0, 298.15, 1.0, 1.0 };
 
     chartNoDensity.setCurves(chartConditions, speed, flow, head, efficiency);
     chartNoDensity.setHeadUnit("meter");
 
     Assertions.assertFalse(chartNoDensity.hasDensityCorrection(),
-        "Density correction should be disabled when not specified");
+	"Density correction should be disabled when not specified");
     Assertions.assertEquals(-1.0, chartNoDensity.getReferenceDensity(), 0.01,
-        "Reference density should be -1.0 when not specified");
+	"Reference density should be -1.0 when not specified");
 
     // getCorrectedHead should return same as getHead
     double chartHead = chartNoDensity.getHead(40.0, 1000.0);
     double correctedHead = chartNoDensity.getCorrectedHead(40.0, 1000.0, 800.0);
 
     Assertions.assertEquals(chartHead, correctedHead, 0.01,
-        "Head should be unchanged when density correction is disabled");
+	"Head should be unchanged when density correction is disabled");
   }
 
   @Test
@@ -132,28 +126,25 @@ public class PumpDensityCorrectionTest extends neqsim.NeqSimTest {
     // Test setting reference density via setter method
     PumpChart chart = new PumpChart();
 
-    double[] speed = new double[] {1000.0};
-    double[][] flow = new double[][] {{10.0, 20.0, 30.0, 40.0}};
-    double[][] head = new double[][] {{120.0, 118.0, 115.0, 110.0}};
-    double[][] efficiency = new double[][] {{60.0, 70.0, 78.0, 82.0}};
+    double[] speed = new double[] { 1000.0 };
+    double[][] flow = new double[][] { { 10.0, 20.0, 30.0, 40.0 } };
+    double[][] head = new double[][] { { 120.0, 118.0, 115.0, 110.0 } };
+    double[][] efficiency = new double[][] { { 60.0, 70.0, 78.0, 82.0 } };
 
     chart.setCurves(new double[] {}, speed, flow, head, efficiency);
     chart.setHeadUnit("meter");
 
-    Assertions.assertFalse(chart.hasDensityCorrection(),
-        "Density correction should initially be disabled");
+    Assertions.assertFalse(chart.hasDensityCorrection(), "Density correction should initially be disabled");
 
     // Set reference density via setter
     chart.setReferenceDensity(998.0);
 
-    Assertions.assertTrue(chart.hasDensityCorrection(),
-        "Density correction should be enabled after setting");
+    Assertions.assertTrue(chart.hasDensityCorrection(), "Density correction should be enabled after setting");
     Assertions.assertEquals(998.0, chart.getReferenceDensity(), 0.01);
 
     // Disable by setting negative
     chart.setReferenceDensity(-1.0);
-    Assertions.assertFalse(chart.hasDensityCorrection(),
-        "Density correction should be disabled with negative value");
+    Assertions.assertFalse(chart.hasDensityCorrection(), "Density correction should be disabled with negative value");
   }
 
   @Test
@@ -172,11 +163,11 @@ public class PumpDensityCorrectionTest extends neqsim.NeqSimTest {
     pump.setSpeed(1000.0);
 
     // Set pump chart with water reference density
-    double[] speed = new double[] {1000.0};
-    double[][] flow = new double[][] {{10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0}};
-    double[][] head = new double[][] {{120.0, 118.0, 115.0, 110.0, 103.0, 94.0, 83.0, 70.0}};
-    double[][] efficiency = new double[][] {{60.0, 70.0, 78.0, 82.0, 81.0, 76.0, 68.0, 55.0}};
-    double[] chartConditions = new double[] {18.0, 298.15, 1.0, 1.0, 998.0};
+    double[] speed = new double[] { 1000.0 };
+    double[][] flow = new double[][] { { 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0 } };
+    double[][] head = new double[][] { { 120.0, 118.0, 115.0, 110.0, 103.0, 94.0, 83.0, 70.0 } };
+    double[][] efficiency = new double[][] { { 60.0, 70.0, 78.0, 82.0, 81.0, 76.0, 68.0, 55.0 } };
+    double[] chartConditions = new double[] { 18.0, 298.15, 1.0, 1.0, 998.0 };
 
     pump.getPumpChart().setCurves(chartConditions, speed, flow, head, efficiency);
     pump.getPumpChart().setHeadUnit("meter");
@@ -184,7 +175,6 @@ public class PumpDensityCorrectionTest extends neqsim.NeqSimTest {
 
     // Pump should run without errors and produce reasonable pressure rise
     double outletPressure = pump.getOutletPressure();
-    Assertions.assertTrue(outletPressure > feedStream.getPressure(),
-        "Outlet pressure should be higher than inlet");
+    Assertions.assertTrue(outletPressure > feedStream.getPressure(), "Outlet pressure should be higher than inlet");
   }
 }

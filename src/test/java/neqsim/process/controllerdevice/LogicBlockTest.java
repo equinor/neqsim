@@ -37,7 +37,8 @@ class LogicBlockTest {
     }
 
     @Override
-    public void displayResult() {}
+    public void displayResult() {
+    }
 
     @Override
     public double getMeasuredValue(String unit) {
@@ -60,7 +61,8 @@ class LogicBlockTest {
     }
 
     @Override
-    public void setUnit(String unit) {}
+    public void setUnit(String unit) {
+    }
 
     @Override
     public double getMaximumValue() {
@@ -73,10 +75,12 @@ class LogicBlockTest {
     }
 
     @Override
-    public void setMaximumValue(double maxValue) {}
+    public void setMaximumValue(double maxValue) {
+    }
 
     @Override
-    public void setMinimumValue(double minValue) {}
+    public void setMinimumValue(double minValue) {
+    }
 
     @Override
     public boolean isLogging() {
@@ -84,7 +88,8 @@ class LogicBlockTest {
     }
 
     @Override
-    public void setLogging(boolean logging) {}
+    public void setLogging(boolean logging) {
+    }
 
     @Override
     public boolean isOnlineSignal() {
@@ -92,7 +97,8 @@ class LogicBlockTest {
     }
 
     @Override
-    public void setAlarmConfig(AlarmConfig config) {}
+    public void setAlarmConfig(AlarmConfig config) {
+    }
 
     @Override
     public AlarmConfig getAlarmConfig() {
@@ -120,7 +126,8 @@ class LogicBlockTest {
     }
 
     @Override
-    public void setTag(String tag) {}
+    public void setTag(String tag) {
+    }
 
     @Override
     public InstrumentTagRole getTagRole() {
@@ -128,7 +135,8 @@ class LogicBlockTest {
     }
 
     @Override
-    public void setTagRole(InstrumentTagRole role) {}
+    public void setTagRole(InstrumentTagRole role) {
+    }
 
     @Override
     public double getFieldValue() {
@@ -136,7 +144,8 @@ class LogicBlockTest {
     }
 
     @Override
-    public void setFieldValue(double value) {}
+    public void setFieldValue(double value) {
+    }
 
     @Override
     public boolean hasFieldValue() {
@@ -154,7 +163,8 @@ class LogicBlockTest {
     }
 
     @Override
-    public void setTagNumber(String tagNumber) {}
+    public void setTagNumber(String tagNumber) {
+    }
 
     @Override
     public String getTagNumber() {
@@ -279,8 +289,7 @@ class LogicBlockTest {
   void testChainedLogicBlocks() {
     // First block: pressure high
     LogicBlock pressureHigh = new LogicBlock("P-high", LogicBlock.Operator.AND);
-    pressureHigh.addInput(new StubMeasurement("P1", 150.0), 100.0,
-        LogicBlock.Comparator.GREATER_THAN);
+    pressureHigh.addInput(new StubMeasurement("P1", 150.0), 100.0, LogicBlock.Comparator.GREATER_THAN);
 
     // Second block: temperature high
     LogicBlock tempHigh = new LogicBlock("T-high", LogicBlock.Operator.AND);

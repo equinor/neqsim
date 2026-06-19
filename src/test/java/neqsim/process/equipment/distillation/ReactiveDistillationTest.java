@@ -13,8 +13,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Tests for reactive distillation using {@link ReactiveTray} inside a {@link DistillationColumn}.
- * The water-gas shift (WGS) system CO + H2O ⇌ CO2 + H2 is used because:
+ * Tests for reactive distillation using {@link ReactiveTray} inside a {@link DistillationColumn}. The water-gas shift
+ * (WGS) system CO + H2O ⇌ CO2 + H2 is used because:
  * <ul>
  * <li>It has a well-known equilibrium that the Modified RAND solver handles correctly.</li>
  * <li>It has been thoroughly validated in the reactive flash test suites.</li>
@@ -27,10 +27,9 @@ import org.apache.logging.log4j.Logger;
 public class ReactiveDistillationTest {
   private static final Logger logger = LogManager.getLogger(ReactiveDistillationTest.class);
 
-
   /**
-   * Test that a reactive distillation column creates ReactiveTray instances when setReactive(true)
-   * is called before construction, and that the column runs without exceptions.
+   * Test that a reactive distillation column creates ReactiveTray instances when setReactive(true) is called before
+   * construction, and that the column runs without exceptions.
    */
   @Test
   public void testReactiveColumnCreatesReactiveTrays() {
@@ -98,21 +97,21 @@ public class ReactiveDistillationTest {
     // Tray 0 = Reboiler, Trays 1-5 = middle, Tray 6 = Condenser
     // Middle tray indices: 0=Tray1, 1=Tray2, 2=Tray3, 3=Tray4, 4=Tray5
     assertFalse(column.getTray(1).isUseReactiveFlash(),
-        "Middle tray 0 (before reactive section) should not have reactive flash");
+	"Middle tray 0 (before reactive section) should not have reactive flash");
     assertTrue(column.getTray(2).isUseReactiveFlash(),
-        "Middle tray 1 (in reactive section) should have reactive flash");
+	"Middle tray 1 (in reactive section) should have reactive flash");
     assertTrue(column.getTray(3).isUseReactiveFlash(),
-        "Middle tray 2 (in reactive section) should have reactive flash");
+	"Middle tray 2 (in reactive section) should have reactive flash");
     assertTrue(column.getTray(4).isUseReactiveFlash(),
-        "Middle tray 3 (in reactive section) should have reactive flash");
+	"Middle tray 3 (in reactive section) should have reactive flash");
     assertFalse(column.getTray(5).isUseReactiveFlash(),
-        "Middle tray 4 (after reactive section) should not have reactive flash");
+	"Middle tray 4 (after reactive section) should not have reactive flash");
   }
 
   /**
-   * Test that a reactive distillation column converges and closes mass balance on a system with NR
-   * = 0 (methane/ethane only — rank(A) = NC = 2, so no reactions). This verifies the reactive flash
-   * path integrates correctly with the column solver.
+   * Test that a reactive distillation column converges and closes mass balance on a system with NR = 0 (methane/ethane
+   * only — rank(A) = NC = 2, so no reactions). This verifies the reactive flash path integrates correctly with the
+   * column solver.
    */
   @Test
   public void testReactiveColumnMassBalanceNR0() {
@@ -157,29 +156,26 @@ public class ReactiveDistillationTest {
     double gasFlow = column.getGasOutStream().getFlowRate("kg/hr");
     double liqFlow = column.getLiquidOutStream().getFlowRate("kg/hr");
     double totalOut = gasFlow + liqFlow;
-    System.out
-        .println("Reactive column: gas=" + gasFlow + " liq=" + liqFlow + " total=" + totalOut);
+    System.out.println("Reactive column: gas=" + gasFlow + " liq=" + liqFlow + " total=" + totalOut);
 
     double massBalanceError = Math.abs(totalOut - 1000.0) / 1000.0;
     assertTrue(massBalanceError < 0.05,
-        "Mass balance error should be < 5% for NR=0 system, got " + (massBalanceError * 100) + "%");
+	"Mass balance error should be < 5% for NR=0 system, got " + (massBalanceError * 100) + "%");
 
     // For NR=0, reactive column should produce results identical to the standard column
     // because the PHflash delegation bypasses the reactive solver entirely
-    assertEquals(stdGas, gasFlow, 0.01,
-        "NR=0 reactive column gas flow should match standard column");
-    assertEquals(stdLiq, liqFlow, 0.01,
-        "NR=0 reactive column liquid flow should match standard column");
+    assertEquals(stdGas, gasFlow, 0.01, "NR=0 reactive column gas flow should match standard column");
+    assertEquals(stdLiq, liqFlow, 0.01, "NR=0 reactive column liquid flow should match standard column");
   }
 
   /**
-   * Test that a single ReactiveTray produces chemical equilibrium products for the WGS system. This
-   * verifies the reactive flash integration at the tray level without the full column iteration.
+   * Test that a single ReactiveTray produces chemical equilibrium products for the WGS system. This verifies the
+   * reactive flash integration at the tray level without the full column iteration.
    */
 
   /**
-   * Test that a single ReactiveTray produces chemical equilibrium products for the WGS system. This
-   * verifies the reactive flash integration at the tray level without the full column iteration.
+   * Test that a single ReactiveTray produces chemical equilibrium products for the WGS system. This verifies the
+   * reactive flash integration at the tray level without the full column iteration.
    */
   @Test
   public void testSingleReactiveTrayWGS() {
@@ -219,16 +215,14 @@ public class ReactiveDistillationTest {
     }
 
     // CO2 started at 0.05, should increase due to WGS reaction
-    assertTrue(co2Overall > 0.05,
-        "CO2 mole fraction should increase via WGS reaction, got " + co2Overall);
+    assertTrue(co2Overall > 0.05, "CO2 mole fraction should increase via WGS reaction, got " + co2Overall);
     // H2 started at 0.05, should increase
-    assertTrue(h2Overall > 0.05,
-        "H2 mole fraction should increase via WGS reaction, got " + h2Overall);
+    assertTrue(h2Overall > 0.05, "H2 mole fraction should increase via WGS reaction, got " + h2Overall);
   }
 
   /**
-   * Test reactive column with a non-reactive system (methane/ethane): should behave like a standard
-   * column since NR = 0 (no independent reactions among hydrocarbons).
+   * Test reactive column with a non-reactive system (methane/ethane): should behave like a standard column since NR = 0
+   * (no independent reactions among hydrocarbons).
    */
   @Test
   public void testReactiveColumnNonReactiveSystem() {
@@ -273,15 +267,12 @@ public class ReactiveDistillationTest {
 
     // With NR=0 PHflash delegation, reactive column delegates to standard PHflash
     // so results should be identical
-    assertEquals(stdGasTemp, rxnGasTemp, 0.01,
-        "Gas outlet temperatures should match for non-reactive system");
-    assertEquals(stdLiqTemp, rxnLiqTemp, 0.01,
-        "Liquid outlet temperatures should match for non-reactive system");
+    assertEquals(stdGasTemp, rxnGasTemp, 0.01, "Gas outlet temperatures should match for non-reactive system");
+    assertEquals(stdLiqTemp, rxnLiqTemp, 0.01, "Liquid outlet temperatures should match for non-reactive system");
   }
 
   /**
-   * Test that the column builder also respects reactive mode (setReactive called after
-   * construction).
+   * Test that the column builder also respects reactive mode (setReactive called after construction).
    */
   @Test
   public void testReactiveColumnAPIUsability() {
@@ -316,11 +307,10 @@ public class ReactiveDistillationTest {
   }
 
   /**
-   * Benchmark: verify that a single reactive tray at specified T,P produces the same chemical
-   * equilibrium composition as a standalone reactive TP flash at the same conditions. We run the
-   * tray first (which does a PH flash — finding T from enthalpy), then do a standalone reactive TP
-   * flash at the tray's converged temperature. This verifies the tray's internal flash is
-   * consistent with the standalone solver.
+   * Benchmark: verify that a single reactive tray at specified T,P produces the same chemical equilibrium composition
+   * as a standalone reactive TP flash at the same conditions. We run the tray first (which does a PH flash — finding T
+   * from enthalpy), then do a standalone reactive TP flash at the tray's converged temperature. This verifies the
+   * tray's internal flash is consistent with the standalone solver.
    */
   @Test
   public void testReactiveTrayMatchesStandaloneFlash() {
@@ -373,23 +363,21 @@ public class ReactiveDistillationTest {
     }
 
     // Both should show reaction products (CO2 and H2 above feed levels)
-    assertTrue(trayCO2 > 0.10,
-        "CO2 from tray should be enriched above feed (0.10), got " + trayCO2);
+    assertTrue(trayCO2 > 0.10, "CO2 from tray should be enriched above feed (0.10), got " + trayCO2);
     assertTrue(trayH2 > 0.10, "H2 from tray should be enriched above feed (0.10), got " + trayH2);
 
     // Compositions should match within 5% relative (tray PH flash vs standalone TP flash
     // may have slightly different convergence since PH flash iterates on T)
     assertEquals(flashCO2, trayCO2, flashCO2 * 0.05,
-        "CO2 from reactive tray should match standalone reactive TP flash");
-    assertEquals(flashH2, trayH2, flashH2 * 0.05,
-        "H2 from reactive tray should match standalone reactive TP flash");
+	"CO2 from reactive tray should match standalone reactive TP flash");
+    assertEquals(flashH2, trayH2, flashH2 * 0.05, "H2 from reactive tray should match standalone reactive TP flash");
   }
 
   /**
-   * Benchmark: verify that a reactive distillation column with WGS (CO + H2O -> CO2 + H2) runs and
-   * produces measurable reaction products. The reactive PH flash (secant+bisection for NR &gt; 0)
-   * handles the simultaneous chemical and phase equilibrium on each tray. Mass balance for reactive
-   * systems is currently less tight than for NR=0 due to the iterative T-loop algorithm.
+   * Benchmark: verify that a reactive distillation column with WGS (CO + H2O -> CO2 + H2) runs and produces measurable
+   * reaction products. The reactive PH flash (secant+bisection for NR &gt; 0) handles the simultaneous chemical and
+   * phase equilibrium on each tray. Mass balance for reactive systems is currently less tight than for NR=0 due to the
+   * iterative T-loop algorithm.
    */
   @Test
   public void testReactiveColumnWGSProducesProducts() {
@@ -423,7 +411,6 @@ public class ReactiveDistillationTest {
     // Check that reaction happened: H2 should be enriched in the gas product
     SystemInterface gasOut = column.getGasOutStream().getFluid();
     double h2InGas = gasOut.getPhase(0).getComponent("hydrogen").getx();
-    assertTrue(h2InGas > 0.10,
-        "H2 in gas product should be enriched above feed (0.10), got " + h2InGas);
+    assertTrue(h2InGas > 0.10, "H2 in gas product should be enriched above feed (0.10), got " + h2InGas);
   }
 }

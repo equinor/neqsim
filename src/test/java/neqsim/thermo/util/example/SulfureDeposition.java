@@ -21,7 +21,7 @@ public class SulfureDeposition {
   private static final Logger logger = LogManager.getLogger(SulfureDeposition.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.
@@ -46,25 +46,25 @@ public class SulfureDeposition {
      * testSystem.addComponent("nitrogen", 0.000001); testSystem.addComponent("CO2", 0.000053);
      * testSystem.addComponent("methane", 0.001125); testSystem.addComponent("ethane", 0.007257);
      * testSystem.addComponent("propane", 0.028675); testSystem.addComponent("i-butane", 0.009183);
-     * testSystem.addComponent("n-butane", 0.034027); testSystem.addComponent("i-pentane",
-     * 0.017530); testSystem.addComponent("n-pentane", 0.028188);
-     * testSystem.addComponent("n-hexane", 0.045485); testSystem.addTBPfraction("Vigdis_C7-C8",
-     * 0.143218, 99.07 / 1000.0, 0.75111); testSystem.addTBPfraction("Vigdis_C9-C12", 0.208009,
-     * 138.64 / 1000.0, 0.80122); testSystem.addTBPfraction("Vigdis_C13-C18", 0.217329, 213.76 /
-     * 1000.0, 0.85103); testSystem.addTBPfraction("Vigdis_C19-C29", 0.156069, 333.84 / 1000.0,
-     * 0.89639); testSystem.addTBPfraction("Vigdis_C30-C80", 0.076902, 525.0 / 1000.0, 0.94072);
+     * testSystem.addComponent("n-butane", 0.034027); testSystem.addComponent("i-pentane", 0.017530);
+     * testSystem.addComponent("n-pentane", 0.028188); testSystem.addComponent("n-hexane", 0.045485);
+     * testSystem.addTBPfraction("Vigdis_C7-C8", 0.143218, 99.07 / 1000.0, 0.75111);
+     * testSystem.addTBPfraction("Vigdis_C9-C12", 0.208009, 138.64 / 1000.0, 0.80122);
+     * testSystem.addTBPfraction("Vigdis_C13-C18", 0.217329, 213.76 / 1000.0, 0.85103);
+     * testSystem.addTBPfraction("Vigdis_C19-C29", 0.156069, 333.84 / 1000.0, 0.89639);
+     * testSystem.addTBPfraction("Vigdis_C30-C80", 0.076902, 525.0 / 1000.0, 0.94072);
      */
     // Vigdis 2 stage
     /*
      * testSystem.addComponent("nitrogen", 0.000301); testSystem.addComponent("CO2", 0.000171);
      * testSystem.addComponent("methane", 0.023407); testSystem.addComponent("ethane", 0.005422);
      * testSystem.addComponent("propane", 0.005413); testSystem.addComponent("i-butane", 0.00095);
-     * testSystem.addComponent("n-butane", 0.003003); testSystem.addComponent("i-pentane",
-     * 0.001173); testSystem.addComponent("n-pentane", 0.001785);
-     * testSystem.addComponent("n-hexane", 0.002514); testSystem.addTBPfraction("Vigdis_C7-C8",
-     * 0.0075, 99.07 / 1000.0, 0.75111); testSystem.addTBPfraction("Vigdis_C9-C12", 0.010572, 138.64
-     * / 1000.0, 0.80122); testSystem.addTBPfraction("Vigdis_C13-C18", 0.011015, 213.76 / 1000.0,
-     * 0.85103); testSystem.addTBPfraction("Vigdis_C19-C29", 0.00791, 333.84 / 1000.0, 0.89639);
+     * testSystem.addComponent("n-butane", 0.003003); testSystem.addComponent("i-pentane", 0.001173);
+     * testSystem.addComponent("n-pentane", 0.001785); testSystem.addComponent("n-hexane", 0.002514);
+     * testSystem.addTBPfraction("Vigdis_C7-C8", 0.0075, 99.07 / 1000.0, 0.75111);
+     * testSystem.addTBPfraction("Vigdis_C9-C12", 0.010572, 138.64 / 1000.0, 0.80122);
+     * testSystem.addTBPfraction("Vigdis_C13-C18", 0.011015, 213.76 / 1000.0, 0.85103);
+     * testSystem.addTBPfraction("Vigdis_C19-C29", 0.00791, 333.84 / 1000.0, 0.89639);
      * testSystem.addTBPfraction("Vigdis_C30-C80", 0.003898, 525.0 / 1000.0, 0.94072); //
      * testSystem.addComponent("water", 0.2514);
      */
@@ -73,11 +73,10 @@ public class SulfureDeposition {
      * testSystem.addComponent("nitrogen", 0.000501); testSystem.addComponent("CO2", 0.000172);
      * testSystem.addComponent("methane", 0.018972); testSystem.addComponent("ethane", 0.007619);
      * testSystem.addComponent("propane", 0.010628); testSystem.addComponent("i-butane", 0.001855);
-     * testSystem.addComponent("n-butane", 0.006983); testSystem.addComponent("i-pentane",
-     * 0.002583); testSystem.addComponent("n-pentane", 0.003948);
-     * testSystem.addComponent("n-hexane", 0.000302); testSystem.addTBPfraction("Snorre_C6",
-     * 0.004846, 86 / 1000.0, 0.664); testSystem.addTBPfraction("Snorre_C7", 0.006924, 96 / 1000.0,
-     * 0.738); testSystem.addTBPfraction("Snorre_C8", 0.006924, 107.0 / 1000.0, 0.765);
+     * testSystem.addComponent("n-butane", 0.006983); testSystem.addComponent("i-pentane", 0.002583);
+     * testSystem.addComponent("n-pentane", 0.003948); testSystem.addComponent("n-hexane", 0.000302);
+     * testSystem.addTBPfraction("Snorre_C6", 0.004846, 86 / 1000.0, 0.664); testSystem.addTBPfraction("Snorre_C7",
+     * 0.006924, 96 / 1000.0, 0.738); testSystem.addTBPfraction("Snorre_C8", 0.006924, 107.0 / 1000.0, 0.765);
      * testSystem.addTBPfraction("Snorre_C9", 0.00426, 121.0 / 1000.0, 0.781);
      * testSystem.addTBPfraction("Snorre_C10-C13", 0.010273, 152.0 / 1000.0, 0.809);
      * testSystem.addTBPfraction("Snorre_C14-C16", 0.005681, 205.0 / 1000.0, 0.835);
@@ -140,23 +139,20 @@ public class SulfureDeposition {
 
       logger.info("temperature " + (testSystem.getTemperature() - 273.15));
       logger.info("mol S8/mol gas (ppb) " + testSystem.getPhase(0).getComponent("S8").getx() * 1e9);
-      logger.info("mg S8/Sm^3 gas " + testSystem.getPhase(0).getComponent("S8").getx()
-          * testSystem.getPhase(0).getComponent("S8").getMolarMass() * 1e6
-          * (101325 / (ThermodynamicConstantsInterface.R * 288.15)));
+      logger.info("mg S8/Sm^3 gas "
+	  + testSystem.getPhase(0).getComponent("S8").getx() * testSystem.getPhase(0).getComponent("S8").getMolarMass()
+	      * 1e6 * (101325 / (ThermodynamicConstantsInterface.R * 288.15)));
 
       logger.info("wt% S8 in gas " + testSystem.getPhase(0).getComponent("S8").getx()
-          * testSystem.getPhase(0).getComponent("S8").getMolarMass()
-          / testSystem.getPhase(0).getMolarMass() * 100);
+	  * testSystem.getPhase(0).getComponent("S8").getMolarMass() / testSystem.getPhase(0).getMolarMass() * 100);
       logger.info("wt% S8 in oil " + testSystem.getPhase(1).getComponent("S8").getx()
-          * testSystem.getPhase(0).getComponent("S8").getMolarMass()
-          / testSystem.getPhase(1).getMolarMass() * 100);
+	  * testSystem.getPhase(0).getComponent("S8").getMolarMass() / testSystem.getPhase(1).getMolarMass() * 100);
       // logger.info("ppb (wt) S8 in water " +
       // testSystem.getPhase(2).getComponent("S8").getx() *
       // testSystem.getPhase(0).getComponent("S8").getMolarMass() /
       // testSystem.getPhase(2).getMolarMass() * 1e9);
       logger.info("ppm (wt) S8 total " + testSystem.getPhase(0).getComponent("S8").getz()
-          * testSystem.getPhase(0).getComponent("S8").getMolarMass() / testSystem.getMolarMass()
-          * 1e6);
+	  * testSystem.getPhase(0).getComponent("S8").getMolarMass() / testSystem.getMolarMass() * 1e6);
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }

@@ -27,7 +27,8 @@ public abstract class BaseFunction implements FunctionInterface {
    * Constructor for BaseFunction.
    * </p>
    */
-  public BaseFunction() {}
+  public BaseFunction() {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -100,7 +101,8 @@ public abstract class BaseFunction implements FunctionInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void setDatabaseParameters() {}
+  public void setDatabaseParameters() {
+  }
 
   /** {@inheritDoc} */
   @Override

@@ -4,8 +4,8 @@ package neqsim.process.equipment.compressor;
  * Enumeration representing the operating states of a compressor in dynamic simulations.
  *
  * <p>
- * This enum provides explicit state tracking for compressor control logic, enabling proper handling
- * of startup sequences, shutdown procedures, and protective actions.
+ * This enum provides explicit state tracking for compressor control logic, enabling proper handling of startup
+ * sequences, shutdown procedures, and protective actions.
  * </p>
  *
  * @author esol
@@ -19,44 +19,41 @@ public enum CompressorState {
   STOPPED("Stopped", "Compressor is stopped and not rotating"),
 
   /**
-   * Compressor is in the startup sequence. Speed is ramping up according to startup profile.
-   * Anti-surge valve may be fully open.
+   * Compressor is in the startup sequence. Speed is ramping up according to startup profile. Anti-surge valve may be
+   * fully open.
    */
   STARTING("Starting", "Compressor is ramping up during startup sequence"),
 
   /**
-   * Normal operating state. Compressor is running within design envelope. Speed and flow are within
-   * acceptable limits.
+   * Normal operating state. Compressor is running within design envelope. Speed and flow are within acceptable limits.
    */
   RUNNING("Running", "Compressor is operating normally"),
 
   /**
-   * Surge protection is active. Operating point is near or at surge line. Anti-surge valve is
-   * modulating to protect compressor.
+   * Surge protection is active. Operating point is near or at surge line. Anti-surge valve is modulating to protect
+   * compressor.
    */
   SURGE_PROTECTION("Surge Protection", "Anti-surge protection is active"),
 
   /**
-   * Speed is limited by driver power or mechanical constraints. Compressor cannot achieve requested
-   * operating point.
+   * Speed is limited by driver power or mechanical constraints. Compressor cannot achieve requested operating point.
    */
   SPEED_LIMITED("Speed Limited", "Speed is limited by driver or mechanical constraints"),
 
   /**
-   * Compressor is in controlled shutdown sequence. Speed is ramping down according to shutdown
-   * profile.
+   * Compressor is in controlled shutdown sequence. Speed is ramping down according to shutdown profile.
    */
   SHUTDOWN("Shutdown", "Compressor is in controlled shutdown sequence"),
 
   /**
-   * System is depressurizing. Compressor may be coasting down. Used during emergency shutdown or
-   * planned depressurization.
+   * System is depressurizing. Compressor may be coasting down. Used during emergency shutdown or planned
+   * depressurization.
    */
   DEPRESSURIZING("Depressurizing", "System is depressurizing"),
 
   /**
-   * Emergency shutdown state. Compressor has tripped due to protective action. Requires operator
-   * acknowledgment before restart.
+   * Emergency shutdown state. Compressor has tripped due to protective action. Requires operator acknowledgment before
+   * restart.
    */
   TRIPPED("Tripped", "Emergency shutdown - compressor has tripped"),
 

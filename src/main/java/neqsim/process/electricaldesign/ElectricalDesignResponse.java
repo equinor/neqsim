@@ -8,9 +8,8 @@ import com.google.gson.GsonBuilder;
  * Response class for electrical design JSON export.
  *
  * <p>
- * Provides a structured representation of electrical design data for JSON serialization. Includes
- * equipment-level electrical parameters, motor data, VFD data, cable data, switchgear data, and
- * hazardous area classification.
+ * Provides a structured representation of electrical design data for JSON serialization. Includes equipment-level
+ * electrical parameters, motor data, VFD data, cable data, switchgear data, and hazardous area classification.
  * </p>
  *
  * @author Even Solbraa
@@ -49,7 +48,8 @@ public class ElectricalDesignResponse implements java.io.Serializable {
   /**
    * Default constructor.
    */
-  public ElectricalDesignResponse() {}
+  public ElectricalDesignResponse() {
+  }
 
   /**
    * Constructor from ElectricalDesign.
@@ -119,8 +119,7 @@ public class ElectricalDesignResponse implements java.io.Serializable {
    * @return JSON representation
    */
   public String toJson() {
-    Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting()
-        .serializeNulls().create();
+    Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().serializeNulls().create();
     return gson.toJson(this);
   }
 

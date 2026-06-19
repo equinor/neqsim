@@ -35,8 +35,8 @@ public class BWRSvsGERG2008Test {
     double gergPhiC2H6 = gerg.getPhase(0).getComponent("ethane").fugcoef(gerg.getPhase(0));
     double gergCp = gerg.getPhase(0).getCp() / gerg.getPhase(0).getNumberOfMolesInPhase();
     double gergJT = -1.0 / gerg.getPhase(0).getCp()
-        * (gerg.getPhase(0).getMolarVolume() * gerg.getPhase(0).getNumberOfMolesInPhase()
-            + gerg.getTemperature() * gerg.getPhase(0).getdPdTVn() / gerg.getPhase(0).getdPdVTn());
+	* (gerg.getPhase(0).getMolarVolume() * gerg.getPhase(0).getNumberOfMolesInPhase()
+	    + gerg.getTemperature() * gerg.getPhase(0).getdPdTVn() / gerg.getPhase(0).getdPdVTn());
     double gergSpeed = gerg.getPhase(0).getSoundSpeed();
 
     assertEquals(gergDensity, bwrsDensity, gergDensity * 0.2);
@@ -57,8 +57,8 @@ public class BWRSvsGERG2008Test {
   }
 
   /**
-   * Test at 100 bar - higher pressure where simple linear BWRS mixing rules have larger errors.
-   * Disabled until quadratic/conformal mixing rules are implemented for MBWR-32.
+   * Test at 100 bar - higher pressure where simple linear BWRS mixing rules have larger errors. Disabled until
+   * quadratic/conformal mixing rules are implemented for MBWR-32.
    */
   @org.junit.jupiter.api.Disabled("BWRS linear mixing rules inaccurate at high pressure for mixtures")
   @Test

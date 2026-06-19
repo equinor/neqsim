@@ -19,8 +19,7 @@ public class FluidComponentResponse {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(FluidComponentResponse.class);
   public String name;
-  public HashMap<String, HashMap<String, Value>> properties =
-      new HashMap<String, HashMap<String, Value>>();
+  public HashMap<String, HashMap<String, Value>> properties = new HashMap<String, HashMap<String, Value>>();
 
   /**
    * <p>
@@ -46,7 +45,7 @@ public class FluidComponentResponse {
    * Constructor for FluidComponentResponse.
    *
    * @param fluidname name of fluid
-   * @param fluid input fluid
+   * @param fluid     input fluid
    */
   public FluidComponentResponse(String fluidname, SystemInterface fluid) {
     this(fluidname);
@@ -61,22 +60,18 @@ public class FluidComponentResponse {
       ComponentInterface component = inputFluid.getPhase(0).getComponent(i);
       PhaseInterface phase = inputFluid.getPhase(0);
       newdata = new HashMap<String, Value>();
-      newdata.put("Acentric Factor",
-          new Value(Double.toString(component.getAcentricFactor()), "-"));
+      newdata.put("Acentric Factor", new Value(Double.toString(component.getAcentricFactor()), "-"));
       newdata.put("Mole Fraction", new Value(Double.toString(component.getz()), "-"));
       newdata.put("Weigth Fraction", new Value(Double.toString(phase.getWtFrac(i)), "-"));
       newdata.put("Critical Temperature",
-          new Value(
-              Double.toString(component.getTC(neqsim.util.unit.Units.getSymbol("temperature"))),
-              neqsim.util.unit.Units.getSymbol("temperature")));
+	  new Value(Double.toString(component.getTC(neqsim.util.unit.Units.getSymbol("temperature"))),
+	      neqsim.util.unit.Units.getSymbol("temperature")));
       newdata.put("Critical Pressure",
-          new Value(Double.toString(component.getPC(neqsim.util.unit.Units.getSymbol("pressure"))),
-              neqsim.util.unit.Units.getSymbol("pressure")));
+	  new Value(Double.toString(component.getPC(neqsim.util.unit.Units.getSymbol("pressure"))),
+	      neqsim.util.unit.Units.getSymbol("pressure")));
       newdata.put("Normal Liquid Density",
-          new Value(
-              Double.toString(
-                  component.getNormalLiquidDensity(neqsim.util.unit.Units.getSymbol("density"))),
-              neqsim.util.unit.Units.getSymbol("density")));
+	  new Value(Double.toString(component.getNormalLiquidDensity(neqsim.util.unit.Units.getSymbol("density"))),
+	      neqsim.util.unit.Units.getSymbol("density")));
 
       properties.put(name, newdata);
     }
@@ -105,5 +100,6 @@ public class FluidComponentResponse {
    * print.
    * </p>
    */
-  public void print() {}
+  public void print() {
+  }
 }

@@ -135,13 +135,11 @@ public final class SafetyReport implements Serializable {
   public String getSummary() {
     StringBuilder sb = new StringBuilder();
     sb.append("Safety Assessment: ").append(overallLevel.getDisplayName()).append("\n");
-    sb.append("  Blowdown time: ").append(String.format("%.1f", estimatedBlowdownTimeMinutes))
-        .append(" min");
+    sb.append("  Blowdown time: ").append(String.format("%.1f", estimatedBlowdownTimeMinutes)).append(" min");
     sb.append(meetsBlowdownTarget() ? " (OK)" : " (EXCEEDS TARGET)").append("\n");
     sb.append("  Min metal temp: ").append(String.format("%.0f", minimumMetalTempC)).append("°C\n");
     sb.append("  Inventory: ").append(String.format("%.1f", inventoryTonnes)).append(" tonnes\n");
-    sb.append("  PSV capacity: ").append(String.format("%.0f", psvRequiredCapacityKgPerHr))
-        .append(" kg/hr\n");
+    sb.append("  PSV capacity: ").append(String.format("%.0f", psvRequiredCapacityKgPerHr)).append(" kg/hr\n");
     if (h2sPresent) {
       sb.append("  WARNING: H2S present - toxic gas considerations\n");
     }
@@ -154,7 +152,7 @@ public final class SafetyReport implements Serializable {
   @Override
   public String toString() {
     return String.format("SafetyReport[level=%s, blowdown=%.1fmin, minTemp=%.0f°C]", overallLevel,
-        estimatedBlowdownTimeMinutes, minimumMetalTempC);
+	estimatedBlowdownTimeMinutes, minimumMetalTempC);
   }
 
   /**

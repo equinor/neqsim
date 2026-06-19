@@ -13,21 +13,16 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Liquid-liquid extractor for separation of components between two immiscible
- * liquid phases.
+ * Liquid-liquid extractor for separation of components between two immiscible liquid phases.
  *
  * <p>
- * Models a single-stage or multi-stage liquid-liquid extraction unit. Takes a
- * feed stream and a
- * solvent stream, mixes them, and performs a liquid-liquid equilibrium (LLE)
- * flash to separate into
- * extract (solvent-rich) and raffinate (feed-rich) phases.
+ * Models a single-stage or multi-stage liquid-liquid extraction unit. Takes a feed stream and a solvent stream, mixes
+ * them, and performs a liquid-liquid equilibrium (LLE) flash to separate into extract (solvent-rich) and raffinate
+ * (feed-rich) phases.
  * </p>
  *
  * <p>
- * Leverages NeqSim's built-in LLE flash capabilities for thermodynamically
- * rigorous phase
- * separation.
+ * Leverages NeqSim's built-in LLE flash capabilities for thermodynamically rigorous phase separation.
  * </p>
  *
  * <p>
@@ -95,8 +90,7 @@ public class LiquidLiquidExtractor extends ProcessEquipmentBaseClass {
    * @param feedStream    the feed stream
    * @param solventStream the solvent stream
    */
-  public LiquidLiquidExtractor(String name, StreamInterface feedStream,
-      StreamInterface solventStream) {
+  public LiquidLiquidExtractor(String name, StreamInterface feedStream, StreamInterface solventStream) {
     super(name);
     setFeedStream(feedStream);
     setSolventStream(solventStream);
@@ -285,11 +279,10 @@ public class LiquidLiquidExtractor extends ProcessEquipmentBaseClass {
       String compName = solventSys.getComponent(i).getComponentName();
       double moles = solventSys.getComponent(i).getNumberOfmoles();
       try {
-        combined.addComponent(compName, moles);
+	combined.addComponent(compName, moles);
       } catch (Exception ex) {
-        // Component may not exist in feed system - try skipping
-        logger.warn("Could not add solvent component '{}' to combined system: {}", compName,
-            ex.getMessage());
+	// Component may not exist in feed system - try skipping
+	logger.warn("Could not add solvent component '{}' to combined system: {}", compName, ex.getMessage());
       }
     }
 
@@ -328,8 +321,8 @@ public class LiquidLiquidExtractor extends ProcessEquipmentBaseClass {
       SystemInterface emptySys = combined.clone();
       // Zero out raff phase
       for (int i = 0; i < emptySys.getNumberOfComponents(); i++) {
-        double moles = emptySys.getComponent(i).getNumberOfmoles();
-        emptySys.addComponent(i, -moles * 0.999);
+	double moles = emptySys.getComponent(i).getNumberOfmoles();
+	emptySys.addComponent(i, -moles * 0.999);
       }
       emptySys.initProperties();
       raffinateStream.setThermoSystem(emptySys);
@@ -341,8 +334,7 @@ public class LiquidLiquidExtractor extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   /**

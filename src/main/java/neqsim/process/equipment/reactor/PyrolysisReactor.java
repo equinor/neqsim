@@ -20,9 +20,9 @@ import neqsim.thermo.system.SystemSrkEos;
  * Pyrolysis reactor for thermal decomposition of biomass in the absence of oxygen.
  *
  * <p>
- * Models slow, fast, and flash pyrolysis by combining empirical product-distribution correlations
- * with constrained Gibbs equilibrium for the vapour phase. The reactor accepts a
- * {@link BiomassCharacterization} feedstock and produces three product streams:
+ * Models slow, fast, and flash pyrolysis by combining empirical product-distribution correlations with constrained
+ * Gibbs equilibrium for the vapour phase. The reactor accepts a {@link BiomassCharacterization} feedstock and produces
+ * three product streams:
  * </p>
  * <ul>
  * <li><b>Pyrolysis gas</b> — non-condensable gases (CO, CO2, H2, CH4)</li>
@@ -65,9 +65,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * </table>
  *
  * <p>
- * Product distribution is set by empirical yield fractions that the user can override. Default
- * yields are estimated from published correlations based on pyrolysis mode and biomass volatile
- * matter content.
+ * Product distribution is set by empirical yield fractions that the user can override. Default yields are estimated
+ * from published correlations based on pyrolysis mode and biomass volatile matter content.
  * </p>
  *
  * @author Even Solbraa
@@ -166,7 +165,7 @@ public class PyrolysisReactor extends ProcessEquipmentBaseClass {
   /**
    * Sets the biomass feedstock and feed rate.
    *
-   * @param biomass biomass characterization
+   * @param biomass         biomass characterization
    * @param feedRateKgPerHr dry biomass feed rate in kg/hr
    */
   public void setBiomass(BiomassCharacterization biomass, double feedRateKgPerHr) {
@@ -205,7 +204,7 @@ public class PyrolysisReactor extends ProcessEquipmentBaseClass {
    * Sets the pyrolysis temperature with unit specification.
    *
    * @param temperature temperature value
-   * @param unit unit string ("K", "C", "F")
+   * @param unit        unit string ("K", "C", "F")
    */
   public void setPyrolysisTemperature(double temperature, String unit) {
     if ("C".equalsIgnoreCase(unit)) {
@@ -283,9 +282,9 @@ public class PyrolysisReactor extends ProcessEquipmentBaseClass {
   /**
    * Sets product yield fractions manually. All three must sum to approximately 1.0.
    *
-   * @param charYieldFrac char yield fraction (0-1)
+   * @param charYieldFrac   char yield fraction (0-1)
    * @param bioOilYieldFrac bio-oil yield fraction (0-1)
-   * @param gasYieldFrac gas yield fraction (0-1)
+   * @param gasYieldFrac    gas yield fraction (0-1)
    */
   public void setProductYields(double charYieldFrac, double bioOilYieldFrac, double gasYieldFrac) {
     this.charYield = charYieldFrac;
@@ -597,8 +596,7 @@ public class PyrolysisReactor extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Estimates product yields based on pyrolysis mode and biomass properties when user values are
-   * not set.
+   * Estimates product yields based on pyrolysis mode and biomass properties when user values are not set.
    *
    * <p>
    * Default correlations are derived from published literature averages:
@@ -614,8 +612,7 @@ public class PyrolysisReactor extends ProcessEquipmentBaseClass {
    * </p>
    */
   private void estimateProductYields() {
-    if (userYieldsSet && !Double.isNaN(charYield) && !Double.isNaN(bioOilYield)
-        && !Double.isNaN(gasYield)) {
+    if (userYieldsSet && !Double.isNaN(charYield) && !Double.isNaN(bioOilYield) && !Double.isNaN(gasYield)) {
       actualCharYield = charYield;
       actualBioOilYield = bioOilYield;
       actualGasYield = gasYield;
@@ -626,26 +623,26 @@ public class PyrolysisReactor extends ProcessEquipmentBaseClass {
     double vm = biomass.getVolatileMatter(); // volatile matter %
 
     switch (pyrolysisMode) {
-      case SLOW:
-        actualCharYield = 0.35;
-        actualBioOilYield = 0.30;
-        actualGasYield = 0.35;
-        break;
-      case FAST:
-        actualCharYield = 0.18;
-        actualBioOilYield = 0.60;
-        actualGasYield = 0.22;
-        break;
-      case FLASH:
-        actualCharYield = 0.12;
-        actualBioOilYield = 0.65;
-        actualGasYield = 0.23;
-        break;
-      default:
-        actualCharYield = 0.20;
-        actualBioOilYield = 0.55;
-        actualGasYield = 0.25;
-        break;
+    case SLOW:
+      actualCharYield = 0.35;
+      actualBioOilYield = 0.30;
+      actualGasYield = 0.35;
+      break;
+    case FAST:
+      actualCharYield = 0.18;
+      actualBioOilYield = 0.60;
+      actualGasYield = 0.22;
+      break;
+    case FLASH:
+      actualCharYield = 0.12;
+      actualBioOilYield = 0.65;
+      actualGasYield = 0.23;
+      break;
+    default:
+      actualCharYield = 0.20;
+      actualBioOilYield = 0.55;
+      actualGasYield = 0.25;
+      break;
     }
 
     // Temperature correction: higher T shifts char to gas
@@ -717,14 +714,14 @@ public class PyrolysisReactor extends ProcessEquipmentBaseClass {
   /**
    * Returns the mole fraction of a component in a system, or 0 if not present.
    *
-   * @param system the thermo system
+   * @param system        the thermo system
    * @param componentName the component name
    * @return mole fraction
    */
   private double getMoleFraction(SystemInterface system, String componentName) {
     try {
       if (system.hasComponent(componentName)) {
-        return system.getPhase(0).getComponent(componentName).getz();
+	return system.getPhase(0).getComponent(componentName).getz();
       }
     } catch (Exception e) {
       logger.debug("Could not get mole fraction for {}: {}", componentName, e.getMessage());
@@ -735,7 +732,7 @@ public class PyrolysisReactor extends ProcessEquipmentBaseClass {
   /**
    * Ensures a component exists in the fluid at a trace amount.
    *
-   * @param fluid the system interface
+   * @param fluid         the system interface
    * @param componentName the component name
    */
   private void ensureComponent(SystemInterface fluid, String componentName) {
@@ -765,15 +762,15 @@ public class PyrolysisReactor extends ProcessEquipmentBaseClass {
     if (gasOutStream != null) {
       SystemInterface gas = gasOutStream.getThermoSystem();
       if (gas != null) {
-        Map<String, Double> composition = new LinkedHashMap<String, Double>();
-        for (int i = 0; i < gas.getPhase(0).getNumberOfComponents(); i++) {
-          String cname = gas.getPhase(0).getComponent(i).getComponentName();
-          double z = gas.getPhase(0).getComponent(i).getz();
-          if (z > 1e-10) {
-            composition.put(cname, z);
-          }
-        }
-        results.put("gasComposition_molFrac", composition);
+	Map<String, Double> composition = new LinkedHashMap<String, Double>();
+	for (int i = 0; i < gas.getPhase(0).getNumberOfComponents(); i++) {
+	  String cname = gas.getPhase(0).getComponent(i).getComponentName();
+	  double z = gas.getPhase(0).getComponent(i).getz();
+	  if (z > 1e-10) {
+	    composition.put(cname, z);
+	  }
+	}
+	results.put("gasComposition_molFrac", composition);
       }
     }
     return results;
@@ -786,8 +783,7 @@ public class PyrolysisReactor extends ProcessEquipmentBaseClass {
    */
   @Override
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(getResults());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(getResults());
   }
 
   /** {@inheritDoc} */
@@ -798,10 +794,9 @@ public class PyrolysisReactor extends ProcessEquipmentBaseClass {
     }
     StringBuilder sb = new StringBuilder();
     sb.append("PyrolysisReactor '").append(getName()).append("'\n");
-    sb.append(
-        String.format("  Mode: %s, T = %.0f C%n", pyrolysisMode, pyrolysisTemperature - 273.15));
-    sb.append(String.format("  Yields: char = %.1f%%, oil = %.1f%%, gas = %.1f%%%n",
-        actualCharYield * 100, actualBioOilYield * 100, actualGasYield * 100));
+    sb.append(String.format("  Mode: %s, T = %.0f C%n", pyrolysisMode, pyrolysisTemperature - 273.15));
+    sb.append(String.format("  Yields: char = %.1f%%, oil = %.1f%%, gas = %.1f%%%n", actualCharYield * 100,
+	actualBioOilYield * 100, actualGasYield * 100));
     sb.append(String.format("  Gas LHV = %.2f MJ/Nm3%n", gasLHVMjPerNm3));
     sb.append(String.format("  Energy yield = %.3f%n", energyYield));
     return sb.toString();

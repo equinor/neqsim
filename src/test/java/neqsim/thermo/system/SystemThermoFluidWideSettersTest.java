@@ -55,8 +55,7 @@ public class SystemThermoFluidWideSettersTest extends neqsim.NeqSimTest {
     system.setBinaryInteractionParameter("methane", "ethane", kij);
 
     for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
-      EosMixingRulesInterface mixingRule = (EosMixingRulesInterface) system.getPhase(phase)
-          .getMixingRule();
+      EosMixingRulesInterface mixingRule = (EosMixingRulesInterface) system.getPhase(phase).getMixingRule();
       assertEquals(kij, mixingRule.getBinaryInteractionParameter(0, 1), 1e-10);
     }
   }

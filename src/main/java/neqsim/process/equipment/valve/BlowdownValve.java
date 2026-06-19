@@ -7,9 +7,9 @@ import neqsim.process.equipment.stream.StreamInterface;
  * Blowdown Valve (BDValve) for emergency depressurization systems (ESD).
  *
  * <p>
- * A blowdown valve is a normally closed isolation valve that opens during emergency shutdown (ESD)
- * events to rapidly depressurize process equipment. The flow through the valve is controlled by a
- * downstream orifice to ensure safe and controlled depressurization rates.
+ * A blowdown valve is a normally closed isolation valve that opens during emergency shutdown (ESD) events to rapidly
+ * depressurize process equipment. The flow through the valve is controlled by a downstream orifice to ensure safe and
+ * controlled depressurization rates.
  *
  * <p>
  * Key features:
@@ -31,7 +31,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  *
  * // Split gas outlet - one to normal process, one to blowdown
  * Splitter splitter = new Splitter("Gas Splitter", separator.getGasOutStream());
- * splitter.setSplitFactors(new double[] {1.0, 0.0}); // Initially all to process
+ * splitter.setSplitFactors(new double[] { 1.0, 0.0 }); // Initially all to process
  *
  * // Create blowdown valve (normally closed)
  * BlowdownValve bdValve = new BlowdownValve("BD-101", splitter.getSplitStream(1));
@@ -44,7 +44,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  *
  * // In emergency situation
  * bdValve.activate(); // Open blowdown valve
- * splitter.setSplitFactors(new double[] {0.0, 1.0}); // Redirect flow to blowdown
+ * splitter.setSplitFactors(new double[] { 0.0, 1.0 }); // Redirect flow to blowdown
  *
  * // In dynamic simulation loop
  * system.runTransient(dt, UUID.randomUUID());
@@ -84,7 +84,7 @@ public class BlowdownValve extends ThrottlingValve {
   /**
    * Constructor for BlowdownValve.
    *
-   * @param name name of blowdown valve
+   * @param name        name of blowdown valve
    * @param inletStream inlet stream to valve
    */
   public BlowdownValve(String name, StreamInterface inletStream) {
@@ -126,9 +126,8 @@ public class BlowdownValve extends ThrottlingValve {
    * Activates the blowdown valve (simulates ESD trigger).
    *
    * <p>
-   * When activated, the valve will begin opening according to the configured opening time. This
-   * simulates the emergency shutdown system triggering the blowdown valve to depressurize the
-   * equipment.
+   * When activated, the valve will begin opening according to the configured opening time. This simulates the emergency
+   * shutdown system triggering the blowdown valve to depressurize the equipment.
    * </p>
    */
   public void activate() {
@@ -145,9 +144,8 @@ public class BlowdownValve extends ThrottlingValve {
    * Resets the blowdown valve to its initial closed state.
    *
    * <p>
-   * This simulates the process of resetting the ESD system after an emergency event. In real
-   * operations, this would require operator action and verification that the system is safe to
-   * restart.
+   * This simulates the process of resetting the ESD system after an emergency event. In real operations, this would
+   * require operator action and verification that the system is safe to restart.
    * </p>
    */
   public void reset() {
@@ -182,8 +180,8 @@ public class BlowdownValve extends ThrottlingValve {
    * Performs dynamic simulation step with automatic opening logic.
    *
    * <p>
-   * If the valve has been activated, it will gradually open according to the configured opening
-   * time until fully open (100%).
+   * If the valve has been activated, it will gradually open according to the configured opening time until fully open
+   * (100%).
    * </p>
    *
    * @param dt time step in seconds
@@ -204,7 +202,7 @@ public class BlowdownValve extends ThrottlingValve {
 
       // Check if fully open
       if (openingFraction >= 1.0) {
-        isOpening = false;
+	isOpening = false;
       }
     }
 
@@ -228,9 +226,8 @@ public class BlowdownValve extends ThrottlingValve {
    */
   @Override
   public String toString() {
-    return getName() + " [Blowdown Valve] - Opening: "
-        + String.format("%.1f", getPercentValveOpening()) + "%, Activated: "
-        + (isActivated ? "YES" : "NO") + ", Opening: " + (isOpening ? "YES" : "NO")
-        + ", Time Elapsed: " + String.format("%.1f", timeElapsed) + "s";
+    return getName() + " [Blowdown Valve] - Opening: " + String.format("%.1f", getPercentValveOpening())
+	+ "%, Activated: " + (isActivated ? "YES" : "NO") + ", Opening: " + (isOpening ? "YES" : "NO")
+	+ ", Time Elapsed: " + String.format("%.1f", timeElapsed) + "s";
   }
 }

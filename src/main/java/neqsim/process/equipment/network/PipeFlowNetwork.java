@@ -16,18 +16,16 @@ import neqsim.process.equipment.stream.StreamInterface;
 /**
  * Network of pipelines connected through manifolds using compositional PipeFlowSystem.
  *
- * &lt;p&gt; This class models pipeline networks where multiple pipelines converge to manifolds
- * (mixers) and pipelines depart from manifolds. Unlike {@link WellFlowlineNetwork} which uses the
- * simpler Beggs-Brill correlation, this class uses the full {@link OnePhasePipeLine} with TDMA
- * solvers supporting: &lt;/p&gt; &lt;ul&gt; &lt;li&gt;Compositional tracking through the
- * network&lt;/li&gt; &lt;li&gt;Steady-state solutions&lt;/li&gt; &lt;li&gt;Transient/dynamic
+ * &lt;p&gt; This class models pipeline networks where multiple pipelines converge to manifolds (mixers) and pipelines
+ * depart from manifolds. Unlike {@link WellFlowlineNetwork} which uses the simpler Beggs-Brill correlation, this class
+ * uses the full {@link OnePhasePipeLine} with TDMA solvers supporting: &lt;/p&gt; &lt;ul&gt; &lt;li&gt;Compositional
+ * tracking through the network&lt;/li&gt; &lt;li&gt;Steady-state solutions&lt;/li&gt; &lt;li&gt;Transient/dynamic
  * simulations&lt;/li&gt; &lt;li&gt;Energy balance and heat transfer&lt;/li&gt; &lt;/ul&gt;
  *
- * &lt;h2&gt;Architecture&lt;/h2&gt; &lt;p&gt; The network is modeled as a directed graph where:
- * &lt;/p&gt; &lt;ul&gt; &lt;li&gt;Nodes are manifolds (implemented as {@link Mixer})&lt;/li&gt;
- * &lt;li&gt;Edges are pipelines (implemented as {@link OnePhasePipeLine})&lt;/li&gt; &lt;li&gt;Feed
- * streams connect to source nodes&lt;/li&gt; &lt;li&gt;The final node provides the network
- * outlet&lt;/li&gt; &lt;/ul&gt;
+ * &lt;h2&gt;Architecture&lt;/h2&gt; &lt;p&gt; The network is modeled as a directed graph where: &lt;/p&gt; &lt;ul&gt;
+ * &lt;li&gt;Nodes are manifolds (implemented as {@link Mixer})&lt;/li&gt; &lt;li&gt;Edges are pipelines (implemented as
+ * {@link OnePhasePipeLine})&lt;/li&gt; &lt;li&gt;Feed streams connect to source nodes&lt;/li&gt; &lt;li&gt;The final
+ * node provides the network outlet&lt;/li&gt; &lt;/ul&gt;
  *
  * &lt;h2&gt;Example Usage&lt;/h2&gt;
  *
@@ -76,8 +74,7 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
     private final String fromManifold; // null for inlet pipes
     private final String toManifold;
 
-    PipelineSegment(String name, OnePhasePipeLine pipeline, String fromManifold,
-        String toManifold) {
+    PipelineSegment(String name, OnePhasePipeLine pipeline, String fromManifold, String toManifold) {
       this.name = name;
       this.pipeline = pipeline;
       this.fromManifold = fromManifold;
@@ -160,9 +157,9 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
 
   // Default pipe geometry parameters
   private double defaultWallRoughness = 1e-5;
-  private double[] defaultOuterTemperature = {278.0, 278.0};
-  private double[] defaultOuterHeatTransfer = {5.0, 5.0};
-  private double[] defaultWallHeatTransfer = {15.0, 15.0};
+  private double[] defaultOuterTemperature = { 278.0, 278.0 };
+  private double[] defaultOuterHeatTransfer = { 5.0, 5.0 };
+  private double[] defaultWallHeatTransfer = { 15.0, 15.0 };
 
   /**
    * Create a new pipeline flow network.
@@ -192,16 +189,16 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
   /**
    * Add an inlet pipeline from a feed stream to a manifold.
    *
-   * @param pipeName pipeline name
-   * @param feedStream feed stream (source)
-   * @param toManifold target manifold name
-   * @param length pipeline length in meters
-   * @param diameter pipeline diameter in meters
+   * @param pipeName      pipeline name
+   * @param feedStream    feed stream (source)
+   * @param toManifold    target manifold name
+   * @param length        pipeline length in meters
+   * @param diameter      pipeline diameter in meters
    * @param numberOfNodes number of computational nodes
    * @return the created pipeline segment
    */
-  public PipelineSegment addInletPipeline(String pipeName, StreamInterface feedStream,
-      String toManifold, double length, double diameter, int numberOfNodes) {
+  public PipelineSegment addInletPipeline(String pipeName, StreamInterface feedStream, String toManifold, double length,
+      double diameter, int numberOfNodes) {
     Objects.requireNonNull(feedStream, "feedStream cannot be null");
     Objects.requireNonNull(toManifold, "toManifold cannot be null");
 
@@ -212,8 +209,7 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
 
     feedStreams.add(feedStream);
 
-    OnePhasePipeLine pipeline =
-        createPipeline(pipeName, feedStream, length, diameter, numberOfNodes);
+    OnePhasePipeLine pipeline = createPipeline(pipeName, feedStream, length, diameter, numberOfNodes);
 
     PipelineSegment segment = new PipelineSegment(pipeName, pipeline, null, toManifold);
     manifold.addInboundPipeline(segment);
@@ -225,16 +221,16 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
   /**
    * Connect two manifolds with a pipeline.
    *
-   * @param fromManifold source manifold name
-   * @param toManifold target manifold name
-   * @param pipeName pipeline name
-   * @param length pipeline length in meters
-   * @param diameter pipeline diameter in meters
+   * @param fromManifold  source manifold name
+   * @param toManifold    target manifold name
+   * @param pipeName      pipeline name
+   * @param length        pipeline length in meters
+   * @param diameter      pipeline diameter in meters
    * @param numberOfNodes number of computational nodes
    * @return the created pipeline segment
    */
-  public PipelineSegment connectManifolds(String fromManifold, String toManifold, String pipeName,
-      double length, double diameter, int numberOfNodes) {
+  public PipelineSegment connectManifolds(String fromManifold, String toManifold, String pipeName, double length,
+      double diameter, int numberOfNodes) {
     Objects.requireNonNull(fromManifold, "fromManifold cannot be null");
     Objects.requireNonNull(toManifold, "toManifold cannot be null");
 
@@ -248,13 +244,12 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
       throw new IllegalArgumentException("Target manifold '" + toManifold + "' not found");
     }
     if (sourceManifold.getOutboundPipeline() != null) {
-      throw new IllegalStateException(
-          "Manifold '" + fromManifold + "' already has an outbound pipeline");
+      throw new IllegalStateException("Manifold '" + fromManifold + "' already has an outbound pipeline");
     }
 
     // Create pipeline with mixer outlet as inlet stream
-    OnePhasePipeLine pipeline = createPipeline(pipeName,
-        sourceManifold.getMixer().getOutletStream(), length, diameter, numberOfNodes);
+    OnePhasePipeLine pipeline = createPipeline(pipeName, sourceManifold.getMixer().getOutletStream(), length, diameter,
+	numberOfNodes);
 
     PipelineSegment segment = new PipelineSegment(pipeName, pipeline, fromManifold, toManifold);
     sourceManifold.setOutboundPipeline(segment);
@@ -267,22 +262,22 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
   /**
    * Create and configure a pipeline.
    *
-   * @param name the pipeline name
-   * @param inletStream the inlet stream
-   * @param length the pipeline length in meters
-   * @param diameter the pipeline diameter in meters
+   * @param name          the pipeline name
+   * @param inletStream   the inlet stream
+   * @param length        the pipeline length in meters
+   * @param diameter      the pipeline diameter in meters
    * @param numberOfNodes the number of computational nodes
    * @return the configured pipeline
    */
-  private OnePhasePipeLine createPipeline(String name, StreamInterface inletStream, double length,
-      double diameter, int numberOfNodes) {
+  private OnePhasePipeLine createPipeline(String name, StreamInterface inletStream, double length, double diameter,
+      int numberOfNodes) {
     OnePhasePipeLine pipeline = new OnePhasePipeLine(name, inletStream);
     pipeline.setNumberOfLegs(1);
     pipeline.setNumberOfNodesInLeg(numberOfNodes);
-    pipeline.setPipeDiameters(new double[] {diameter, diameter});
-    pipeline.setLegPositions(new double[] {0.0, length});
-    pipeline.setHeightProfile(new double[] {0.0, 0.0});
-    pipeline.setPipeWallRoughness(new double[] {defaultWallRoughness, defaultWallRoughness});
+    pipeline.setPipeDiameters(new double[] { diameter, diameter });
+    pipeline.setLegPositions(new double[] { 0.0, length });
+    pipeline.setHeightProfile(new double[] { 0.0, 0.0 });
+    pipeline.setPipeWallRoughness(new double[] { defaultWallRoughness, defaultWallRoughness });
     pipeline.setOuterTemperatures(defaultOuterTemperature);
     pipeline.setPipeOuterHeatTransferCoefficients(defaultOuterHeatTransfer);
     pipeline.setPipeWallHeatTransferCoefficients(defaultWallHeatTransfer);
@@ -306,18 +301,18 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
    * @param temperature outer temperature in Kelvin
    */
   public void setDefaultOuterTemperature(double temperature) {
-    this.defaultOuterTemperature = new double[] {temperature, temperature};
+    this.defaultOuterTemperature = new double[] { temperature, temperature };
   }
 
   /**
    * Set default heat transfer coefficients for new pipelines.
    *
    * @param outerCoeff outer heat transfer coefficient (W/m2K)
-   * @param wallCoeff wall heat transfer coefficient (W/m2K)
+   * @param wallCoeff  wall heat transfer coefficient (W/m2K)
    */
   public void setDefaultHeatTransferCoefficients(double outerCoeff, double wallCoeff) {
-    this.defaultOuterHeatTransfer = new double[] {outerCoeff, outerCoeff};
-    this.defaultWallHeatTransfer = new double[] {wallCoeff, wallCoeff};
+    this.defaultOuterHeatTransfer = new double[] { outerCoeff, outerCoeff };
+    this.defaultWallHeatTransfer = new double[] { wallCoeff, wallCoeff };
   }
 
   /**
@@ -416,28 +411,27 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
     for (ManifoldNode manifold : manifolds.values()) {
       boolean hasOnlyInlets = true;
       for (PipelineSegment segment : manifold.getInboundPipelines()) {
-        if (!segment.isInletPipeline()) {
-          hasOnlyInlets = false;
-          break;
-        }
+	if (!segment.isInletPipeline()) {
+	  hasOnlyInlets = false;
+	  break;
+	}
       }
       if (hasOnlyInlets && !manifold.getInboundPipelines().isEmpty()) {
-        addToExecutionOrder(manifold, order, visited);
+	addToExecutionOrder(manifold, order, visited);
       }
     }
 
     // Add any remaining manifolds
     for (ManifoldNode manifold : manifolds.values()) {
       if (!visited.contains(manifold.getName())) {
-        addToExecutionOrder(manifold, order, visited);
+	addToExecutionOrder(manifold, order, visited);
       }
     }
 
     return order;
   }
 
-  private void addToExecutionOrder(ManifoldNode node, List<ManifoldNode> order,
-      java.util.Set<String> visited) {
+  private void addToExecutionOrder(ManifoldNode node, List<ManifoldNode> order, java.util.Set<String> visited) {
     if (visited.contains(node.getName())) {
       return;
     }
@@ -447,7 +441,7 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
     if (node.getOutboundPipeline() != null) {
       ManifoldNode next = manifolds.get(node.getOutboundPipeline().getToManifold());
       if (next != null) {
-        addToExecutionOrder(next, order, visited);
+	addToExecutionOrder(next, order, visited);
       }
     }
   }
@@ -472,7 +466,7 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
     for (ManifoldNode manifold : executionOrder) {
       // Run all inbound pipelines to this manifold
       for (PipelineSegment segment : manifold.getInboundPipelines()) {
-        segment.getPipeline().run(id);
+	segment.getPipeline().run(id);
       }
 
       // Run the mixer
@@ -480,8 +474,7 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
 
       // Set up outbound pipeline inlet if exists
       if (manifold.getOutboundPipeline() != null) {
-        manifold.getOutboundPipeline().getPipeline()
-            .setInletStream(manifold.getMixer().getOutletStream());
+	manifold.getOutboundPipeline().getPipeline().setInletStream(manifold.getMixer().getOutletStream());
       }
     }
 
@@ -513,7 +506,7 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
     for (ManifoldNode manifold : executionOrder) {
       // Run transient for all inbound pipelines
       for (PipelineSegment segment : manifold.getInboundPipelines()) {
-        segment.getPipeline().runTransient(dt, id);
+	segment.getPipeline().runTransient(dt, id);
       }
 
       // Run the mixer
@@ -521,8 +514,8 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
 
       // Update outbound pipeline inlet
       if (manifold.getOutboundPipeline() != null) {
-        OnePhasePipeLine outPipe = manifold.getOutboundPipeline().getPipeline();
-        outPipe.setInletStream(manifold.getMixer().getOutletStream());
+	OnePhasePipeLine outPipe = manifold.getOutboundPipeline().getPipeline();
+	outPipe.setInletStream(manifold.getMixer().getOutletStream());
       }
     }
 
@@ -534,13 +527,13 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
    * Get the pressure profile along a specific pipeline.
    *
    * @param pipeName pipeline name
-   * @param unit pressure unit ("bara" or "Pa")
+   * @param unit     pressure unit ("bara" or "Pa")
    * @return array of pressures at each node
    */
   public double[] getPressureProfile(String pipeName, String unit) {
     for (PipelineSegment segment : allPipelines) {
       if (segment.getName().equals(pipeName)) {
-        return segment.getPipeline().getPressureProfile(unit);
+	return segment.getPipeline().getPressureProfile(unit);
       }
     }
     throw new IllegalArgumentException("Pipeline '" + pipeName + "' not found");
@@ -550,13 +543,13 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
    * Get the temperature profile along a specific pipeline.
    *
    * @param pipeName pipeline name
-   * @param unit temperature unit ("K" or "C")
+   * @param unit     temperature unit ("K" or "C")
    * @return array of temperatures at each node
    */
   public double[] getTemperatureProfile(String pipeName, String unit) {
     for (PipelineSegment segment : allPipelines) {
       if (segment.getName().equals(pipeName)) {
-        return segment.getPipeline().getTemperatureProfile(unit);
+	return segment.getPipeline().getTemperatureProfile(unit);
       }
     }
     throw new IllegalArgumentException("Pipeline '" + pipeName + "' not found");
@@ -565,14 +558,14 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
   /**
    * Get the composition profile along a specific pipeline.
    *
-   * @param pipeName pipeline name
+   * @param pipeName      pipeline name
    * @param componentName component name
    * @return array of mass fractions at each node
    */
   public double[] getCompositionProfile(String pipeName, String componentName) {
     for (PipelineSegment segment : allPipelines) {
       if (segment.getName().equals(pipeName)) {
-        return segment.getPipeline().getCompositionProfile(componentName);
+	return segment.getPipeline().getCompositionProfile(componentName);
       }
     }
     throw new IllegalArgumentException("Pipeline '" + pipeName + "' not found");
@@ -587,7 +580,7 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
   public double[] getVelocityProfile(String pipeName) {
     for (PipelineSegment segment : allPipelines) {
       if (segment.getName().equals(pipeName)) {
-        return segment.getPipeline().getVelocityProfile();
+	return segment.getPipeline().getVelocityProfile();
       }
     }
     throw new IllegalArgumentException("Pipeline '" + pipeName + "' not found");
@@ -604,7 +597,7 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
     for (PipelineSegment segment : allPipelines) {
       double[] profile = segment.getPipeline().getPressureProfile(unit);
       if (profile.length >= 2) {
-        totalDrop += profile[0] - profile[profile.length - 1];
+	totalDrop += profile[0] - profile[profile.length - 1];
       }
     }
     return totalDrop;

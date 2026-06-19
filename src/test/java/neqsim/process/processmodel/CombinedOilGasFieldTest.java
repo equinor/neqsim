@@ -8,8 +8,7 @@ import neqsim.process.measurementdevice.MultiPhaseMeter;
 public class CombinedOilGasFieldTest {
   @Test
   public void testreservoirTPsim() {
-    neqsim.thermo.system.SystemInterface wellFluid =
-        new neqsim.thermo.system.SystemPrEos(273.15 + 30.0, 65.00);
+    neqsim.thermo.system.SystemInterface wellFluid = new neqsim.thermo.system.SystemPrEos(273.15 + 30.0, 65.00);
     wellFluid.addComponent("nitrogen", 0.08);
     wellFluid.addComponent("CO2", 3.56);
     wellFluid.addComponent("methane", 87.36);
@@ -41,11 +40,9 @@ public class CombinedOilGasFieldTest {
     wellFluid.setMixingRule("classic");
     wellFluid.init(0);
 
-    neqsim.thermo.system.SystemInterface wellFluidGasWell =
-        (neqsim.thermo.system.SystemInterface) wellFluid.clone();
-    wellFluidGasWell.setMolarComposition(
-        new double[] {0.108, 3.379, 85.915, 4.250, 1.719, 0.275, 0.549, 0.201, 0.256, 0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.24, 0.34, 0.33, 0.19, 0.15, 0.69, 0.5, 0.03});
+    neqsim.thermo.system.SystemInterface wellFluidGasWell = (neqsim.thermo.system.SystemInterface) wellFluid.clone();
+    wellFluidGasWell.setMolarComposition(new double[] { 0.108, 3.379, 85.915, 4.250, 1.719, 0.275, 0.549, 0.201, 0.256,
+	0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.24, 0.34, 0.33, 0.19, 0.15, 0.69, 0.5, 0.03 });
 
     ReservoirTPsim reservoirGasTPsim = new ReservoirTPsim("TPreservoir", wellFluidGasWell);
     reservoirGasTPsim.setTemperature(150.0, "C");
@@ -60,23 +57,19 @@ public class CombinedOilGasFieldTest {
     // ReservoirCVDsim reservoirCVD = new ReservoirCVDsim();
     // ReservoirDiffLibsim reservoirDiffLib = new ReservoirDiffLibsim();
     /*
-     * neqsim.thermo.system.SystemInterface wellFluidOilWell =
-     * (neqsim.thermo.system.SystemInterface) wellFluid.clone();
-     * wellFluidOilWell.setMolarComposition( new double[] {0.047, 0.191, 39.022, 0.25, 0.053, 0.017,
-     * 0.022, 0.021, 0.015, 0.057, 0.176, 0.181, 0.177, 0.81, 15.353, 30.738, 12.869, 0.0, 0.0, 0.0,
-     * 0.0, 0.0, 0.0, 0.0, 0.0});
+     * neqsim.thermo.system.SystemInterface wellFluidOilWell = (neqsim.thermo.system.SystemInterface) wellFluid.clone();
+     * wellFluidOilWell.setMolarComposition( new double[] {0.047, 0.191, 39.022, 0.25, 0.053, 0.017, 0.022, 0.021,
+     * 0.015, 0.057, 0.176, 0.181, 0.177, 0.81, 15.353, 30.738, 12.869, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
      *
-     * Stream wellStreamOil = new Stream("Well Stream Oil Well", wellFluidOilWell);
-     * wellStreamOil.setFlowRate(50000.0, "kg/hr"); wellStreamOil.setTemperature(100.0, "C");
-     * wellStreamOil.setPressure(100.0, "bara");
+     * Stream wellStreamOil = new Stream("Well Stream Oil Well", wellFluidOilWell); wellStreamOil.setFlowRate(50000.0,
+     * "kg/hr"); wellStreamOil.setTemperature(100.0, "C"); wellStreamOil.setPressure(100.0, "bara");
      */
 
     // MultiPhaseMeter MPFMoil = new MultiPhaseMeter("Oil MPFM", wellStreamOil);
     // MPFMoil.setTemperature(60.0, "C");
     // MPFMoil.setPressure(20.0, "bara");
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(reservoirGasTPsim);
     operations.add(MPFMgas);
     operations.run();
@@ -84,7 +77,6 @@ public class CombinedOilGasFieldTest {
 
     reservoirGasTPsim.setPressure(150.0, "bara");
     operations.run();
-    assertEquals(14937.606339690177
-    , MPFMgas.getMeasuredValue("GOR_std", ""), 1.0);
+    assertEquals(14937.606339690177, MPFMgas.getMeasuredValue("GOR_std", ""), 1.0);
   }
 }

@@ -78,36 +78,34 @@ public final class TieInPeriodResult implements Serializable {
   /**
    * Creates a period result.
    *
-   * @param periodName period name used in reports
-   * @param year calendar year
-   * @param baseRequest requested base-host production
-   * @param acceptedBase accepted base-host production
-   * @param scheduledSatellite scheduled satellite production before deferred backlog
-   * @param deferredIntoPeriod deferred satellite backlog entering the period
-   * @param satelliteRequest satellite request including scheduled and deferred production
-   * @param acceptedSatellite accepted satellite production
-   * @param heldBackSatellite satellite production not accepted in this period
-   * @param deferredToNextPeriod satellite backlog carried to the next period
-   * @param satelliteAllocationScale allocation scale applied to satellite production
-   * @param nameplateBottleneck nameplate bottleneck category
-   * @param processModelUsed true if an attached process model was checked
-   * @param processCapacityAvailable true if process model capacity is available
-   * @param processBottleneck process-model bottleneck name
+   * @param periodName                   period name used in reports
+   * @param year                         calendar year
+   * @param baseRequest                  requested base-host production
+   * @param acceptedBase                 accepted base-host production
+   * @param scheduledSatellite           scheduled satellite production before deferred backlog
+   * @param deferredIntoPeriod           deferred satellite backlog entering the period
+   * @param satelliteRequest             satellite request including scheduled and deferred production
+   * @param acceptedSatellite            accepted satellite production
+   * @param heldBackSatellite            satellite production not accepted in this period
+   * @param deferredToNextPeriod         satellite backlog carried to the next period
+   * @param satelliteAllocationScale     allocation scale applied to satellite production
+   * @param nameplateBottleneck          nameplate bottleneck category
+   * @param processModelUsed             true if an attached process model was checked
+   * @param processCapacityAvailable     true if process model capacity is available
+   * @param processBottleneck            process-model bottleneck name
    * @param processBottleneckUtilization process-model bottleneck utilization fraction
-   * @param processUtilizationSummary process utilization summary by equipment name in percent
-   * @param deferredValueMusd deferred value in MUSD before discounting
-   * @param deferredValueNpvMusd deferred value in MUSD after discounting
-   * @param summary concise text summary
+   * @param processUtilizationSummary    process utilization summary by equipment name in percent
+   * @param deferredValueMusd            deferred value in MUSD before discounting
+   * @param deferredValueNpvMusd         deferred value in MUSD after discounting
+   * @param summary                      concise text summary
    */
-  public TieInPeriodResult(String periodName, int year, ProductionLoad baseRequest,
-      ProductionLoad acceptedBase, ProductionLoad scheduledSatellite,
-      ProductionLoad deferredIntoPeriod, ProductionLoad satelliteRequest,
-      ProductionLoad acceptedSatellite, ProductionLoad heldBackSatellite,
-      ProductionLoad deferredToNextPeriod, double satelliteAllocationScale,
-      String nameplateBottleneck, boolean processModelUsed, boolean processCapacityAvailable,
-      String processBottleneck, double processBottleneckUtilization,
-      Map<String, Double> processUtilizationSummary, double deferredValueMusd,
-      double deferredValueNpvMusd, String summary) {
+  public TieInPeriodResult(String periodName, int year, ProductionLoad baseRequest, ProductionLoad acceptedBase,
+      ProductionLoad scheduledSatellite, ProductionLoad deferredIntoPeriod, ProductionLoad satelliteRequest,
+      ProductionLoad acceptedSatellite, ProductionLoad heldBackSatellite, ProductionLoad deferredToNextPeriod,
+      double satelliteAllocationScale, String nameplateBottleneck, boolean processModelUsed,
+      boolean processCapacityAvailable, String processBottleneck, double processBottleneckUtilization,
+      Map<String, Double> processUtilizationSummary, double deferredValueMusd, double deferredValueNpvMusd,
+      String summary) {
     this.periodName = periodName;
     this.year = year;
     this.baseRequest = baseRequest;
@@ -281,7 +279,7 @@ public final class TieInPeriodResult implements Serializable {
    */
   public String getPrimaryBottleneck() {
     if (processBottleneck != null && !processBottleneck.trim().isEmpty()
-        && !"None".equalsIgnoreCase(processBottleneck)) {
+	&& !"None".equalsIgnoreCase(processBottleneck)) {
       return processBottleneck;
     }
     return nameplateBottleneck;

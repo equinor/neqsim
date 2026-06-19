@@ -10,11 +10,10 @@ import java.util.Map;
  * Global pressure-flow solver for an integrated production network.
  *
  * <p>
- * This solver mirrors the architecture of commercial network tools (Petex GAP, Schlumberger
- * Pipesim): a set of {@link NetworkNode nodes} are connected by {@link NetworkBranch branches}
- * (wells, flowlines, chokes). Some node pressures are fixed boundary conditions (reservoir datum,
- * separator/export header); the remaining free node pressures are found by enforcing volumetric
- * mass balance at every free node.
+ * This solver mirrors the architecture of commercial network tools (Petex GAP, Schlumberger Pipesim): a set of
+ * {@link NetworkNode nodes} are connected by {@link NetworkBranch branches} (wells, flowlines, chokes). Some node
+ * pressures are fixed boundary conditions (reservoir datum, separator/export header); the remaining free node pressures
+ * are found by enforcing volumetric mass balance at every free node.
  * </p>
  *
  * <p>
@@ -26,11 +25,10 @@ import java.util.Map;
  * </p>
  *
  * <p>
- * which must be zero at convergence. The system is solved with a damped global Newton-Raphson
- * iteration using a numerical (finite-difference) Jacobian and a self-contained Gaussian
- * elimination with partial pivoting. If Newton stalls, a successive-substitution fallback is used.
- * Branch flow evaluations are cheap because each branch hides its physics behind a surrogate
- * (deliverability curve, quadratic pressure drop), so no thermodynamic flash runs inside the
+ * which must be zero at convergence. The system is solved with a damped global Newton-Raphson iteration using a
+ * numerical (finite-difference) Jacobian and a self-contained Gaussian elimination with partial pivoting. If Newton
+ * stalls, a successive-substitution fallback is used. Branch flow evaluations are cheap because each branch hides its
+ * physics behind a surrogate (deliverability curve, quadratic pressure drop), so no thermodynamic flash runs inside the
  * Jacobian loop.
  * </p>
  *
@@ -69,15 +67,15 @@ public class NetworkNewtonSolver implements Serializable {
     /**
      * Creates a solution result.
      *
-     * @param converged whether the solve converged
-     * @param iterations number of iterations used
-     * @param maxResidual final maximum absolute node residual in Sm3/day
+     * @param converged     whether the solve converged
+     * @param iterations    number of iterations used
+     * @param maxResidual   final maximum absolute node residual in Sm3/day
      * @param nodePressures solved node pressures in bara keyed by node name
-     * @param branchFlows branch flows in Sm3/day keyed by branch name
-     * @param method solver method that produced the result
+     * @param branchFlows   branch flows in Sm3/day keyed by branch name
+     * @param method        solver method that produced the result
      */
     public NetworkSolutionResult(boolean converged, int iterations, double maxResidual,
-        Map<String, Double> nodePressures, Map<String, Double> branchFlows, String method) {
+	Map<String, Double> nodePressures, Map<String, Double> branchFlows, String method) {
       this.converged = converged;
       this.iterations = iterations;
       this.maxResidual = maxResidual;
@@ -218,7 +216,7 @@ public class NetworkNewtonSolver implements Serializable {
     List<NetworkNode> free = new ArrayList<NetworkNode>();
     for (NetworkNode n : nodes.values()) {
       if (!n.isPressureFixed()) {
-        free.add(n);
+	free.add(n);
       }
     }
     int m = free.size();
@@ -239,31 +237,31 @@ public class NetworkNewtonSolver implements Serializable {
       double[] r = residuals(free);
       maxRes = maxAbs(r);
       if (maxRes < tolerance) {
-        converged = true;
-        break;
+	converged = true;
+	break;
       }
       double[][] j = jacobian(free, p, r);
       double[] dp = gaussianSolve(j, negate(r));
       if (dp == null) {
-        break; // singular; fall through to successive substitution
+	break; // singular; fall through to successive substitution
       }
       // Damped line search on the infinity-norm of the residual.
       double lambda = 1.0;
       double bestRes = maxRes;
       double[] bestP = p.clone();
       for (int ls = 0; ls < 8; ls++) {
-        double[] trial = new double[m];
-        for (int i = 0; i < m; i++) {
-          trial[i] = Math.max(minPressure, p[i] + lambda * dp[i]);
-        }
-        applyPressures(free, trial);
-        double res = maxAbs(residuals(free));
-        if (res < bestRes) {
-          bestRes = res;
-          bestP = trial;
-          break;
-        }
-        lambda *= 0.5;
+	double[] trial = new double[m];
+	for (int i = 0; i < m; i++) {
+	  trial[i] = Math.max(minPressure, p[i] + lambda * dp[i]);
+	}
+	applyPressures(free, trial);
+	double res = maxAbs(residuals(free));
+	if (res < bestRes) {
+	  bestRes = res;
+	  bestP = trial;
+	  break;
+	}
+	lambda *= 0.5;
       }
       p = bestP;
     }
@@ -272,7 +270,7 @@ public class NetworkNewtonSolver implements Serializable {
       // Successive-substitution fallback: relax each free node toward balance.
       NetworkSolutionResult ss = successiveSubstitution(free, p);
       if (ss != null) {
-        return ss;
+	return ss;
       }
     }
     applyPressures(free, p);
@@ -282,12 +280,11 @@ public class NetworkNewtonSolver implements Serializable {
   /**
    * Successive-substitution fallback solver.
    *
-   * @param free free nodes
+   * @param free           free nodes
    * @param startPressures starting pressures in bara
    * @return a result if it converges, otherwise null
    */
-  private NetworkSolutionResult successiveSubstitution(List<NetworkNode> free,
-      double[] startPressures) {
+  private NetworkSolutionResult successiveSubstitution(List<NetworkNode> free, double[] startPressures) {
     int m = free.size();
     double[] p = startPressures.clone();
     double relax = 0.3;
@@ -297,23 +294,23 @@ public class NetworkNewtonSolver implements Serializable {
       double[] r = residuals(free);
       maxRes = maxAbs(r);
       if (maxRes < tolerance) {
-        applyPressures(free, p);
-        return buildResult(true, iter, maxRes, "successive-substitution");
+	applyPressures(free, p);
+	return buildResult(true, iter, maxRes, "successive-substitution");
       }
       for (int i = 0; i < m; i++) {
-        // Numerical sensitivity of residual i to its own pressure.
-        double dpi = 0.01 * Math.max(1.0, p[i]);
-        double base = nodeResidual(free.get(i));
-        double saved = p[i];
-        p[i] = Math.max(minPressure, saved + dpi);
-        applyPressures(free, p);
-        double pert = nodeResidual(free.get(i));
-        double deriv = (pert - base) / dpi;
-        p[i] = saved;
-        applyPressures(free, p);
-        if (Math.abs(deriv) > 1.0e-12) {
-          p[i] = Math.max(minPressure, p[i] - relax * base / deriv);
-        }
+	// Numerical sensitivity of residual i to its own pressure.
+	double dpi = 0.01 * Math.max(1.0, p[i]);
+	double base = nodeResidual(free.get(i));
+	double saved = p[i];
+	p[i] = Math.max(minPressure, saved + dpi);
+	applyPressures(free, p);
+	double pert = nodeResidual(free.get(i));
+	double deriv = (pert - base) / dpi;
+	p[i] = saved;
+	applyPressures(free, p);
+	if (Math.abs(deriv) > 1.0e-12) {
+	  p[i] = Math.max(minPressure, p[i] - relax * base / deriv);
+	}
       }
     }
     applyPressures(free, p);
@@ -324,7 +321,7 @@ public class NetworkNewtonSolver implements Serializable {
    * Applies a pressure vector to the free nodes.
    *
    * @param free free nodes
-   * @param p pressures in bara
+   * @param p    pressures in bara
    */
   private void applyPressures(List<NetworkNode> free, double[] p) {
     for (int i = 0; i < free.size(); i++) {
@@ -358,12 +355,12 @@ public class NetworkNewtonSolver implements Serializable {
       NetworkNode from = nodes.get(b.getFromNode());
       NetworkNode to = nodes.get(b.getToNode());
       if (from == null || to == null) {
-        continue;
+	continue;
       }
       if (b.getToNode().equals(node.getName())) {
-        sum += b.flow(from.getPressure(), to.getPressure());
+	sum += b.flow(from.getPressure(), to.getPressure());
       } else if (b.getFromNode().equals(node.getName())) {
-        sum -= b.flow(from.getPressure(), to.getPressure());
+	sum -= b.flow(from.getPressure(), to.getPressure());
       }
     }
     return sum;
@@ -373,8 +370,8 @@ public class NetworkNewtonSolver implements Serializable {
    * Builds the finite-difference Jacobian of the residuals with respect to free-node pressures.
    *
    * @param free free nodes
-   * @param p current pressures in bara
-   * @param r residuals at the current pressures
+   * @param p    current pressures in bara
+   * @param r    residuals at the current pressures
    * @return the Jacobian matrix
    */
   private double[][] jacobian(List<NetworkNode> free, double[] p, double[] r) {
@@ -389,7 +386,7 @@ public class NetworkNewtonSolver implements Serializable {
       p[col] = saved;
       applyPressures(free, p);
       for (int row = 0; row < m; row++) {
-        jac[row][col] = (rp[row] - r[row]) / dp;
+	jac[row][col] = (rp[row] - r[row]) / dp;
       }
     }
     return jac;
@@ -408,35 +405,35 @@ public class NetworkNewtonSolver implements Serializable {
       int pivot = col;
       double max = Math.abs(a[col][col]);
       for (int row = col + 1; row < n; row++) {
-        if (Math.abs(a[row][col]) > max) {
-          max = Math.abs(a[row][col]);
-          pivot = row;
-        }
+	if (Math.abs(a[row][col]) > max) {
+	  max = Math.abs(a[row][col]);
+	  pivot = row;
+	}
       }
       if (max < 1.0e-14) {
-        return null;
+	return null;
       }
       if (pivot != col) {
-        double[] tmp = a[col];
-        a[col] = a[pivot];
-        a[pivot] = tmp;
-        double tb = b[col];
-        b[col] = b[pivot];
-        b[pivot] = tb;
+	double[] tmp = a[col];
+	a[col] = a[pivot];
+	a[pivot] = tmp;
+	double tb = b[col];
+	b[col] = b[pivot];
+	b[pivot] = tb;
       }
       for (int row = col + 1; row < n; row++) {
-        double factor = a[row][col] / a[col][col];
-        for (int k = col; k < n; k++) {
-          a[row][k] -= factor * a[col][k];
-        }
-        b[row] -= factor * b[col];
+	double factor = a[row][col] / a[col][col];
+	for (int k = col; k < n; k++) {
+	  a[row][k] -= factor * a[col][k];
+	}
+	b[row] -= factor * b[col];
       }
     }
     double[] x = new double[n];
     for (int row = n - 1; row >= 0; row--) {
       double sum = b[row];
       for (int k = row + 1; k < n; k++) {
-        sum -= a[row][k] * x[k];
+	sum -= a[row][k] * x[k];
       }
       x[row] = sum / a[row][row];
     }
@@ -474,14 +471,13 @@ public class NetworkNewtonSolver implements Serializable {
   /**
    * Builds a solution result snapshot from the current node pressures and branch flows.
    *
-   * @param converged whether the solve converged
-   * @param iterations number of iterations
+   * @param converged   whether the solve converged
+   * @param iterations  number of iterations
    * @param maxResidual final maximum residual in Sm3/day
-   * @param method solver method name
+   * @param method      solver method name
    * @return the solution result
    */
-  private NetworkSolutionResult buildResult(boolean converged, int iterations, double maxResidual,
-      String method) {
+  private NetworkSolutionResult buildResult(boolean converged, int iterations, double maxResidual, String method) {
     Map<String, Double> pressures = new LinkedHashMap<String, Double>();
     for (NetworkNode n : nodes.values()) {
       pressures.put(n.getName(), n.getPressure());
@@ -491,7 +487,7 @@ public class NetworkNewtonSolver implements Serializable {
       NetworkNode from = nodes.get(b.getFromNode());
       NetworkNode to = nodes.get(b.getToNode());
       if (from != null && to != null) {
-        flows.put(b.getName(), b.flow(from.getPressure(), to.getPressure()));
+	flows.put(b.getName(), b.flow(from.getPressure(), to.getPressure()));
       }
     }
     return new NetworkSolutionResult(converged, iterations, maxResidual, pressures, flows, method);

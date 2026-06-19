@@ -13,11 +13,10 @@ import java.util.Set;
  * Escalation (domino-effect) graph analyzer.
  *
  * <p>
- * Models a directed graph where each node is a piece of process equipment with a vulnerability
- * threshold (e.g. 12.5 kW/m² heat flux for steel structures, 35 kPa overpressure for vessels) and
- * each edge is a hazard exposure (heat, blast) from a primary failure to a secondary item with the
- * predicted load at that target. The analyzer propagates failures: if the cumulative load on a
- * target exceeds its threshold, that target also fails and propagates further.
+ * Models a directed graph where each node is a piece of process equipment with a vulnerability threshold (e.g. 12.5
+ * kW/m² heat flux for steel structures, 35 kPa overpressure for vessels) and each edge is a hazard exposure (heat,
+ * blast) from a primary failure to a secondary item with the predicted load at that target. The analyzer propagates
+ * failures: if the cumulative load on a target exceeds its threshold, that target also fails and propagates further.
  *
  * <p>
  * <b>References:</b>
@@ -39,7 +38,7 @@ public class EscalationGraphAnalyzer implements Serializable {
   /**
    * Register a target item and its failure threshold (load to fail).
    *
-   * @param itemId item identifier
+   * @param itemId           item identifier
    * @param failureThreshold threshold load (units must match edge loads)
    * @return this analyzer for chaining
    */
@@ -54,7 +53,7 @@ public class EscalationGraphAnalyzer implements Serializable {
    *
    * @param source upstream failed item
    * @param target downstream item exposed to source's hazard
-   * @param load hazard load delivered (e.g. heat flux W/m² or overpressure Pa)
+   * @param load   hazard load delivered (e.g. heat flux W/m² or overpressure Pa)
    * @return this analyzer for chaining
    */
   public EscalationGraphAnalyzer addExposure(String source, String target, double load) {
@@ -66,8 +65,8 @@ public class EscalationGraphAnalyzer implements Serializable {
   }
 
   /**
-   * Propagate a primary failure of {@code initiator} and collect all items that escalate.
-   * Cumulative load on each target is summed across all paths.
+   * Propagate a primary failure of {@code initiator} and collect all items that escalate. Cumulative load on each
+   * target is summed across all paths.
    *
    * @param initiator initial failed item
    * @return set of all items that ultimately fail (including the initiator)
@@ -86,29 +85,29 @@ public class EscalationGraphAnalyzer implements Serializable {
       // Reset and recompute cumulative loads on each non-failed item
       Map<String, Double> newCumulative = new HashMap<>();
       for (String src : failed) {
-        for (Edge e : outgoing.get(src)) {
-          double current = newCumulative.containsKey(e.target) ? newCumulative.get(e.target) : 0.0;
-          newCumulative.put(e.target, current + e.load);
-        }
+	for (Edge e : outgoing.get(src)) {
+	  double current = newCumulative.containsKey(e.target) ? newCumulative.get(e.target) : 0.0;
+	  newCumulative.put(e.target, current + e.load);
+	}
       }
       cumulative = newCumulative;
       // Check which not-yet-failed items exceed threshold
       for (Map.Entry<String, Double> en : cumulative.entrySet()) {
-        if (failed.contains(en.getKey())) {
-          continue;
-        }
-        if (en.getValue() >= thresholds.get(en.getKey())) {
-          failed.add(en.getKey());
-          changed = true;
-        }
+	if (failed.contains(en.getKey())) {
+	  continue;
+	}
+	if (en.getValue() >= thresholds.get(en.getKey())) {
+	  failed.add(en.getKey());
+	  changed = true;
+	}
       }
     }
     return failed;
   }
 
   /**
-   * Run propagation from each registered item in turn and return the worst-case failure set
-   * (largest number of escalated items).
+   * Run propagation from each registered item in turn and return the worst-case failure set (largest number of
+   * escalated items).
    *
    * @return worst-case escalation set
    */
@@ -117,7 +116,7 @@ public class EscalationGraphAnalyzer implements Serializable {
     for (String item : thresholds.keySet()) {
       Set<String> esc = propagate(item);
       if (esc.size() > worst.size()) {
-        worst = esc;
+	worst = esc;
       }
     }
     return worst;

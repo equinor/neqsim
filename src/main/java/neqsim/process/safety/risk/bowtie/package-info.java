@@ -2,17 +2,16 @@
  * Bow-Tie Diagram Generation Package.
  *
  * <p>
- * This package provides bow-tie diagram generation and analysis capabilities for process safety
- * risk assessment. Bow-tie diagrams visualize the relationship between threats, hazards, and
- * consequences with their associated barriers.
+ * This package provides bow-tie diagram generation and analysis capabilities for process safety risk assessment.
+ * Bow-tie diagrams visualize the relationship between threats, hazards, and consequences with their associated
+ * barriers.
  * </p>
  *
  * <h2>Key Classes</h2>
  * <ul>
- * <li>{@link neqsim.process.safety.risk.bowtie.BowTieAnalyzer} - Main analyzer with
- * threat/consequence libraries</li>
- * <li>{@link neqsim.process.safety.risk.bowtie.BowTieModel} - Individual bow-tie model with
- * threats, consequences, and barriers</li>
+ * <li>{@link neqsim.process.safety.risk.bowtie.BowTieAnalyzer} - Main analyzer with threat/consequence libraries</li>
+ * <li>{@link neqsim.process.safety.risk.bowtie.BowTieModel} - Individual bow-tie model with threats, consequences, and
+ * barriers</li>
  * </ul>
  *
  * <h2>Bow-Tie Structure</h2>
@@ -41,8 +40,7 @@
  * List&lt;BowTieModel&gt; bowTies = analyzer.autoGenerateFromProcess();
  *
  * // Or create manually
- * BowTieModel overpressure =
- *     analyzer.createBowTie("SEP-001-OVP", "Overpressure in HP Separator", "OVERPRESSURE");
+ * BowTieModel overpressure = analyzer.createBowTie("SEP-001-OVP", "Overpressure in HP Separator", "OVERPRESSURE");
  *
  * // Add custom threat
  * BowTieModel.Threat threat = new BowTieModel.Threat("T-001", "Blocked outlet valve", 0.1);
@@ -60,8 +58,8 @@
  *
  * <h2>Integration with SIS</h2>
  * <p>
- * The bow-tie package integrates with the SIS package to automatically assign Safety Instrumented
- * Functions (SIFs) as barriers with proper PFD values.
+ * The bow-tie package integrates with the SIS package to automatically assign Safety Instrumented Functions (SIFs) as
+ * barriers with proper PFD values.
  * </p>
  *
  * @author NeqSim Development Team

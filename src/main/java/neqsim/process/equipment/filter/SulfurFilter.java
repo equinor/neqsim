@@ -16,10 +16,10 @@ import neqsim.util.nucleation.ClassicalNucleationTheory;
  * Sulfur filter for removing solid elemental sulfur (S8) from gas streams.
  *
  * <p>
- * This equipment models a cartridge or coalescing filter designed to capture solid S8 particles
- * that form when pipeline gas is cooled below the sulfur solubility limit (e.g., during
- * Joule-Thomson letdown). It extends the basic {@link Filter} class with solid-phase removal
- * tracking, filter capacity calculations, and maintenance interval estimation.
+ * This equipment models a cartridge or coalescing filter designed to capture solid S8 particles that form when pipeline
+ * gas is cooled below the sulfur solubility limit (e.g., during Joule-Thomson letdown). It extends the basic
+ * {@link Filter} class with solid-phase removal tracking, filter capacity calculations, and maintenance interval
+ * estimation.
  * </p>
  *
  * <p>
@@ -92,8 +92,8 @@ public class SulfurFilter extends Filter {
   private transient ClassicalNucleationTheory nucleationModel;
 
   /**
-   * Residence time in the supersaturated zone (seconds). Used for particle size prediction. Default
-   * 2.0 s (typical valve-to-filter transit at 5-10 m/s over 10-20 m pipe).
+   * Residence time in the supersaturated zone (seconds). Used for particle size prediction. Default 2.0 s (typical
+   * valve-to-filter transit at 5-10 m/s over 10-20 m pipe).
    */
   private double residenceTime = 2.0;
 
@@ -105,7 +105,7 @@ public class SulfurFilter extends Filter {
   /**
    * Creates a new SulfurFilter.
    *
-   * @param name name of the sulfur filter
+   * @param name     name of the sulfur filter
    * @param inStream inlet gas stream (may contain solid S8)
    */
   public SulfurFilter(String name, StreamInterface inStream) {
@@ -142,15 +142,15 @@ public class SulfurFilter extends Filter {
 
       // Find the solid phase and get S8 mass
       for (int phaseIdx = 0; phaseIdx < system.getNumberOfPhases(); phaseIdx++) {
-        if (system.getPhase(phaseIdx).getType() == PhaseType.SOLID) {
-          double solidPhaseMass = system.getPhase(phaseIdx).getMass();
-          // S8 mass fraction in the total stream that is solid
-          double totalMass = system.getMass("kg");
-          if (totalMass > 0) {
-            solidS8MassFractionInlet = solidPhaseMass / totalMass;
-          }
-          break;
-        }
+	if (system.getPhase(phaseIdx).getType() == PhaseType.SOLID) {
+	  double solidPhaseMass = system.getPhase(phaseIdx).getMass();
+	  // S8 mass fraction in the total stream that is solid
+	  double totalMass = system.getMass("kg");
+	  if (totalMass > 0) {
+	    solidS8MassFractionInlet = solidPhaseMass / totalMass;
+	  }
+	  break;
+	}
       }
 
       // Calculate removal rate: mass flow * solid fraction * efficiency
@@ -159,26 +159,26 @@ public class SulfurFilter extends Filter {
       // Remove solid S8 from outlet: reduce S8 component by removal efficiency
       // Set S8 content in outlet to only the fraction that passes through
       if (system.hasComponent("S8") && removalEfficiency > 0) {
-        // Get current S8 moles in gas phase and reduce total S8
-        double currentS8Moles = 0.0;
-        double solidS8Moles = 0.0;
-        for (int phaseIdx = 0; phaseIdx < system.getNumberOfPhases(); phaseIdx++) {
-          if (system.getPhase(phaseIdx).getType() == PhaseType.SOLID) {
-            solidS8Moles = system.getPhase(phaseIdx).getComponent("S8").getNumberOfmoles();
-          }
-          currentS8Moles += system.getPhase(phaseIdx).getComponent("S8").getNumberOfmoles();
-        }
+	// Get current S8 moles in gas phase and reduce total S8
+	double currentS8Moles = 0.0;
+	double solidS8Moles = 0.0;
+	for (int phaseIdx = 0; phaseIdx < system.getNumberOfPhases(); phaseIdx++) {
+	  if (system.getPhase(phaseIdx).getType() == PhaseType.SOLID) {
+	    solidS8Moles = system.getPhase(phaseIdx).getComponent("S8").getNumberOfmoles();
+	  }
+	  currentS8Moles += system.getPhase(phaseIdx).getComponent("S8").getNumberOfmoles();
+	}
 
-        // Remove solid S8 from the system (filter captures it)
-        double molesToRemove = solidS8Moles * removalEfficiency;
-        if (molesToRemove > 0 && currentS8Moles > molesToRemove) {
-          double remainingMoles = currentS8Moles - molesToRemove;
-          system.addComponent("S8", -molesToRemove);
-        }
+	// Remove solid S8 from the system (filter captures it)
+	double molesToRemove = solidS8Moles * removalEfficiency;
+	if (molesToRemove > 0 && currentS8Moles > molesToRemove) {
+	  double remainingMoles = currentS8Moles - molesToRemove;
+	  system.addComponent("S8", -molesToRemove);
+	}
 
-        // Re-flash without solid check to get clean gas outlet
-        ops.TPflash();
-        system.initProperties();
+	// Re-flash without solid check to get clean gas outlet
+	ops.TPflash();
+	system.initProperties();
       }
     }
 
@@ -193,9 +193,8 @@ public class SulfurFilter extends Filter {
    * Runs the Classical Nucleation Theory model to predict sulfur particle sizes.
    *
    * <p>
-   * Uses the S8 supersaturation and process conditions to predict mean particle diameter,
-   * nucleation rate, and particle size distribution. Results are available via
-   * {@link #getNucleationModel()}.
+   * Uses the S8 supersaturation and process conditions to predict mean particle diameter, nucleation rate, and particle
+   * size distribution. Results are available via {@link #getNucleationModel()}.
    * </p>
    *
    * @param system the thermodynamic system after flash calculation
@@ -212,19 +211,19 @@ public class SulfurFilter extends Filter {
       double totalS8moles = 0;
       double solidS8moles = 0;
       for (int i = 0; i < system.getNumberOfPhases(); i++) {
-        if (system.getPhase(i).hasComponent("S8")) {
-          double moles = system.getPhase(i).getComponent("S8").getNumberOfmoles();
-          totalS8moles += moles;
-          if (system.getPhase(i).getType() == PhaseType.SOLID) {
-            solidS8moles = moles;
-          }
-        }
+	if (system.getPhase(i).hasComponent("S8")) {
+	  double moles = system.getPhase(i).getComponent("S8").getNumberOfmoles();
+	  totalS8moles += moles;
+	  if (system.getPhase(i).getType() == PhaseType.SOLID) {
+	    solidS8moles = moles;
+	  }
+	}
       }
       double gasS8moles = totalS8moles - solidS8moles;
       if (gasS8moles > 0 && solidS8moles > 0) {
-        supersaturationRatio = totalS8moles / gasS8moles;
+	supersaturationRatio = totalS8moles / gasS8moles;
       } else if (solidS8moles > 0) {
-        supersaturationRatio = 100.0; // very high if all S8 is solid
+	supersaturationRatio = 100.0; // very high if all S8 is solid
       }
     }
     nucleationModel.setSupersaturationRatio(supersaturationRatio);
@@ -233,7 +232,7 @@ public class SulfurFilter extends Filter {
     try {
       double gasVisc = system.getPhase("gas").getViscosity("kg/msec");
       if (gasVisc > 0) {
-        nucleationModel.setGasViscosity(gasVisc);
+	nucleationModel.setGasViscosity(gasVisc);
       }
     } catch (Exception ex) {
       nucleationModel.setGasViscosity(1.0e-5);
@@ -432,8 +431,8 @@ public class SulfurFilter extends Filter {
   }
 
   /**
-   * Returns the Classical Nucleation Theory model with particle size results. Available after
-   * {@code run()} has been called.
+   * Returns the Classical Nucleation Theory model with particle size results. Available after {@code run()} has been
+   * called.
    *
    * @return the nucleation model, or null if not yet calculated
    */
@@ -461,14 +460,14 @@ public class SulfurFilter extends Filter {
   public double[] getParticleSizePercentilesUM() {
     if (nucleationModel != null && nucleationModel.isCalculated()) {
       double[] pctiles = nucleationModel.getParticleSizePercentiles();
-      return new double[] {pctiles[0] * 1e6, pctiles[1] * 1e6, pctiles[2] * 1e6};
+      return new double[] { pctiles[0] * 1e6, pctiles[1] * 1e6, pctiles[2] * 1e6 };
     }
-    return new double[] {0.0, 0.0, 0.0};
+    return new double[] { 0.0, 0.0, 0.0 };
   }
 
   /**
-   * Returns the estimated filter capture efficiency for the predicted particle size distribution,
-   * based on the current filtration rating.
+   * Returns the estimated filter capture efficiency for the predicted particle size distribution, based on the current
+   * filtration rating.
    *
    * @return capture fraction (0 to 1)
    */
@@ -550,15 +549,13 @@ public class SulfurFilter extends Filter {
       particles.put("d90_um", pctiles[2] * 1e6);
       particles.put("nucleationRate_per_m3s", nucleationModel.getNucleationRate());
       particles.put("particleNumberDensity_per_m3", nucleationModel.getParticleNumberDensity());
-      particles.put("massConcentration_mg_m3",
-          nucleationModel.getParticleMassConcentration() * 1e6);
+      particles.put("massConcentration_mg_m3", nucleationModel.getParticleMassConcentration() * 1e6);
       particles.put("criticalRadius_nm", nucleationModel.getCriticalRadius() * 1e9);
       particles.put("knudsenNumber", nucleationModel.getKnudsenNumber());
       particles.put("estimatedCaptureEfficiency", getEstimatedCaptureEfficiency());
       result.put("particleSizePrediction", particles);
     }
 
-    return new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create()
-        .toJson(result);
+    return new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create().toJson(result);
   }
 }

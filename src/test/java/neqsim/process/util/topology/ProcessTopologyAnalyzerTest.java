@@ -165,15 +165,13 @@ public class ProcessTopologyAnalyzerTest {
     Stream tear = new Stream("Tear Seed", fluid.clone());
     tear.setFlowRate(1.0, "kg/hr");
 
-    neqsim.process.equipment.mixer.Mixer mixer =
-        new neqsim.process.equipment.mixer.Mixer("Loop Mixer");
+    neqsim.process.equipment.mixer.Mixer mixer = new neqsim.process.equipment.mixer.Mixer("Loop Mixer");
     mixer.addStream(feed);
     mixer.addStream(tear);
 
     Separator sep = new Separator("Loop Separator", mixer.getOutletStream());
 
-    neqsim.process.equipment.util.Recycle recycle =
-        new neqsim.process.equipment.util.Recycle("Liquid Recycle");
+    neqsim.process.equipment.util.Recycle recycle = new neqsim.process.equipment.util.Recycle("Liquid Recycle");
     recycle.addStream(sep.getLiquidOutStream());
     recycle.setOutletStream(tear);
 
@@ -201,8 +199,7 @@ public class ProcessTopologyAnalyzerTest {
     tear.setFlowRate(1.0, "kg/hr");
     loop.add(tear);
 
-    neqsim.process.equipment.mixer.Mixer mixer =
-        new neqsim.process.equipment.mixer.Mixer("Loop Mixer");
+    neqsim.process.equipment.mixer.Mixer mixer = new neqsim.process.equipment.mixer.Mixer("Loop Mixer");
     mixer.addStream(feed);
     mixer.addStream(tear);
     loop.add(mixer);
@@ -210,8 +207,7 @@ public class ProcessTopologyAnalyzerTest {
     Separator sep = new Separator("Loop Separator", mixer.getOutletStream());
     loop.add(sep);
 
-    neqsim.process.equipment.util.Recycle recycle =
-        new neqsim.process.equipment.util.Recycle("Liquid Recycle");
+    neqsim.process.equipment.util.Recycle recycle = new neqsim.process.equipment.util.Recycle("Liquid Recycle");
     recycle.addStream(sep.getLiquidOutStream());
     recycle.setOutletStream(tear);
     loop.add(recycle);
@@ -226,12 +222,10 @@ public class ProcessTopologyAnalyzerTest {
     List<String> recycleUpstream = loopAnalyzer.getUpstreamEquipment("Liquid Recycle");
     List<String> recycleDownstream = loopAnalyzer.getDownstreamEquipment("Liquid Recycle");
     assertTrue(recycleUpstream.contains("Loop Separator"),
-        "Recycle should receive the separator liquid outlet as an inlet");
-    assertTrue(recycleDownstream.contains("Loop Mixer"),
-        "Recycle outlet (tear seed) should feed the loop mixer");
+	"Recycle should receive the separator liquid outlet as an inlet");
+    assertTrue(recycleDownstream.contains("Loop Mixer"), "Recycle outlet (tear seed) should feed the loop mixer");
 
     String dot = loopAnalyzer.toDotGraph();
-    assertTrue(dot.contains("Liquid Recycle"),
-        "DOT/Graphviz export should include the recycle node");
+    assertTrue(dot.contains("Liquid Recycle"), "DOT/Graphviz export should include the recycle node");
   }
 }

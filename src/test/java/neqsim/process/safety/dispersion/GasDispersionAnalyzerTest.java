@@ -15,9 +15,8 @@ class GasDispersionAnalyzerTest {
 
   @Test
   void methaneReleaseGivesGaussianFlammableDistances() {
-    GasDispersionResult result =
-        GasDispersionAnalyzer.builder().scenarioName("Methane leak").fluid(methaneFluid(20.0))
-            .massReleaseRate(1.0).boundaryConditions(standardWeather()).build().analyze();
+    GasDispersionResult result = GasDispersionAnalyzer.builder().scenarioName("Methane leak").fluid(methaneFluid(20.0))
+	.massReleaseRate(1.0).boundaryConditions(standardWeather()).build().analyze();
 
     assertEquals("GAUSSIAN_PLUME", result.getSelectedModel());
     assertTrue(result.getDistanceToLflM() > 0.0);
@@ -29,10 +28,9 @@ class GasDispersionAnalyzerTest {
 
   @Test
   void sts0131IntegralEndpointUsesTwentyPercentLfl() {
-    GasDispersionResult result =
-        GasDispersionAnalyzer.builder().scenarioName("Methane integral endpoint")
-            .fluid(methaneFluid(20.0)).massReleaseRate(1.0).boundaryConditions(standardWeather())
-            .sts0131IntegralEndpoint().build().analyze();
+    GasDispersionResult result = GasDispersionAnalyzer.builder().scenarioName("Methane integral endpoint")
+	.fluid(methaneFluid(20.0)).massReleaseRate(1.0).boundaryConditions(standardWeather()).sts0131IntegralEndpoint()
+	.build().analyze();
 
     assertEquals(0.20, result.getFlammableEndpointFractionOfLfl(), 1.0e-12);
     assertTrue(result.getDistanceToFlammableEndpointM() > result.getDistanceToHalfLflM());
@@ -41,9 +39,8 @@ class GasDispersionAnalyzerTest {
 
   @Test
   void carbonDioxideReleaseSelectsDenseGasAndNoFlammableCloud() {
-    GasDispersionResult result =
-        GasDispersionAnalyzer.builder().scenarioName("CO2 leak").fluid(carbonDioxideFluid())
-            .massReleaseRate(5.0).boundaryConditions(standardWeather()).build().analyze();
+    GasDispersionResult result = GasDispersionAnalyzer.builder().scenarioName("CO2 leak").fluid(carbonDioxideFluid())
+	.massReleaseRate(5.0).boundaryConditions(standardWeather()).build().analyze();
 
     assertEquals("HEAVY_GAS", result.getSelectedModel());
     assertFalse(result.hasFlammableCloud());
@@ -57,9 +54,8 @@ class GasDispersionAnalyzerTest {
     sourGas.addComponent("H2S", 0.02);
     sourGas.setMixingRule("classic");
 
-    GasDispersionResult result = GasDispersionAnalyzer.builder().scenarioName("Sour gas leak")
-        .fluid(sourGas).massReleaseRate(2.0).boundaryConditions(standardWeather())
-        .toxicEndpoint("H2S", 100.0).build().analyze();
+    GasDispersionResult result = GasDispersionAnalyzer.builder().scenarioName("Sour gas leak").fluid(sourGas)
+	.massReleaseRate(2.0).boundaryConditions(standardWeather()).toxicEndpoint("H2S", 100.0).build().analyze();
 
     assertTrue(result.hasToxicEndpoint());
     assertTrue(result.getToxicDistanceM() > 0.0);
@@ -69,13 +65,12 @@ class GasDispersionAnalyzerTest {
   @Test
   void sourceTermPeakRateFeedsDispersionScreening() {
     SystemInterface highPressureMethane = methaneFluid(50.0);
-    LeakModel leak = LeakModel.builder().fluid(highPressureMethane).holeDiameter(0.01)
-        .vesselVolume(1.0).scenarioName("Dynamic leak").build();
+    LeakModel leak = LeakModel.builder().fluid(highPressureMethane).holeDiameter(0.01).vesselVolume(1.0)
+	.scenarioName("Dynamic leak").build();
     SourceTermResult sourceTerm = leak.calculateSourceTerm(5.0, 1.0);
 
-    GasDispersionResult result =
-        GasDispersionAnalyzer.builder().scenarioName("Dynamic screen").fluid(highPressureMethane)
-            .sourceTerm(sourceTerm).boundaryConditions(standardWeather()).build().analyze();
+    GasDispersionResult result = GasDispersionAnalyzer.builder().scenarioName("Dynamic screen")
+	.fluid(highPressureMethane).sourceTerm(sourceTerm).boundaryConditions(standardWeather()).build().analyze();
 
     assertEquals(sourceTerm.getPeakMassFlowRate(), result.getMassReleaseRateKgPerS(), 1.0e-12);
     assertTrue(result.getDistanceToLflM() > 0.0);
@@ -87,8 +82,7 @@ class GasDispersionAnalyzerTest {
     stream.setFlowRate(3600.0, "kg/hr");
     stream.run();
 
-    GasDispersionResult result =
-        GasDispersionAnalyzer.analyzeStream("Stream leak", stream, standardWeather());
+    GasDispersionResult result = GasDispersionAnalyzer.analyzeStream("Stream leak", stream, standardWeather());
 
     assertEquals(1.0, result.getMassReleaseRateKgPerS(), 1.0e-9);
     assertTrue(result.getDistanceToLflM() > 0.0);
@@ -100,8 +94,8 @@ class GasDispersionAnalyzerTest {
   }
 
   private static BoundaryConditions standardWeather() {
-    return BoundaryConditions.builder().ambientTemperature(15.0, "C").windSpeed(5.0)
-        .pasquillStabilityClass('D').isOffshore(false).surfaceRoughness(0.1).build();
+    return BoundaryConditions.builder().ambientTemperature(15.0, "C").windSpeed(5.0).pasquillStabilityClass('D')
+	.isOffshore(false).surfaceRoughness(0.1).build();
   }
 
   private static SystemInterface methaneFluid(double pressureBara) {

@@ -11,8 +11,8 @@ import java.util.List;
  * Records and tracks compressor operating history for analysis and trending.
  *
  * <p>
- * This class stores operating points over time, enabling post-simulation analysis of compressor
- * behavior, surge events, and performance trends.
+ * This class stores operating points over time, enabling post-simulation analysis of compressor behavior, surge events,
+ * and performance trends.
  * </p>
  *
  * @author esol
@@ -54,24 +54,23 @@ public class CompressorOperatingHistory implements Serializable {
     /**
      * Constructor for OperatingPoint.
      *
-     * @param time simulation time in seconds
-     * @param flow volumetric flow rate in m³/hr
-     * @param head polytropic head in kJ/kg
-     * @param speed rotational speed in RPM
-     * @param power shaft power in kW
-     * @param efficiency polytropic efficiency (0-1)
-     * @param surgeMargin margin to surge line (ratio)
-     * @param stoneWallMargin margin to stone wall (ratio)
-     * @param state compressor operating state
-     * @param inletPressure inlet pressure in bara
-     * @param outletPressure outlet pressure in bara
-     * @param inletTemperature inlet temperature in K
+     * @param time              simulation time in seconds
+     * @param flow              volumetric flow rate in m³/hr
+     * @param head              polytropic head in kJ/kg
+     * @param speed             rotational speed in RPM
+     * @param power             shaft power in kW
+     * @param efficiency        polytropic efficiency (0-1)
+     * @param surgeMargin       margin to surge line (ratio)
+     * @param stoneWallMargin   margin to stone wall (ratio)
+     * @param state             compressor operating state
+     * @param inletPressure     inlet pressure in bara
+     * @param outletPressure    outlet pressure in bara
+     * @param inletTemperature  inlet temperature in K
      * @param outletTemperature outlet temperature in K
      */
-    public OperatingPoint(double time, double flow, double head, double speed, double power,
-        double efficiency, double surgeMargin, double stoneWallMargin, CompressorState state,
-        double inletPressure, double outletPressure, double inletTemperature,
-        double outletTemperature) {
+    public OperatingPoint(double time, double flow, double head, double speed, double power, double efficiency,
+	double surgeMargin, double stoneWallMargin, CompressorState state, double inletPressure, double outletPressure,
+	double inletTemperature, double outletTemperature) {
       this.time = time;
       this.flow = flow;
       this.head = head;
@@ -215,16 +214,15 @@ public class CompressorOperatingHistory implements Serializable {
 
     @Override
     public String toString() {
-      return String.format(
-          "t=%.1fs, Q=%.1f m³/hr, H=%.1f kJ/kg, N=%.0f RPM, P=%.1f kW, η=%.1f%%, SM=%.1f%%", time,
-          flow, head, speed, power, efficiency * 100, surgeMargin * 100);
+      return String.format("t=%.1fs, Q=%.1f m³/hr, H=%.1f kJ/kg, N=%.0f RPM, P=%.1f kW, η=%.1f%%, SM=%.1f%%", time,
+	  flow, head, speed, power, efficiency * 100, surgeMargin * 100);
     }
   }
 
   /**
    * Record a new operating point from a compressor.
    *
-   * @param time simulation time in seconds
+   * @param time       simulation time in seconds
    * @param compressor the compressor to record data from
    */
   public void recordOperatingPoint(double time, Compressor compressor) {
@@ -254,9 +252,8 @@ public class CompressorOperatingHistory implements Serializable {
 
     head = compressor.getPolytropicFluidHead();
 
-    OperatingPoint point =
-        new OperatingPoint(time, flow, head, speed, power, efficiency, surgeMargin, stoneWallMargin,
-            state, inletPressure, outletPressure, inletTemperature, outletTemperature);
+    OperatingPoint point = new OperatingPoint(time, flow, head, speed, power, efficiency, surgeMargin, stoneWallMargin,
+	state, inletPressure, outletPressure, inletTemperature, outletTemperature);
 
     recordOperatingPoint(point);
   }
@@ -272,16 +269,16 @@ public class CompressorOperatingHistory implements Serializable {
     // Track surge conditions
     if (point.isInSurge()) {
       if (!inSurgeCondition) {
-        // Entering surge
-        inSurgeCondition = true;
-        surgeEntryTime = point.getTime();
-        surgeEventCount++;
+	// Entering surge
+	inSurgeCondition = true;
+	surgeEntryTime = point.getTime();
+	surgeEventCount++;
       }
     } else {
       if (inSurgeCondition) {
-        // Exiting surge
-        totalTimeInSurge += point.getTime() - surgeEntryTime;
-        inSurgeCondition = false;
+	// Exiting surge
+	totalTimeInSurge += point.getTime() - surgeEntryTime;
+	inSurgeCondition = false;
       }
     }
 
@@ -366,7 +363,7 @@ public class CompressorOperatingHistory implements Serializable {
     double minMargin = 1.0;
     for (OperatingPoint point : history) {
       if (point.getSurgeMargin() < minMargin) {
-        minMargin = point.getSurgeMargin();
+	minMargin = point.getSurgeMargin();
       }
     }
     return minMargin;
@@ -421,17 +418,15 @@ public class CompressorOperatingHistory implements Serializable {
   public void exportToCSV(String filename) throws IOException {
     try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {
       // Header
-      writer.println(
-          "Time[s],Flow[m3/hr],Head[kJ/kg],Speed[RPM],Power[kW],Efficiency[-],SurgeMargin[-],"
-              + "StoneWallMargin[-],State,InletP[bara],OutletP[bara],InletT[K],OutletT[K]");
+      writer.println("Time[s],Flow[m3/hr],Head[kJ/kg],Speed[RPM],Power[kW],Efficiency[-],SurgeMargin[-],"
+	  + "StoneWallMargin[-],State,InletP[bara],OutletP[bara],InletT[K],OutletT[K]");
 
       // Data
       for (OperatingPoint point : history) {
-        writer.printf("%.3f,%.3f,%.3f,%.1f,%.3f,%.4f,%.4f,%.4f,%s,%.3f,%.3f,%.2f,%.2f%n",
-            point.getTime(), point.getFlow(), point.getHead(), point.getSpeed(), point.getPower(),
-            point.getEfficiency(), point.getSurgeMargin(), point.getStoneWallMargin(),
-            point.getState().name(), point.getInletPressure(), point.getOutletPressure(),
-            point.getInletTemperature(), point.getOutletTemperature());
+	writer.printf("%.3f,%.3f,%.3f,%.1f,%.3f,%.4f,%.4f,%.4f,%s,%.3f,%.3f,%.2f,%.2f%n", point.getTime(),
+	    point.getFlow(), point.getHead(), point.getSpeed(), point.getPower(), point.getEfficiency(),
+	    point.getSurgeMargin(), point.getStoneWallMargin(), point.getState().name(), point.getInletPressure(),
+	    point.getOutletPressure(), point.getInletTemperature(), point.getOutletTemperature());
       }
     }
   }
@@ -456,16 +451,16 @@ public class CompressorOperatingHistory implements Serializable {
       sb.append(String.format("Average efficiency: %.1f%%\n", getAverageEfficiency() * 100));
 
       if (peakPowerPoint != null) {
-        sb.append(String.format("Peak power: %.1f kW at t=%.1f s\n", peakPowerPoint.getPower(),
-            peakPowerPoint.getTime()));
+	sb.append(
+	    String.format("Peak power: %.1f kW at t=%.1f s\n", peakPowerPoint.getPower(), peakPowerPoint.getTime()));
       }
       if (peakHeadPoint != null) {
-        sb.append(String.format("Peak head: %.1f kJ/kg at t=%.1f s\n", peakHeadPoint.getHead(),
-            peakHeadPoint.getTime()));
+	sb.append(
+	    String.format("Peak head: %.1f kJ/kg at t=%.1f s\n", peakHeadPoint.getHead(), peakHeadPoint.getTime()));
       }
       if (peakFlowPoint != null) {
-        sb.append(String.format("Peak flow: %.1f m³/hr at t=%.1f s\n", peakFlowPoint.getFlow(),
-            peakFlowPoint.getTime()));
+	sb.append(
+	    String.format("Peak flow: %.1f m³/hr at t=%.1f s\n", peakFlowPoint.getFlow(), peakFlowPoint.getTime()));
       }
     }
 

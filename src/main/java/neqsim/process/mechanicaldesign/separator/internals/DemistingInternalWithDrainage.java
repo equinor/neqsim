@@ -7,9 +7,8 @@ import org.apache.logging.log4j.Logger;
  * A demisting internal with a drainage section below the main demisting pad.
  *
  * <p>
- * The drainage section captures re-entrained liquid that drips from the demisting pad. This design
- * is common in high-velocity wire mesh and vane pack installations where film drainage alone is
- * insufficient.
+ * The drainage section captures re-entrained liquid that drips from the demisting pad. This design is common in
+ * high-velocity wire mesh and vane pack installations where film drainage alone is insufficient.
  * </p>
  *
  * <p>
@@ -30,8 +29,8 @@ public class DemistingInternalWithDrainage extends DemistingInternal {
   static Logger logger = LogManager.getLogger(DemistingInternalWithDrainage.class);
 
   /**
-   * Drainage efficiency [0..1]. Fraction of re-entrained liquid captured by the drainage section.
-   * Typical values: 0.3–0.7 depending on drainage design and liquid load.
+   * Drainage efficiency [0..1]. Fraction of re-entrained liquid captured by the drainage section. Typical values:
+   * 0.3–0.7 depending on drainage design and liquid load.
    */
   private double drainageEfficiency = 0.5;
 
@@ -65,8 +64,8 @@ public class DemistingInternalWithDrainage extends DemistingInternal {
    * {@inheritDoc}
    *
    * <p>
-   * Overrides to account for drainage section. The effective carry-over is the pad carry-over
-   * reduced by the drainage efficiency.
+   * Overrides to account for drainage section. The effective carry-over is the pad carry-over reduced by the drainage
+   * efficiency.
    * </p>
    */
   @Override

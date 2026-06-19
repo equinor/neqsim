@@ -10,8 +10,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * Comprehensive tests comparing all four wax thermodynamic models against each other and
- * literature-derived expectations.
+ * Comprehensive tests comparing all four wax thermodynamic models against each other and literature-derived
+ * expectations.
  *
  * <p>
  * Models tested: Pedersen (default), Won, Wilson, Coutinho (UNIQUAC).
@@ -20,8 +20,8 @@ import neqsim.util.database.NeqSimDataBase;
 public class WaxModelComparisonTest {
 
   /**
-   * Creates a standard test fluid with TBP/plus fractions, configures wax model, and returns the
-   * system ready for flash calculations.
+   * Creates a standard test fluid with TBP/plus fractions, configures wax model, and returns the system ready for flash
+   * calculations.
    */
   private SystemInterface createTestSystem(String waxModelName) {
     NeqSimDataBase.setCreateTemporaryTables(true);
@@ -38,7 +38,7 @@ public class WaxModelComparisonTest {
     // Set the wax component model on the wax phase
     for (int k = 0; k < system.getNumberOfPhases(); k++) {
       if (system.getPhase(k) instanceof PhaseWax) {
-        ((PhaseWax) system.getPhase(k)).setWaxComponentModel(waxModelName);
+	((PhaseWax) system.getPhase(k)).setWaxComponentModel(waxModelName);
       }
     }
 
@@ -51,8 +51,8 @@ public class WaxModelComparisonTest {
   }
 
   /**
-   * Tests the default Pedersen (ComponentWax) model at low temperature. Verifies that the improved
-   * model with DeltaCp correction gives reasonable wax fractions.
+   * Tests the default Pedersen (ComponentWax) model at low temperature. Verifies that the improved model with DeltaCp
+   * correction gives reasonable wax fractions.
    */
   @Test
   void testPedersenModelWaxFraction() {
@@ -104,8 +104,7 @@ public class WaxModelComparisonTest {
     // Wilson model should also predict wax at this low temperature
     if (system.hasPhaseType("wax")) {
       double waxMassFraction = system.getPhaseFraction("wax", "mass");
-      assertTrue(waxMassFraction > 0.0,
-          "Wilson model should predict positive wax fraction at 261 K");
+      assertTrue(waxMassFraction > 0.0, "Wilson model should predict positive wax fraction at 261 K");
     }
   }
 
@@ -124,14 +123,13 @@ public class WaxModelComparisonTest {
     // Coutinho model should predict wax at this low temperature
     if (system.hasPhaseType("wax")) {
       double waxMassFraction = system.getPhaseFraction("wax", "mass");
-      assertTrue(waxMassFraction > 0.0,
-          "Coutinho model should predict positive wax fraction at 261 K");
+      assertTrue(waxMassFraction > 0.0, "Coutinho model should predict positive wax fraction at 261 K");
     }
   }
 
   /**
-   * Tests that the Pedersen model (with DeltaCp correction) still gives reasonable results at a
-   * temperature well above WAT. No wax should be present well above the wax appearance temperature.
+   * Tests that the Pedersen model (with DeltaCp correction) still gives reasonable results at a temperature well above
+   * WAT. No wax should be present well above the wax appearance temperature.
    */
   @Test
   void testNoWaxAboveWAT() {
@@ -150,8 +148,8 @@ public class WaxModelComparisonTest {
   }
 
   /**
-   * Creates a gas condensate system (similar to WaxFlashTest setup) and calculates WAT using the
-   * default Pedersen model. This is a regression test.
+   * Creates a gas condensate system (similar to WaxFlashTest setup) and calculates WAT using the default Pedersen
+   * model. This is a regression test.
    */
   @Test
   void testWATCalculation() {

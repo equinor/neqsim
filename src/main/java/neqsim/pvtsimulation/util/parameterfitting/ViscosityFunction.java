@@ -44,8 +44,7 @@ public class ViscosityFunction extends LevenbergMarquardtFunction {
     double waxFraction = 0.0;
     if (system.hasPhaseType("wax") && includeWaxEmulsionViscosity) {
       waxFraction = system.getWtFraction(system.getPhaseNumberOfPhase("wax"));
-      return system.getPhase(0).getPhysicalProperties().getViscosityOfWaxyOil(waxFraction,
-          dependentValues[0]); // %wax
+      return system.getPhase(0).getPhysicalProperties().getViscosityOfWaxyOil(waxFraction, dependentValues[0]); // %wax
     }
     // system.display();
     return system.getPhase(0).getPhysicalProperties().getViscosity(); // %wax
@@ -57,6 +56,6 @@ public class ViscosityFunction extends LevenbergMarquardtFunction {
     params[i] = value;
 
     ((FrictionTheoryViscosityMethod) system.getPhase(0).getPhysicalProperties().getViscosityModel())
-        .setTBPviscosityCorrection(value);
+	.setTBPviscosityCorrection(value);
   }
 }

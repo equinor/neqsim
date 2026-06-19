@@ -5,15 +5,13 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * Implementation of GPA 2172 - Calculation of Gross Heating Value, Relative Density,
- * Compressibility and Theoretical Hydrocarbon Liquid Content for Natural Gas Mixtures for Custody
- * Transfer.
+ * Implementation of GPA 2172 - Calculation of Gross Heating Value, Relative Density, Compressibility and Theoretical
+ * Hydrocarbon Liquid Content for Natural Gas Mixtures for Custody Transfer.
  *
  * <p>
- * GPA 2172 is the North American standard for calculating key gas quality parameters from
- * composition analysis. It is widely used for custody transfer in the United States and Canada. The
- * standard uses GPA 2145 physical constants as reference data and specifies calculations at 60F
- * (15.556C) and 14.696 psia (1.01325 bara).
+ * GPA 2172 is the North American standard for calculating key gas quality parameters from composition analysis. It is
+ * widely used for custody transfer in the United States and Canada. The standard uses GPA 2145 physical constants as
+ * reference data and specifies calculations at 60F (15.556C) and 14.696 psia (1.01325 bara).
  * </p>
  *
  * <p>
@@ -66,8 +64,7 @@ public class Standard_GPA2172 extends neqsim.standards.Standard {
   private static final double MOLAR_MASS_AIR = 28.9625;
 
   /**
-   * GPA 2145 liquid density at 60F in lb/gal for GPM calculation. Standard values for common NGL
-   * components.
+   * GPA 2145 liquid density at 60F in lb/gal for GPM calculation. Standard values for common NGL components.
    */
   private static final double ETHANE_LB_PER_GAL = 2.97;
   private static final double PROPANE_LB_PER_GAL = 4.233;
@@ -83,8 +80,7 @@ public class Standard_GPA2172 extends neqsim.standards.Standard {
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
   public Standard_GPA2172(SystemInterface thermoSystem) {
-    super("Standard_GPA2172",
-        "Calculation of GHV, RD, Z, and Theoretical Hydrocarbon Liquid Content", thermoSystem);
+    super("Standard_GPA2172", "Calculation of GHV, RD, Z, and Theoretical Hydrocarbon Liquid Content", thermoSystem);
     this.gpa2145 = new Standard_GPA2145(thermoSystem);
     this.iso6976 = new Standard_ISO6976(thermoSystem, 15.55, 15.55, "volume");
   }
@@ -106,7 +102,7 @@ public class Standard_GPA2172 extends neqsim.standards.Standard {
 
       // Real gas GHV = Ideal GHV / Z
       if (compressionFactor > 0.0) {
-        realGrossHV = idealGrossHV / compressionFactor;
+	realGrossHV = idealGrossHV / compressionFactor;
       }
 
       // Calculate GPM (gallons per Mcf = gallons per 1000 ft3)
@@ -118,17 +114,17 @@ public class Standard_GPA2172 extends neqsim.standards.Standard {
       gpmC3Plus = 0.0;
 
       for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
-        String name = thermoSystem.getPhase(0).getComponent(i).getName();
-        double xi = thermoSystem.getPhase(0).getComponent(i).getz();
-        double gpm = calculateComponentGPM(name, xi);
+	String name = thermoSystem.getPhase(0).getComponent(i).getName();
+	double xi = thermoSystem.getPhase(0).getComponent(i).getz();
+	double gpm = calculateComponentGPM(name, xi);
 
-        if ("ethane".equals(name)) {
-          gpmC2Plus += gpm;
-        } else if ("propane".equals(name) || "i-butane".equals(name) || "n-butane".equals(name)
-            || "i-pentane".equals(name) || "n-pentane".equals(name) || "n-hexane".equals(name)) {
-          gpmC2Plus += gpm;
-          gpmC3Plus += gpm;
-        }
+	if ("ethane".equals(name)) {
+	  gpmC2Plus += gpm;
+	} else if ("propane".equals(name) || "i-butane".equals(name) || "n-butane".equals(name)
+	    || "i-pentane".equals(name) || "n-pentane".equals(name) || "n-hexane".equals(name)) {
+	  gpmC2Plus += gpm;
+	  gpmC3Plus += gpm;
+	}
       }
     } catch (Exception ex) {
       logger.error("GPA 2172 calculation failed", ex);
@@ -138,7 +134,7 @@ public class Standard_GPA2172 extends neqsim.standards.Standard {
   /**
    * Calculates gallons per Mcf for a given component.
    *
-   * @param name the component name
+   * @param name         the component name
    * @param moleFraction the mole fraction
    * @return GPM value
    */
@@ -182,7 +178,7 @@ public class Standard_GPA2172 extends neqsim.standards.Standard {
     double value = getValue(returnParameter);
     if ("idealGrossHV".equals(returnParameter) || "realGrossHV".equals(returnParameter)) {
       if ("MJ/m3".equals(returnUnit)) {
-        return value * 0.037316; // BTU/ft3 to MJ/m3
+	return value * 0.037316; // BTU/ft3 to MJ/m3
       }
     }
     return value;
@@ -219,11 +215,11 @@ public class Standard_GPA2172 extends neqsim.standards.Standard {
   @Override
   public String getUnit(String returnParameter) {
     if ("idealGrossHV".equals(returnParameter) || "GHV".equals(returnParameter)
-        || "realGrossHV".equals(returnParameter)) {
+	|| "realGrossHV".equals(returnParameter)) {
       return "BTU/ft3";
     }
     if ("relativeDensity".equals(returnParameter) || "specificGravity".equals(returnParameter)
-        || "compressionFactor".equals(returnParameter) || "Z".equals(returnParameter)) {
+	|| "compressionFactor".equals(returnParameter) || "Z".equals(returnParameter)) {
       return "-";
     }
     if ("molarMass".equals(returnParameter)) {

@@ -11,9 +11,9 @@ import com.google.gson.GsonBuilder;
  * Incremental zone-by-zone thermal analysis for heat exchangers.
  *
  * <p>
- * Divides the heat exchanger into N incremental zones along the tube length, performing local
- * thermodynamic flash calculations at each zone boundary to determine local fluid properties. This
- * is analogous to the "incremental" rating mode in HTRI Xist.
+ * Divides the heat exchanger into N incremental zones along the tube length, performing local thermodynamic flash
+ * calculations at each zone boundary to determine local fluid properties. This is analogous to the "incremental" rating
+ * mode in HTRI Xist.
  * </p>
  *
  * <p>
@@ -21,8 +21,7 @@ import com.google.gson.GsonBuilder;
  * </p>
  * <ul>
  * <li>Adaptive zone sizing — finer resolution near phase boundaries (dew point, bubble point)</li>
- * <li>Local heat transfer coefficient calculation per zone (single-phase, condensing, or
- * boiling)</li>
+ * <li>Local heat transfer coefficient calculation per zone (single-phase, condensing, or boiling)</li>
  * <li>Local pressure drop per zone (single-phase Fanning, two-phase Friedel)</li>
  * <li>Cumulative duty, area, pressure drop tracking</li>
  * <li>Pinch temperature detection (minimum temperature approach along the exchanger)</li>
@@ -97,7 +96,6 @@ public class IncrementalZoneAnalysis implements Serializable {
   private double baffleSpacingm = 0.2;
   private double tubeWallConductivity = 52.0;
 
-
   // Fouling
   private double foulingTube = 0.000176;
   private double foulingShell = 0.000176;
@@ -137,14 +135,13 @@ public class IncrementalZoneAnalysis implements Serializable {
   /**
    * Sets the tube geometry parameters.
    *
-   * @param tubeID tube inner diameter (m)
-   * @param tubeOD tube outer diameter (m)
+   * @param tubeID     tube inner diameter (m)
+   * @param tubeOD     tube outer diameter (m)
    * @param tubeLength tube length (m)
-   * @param tubeCount number of tubes
+   * @param tubeCount  number of tubes
    * @param tubePasses number of tube passes
    */
-  public void setGeometry(double tubeID, double tubeOD, double tubeLength, int tubeCount,
-      int tubePasses) {
+  public void setGeometry(double tubeID, double tubeOD, double tubeLength, int tubeCount, int tubePasses) {
     this.tubeIDm = tubeID;
     this.tubeODm = tubeOD;
     this.tubeLengthm = tubeLength;
@@ -155,13 +152,12 @@ public class IncrementalZoneAnalysis implements Serializable {
   /**
    * Sets the shell-side geometry parameters.
    *
-   * @param shellID shell inside diameter (m)
-   * @param baffleSpacing baffle spacing (m)
-   * @param tubePitch tube pitch (m)
+   * @param shellID         shell inside diameter (m)
+   * @param baffleSpacing   baffle spacing (m)
+   * @param tubePitch       tube pitch (m)
    * @param triangularPitch true for triangular layout
    */
-  public void setShellGeometry(double shellID, double baffleSpacing, double tubePitch,
-      boolean triangularPitch) {
+  public void setShellGeometry(double shellID, double baffleSpacing, double tubePitch, boolean triangularPitch) {
     this.shellIDm = shellID;
     this.baffleSpacingm = baffleSpacing;
     this.tubePitchm = tubePitch;
@@ -171,7 +167,7 @@ public class IncrementalZoneAnalysis implements Serializable {
   /**
    * Sets fouling resistances.
    *
-   * @param tubeFouling tube-side fouling resistance (m2*K/W)
+   * @param tubeFouling  tube-side fouling resistance (m2*K/W)
    * @param shellFouling shell-side fouling resistance (m2*K/W)
    */
   public void setFouling(double tubeFouling, double shellFouling) {
@@ -199,9 +195,9 @@ public class IncrementalZoneAnalysis implements Serializable {
    * Performs the incremental zone calculation.
    *
    * <p>
-   * For each zone, calculates local heat transfer coefficients using appropriate correlations
-   * (single-phase Gnielinski/Kern, Shah condensation, Gungor-Winterton boiling), local pressure
-   * drops (Fanning or Friedel), local LMTD, and local required area.
+   * For each zone, calculates local heat transfer coefficients using appropriate correlations (single-phase
+   * Gnielinski/Kern, Shah condensation, Gungor-Winterton boiling), local pressure drops (Fanning or Friedel), local
+   * LMTD, and local required area.
    * </p>
    */
   public void calculate() {
@@ -253,7 +249,7 @@ public class IncrementalZoneAnalysis implements Serializable {
       double approach2 = Math.abs(zone.hotOutletTemp - zone.coldInletTemp);
       double minApproach = Math.min(approach1, approach2);
       if (minApproach < minimumApproachTemperature) {
-        minimumApproachTemperature = minApproach;
+	minimumApproachTemperature = minApproach;
       }
     }
 
@@ -271,27 +267,25 @@ public class IncrementalZoneAnalysis implements Serializable {
     double massFlux = calcTubeSideMassFlux(zone.tubeMassFlowRate);
 
     switch (zone.tubePhaseRegime) {
-      case CONDENSING:
-        // Shah condensation
-        double hLo = ShahCondensation.calcLiquidOnlyHTC(massFlux, tubeIDm, zone.tubeLiquidDensity,
-            zone.tubeLiquidViscosity, zone.tubeLiquidCp, zone.tubeLiquidConductivity);
-        return ShahCondensation.calcAverageHTC(hLo, zone.tubeReducedPressure, zone.tubeQualityIn,
-            zone.tubeQualityOut, 10);
+    case CONDENSING:
+      // Shah condensation
+      double hLo = ShahCondensation.calcLiquidOnlyHTC(massFlux, tubeIDm, zone.tubeLiquidDensity,
+	  zone.tubeLiquidViscosity, zone.tubeLiquidCp, zone.tubeLiquidConductivity);
+      return ShahCondensation.calcAverageHTC(hLo, zone.tubeReducedPressure, zone.tubeQualityIn, zone.tubeQualityOut,
+	  10);
 
-      case EVAPORATING:
-        // Gungor-Winterton boiling
-        double heatFlux = (tubeCount > 0 && tubeIDm > 0)
-            ? zone.duty / (tubeCount * Math.PI * tubeIDm * tubeLengthm / zones.size())
-            : 0.0;
-        return BoilingHeatTransfer.calcAverageHTC(massFlux, tubeIDm, zone.tubeLiquidDensity,
-            zone.tubeVaporDensity, zone.tubeLiquidViscosity, zone.tubeLiquidCp,
-            zone.tubeLiquidConductivity, heatFlux, zone.tubeHeatOfVaporization, zone.tubeQualityIn,
-            zone.tubeQualityOut, 10);
+    case EVAPORATING:
+      // Gungor-Winterton boiling
+      double heatFlux = (tubeCount > 0 && tubeIDm > 0)
+	  ? zone.duty / (tubeCount * Math.PI * tubeIDm * tubeLengthm / zones.size())
+	  : 0.0;
+      return BoilingHeatTransfer.calcAverageHTC(massFlux, tubeIDm, zone.tubeLiquidDensity, zone.tubeVaporDensity,
+	  zone.tubeLiquidViscosity, zone.tubeLiquidCp, zone.tubeLiquidConductivity, heatFlux,
+	  zone.tubeHeatOfVaporization, zone.tubeQualityIn, zone.tubeQualityOut, 10);
 
-      default:
-        // Single-phase (vapor or liquid)
-        return calcSinglePhaseHTC(massFlux, zone.tubeDensity, zone.tubeViscosity, zone.tubeCp,
-            zone.tubeConductivity);
+    default:
+      // Single-phase (vapor or liquid)
+      return calcSinglePhaseHTC(massFlux, zone.tubeDensity, zone.tubeViscosity, zone.tubeCp, zone.tubeConductivity);
     }
   }
 
@@ -304,8 +298,7 @@ public class IncrementalZoneAnalysis implements Serializable {
   private double calcShellSideHTC(IncrementalZone zone) {
     // Use Kern method for shell side
     double De = BellDelawareMethod.calcShellEquivDiameter(tubeODm, tubePitchm, triangularPitch);
-    double crossflowArea =
-        BellDelawareMethod.calcCrossflowArea(shellIDm, baffleSpacingm, tubeODm, tubePitchm);
+    double crossflowArea = BellDelawareMethod.calcCrossflowArea(shellIDm, baffleSpacingm, tubeODm, tubePitchm);
 
     if (De <= 0 || crossflowArea <= 0) {
       return 0.0;
@@ -315,21 +308,20 @@ public class IncrementalZoneAnalysis implements Serializable {
     double muW = zone.shellViscosity; // Assume bulk = wall for simplicity
 
     return BellDelawareMethod.calcKernShellSideHTC(massFlux, De, zone.shellViscosity, zone.shellCp,
-        zone.shellConductivity, muW);
+	zone.shellConductivity, muW);
   }
 
   /**
    * Calculates single-phase HTC using Gnielinski or laminar correlation.
    *
-   * @param massFlux mass flux (kg/(m2*s))
-   * @param density density (kg/m3)
-   * @param viscosity viscosity (Pa*s)
-   * @param cp heat capacity (J/(kg*K))
+   * @param massFlux     mass flux (kg/(m2*s))
+   * @param density      density (kg/m3)
+   * @param viscosity    viscosity (Pa*s)
+   * @param cp           heat capacity (J/(kg*K))
    * @param conductivity thermal conductivity (W/(m*K))
    * @return heat transfer coefficient (W/(m2*K))
    */
-  private double calcSinglePhaseHTC(double massFlux, double density, double viscosity, double cp,
-      double conductivity) {
+  private double calcSinglePhaseHTC(double massFlux, double density, double viscosity, double cp, double conductivity) {
     if (viscosity <= 0 || conductivity <= 0 || tubeIDm <= 0) {
       return 0.0;
     }
@@ -341,14 +333,13 @@ public class IncrementalZoneAnalysis implements Serializable {
     if (Re > 3000) {
       // Gnielinski
       double f = ThermalDesignCalculator.calcDarcyFriction(Re);
-      Nu = (f / 8.0) * (Re - 1000.0) * Pr
-          / (1.0 + 12.7 * Math.sqrt(f / 8.0) * (Math.pow(Pr, 2.0 / 3.0) - 1.0));
+      Nu = (f / 8.0) * (Re - 1000.0) * Pr / (1.0 + 12.7 * Math.sqrt(f / 8.0) * (Math.pow(Pr, 2.0 / 3.0) - 1.0));
       Nu = Math.max(Nu, 0.0);
     } else if (Re > 2300) {
       double NuLam = 3.66;
       double fTurb = ThermalDesignCalculator.calcDarcyFriction(3000);
       double NuTurb = (fTurb / 8.0) * 2000.0 * Pr
-          / (1.0 + 12.7 * Math.sqrt(fTurb / 8.0) * (Math.pow(Pr, 2.0 / 3.0) - 1.0));
+	  / (1.0 + 12.7 * Math.sqrt(fTurb / 8.0) * (Math.pow(Pr, 2.0 / 3.0) - 1.0));
       double frac = (Re - 2300.0) / 700.0;
       Nu = NuLam + frac * (NuTurb - NuLam);
     } else {
@@ -361,7 +352,7 @@ public class IncrementalZoneAnalysis implements Serializable {
   /**
    * Calculates the overall U for a zone using resistance-in-series.
    *
-   * @param hTube tube-side HTC (W/(m2*K))
+   * @param hTube  tube-side HTC (W/(m2*K))
    * @param hShell shell-side HTC (W/(m2*K))
    * @return overall U based on outer area (W/(m2*K))
    */
@@ -425,13 +416,12 @@ public class IncrementalZoneAnalysis implements Serializable {
     double massFlux = calcTubeSideMassFlux(zone.tubeMassFlowRate);
     double zoneLength = tubeLengthm / Math.max(zones.size(), 1);
 
-    if (zone.tubePhaseRegime == PhaseRegime.CONDENSING
-        || zone.tubePhaseRegime == PhaseRegime.EVAPORATING) {
+    if (zone.tubePhaseRegime == PhaseRegime.CONDENSING || zone.tubePhaseRegime == PhaseRegime.EVAPORATING) {
       // Use Friedel for two-phase
       double avgQuality = (zone.tubeQualityIn + zone.tubeQualityOut) / 2.0;
       return TwoPhasePressureDrop.calcFriedelPressureDrop(massFlux, avgQuality, tubeIDm, zoneLength,
-          zone.tubeLiquidDensity, zone.tubeVaporDensity, zone.tubeLiquidViscosity,
-          zone.tubeVaporViscosity, zone.tubeSurfaceTension);
+	  zone.tubeLiquidDensity, zone.tubeVaporDensity, zone.tubeLiquidViscosity, zone.tubeVaporViscosity,
+	  zone.tubeSurfaceTension);
     }
 
     // Single-phase Fanning friction
@@ -453,8 +443,7 @@ public class IncrementalZoneAnalysis implements Serializable {
    */
   private double calcShellSidePressureDrop(IncrementalZone zone) {
     double De = BellDelawareMethod.calcShellEquivDiameter(tubeODm, tubePitchm, triangularPitch);
-    double crossflowArea =
-        BellDelawareMethod.calcCrossflowArea(shellIDm, baffleSpacingm, tubeODm, tubePitchm);
+    double crossflowArea = BellDelawareMethod.calcCrossflowArea(shellIDm, baffleSpacingm, tubeODm, tubePitchm);
 
     if (De <= 0 || crossflowArea <= 0) {
       return 0.0;
@@ -464,11 +453,10 @@ public class IncrementalZoneAnalysis implements Serializable {
     double muW = zone.shellViscosity;
 
     // Scale for zone fraction of total baffles
-    int zoneBaffles =
-        Math.max(1, (int) Math.round(tubeLengthm / baffleSpacingm / zones.size()));
+    int zoneBaffles = Math.max(1, (int) Math.round(tubeLengthm / baffleSpacingm / zones.size()));
 
-    return BellDelawareMethod.calcKernShellSidePressureDrop(massFlux, De, shellIDm, zoneBaffles,
-        zone.shellDensity, zone.shellViscosity, muW);
+    return BellDelawareMethod.calcKernShellSidePressureDrop(massFlux, De, shellIDm, zoneBaffles, zone.shellDensity,
+	zone.shellViscosity, muW);
   }
 
   /**
@@ -533,8 +521,7 @@ public class IncrementalZoneAnalysis implements Serializable {
    * @return JSON string with pretty printing
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   // ============================================================================
@@ -630,8 +617,8 @@ public class IncrementalZoneAnalysis implements Serializable {
    * Represents a single incremental zone in the heat exchanger.
    *
    * <p>
-   * Each zone contains local fluid properties for both tube and shell side, temperature endpoints,
-   * and computed results (HTC, U, area, pressure drop).
+   * Each zone contains local fluid properties for both tube and shell side, temperature endpoints, and computed results
+   * (HTC, U, area, pressure drop).
    * </p>
    *
    * @author NeqSim Development Team
@@ -729,14 +716,15 @@ public class IncrementalZoneAnalysis implements Serializable {
     /**
      * Default constructor.
      */
-    public IncrementalZone() {}
+    public IncrementalZone() {
+    }
 
     /**
      * Sets the temperature endpoints for this zone.
      *
-     * @param hotIn hot-side inlet temperature (K)
-     * @param hotOut hot-side outlet temperature (K)
-     * @param coldIn cold-side inlet temperature (K)
+     * @param hotIn   hot-side inlet temperature (K)
+     * @param hotOut  hot-side outlet temperature (K)
+     * @param coldIn  cold-side inlet temperature (K)
      * @param coldOut cold-side outlet temperature (K)
      */
     public void setTemperatures(double hotIn, double hotOut, double coldIn, double coldOut) {
@@ -749,15 +737,15 @@ public class IncrementalZoneAnalysis implements Serializable {
     /**
      * Sets single-phase tube-side properties.
      *
-     * @param density density (kg/m3)
-     * @param viscosity viscosity (Pa*s)
-     * @param cp heat capacity (J/(kg*K))
+     * @param density      density (kg/m3)
+     * @param viscosity    viscosity (Pa*s)
+     * @param cp           heat capacity (J/(kg*K))
      * @param conductivity thermal conductivity (W/(m*K))
      * @param massFlowRate mass flow rate (kg/s)
-     * @param regime phase regime
+     * @param regime       phase regime
      */
-    public void setTubeSideProperties(double density, double viscosity, double cp,
-        double conductivity, double massFlowRate, PhaseRegime regime) {
+    public void setTubeSideProperties(double density, double viscosity, double cp, double conductivity,
+	double massFlowRate, PhaseRegime regime) {
       this.tubeDensity = density;
       this.tubeViscosity = viscosity;
       this.tubeCp = cp;
@@ -769,15 +757,15 @@ public class IncrementalZoneAnalysis implements Serializable {
     /**
      * Sets shell-side properties.
      *
-     * @param density density (kg/m3)
-     * @param viscosity viscosity (Pa*s)
-     * @param cp heat capacity (J/(kg*K))
+     * @param density      density (kg/m3)
+     * @param viscosity    viscosity (Pa*s)
+     * @param cp           heat capacity (J/(kg*K))
      * @param conductivity thermal conductivity (W/(m*K))
      * @param massFlowRate mass flow rate (kg/s)
-     * @param regime phase regime
+     * @param regime       phase regime
      */
-    public void setShellSideProperties(double density, double viscosity, double cp,
-        double conductivity, double massFlowRate, PhaseRegime regime) {
+    public void setShellSideProperties(double density, double viscosity, double cp, double conductivity,
+	double massFlowRate, PhaseRegime regime) {
       this.shellDensity = density;
       this.shellViscosity = viscosity;
       this.shellCp = cp;

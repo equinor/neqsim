@@ -33,7 +33,7 @@ public class PallRingPacking extends Packing {
    * </p>
    *
    * @param material a {@link java.lang.String} object
-   * @param size a int
+   * @param size     a int
    */
   public PallRingPacking(String material, int size) {
     super("PallRingPacking", material, size);

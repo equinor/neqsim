@@ -10,13 +10,12 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
- * Test recreating NPV field development calculation from NeqSim-Colab notebook
- * (notebooks/fielddevelopment/npv.ipynb).
+ * Test recreating NPV field development calculation from NeqSim-Colab notebook (notebooks/fielddevelopment/npv.ipynb).
  *
  * <p>
- * Models a subsea gas tieback with SimpleReservoir, WellFlow, three pipeline segments (vertical
- * well, new flowline, existing export pipeline), and an adjuster controlling gas flow to maintain
- * outlet pressure at the receiving facility.
+ * Models a subsea gas tieback with SimpleReservoir, WellFlow, three pipeline segments (vertical well, new flowline,
+ * existing export pipeline), and an adjuster controlling gas flow to maintain outlet pressure at the receiving
+ * facility.
  * </p>
  *
  * @author Even Solbraa
@@ -47,8 +46,8 @@ public class FieldDevelopmentNPVTest {
     double existingPipelineDiameter = 24.0 * 0.0254; // 24" pipeline
 
     // Create reservoir fluid (SRK EOS)
-    neqsim.thermo.system.SystemInterface reservoirFluid =
-        new neqsim.thermo.system.SystemSrkEos(273.15 + reservoirTemperature, reservoirPressure);
+    neqsim.thermo.system.SystemInterface reservoirFluid = new neqsim.thermo.system.SystemSrkEos(
+	273.15 + reservoirTemperature, reservoirPressure);
     reservoirFluid.addComponent("nitrogen", 0.5);
     reservoirFluid.addComponent("CO2", 0.5);
     reservoirFluid.addComponent("methane", 90.0);
@@ -126,26 +125,23 @@ public class FieldDevelopmentNPVTest {
 
     // Verify flow is within bounds
     double gasFlow = producedGasStream.getFlowRate("MSm3/day");
-    assertTrue(gasFlow >= 1.0 && gasFlow <= maxGasProduction,
-        "Gas flow should be within adjuster bounds: " + gasFlow);
+    assertTrue(gasFlow >= 1.0 && gasFlow <= maxGasProduction, "Gas flow should be within adjuster bounds: " + gasFlow);
 
     // At 150 bara reservoir with max 10 MSm3/day, the outlet pressure will be
     // much higher than 30 bara since maximum flow doesn't produce enough pressure
     // drop. The adjuster should converge at max flow accepting the higher pressure.
-    assertEquals(maxGasProduction, gasFlow, 0.5,
-        "Flow should be at max when target pressure is unreachable");
+    assertEquals(maxGasProduction, gasFlow, 0.5, "Flow should be at max when target pressure is unreachable");
     assertTrue(outletPressure > inletPressure,
-        "Outlet pressure should be above target when at max flow: " + outletPressure);
+	"Outlet pressure should be above target when at max flow: " + outletPressure);
 
     // Verify reservoir pressure is reasonable
     double resPressure = reservoirOps.getReservoirFluid().getPressure("bara");
-    assertTrue(resPressure > 100 && resPressure <= 150,
-        "Reservoir pressure should be reasonable: " + resPressure);
+    assertTrue(resPressure > 100 && resPressure <= 150, "Reservoir pressure should be reasonable: " + resPressure);
   }
 
   /**
-   * Tests transient production simulation over multiple years with adjuster. This reproduces the
-   * full NPV production profile calculation from the notebook.
+   * Tests transient production simulation over multiple years with adjuster. This reproduces the full NPV production
+   * profile calculation from the notebook.
    */
   @Test
   void testTransientProductionWithAdjuster() {
@@ -167,8 +163,8 @@ public class FieldDevelopmentNPVTest {
     double existingPipelineDiameter = 24.0 * 0.0254;
 
     // Create reservoir fluid
-    neqsim.thermo.system.SystemInterface reservoirFluid =
-        new neqsim.thermo.system.SystemSrkEos(273.15 + reservoirTemperature, reservoirPressure);
+    neqsim.thermo.system.SystemInterface reservoirFluid = new neqsim.thermo.system.SystemSrkEos(
+	273.15 + reservoirTemperature, reservoirPressure);
     reservoirFluid.addComponent("nitrogen", 0.5);
     reservoirFluid.addComponent("CO2", 0.5);
     reservoirFluid.addComponent("methane", 90.0);
@@ -244,13 +240,13 @@ public class FieldDevelopmentNPVTest {
       wellflow.setWellProductionIndex(productionIndex);
 
       if (pipeline2.getOutletStream().getPressure("bara") < inletPressure) {
-        break;
+	break;
       }
       if (t >= 1) {
-        for (int k = 0; k < 3; k++) {
-          reservoirOps.runTransient(deltaT / 10.0);
-          process.run();
-        }
+	for (int k = 0; k < 3; k++) {
+	  reservoirOps.runTransient(deltaT / 10.0);
+	  process.run();
+	}
       }
 
       double resPressure = reservoirOps.getReservoirFluid().getPressure("bara");
@@ -258,16 +254,14 @@ public class FieldDevelopmentNPVTest {
       double topsidePressure = pipeline2.getOutletStream().getPressure("bara");
 
       // Validate pressure stays reasonable (should be > low pressure limit)
-      assertTrue(resPressure > 10,
-          "Year " + t + ": Reservoir pressure should stay above low limit: " + resPressure);
+      assertTrue(resPressure > 10, "Year " + t + ": Reservoir pressure should stay above low limit: " + resPressure);
 
       // Validate flow rate is within bounds
-      assertTrue(gasProductionRate >= 0,
-          "Year " + t + ": Gas production should be non-negative: " + gasProductionRate);
+      assertTrue(gasProductionRate >= 0, "Year " + t + ": Gas production should be non-negative: " + gasProductionRate);
 
       // Validate topside pressure is positive and within physical range
       assertTrue(topsidePressure > 0 && topsidePressure < 200,
-          "Year " + t + ": Topside pressure should be in physical range: " + topsidePressure);
+	  "Year " + t + ": Topside pressure should be in physical range: " + topsidePressure);
     }
 
     // Verify some gas was produced

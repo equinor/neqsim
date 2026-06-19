@@ -22,7 +22,8 @@ public class ViscosityFunction extends LevenbergMarquardtFunction {
    * Constructor for ViscosityFunction.
    * </p>
    */
-  public ViscosityFunction() {}
+  public ViscosityFunction() {
+  }
 
   /** {@inheritDoc} */
   @Override

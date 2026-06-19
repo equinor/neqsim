@@ -11,8 +11,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEos
-    implements ComponentCPAInterface {
+public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEos implements ComponentCPAInterface {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
@@ -29,10 +28,10 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
    * Constructor for ComponentElectrolyteCPA.
    * </p>
    *
-   * @param name Name of component.
-   * @param moles Total number of moles of component.
+   * @param name         Name of component.
+   * @param moles        Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
-   * @param compIndex Index number of component in phase object component array.
+   * @param compIndex    Index number of component in phase object component array.
    */
   public ComponentElectrolyteCPA(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
@@ -47,14 +46,14 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
       // System.out.println("aSRK " + a + " aCPA " + aCPA);
       // System.out.println("bSRK " + b + " bCPA " + bCPA);
       for (int j = 0; j < getNumberOfAssociationSites(); j++) {
-        setXsite(j, 1.0);
-        setXsiteOld(j, 1.0);
-        setXsitedV(j, 0.0);
-        setXsitedT(j, 0.0);
+	setXsite(j, 1.0);
+	setXsiteOld(j, 1.0);
+	setXsitedV(j, 0.0);
+	setXsitedT(j, 0.0);
       }
       if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
-        a = aCPA;
-        b = bCPA;
+	a = aCPA;
+	b = bCPA;
       }
       setAttractiveTerm(0);
     }
@@ -69,14 +68,13 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
    * </p>
    *
    * @param number a int. Not used.
-   * @param TC Critical temperature [K]
-   * @param PC Critical pressure [bara]
-   * @param M Molar mass
-   * @param a Acentric factor
-   * @param moles Total number of moles of component.
+   * @param TC     Critical temperature [K]
+   * @param PC     Critical pressure [bara]
+   * @param M      Molar mass
+   * @param a      Acentric factor
+   * @param moles  Total number of moles of component.
    */
-  public ComponentElectrolyteCPA(int number, double TC, double PC, double M, double a,
-      double moles) {
+  public ComponentElectrolyteCPA(int number, double TC, double PC, double M, double a, double moles) {
     super(number, TC, PC, M, a, moles);
     xsite = new double[numberOfAssociationSites];
     xsitedni = new double[numberOfAssociationSites][100];
@@ -86,14 +84,14 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
     xsiteOld = new double[numberOfAssociationSites];
     if (numberOfAssociationSites != 0 && cpaon == 1) {
       for (int j = 0; j < getNumberOfAssociationSites(); j++) {
-        setXsite(j, 1.0);
-        setXsiteOld(j, 1.0);
-        setXsitedV(j, 0.0);
-        setXsitedT(j, 0.0);
+	setXsite(j, 1.0);
+	setXsiteOld(j, 1.0);
+	setXsitedV(j, 0.0);
+	setXsitedT(j, 0.0);
       }
       if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
-        a = aCPA;
-        b = bCPA;
+	a = aCPA;
+	b = bCPA;
       }
       setAttractiveTerm(0);
     }
@@ -182,8 +180,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
 
   /** {@inheritDoc} */
   @Override
-  public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     double Fsup = super.dFdN(phase, numberOfComponents, temperature, pressure);
     double Fcpa = 0.0;
     // if(phase.getPhaseType()==1) cpaon=0;
@@ -197,11 +194,10 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     if (((PhaseCPAInterface) phase).getTotalNumberOfAccociationSites() > 0) {
       return super.dFdNdT(phase, numberOfComponents, temperature, pressure)
-          + cpaon * dFCPAdNdT(phase, numberOfComponents, temperature, pressure);
+	  + cpaon * dFCPAdNdT(phase, numberOfComponents, temperature, pressure);
     } else {
       return super.dFdNdT(phase, numberOfComponents, temperature, pressure);
     }
@@ -209,14 +205,13 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     // System.out.println("dQdndV " + dFCPAdNdV(phase, numberOfComponents,
     // temperature, pressure) + " dFdndV " + super.dFdNdV(phase, numberOfComponents,
     // temperature, pressure));
     if (((PhaseCPAInterface) phase).getTotalNumberOfAccociationSites() > 0) {
       return super.dFdNdV(phase, numberOfComponents, temperature, pressure)
-          + cpaon * dFCPAdNdV(phase, numberOfComponents, temperature, pressure);
+	  + cpaon * dFCPAdNdV(phase, numberOfComponents, temperature, pressure);
     } else {
       return super.dFdNdV(phase, numberOfComponents, temperature, pressure);
     }
@@ -224,8 +219,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     // System.out.println("ij " + componentNumber + " " + j + " dQCPAdndn " +
     // dFCPAdNdN(j, phase, numberOfComponents, temperature, pressure)+ " dQsrkdndn "
     // + super.dFdNdN(j, phase, numberOfComponents, temperature, pressure));
@@ -234,7 +228,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
     // pressure)));
     if (((PhaseCPAInterface) phase).getTotalNumberOfAccociationSites() > 0) {
       return super.dFdNdN(j, phase, numberOfComponents, temperature, pressure)
-          + cpaon * dFCPAdNdN(j, phase, numberOfComponents, temperature, pressure);
+	  + cpaon * dFCPAdNdN(j, phase, numberOfComponents, temperature, pressure);
     } else {
       return super.dFdNdN(j, phase, numberOfComponents, temperature, pressure);
     }
@@ -245,23 +239,21 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
    * dFCPAdNdN.
    * </p>
    *
-   * @param j a int
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param j                  a int
+   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature a double
-   * @param pressure a double
+   * @param temperature        a double
+   * @param pressure           a double
    * @return a double
    */
-  public double dFCPAdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFCPAdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     double temp1 = 0;
     for (int i = 0; i < numberOfAssociationSites; i++) {
       temp1 += 1.0 / getXsite()[i] * getXsitedni(i, j);
     }
     double tot2 = 0.0;
     for (int i = 0; i < phase.getComponent(j).getNumberOfAssociationSites(); i++) {
-      tot2 += calc_lngi(phase)
-          * (1.0 - ((ComponentElectrolyteCPA) phase.getComponent(j)).getXsite()[i]);
+      tot2 += calc_lngi(phase) * (1.0 - ((ComponentElectrolyteCPA) phase.getComponent(j)).getXsite()[i]);
     }
     double tot1 = 1.0 / 2.0 * tot2;
 
@@ -270,8 +262,8 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
     double tot10 = 0.0;
     for (int kk = 0; kk < phase.getNumberOfComponents(); kk++) {
       for (int k = 0; k < phase.getComponent(kk).getNumberOfAssociationSites(); k++) {
-        tot10 += -phase.getComponent(kk).getNumberOfMolesInPhase()
-            * ((ComponentElectrolyteCPA) phase.getComponent(kk)).getXsitedni(k, j);
+	tot10 += -phase.getComponent(kk).getNumberOfMolesInPhase()
+	    * ((ComponentElectrolyteCPA) phase.getComponent(kk)).getXsitedni(k, j);
       }
     }
     double tot11 = tot10 / 2.0 * calc_lngi(phase);
@@ -285,14 +277,13 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
    * dFCPAdN.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature a double
-   * @param pressure a double
+   * @param temperature        a double
+   * @param pressure           a double
    * @return a double
    */
-  public double dFCPAdN(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFCPAdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     double xi = 0.0;
     for (int i = 0; i < numberOfAssociationSites; i++) {
       xi += Math.log(xsite[i]);
@@ -307,14 +298,13 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
    * dFCPAdNdV.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature a double
-   * @param pressure a double
+   * @param temperature        a double
+   * @param pressure           a double
    * @return a double
    */
-  public double dFCPAdNdV(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFCPAdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     double xi = 0.0;
     for (int i = 0; i < numberOfAssociationSites; i++) {
       xi += (1.0 / xsite[i]) * xsitedV[i];
@@ -325,8 +315,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
     for (int k = 0; k < phase.getNumberOfComponents(); k++) {
       tot2 = 0.0;
       for (int i = 0; i < phase.getComponent(k).getNumberOfAssociationSites(); i++) {
-        tot2 -=
-            calc_lngi(phase) * ((ComponentElectrolyteCPA) phase.getComponent(k)).getXsitedV()[i];
+	tot2 -= calc_lngi(phase) * ((ComponentElectrolyteCPA) phase.getComponent(k)).getXsitedV()[i];
       }
       tot1 += 1.0 / 2.0 * tot2 * phase.getComponent(k).getNumberOfMolesInPhase();
     }
@@ -336,8 +325,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
     for (int k = 0; k < phase.getNumberOfComponents(); k++) {
       tot3 = 0.0;
       for (int i = 0; i < phase.getComponent(k).getNumberOfAssociationSites(); i++) {
-        tot3 += (1.0 - ((ComponentElectrolyteCPA) phase.getComponent(k)).getXsite()[i])
-            * calc_lngidV(phase);
+	tot3 += (1.0 - ((ComponentElectrolyteCPA) phase.getComponent(k)).getXsite()[i]) * calc_lngidV(phase);
       }
       tot4 += 0.5 * phase.getComponent(k).getNumberOfMolesInPhase() * tot3;
     }
@@ -350,14 +338,13 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
    * dFCPAdNdT.
    * </p>
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature a double
-   * @param pressure a double
+   * @param temperature        a double
+   * @param pressure           a double
    * @return a double
    */
-  public double dFCPAdNdT(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFCPAdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     double xi = 0.0;
     for (int i = 0; i < numberOfAssociationSites; i++) {
       xi += 1.0 / xsite[i] * xsitedT[i];
@@ -368,7 +355,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
     for (int k = 0; k < phase.getNumberOfComponents(); k++) {
       tot2 = 0.0;
       for (int i = 0; i < phase.getComponent(k).getNumberOfAssociationSites(); i++) {
-        tot2 -= ((ComponentElectrolyteCPA) phase.getComponent(k)).getXsitedT()[i];
+	tot2 -= ((ComponentElectrolyteCPA) phase.getComponent(k)).getXsitedT()[i];
       }
       tot1 += tot2 * phase.getComponent(k).getNumberOfMolesInPhase();
     }
@@ -404,7 +391,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
    * dFCPAdXidni.
    * </p>
    *
-   * @param site a int
+   * @param site  a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
    */
@@ -420,18 +407,16 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
       fact = 1.0;
     }
     return -getNumberOfMolesInPhase() / Math.pow(xsite[sitei], 2.0) * fact
-        - getNumberOfMolesInPhase() * phase.getComponent(compj).getNumberOfMolesInPhase()
-            * ((PhaseCPAInterface) phase).getCpaMixingRule().calcDelta(sitei, sitej,
-                componentNumber, compj, phase, phase.getTemperature(), phase.getPressure(),
-                phase.getNumberOfComponents());
+	- getNumberOfMolesInPhase() * phase.getComponent(compj).getNumberOfMolesInPhase()
+	    * ((PhaseCPAInterface) phase).getCpaMixingRule().calcDelta(sitei, sitej, componentNumber, compj, phase,
+		phase.getTemperature(), phase.getPressure(), phase.getNumberOfComponents());
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFCPAdVdXi(int site, PhaseInterface phase) {
     return -1.0 / (2.0 * phase.getTotalVolume())
-        * (1.0 - phase.getTotalVolume() * ((PhaseCPAInterface) phase).getGcpav())
-        * getNumberOfMolesInPhase();
+	* (1.0 - phase.getTotalVolume() * ((PhaseCPAInterface) phase).getGcpav()) * getNumberOfMolesInPhase();
   }
 
   /** {@inheritDoc} */
@@ -465,8 +450,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
    * </p>
    *
    * <p>
-   * Uses standard Carnahan-Starling formula to match PhaseCPAInterface.calc_g() and
-   * ComponentSrkCPA.calc_lngi().
+   * Uses standard Carnahan-Starling formula to match PhaseCPAInterface.calc_g() and ComponentSrkCPA.calc_lngi().
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -474,8 +458,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
    */
   public double calc_lngi(PhaseInterface phase) {
     return 2.0 * getBi() * (10.0 * phase.getTotalVolume() - phase.getB())
-        / ((8.0 * phase.getTotalVolume() - phase.getB())
-            * (4.0 * phase.getTotalVolume() - phase.getB()));
+	/ ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB()));
   }
 
   /**
@@ -492,12 +475,10 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
    */
   public double calc_lngidV(PhaseInterface phase) {
     return 2.0 * getBi() * (10.0)
-        / ((8.0 * phase.getTotalVolume() - phase.getB())
-            * (4.0 * phase.getTotalVolume() - phase.getB()))
-        - 2.0 * getBi() * (10.0 * phase.getTotalVolume() - phase.getB())
-            * (2.0 * 32.0 * phase.getTotalVolume() - 12.0 * phase.getB())
-            / Math.pow(((8.0 * phase.getTotalVolume() - phase.getB())
-                * (4.0 * phase.getTotalVolume() - phase.getB())), 2.0);
+	/ ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB()))
+	- 2.0 * getBi() * (10.0 * phase.getTotalVolume() - phase.getB())
+	    * (2.0 * 32.0 * phase.getTotalVolume() - 12.0 * phase.getB()) / Math.pow(
+		((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB())), 2.0);
   }
 
   /**
@@ -509,7 +490,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
    * Uses standard Carnahan-Starling formula to match ComponentSrkCPA.calc_lngij().
    * </p>
    *
-   * @param j a int
+   * @param j     a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
    */
@@ -621,7 +602,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
    * Getter for the field <code>xsitedni</code>.
    * </p>
    *
-   * @param xNumb a int
+   * @param xNumb     a int
    * @param compNumbi a int
    * @return a double
    */

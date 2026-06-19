@@ -45,9 +45,9 @@ class ProcessModelSimulationEvaluatorTest {
     /**
      * Creates a test fixture.
      *
-     * @param feed feed stream
+     * @param feed      feed stream
      * @param separator separator
-     * @param model process model
+     * @param model     process model
      */
     private ModelFixture(Stream feed, Separator separator, ProcessModel model) {
       this.feed = feed;
@@ -107,25 +107,24 @@ class ProcessModelSimulationEvaluatorTest {
       /** {@inheritDoc} */
       @Override
       public double applyAsDouble(ProcessModel model) {
-        return model.getVariableValue("separation::separator.gasOutStream.flowRate", "kg/hr");
+	return model.getVariableValue("separation::separator.gasOutStream.flowRate", "kg/hr");
       }
     }, ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
     evaluator.addConstraintUpperBound("feedLimit", new ToDoubleFunction<ProcessModel>() {
       /** {@inheritDoc} */
       @Override
       public double applyAsDouble(ProcessModel model) {
-        return model.getVariableValue("wells::feed.flowRate", "kg/hr");
+	return model.getVariableValue("wells::feed.flowRate", "kg/hr");
       }
     }, 15000.0);
 
-    ProcessModelSimulationEvaluator.EvaluationResult result =
-        evaluator.evaluate(new double[] {12000.0});
+    ProcessModelSimulationEvaluator.EvaluationResult result = evaluator.evaluate(new double[] { 12000.0 });
 
     assertTrue(result.isSimulationConverged(), "model should converge");
     assertTrue(result.isFeasible(), "feed should be below the upper bound");
     assertEquals(12000.0, fixture.model.getVariableValue("wells::feed.flowRate", "kg/hr"), 1.0e-6);
     assertEquals(-result.getObjectivesRaw()[0], result.getObjectives()[0], 1.0e-6,
-        "maximization objective should be sign-adjusted for minimizers");
+	"maximization objective should be sign-adjusted for minimizers");
     assertEquals(3000.0, result.getConstraintMargins()[0], 1.0e-6);
   }
 
@@ -135,32 +134,29 @@ class ProcessModelSimulationEvaluatorTest {
   @Test
   void capacityConstraintsIdentifyActiveModelBottleneck() {
     final ModelFixture fixture = createModelFixture();
-    CapacityConstraint installedCapacity =
-        new CapacityConstraint("installedGasCapacity", "kg/hr", ConstraintType.HARD)
-            .setDesignValue(5000.0).setMaxValue(12000.0).setSeverity(ConstraintSeverity.HARD)
-            .setValueSupplier(new DoubleSupplier() {
-              /** {@inheritDoc} */
-              @Override
-              public double getAsDouble() {
-                return fixture.feed.getFlowRate("kg/hr");
-              }
-            });
+    CapacityConstraint installedCapacity = new CapacityConstraint("installedGasCapacity", "kg/hr", ConstraintType.HARD)
+	.setDesignValue(5000.0).setMaxValue(12000.0).setSeverity(ConstraintSeverity.HARD)
+	.setValueSupplier(new DoubleSupplier() {
+	  /** {@inheritDoc} */
+	  @Override
+	  public double getAsDouble() {
+	    return fixture.feed.getFlowRate("kg/hr");
+	  }
+	});
     fixture.separator.clearCapacityConstraints();
     fixture.separator.addCapacityConstraint(installedCapacity);
 
     ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(fixture.model);
     evaluator.addParameter("wells::feed.flowRate", 5000.0, 20000.0, "kg/hr")
-        .addObjective("gas", new ToDoubleFunction<ProcessModel>() {
-          /** {@inheritDoc} */
-          @Override
-          public double applyAsDouble(ProcessModel model) {
-            return model.getVariableValue("separation::separator.gasOutStream.flowRate", "kg/hr");
-          }
-        }, ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE)
-        .addEquipmentCapacityConstraints();
+	.addObjective("gas", new ToDoubleFunction<ProcessModel>() {
+	  /** {@inheritDoc} */
+	  @Override
+	  public double applyAsDouble(ProcessModel model) {
+	    return model.getVariableValue("separation::separator.gasOutStream.flowRate", "kg/hr");
+	  }
+	}, ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE).addEquipmentCapacityConstraints();
 
-    ProcessModelSimulationEvaluator.EvaluationResult result =
-        evaluator.evaluate(new double[] {13000.0});
+    ProcessModelSimulationEvaluator.EvaluationResult result = evaluator.evaluate(new double[] { 13000.0 });
 
     assertFalse(result.isFeasible(), "installed capacity should be exceeded");
     assertTrue(evaluator.getConstraintCount() > 0, "capacity constraints should be registered");

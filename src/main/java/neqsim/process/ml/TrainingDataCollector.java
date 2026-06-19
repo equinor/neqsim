@@ -14,8 +14,7 @@ import java.util.Map;
  * Training data collector for surrogate model development.
  *
  * <p>
- * Collects input-output pairs from NeqSim simulations for training neural network surrogates.
- * Supports:
+ * Collects input-output pairs from NeqSim simulations for training neural network surrogates. Supports:
  * <ul>
  * <li>CSV export for scikit-learn, PyTorch, TensorFlow</li>
  * <li>JSON export for flexible data handling</li>
@@ -124,14 +123,13 @@ public class TrainingDataCollector implements Serializable {
   /**
    * Define an input feature.
    *
-   * @param name feature name
-   * @param unit physical unit
+   * @param name     feature name
+   * @param unit     physical unit
    * @param minBound expected minimum value
    * @param maxBound expected maximum value
    * @return this collector for chaining
    */
-  public TrainingDataCollector defineInput(String name, String unit, double minBound,
-      double maxBound) {
+  public TrainingDataCollector defineInput(String name, String unit, double minBound, double maxBound) {
     inputDefs.put(name, new FeatureDefinition(name, unit, minBound, maxBound));
     inputStats.put(name, new RunningStats());
     return this;
@@ -140,14 +138,13 @@ public class TrainingDataCollector implements Serializable {
   /**
    * Define an output feature.
    *
-   * @param name feature name
-   * @param unit physical unit
+   * @param name     feature name
+   * @param unit     physical unit
    * @param minBound expected minimum value
    * @param maxBound expected maximum value
    * @return this collector for chaining
    */
-  public TrainingDataCollector defineOutput(String name, String unit, double minBound,
-      double maxBound) {
+  public TrainingDataCollector defineOutput(String name, String unit, double minBound, double maxBound) {
     outputDefs.put(name, new FeatureDefinition(name, unit, minBound, maxBound));
     outputStats.put(name, new RunningStats());
     return this;
@@ -163,7 +160,7 @@ public class TrainingDataCollector implements Serializable {
   /**
    * Record an input value for current sample.
    *
-   * @param name input feature name
+   * @param name  input feature name
    * @param value value to record
    */
   public void recordInput(String name, double value) {
@@ -177,7 +174,7 @@ public class TrainingDataCollector implements Serializable {
   /**
    * Record an output value for current sample.
    *
-   * @param name output feature name
+   * @param name  output feature name
    * @param value value to record
    */
   public void recordOutput(String name, double value) {
@@ -196,7 +193,7 @@ public class TrainingDataCollector implements Serializable {
   public void recordStateAsInputs(StateVector state) {
     for (String name : state.getFeatureNames()) {
       if (inputDefs.containsKey(name)) {
-        recordInput(name, state.getValue(name));
+	recordInput(name, state.getValue(name));
       }
     }
   }
@@ -209,7 +206,7 @@ public class TrainingDataCollector implements Serializable {
   public void recordStateAsOutputs(StateVector state) {
     for (String name : state.getFeatureNames()) {
       if (outputDefs.containsKey(name)) {
-        recordOutput(name, state.getValue(name));
+	recordOutput(name, state.getValue(name));
       }
     }
   }
@@ -266,7 +263,7 @@ public class TrainingDataCollector implements Serializable {
     StringBuilder header = new StringBuilder();
     for (String name : inputDefs.keySet()) {
       if (header.length() > 0) {
-        header.append(",");
+	header.append(",");
       }
       header.append("input_").append(name);
     }
@@ -280,16 +277,16 @@ public class TrainingDataCollector implements Serializable {
     for (Map<String, Double> sample : samples) {
       StringBuilder row = new StringBuilder();
       for (String name : inputDefs.keySet()) {
-        if (row.length() > 0) {
-          row.append(",");
-        }
-        Double val = sample.get("input_" + name);
-        row.append(val != null ? val : "");
+	if (row.length() > 0) {
+	  row.append(",");
+	}
+	Double val = sample.get("input_" + name);
+	row.append(val != null ? val : "");
       }
       for (String name : outputDefs.keySet()) {
-        row.append(",");
-        Double val = sample.get("output_" + name);
-        row.append(val != null ? val : "");
+	row.append(",");
+	Double val = sample.get("output_" + name);
+	row.append(val != null ? val : "");
       }
       sw.write(row.toString());
       sw.write("\n");
@@ -373,16 +370,16 @@ public class TrainingDataCollector implements Serializable {
     for (String name : inputDefs.keySet()) {
       FeatureDefinition def = inputDefs.get(name);
       RunningStats stats = inputStats.get(name);
-      sb.append(String.format("  %s [%s]: mean=%.4f, std=%.4f, range=[%.4f, %.4f]\n", name,
-          def.unit, stats.mean, stats.getStd(), stats.min, stats.max));
+      sb.append(String.format("  %s [%s]: mean=%.4f, std=%.4f, range=[%.4f, %.4f]\n", name, def.unit, stats.mean,
+	  stats.getStd(), stats.min, stats.max));
     }
 
     sb.append("\nOutputs:\n");
     for (String name : outputDefs.keySet()) {
       FeatureDefinition def = outputDefs.get(name);
       RunningStats stats = outputStats.get(name);
-      sb.append(String.format("  %s [%s]: mean=%.4f, std=%.4f, range=[%.4f, %.4f]\n", name,
-          def.unit, stats.mean, stats.getStd(), stats.min, stats.max));
+      sb.append(String.format("  %s [%s]: mean=%.4f, std=%.4f, range=[%.4f, %.4f]\n", name, def.unit, stats.mean,
+	  stats.getStd(), stats.min, stats.max));
     }
 
     return sb.toString();
@@ -390,7 +387,7 @@ public class TrainingDataCollector implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("TrainingDataCollector[%s, %d inputs, %d outputs, %d samples]", name,
-        inputDefs.size(), outputDefs.size(), samples.size());
+    return String.format("TrainingDataCollector[%s, %d inputs, %d outputs, %d samples]", name, inputDefs.size(),
+	outputDefs.size(), samples.size());
   }
 }

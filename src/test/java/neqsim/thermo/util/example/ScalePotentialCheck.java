@@ -26,7 +26,7 @@ public class ScalePotentialCheck {
   private static final Logger logger = LogManager.getLogger(ScalePotentialCheck.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.

@@ -20,8 +20,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Tests for equipment-based mechanical design classes: Flare, Electrolyzer, Membrane, Reactor, and
- * PowerGeneration.
+ * Tests for equipment-based mechanical design classes: Flare, Electrolyzer, Membrane, Reactor, and PowerGeneration.
  *
  * @author esol
  */
@@ -119,10 +118,8 @@ class EquipmentMechanicalDesignTest {
       FlareMechanicalDesign design2 = new FlareMechanicalDesign(flare2);
       design2.calcDesign();
 
-      assertTrue(design2.getStackHeight() >= design1.getStackHeight(),
-          "Larger flow should require taller stack");
-      assertTrue(design2.getTipDiameter() >= design1.getTipDiameter(),
-          "Larger flow should need bigger or equal tip");
+      assertTrue(design2.getStackHeight() >= design1.getStackHeight(), "Larger flow should require taller stack");
+      assertTrue(design2.getTipDiameter() >= design1.getTipDiameter(), "Larger flow should need bigger or equal tip");
     }
 
     @Test
@@ -154,8 +151,7 @@ class EquipmentMechanicalDesignTest {
       FlareMechanicalDesign design = new FlareMechanicalDesign(flare);
       design.calcDesign();
 
-      assertTrue(design.getRadiationDistanceAtGrade() >= 0,
-          "Radiation distance should be non-negative");
+      assertTrue(design.getRadiationDistanceAtGrade() >= 0, "Radiation distance should be non-negative");
     }
   }
 
@@ -213,7 +209,7 @@ class EquipmentMechanicalDesignTest {
 
       // Alkaline is heavier per kW
       assertTrue(alk.getWeightTotal() > pem.getWeightTotal(),
-          "Alkaline should be heavier than PEM for same production");
+	  "Alkaline should be heavier than PEM for same production");
     }
 
     @Test
@@ -232,8 +228,8 @@ class EquipmentMechanicalDesignTest {
       double specificEnergy = design.getSpecificEnergyKWhPerKg();
       // Typical PEM: 50-80 kWh/kgH2 (including overvoltage)
       if (specificEnergy > 0) {
-        assertTrue(specificEnergy > 30, "Specific energy should be > 30 kWh/kgH2");
-        assertTrue(specificEnergy < 200, "Specific energy should be < 200 kWh/kgH2");
+	assertTrue(specificEnergy > 30, "Specific energy should be > 30 kWh/kgH2");
+	assertTrue(specificEnergy < 200, "Specific energy should be < 200 kWh/kgH2");
       }
     }
 
@@ -252,8 +248,8 @@ class EquipmentMechanicalDesignTest {
 
       double efficiency = design.getStackEfficiency();
       if (efficiency > 0) {
-        assertTrue(efficiency > 0.1, "Efficiency should be > 10%");
-        assertTrue(efficiency <= 1.0, "Efficiency should be <= 100%");
+	assertTrue(efficiency > 0.1, "Efficiency should be > 10%");
+	assertTrue(efficiency <= 1.0, "Efficiency should be <= 100%");
       }
     }
   }
@@ -331,8 +327,8 @@ class EquipmentMechanicalDesignTest {
       feed.setFlowRate(10000.0, "kg/hr");
       feed.run();
 
-      neqsim.process.equipment.reactor.GibbsReactor reactor =
-          new neqsim.process.equipment.reactor.GibbsReactor("Test Reactor", feed);
+      neqsim.process.equipment.reactor.GibbsReactor reactor = new neqsim.process.equipment.reactor.GibbsReactor(
+	  "Test Reactor", feed);
       reactor.run();
 
       ReactorMechanicalDesign design = new ReactorMechanicalDesign(reactor);
@@ -354,8 +350,8 @@ class EquipmentMechanicalDesignTest {
       feed1.setFlowRate(5000.0, "kg/hr");
       feed1.run();
 
-      neqsim.process.equipment.reactor.GibbsReactor reactor1 =
-          new neqsim.process.equipment.reactor.GibbsReactor("Reactor LP", feed1);
+      neqsim.process.equipment.reactor.GibbsReactor reactor1 = new neqsim.process.equipment.reactor.GibbsReactor(
+	  "Reactor LP", feed1);
       reactor1.run();
 
       ReactorMechanicalDesign designLP = new ReactorMechanicalDesign(reactor1);
@@ -368,8 +364,8 @@ class EquipmentMechanicalDesignTest {
       feed2.setFlowRate(5000.0, "kg/hr");
       feed2.run();
 
-      neqsim.process.equipment.reactor.GibbsReactor reactor2 =
-          new neqsim.process.equipment.reactor.GibbsReactor("Reactor HP", feed2);
+      neqsim.process.equipment.reactor.GibbsReactor reactor2 = new neqsim.process.equipment.reactor.GibbsReactor(
+	  "Reactor HP", feed2);
       reactor2.run();
 
       ReactorMechanicalDesign designHP = new ReactorMechanicalDesign(reactor2);
@@ -378,7 +374,7 @@ class EquipmentMechanicalDesignTest {
       designHP.calcDesign();
 
       assertTrue(designHP.getShellThickness() > designLP.getShellThickness(),
-          "Higher pressure should require thicker shell");
+	  "Higher pressure should require thicker shell");
     }
 
     @Test
@@ -389,8 +385,8 @@ class EquipmentMechanicalDesignTest {
       feed.setFlowRate(5000.0, "kg/hr");
       feed.run();
 
-      neqsim.process.equipment.reactor.GibbsReactor reactor =
-          new neqsim.process.equipment.reactor.GibbsReactor("Reactor", feed);
+      neqsim.process.equipment.reactor.GibbsReactor reactor = new neqsim.process.equipment.reactor.GibbsReactor(
+	  "Reactor", feed);
       reactor.run();
 
       ReactorMechanicalDesign design = new ReactorMechanicalDesign(reactor);
@@ -406,8 +402,8 @@ class EquipmentMechanicalDesignTest {
       feed.setFlowRate(5000.0, "kg/hr");
       feed.run();
 
-      neqsim.process.equipment.reactor.GibbsReactor reactor =
-          new neqsim.process.equipment.reactor.GibbsReactor("Reactor", feed);
+      neqsim.process.equipment.reactor.GibbsReactor reactor = new neqsim.process.equipment.reactor.GibbsReactor(
+	  "Reactor", feed);
       reactor.run();
 
       ReactorMechanicalDesign design = new ReactorMechanicalDesign(reactor);
@@ -415,8 +411,7 @@ class EquipmentMechanicalDesignTest {
       design.setMaxOperationTemperature(273.15 + 300.0);
       design.calcDesign();
 
-      assertTrue(design.getDesignPressureBara() > 50.0,
-          "Design pressure should exceed max operating pressure");
+      assertTrue(design.getDesignPressureBara() > 50.0, "Design pressure should exceed max operating pressure");
     }
   }
 
@@ -464,8 +459,8 @@ class EquipmentMechanicalDesignTest {
 
       double efficiency = design.getThermalEfficiency();
       if (efficiency > 0) {
-        assertTrue(efficiency > 0.1, "Efficiency should be > 10%");
-        assertTrue(efficiency < 0.6, "Efficiency should be < 60%");
+	assertTrue(efficiency > 0.1, "Efficiency should be > 10%");
+	assertTrue(efficiency < 0.6, "Efficiency should be < 60%");
       }
     }
 
@@ -502,8 +497,7 @@ class EquipmentMechanicalDesignTest {
       PowerGenerationMechanicalDesign design = new PowerGenerationMechanicalDesign(turbine);
       design.calcDesign();
 
-      assertTrue(design.getTurbinePackageWeightTonnes() > 0,
-          "Turbine package weight should be positive");
+      assertTrue(design.getTurbinePackageWeightTonnes() > 0, "Turbine package weight should be positive");
       assertTrue(design.getTotalSystemWeightTonnes() > 0, "Total system weight should be positive");
     }
   }

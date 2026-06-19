@@ -90,8 +90,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * List of unit operations in the process system.
    */
   private List<ProcessEquipmentInterface> unitOperations = new ArrayList<>();
-  List<MeasurementDeviceInterface> measurementDevices =
-      new ArrayList<MeasurementDeviceInterface>(0);
+  List<MeasurementDeviceInterface> measurementDevices = new ArrayList<MeasurementDeviceInterface>(0);
   List<ControllerDeviceInterface> controllerDevices = new ArrayList<ControllerDeviceInterface>(0);
   private List<ProcessConnection> connections = new ArrayList<ProcessConnection>(0);
   private ProcessAlarmManager alarmManager = new ProcessAlarmManager();
@@ -142,23 +141,22 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * Pluggable integration strategy advertised to equipment during {@code runTransient}. Defaults to
-   * {@link ExplicitEulerIntegrator} so equipment that opt into the new {@link IntegratorStrategy}
-   * API get backwards-compatible explicit-Euler behaviour. Equipment that still embed their own
-   * hand-rolled integration are unaffected — they ignore this field. See
-   * {@code neqsim-dynamic-simulation} skill for the migration pattern.
+   * {@link ExplicitEulerIntegrator} so equipment that opt into the new {@link IntegratorStrategy} API get
+   * backwards-compatible explicit-Euler behaviour. Equipment that still embed their own hand-rolled integration are
+   * unaffected — they ignore this field. See {@code neqsim-dynamic-simulation} skill for the migration pattern.
    */
   private IntegratorStrategy integratorStrategy = new ExplicitEulerIntegrator();
 
   /**
-   * Optional event scheduler. When set, all events with {@code time <= currentTime} are fired at
-   * the top of every {@link #runTransient(double, UUID)} step, before equipment is run. This is the
-   * integration point for ESD/IOA/setpoint-change events in dynamic studies.
+   * Optional event scheduler. When set, all events with {@code time <= currentTime} are fired at the top of every
+   * {@link #runTransient(double, UUID)} step, before equipment is run. This is the integration point for
+   * ESD/IOA/setpoint-change events in dynamic studies.
    *
    * <p>
-   * Declared {@code transient} because scheduled event payloads ({@link Runnable}) are typically
-   * not serializable (lambdas, anonymous inner classes capturing non-serializable references). A
-   * deserialized {@code ProcessSystem} starts with no scheduler attached; the caller must
-   * re-install one if event-driven behaviour is needed after restore.
+   * Declared {@code transient} because scheduled event payloads ({@link Runnable}) are typically not serializable
+   * (lambdas, anonymous inner classes capturing non-serializable references). A deserialized {@code ProcessSystem}
+   * starts with no scheduler attached; the caller must re-install one if event-driven behaviour is needed after
+   * restore.
    * </p>
    */
   private transient EventScheduler eventScheduler = null;
@@ -187,21 +185,19 @@ public class ProcessSystem extends SimulationBaseClass {
   /** Cached result of hasMultiInputEquipment() - null means not yet computed. */
   private transient Boolean cachedHasMultiInput = null;
   /**
-   * Minimum number of units required for dataflow scheduling (vs level-based parallel) in
-   * {@link #runOptimized(UUID)}. Below this threshold the
-   * {@link java.util.concurrent.CompletableFuture} overhead outweighs the straggler-elimination
-   * benefit.
+   * Minimum number of units required for dataflow scheduling (vs level-based parallel) in {@link #runOptimized(UUID)}.
+   * Below this threshold the {@link java.util.concurrent.CompletableFuture} overhead outweighs the
+   * straggler-elimination benefit.
    */
   private static final int DATAFLOW_UNIT_THRESHOLD = 8;
   /** Whether to use graph-based execution order instead of insertion order. */
   private boolean useGraphBasedExecution = false;
   /**
-   * Whether to use optimized execution (parallel/hybrid) by default when run() is called. When
-   * true, run() delegates to runOptimized() which automatically selects the best strategy. When
-   * false, run() uses sequential execution in insertion order (legacy behavior). Default is true
-   * for optimal performance - runOptimized() automatically falls back to sequential execution for
-   * processes with multi-input equipment (mixers, heat exchangers, etc.) to preserve correct mass
-   * balance.
+   * Whether to use optimized execution (parallel/hybrid) by default when run() is called. When true, run() delegates to
+   * runOptimized() which automatically selects the best strategy. When false, run() uses sequential execution in
+   * insertion order (legacy behavior). Default is true for optimal performance - runOptimized() automatically falls
+   * back to sequential execution for processes with multi-input equipment (mixers, heat exchangers, etc.) to preserve
+   * correct mass balance.
    */
   private boolean useOptimizedExecution = true;
 
@@ -210,8 +206,7 @@ public class ProcessSystem extends SimulationBaseClass {
     private final List<List<ProcessNode>> tasks;
     private final List<java.util.Set<Integer>> taskPredecessors;
 
-    private DataflowExecutionPlan(List<List<ProcessNode>> tasks,
-        List<java.util.Set<Integer>> taskPredecessors) {
+    private DataflowExecutionPlan(List<List<ProcessNode>> tasks, List<java.util.Set<Integer>> taskPredecessors) {
       this.tasks = tasks;
       this.taskPredecessors = taskPredecessors;
     }
@@ -223,52 +218,51 @@ public class ProcessSystem extends SimulationBaseClass {
     private final List<ProcessEquipmentInterface> iterativeSection;
 
     private HybridExecutionPlan(List<List<List<ProcessNode>>> feedForwardLevelGroups,
-        List<ProcessEquipmentInterface> iterativeSection) {
+	List<ProcessEquipmentInterface> iterativeSection) {
       this.feedForwardLevelGroups = feedForwardLevelGroups;
       this.iterativeSection = iterativeSection;
     }
   }
 
   /**
-   * Transient listener for simulation progress callbacks. Used for real-time visualization in
-   * Jupyter notebooks and digital twin dashboards. Marked transient to avoid serialization issues.
+   * Transient listener for simulation progress callbacks. Used for real-time visualization in Jupyter notebooks and
+   * digital twin dashboards. Marked transient to avoid serialization issues.
    */
   private transient SimulationProgressListener progressListener = null;
 
   /**
-   * When true, lifecycle events are published to the ProcessEventBus singleton during simulation.
-   * Default is false for zero overhead when not needed. Enable via setPublishEvents(true).
+   * When true, lifecycle events are published to the ProcessEventBus singleton during simulation. Default is false for
+   * zero overhead when not needed. Enable via setPublishEvents(true).
    */
   private boolean publishEvents = false;
 
   /**
-   * When true, validateSetup() is auto-invoked on each equipment unit before the first iteration.
-   * Validation warnings are logged but do not abort execution. Enable via setAutoValidate(true).
+   * When true, validateSetup() is auto-invoked on each equipment unit before the first iteration. Validation warnings
+   * are logged but do not abort execution. Enable via setAutoValidate(true).
    */
   private boolean autoValidate = false;
 
   /**
-   * When true, the iterative TPflash inside every fluid evaluation re-uses the previously converged
-   * K-values as a warm start instead of seeding from Wilson on every call. This is applied via
-   * {@code ThermodynamicModelSettings.setUseWarmStartKValues(true)} for the duration of
-   * {@link #run(java.util.UUID)} and restored afterwards (try/finally), so flowsheet-level usage
-   * does not leak into other code on the same thread. Default is {@code false} (historical
-   * behaviour) — recycle-heavy flowsheets are sensitive to flash trajectory and warm-start can
-   * shift the converged fixed point. Opt in via {@link #setUseFlashWarmStart(boolean)} for 10–20%
+   * When true, the iterative TPflash inside every fluid evaluation re-uses the previously converged K-values as a warm
+   * start instead of seeding from Wilson on every call. This is applied via
+   * {@code ThermodynamicModelSettings.setUseWarmStartKValues(true)} for the duration of {@link #run(java.util.UUID)}
+   * and restored afterwards (try/finally), so flowsheet-level usage does not leak into other code on the same thread.
+   * Default is {@code false} (historical behaviour) — recycle-heavy flowsheets are sensitive to flash trajectory and
+   * warm-start can shift the converged fixed point. Opt in via {@link #setUseFlashWarmStart(boolean)} for 10–20%
    * wall-time reduction on flowsheets that re-flash near-identical conditions.
    */
   private boolean useFlashWarmStart = false;
 
   /**
    * When true, per-unit execution timing is recorded during simulation. After run() completes, call
-   * {@link #getExecutionProfile()} to retrieve a map from equipment name to cumulative execution
-   * time in milliseconds. Enable via {@link #setProfilingEnabled(boolean)}.
+   * {@link #getExecutionProfile()} to retrieve a map from equipment name to cumulative execution time in milliseconds.
+   * Enable via {@link #setProfilingEnabled(boolean)}.
    */
   private transient boolean profilingEnabled = false;
 
   /**
-   * Stores cumulative execution time per equipment unit in nanoseconds. Keyed by equipment name.
-   * Populated during simulation when {@link #profilingEnabled} is true.
+   * Stores cumulative execution time per equipment unit in nanoseconds. Keyed by equipment name. Populated during
+   * simulation when {@link #profilingEnabled} is true.
    */
   private transient Map<String, long[]> executionTimingNanos = null;
 
@@ -278,15 +272,14 @@ public class ProcessSystem extends SimulationBaseClass {
   private transient long lastRunElapsedNanos = 0;
 
   /**
-   * Structured per-unit outcome of the most recent {@link #run(UUID)} call. Populated during the
-   * run and queryable via {@link #getRunStatus()} and {@link #getRunStatusJson()}.
+   * Structured per-unit outcome of the most recent {@link #run(UUID)} call. Populated during the run and queryable via
+   * {@link #getRunStatus()} and {@link #getRunStatusJson()}.
    */
   private transient RunStatus lastRunStatus = new RunStatus();
 
   /**
-   * Interface for monitoring simulation progress during execution. Implementations receive
-   * callbacks after each unit operation completes, enabling real-time visualization, progress
-   * tracking, and early termination detection.
+   * Interface for monitoring simulation progress during execution. Implementations receive callbacks after each unit
+   * operation completes, enabling real-time visualization, progress tracking, and early termination detection.
    *
    * <p>
    * This interface is designed for integration with:
@@ -304,21 +297,20 @@ public class ProcessSystem extends SimulationBaseClass {
     /**
      * Called after each unit operation completes successfully.
      *
-     * @param unit the completed unit operation
-     * @param unitIndex zero-based index of current unit in execution order
-     * @param totalUnits total number of unit operations in the system
+     * @param unit            the completed unit operation
+     * @param unitIndex       zero-based index of current unit in execution order
+     * @param totalUnits      total number of unit operations in the system
      * @param iterationNumber current iteration number (for recycle loops, starts at 1)
      */
-    void onUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits,
-        int iterationNumber);
+    void onUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits, int iterationNumber);
 
     /**
-     * Called when an iteration of the process system completes. For systems with recycles, this is
-     * called after each complete pass through all units.
+     * Called when an iteration of the process system completes. For systems with recycles, this is called after each
+     * complete pass through all units.
      *
      * @param iterationNumber the iteration that just completed (starts at 1)
-     * @param converged true if all recycles have converged
-     * @param recycleError maximum relative error across all recycle streams (0.0 if no recycles)
+     * @param converged       true if all recycles have converged
+     * @param recycleError    maximum relative error across all recycle streams (0.0 if no recycles)
      */
     default void onIterationComplete(int iterationNumber, boolean converged, double recycleError) {
       // Default implementation does nothing
@@ -327,7 +319,7 @@ public class ProcessSystem extends SimulationBaseClass {
     /**
      * Called if a unit operation encounters an error during execution.
      *
-     * @param unit the unit operation that failed
+     * @param unit      the unit operation that failed
      * @param exception the exception that was thrown
      * @return true to continue with next unit, false to abort simulation
      */
@@ -336,22 +328,21 @@ public class ProcessSystem extends SimulationBaseClass {
     }
 
     /**
-     * Called before each unit operation is executed. Useful for state inspection, cache warming, or
-     * injecting external data before a unit runs.
+     * Called before each unit operation is executed. Useful for state inspection, cache warming, or injecting external
+     * data before a unit runs.
      *
-     * @param unit the unit about to be executed
-     * @param unitIndex zero-based index of the unit in execution order
-     * @param totalUnits total number of unit operations
+     * @param unit            the unit about to be executed
+     * @param unitIndex       zero-based index of the unit in execution order
+     * @param totalUnits      total number of unit operations
      * @param iterationNumber current iteration number (starts at 1)
      */
-    default void onBeforeUnit(ProcessEquipmentInterface unit, int unitIndex, int totalUnits,
-        int iterationNumber) {
+    default void onBeforeUnit(ProcessEquipmentInterface unit, int unitIndex, int totalUnits, int iterationNumber) {
       // Default implementation does nothing
     }
 
     /**
-     * Called at the start of each iteration before any units are executed. Useful for resetting
-     * state, applying external data, or logging iteration starts.
+     * Called at the start of each iteration before any units are executed. Useful for resetting state, applying
+     * external data, or logging iteration starts.
      *
      * @param iterationNumber the iteration about to start (starts at 1)
      */
@@ -372,7 +363,7 @@ public class ProcessSystem extends SimulationBaseClass {
      * Called once when the simulation ends, after all iterations complete.
      *
      * @param totalIterations total number of iterations performed
-     * @param converged true if the simulation converged
+     * @param converged       true if the simulation converged
      */
     default void onSimulationComplete(int totalIterations, boolean converged) {
       // Default implementation does nothing
@@ -414,7 +405,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * Add to specific position.
    * </p>
    *
-   * @param position 0-based position
+   * @param position  0-based position
    * @param operation a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
   public synchronized void add(int position, ProcessEquipmentInterface operation) {
@@ -422,16 +413,16 @@ public class ProcessSystem extends SimulationBaseClass {
 
     for (ProcessEquipmentInterface unit : units) {
       if (unit == operation) {
-        logger.info("Equipment " + operation.getName() + " is already included in ProcessSystem");
-        return;
+	logger.info("Equipment " + operation.getName() + " is already included in ProcessSystem");
+	return;
       }
     }
 
     if (getAllUnitNames().contains(operation.getName())) {
       ProcessEquipmentInterface existing = this.getUnit(operation.getName());
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("ProcessSystem",
-          "add", "operation", "- Process equipment of type " + existing.getClass().getSimpleName()
-              + " named " + operation.getName() + " already included in ProcessSystem"));
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("ProcessSystem", "add", "operation",
+	  "- Process equipment of type " + existing.getClass().getSimpleName() + " named " + operation.getName()
+	      + " already included in ProcessSystem"));
     }
 
     getUnitOperations().add(position, operation);
@@ -446,8 +437,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * Add measurementdevice.
    * </p>
    *
-   * @param measurementDevice a {@link neqsim.process.measurementdevice.MeasurementDeviceInterface}
-   *        object
+   * @param measurementDevice a {@link neqsim.process.measurementdevice.MeasurementDeviceInterface} object
    */
   public synchronized void add(MeasurementDeviceInterface measurementDevice) {
     measurementDevices.add(measurementDevice);
@@ -455,25 +445,24 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Add a standalone controller device to the process system. Controllers added here participate in
-   * the explicit controller scan during {@code runTransient}.
+   * Add a standalone controller device to the process system. Controllers added here participate in the explicit
+   * controller scan during {@code runTransient}.
    *
-   * @param controllerDevice a {@link neqsim.process.controllerdevice.ControllerDeviceInterface}
-   *        object
+   * @param controllerDevice a {@link neqsim.process.controllerdevice.ControllerDeviceInterface} object
    */
   public synchronized void add(ControllerDeviceInterface controllerDevice) {
     controllerDevices.add(controllerDevice);
   }
 
   /**
-   * Returns an unmodifiable list of all process elements — equipment, measurement devices, and
-   * controllers — registered in this system.
+   * Returns an unmodifiable list of all process elements — equipment, measurement devices, and controllers — registered
+   * in this system.
    *
    * @return list of all {@link neqsim.process.ProcessElementInterface} objects
    */
   public List<ProcessElementInterface> getAllElements() {
     List<ProcessElementInterface> all = new ArrayList<ProcessElementInterface>(
-        unitOperations.size() + measurementDevices.size() + controllerDevices.size());
+	unitOperations.size() + measurementDevices.size() + controllerDevices.size());
     all.addAll(unitOperations);
     all.addAll(measurementDevices);
     all.addAll(controllerDevices);
@@ -499,20 +488,19 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Declares an explicit connection between two equipment ports. This is a metadata record; it does
-   * not create or wire stream objects. Interchange formats like DEXPI and topology analyses can
-   * query the connection list via {@link #getConnections()}.
+   * Declares an explicit connection between two equipment ports. This is a metadata record; it does not create or wire
+   * stream objects. Interchange formats like DEXPI and topology analyses can query the connection list via
+   * {@link #getConnections()}.
    *
    * @param sourceEquipment name of upstream equipment
-   * @param sourcePort port name on source (e.g. "gasOut")
+   * @param sourcePort      port name on source (e.g. "gasOut")
    * @param targetEquipment name of downstream equipment
-   * @param targetPort port name on target (e.g. "inlet")
-   * @param type connection type
+   * @param targetPort      port name on target (e.g. "inlet")
+   * @param type            connection type
    */
-  public void connect(String sourceEquipment, String sourcePort, String targetEquipment,
-      String targetPort, ProcessConnection.ConnectionType type) {
-    connections
-        .add(new ProcessConnection(sourceEquipment, sourcePort, targetEquipment, targetPort, type));
+  public void connect(String sourceEquipment, String sourcePort, String targetEquipment, String targetPort,
+      ProcessConnection.ConnectionType type) {
+    connections.add(new ProcessConnection(sourceEquipment, sourcePort, targetEquipment, targetPort, type));
   }
 
   /**
@@ -539,8 +527,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * Add multiple process equipment to end.
    * </p>
    *
-   * @param operations an array of {@link neqsim.process.equipment.ProcessEquipmentInterface}
-   *        objects
+   * @param operations an array of {@link neqsim.process.equipment.ProcessEquipmentInterface} objects
    */
   public void add(ProcessEquipmentInterface[] operations) {
     getUnitOperations().addAll(Arrays.asList(operations));
@@ -552,18 +539,18 @@ public class ProcessSystem extends SimulationBaseClass {
    * Replace a unitoperation.
    * </p>
    *
-   * @param name Name of the object to replace
+   * @param name      Name of the object to replace
    * @param newObject the object to replace it with
    * @return a {@link java.lang.Boolean} object
    */
   public boolean replaceUnit(String name, ProcessEquipmentInterface newObject) {
     try {
       for (int i = 0; i < unitOperations.size(); i++) {
-        if (unitOperations.get(i).getName().equals(name)) {
-          unitOperations.set(i, newObject);
-          invalidateStructureCaches();
-          return true;
-        }
+	if (unitOperations.get(i).getName().equals(name)) {
+	  unitOperations.set(i, newObject);
+	  invalidateStructureCaches();
+	  return true;
+	}
       }
       logger.error("Unit operation with name '" + name + "' not found for replacement");
       return false;
@@ -584,24 +571,23 @@ public class ProcessSystem extends SimulationBaseClass {
   public ProcessEquipmentInterface getUnit(String name) {
     for (int i = 0; i < getUnitOperations().size(); i++) {
       if (getUnitOperations().get(i) instanceof ModuleInterface) {
-        for (int j = 0; j < ((ModuleInterface) getUnitOperations().get(i)).getOperations()
-            .getUnitOperations().size(); j++) {
-          if (((ModuleInterface) getUnitOperations().get(i)).getOperations().getUnitOperations()
-              .get(j).getName().equals(name)) {
-            return ((ModuleInterface) getUnitOperations().get(i)).getOperations()
-                .getUnitOperations().get(j);
-          }
-        }
+	for (int j = 0; j < ((ModuleInterface) getUnitOperations().get(i)).getOperations().getUnitOperations()
+	    .size(); j++) {
+	  if (((ModuleInterface) getUnitOperations().get(i)).getOperations().getUnitOperations().get(j).getName()
+	      .equals(name)) {
+	    return ((ModuleInterface) getUnitOperations().get(i)).getOperations().getUnitOperations().get(j);
+	  }
+	}
       } else if (getUnitOperations().get(i).getName().equals(name)) {
-        return getUnitOperations().get(i);
+	return getUnitOperations().get(i);
       }
     }
     return null;
   }
 
   /**
-   * Looks up a process equipment unit by its IEC 81346 reference designation string (e.g.
-   * {@code "=A1.B1"}, {@code "-B1"}).
+   * Looks up a process equipment unit by its IEC 81346 reference designation string (e.g. {@code "=A1.B1"},
+   * {@code "-B1"}).
    *
    * @param refDesignation the reference designation string to match
    * @return the matching equipment, or {@code null} if not found
@@ -613,25 +599,22 @@ public class ProcessSystem extends SimulationBaseClass {
     for (int i = 0; i < getUnitOperations().size(); i++) {
       ProcessEquipmentInterface unit = getUnitOperations().get(i);
       if (unit instanceof ModuleInterface) {
-        for (int j = 0; j < ((ModuleInterface) unit).getOperations().getUnitOperations()
-            .size(); j++) {
-          ProcessEquipmentInterface inner =
-              ((ModuleInterface) unit).getOperations().getUnitOperations().get(j);
-          if (refDesignation.equals(inner.getReferenceDesignationString())) {
-            return inner;
-          }
-        }
+	for (int j = 0; j < ((ModuleInterface) unit).getOperations().getUnitOperations().size(); j++) {
+	  ProcessEquipmentInterface inner = ((ModuleInterface) unit).getOperations().getUnitOperations().get(j);
+	  if (refDesignation.equals(inner.getReferenceDesignationString())) {
+	    return inner;
+	  }
+	}
       } else if (refDesignation.equals(unit.getReferenceDesignationString())) {
-        return unit;
+	return unit;
       }
     }
     return null;
   }
 
   /**
-   * Generates IEC 81346 reference designations for all equipment in this process system. This is a
-   * convenience wrapper around
-   * {@link neqsim.process.equipment.iec81346.ReferenceDesignationGenerator}.
+   * Generates IEC 81346 reference designations for all equipment in this process system. This is a convenience wrapper
+   * around {@link neqsim.process.equipment.iec81346.ReferenceDesignationGenerator}.
    *
    * @param functionPrefix the function-aspect prefix (e.g. "A1" for the first process area)
    * @param locationPrefix the location-aspect prefix (e.g. "G1" for a specific platform)
@@ -639,8 +622,7 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   public neqsim.process.equipment.iec81346.ReferenceDesignationGenerator generateReferenceDesignations(
       String functionPrefix, String locationPrefix) {
-    neqsim.process.equipment.iec81346.ReferenceDesignationGenerator gen =
-        new neqsim.process.equipment.iec81346.ReferenceDesignationGenerator();
+    neqsim.process.equipment.iec81346.ReferenceDesignationGenerator gen = new neqsim.process.equipment.iec81346.ReferenceDesignationGenerator();
     gen.setFunctionPrefix(functionPrefix);
     gen.setLocationPrefix(locationPrefix);
     gen.generate(this);
@@ -674,7 +656,7 @@ public class ProcessSystem extends SimulationBaseClass {
   public MeasurementDeviceInterface getMeasurementDevice(String name) {
     for (int i = 0; i < measurementDevices.size(); i++) {
       if (measurementDevices.get(i).getName().equals(name)) {
-        return measurementDevices.get(i);
+	return measurementDevices.get(i);
       }
     }
     return null;
@@ -682,8 +664,8 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * Look up a measurement device by its instrument tag. Tags are assigned via
-   * {@link MeasurementDeviceInterface#setTag(String)} and typically correspond to plant historian
-   * signal identifiers (e.g. "PT-101", "TT-201").
+   * {@link MeasurementDeviceInterface#setTag(String)} and typically correspond to plant historian signal identifiers
+   * (e.g. "PT-101", "TT-201").
    *
    * @param tag the instrument tag to search for
    * @return the matching device, or {@code null} if no device carries the given tag
@@ -691,15 +673,14 @@ public class ProcessSystem extends SimulationBaseClass {
   public MeasurementDeviceInterface getMeasurementDeviceByTag(String tag) {
     for (int i = 0; i < measurementDevices.size(); i++) {
       if (tag.equals(measurementDevices.get(i).getTag())) {
-        return measurementDevices.get(i);
+	return measurementDevices.get(i);
       }
     }
     return null;
   }
 
   /**
-   * Returns all measurement devices that have the specified
-   * {@link neqsim.process.measurementdevice.InstrumentTagRole}.
+   * Returns all measurement devices that have the specified {@link neqsim.process.measurementdevice.InstrumentTagRole}.
    *
    * @param role the tag role to filter on
    * @return unmodifiable list of matching devices (may be empty)
@@ -709,16 +690,16 @@ public class ProcessSystem extends SimulationBaseClass {
     List<MeasurementDeviceInterface> result = new ArrayList<MeasurementDeviceInterface>();
     for (int i = 0; i < measurementDevices.size(); i++) {
       if (measurementDevices.get(i).getTagRole() == role) {
-        result.add(measurementDevices.get(i));
+	result.add(measurementDevices.get(i));
       }
     }
     return Collections.unmodifiableList(result);
   }
 
   /**
-   * Sets field data values on measurement devices identified by their instrument tags. Devices with
-   * role {@link neqsim.process.measurementdevice.InstrumentTagRole#INPUT INPUT} will push the
-   * values into the model via {@link MeasurementDeviceInterface#applyFieldValue()}.
+   * Sets field data values on measurement devices identified by their instrument tags. Devices with role
+   * {@link neqsim.process.measurementdevice.InstrumentTagRole#INPUT INPUT} will push the values into the model via
+   * {@link MeasurementDeviceInterface#applyFieldValue()}.
    *
    * @param fieldData map of instrument tag to field value
    */
@@ -726,30 +707,29 @@ public class ProcessSystem extends SimulationBaseClass {
     for (Map.Entry<String, Double> entry : fieldData.entrySet()) {
       MeasurementDeviceInterface device = getMeasurementDeviceByTag(entry.getKey());
       if (device != null) {
-        device.setFieldValue(entry.getValue());
+	device.setFieldValue(entry.getValue());
       }
     }
   }
 
   /**
-   * Applies field values from all {@link neqsim.process.measurementdevice.InstrumentTagRole#INPUT
-   * INPUT} instruments to their connected streams or equipment. Call this before running the
-   * process to push field boundary conditions into the model.
+   * Applies field values from all {@link neqsim.process.measurementdevice.InstrumentTagRole#INPUT INPUT} instruments to
+   * their connected streams or equipment. Call this before running the process to push field boundary conditions into
+   * the model.
    */
   public void applyFieldInputs() {
     for (int i = 0; i < measurementDevices.size(); i++) {
       MeasurementDeviceInterface device = measurementDevices.get(i);
-      if (device.getTagRole() == neqsim.process.measurementdevice.InstrumentTagRole.INPUT
-          && device.hasFieldValue()) {
-        device.applyFieldValue();
+      if (device.getTagRole() == neqsim.process.measurementdevice.InstrumentTagRole.INPUT && device.hasFieldValue()) {
+	device.applyFieldValue();
       }
     }
   }
 
   /**
    * Returns a map of instrument tag to deviation (model minus field) for all
-   * {@link neqsim.process.measurementdevice.InstrumentTagRole#BENCHMARK BENCHMARK} instruments that
-   * have field data. Useful for model validation and parameter optimisation.
+   * {@link neqsim.process.measurementdevice.InstrumentTagRole#BENCHMARK BENCHMARK} instruments that have field data.
+   * Useful for model validation and parameter optimisation.
    *
    * @return map of tag to deviation value
    */
@@ -758,8 +738,8 @@ public class ProcessSystem extends SimulationBaseClass {
     for (int i = 0; i < measurementDevices.size(); i++) {
       MeasurementDeviceInterface device = measurementDevices.get(i);
       if (device.getTagRole() == neqsim.process.measurementdevice.InstrumentTagRole.BENCHMARK
-          && device.hasFieldValue()) {
-        deviations.put(device.getTag(), device.getDeviation());
+	  && device.hasFieldValue()) {
+	deviations.put(device.getTag(), device.getDeviation());
       }
     }
     return deviations;
@@ -776,15 +756,15 @@ public class ProcessSystem extends SimulationBaseClass {
   public int getUnitNumber(String name) {
     for (int i = 0; i < getUnitOperations().size(); i++) {
       if (getUnitOperations().get(i) instanceof ModuleInterface) {
-        for (int j = 0; j < ((ModuleInterface) getUnitOperations().get(i)).getOperations()
-            .getUnitOperations().size(); j++) {
-          if (((ModuleInterface) getUnitOperations().get(i)).getOperations().getUnitOperations()
-              .get(j).getName().equals(name)) {
-            return j;
-          }
-        }
+	for (int j = 0; j < ((ModuleInterface) getUnitOperations().get(i)).getOperations().getUnitOperations()
+	    .size(); j++) {
+	  if (((ModuleInterface) getUnitOperations().get(i)).getOperations().getUnitOperations().get(j).getName()
+	      .equals(name)) {
+	    return j;
+	  }
+	}
       } else if (getUnitOperations().get(i).getName().equals(name)) {
-        return i;
+	return i;
       }
     }
     return -1;
@@ -795,7 +775,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * replaceObject.
    * </p>
    *
-   * @param unitName a {@link java.lang.String} object
+   * @param unitName  a {@link java.lang.String} object
    * @param operation a {@link neqsim.process.equipment.ProcessEquipmentBaseClass} object
    */
   public synchronized void replaceObject(String unitName, ProcessEquipmentBaseClass operation) {
@@ -804,8 +784,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
     int index = getUnitNumber(unitName);
     if (index < 0 || index >= unitOperations.size() || getUnit(unitName) == null) {
-      throw new IllegalArgumentException(
-          "No process equipment named '" + unitName + "' exists in this ProcessSystem");
+      throw new IllegalArgumentException("No process equipment named '" + unitName + "' exists in this ProcessSystem");
     }
 
     operation.setName(unitName);
@@ -824,11 +803,11 @@ public class ProcessSystem extends SimulationBaseClass {
     ArrayList<String> unitNames = new ArrayList<String>();
     for (int i = 0; i < getUnitOperations().size(); i++) {
       if (getUnitOperations().get(i) instanceof ModuleInterface) {
-        for (int j = 0; j < ((ModuleInterface) getUnitOperations().get(i)).getOperations()
-            .getUnitOperations().size(); j++) {
-          unitNames.add(((ModuleInterface) getUnitOperations().get(i)).getOperations()
-              .getUnitOperations().get(j).getName());
-        }
+	for (int j = 0; j < ((ModuleInterface) getUnitOperations().get(i)).getOperations().getUnitOperations()
+	    .size(); j++) {
+	  unitNames
+	      .add(((ModuleInterface) getUnitOperations().get(i)).getOperations().getUnitOperations().get(j).getName());
+	}
       }
       unitNames.add(unitOperations.get(i).getName());
     }
@@ -861,13 +840,12 @@ public class ProcessSystem extends SimulationBaseClass {
    * @return validation result with errors and warnings for all equipment
    */
   public neqsim.util.validation.ValidationResult validateSetup() {
-    neqsim.util.validation.ValidationResult result =
-        new neqsim.util.validation.ValidationResult(getName());
+    neqsim.util.validation.ValidationResult result = new neqsim.util.validation.ValidationResult(getName());
 
     // Check: Has unit operations
     if (unitOperations.isEmpty()) {
       result.addError("process", "No unit operations in process system",
-          "Add equipment: processSystem.add(stream); processSystem.add(separator);");
+	  "Add equipment: processSystem.add(stream); processSystem.add(separator);");
       return result;
     }
 
@@ -878,45 +856,42 @@ public class ProcessSystem extends SimulationBaseClass {
       ProcessEquipmentInterface equipment = unitOperations.get(i);
 
       if (equipment == null) {
-        result.addError("unit[" + i + "]", "Null equipment at index " + i,
-            "Ensure all equipment is properly initialized before adding");
-        continue;
+	result.addError("unit[" + i + "]", "Null equipment at index " + i,
+	    "Ensure all equipment is properly initialized before adding");
+	continue;
       }
 
       // Check for duplicate names
       String name = equipment.getName();
       if (name != null && !name.isEmpty()) {
-        if (names.contains(name)) {
-          result.addWarning("unit." + name, "Duplicate equipment name: " + name,
-              "Use unique names for each equipment for easier debugging");
-        }
-        names.add(name);
+	if (names.contains(name)) {
+	  result.addWarning("unit." + name, "Duplicate equipment name: " + name,
+	      "Use unique names for each equipment for easier debugging");
+	}
+	names.add(name);
       }
 
       // Count feed streams
       if (equipment.getClass().getSimpleName().contains("Stream")) {
-        feedStreamCount++;
+	feedStreamCount++;
       }
 
       // Validate individual equipment
       neqsim.util.validation.ValidationResult equipResult = equipment.validateSetup();
-      for (neqsim.util.validation.ValidationResult.ValidationIssue issue : equipResult
-          .getIssues()) {
-        String equipName = (name != null && !name.isEmpty()) ? name : "unit[" + i + "]";
-        if (issue.getSeverity() == neqsim.util.validation.ValidationResult.Severity.CRITICAL) {
-          result.addError(equipName + "." + issue.getCategory(), issue.getMessage(),
-              issue.getRemediation());
-        } else if (issue.getSeverity() == neqsim.util.validation.ValidationResult.Severity.MAJOR) {
-          result.addWarning(equipName + "." + issue.getCategory(), issue.getMessage(),
-              issue.getRemediation());
-        }
+      for (neqsim.util.validation.ValidationResult.ValidationIssue issue : equipResult.getIssues()) {
+	String equipName = (name != null && !name.isEmpty()) ? name : "unit[" + i + "]";
+	if (issue.getSeverity() == neqsim.util.validation.ValidationResult.Severity.CRITICAL) {
+	  result.addError(equipName + "." + issue.getCategory(), issue.getMessage(), issue.getRemediation());
+	} else if (issue.getSeverity() == neqsim.util.validation.ValidationResult.Severity.MAJOR) {
+	  result.addWarning(equipName + "." + issue.getCategory(), issue.getMessage(), issue.getRemediation());
+	}
       }
     }
 
     // Check: Has at least one feed stream
     if (feedStreamCount == 0) {
       result.addWarning("feeds", "No obvious feed streams detected",
-          "Ensure process has input streams with defined compositions");
+	  "Ensure process has input streams with defined compositions");
     }
 
     return result;
@@ -926,25 +901,23 @@ public class ProcessSystem extends SimulationBaseClass {
    * Validates all equipment in the process system and returns individual results.
    *
    * <p>
-   * Unlike {@link #validateSetup()} which returns a combined result, this method returns a map of
-   * equipment names to their individual validation results, making it easier to identify specific
-   * issues.
+   * Unlike {@link #validateSetup()} which returns a combined result, this method returns a map of equipment names to
+   * their individual validation results, making it easier to identify specific issues.
    * </p>
    *
    * @return map of equipment names to their validation results
    */
   public java.util.Map<String, neqsim.util.validation.ValidationResult> validateAll() {
-    java.util.Map<String, neqsim.util.validation.ValidationResult> results =
-        new java.util.LinkedHashMap<>();
+    java.util.Map<String, neqsim.util.validation.ValidationResult> results = new java.util.LinkedHashMap<>();
 
     for (int i = 0; i < unitOperations.size(); i++) {
       ProcessEquipmentInterface equipment = unitOperations.get(i);
       if (equipment != null) {
-        String name = equipment.getName();
-        if (name == null || name.isEmpty()) {
-          name = "unit[" + i + "]";
-        }
-        results.put(name, equipment.validateSetup());
+	String name = equipment.getName();
+	if (name == null || name.isEmpty()) {
+	  name = "unit[" + i + "]";
+	}
+	results.put(name, equipment.validateSetup());
       }
     }
 
@@ -968,8 +941,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Validates the process setup and returns a structured SimulationResult.
    *
    * <p>
-   * Converts ValidationResult issues into SimulationResult.ErrorDetail objects for web API
-   * consumption. Returns a success result if no critical errors are found.
+   * Converts ValidationResult issues into SimulationResult.ErrorDetail objects for web API consumption. Returns a
+   * success result if no critical errors are found.
    * </p>
    *
    * @return a SimulationResult with validation errors or success status
@@ -981,12 +954,11 @@ public class ProcessSystem extends SimulationBaseClass {
 
     for (neqsim.util.validation.ValidationResult.ValidationIssue issue : valResult.getIssues()) {
       if (issue.getSeverity() == neqsim.util.validation.ValidationResult.Severity.CRITICAL) {
-        errorDetails.add(new SimulationResult.ErrorDetail(
-            "VALIDATION_" + issue.getCategory().toUpperCase().replace('.', '_'), issue.getMessage(),
-            issue.getCategory().contains(".") ? issue.getCategory().split("\\.")[0] : null,
-            issue.getRemediation()));
+	errorDetails.add(new SimulationResult.ErrorDetail(
+	    "VALIDATION_" + issue.getCategory().toUpperCase().replace('.', '_'), issue.getMessage(),
+	    issue.getCategory().contains(".") ? issue.getCategory().split("\\.")[0] : null, issue.getRemediation()));
       } else {
-        warningMessages.add(issue.toString());
+	warningMessages.add(issue.toString());
       }
     }
 
@@ -1000,8 +972,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Runs the process system and returns a structured SimulationResult.
    *
    * <p>
-   * Validates the setup first, then runs the simulation. Returns a structured result containing the
-   * full JSON report on success, or detailed errors on failure. Designed for web API integration.
+   * Validates the setup first, then runs the simulation. Returns a structured result containing the full JSON report on
+   * success, or detailed errors on failure. Designed for web API integration.
    * </p>
    *
    * @return a SimulationResult with the simulation report or errors
@@ -1021,9 +993,8 @@ public class ProcessSystem extends SimulationBaseClass {
       return SimulationResult.success(this, report, warningMessages);
     } catch (Exception e) {
       List<SimulationResult.ErrorDetail> errorDetails = new ArrayList<>();
-      errorDetails.add(new SimulationResult.ErrorDetail("SIMULATION_ERROR",
-          "Simulation failed: " + e.getMessage(), null,
-          "Check equipment configuration, fluid definitions, and stream connections"));
+      errorDetails.add(new SimulationResult.ErrorDetail("SIMULATION_ERROR", "Simulation failed: " + e.getMessage(),
+	  null, "Check equipment configuration, fluid definitions, and stream connections"));
       return SimulationResult.failure(this, errorDetails, warningMessages);
     }
   }
@@ -1038,8 +1009,8 @@ public class ProcessSystem extends SimulationBaseClass {
   public synchronized void removeUnit(String name) {
     for (int i = 0; i < unitOperations.size(); i++) {
       if (unitOperations.get(i).getName().equals(name)) {
-        unitOperations.remove(i);
-        invalidateStructureCaches();
+	unitOperations.remove(i);
+	invalidateStructureCaches();
       }
     }
   }
@@ -1069,8 +1040,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * setFluid.
    * </p>
    *
-   * @param fluid1 a {@link neqsim.thermo.system.SystemInterface} object
-   * @param fluid2 a {@link neqsim.thermo.system.SystemInterface} object
+   * @param fluid1           a {@link neqsim.thermo.system.SystemInterface} object
+   * @param fluid2           a {@link neqsim.thermo.system.SystemInterface} object
    * @param addNewComponents a boolean
    */
   public void setFluid(SystemInterface fluid1, SystemInterface fluid2, boolean addNewComponents) {
@@ -1078,21 +1049,17 @@ public class ProcessSystem extends SimulationBaseClass {
     boolean addedComps = false;
     for (int i = 0; i < fluid2.getNumberOfComponents(); i++) {
       if (fluid1.getPhase(0).hasComponent(fluid2.getComponent(i).getName())) {
-        fluid1.addComponent(fluid2.getComponent(i).getName(),
-            fluid2.getComponent(i).getNumberOfmoles());
+	fluid1.addComponent(fluid2.getComponent(i).getName(), fluid2.getComponent(i).getNumberOfmoles());
       } else {
-        if (addNewComponents) {
-          addedComps = true;
-          if (fluid2.getComponent(i).isIsTBPfraction()
-              || fluid2.getComponent(i).isIsPlusFraction()) {
-            fluid1.addTBPfraction(fluid2.getComponent(i).getName(),
-                fluid2.getComponent(i).getNumberOfmoles(), fluid2.getComponent(i).getMolarMass(),
-                fluid2.getComponent(i).getNormalLiquidDensity());
-          } else {
-            fluid1.addComponent(fluid2.getComponent(i).getName(),
-                fluid2.getComponent(i).getNumberOfmoles());
-          }
-        }
+	if (addNewComponents) {
+	  addedComps = true;
+	  if (fluid2.getComponent(i).isIsTBPfraction() || fluid2.getComponent(i).isIsPlusFraction()) {
+	    fluid1.addTBPfraction(fluid2.getComponent(i).getName(), fluid2.getComponent(i).getNumberOfmoles(),
+		fluid2.getComponent(i).getMolarMass(), fluid2.getComponent(i).getNormalLiquidDensity());
+	  } else {
+	    fluid1.addComponent(fluid2.getComponent(i).getName(), fluid2.getComponent(i).getNumberOfmoles());
+	  }
+	}
       }
     }
     if (addedComps) {
@@ -1116,18 +1083,15 @@ public class ProcessSystem extends SimulationBaseClass {
     boolean addedComps = false;
     for (int i = 0; i < fluid2.getNumberOfComponents(); i++) {
       if (fluid1.getPhase(0).hasComponent(fluid2.getComponent(i).getName())) {
-        fluid1.addComponent(fluid2.getComponent(i).getName(),
-            fluid2.getComponent(i).getNumberOfmoles());
+	fluid1.addComponent(fluid2.getComponent(i).getName(), fluid2.getComponent(i).getNumberOfmoles());
       } else {
-        addedComps = true;
-        if (fluid2.getComponent(i).isIsTBPfraction() || fluid2.getComponent(i).isIsPlusFraction()) {
-          fluid1.addTBPfraction(fluid2.getComponent(i).getName(),
-              fluid2.getComponent(i).getNumberOfmoles(), fluid2.getComponent(i).getMolarMass(),
-              fluid2.getComponent(i).getNormalLiquidDensity());
-        } else {
-          fluid1.addComponent(fluid2.getComponent(i).getName(),
-              fluid2.getComponent(i).getNumberOfmoles());
-        }
+	addedComps = true;
+	if (fluid2.getComponent(i).isIsTBPfraction() || fluid2.getComponent(i).isIsPlusFraction()) {
+	  fluid1.addTBPfraction(fluid2.getComponent(i).getName(), fluid2.getComponent(i).getNumberOfmoles(),
+	      fluid2.getComponent(i).getMolarMass(), fluid2.getComponent(i).getNormalLiquidDensity());
+	} else {
+	  fluid1.addComponent(fluid2.getComponent(i).getName(), fluid2.getComponent(i).getNumberOfmoles());
+	}
       }
     }
     if (addedComps) {
@@ -1142,9 +1106,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * Runs this process in a separate thread using the global NeqSim thread pool.
    *
    * <p>
-   * This method submits the process to the shared {@link neqsim.util.NeqSimThreadPool} and returns
-   * a {@link java.util.concurrent.Future} that can be used to monitor completion, cancel the task,
-   * or retrieve any exceptions that occurred.
+   * This method submits the process to the shared {@link neqsim.util.NeqSimThreadPool} and returns a
+   * {@link java.util.concurrent.Future} that can be used to monitor completion, cancel the task, or retrieve any
+   * exceptions that occurred.
    * </p>
    *
    * @return a {@link java.util.concurrent.Future} representing the pending completion of the task
@@ -1166,8 +1130,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * </ul>
    *
    * <p>
-   * This is the recommended method for most use cases as it provides the best performance without
-   * requiring manual configuration.
+   * This is the recommended method for most use cases as it provides the best performance without requiring manual
+   * configuration.
    * </p>
    */
   public void runOptimized() {
@@ -1181,11 +1145,11 @@ public class ProcessSystem extends SimulationBaseClass {
    * This method automatically selects the best execution mode:
    * </p>
    * <ul>
-   * <li>For processes with adjusters: sequential execution (adjusters modify upstream variables and
-   * read downstream targets, creating implicit feedback loops)</li>
+   * <li>For processes with adjusters: sequential execution (adjusters modify upstream variables and read downstream
+   * targets, creating implicit feedback loops)</li>
    * <li>For processes with recycles (no adjusters): sequential execution for full convergence</li>
-   * <li>For processes with multi-input equipment (Mixer, Manifold, HeatExchanger, etc.): sequential
-   * execution to ensure correct mass balance</li>
+   * <li>For processes with multi-input equipment (Mixer, Manifold, HeatExchanger, etc.): sequential execution to ensure
+   * correct mass balance</li>
    * <li>For simple feed-forward processes: parallel execution for maximum speed</li>
    * </ul>
    *
@@ -1196,53 +1160,53 @@ public class ProcessSystem extends SimulationBaseClass {
     try {
       resetActiveStates();
       if (hasAdjusters()) {
-        // Adjusters create implicit feedback loops via signal connections and
-        // iterate on a target variable. The graph partitioner cannot represent
-        // that iterative coupling, so adjuster-containing systems must run
-        // sequentially to ensure correct evaluation order.
-        runSequential(id);
+	// Adjusters create implicit feedback loops via signal connections and
+	// iterate on a target variable. The graph partitioner cannot represent
+	// that iterative coupling, so adjuster-containing systems must run
+	// sequentially to ensure correct evaluation order.
+	runSequential(id);
       } else if (hasRecycles()) {
-        // Process has Recycle units. runHybrid() parallelises feed-forward levels
-        // before the first recycle level, then runs the iterative section in
-        // insertion order using the same needRecalculation() guard as
-        // runSequential(), so the fixed point should match. If hybrid throws
-        // InterruptedException, fall back to sequential.
-        try {
-          runHybrid(id);
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          logger.warn("Hybrid execution interrupted, falling back to sequential");
-          runSequential(id);
-        }
+	// Process has Recycle units. runHybrid() parallelises feed-forward levels
+	// before the first recycle level, then runs the iterative section in
+	// insertion order using the same needRecalculation() guard as
+	// runSequential(), so the fixed point should match. If hybrid throws
+	// InterruptedException, fall back to sequential.
+	try {
+	  runHybrid(id);
+	} catch (InterruptedException e) {
+	  Thread.currentThread().interrupt();
+	  logger.warn("Hybrid execution interrupted, falling back to sequential");
+	  runSequential(id);
+	}
       } else if (hasMultiInputEquipment()) {
-        // Process has multi-input equipment (Mixer, HeatExchanger, etc.) but no
-        // recycles or adjusters. The graph correctly places multi-input equipment
-        // at levels after all their input producers, so parallel execution of
-        // independent units at earlier levels is safe. Use runParallel which
-        // respects the topological order and Union-Find grouping.
-        try {
-          runParallel(id);
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          logger.warn("Parallel execution interrupted, falling back to sequential");
-          runSequential(id);
-        }
+	// Process has multi-input equipment (Mixer, HeatExchanger, etc.) but no
+	// recycles or adjusters. The graph correctly places multi-input equipment
+	// at levels after all their input producers, so parallel execution of
+	// independent units at earlier levels is safe. Use runParallel which
+	// respects the topological order and Union-Find grouping.
+	try {
+	  runParallel(id);
+	} catch (InterruptedException e) {
+	  Thread.currentThread().interrupt();
+	  logger.warn("Parallel execution interrupted, falling back to sequential");
+	  runSequential(id);
+	}
       } else {
-        // Feed-forward process with single-input equipment only. For larger
-        // flowsheets use dataflow scheduling (no level barriers, units fire as
-        // soon as predecessors complete); for small trees the CompletableFuture
-        // overhead outweighs the straggler benefit, so stay on runParallel.
-        try {
-          if (unitOperations.size() >= DATAFLOW_UNIT_THRESHOLD) {
-            runDataflow(id);
-          } else {
-            runParallel(id);
-          }
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          logger.warn("Parallel execution interrupted, falling back to sequential");
-          runSequential(id);
-        }
+	// Feed-forward process with single-input equipment only. For larger
+	// flowsheets use dataflow scheduling (no level barriers, units fire as
+	// soon as predecessors complete); for small trees the CompletableFuture
+	// overhead outweighs the straggler benefit, so stay on runParallel.
+	try {
+	  if (unitOperations.size() >= DATAFLOW_UNIT_THRESHOLD) {
+	    runDataflow(id);
+	  } else {
+	    runParallel(id);
+	  }
+	} catch (InterruptedException e) {
+	  Thread.currentThread().interrupt();
+	  logger.warn("Parallel execution interrupted, falling back to sequential");
+	  runSequential(id);
+	}
       }
     } finally {
       exitRunScope();
@@ -1250,10 +1214,9 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Creates a runtime exception for a failed unit operation run and logs the failure with unit
-   * context.
+   * Creates a runtime exception for a failed unit operation run and logs the failure with unit context.
    *
-   * @param unit the unit operation that failed
+   * @param unit  the unit operation that failed
    * @param cause the exception thrown by the unit operation
    * @return runtime exception containing the unit name and original cause
    */
@@ -1265,15 +1228,14 @@ public class ProcessSystem extends SimulationBaseClass {
     }
     logger.error("equipment: " + unitName + " error: " + cause.getMessage(), cause);
     publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.ERROR, unitName,
-        "Unit error: " + cause.getMessage(), ProcessEvent.Severity.ERROR));
+	"Unit error: " + cause.getMessage(), ProcessEvent.Severity.ERROR));
     return new RuntimeException("Failed to run unit operation " + unitName, cause);
   }
 
   /**
-   * Converts an execution exception from a worker thread into the original runtime failure when
-   * possible.
+   * Converts an execution exception from a worker thread into the original runtime failure when possible.
    *
-   * @param mode the execution mode that failed
+   * @param mode      the execution mode that failed
    * @param exception the execution exception returned by the worker future
    * @return runtime exception to propagate to the process caller
    */
@@ -1300,8 +1262,8 @@ public class ProcessSystem extends SimulationBaseClass {
     }
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit instanceof Adjuster || unit instanceof MultiVariableAdjuster) {
-        cachedHasAdjusters = true;
-        return true;
+	cachedHasAdjusters = true;
+	return true;
       }
     }
     cachedHasAdjusters = false;
@@ -1312,9 +1274,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * Checks if the process contains any Calculator units.
    *
    * <p>
-   * Calculator units read input streams and write to an output stream property using signal
-   * connections rather than physical stream connections. They create implicit feedback loops that
-   * the graph-based partitioner does not detect, so parallel execution cannot place them correctly.
+   * Calculator units read input streams and write to an output stream property using signal connections rather than
+   * physical stream connections. They create implicit feedback loops that the graph-based partitioner does not detect,
+   * so parallel execution cannot place them correctly.
    * </p>
    *
    * @return true if there are any Calculator units in the process
@@ -1325,8 +1287,8 @@ public class ProcessSystem extends SimulationBaseClass {
     }
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit instanceof Calculator) {
-        cachedHasCalculators = true;
-        return true;
+	cachedHasCalculators = true;
+	return true;
       }
     }
     cachedHasCalculators = false;
@@ -1337,8 +1299,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Checks if the process contains any Recycle units.
    *
    * <p>
-   * This method directly checks for Recycle units in the process, which is more reliable than
-   * graph-based cycle detection for determining if iterative execution is needed.
+   * This method directly checks for Recycle units in the process, which is more reliable than graph-based cycle
+   * detection for determining if iterative execution is needed.
    * </p>
    *
    * @return true if there are Recycle units in the process
@@ -1349,8 +1311,8 @@ public class ProcessSystem extends SimulationBaseClass {
     }
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit instanceof Recycle) {
-        cachedHasRecycles = true;
-        return true;
+	cachedHasRecycles = true;
+	return true;
       }
     }
     cachedHasRecycles = false;
@@ -1361,10 +1323,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * Checks if the process contains any multi-input equipment.
    *
    * <p>
-   * Multi-input equipment (Mixer, Manifold, TurboExpanderCompressor, Ejector, HeatExchanger,
-   * MultiStreamHeatExchanger) require sequential execution to ensure correct mass balance. Parallel
-   * execution can change the order in which input streams are processed, leading to incorrect
-   * results.
+   * Multi-input equipment (Mixer, Manifold, TurboExpanderCompressor, Ejector, HeatExchanger, MultiStreamHeatExchanger)
+   * require sequential execution to ensure correct mass balance. Parallel execution can change the order in which input
+   * streams are processed, leading to incorrect results.
    * </p>
    *
    * @return true if there are multi-input equipment units in the process
@@ -1374,49 +1335,46 @@ public class ProcessSystem extends SimulationBaseClass {
       return cachedHasMultiInput;
     }
     for (ProcessEquipmentInterface unit : unitOperations) {
-      if (unit instanceof MixerInterface || unit instanceof Manifold
-          || unit instanceof TurboExpanderCompressor || unit instanceof Ejector
-          || unit instanceof HeatExchanger || unit instanceof MultiStreamHeatExchangerInterface
-          || unit instanceof FurnaceBurner || unit instanceof FlareStack) {
-        cachedHasMultiInput = true;
-        return true;
+      if (unit instanceof MixerInterface || unit instanceof Manifold || unit instanceof TurboExpanderCompressor
+	  || unit instanceof Ejector || unit instanceof HeatExchanger
+	  || unit instanceof MultiStreamHeatExchangerInterface || unit instanceof FurnaceBurner
+	  || unit instanceof FlareStack) {
+	cachedHasMultiInput = true;
+	return true;
       }
       // Check if Separator has multiple input streams (uses internal mixer)
       if (unit instanceof neqsim.process.equipment.separator.Separator) {
-        neqsim.process.equipment.separator.Separator sep =
-            (neqsim.process.equipment.separator.Separator) unit;
-        if (sep.numberOfInputStreams > 1) {
-          cachedHasMultiInput = true;
-          return true;
-        }
+	neqsim.process.equipment.separator.Separator sep = (neqsim.process.equipment.separator.Separator) unit;
+	if (sep.numberOfInputStreams > 1) {
+	  cachedHasMultiInput = true;
+	  return true;
+	}
       }
       // Check if Tank has multiple input streams (uses internal mixer like
       // Separator).
       // Use the generic inlet-streams API instead of reflection on a private field.
       if (unit instanceof neqsim.process.equipment.tank.Tank) {
-        try {
-          java.util.List<neqsim.process.equipment.stream.StreamInterface> inlets =
-              unit.getInletStreams();
-          if (inlets != null && inlets.size() > 1) {
-            cachedHasMultiInput = true;
-            return true;
-          }
-        } catch (Exception e) {
-          // Fall through - conservative default (no multi-input)
-        }
+	try {
+	  java.util.List<neqsim.process.equipment.stream.StreamInterface> inlets = unit.getInletStreams();
+	  if (inlets != null && inlets.size() > 1) {
+	    cachedHasMultiInput = true;
+	    return true;
+	  }
+	} catch (Exception e) {
+	  // Fall through - conservative default (no multi-input)
+	}
       }
       // Generic fallback: any equipment reporting 2+ inlet streams via the
       // interface method is treated as multi-input. This catches future
       // equipment classes without requiring edits here.
       try {
-        java.util.List<neqsim.process.equipment.stream.StreamInterface> inlets =
-            unit.getInletStreams();
-        if (inlets != null && inlets.size() > 1) {
-          cachedHasMultiInput = true;
-          return true;
-        }
+	java.util.List<neqsim.process.equipment.stream.StreamInterface> inlets = unit.getInletStreams();
+	if (inlets != null && inlets.size() > 1) {
+	  cachedHasMultiInput = true;
+	  return true;
+	}
       } catch (Exception e) {
-        // Conservative default - fall through to next unit
+	// Conservative default - fall through to next unit
       }
     }
     cachedHasMultiInput = false;
@@ -1425,34 +1383,32 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * Returns true if the given graph node represents multi-input equipment. Used by
-   * {@link #groupNodesBySharedInputStreams(List)} to decide whether shared-stream consumers need to
-   * be serialised within a group.
+   * {@link #groupNodesBySharedInputStreams(List)} to decide whether shared-stream consumers need to be serialised
+   * within a group.
    *
    * @param node the graph node
-   * @return {@code true} if the underlying equipment has 2+ inlet streams or is one of the
-   *         class-based multi-input types
+   * @return {@code true} if the underlying equipment has 2+ inlet streams or is one of the class-based multi-input
+   *         types
    */
   private boolean isMultiInputNode(ProcessNode node) {
     ProcessEquipmentInterface unit = node.getEquipment();
     if (unit == null) {
       return false;
     }
-    if (unit instanceof MixerInterface || unit instanceof Manifold
-        || unit instanceof TurboExpanderCompressor || unit instanceof Ejector
-        || unit instanceof HeatExchanger || unit instanceof MultiStreamHeatExchangerInterface
-        || unit instanceof FurnaceBurner || unit instanceof FlareStack) {
+    if (unit instanceof MixerInterface || unit instanceof Manifold || unit instanceof TurboExpanderCompressor
+	|| unit instanceof Ejector || unit instanceof HeatExchanger || unit instanceof MultiStreamHeatExchangerInterface
+	|| unit instanceof FurnaceBurner || unit instanceof FlareStack) {
       return true;
     }
     if (unit instanceof neqsim.process.equipment.separator.Separator) {
       if (((neqsim.process.equipment.separator.Separator) unit).numberOfInputStreams > 1) {
-        return true;
+	return true;
       }
     }
     try {
-      java.util.List<neqsim.process.equipment.stream.StreamInterface> inlets =
-          unit.getInletStreams();
+      java.util.List<neqsim.process.equipment.stream.StreamInterface> inlets = unit.getInletStreams();
       if (inlets != null && inlets.size() > 1) {
-        return true;
+	return true;
       }
     } catch (Exception e) {
       // Fall through - conservative default is false
@@ -1471,13 +1427,13 @@ public class ProcessSystem extends SimulationBaseClass {
       ProcessGraph.ParallelPartition partition = graph.partitionForParallelExecution();
       List<List<List<ProcessNode>>> plan = new ArrayList<>();
       for (List<ProcessNode> level : partition.getLevels()) {
-        if (level.size() <= 1) {
-          List<List<ProcessNode>> singleGroup = new ArrayList<>();
-          singleGroup.add(level);
-          plan.add(singleGroup);
-        } else {
-          plan.add(groupNodesBySharedInputStreams(level));
-        }
+	if (level.size() <= 1) {
+	  List<List<ProcessNode>> singleGroup = new ArrayList<>();
+	  singleGroup.add(level);
+	  plan.add(singleGroup);
+	} else {
+	  plan.add(groupNodesBySharedInputStreams(level));
+	}
       }
       cachedParallelPlan = plan;
     }
@@ -1502,7 +1458,7 @@ public class ProcessSystem extends SimulationBaseClass {
     Map<ProcessNode, Integer> nodeToTaskIndex = new IdentityHashMap<>();
     for (int i = 0; i < tasks.size(); i++) {
       for (ProcessNode node : tasks.get(i)) {
-        nodeToTaskIndex.put(node, i);
+	nodeToTaskIndex.put(node, i);
       }
     }
 
@@ -1510,15 +1466,15 @@ public class ProcessSystem extends SimulationBaseClass {
     for (int i = 0; i < tasks.size(); i++) {
       java.util.Set<Integer> predSet = new java.util.HashSet<>();
       for (ProcessNode node : tasks.get(i)) {
-        for (ProcessEdge edge : node.getIncomingEdges()) {
-          if (edge.isBackEdge()) {
-            continue;
-          }
-          Integer srcTask = nodeToTaskIndex.get(edge.getSource());
-          if (srcTask != null && srcTask != i) {
-            predSet.add(srcTask);
-          }
-        }
+	for (ProcessEdge edge : node.getIncomingEdges()) {
+	  if (edge.isBackEdge()) {
+	    continue;
+	  }
+	  Integer srcTask = nodeToTaskIndex.get(edge.getSource());
+	  if (srcTask != null && srcTask != i) {
+	    predSet.add(srcTask);
+	  }
+	}
       }
       taskPredecessors.add(predSet);
     }
@@ -1551,26 +1507,26 @@ public class ProcessSystem extends SimulationBaseClass {
       boolean hasRecycleUnit = false;
       boolean hasAdjusterUnit = false;
       for (ProcessNode node : level) {
-        if (recycleNodes.contains(node)) {
-          hasRecycleUnit = true;
-        }
-        if (node.getEquipment() instanceof Adjuster) {
-          hasAdjusterUnit = true;
-        }
+	if (recycleNodes.contains(node)) {
+	  hasRecycleUnit = true;
+	}
+	if (node.getEquipment() instanceof Adjuster) {
+	  hasAdjusterUnit = true;
+	}
       }
       if (hasRecycleUnit && firstRecycleLevel < 0) {
-        firstRecycleLevel = levelIdx;
+	firstRecycleLevel = levelIdx;
       }
       if (hasAdjusterUnit && firstAdjusterLevel < 0) {
-        firstAdjusterLevel = levelIdx;
+	firstAdjusterLevel = levelIdx;
       }
       if (hasRecycleUnit || hasAdjusterUnit) {
-        break;
+	break;
       }
       if (level.size() <= 1) {
-        feedForwardLevelGroups.add(Collections.singletonList(level));
+	feedForwardLevelGroups.add(Collections.singletonList(level));
       } else {
-        feedForwardLevelGroups.add(groupNodesBySharedInputStreams(level));
+	feedForwardLevelGroups.add(groupNodesBySharedInputStreams(level));
       }
     }
 
@@ -1587,14 +1543,14 @@ public class ProcessSystem extends SimulationBaseClass {
     if (firstIterativeLevel >= 0) {
       java.util.Set<ProcessEquipmentInterface> iterativeSet = new java.util.HashSet<>();
       for (int levelIdx = firstIterativeLevel; levelIdx < levels.size(); levelIdx++) {
-        for (ProcessNode node : levels.get(levelIdx)) {
-          iterativeSet.add(node.getEquipment());
-        }
+	for (ProcessNode node : levels.get(levelIdx)) {
+	  iterativeSet.add(node.getEquipment());
+	}
       }
       for (ProcessEquipmentInterface unit : unitOperations) {
-        if (iterativeSet.contains(unit)) {
-          iterativeSection.add(unit);
-        }
+	if (iterativeSet.contains(unit)) {
+	  iterativeSection.add(unit);
+	}
       }
       iterativeSection = reorderRecyclesWithinSCCs(iterativeSection);
     }
@@ -1607,21 +1563,20 @@ public class ProcessSystem extends SimulationBaseClass {
    * Executes grouped process nodes in one feed-forward level.
    *
    * @param levelGroups independent groups in a level
-   * @param id calculation identifier
+   * @param id          calculation identifier
    * @throws InterruptedException if the executing thread is interrupted while running units
    */
-  private void runLevelGroups(List<List<ProcessNode>> levelGroups, UUID id)
-      throws InterruptedException {
+  private void runLevelGroups(List<List<ProcessNode>> levelGroups, UUID id) throws InterruptedException {
     if (levelGroups.size() == 1) {
       for (ProcessNode node : levelGroups.get(0)) {
-        ProcessEquipmentInterface unit = node.getEquipment();
-        if (!(unit instanceof Setter)) {
-          try {
-            runUnitProfiled(unit, id);
-          } catch (Exception ex) {
-            throw createUnitRunException(unit, ex);
-          }
-        }
+	ProcessEquipmentInterface unit = node.getEquipment();
+	if (!(unit instanceof Setter)) {
+	  try {
+	    runUnitProfiled(unit, id);
+	  } catch (Exception ex) {
+	    throw createUnitRunException(unit, ex);
+	  }
+	}
       }
       return;
     }
@@ -1631,26 +1586,26 @@ public class ProcessSystem extends SimulationBaseClass {
       final List<ProcessNode> groupToRun = group;
       final UUID calcId = id;
       futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
-        for (ProcessNode node : groupToRun) {
-          ProcessEquipmentInterface unit = node.getEquipment();
-          if (!(unit instanceof Setter)) {
-            try {
-              runUnitProfiled(unit, calcId);
-            } catch (Exception ex) {
-              throw createUnitRunException(unit, ex);
-            }
-          }
-        }
+	for (ProcessNode node : groupToRun) {
+	  ProcessEquipmentInterface unit = node.getEquipment();
+	  if (!(unit instanceof Setter)) {
+	    try {
+	      runUnitProfiled(unit, calcId);
+	    } catch (Exception ex) {
+	      throw createUnitRunException(unit, ex);
+	    }
+	  }
+	}
       }));
     }
     for (java.util.concurrent.Future<?> future : futures) {
       try {
-        future.get();
+	future.get();
       } catch (java.util.concurrent.ExecutionException ex) {
-        throw createWorkerExecutionException("Parallel", ex);
+	throw createWorkerExecutionException("Parallel", ex);
       } catch (InterruptedException ex) {
-        Thread.currentThread().interrupt();
-        throw ex;
+	Thread.currentThread().interrupt();
+	throw ex;
       }
     }
   }
@@ -1663,7 +1618,7 @@ public class ProcessSystem extends SimulationBaseClass {
   private boolean hasUnitsNeedingRecalculation() {
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (!(unit instanceof Setter) && unit.needRecalculation()) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -1688,10 +1643,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * This method partitions the process into:
    * </p>
    * <ul>
-   * <li>Feed-forward section: Units at the beginning with no recycle dependencies - run in
-   * parallel</li>
-   * <li>Recycle section: Units that are part of or depend on recycle loops - run with graph-based
-   * iteration</li>
+   * <li>Feed-forward section: Units at the beginning with no recycle dependencies - run in parallel</li>
+   * <li>Recycle section: Units that are part of or depend on recycle loops - run with graph-based iteration</li>
    * </ul>
    *
    * @param id calculation identifier for tracking
@@ -1704,7 +1657,7 @@ public class ProcessSystem extends SimulationBaseClass {
     // Run setters first (sequential, they set conditions)
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit instanceof Setter) {
-        unit.run(id);
+	unit.run(id);
       }
     }
 
@@ -1716,9 +1669,9 @@ public class ProcessSystem extends SimulationBaseClass {
       // Initialize recycle controller for these units
       recycleController.clear();
       for (ProcessEquipmentInterface unit : plan.iterativeSection) {
-        if (unit instanceof Recycle) {
-          recycleController.addRecycle((Recycle) unit);
-        }
+	if (unit instanceof Recycle) {
+	  recycleController.addRecycle((Recycle) unit);
+	}
       }
       recycleController.init();
 
@@ -1726,63 +1679,62 @@ public class ProcessSystem extends SimulationBaseClass {
       boolean isConverged = true;
       int iter = 0;
       do {
-        iter++;
-        isConverged = true;
+	iter++;
+	isConverged = true;
 
-        for (ProcessEquipmentInterface unit : plan.iterativeSection) {
-          if (Thread.currentThread().isInterrupted()) {
-            logger.debug("Process simulation was interrupted, exiting runHybrid()..." + getName());
-            break;
-          }
-          if (!(unit instanceof Recycle)) {
-            try {
-              if (iter == 1 || unit.needRecalculation()) {
-                runUnitProfiled(unit, id);
-              }
-            } catch (Exception ex) {
-              throw createUnitRunException(unit, ex);
-            }
-          }
-          if (unit instanceof Recycle && recycleController.doSolveRecycle((Recycle) unit)) {
-            try {
-              runUnitProfiled(unit, id);
-            } catch (Exception ex) {
-              throw createUnitRunException(unit, ex);
-            }
-          }
-        }
+	for (ProcessEquipmentInterface unit : plan.iterativeSection) {
+	  if (Thread.currentThread().isInterrupted()) {
+	    logger.debug("Process simulation was interrupted, exiting runHybrid()..." + getName());
+	    break;
+	  }
+	  if (!(unit instanceof Recycle)) {
+	    try {
+	      if (iter == 1 || unit.needRecalculation()) {
+		runUnitProfiled(unit, id);
+	      }
+	    } catch (Exception ex) {
+	      throw createUnitRunException(unit, ex);
+	    }
+	  }
+	  if (unit instanceof Recycle && recycleController.doSolveRecycle((Recycle) unit)) {
+	    try {
+	      runUnitProfiled(unit, id);
+	    } catch (Exception ex) {
+	      throw createUnitRunException(unit, ex);
+	    }
+	  }
+	}
 
-        if (recycleController.isUseCoordinatedAcceleration()
-            && recycleController.getRecyclesAtCurrentPriority().size() > 1
-            && !recycleController.solvedCurrentPriorityLevel() && iter > 1) {
-          recycleController.runSimultaneousAcceleration();
-        }
+	if (recycleController.isUseCoordinatedAcceleration()
+	    && recycleController.getRecyclesAtCurrentPriority().size() > 1
+	    && !recycleController.solvedCurrentPriorityLevel() && iter > 1) {
+	  recycleController.runSimultaneousAcceleration();
+	}
 
-        if (!recycleController.solvedAll() || recycleController.hasHigherPriorityLevel()) {
-          isConverged = false;
-        }
-        if (recycleController.solvedCurrentPriorityLevel()) {
-          recycleController.nextPriorityLevel();
-        } else if (recycleController.hasLoverPriorityLevel() && !recycleController.solvedAll()) {
-          recycleController.resetPriorityLevel();
-        }
+	if (!recycleController.solvedAll() || recycleController.hasHigherPriorityLevel()) {
+	  isConverged = false;
+	}
+	if (recycleController.solvedCurrentPriorityLevel()) {
+	  recycleController.nextPriorityLevel();
+	} else if (recycleController.hasLoverPriorityLevel() && !recycleController.solvedAll()) {
+	  recycleController.resetPriorityLevel();
+	}
 
-        for (ProcessEquipmentInterface unit : plan.iterativeSection) {
-          if (unit instanceof Adjuster) {
-            if (!((Adjuster) unit).solved()) {
-              isConverged = false;
-              break;
-            }
-          }
-          if (unit instanceof MultiVariableAdjuster) {
-            if (!((MultiVariableAdjuster) unit).solved()) {
-              isConverged = false;
-              break;
-            }
-          }
-        }
-      } while ((!isConverged || (iter < 2)) && iter < 100
-          && !Thread.currentThread().isInterrupted());
+	for (ProcessEquipmentInterface unit : plan.iterativeSection) {
+	  if (unit instanceof Adjuster) {
+	    if (!((Adjuster) unit).solved()) {
+	      isConverged = false;
+	      break;
+	    }
+	  }
+	  if (unit instanceof MultiVariableAdjuster) {
+	    if (!((MultiVariableAdjuster) unit).solved()) {
+	      isConverged = false;
+	      break;
+	    }
+	  }
+	}
+      } while ((!isConverged || (iter < 2)) && iter < 100 && !Thread.currentThread().isInterrupted());
     }
 
     // Update calculation identifiers
@@ -1796,9 +1748,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * Explains why {@link #runOptimized()} chose a particular execution strategy.
    *
    * <p>
-   * Useful for agents or developers who expect full parallel execution and want to know which
-   * specific unit(s) forced sequential or hybrid mode. Returns a multi-line string with the
-   * selected strategy and the equipment blocking higher parallelism (if any).
+   * Useful for agents or developers who expect full parallel execution and want to know which specific unit(s) forced
+   * sequential or hybrid mode. Returns a multi-line string with the selected strategy and the equipment blocking higher
+   * parallelism (if any).
    * </p>
    *
    * @return human-readable explanation of the chosen execution strategy
@@ -1812,16 +1764,16 @@ public class ProcessSystem extends SimulationBaseClass {
     List<String> multiInput = new ArrayList<>();
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit instanceof Adjuster || unit instanceof MultiVariableAdjuster) {
-        adjusters.add(unit.getName());
+	adjusters.add(unit.getName());
       }
       if (unit instanceof Recycle) {
-        recycles.add(unit.getName());
+	recycles.add(unit.getName());
       }
       if (unit instanceof Calculator) {
-        calculators.add(unit.getName());
+	calculators.add(unit.getName());
       }
       if (isMultiInputUnit(unit)) {
-        multiInput.add(unit.getName() + " (" + unit.getClass().getSimpleName() + ")");
+	multiInput.add(unit.getName() + " (" + unit.getClass().getSimpleName() + ")");
       }
     }
     String strategy;
@@ -1829,7 +1781,7 @@ public class ProcessSystem extends SimulationBaseClass {
     if (!adjusters.isEmpty()) {
       strategy = "sequential";
       reason = "process contains Adjuster/MultiVariableAdjuster units which require "
-          + "iterative feedback and cannot be represented in the graph partitioner";
+	  + "iterative feedback and cannot be represented in the graph partitioner";
     } else if (!recycles.isEmpty()) {
       strategy = "hybrid (parallel feed-forward then iterative recycle section)";
       reason = "process contains Recycle units - iterative convergence required";
@@ -1847,8 +1799,7 @@ public class ProcessSystem extends SimulationBaseClass {
     appendUnitList(sb, "  Recycles", recycles);
     appendUnitList(sb, "  Calculators", calculators);
     appendUnitList(sb, "  Multi-input equipment", multiInput);
-    if (adjusters.isEmpty() && recycles.isEmpty() && calculators.isEmpty()
-        && multiInput.isEmpty()) {
+    if (adjusters.isEmpty() && recycles.isEmpty() && calculators.isEmpty() && multiInput.isEmpty()) {
       sb.append("  (none - all units are single-input feed-forward)\n");
     }
     try {
@@ -1866,7 +1817,7 @@ public class ProcessSystem extends SimulationBaseClass {
   /**
    * Appends a labelled unit list to a builder if non-empty.
    *
-   * @param sb target builder
+   * @param sb    target builder
    * @param label label prefix
    * @param names unit names
    */
@@ -1877,7 +1828,7 @@ public class ProcessSystem extends SimulationBaseClass {
     sb.append(label).append(" (").append(names.size()).append("): ");
     for (int i = 0; i < names.size(); i++) {
       if (i > 0) {
-        sb.append(", ");
+	sb.append(", ");
       }
       sb.append(names.get(i));
     }
@@ -1894,19 +1845,17 @@ public class ProcessSystem extends SimulationBaseClass {
     if (unit == null) {
       return false;
     }
-    if (unit instanceof MixerInterface || unit instanceof Manifold
-        || unit instanceof TurboExpanderCompressor || unit instanceof Ejector
-        || unit instanceof HeatExchanger || unit instanceof MultiStreamHeatExchangerInterface
-        || unit instanceof FurnaceBurner || unit instanceof FlareStack) {
+    if (unit instanceof MixerInterface || unit instanceof Manifold || unit instanceof TurboExpanderCompressor
+	|| unit instanceof Ejector || unit instanceof HeatExchanger || unit instanceof MultiStreamHeatExchangerInterface
+	|| unit instanceof FurnaceBurner || unit instanceof FlareStack) {
       return true;
     }
     if (unit instanceof neqsim.process.equipment.separator.Separator
-        && ((neqsim.process.equipment.separator.Separator) unit).numberOfInputStreams > 1) {
+	&& ((neqsim.process.equipment.separator.Separator) unit).numberOfInputStreams > 1) {
       return true;
     }
     try {
-      java.util.List<neqsim.process.equipment.stream.StreamInterface> inlets =
-          unit.getInletStreams();
+      java.util.List<neqsim.process.equipment.stream.StreamInterface> inlets = unit.getInletStreams();
       return inlets != null && inlets.size() > 1;
     } catch (Exception e) {
       return false;
@@ -1944,7 +1893,7 @@ public class ProcessSystem extends SimulationBaseClass {
     if (!recycleNodes.isEmpty()) {
       sb.append("Units in recycle loops: ").append(recycleNodes.size()).append("\n");
       for (ProcessNode node : recycleNodes) {
-        sb.append("  - ").append(node.getName()).append("\n");
+	sb.append("  - ").append(node.getName()).append("\n");
       }
     }
 
@@ -1959,28 +1908,28 @@ public class ProcessSystem extends SimulationBaseClass {
     for (List<ProcessNode> level : levels) {
       boolean hasRecycleUnit = false;
       for (ProcessNode node : level) {
-        if (recycleNodes.contains(node)) {
-          hasRecycleUnit = true;
-          break;
-        }
+	if (recycleNodes.contains(node)) {
+	  hasRecycleUnit = true;
+	  break;
+	}
       }
       if (hasRecycleUnit) {
-        inRecycleSection = true;
+	inRecycleSection = true;
       }
       if (inRecycleSection) {
-        recycleSectionLevels++;
-        recycleSectionUnits += level.size();
+	recycleSectionLevels++;
+	recycleSectionUnits += level.size();
       } else {
-        feedForwardLevels++;
-        feedForwardUnits += level.size();
+	feedForwardLevels++;
+	feedForwardUnits += level.size();
       }
     }
 
     sb.append("\n=== Hybrid Execution Strategy ===\n");
-    sb.append("Phase 1 (Parallel): ").append(feedForwardLevels).append(" levels, ")
-        .append(feedForwardUnits).append(" units\n");
-    sb.append("Phase 2 (Iterative): ").append(recycleSectionLevels).append(" levels, ")
-        .append(recycleSectionUnits).append(" units\n");
+    sb.append("Phase 1 (Parallel): ").append(feedForwardLevels).append(" levels, ").append(feedForwardUnits)
+	.append(" units\n");
+    sb.append("Phase 2 (Iterative): ").append(recycleSectionLevels).append(" levels, ").append(recycleSectionUnits)
+	.append(" units\n");
 
     // Show execution levels
     sb.append("\nExecution levels:\n");
@@ -1989,30 +1938,30 @@ public class ProcessSystem extends SimulationBaseClass {
     for (java.util.List<ProcessNode> level : partition.getLevels()) {
       boolean hasRecycleUnit = false;
       for (ProcessNode node : level) {
-        if (recycleNodes.contains(node)) {
-          hasRecycleUnit = true;
-          break;
-        }
+	if (recycleNodes.contains(node)) {
+	  hasRecycleUnit = true;
+	  break;
+	}
       }
       if (hasRecycleUnit && !inRecycleSection) {
-        inRecycleSection = true;
-        sb.append("  --- Recycle Section Start (iterative) ---\n");
+	inRecycleSection = true;
+	sb.append("  --- Recycle Section Start (iterative) ---\n");
       }
 
       sb.append("  Level ").append(levelNum++);
       if (!inRecycleSection) {
-        sb.append(" [PARALLEL]");
+	sb.append(" [PARALLEL]");
       }
       sb.append(": ");
       for (int i = 0; i < level.size(); i++) {
-        if (i > 0) {
-          sb.append(", ");
-        }
-        ProcessNode node = level.get(i);
-        sb.append(node.getName());
-        if (recycleNodes.contains(node)) {
-          sb.append(" [RECYCLE]");
-        }
+	if (i > 0) {
+	  sb.append(", ");
+	}
+	ProcessNode node = level.get(i);
+	sb.append(node.getName());
+	if (recycleNodes.contains(node)) {
+	  sb.append(" [RECYCLE]");
+	}
       }
       sb.append("\n");
     }
@@ -2024,15 +1973,14 @@ public class ProcessSystem extends SimulationBaseClass {
    * Runs the process system using parallel execution for independent equipment.
    *
    * <p>
-   * This method uses the process graph to identify equipment that can run in parallel (i.e.,
-   * equipment with no dependencies between them). Equipment at the same "level" in the dependency
-   * graph are executed concurrently using the NeqSim thread pool.
+   * This method uses the process graph to identify equipment that can run in parallel (i.e., equipment with no
+   * dependencies between them). Equipment at the same "level" in the dependency graph are executed concurrently using
+   * the NeqSim thread pool.
    * </p>
    *
    * <p>
-   * Note: This method does not handle recycles or adjusters - use regular {@link #run()} for
-   * processes with recycle loops. This is suitable for feed-forward processes where maximum
-   * parallelism is desired.
+   * Note: This method does not handle recycles or adjusters - use regular {@link #run()} for processes with recycle
+   * loops. This is suitable for feed-forward processes where maximum parallelism is desired.
    * </p>
    *
    * @throws InterruptedException if the thread is interrupted while waiting for tasks
@@ -2045,9 +1993,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * Runs the process system using parallel execution for independent equipment.
    *
    * <p>
-   * This method uses the process graph to identify equipment that can run in parallel (i.e.,
-   * equipment with no dependencies between them). Equipment at the same "level" in the dependency
-   * graph are executed concurrently using the NeqSim thread pool.
+   * This method uses the process graph to identify equipment that can run in parallel (i.e., equipment with no
+   * dependencies between them). Equipment at the same "level" in the dependency graph are executed concurrently using
+   * the NeqSim thread pool.
    * </p>
    *
    * @param id calculation identifier for tracking
@@ -2057,8 +2005,7 @@ public class ProcessSystem extends SimulationBaseClass {
     resetActiveStates();
     // Publish simulation start event
     publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.INFO, getName(),
-        "Parallel simulation started with " + unitOperations.size() + " units",
-        ProcessEvent.Severity.INFO));
+	"Parallel simulation started with " + unitOperations.size() + " units", ProcessEvent.Severity.INFO));
 
     // Auto-validate equipment setup before first run
     if (autoValidate) {
@@ -2068,82 +2015,81 @@ public class ProcessSystem extends SimulationBaseClass {
     // Run setters first (sequential, they set conditions)
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit instanceof Setter) {
-        unit.run(id);
+	unit.run(id);
       }
     }
     if (!hasUnitsNeedingRecalculation()) {
       updateCalculationIdentifiers(id);
-      publishEvent(new ProcessEvent(ProcessEvent.generateId(),
-          ProcessEvent.EventType.SIMULATION_COMPLETE, getName(),
-          "Parallel simulation completed with no dirty units", ProcessEvent.Severity.INFO));
+      publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.SIMULATION_COMPLETE, getName(),
+	  "Parallel simulation completed with no dirty units", ProcessEvent.Severity.INFO));
       return;
     }
 
     // Execute each level using the cached plan
     for (List<List<ProcessNode>> levelGroups : getCachedParallelPlan()) {
       if (levelGroups.size() == 1 && levelGroups.get(0).size() == 1) {
-        // Single unit at this level - run directly (no thread pool overhead)
-        ProcessEquipmentInterface unit = levelGroups.get(0).get(0).getEquipment();
-        if (!(unit instanceof Setter) && unit.needRecalculation()) {
-          try {
-            runUnitProfiled(unit, id);
-          } catch (Exception ex) {
-            throw createUnitRunException(unit, ex);
-          }
-        }
+	// Single unit at this level - run directly (no thread pool overhead)
+	ProcessEquipmentInterface unit = levelGroups.get(0).get(0).getEquipment();
+	if (!(unit instanceof Setter) && unit.needRecalculation()) {
+	  try {
+	    runUnitProfiled(unit, id);
+	  } catch (Exception ex) {
+	    throw createUnitRunException(unit, ex);
+	  }
+	}
       } else if (levelGroups.size() == 1) {
-        // Single group with multiple units sharing input streams - run sequentially
-        for (ProcessNode node : levelGroups.get(0)) {
-          ProcessEquipmentInterface unit = node.getEquipment();
-          if (!(unit instanceof Setter) && unit.needRecalculation()) {
-            try {
-              runUnitProfiled(unit, id);
-            } catch (Exception ex) {
-              throw createUnitRunException(unit, ex);
-            }
-          }
-        }
+	// Single group with multiple units sharing input streams - run sequentially
+	for (ProcessNode node : levelGroups.get(0)) {
+	  ProcessEquipmentInterface unit = node.getEquipment();
+	  if (!(unit instanceof Setter) && unit.needRecalculation()) {
+	    try {
+	      runUnitProfiled(unit, id);
+	    } catch (Exception ex) {
+	      throw createUnitRunException(unit, ex);
+	    }
+	  }
+	}
       } else {
-        // Multiple independent groups - run in parallel
-        List<java.util.concurrent.Future<?>> futures = new ArrayList<>();
-        for (List<ProcessNode> group : levelGroups) {
-          if (group.size() == 1) {
-            final ProcessEquipmentInterface unitToRun = group.get(0).getEquipment();
-            if (!(unitToRun instanceof Setter) && unitToRun.needRecalculation()) {
-              final UUID calcId = id;
-              futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
-                try {
-                  runUnitProfiled(unitToRun, calcId);
-                } catch (Exception ex) {
-                  throw createUnitRunException(unitToRun, ex);
-                }
-              }));
-            }
-          } else {
-            final List<ProcessNode> groupToRun = group;
-            final UUID calcId = id;
-            futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
-              for (ProcessNode node : groupToRun) {
-                ProcessEquipmentInterface unit = node.getEquipment();
-                if (!(unit instanceof Setter) && unit.needRecalculation()) {
-                  try {
-                    runUnitProfiled(unit, calcId);
-                  } catch (Exception ex) {
-                    throw createUnitRunException(unit, ex);
-                  }
-                }
-              }
-            }));
-          }
-        }
-        // Wait for all groups at this level to complete before moving to next level
-        for (java.util.concurrent.Future<?> future : futures) {
-          try {
-            future.get();
-          } catch (java.util.concurrent.ExecutionException ex) {
-            throw createWorkerExecutionException("Parallel", ex);
-          }
-        }
+	// Multiple independent groups - run in parallel
+	List<java.util.concurrent.Future<?>> futures = new ArrayList<>();
+	for (List<ProcessNode> group : levelGroups) {
+	  if (group.size() == 1) {
+	    final ProcessEquipmentInterface unitToRun = group.get(0).getEquipment();
+	    if (!(unitToRun instanceof Setter) && unitToRun.needRecalculation()) {
+	      final UUID calcId = id;
+	      futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
+		try {
+		  runUnitProfiled(unitToRun, calcId);
+		} catch (Exception ex) {
+		  throw createUnitRunException(unitToRun, ex);
+		}
+	      }));
+	    }
+	  } else {
+	    final List<ProcessNode> groupToRun = group;
+	    final UUID calcId = id;
+	    futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
+	      for (ProcessNode node : groupToRun) {
+		ProcessEquipmentInterface unit = node.getEquipment();
+		if (!(unit instanceof Setter) && unit.needRecalculation()) {
+		  try {
+		    runUnitProfiled(unit, calcId);
+		  } catch (Exception ex) {
+		    throw createUnitRunException(unit, ex);
+		  }
+		}
+	      }
+	    }));
+	  }
+	}
+	// Wait for all groups at this level to complete before moving to next level
+	for (java.util.concurrent.Future<?> future : futures) {
+	  try {
+	    future.get();
+	  } catch (java.util.concurrent.ExecutionException ex) {
+	    throw createWorkerExecutionException("Parallel", ex);
+	  }
+	}
       }
     }
 
@@ -2154,19 +2100,17 @@ public class ProcessSystem extends SimulationBaseClass {
     setCalculationIdentifier(id);
 
     // Publish simulation complete event
-    publishEvent(
-        new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.SIMULATION_COMPLETE,
-            getName(), "Parallel simulation completed", ProcessEvent.Severity.INFO));
+    publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.SIMULATION_COMPLETE, getName(),
+	"Parallel simulation completed", ProcessEvent.Severity.INFO));
   }
 
   /**
    * Runs the process using dataflow scheduling.
    *
    * <p>
-   * Unlike {@link #runParallel(UUID)} which uses level barriers, this method fires each unit (or
-   * shared-input group) as soon as its direct predecessors have completed. Eliminates straggler
-   * penalty on wide asymmetric flowsheets where a slow unit on one branch currently delays
-   * unrelated units on other branches.
+   * Unlike {@link #runParallel(UUID)} which uses level barriers, this method fires each unit (or shared-input group) as
+   * soon as its direct predecessors have completed. Eliminates straggler penalty on wide asymmetric flowsheets where a
+   * slow unit on one branch currently delays unrelated units on other branches.
    * </p>
    *
    * <p>
@@ -2185,8 +2129,7 @@ public class ProcessSystem extends SimulationBaseClass {
   public synchronized void runDataflow(UUID id) throws InterruptedException {
     resetActiveStates();
     publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.INFO, getName(),
-        "Dataflow simulation started with " + unitOperations.size() + " units",
-        ProcessEvent.Severity.INFO));
+	"Dataflow simulation started with " + unitOperations.size() + " units", ProcessEvent.Severity.INFO));
 
     if (autoValidate) {
       runAutoValidation(unitOperations);
@@ -2197,58 +2140,55 @@ public class ProcessSystem extends SimulationBaseClass {
     // Run setters first (sequential, they set boundary conditions).
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit instanceof Setter) {
-        unit.run(id);
+	unit.run(id);
       }
     }
     if (!hasUnitsNeedingRecalculation()) {
       updateCalculationIdentifiers(id);
-      publishEvent(new ProcessEvent(ProcessEvent.generateId(),
-          ProcessEvent.EventType.SIMULATION_COMPLETE, getName(),
-          "Dataflow simulation completed with no dirty units", ProcessEvent.Severity.INFO));
+      publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.SIMULATION_COMPLETE, getName(),
+	  "Dataflow simulation completed with no dirty units", ProcessEvent.Severity.INFO));
       return;
     }
 
     // Build CompletableFutures: each task waits for its predecessors, then
     // runs its contained nodes sequentially on the NeqSim thread pool.
     java.util.concurrent.ExecutorService executor = neqsim.util.NeqSimThreadPool.getPool();
-    List<java.util.concurrent.CompletableFuture<Void>> taskFutures =
-        new ArrayList<>(plan.tasks.size());
+    List<java.util.concurrent.CompletableFuture<Void>> taskFutures = new ArrayList<>(plan.tasks.size());
     for (int i = 0; i < plan.tasks.size(); i++) {
       final List<ProcessNode> taskNodes = plan.tasks.get(i);
       final UUID calcId = id;
       Runnable body = () -> {
-        for (ProcessNode node : taskNodes) {
-          ProcessEquipmentInterface unit = node.getEquipment();
-          if (!(unit instanceof Setter) && unit.needRecalculation()) {
-            try {
-              runUnitProfiled(unit, calcId);
-            } catch (Exception ex) {
-              throw createUnitRunException(unit, ex);
-            }
-          }
-        }
+	for (ProcessNode node : taskNodes) {
+	  ProcessEquipmentInterface unit = node.getEquipment();
+	  if (!(unit instanceof Setter) && unit.needRecalculation()) {
+	    try {
+	      runUnitProfiled(unit, calcId);
+	    } catch (Exception ex) {
+	      throw createUnitRunException(unit, ex);
+	    }
+	  }
+	}
       };
 
       java.util.Set<Integer> preds = plan.taskPredecessors.get(i);
       java.util.concurrent.CompletableFuture<Void> future;
       if (preds.isEmpty()) {
-        future = java.util.concurrent.CompletableFuture.runAsync(body, executor);
+	future = java.util.concurrent.CompletableFuture.runAsync(body, executor);
       } else {
-        java.util.concurrent.CompletableFuture<?>[] predArr =
-            new java.util.concurrent.CompletableFuture[preds.size()];
-        int k = 0;
-        for (Integer p : preds) {
-          predArr[k++] = taskFutures.get(p);
-        }
-        future = java.util.concurrent.CompletableFuture.allOf(predArr).thenRunAsync(body, executor);
+	java.util.concurrent.CompletableFuture<?>[] predArr = new java.util.concurrent.CompletableFuture[preds.size()];
+	int k = 0;
+	for (Integer p : preds) {
+	  predArr[k++] = taskFutures.get(p);
+	}
+	future = java.util.concurrent.CompletableFuture.allOf(predArr).thenRunAsync(body, executor);
       }
       taskFutures.add(future);
     }
 
     // Wait for all tasks to finish.
     try {
-      java.util.concurrent.CompletableFuture
-          .allOf(taskFutures.toArray(new java.util.concurrent.CompletableFuture[0])).get();
+      java.util.concurrent.CompletableFuture.allOf(taskFutures.toArray(new java.util.concurrent.CompletableFuture[0]))
+	  .get();
     } catch (java.util.concurrent.ExecutionException ex) {
       throw createWorkerExecutionException("Dataflow", ex);
     }
@@ -2258,19 +2198,17 @@ public class ProcessSystem extends SimulationBaseClass {
     }
     setCalculationIdentifier(id);
 
-    publishEvent(
-        new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.SIMULATION_COMPLETE,
-            getName(), "Dataflow simulation completed", ProcessEvent.Severity.INFO));
+    publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.SIMULATION_COMPLETE, getName(),
+	"Dataflow simulation completed", ProcessEvent.Severity.INFO));
   }
 
   /**
    * Groups nodes by shared input streams for parallel execution safety.
    *
    * <p>
-   * Units that share the same input stream cannot safely run in parallel because they would
-   * concurrently read from the same thermo system. This method uses Union-Find to group nodes that
-   * share any input stream, so they can be run sequentially within their group while different
-   * groups run in parallel.
+   * Units that share the same input stream cannot safely run in parallel because they would concurrently read from the
+   * same thermo system. This method uses Union-Find to group nodes that share any input stream, so they can be run
+   * sequentially within their group while different groups run in parallel.
    * </p>
    *
    * @param nodes list of nodes at the same execution level
@@ -2285,23 +2223,22 @@ public class ProcessSystem extends SimulationBaseClass {
     }
 
     // Find with path compression
-    java.util.function.Function<ProcessNode, ProcessNode> find =
-        new java.util.function.Function<ProcessNode, ProcessNode>() {
-          @Override
-          public ProcessNode apply(ProcessNode node) {
-            if (parent.get(node) != node) {
-              parent.put(node, this.apply(parent.get(node)));
-            }
-            return parent.get(node);
-          }
-        };
+    java.util.function.Function<ProcessNode, ProcessNode> find = new java.util.function.Function<ProcessNode, ProcessNode>() {
+      @Override
+      public ProcessNode apply(ProcessNode node) {
+	if (parent.get(node) != node) {
+	  parent.put(node, this.apply(parent.get(node)));
+	}
+	return parent.get(node);
+      }
+    };
 
     // Union operation
     java.util.function.BiConsumer<ProcessNode, ProcessNode> union = (a, b) -> {
       ProcessNode rootA = find.apply(a);
       ProcessNode rootB = find.apply(b);
       if (rootA != rootB) {
-        parent.put(rootA, rootB);
+	parent.put(rootA, rootB);
       }
     };
 
@@ -2309,13 +2246,13 @@ public class ProcessSystem extends SimulationBaseClass {
     Map<StreamInterface, List<ProcessNode>> streamToNodes = new IdentityHashMap<>();
     for (ProcessNode node : nodes) {
       for (ProcessEdge edge : node.getIncomingEdges()) {
-        StreamInterface stream = edge.getStream();
-        if (stream != null) {
-          if (!streamToNodes.containsKey(stream)) {
-            streamToNodes.put(stream, new ArrayList<>());
-          }
-          streamToNodes.get(stream).add(node);
-        }
+	StreamInterface stream = edge.getStream();
+	if (stream != null) {
+	  if (!streamToNodes.containsKey(stream)) {
+	    streamToNodes.put(stream, new ArrayList<>());
+	  }
+	  streamToNodes.get(stream).add(node);
+	}
       }
     }
 
@@ -2330,20 +2267,20 @@ public class ProcessSystem extends SimulationBaseClass {
     // over-conservative grouping that limits parallelism unnecessarily.
     for (List<ProcessNode> nodesWithSameStream : streamToNodes.values()) {
       if (nodesWithSameStream.size() > 1) {
-        boolean anyMultiInput = false;
-        for (ProcessNode n : nodesWithSameStream) {
-          if (isMultiInputNode(n)) {
-            anyMultiInput = true;
-            break;
-          }
-        }
-        if (!anyMultiInput) {
-          continue; // Pure single-input readers - safe to run in parallel.
-        }
-        ProcessNode first = nodesWithSameStream.get(0);
-        for (int i = 1; i < nodesWithSameStream.size(); i++) {
-          union.accept(first, nodesWithSameStream.get(i));
-        }
+	boolean anyMultiInput = false;
+	for (ProcessNode n : nodesWithSameStream) {
+	  if (isMultiInputNode(n)) {
+	    anyMultiInput = true;
+	    break;
+	  }
+	}
+	if (!anyMultiInput) {
+	  continue; // Pure single-input readers - safe to run in parallel.
+	}
+	ProcessNode first = nodesWithSameStream.get(0);
+	for (int i = 1; i < nodesWithSameStream.size(); i++) {
+	  union.accept(first, nodesWithSameStream.get(i));
+	}
       }
     }
 
@@ -2352,7 +2289,7 @@ public class ProcessSystem extends SimulationBaseClass {
     for (ProcessNode node : nodes) {
       ProcessNode root = find.apply(node);
       if (!groups.containsKey(root)) {
-        groups.put(root, new ArrayList<>());
+	groups.put(root, new ArrayList<>());
       }
       groups.get(root).add(node);
     }
@@ -2364,9 +2301,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Gets the parallel execution partition for this process.
    *
    * <p>
-   * This method returns information about how the process can be parallelized, including: - The
-   * number of parallel levels - Maximum parallelism (max units that can run concurrently) - Which
-   * units are at each level
+   * This method returns information about how the process can be parallelized, including: - The number of parallel
+   * levels - Maximum parallelism (max units that can run concurrently) - Which units are at each level
    * </p>
    *
    * @return parallel partition result, or null if graph cannot be built
@@ -2398,10 +2334,10 @@ public class ProcessSystem extends SimulationBaseClass {
     // Check for recycles and adjusters - they require iterative execution
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit instanceof Recycle) {
-        return false;
+	return false;
       }
       if (unit instanceof Adjuster) {
-        return false;
+	return false;
       }
     }
     // Note: multi-input equipment (Mixer, HeatExchanger, etc.) is handled safely
@@ -2423,8 +2359,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Runs the process using the optimal execution strategy.
    *
    * <p>
-   * This method automatically determines whether to use parallel or sequential execution based on
-   * the process structure. It will use parallel execution if:
+   * This method automatically determines whether to use parallel or sequential execution based on the process
+   * structure. It will use parallel execution if:
    * <ul>
    * <li>The process has independent branches that can benefit from parallelism</li>
    * <li>There are no recycle loops or adjusters requiring iterative execution</li>
@@ -2432,8 +2368,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * </ul>
    *
    * <p>
-   * For processes with recycles or adjusters, this method falls back to the standard sequential
-   * {@link #run()} method which properly handles convergence iterations.
+   * For processes with recycles or adjusters, this method falls back to the standard sequential {@link #run()} method
+   * which properly handles convergence iterations.
    */
   public void runOptimal() {
     runOptimal(UUID.randomUUID());
@@ -2448,11 +2384,11 @@ public class ProcessSystem extends SimulationBaseClass {
   public void runOptimal(UUID id) {
     if (isParallelExecutionBeneficial()) {
       try {
-        runParallel(id);
+	runParallel(id);
       } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        logger.warn("Parallel execution interrupted, falling back to sequential", e);
-        run(id);
+	Thread.currentThread().interrupt();
+	logger.warn("Parallel execution interrupted, falling back to sequential", e);
+	run(id);
       }
     } else {
       run(id);
@@ -2465,8 +2401,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * </p>
    *
    * @return a {@link java.lang.Thread} object
-   * @deprecated Use {@link #runAsTask()} instead for better resource management. This method
-   *             creates a new unmanaged thread directly.
+   * @deprecated Use {@link #runAsTask()} instead for better resource management. This method creates a new unmanaged
+   *             thread directly.
    */
   @Deprecated
   public Thread runAsThread() {
@@ -2490,21 +2426,21 @@ public class ProcessSystem extends SimulationBaseClass {
       long wallStart = System.nanoTime();
       boolean prevWarmStart = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
       if (useFlashWarmStart) {
-        neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
+	neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
       }
       try {
-        // Use optimized execution by default for best performance
-        if (useOptimizedExecution) {
-          runOptimized(id);
-          return;
-        }
-        // Legacy sequential execution path
-        runSequential(id);
+	// Use optimized execution by default for best performance
+	if (useOptimizedExecution) {
+	  runOptimized(id);
+	  return;
+	}
+	// Legacy sequential execution path
+	runSequential(id);
       } finally {
-        if (useFlashWarmStart) {
-          neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarmStart);
-        }
-        lastRunElapsedNanos = System.nanoTime() - wallStart;
+	if (useFlashWarmStart) {
+	  neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarmStart);
+	}
+	lastRunElapsedNanos = System.nanoTime() - wallStart;
       }
     } catch (RuntimeException ex) {
       runThrew = true;
@@ -2516,10 +2452,9 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Finalizes the {@link #lastRunStatus} after a run completes. On a clean run, records a success
-   * entry for every unit operation that has no prior failure entry; on a thrown run, marks the
-   * overall status as failed (the failed unit was already captured by
-   * {@link #createUnitRunException(ProcessEquipmentInterface, Exception)}).
+   * Finalizes the {@link #lastRunStatus} after a run completes. On a clean run, records a success entry for every unit
+   * operation that has no prior failure entry; on a thrown run, marks the overall status as failed (the failed unit was
+   * already captured by {@link #createUnitRunException(ProcessEquipmentInterface, Exception)}).
    *
    * @param runThrew true if the run propagated a {@link RuntimeException}
    */
@@ -2530,17 +2465,17 @@ public class ProcessSystem extends SimulationBaseClass {
     if (!runThrew) {
       java.util.Set<String> failedNames = new java.util.HashSet<String>();
       for (UnitRunStatus u : lastRunStatus.getUnits()) {
-        if (!u.isSuccess()) {
-          failedNames.add(u.getUnitName());
-        }
+	if (!u.isSuccess()) {
+	  failedNames.add(u.getUnitName());
+	}
       }
       for (ProcessEquipmentInterface unit : unitOperations) {
-        if (unit == null) {
-          continue;
-        }
-        if (!failedNames.contains(unit.getName())) {
-          lastRunStatus.recordSuccess(unit.getName(), unit.getClass().getSimpleName());
-        }
+	if (unit == null) {
+	  continue;
+	}
+	if (!failedNames.contains(unit.getName())) {
+	  lastRunStatus.recordSuccess(unit.getName(), unit.getClass().getSimpleName());
+	}
       }
     }
     lastRunStatus.markComplete(!runThrew);
@@ -2550,9 +2485,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * Returns the structured outcome of the most recent {@link #run(UUID)} call.
    *
    * <p>
-   * The returned {@link RunStatus} reports whether the run succeeded and, on failure, the first
-   * unit that failed and its error message &mdash; allowing agents to react to a failed run without
-   * catching and parsing a {@link RuntimeException}.
+   * The returned {@link RunStatus} reports whether the run succeeded and, on failure, the first unit that failed and
+   * its error message &mdash; allowing agents to react to a failed run without catching and parsing a
+   * {@link RuntimeException}.
    * </p>
    *
    * @return the last run status (never null; reports {@code completed=false} before the first run)
@@ -2577,9 +2512,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * Runs the process system using sequential execution.
    *
    * <p>
-   * This method executes units in insertion order (or topological order if useGraphBasedExecution
-   * is enabled). It handles recycle loops by iterating until convergence. This is the legacy
-   * execution mode preserved for backward compatibility.
+   * This method executes units in insertion order (or topological order if useGraphBasedExecution is enabled). It
+   * handles recycle loops by iterating until convergence. This is the legacy execution mode preserved for backward
+   * compatibility.
    * </p>
    *
    * @param id calculation identifier for tracking
@@ -2598,8 +2533,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
     // Publish simulation start event
     publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.INFO, getName(),
-        "Sequential simulation started with " + executionOrder.size() + " units",
-        ProcessEvent.Severity.INFO));
+	"Sequential simulation started with " + executionOrder.size() + " units", ProcessEvent.Severity.INFO));
 
     // Auto-validate equipment setup before first run
     if (autoValidate) {
@@ -2610,7 +2544,7 @@ public class ProcessSystem extends SimulationBaseClass {
     for (int i = 0; i < executionOrder.size(); i++) {
       ProcessEquipmentInterface unit = executionOrder.get(i);
       if (unit instanceof Setter) {
-        unit.run(id);
+	unit.run(id);
       }
     }
 
@@ -2621,8 +2555,8 @@ public class ProcessSystem extends SimulationBaseClass {
     for (int i = 0; i < executionOrder.size(); i++) {
       ProcessEquipmentInterface unit = executionOrder.get(i);
       if (unit instanceof Recycle) {
-        hasRecycle = true;
-        recycleController.addRecycle((Recycle) unit);
+	hasRecycle = true;
+	recycleController.addRecycle((Recycle) unit);
       }
     }
     recycleController.init();
@@ -2633,66 +2567,65 @@ public class ProcessSystem extends SimulationBaseClass {
       iter++;
       isConverged = true;
       for (int i = 0; i < executionOrder.size(); i++) {
-        ProcessEquipmentInterface unit = executionOrder.get(i);
-        if (Thread.currentThread().isInterrupted()) {
-          logger.debug("Process simulation was interrupted, exiting run()..." + getName());
-          break;
-        }
-        if (!(unit instanceof Recycle)) {
-          try {
-            if (iter == 1 || unit.needRecalculation()) {
-              runUnitProfiled(unit, id);
-            }
-          } catch (Exception ex) {
-            throw createUnitRunException(unit, ex);
-          }
-        }
-        if (unit instanceof Recycle && recycleController.doSolveRecycle((Recycle) unit)) {
-          try {
-            runUnitProfiled(unit, id);
-          } catch (Exception ex) {
-            throw createUnitRunException(unit, ex);
-          }
-        }
+	ProcessEquipmentInterface unit = executionOrder.get(i);
+	if (Thread.currentThread().isInterrupted()) {
+	  logger.debug("Process simulation was interrupted, exiting run()..." + getName());
+	  break;
+	}
+	if (!(unit instanceof Recycle)) {
+	  try {
+	    if (iter == 1 || unit.needRecalculation()) {
+	      runUnitProfiled(unit, id);
+	    }
+	  } catch (Exception ex) {
+	    throw createUnitRunException(unit, ex);
+	  }
+	}
+	if (unit instanceof Recycle && recycleController.doSolveRecycle((Recycle) unit)) {
+	  try {
+	    runUnitProfiled(unit, id);
+	  } catch (Exception ex) {
+	    throw createUnitRunException(unit, ex);
+	  }
+	}
       }
       if (!recycleController.solvedAll() || recycleController.hasHigherPriorityLevel()) {
-        isConverged = false;
+	isConverged = false;
       }
 
       if (recycleController.solvedCurrentPriorityLevel()) {
-        recycleController.nextPriorityLevel();
+	recycleController.nextPriorityLevel();
       } else if (recycleController.hasLoverPriorityLevel() && !recycleController.solvedAll()) {
-        recycleController.resetPriorityLevel();
+	recycleController.resetPriorityLevel();
       }
 
       for (int i = 0; i < executionOrder.size(); i++) {
-        ProcessEquipmentInterface unit = executionOrder.get(i);
-        // Skip bypassed / inactive adjusters — they never execute, so solved() may
-        // stay false and would otherwise burn the full iteration budget for nothing.
-        if (unit.isLockedInactive() || !unit.isActive()) {
-          continue;
-        }
-        if (unit instanceof Adjuster) {
-          if (!((Adjuster) unit).solved()) {
-            isConverged = false;
-            break;
-          }
-        }
-        if (unit instanceof MultiVariableAdjuster) {
-          if (!((MultiVariableAdjuster) unit).solved()) {
-            isConverged = false;
-            break;
-          }
-        }
+	ProcessEquipmentInterface unit = executionOrder.get(i);
+	// Skip bypassed / inactive adjusters — they never execute, so solved() may
+	// stay false and would otherwise burn the full iteration budget for nothing.
+	if (unit.isLockedInactive() || !unit.isActive()) {
+	  continue;
+	}
+	if (unit instanceof Adjuster) {
+	  if (!((Adjuster) unit).solved()) {
+	    isConverged = false;
+	    break;
+	  }
+	}
+	if (unit instanceof MultiVariableAdjuster) {
+	  if (!((MultiVariableAdjuster) unit).solved()) {
+	    isConverged = false;
+	    break;
+	  }
+	}
       }
     } while (((!isConverged || (iter < 2 && hasRecycle)) && iter < 100) && !runStep
-        && !Thread.currentThread().isInterrupted());
+	&& !Thread.currentThread().isInterrupted());
 
     // Publish simulation complete event
-    publishEvent(new ProcessEvent(ProcessEvent.generateId(),
-        ProcessEvent.EventType.SIMULATION_COMPLETE, getName(),
-        "Sequential simulation completed after " + iter + " iterations, converged=" + isConverged,
-        isConverged ? ProcessEvent.Severity.INFO : ProcessEvent.Severity.WARNING));
+    publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.SIMULATION_COMPLETE, getName(),
+	"Sequential simulation completed after " + iter + " iterations, converged=" + isConverged,
+	isConverged ? ProcessEvent.Severity.INFO : ProcessEvent.Severity.WARNING));
 
     for (int i = 0; i < executionOrder.size(); i++) {
       executionOrder.get(i).setCalculationIdentifier(id);
@@ -2706,20 +2639,20 @@ public class ProcessSystem extends SimulationBaseClass {
   public void run_step(UUID id) {
     for (int i = 0; i < unitOperations.size(); i++) {
       try {
-        if (Thread.currentThread().isInterrupted()) {
-          logger.debug("Process simulation was interrupted, exiting run()..." + getName());
-          break;
-        }
-        ProcessEquipmentInterface unit = unitOperations.get(i);
-        // Mirror the bypass guard used by run(UUID): deactivated units must stay
-        // dormant during transient timesteps as well, otherwise dynamic simulations
-        // get zero benefit from deactivateSection() / low-flow auto-bypass.
-        if (unit.isLockedInactive() || !unit.isActive()) {
-          continue;
-        }
-        unit.run(id);
+	if (Thread.currentThread().isInterrupted()) {
+	  logger.debug("Process simulation was interrupted, exiting run()..." + getName());
+	  break;
+	}
+	ProcessEquipmentInterface unit = unitOperations.get(i);
+	// Mirror the bypass guard used by run(UUID): deactivated units must stay
+	// dormant during transient timesteps as well, otherwise dynamic simulations
+	// get zero benefit from deactivateSection() / low-flow auto-bypass.
+	if (unit.isLockedInactive() || !unit.isActive()) {
+	  continue;
+	}
+	unit.run(id);
       } catch (Exception ex) {
-        throw createUnitRunException(unitOperations.get(i), ex);
+	throw createUnitRunException(unitOperations.get(i), ex);
       }
     }
     for (int i = 0; i < unitOperations.size(); i++) {
@@ -2729,8 +2662,8 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Set a listener to receive progress updates during simulation. Useful for real-time
-   * visualization in Jupyter notebooks and digital twin dashboards.
+   * Set a listener to receive progress updates during simulation. Useful for real-time visualization in Jupyter
+   * notebooks and digital twin dashboards.
    *
    * <p>
    * Example usage in Python/Jupyter:
@@ -2760,9 +2693,9 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Enables or disables event publishing to the ProcessEventBus singleton. When enabled, lifecycle
-   * events (simulation start/complete, unit errors, threshold crossings) are published to the event
-   * bus during steady-state and transient execution.
+   * Enables or disables event publishing to the ProcessEventBus singleton. When enabled, lifecycle events (simulation
+   * start/complete, unit errors, threshold crossings) are published to the event bus during steady-state and transient
+   * execution.
    *
    * @param publish true to enable event publishing, false to disable (default)
    */
@@ -2780,9 +2713,9 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Enables or disables automatic equipment validation before the first simulation iteration. When
-   * enabled, validateSetup() is called on each equipment unit before the first run. Validation
-   * failures are logged as warnings but do not abort execution.
+   * Enables or disables automatic equipment validation before the first simulation iteration. When enabled,
+   * validateSetup() is called on each equipment unit before the first run. Validation failures are logged as warnings
+   * but do not abort execution.
    *
    * @param validate true to enable auto-validation, false to disable (default)
    */
@@ -2800,10 +2733,9 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Enables or disables per-unit execution timing profiling. When enabled, each call to an
-   * equipment unit's run() method is timed and accumulated. After simulation completes, use
-   * {@link #getExecutionProfile()} to retrieve timing data and {@link #printExecutionProfile()} to
-   * print it.
+   * Enables or disables per-unit execution timing profiling. When enabled, each call to an equipment unit's run()
+   * method is timed and accumulated. After simulation completes, use {@link #getExecutionProfile()} to retrieve timing
+   * data and {@link #printExecutionProfile()} to print it.
    *
    * @param enabled true to enable profiling, false to disable (default)
    */
@@ -2827,12 +2759,11 @@ public class ProcessSystem extends SimulationBaseClass {
    * Returns the execution profile from the last simulation run.
    *
    * <p>
-   * The returned map contains equipment names as keys and arrays of
-   * {@code [total_time_ms, call_count]} as values. Equipment is sorted by total time descending.
+   * The returned map contains equipment names as keys and arrays of {@code [total_time_ms, call_count]} as values.
+   * Equipment is sorted by total time descending.
    * </p>
    *
-   * @return map from equipment name to [total_time_ms, call_count], or empty map if profiling is
-   *         disabled
+   * @return map from equipment name to [total_time_ms, call_count], or empty map if profiling is disabled
    */
   public Map<String, double[]> getExecutionProfile() {
     Map<String, double[]> result = new java.util.LinkedHashMap<>();
@@ -2844,7 +2775,7 @@ public class ProcessSystem extends SimulationBaseClass {
     Collections.sort(entries, (a, b) -> Long.compare(b.getValue()[0], a.getValue()[0]));
     for (Map.Entry<String, long[]> entry : entries) {
       long[] nanos = entry.getValue();
-      result.put(entry.getKey(), new double[] {nanos[0] / 1e6, nanos[1]});
+      result.put(entry.getKey(), new double[] { nanos[0] / 1e6, nanos[1] });
     }
     return result;
   }
@@ -2862,8 +2793,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Prints the execution profile to System.out in a formatted table.
    *
    * <p>
-   * Shows each equipment unit's total execution time, percentage of total, and call count. Useful
-   * for identifying bottleneck equipment in large process simulations.
+   * Shows each equipment unit's total execution time, percentage of total, and call count. Useful for identifying
+   * bottleneck equipment in large process simulations.
    * </p>
    */
   public void printExecutionProfile() {
@@ -2876,11 +2807,10 @@ public class ProcessSystem extends SimulationBaseClass {
     for (double[] vals : profile.values()) {
       totalMs += vals[0];
     }
-    System.out.printf("=== Execution Profile (total wall-clock: %.1f ms) ===%n",
-        getLastRunElapsedMs());
+    System.out.printf("=== Execution Profile (total wall-clock: %.1f ms) ===%n", getLastRunElapsedMs());
     System.out.printf("%-40s %10s %8s %8s%n", "Equipment", "Time (ms)", "% Total", "Calls");
-    System.out.printf("%-40s %10s %8s %8s%n", "----------------------------------------",
-        "----------", "--------", "--------");
+    System.out.printf("%-40s %10s %8s %8s%n", "----------------------------------------", "----------", "--------",
+	"--------");
     for (Map.Entry<String, double[]> entry : profile.entrySet()) {
       double ms = entry.getValue()[0];
       int calls = (int) entry.getValue()[1];
@@ -2893,14 +2823,13 @@ public class ProcessSystem extends SimulationBaseClass {
    * Records execution time for a unit operation when profiling is enabled.
    *
    * <p>
-   * Uses a {@link java.util.concurrent.ConcurrentHashMap} and
-   * {@link java.util.concurrent.atomic.AtomicLong} fields on the per-unit timing record to avoid
-   * lock contention when multiple units run in parallel. Previously this method used a global
-   * {@code synchronized(map)} block which serialized all concurrent unit runs and hid real parallel
+   * Uses a {@link java.util.concurrent.ConcurrentHashMap} and {@link java.util.concurrent.atomic.AtomicLong} fields on
+   * the per-unit timing record to avoid lock contention when multiple units run in parallel. Previously this method
+   * used a global {@code synchronized(map)} block which serialized all concurrent unit runs and hid real parallel
    * speedup when profiling was enabled.
    * </p>
    *
-   * @param unitName the name of the equipment unit
+   * @param unitName     the name of the equipment unit
    * @param elapsedNanos the elapsed time in nanoseconds
    */
   private void recordUnitTiming(String unitName, long elapsedNanos) {
@@ -2909,10 +2838,9 @@ public class ProcessSystem extends SimulationBaseClass {
     }
     long[] timing = executionTimingNanos.get(unitName);
     if (timing == null) {
-      long[] fresh = new long[] {0L, 0L};
-      long[] existing =
-          ((java.util.concurrent.ConcurrentHashMap<String, long[]>) executionTimingNanos)
-              .putIfAbsent(unitName, fresh);
+      long[] fresh = new long[] { 0L, 0L };
+      long[] existing = ((java.util.concurrent.ConcurrentHashMap<String, long[]>) executionTimingNanos)
+	  .putIfAbsent(unitName, fresh);
       timing = (existing != null) ? existing : fresh;
     }
     // Fine-grained synchronization only on the per-unit record (no cross-unit
@@ -2929,9 +2857,9 @@ public class ProcessSystem extends SimulationBaseClass {
   private void resetExecutionProfile() {
     if (profilingEnabled) {
       if (executionTimingNanos == null) {
-        executionTimingNanos = new java.util.concurrent.ConcurrentHashMap<>();
+	executionTimingNanos = new java.util.concurrent.ConcurrentHashMap<>();
       } else {
-        executionTimingNanos.clear();
+	executionTimingNanos.clear();
       }
     }
   }
@@ -2940,7 +2868,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * Runs a single equipment unit with optional profiling.
    *
    * @param unit the equipment unit to run
-   * @param id the calculation identifier
+   * @param id   the calculation identifier
    */
   private void runUnitProfiled(ProcessEquipmentInterface unit, UUID id) {
     if (unit.isLockedInactive() || !unit.isActive()) {
@@ -2960,18 +2888,17 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Skip-aware wrapper used by the dynamic ({@code runTransient}) stepping loops. Mirrors the gate
-   * in {@link #runUnitProfiled} so units that are manually locked via
-   * {@link neqsim.process.equipment.ProcessEquipmentBaseClass#setLockedInactive(boolean)} or
-   * auto-deactivated by low-flow bypass keep their current state during the timestep instead of
-   * being re-integrated. See docs/process/processmodel/low_flow_bypass.md.
+   * Skip-aware wrapper used by the dynamic ({@code runTransient}) stepping loops. Mirrors the gate in
+   * {@link #runUnitProfiled} so units that are manually locked via
+   * {@link neqsim.process.equipment.ProcessEquipmentBaseClass#setLockedInactive(boolean)} or auto-deactivated by
+   * low-flow bypass keep their current state during the timestep instead of being re-integrated. See
+   * docs/process/processmodel/low_flow_bypass.md.
    *
    * @param unit the equipment unit to step
-   * @param dt time step in seconds
-   * @param id the calculation identifier for this timestep
+   * @param dt   time step in seconds
+   * @param id   the calculation identifier for this timestep
    */
-  private void runUnitTransientSkippingInactive(ProcessEquipmentInterface unit, double dt,
-      UUID id) {
+  private void runUnitTransientSkippingInactive(ProcessEquipmentInterface unit, double dt, UUID id) {
     // Honor only the explicit user lock during dynamic stepping. Units that were
     // auto-bypassed by the low-flow heuristic on a previous (possibly steady-state)
     // pass must be given a chance to re-evaluate each timestep: they may hold dynamic
@@ -2991,15 +2918,14 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Resets the transient {@code isActive} flag to {@code true} for every unit operation that has
-   * not been explicitly locked inactive via
-   * {@link neqsim.process.equipment.ProcessEquipmentBaseClass#setLockedInactive(boolean)}.
+   * Resets the transient {@code isActive} flag to {@code true} for every unit operation that has not been explicitly
+   * locked inactive via {@link neqsim.process.equipment.ProcessEquipmentBaseClass#setLockedInactive(boolean)}.
    *
    * <p>
-   * Called automatically at the start of each public {@code run()} entry point so that units which
-   * auto-deactivated themselves on a previous solve (via
-   * {@link neqsim.process.equipment.ProcessEquipmentBaseClass#checkAndHandleLowFlow}) are given a
-   * chance to re-evaluate when feed conditions change.
+   * Called automatically at the start of each public {@code run()} entry point so that units which auto-deactivated
+   * themselves on a previous solve (via
+   * {@link neqsim.process.equipment.ProcessEquipmentBaseClass#checkAndHandleLowFlow}) are given a chance to re-evaluate
+   * when feed conditions change.
    * </p>
    */
   private void resetActiveStates() {
@@ -3013,41 +2939,40 @@ public class ProcessSystem extends SimulationBaseClass {
     boolean outermost = getRunDepth().get().intValue() <= 1;
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit.isLockedInactive()) {
-        // Manually locked-off equipment must stay inactive across runs.
-        unit.isActive(false);
+	// Manually locked-off equipment must stay inactive across runs.
+	unit.isActive(false);
       } else if (outermost && unit.needRecalculation()) {
-        // Fresh user-invoked solve AND inputs have changed: give the unit a chance to
-        // re-evaluate its low-flow status. Its run() will be invoked and any auto-bypass
-        // unit (Splitter/Separator/Heater/Compressor) will re-check flow via
-        // checkAndHandleLowFlow at the top of run().
-        unit.isActive(true);
+	// Fresh user-invoked solve AND inputs have changed: give the unit a chance to
+	// re-evaluate its low-flow status. Its run() will be invoked and any auto-bypass
+	// unit (Splitter/Separator/Heater/Compressor) will re-check flow via
+	// checkAndHandleLowFlow at the top of run().
+	unit.isActive(true);
       }
       // Otherwise (inner reset OR no input change): preserve sticky bypass state.
     }
   }
 
   /**
-   * Thread-local re-entrancy counter for {@link #resetActiveStates()}. Incremented on entry to any
-   * public {@code run(...)} overload and decremented on exit; used to distinguish the outermost
-   * (user-invoked) solve from nested inner-overload calls so transient low-flow bypass state is not
-   * clobbered mid-solve.
+   * Thread-local re-entrancy counter for {@link #resetActiveStates()}. Incremented on entry to any public
+   * {@code run(...)} overload and decremented on exit; used to distinguish the outermost (user-invoked) solve from
+   * nested inner-overload calls so transient low-flow bypass state is not clobbered mid-solve.
    */
   private transient ThreadLocal<Integer> runDepth;
 
   /**
-   * Lazily returns the re-entrancy counter ThreadLocal, initializing it if needed. Required because
-   * {@link ThreadLocal} is not {@link java.io.Serializable}; the {@code transient} field is
-   * {@code null} after deserialization (e.g. via {@link #copy()}).
+   * Lazily returns the re-entrancy counter ThreadLocal, initializing it if needed. Required because {@link ThreadLocal}
+   * is not {@link java.io.Serializable}; the {@code transient} field is {@code null} after deserialization (e.g. via
+   * {@link #copy()}).
    *
    * @return non-null ThreadLocal whose initial value is 0
    */
   private synchronized ThreadLocal<Integer> getRunDepth() {
     if (runDepth == null) {
       runDepth = new ThreadLocal<Integer>() {
-        @Override
-        protected Integer initialValue() {
-          return Integer.valueOf(0);
-        }
+	@Override
+	protected Integer initialValue() {
+	  return Integer.valueOf(0);
+	}
       };
     }
     return runDepth;
@@ -3063,8 +2988,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Decrements the re-entrancy counter used by {@link #resetActiveStates()}. See
-   * {@link #enterRunScope()}.
+   * Decrements the re-entrancy counter used by {@link #resetActiveStates()}. See {@link #enterRunScope()}.
    */
   private void exitRunScope() {
     ThreadLocal<Integer> d = getRunDepth();
@@ -3077,13 +3001,12 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Sets the low-flow bypass threshold ({@code minimumFlow}, kg/hr) on every unit operation in this
-   * process. Equipment whose primary inlet mass flow falls below this threshold will auto-bypass
-   * (mark itself inactive and skip its run) via
-   * {@link neqsim.process.equipment.ProcessEquipmentBaseClass#checkAndHandleLowFlow}.
+   * Sets the low-flow bypass threshold ({@code minimumFlow}, kg/hr) on every unit operation in this process. Equipment
+   * whose primary inlet mass flow falls below this threshold will auto-bypass (mark itself inactive and skip its run)
+   * via {@link neqsim.process.equipment.ProcessEquipmentBaseClass#checkAndHandleLowFlow}.
    *
-   * @param thresholdKgPerHour low-flow cutoff in kg/hr (must be &gt;= 0); equipment with inlet flow
-   *        below this value is bypassed
+   * @param thresholdKgPerHour low-flow cutoff in kg/hr (must be &gt;= 0); equipment with inlet flow below this value is
+   *                           bypassed
    */
   public void setSectionLowFlowThreshold(double thresholdKgPerHour) {
     if (thresholdKgPerHour < 0.0) {
@@ -3095,14 +3018,12 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Sets the low-flow bypass threshold ({@code minimumFlow}, kg/hr) on a single named unit
-   * operation. Useful for tuning per-unit cutoffs (e.g., a higher threshold on a small recycle pump
-   * than on the main feed train).
+   * Sets the low-flow bypass threshold ({@code minimumFlow}, kg/hr) on a single named unit operation. Useful for tuning
+   * per-unit cutoffs (e.g., a higher threshold on a small recycle pump than on the main feed train).
    *
-   * @param unitName name of the unit to configure
+   * @param unitName           name of the unit to configure
    * @param thresholdKgPerHour low-flow cutoff in kg/hr (must be &gt;= 0)
-   * @throws IllegalArgumentException if no unit with the given name exists or the threshold is
-   *         negative
+   * @throws IllegalArgumentException if no unit with the given name exists or the threshold is negative
    */
   public void setSectionLowFlowThreshold(String unitName, double thresholdKgPerHour) {
     if (thresholdKgPerHour < 0.0) {
@@ -3116,12 +3037,12 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Sets the low-flow bypass threshold on every unit operation as a fraction of the unit's current
-   * primary inlet flow. Useful as a relative cutoff (e.g., "bypass anything currently below 1% of
-   * its inlet flow"). Units with no inlet stream or whose inlet flow lookup fails are skipped.
+   * Sets the low-flow bypass threshold on every unit operation as a fraction of the unit's current primary inlet flow.
+   * Useful as a relative cutoff (e.g., "bypass anything currently below 1% of its inlet flow"). Units with no inlet
+   * stream or whose inlet flow lookup fails are skipped.
    *
-   * @param fraction fraction of the current inlet flow to use as the cutoff (must be &gt;= 0,
-   *        typical values 0.001 - 0.05)
+   * @param fraction fraction of the current inlet flow to use as the cutoff (must be &gt;= 0, typical values 0.001 -
+   *                 0.05)
    * @return the number of units whose threshold was updated
    * @throws IllegalArgumentException if fraction is negative
    */
@@ -3133,30 +3054,29 @@ public class ProcessSystem extends SimulationBaseClass {
     for (ProcessEquipmentInterface unit : unitOperations) {
       java.util.List<neqsim.process.equipment.stream.StreamInterface> inlets;
       try {
-        inlets = unit.getInletStreams();
+	inlets = unit.getInletStreams();
       } catch (RuntimeException ex) {
-        continue;
+	continue;
       }
       if (inlets == null || inlets.isEmpty() || inlets.get(0) == null) {
-        continue;
+	continue;
       }
       try {
-        double inletFlow = inlets.get(0).getFlowRate("kg/hr");
-        if (Double.isFinite(inletFlow) && inletFlow > 0.0) {
-          unit.setMinimumFlow(inletFlow * fraction);
-          updated++;
-        }
+	double inletFlow = inlets.get(0).getFlowRate("kg/hr");
+	if (Double.isFinite(inletFlow) && inletFlow > 0.0) {
+	  unit.setMinimumFlow(inletFlow * fraction);
+	  updated++;
+	}
       } catch (RuntimeException ex) {
-        // skip units with no thermo system yet
+	// skip units with no thermo system yet
       }
     }
     return updated;
   }
 
   /**
-   * Returns the names of every unit operation that is currently bypassed (either manually locked
-   * inactive or auto-bypassed via low-flow detection). Useful for post-run diagnostics in agents
-   * and notebooks.
+   * Returns the names of every unit operation that is currently bypassed (either manually locked inactive or
+   * auto-bypassed via low-flow detection). Useful for post-run diagnostics in agents and notebooks.
    *
    * @return ordered list of bypassed unit names (may be empty)
    */
@@ -3164,18 +3084,17 @@ public class ProcessSystem extends SimulationBaseClass {
     java.util.List<String> bypassed = new java.util.ArrayList<String>();
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit.isLockedInactive() || !unit.isActive()) {
-        bypassed.add(unit.getName());
+	bypassed.add(unit.getName());
       }
     }
     return bypassed;
   }
 
   /**
-   * Manually deactivates a section of the flowsheet by locking the named starting unit and every
-   * downstream unit reachable via {@link ProcessConnection.ConnectionType#MATERIAL} edges in
-   * {@link #getConnections()}. Traversal stops at any {@link neqsim.process.equipment.mixer.Mixer}
-   * whose other inlet streams are still served by active equipment, so the active part of the
-   * flowsheet keeps running.
+   * Manually deactivates a section of the flowsheet by locking the named starting unit and every downstream unit
+   * reachable via {@link ProcessConnection.ConnectionType#MATERIAL} edges in {@link #getConnections()}. Traversal stops
+   * at any {@link neqsim.process.equipment.mixer.Mixer} whose other inlet streams are still served by active equipment,
+   * so the active part of the flowsheet keeps running.
    *
    * @param startUnitName name of the unit at the top of the section to deactivate
    * @return the number of units that were locked inactive (including the start unit)
@@ -3186,56 +3105,53 @@ public class ProcessSystem extends SimulationBaseClass {
     if (start == null) {
       throw new IllegalArgumentException("No unit named '" + startUnitName + "' in process");
     }
-    java.util.Set<ProcessEquipmentInterface> visited =
-        new java.util.LinkedHashSet<ProcessEquipmentInterface>();
-    java.util.Deque<ProcessEquipmentInterface> stack =
-        new java.util.ArrayDeque<ProcessEquipmentInterface>();
+    java.util.Set<ProcessEquipmentInterface> visited = new java.util.LinkedHashSet<ProcessEquipmentInterface>();
+    java.util.Deque<ProcessEquipmentInterface> stack = new java.util.ArrayDeque<ProcessEquipmentInterface>();
     stack.push(start);
     while (!stack.isEmpty()) {
       ProcessEquipmentInterface u = stack.pop();
       if (!visited.add(u)) {
-        continue;
+	continue;
       }
       // If this is a mixer or recycle node with other (still-active) feed equipment, do not
       // descend past it — otherwise we would silently kill an unrelated branch that still has live
       // feeds.
       if (u != start && (u instanceof neqsim.process.equipment.mixer.Mixer
-          || u instanceof neqsim.process.equipment.util.Recycle)) {
-        boolean hasOtherActiveFeed = false;
-        for (ProcessConnection c : connections) {
-          if (c.getType() != ProcessConnection.ConnectionType.MATERIAL) {
-            continue;
-          }
-          ProcessEquipmentInterface target = getUnit(c.getTargetEquipment());
-          ProcessEquipmentInterface source = getUnit(c.getSourceEquipment());
-          if (target == u && source != null && !visited.contains(source)
-              && !source.isLockedInactive()) {
-            hasOtherActiveFeed = true;
-            break;
-          }
-        }
-        // Fallback: detect other active feeds via stream wiring (inlet stream of u produced by a
-        // unit that is still active). This makes the guard work for flowsheets built with
-        // getOutletStream() wiring without explicit connect() registration.
-        if (!hasOtherActiveFeed && hasOtherActiveFeedViaStreams(u, visited)) {
-          hasOtherActiveFeed = true;
-        }
-        if (hasOtherActiveFeed) {
-          // This node is a live boundary (a parallel feed keeps it active): do not descend past it
-          // and do not lock it. Only units strictly downstream of the start belong to the section.
-          visited.remove(u);
-          continue;
-        }
+	  || u instanceof neqsim.process.equipment.util.Recycle)) {
+	boolean hasOtherActiveFeed = false;
+	for (ProcessConnection c : connections) {
+	  if (c.getType() != ProcessConnection.ConnectionType.MATERIAL) {
+	    continue;
+	  }
+	  ProcessEquipmentInterface target = getUnit(c.getTargetEquipment());
+	  ProcessEquipmentInterface source = getUnit(c.getSourceEquipment());
+	  if (target == u && source != null && !visited.contains(source) && !source.isLockedInactive()) {
+	    hasOtherActiveFeed = true;
+	    break;
+	  }
+	}
+	// Fallback: detect other active feeds via stream wiring (inlet stream of u produced by a
+	// unit that is still active). This makes the guard work for flowsheets built with
+	// getOutletStream() wiring without explicit connect() registration.
+	if (!hasOtherActiveFeed && hasOtherActiveFeedViaStreams(u, visited)) {
+	  hasOtherActiveFeed = true;
+	}
+	if (hasOtherActiveFeed) {
+	  // This node is a live boundary (a parallel feed keeps it active): do not descend past it
+	  // and do not lock it. Only units strictly downstream of the start belong to the section.
+	  visited.remove(u);
+	  continue;
+	}
       }
       for (ProcessConnection c : connections) {
-        if (c.getType() != ProcessConnection.ConnectionType.MATERIAL) {
-          continue;
-        }
-        ProcessEquipmentInterface source = getUnit(c.getSourceEquipment());
-        ProcessEquipmentInterface target = getUnit(c.getTargetEquipment());
-        if (source == u && target != null) {
-          stack.push(target);
-        }
+	if (c.getType() != ProcessConnection.ConnectionType.MATERIAL) {
+	  continue;
+	}
+	ProcessEquipmentInterface source = getUnit(c.getSourceEquipment());
+	ProcessEquipmentInterface target = getUnit(c.getTargetEquipment());
+	if (source == u && target != null) {
+	  stack.push(target);
+	}
       }
       // Fallback: also walk via stream wiring (outlet stream of u == inlet stream of v).
       // This makes deactivateSection() work for flowsheets built with getOutletStream() wiring
@@ -3249,12 +3165,12 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Detects whether a mixer/recycle node still has at least one active feed coming from a unit that
-   * is not already part of the deactivated set, using stream wiring (an inlet stream of the node is
-   * an outlet stream of some other still-active unit). Complements the {@link ProcessConnection}
-   * based check so the guard also protects flowsheets built with {@code getOutletStream()} wiring.
+   * Detects whether a mixer/recycle node still has at least one active feed coming from a unit that is not already part
+   * of the deactivated set, using stream wiring (an inlet stream of the node is an outlet stream of some other
+   * still-active unit). Complements the {@link ProcessConnection} based check so the guard also protects flowsheets
+   * built with {@code getOutletStream()} wiring.
    *
-   * @param node the mixer or recycle unit being evaluated
+   * @param node    the mixer or recycle unit being evaluated
    * @param visited the set of units already scheduled for deactivation
    * @return {@code true} if another active feed reaches the node, {@code false} otherwise
    */
@@ -3271,47 +3187,46 @@ public class ProcessSystem extends SimulationBaseClass {
     }
     for (neqsim.process.equipment.stream.StreamInterface inlet : nodeInlets) {
       if (inlet == null) {
-        continue;
+	continue;
       }
       // An inlet stream that is itself a still-active registered unit (e.g. a feed Stream, which
       // is both a StreamInterface and a ProcessEquipmentInterface) counts as a live feed. Feed
       // streams report no outlet streams, so they are not found by the source-outlet scan below.
-      if (inlet instanceof ProcessEquipmentInterface && unitOperations.contains(inlet)
-          && !visited.contains(inlet) && !((ProcessEquipmentInterface) inlet).isLockedInactive()) {
-        return true;
+      if (inlet instanceof ProcessEquipmentInterface && unitOperations.contains(inlet) && !visited.contains(inlet)
+	  && !((ProcessEquipmentInterface) inlet).isLockedInactive()) {
+	return true;
       }
       for (ProcessEquipmentInterface source : unitOperations) {
-        if (source == node || visited.contains(source) || source.isLockedInactive()) {
-          continue;
-        }
-        java.util.List<neqsim.process.equipment.stream.StreamInterface> sourceOutlets;
-        try {
-          sourceOutlets = source.getOutletStreams();
-        } catch (Exception ex) {
-          continue;
-        }
-        if (sourceOutlets == null) {
-          continue;
-        }
-        for (neqsim.process.equipment.stream.StreamInterface outlet : sourceOutlets) {
-          if (outlet == inlet) {
-            return true;
-          }
-        }
+	if (source == node || visited.contains(source) || source.isLockedInactive()) {
+	  continue;
+	}
+	java.util.List<neqsim.process.equipment.stream.StreamInterface> sourceOutlets;
+	try {
+	  sourceOutlets = source.getOutletStreams();
+	} catch (Exception ex) {
+	  continue;
+	}
+	if (sourceOutlets == null) {
+	  continue;
+	}
+	for (neqsim.process.equipment.stream.StreamInterface outlet : sourceOutlets) {
+	  if (outlet == inlet) {
+	    return true;
+	  }
+	}
       }
     }
     return false;
   }
 
   /**
-   * Pushes onto the stack every unit operation in this process whose inlet stream list contains an
-   * outlet stream of the given source unit. Used as a fallback traversal in
-   * {@link #deactivateSection(String)} and {@link #activateSection(String)} so the feature works
-   * even when {@link ProcessConnection} edges were never registered with
-   * {@link #connect(String, String)}.
+   * Pushes onto the stack every unit operation in this process whose inlet stream list contains an outlet stream of the
+   * given source unit. Used as a fallback traversal in {@link #deactivateSection(String)} and
+   * {@link #activateSection(String)} so the feature works even when {@link ProcessConnection} edges were never
+   * registered with {@link #connect(String, String)}.
    *
    * @param source the unit whose outlet streams should be followed downstream
-   * @param stack DFS stack to push discovered downstream units onto
+   * @param stack  DFS stack to push discovered downstream units onto
    */
   private void pushDownstreamViaStreams(ProcessEquipmentInterface source,
       java.util.Deque<ProcessEquipmentInterface> stack) {
@@ -3326,34 +3241,34 @@ public class ProcessSystem extends SimulationBaseClass {
     }
     for (ProcessEquipmentInterface v : unitOperations) {
       if (v == source) {
-        continue;
+	continue;
       }
       java.util.List<neqsim.process.equipment.stream.StreamInterface> vInlets;
       try {
-        vInlets = v.getInletStreams();
+	vInlets = v.getInletStreams();
       } catch (Exception ex) {
-        continue;
+	continue;
       }
       if (vInlets == null) {
-        continue;
+	continue;
       }
       for (neqsim.process.equipment.stream.StreamInterface outlet : outlets) {
-        if (outlet == null) {
-          continue;
-        }
-        for (neqsim.process.equipment.stream.StreamInterface inlet : vInlets) {
-          if (inlet == outlet) {
-            stack.push(v);
-            break;
-          }
-        }
+	if (outlet == null) {
+	  continue;
+	}
+	for (neqsim.process.equipment.stream.StreamInterface inlet : vInlets) {
+	  if (inlet == outlet) {
+	    stack.push(v);
+	    break;
+	  }
+	}
       }
     }
   }
 
   /**
-   * Re-activates a previously deactivated section of the flowsheet by clearing the locked-inactive
-   * flag on the named starting unit and every downstream unit reachable via MATERIAL connections.
+   * Re-activates a previously deactivated section of the flowsheet by clearing the locked-inactive flag on the named
+   * starting unit and every downstream unit reachable via MATERIAL connections.
    *
    * @param startUnitName name of the unit at the top of the section to reactivate
    * @return the number of units that were unlocked (including the start unit)
@@ -3364,25 +3279,23 @@ public class ProcessSystem extends SimulationBaseClass {
     if (start == null) {
       throw new IllegalArgumentException("No unit named '" + startUnitName + "' in process");
     }
-    java.util.Set<ProcessEquipmentInterface> visited =
-        new java.util.LinkedHashSet<ProcessEquipmentInterface>();
-    java.util.Deque<ProcessEquipmentInterface> stack =
-        new java.util.ArrayDeque<ProcessEquipmentInterface>();
+    java.util.Set<ProcessEquipmentInterface> visited = new java.util.LinkedHashSet<ProcessEquipmentInterface>();
+    java.util.Deque<ProcessEquipmentInterface> stack = new java.util.ArrayDeque<ProcessEquipmentInterface>();
     stack.push(start);
     while (!stack.isEmpty()) {
       ProcessEquipmentInterface u = stack.pop();
       if (!visited.add(u)) {
-        continue;
+	continue;
       }
       for (ProcessConnection c : connections) {
-        if (c.getType() != ProcessConnection.ConnectionType.MATERIAL) {
-          continue;
-        }
-        ProcessEquipmentInterface source = getUnit(c.getSourceEquipment());
-        ProcessEquipmentInterface target = getUnit(c.getTargetEquipment());
-        if (source == u && target != null) {
-          stack.push(target);
-        }
+	if (c.getType() != ProcessConnection.ConnectionType.MATERIAL) {
+	  continue;
+	}
+	ProcessEquipmentInterface source = getUnit(c.getSourceEquipment());
+	ProcessEquipmentInterface target = getUnit(c.getTargetEquipment());
+	if (source == u && target != null) {
+	  stack.push(target);
+	}
       }
       pushDownstreamViaStreams(u, stack);
     }
@@ -3401,17 +3314,16 @@ public class ProcessSystem extends SimulationBaseClass {
     int count = 0;
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit.isLockedInactive()) {
-        unit.setLockedInactive(false);
-        count++;
+	unit.setLockedInactive(false);
+	count++;
       }
     }
     return count;
   }
 
   /**
-   * Run simulation with a simple callback for each completed unit operation. This is a convenience
-   * method for Python/Jupyter integration where implementing the full SimulationProgressListener
-   * interface may be cumbersome.
+   * Run simulation with a simple callback for each completed unit operation. This is a convenience method for
+   * Python/Jupyter integration where implementing the full SimulationProgressListener interface may be cumbersome.
    *
    * <p>
    * Example usage in Python/Jupyter:
@@ -3425,8 +3337,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * process.runWithCallback(on_complete)
    * </pre>
    *
-   * @param callback Consumer function called with each completed unit operation. May be null for no
-   *        callbacks (equivalent to regular run()).
+   * @param callback Consumer function called with each completed unit operation. May be null for no callbacks
+   *                 (equivalent to regular run()).
    */
   public void runWithCallback(java.util.function.Consumer<ProcessEquipmentInterface> callback) {
     runWithCallback(callback, UUID.randomUUID());
@@ -3436,19 +3348,17 @@ public class ProcessSystem extends SimulationBaseClass {
    * Run simulation with a simple callback for each completed unit operation.
    *
    * @param callback Consumer function called with each completed unit operation
-   * @param id calculation identifier for tracking
+   * @param id       calculation identifier for tracking
    */
-  public void runWithCallback(java.util.function.Consumer<ProcessEquipmentInterface> callback,
-      UUID id) {
+  public void runWithCallback(java.util.function.Consumer<ProcessEquipmentInterface> callback, UUID id) {
     // Wrap the simple callback in a full listener if provided
     SimulationProgressListener originalListener = this.progressListener;
     if (callback != null) {
       this.progressListener = new SimulationProgressListener() {
-        @Override
-        public void onUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits,
-            int iterationNumber) {
-          callback.accept(unit);
-        }
+	@Override
+	public void onUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits, int iterationNumber) {
+	  callback.accept(unit);
+	}
       };
     }
 
@@ -3461,13 +3371,11 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Run simulation with full progress monitoring. This method executes the process system and
-   * invokes the registered SimulationProgressListener after each unit operation and iteration
-   * completes.
+   * Run simulation with full progress monitoring. This method executes the process system and invokes the registered
+   * SimulationProgressListener after each unit operation and iteration completes.
    *
    * <p>
-   * This is the primary method for digital twin applications requiring real-time feedback. It
-   * supports:
+   * This is the primary method for digital twin applications requiring real-time feedback. It supports:
    * <ul>
    * <li>Progress callbacks after each unit operation</li>
    * <li>Iteration callbacks for recycle convergence monitoring</li>
@@ -3492,7 +3400,7 @@ public class ProcessSystem extends SimulationBaseClass {
     // Notify simulation start
     notifySimulationStart(totalUnits);
     publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.INFO, getName(),
-        "Simulation started with " + totalUnits + " units", ProcessEvent.Severity.INFO));
+	"Simulation started with " + totalUnits + " units", ProcessEvent.Severity.INFO));
 
     // Auto-validate equipment setup before first run
     if (autoValidate) {
@@ -3503,8 +3411,8 @@ public class ProcessSystem extends SimulationBaseClass {
     for (int i = 0; i < totalUnits; i++) {
       ProcessEquipmentInterface unit = executionOrder.get(i);
       if (unit instanceof Setter) {
-        unit.run(id);
-        notifyUnitComplete(unit, i, totalUnits, 0);
+	unit.run(id);
+	notifyUnitComplete(unit, i, totalUnits, 0);
       }
     }
 
@@ -3514,8 +3422,8 @@ public class ProcessSystem extends SimulationBaseClass {
     for (int i = 0; i < totalUnits; i++) {
       ProcessEquipmentInterface unit = executionOrder.get(i);
       if (unit instanceof Recycle) {
-        hasRecycle = true;
-        recycleController.addRecycle((Recycle) unit);
+	hasRecycle = true;
+	recycleController.addRecycle((Recycle) unit);
       }
     }
     recycleController.init();
@@ -3529,76 +3437,74 @@ public class ProcessSystem extends SimulationBaseClass {
 
       // Notify before-iteration
       notifyBeforeIteration(iter);
-      publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.STATE_CHANGE,
-          getName(), "Starting iteration " + iter, ProcessEvent.Severity.DEBUG));
+      publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.STATE_CHANGE, getName(),
+	  "Starting iteration " + iter, ProcessEvent.Severity.DEBUG));
 
       for (int i = 0; i < totalUnits; i++) {
-        ProcessEquipmentInterface unit = executionOrder.get(i);
+	ProcessEquipmentInterface unit = executionOrder.get(i);
 
-        if (Thread.currentThread().isInterrupted()) {
-          logger.debug(
-              "Process simulation was interrupted, exiting runWithProgress()..." + getName());
-          break;
-        }
+	if (Thread.currentThread().isInterrupted()) {
+	  logger.debug("Process simulation was interrupted, exiting runWithProgress()..." + getName());
+	  break;
+	}
 
-        if (!(unit instanceof Recycle)) {
-          try {
-            if (iter == 1 || unit.needRecalculation()) {
-              notifyBeforeUnit(unit, i, totalUnits, iter);
-              unit.run(id);
-            }
-            notifyUnitComplete(unit, i, totalUnits, iter);
-          } catch (Exception ex) {
-            logger.error("Error running unit operation " + unit.getName() + " " + ex.getMessage(),
-                ex);
-            publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.ERROR,
-                unit.getName(), "Unit error: " + ex.getMessage(), ProcessEvent.Severity.ERROR));
-            if (!notifyUnitError(unit, ex)) {
-              // Listener requested abort
-              return;
-            }
-          }
-        }
+	if (!(unit instanceof Recycle)) {
+	  try {
+	    if (iter == 1 || unit.needRecalculation()) {
+	      notifyBeforeUnit(unit, i, totalUnits, iter);
+	      unit.run(id);
+	    }
+	    notifyUnitComplete(unit, i, totalUnits, iter);
+	  } catch (Exception ex) {
+	    logger.error("Error running unit operation " + unit.getName() + " " + ex.getMessage(), ex);
+	    publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.ERROR, unit.getName(),
+		"Unit error: " + ex.getMessage(), ProcessEvent.Severity.ERROR));
+	    if (!notifyUnitError(unit, ex)) {
+	      // Listener requested abort
+	      return;
+	    }
+	  }
+	}
 
-        if (unit instanceof Recycle && recycleController.doSolveRecycle((Recycle) unit)) {
-          try {
-            notifyBeforeUnit(unit, i, totalUnits, iter);
-            unit.run(id);
-            notifyUnitComplete(unit, i, totalUnits, iter);
-          } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
-            if (!notifyUnitError(unit, ex)) {
-              return;
-            }
-          }
-        }
+	if (unit instanceof Recycle && recycleController.doSolveRecycle((Recycle) unit)) {
+	  try {
+	    notifyBeforeUnit(unit, i, totalUnits, iter);
+	    unit.run(id);
+	    notifyUnitComplete(unit, i, totalUnits, iter);
+	  } catch (Exception ex) {
+	    logger.error(ex.getMessage(), ex);
+	    if (!notifyUnitError(unit, ex)) {
+	      return;
+	    }
+	  }
+	}
       }
 
       // Check convergence
       if (!recycleController.solvedAll() || recycleController.hasHigherPriorityLevel()) {
-        isConverged = false;
+	isConverged = false;
       }
 
       if (recycleController.solvedCurrentPriorityLevel()) {
-        recycleController.nextPriorityLevel();
+	recycleController.nextPriorityLevel();
       } else if (recycleController.hasLoverPriorityLevel() && !recycleController.solvedAll()) {
-        recycleController.resetPriorityLevel();
+	recycleController.resetPriorityLevel();
       }
 
       for (int i = 0; i < totalUnits; i++) {
-        ProcessEquipmentInterface unit = executionOrder.get(i);
-        if (unit instanceof Adjuster) {
-          if (!((Adjuster) unit).solved()) {
-            isConverged = false;
-            break;
-          }
-        }
-        if (unit instanceof MultiVariableAdjuster) {
-          if (!((MultiVariableAdjuster) unit).solved()) {
-            isConverged = false;
-            break;
-          }
-        }
+	ProcessEquipmentInterface unit = executionOrder.get(i);
+	if (unit instanceof Adjuster) {
+	  if (!((Adjuster) unit).solved()) {
+	    isConverged = false;
+	    break;
+	  }
+	}
+	if (unit instanceof MultiVariableAdjuster) {
+	  if (!((MultiVariableAdjuster) unit).solved()) {
+	    isConverged = false;
+	    break;
+	  }
+	}
       }
 
       // Notify iteration complete
@@ -3606,14 +3512,13 @@ public class ProcessSystem extends SimulationBaseClass {
       notifyIterationComplete(iter, isConverged, recycleError);
 
     } while (((!isConverged || (iter < 2 && hasRecycle)) && iter < 100) && !runStep
-        && !Thread.currentThread().isInterrupted());
+	&& !Thread.currentThread().isInterrupted());
 
     // Notify simulation complete
     notifySimulationComplete(iter, isConverged);
-    publishEvent(new ProcessEvent(ProcessEvent.generateId(),
-        ProcessEvent.EventType.SIMULATION_COMPLETE, getName(),
-        "Simulation completed after " + iter + " iterations, converged=" + isConverged,
-        isConverged ? ProcessEvent.Severity.INFO : ProcessEvent.Severity.WARNING));
+    publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.SIMULATION_COMPLETE, getName(),
+	"Simulation completed after " + iter + " iterations, converged=" + isConverged,
+	isConverged ? ProcessEvent.Severity.INFO : ProcessEvent.Severity.WARNING));
 
     for (int i = 0; i < totalUnits; i++) {
       executionOrder.get(i).setCalculationIdentifier(id);
@@ -3624,18 +3529,17 @@ public class ProcessSystem extends SimulationBaseClass {
   /**
    * Notify the progress listener that a unit operation has completed.
    *
-   * @param unit the completed unit
-   * @param unitIndex index of the unit
-   * @param totalUnits total number of units
+   * @param unit            the completed unit
+   * @param unitIndex       index of the unit
+   * @param totalUnits      total number of units
    * @param iterationNumber current iteration
    */
-  private void notifyUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits,
-      int iterationNumber) {
+  private void notifyUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits, int iterationNumber) {
     if (progressListener != null) {
       try {
-        progressListener.onUnitComplete(unit, unitIndex, totalUnits, iterationNumber);
+	progressListener.onUnitComplete(unit, unitIndex, totalUnits, iterationNumber);
       } catch (Exception ex) {
-        logger.warn("Progress listener threw exception in onUnitComplete: " + ex.getMessage());
+	logger.warn("Progress listener threw exception in onUnitComplete: " + ex.getMessage());
       }
     }
   }
@@ -3644,16 +3548,15 @@ public class ProcessSystem extends SimulationBaseClass {
    * Notify the progress listener that an iteration has completed.
    *
    * @param iterationNumber the completed iteration
-   * @param converged whether the system has converged
-   * @param recycleError maximum recycle error
+   * @param converged       whether the system has converged
+   * @param recycleError    maximum recycle error
    */
-  private void notifyIterationComplete(int iterationNumber, boolean converged,
-      double recycleError) {
+  private void notifyIterationComplete(int iterationNumber, boolean converged, double recycleError) {
     if (progressListener != null) {
       try {
-        progressListener.onIterationComplete(iterationNumber, converged, recycleError);
+	progressListener.onIterationComplete(iterationNumber, converged, recycleError);
       } catch (Exception ex) {
-        logger.warn("Progress listener threw exception in onIterationComplete: " + ex.getMessage());
+	logger.warn("Progress listener threw exception in onIterationComplete: " + ex.getMessage());
       }
     }
   }
@@ -3661,16 +3564,16 @@ public class ProcessSystem extends SimulationBaseClass {
   /**
    * Notify the progress listener that a unit operation encountered an error.
    *
-   * @param unit the unit that failed
+   * @param unit      the unit that failed
    * @param exception the exception
    * @return true to continue, false to abort
    */
   private boolean notifyUnitError(ProcessEquipmentInterface unit, Exception exception) {
     if (progressListener != null) {
       try {
-        return progressListener.onUnitError(unit, exception);
+	return progressListener.onUnitError(unit, exception);
       } catch (Exception ex) {
-        logger.warn("Progress listener threw exception in onUnitError: " + ex.getMessage());
+	logger.warn("Progress listener threw exception in onUnitError: " + ex.getMessage());
       }
     }
     return false; // Default: abort on error
@@ -3679,18 +3582,17 @@ public class ProcessSystem extends SimulationBaseClass {
   /**
    * Notify the progress listener that a unit operation is about to start.
    *
-   * @param unit the unit about to run
-   * @param unitIndex index of the unit
-   * @param totalUnits total number of units
+   * @param unit            the unit about to run
+   * @param unitIndex       index of the unit
+   * @param totalUnits      total number of units
    * @param iterationNumber current iteration
    */
-  private void notifyBeforeUnit(ProcessEquipmentInterface unit, int unitIndex, int totalUnits,
-      int iterationNumber) {
+  private void notifyBeforeUnit(ProcessEquipmentInterface unit, int unitIndex, int totalUnits, int iterationNumber) {
     if (progressListener != null) {
       try {
-        progressListener.onBeforeUnit(unit, unitIndex, totalUnits, iterationNumber);
+	progressListener.onBeforeUnit(unit, unitIndex, totalUnits, iterationNumber);
       } catch (Exception ex) {
-        logger.warn("Progress listener threw exception in onBeforeUnit: " + ex.getMessage());
+	logger.warn("Progress listener threw exception in onBeforeUnit: " + ex.getMessage());
       }
     }
   }
@@ -3703,9 +3605,9 @@ public class ProcessSystem extends SimulationBaseClass {
   private void notifyBeforeIteration(int iterationNumber) {
     if (progressListener != null) {
       try {
-        progressListener.onBeforeIteration(iterationNumber);
+	progressListener.onBeforeIteration(iterationNumber);
       } catch (Exception ex) {
-        logger.warn("Progress listener threw exception in onBeforeIteration: " + ex.getMessage());
+	logger.warn("Progress listener threw exception in onBeforeIteration: " + ex.getMessage());
       }
     }
   }
@@ -3718,9 +3620,9 @@ public class ProcessSystem extends SimulationBaseClass {
   private void notifySimulationStart(int totalUnits) {
     if (progressListener != null) {
       try {
-        progressListener.onSimulationStart(totalUnits);
+	progressListener.onSimulationStart(totalUnits);
       } catch (Exception ex) {
-        logger.warn("Progress listener threw exception in onSimulationStart: " + ex.getMessage());
+	logger.warn("Progress listener threw exception in onSimulationStart: " + ex.getMessage());
       }
     }
   }
@@ -3729,15 +3631,14 @@ public class ProcessSystem extends SimulationBaseClass {
    * Notify the progress listener that the simulation has completed.
    *
    * @param totalIterations total number of iterations executed
-   * @param converged whether the simulation converged
+   * @param converged       whether the simulation converged
    */
   private void notifySimulationComplete(int totalIterations, boolean converged) {
     if (progressListener != null) {
       try {
-        progressListener.onSimulationComplete(totalIterations, converged);
+	progressListener.onSimulationComplete(totalIterations, converged);
       } catch (Exception ex) {
-        logger
-            .warn("Progress listener threw exception in onSimulationComplete: " + ex.getMessage());
+	logger.warn("Progress listener threw exception in onSimulationComplete: " + ex.getMessage());
       }
     }
   }
@@ -3750,16 +3651,15 @@ public class ProcessSystem extends SimulationBaseClass {
   private void publishEvent(ProcessEvent event) {
     if (publishEvents && event != null) {
       try {
-        ProcessEventBus.getInstance().publish(event);
+	ProcessEventBus.getInstance().publish(event);
       } catch (Exception ex) {
-        logger.warn("Failed to publish process event: " + ex.getMessage());
+	logger.warn("Failed to publish process event: " + ex.getMessage());
       }
     }
   }
 
   /**
-   * Run auto-validation on all equipment units. Called once before the first iteration when
-   * autoValidate is enabled.
+   * Run auto-validation on all equipment units. Called once before the first iteration when autoValidate is enabled.
    *
    * @param executionOrder the list of units to validate
    */
@@ -3767,16 +3667,15 @@ public class ProcessSystem extends SimulationBaseClass {
     for (int i = 0; i < executionOrder.size(); i++) {
       ProcessEquipmentInterface unit = executionOrder.get(i);
       try {
-        neqsim.util.validation.ValidationResult result = unit.validateSetup();
-        if (result != null && !result.isValid()) {
-          logger.warn("Validation warning for " + unit.getName() + ": " + result);
-          if (publishEvents) {
-            publishEvent(ProcessEvent.warning(unit.getName(),
-                "Setup validation failed: " + result.toString()));
-          }
-        }
+	neqsim.util.validation.ValidationResult result = unit.validateSetup();
+	if (result != null && !result.isValid()) {
+	  logger.warn("Validation warning for " + unit.getName() + ": " + result);
+	  if (publishEvents) {
+	    publishEvent(ProcessEvent.warning(unit.getName(), "Setup validation failed: " + result.toString()));
+	  }
+	}
       } catch (Exception ex) {
-        logger.debug("Could not validate " + unit.getName() + ": " + ex.getMessage());
+	logger.debug("Could not validate " + unit.getName() + ": " + ex.getMessage());
       }
     }
   }
@@ -3785,12 +3684,10 @@ public class ProcessSystem extends SimulationBaseClass {
    * signalDB = new String[1000][1 + 3 * measurementDevices.size()];
    *
    * signalDB[timeStepNumber] = new String[1 + 3 * measurementDevices.size()]; for (int i = 0; i <
-   * measurementDevices.size(); i++) { signalDB[timeStepNumber][0] = Double.toString(time);
-   * signalDB[timeStepNumber][3 * i + 1] = ((MeasurementDeviceInterface) measurementDevices.get(i))
-   * .getName(); signalDB[timeStepNumber][3 * i + 2] = Double
-   * .toString(((MeasurementDeviceInterface) measurementDevices.get(i)).getMeasuredValue());
-   * signalDB[timeStepNumber][3 * i + 3] = ((MeasurementDeviceInterface) measurementDevices.get(i))
-   * .getUnit(); }
+   * measurementDevices.size(); i++) { signalDB[timeStepNumber][0] = Double.toString(time); signalDB[timeStepNumber][3 *
+   * i + 1] = ((MeasurementDeviceInterface) measurementDevices.get(i)) .getName(); signalDB[timeStepNumber][3 * i + 2] =
+   * Double .toString(((MeasurementDeviceInterface) measurementDevices.get(i)).getMeasuredValue());
+   * signalDB[timeStepNumber][3 * i + 3] = ((MeasurementDeviceInterface) measurementDevices.get(i)) .getUnit(); }
    */
 
   /**
@@ -3808,15 +3705,15 @@ public class ProcessSystem extends SimulationBaseClass {
     ensureInitialStateSnapshot();
 
     // Publish pre-timestep event
-    publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.STATE_CHANGE,
-        getName(), "Transient timestep " + timeStepNumber + " starting at t="
-            + String.format("%.3f", time) + " s, dt=" + String.format("%.4f", dt) + " s",
-        ProcessEvent.Severity.DEBUG));
+    publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.STATE_CHANGE, getName(),
+	"Transient timestep " + timeStepNumber + " starting at t=" + String.format("%.3f", time) + " s, dt="
+	    + String.format("%.4f", dt) + " s",
+	ProcessEvent.Severity.DEBUG));
 
     for (int i = 0; i < unitOperations.size(); i++) {
       ProcessEquipmentInterface unit = unitOperations.get(i);
       if (unit instanceof Setter) {
-        unit.run(id);
+	unit.run(id);
       }
     }
 
@@ -3838,13 +3735,13 @@ public class ProcessSystem extends SimulationBaseClass {
     if (enableMassBalanceTracking) {
       double currentMass = calculateTotalSystemMass();
       if (previousTotalMass > 0) {
-        massBalanceError = Math.abs(currentMass - previousTotalMass) / previousTotalMass * 100.0;
-        if (massBalanceError > massBalanceErrorThreshold) {
-          logger.warn("Mass balance error: " + String.format("%.3f", massBalanceError)
-              + "% (threshold: " + massBalanceErrorThreshold + "%) at time " + time + " s");
-          publishEvent(ProcessEvent.thresholdCrossed(getName(), "massBalanceError",
-              massBalanceError, massBalanceErrorThreshold, true));
-        }
+	massBalanceError = Math.abs(currentMass - previousTotalMass) / previousTotalMass * 100.0;
+	if (massBalanceError > massBalanceErrorThreshold) {
+	  logger.warn("Mass balance error: " + String.format("%.3f", massBalanceError) + "% (threshold: "
+	      + massBalanceErrorThreshold + "%) at time " + time + " s");
+	  publishEvent(ProcessEvent.thresholdCrossed(getName(), "massBalanceError", massBalanceError,
+	      massBalanceErrorThreshold, true));
+	}
       }
       previousTotalMass = currentMass;
     }
@@ -3858,18 +3755,18 @@ public class ProcessSystem extends SimulationBaseClass {
       runEquipmentTransientParallel(dt, id);
     } else {
       for (int i = 0; i < unitOperations.size(); i++) {
-        runUnitTransientSkippingInactive(unitOperations.get(i), dt, id);
+	runUnitTransientSkippingInactive(unitOperations.get(i), dt, id);
       }
     }
 
     // Semi-implicit: run a second pass for improved stability
     if (integrationMethod == IntegrationMethod.SEMI_IMPLICIT) {
       if (parallelTransientEnabled && unitOperations.size() > 1) {
-        runEquipmentTransientParallel(dt, id);
+	runEquipmentTransientParallel(dt, id);
       } else {
-        for (int i = 0; i < unitOperations.size(); i++) {
-          runUnitTransientSkippingInactive(unitOperations.get(i), dt, id);
-        }
+	for (int i = 0; i < unitOperations.size(); i++) {
+	  runUnitTransientSkippingInactive(unitOperations.get(i), dt, id);
+	}
       }
     }
 
@@ -3880,14 +3777,13 @@ public class ProcessSystem extends SimulationBaseClass {
     for (int i = 0; i < controllerDevices.size(); i++) {
       ControllerDeviceInterface ctrl = controllerDevices.get(i);
       if (ctrl.isActive()) {
-        ctrl.runTransient(ctrl.getResponse(), dt, id);
+	ctrl.runTransient(ctrl.getResponse(), dt, id);
       }
     }
 
     // Publish post-controller, pre-measurement event
-    publishEvent(
-        new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.STATE_CHANGE, getName(),
-            "Controllers completed for timestep " + timeStepNumber, ProcessEvent.Severity.DEBUG));
+    publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.STATE_CHANGE, getName(),
+	"Controllers completed for timestep " + timeStepNumber, ProcessEvent.Severity.DEBUG));
 
     timeStepNumber++;
     String[] row = new String[1 + 3 * measurementDevices.size()];
@@ -3910,43 +3806,41 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Runs all equipment transient calculations in parallel using an ExecutorService. Each equipment
-   * unit is submitted as an independent task. This is suitable when equipment units are loosely
-   * coupled (no data dependencies within a single timestep).
+   * Runs all equipment transient calculations in parallel using an ExecutorService. Each equipment unit is submitted as
+   * an independent task. This is suitable when equipment units are loosely coupled (no data dependencies within a
+   * single timestep).
    *
    * @param dt time step in seconds
    * @param id calculation identifier
    */
   private void runEquipmentTransientParallel(double dt, UUID id) {
-    java.util.concurrent.ExecutorService executor =
-        java.util.concurrent.Executors.newFixedThreadPool(transientThreadPoolSize);
-    List<java.util.concurrent.Future<?>> futures =
-        new ArrayList<java.util.concurrent.Future<?>>(unitOperations.size());
+    java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors
+	.newFixedThreadPool(transientThreadPoolSize);
+    List<java.util.concurrent.Future<?>> futures = new ArrayList<java.util.concurrent.Future<?>>(unitOperations.size());
     for (int i = 0; i < unitOperations.size(); i++) {
       final ProcessEquipmentInterface unit = unitOperations.get(i);
       final double stepSize = dt;
       final UUID calcId = id;
       futures.add(executor.submit(new Runnable() {
-        @Override
-        public void run() {
-          runUnitTransientSkippingInactive(unit, stepSize, calcId);
-        }
+	@Override
+	public void run() {
+	  runUnitTransientSkippingInactive(unit, stepSize, calcId);
+	}
       }));
     }
     for (java.util.concurrent.Future<?> f : futures) {
       try {
-        f.get();
+	f.get();
       } catch (Exception ex) {
-        logger.error("Parallel transient execution failed: " + ex.getMessage(), ex);
+	logger.error("Parallel transient execution failed: " + ex.getMessage(), ex);
       }
     }
     executor.shutdown();
   }
 
   /**
-   * Runs a single transient step with adaptive timestep control. This method compares a full-step
-   * result with two half-step results to estimate the local truncation error and adjusts dt
-   * accordingly.
+   * Runs a single transient step with adaptive timestep control. This method compares a full-step result with two
+   * half-step results to estimate the local truncation error and adjusts dt accordingly.
    *
    * <p>
    * Usage: call this instead of runTransient(dt, id) when adaptive control is desired.
@@ -3970,9 +3864,8 @@ public class ProcessSystem extends SimulationBaseClass {
     if (!unitOperations.isEmpty()) {
       ProcessEquipmentInterface firstUnit = unitOperations.get(0);
       List<neqsim.process.equipment.stream.StreamInterface> outlets = firstUnit.getOutletStreams();
-      if (outlets != null && !outlets.isEmpty() && outlets.get(0) != null
-          && outlets.get(0).getThermoSystem() != null) {
-        refTempBefore = outlets.get(0).getThermoSystem().getTemperature();
+      if (outlets != null && !outlets.isEmpty() && outlets.get(0) != null && outlets.get(0).getThermoSystem() != null) {
+	refTempBefore = outlets.get(0).getThermoSystem().getTemperature();
       }
     }
 
@@ -3983,9 +3876,8 @@ public class ProcessSystem extends SimulationBaseClass {
     if (!unitOperations.isEmpty()) {
       ProcessEquipmentInterface firstUnit = unitOperations.get(0);
       List<neqsim.process.equipment.stream.StreamInterface> outlets = firstUnit.getOutletStreams();
-      if (outlets != null && !outlets.isEmpty() && outlets.get(0) != null
-          && outlets.get(0).getThermoSystem() != null) {
-        refTempFullStep = outlets.get(0).getThermoSystem().getTemperature();
+      if (outlets != null && !outlets.isEmpty() && outlets.get(0) != null && outlets.get(0).getThermoSystem() != null) {
+	refTempFullStep = outlets.get(0).getThermoSystem().getTemperature();
       }
     }
 
@@ -4016,13 +3908,12 @@ public class ProcessSystem extends SimulationBaseClass {
     /* */
     if (recycleController.solvedAll()) {
       for (int i = 0; i < unitOperations.size(); i++) {
-        if (logger.isDebugEnabled()) {
-          logger.debug("unit " + unitOperations.get(i).getName() + " solved: "
-              + unitOperations.get(i).solved());
-        }
-        if (!unitOperations.get(i).solved()) {
-          return false;
-        }
+	if (logger.isDebugEnabled()) {
+	  logger.debug("unit " + unitOperations.get(i).getName() + " solved: " + unitOperations.get(i).solved());
+	}
+	if (!unitOperations.get(i).solved()) {
+	  return false;
+	}
       }
     } else {
       return false;
@@ -4034,9 +3925,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Build a human-readable convergence diagnostic report for the process system.
    *
    * <p>
-   * The report lists unsolved unit operations and expands distillation column residual diagnostics
-   * so notebook users can identify the unit and convergence gate that prevented the process from
-   * solving.
+   * The report lists unsolved unit operations and expands distillation column residual diagnostics so notebook users
+   * can identify the unit and convergence gate that prevented the process from solving.
    * </p>
    *
    * @return multi-line diagnostic report for recycle and unit-operation convergence
@@ -4053,23 +3943,21 @@ public class ProcessSystem extends SimulationBaseClass {
     for (ProcessEquipmentInterface unit : unitOperations) {
       boolean unitSolved = false;
       try {
-        unitSolved = unit.solved();
+	unitSolved = unit.solved();
       } catch (Exception ex) {
-        diagnostics.append("    - ").append(unit.getName()).append(" (")
-            .append(unit.getClass().getSimpleName()).append(") threw ")
-            .append(ex.getClass().getSimpleName()).append(" while checking solved state: ")
-            .append(ex.getMessage()).append("\n");
-        unsolvedUnits++;
-        continue;
+	diagnostics.append("    - ").append(unit.getName()).append(" (").append(unit.getClass().getSimpleName())
+	    .append(") threw ").append(ex.getClass().getSimpleName()).append(" while checking solved state: ")
+	    .append(ex.getMessage()).append("\n");
+	unsolvedUnits++;
+	continue;
       }
       if (!unitSolved) {
-        diagnostics.append("    - ").append(unit.getName()).append(" (")
-            .append(unit.getClass().getSimpleName()).append(")\n");
-        if (unit instanceof DistillationColumn) {
-          appendIndentedDiagnostics(diagnostics,
-              ((DistillationColumn) unit).getConvergenceDiagnostics(), "      ");
-        }
-        unsolvedUnits++;
+	diagnostics.append("    - ").append(unit.getName()).append(" (").append(unit.getClass().getSimpleName())
+	    .append(")\n");
+	if (unit instanceof DistillationColumn) {
+	  appendIndentedDiagnostics(diagnostics, ((DistillationColumn) unit).getConvergenceDiagnostics(), "      ");
+	}
+	unsolvedUnits++;
       }
     }
     if (unsolvedUnits == 0) {
@@ -4086,8 +3974,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Append a multi-line diagnostic block using a fixed indentation prefix.
    *
    * @param diagnostics destination report builder
-   * @param block diagnostic block to append
-   * @param indent prefix added before every line of {@code block}
+   * @param block       diagnostic block to append
+   * @param indent      prefix added before every line of {@code block}
    */
   private void appendIndentedDiagnostics(StringBuilder diagnostics, String block, String indent) {
     String[] lines = block.split("\\R");
@@ -4131,12 +4019,12 @@ public class ProcessSystem extends SimulationBaseClass {
     double totalMass = 0.0;
     for (ProcessEquipmentInterface unit : unitOperations) {
       try {
-        SystemInterface system = unit.getThermoSystem();
-        if (system != null && system.getTotalNumberOfMoles() > 0) {
-          totalMass += system.getTotalNumberOfMoles() * system.getMolarMass();
-        }
+	SystemInterface system = unit.getThermoSystem();
+	if (system != null && system.getTotalNumberOfMoles() > 0) {
+	  totalMass += system.getTotalNumberOfMoles() * system.getMolarMass();
+	}
       } catch (Exception e) {
-        // Some units may not have a thermo system
+	// Some units may not have a thermo system
       }
     }
     return totalMass;
@@ -4167,8 +4055,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Set the maximum number of iterations within each transient time step.
    *
    * <p>
-   * Multiple iterations help converge circular dependencies between equipment. Default is 3. Set to
-   * 1 to disable iterative convergence.
+   * Multiple iterations help converge circular dependencies between equipment. Default is 3. Set to 1 to disable
+   * iterative convergence.
    * </p>
    *
    * @param iterations Number of iterations (must be &gt;= 1)
@@ -4210,9 +4098,9 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Returns the pluggable {@link IntegratorStrategy} (defaults to {@link ExplicitEulerIntegrator}).
-   * Equipment that opt into the new strategy API should call this getter inside their own
-   * {@code runTransient} implementation to advance state.
+   * Returns the pluggable {@link IntegratorStrategy} (defaults to {@link ExplicitEulerIntegrator}). Equipment that opt
+   * into the new strategy API should call this getter inside their own {@code runTransient} implementation to advance
+   * state.
    *
    * @return the current integrator strategy (never {@code null})
    */
@@ -4221,8 +4109,8 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Sets the pluggable {@link IntegratorStrategy} used by equipment that opt into the strategy API.
-   * Passing {@code null} restores the default {@link ExplicitEulerIntegrator}.
+   * Sets the pluggable {@link IntegratorStrategy} used by equipment that opt into the strategy API. Passing
+   * {@code null} restores the default {@link ExplicitEulerIntegrator}.
    *
    * @param strategy integrator strategy, or {@code null} for default
    */
@@ -4231,8 +4119,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Returns the attached {@link EventScheduler}, or {@code null} if no scheduler has been
-   * configured.
+   * Returns the attached {@link EventScheduler}, or {@code null} if no scheduler has been configured.
    *
    * @return the event scheduler or {@code null}
    */
@@ -4241,8 +4128,8 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Attaches an {@link EventScheduler}. When set, its {@code fireDueEvents(currentTime)} is called
-   * at the top of every {@link #runTransient(double, UUID)} step. Pass {@code null} to detach.
+   * Attaches an {@link EventScheduler}. When set, its {@code fireDueEvents(currentTime)} is called at the top of every
+   * {@link #runTransient(double, UUID)} step. Pass {@code null} to detach.
    *
    * @param scheduler scheduler instance, or {@code null} to detach
    */
@@ -4251,8 +4138,8 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Enables or disables adaptive timestep control. When enabled, the timestep is adjusted based on
-   * local error estimates by comparing a full step with two half-steps.
+   * Enables or disables adaptive timestep control. When enabled, the timestep is adjusted based on local error
+   * estimates by comparing a full step with two half-steps.
    *
    * @param enabled true to enable adaptive timestep
    */
@@ -4396,10 +4283,9 @@ public class ProcessSystem extends SimulationBaseClass {
     }
 
     /*
-     * JFrame frame = new JFrame(); frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-     * frame.setLayout(new GridLayout(1, 0, 5, 5)); JTextArea area1 = new JTextArea(10, 10); JTable
-     * Jtab = new JTable(reportResults(), reportResults()[0]); frame.add(area1); frame.pack();
-     * frame.setLocationRelativeTo(null); frame.setVisible(true);
+     * JFrame frame = new JFrame(); frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); frame.setLayout(new
+     * GridLayout(1, 0, 5, 5)); JTextArea area1 = new JTextArea(10, 10); JTable Jtab = new JTable(reportResults(),
+     * reportResults()[0]); frame.add(area1); frame.pack(); frame.setLocationRelativeTo(null); frame.setVisible(true);
      */
   }
 
@@ -4416,11 +4302,11 @@ public class ProcessSystem extends SimulationBaseClass {
     }
     for (int i = 0; i < measurementDevices.size(); i++) {
       System.out.println("Measurements Device Name: " + measurementDevices.get(i).getName());
-      System.out.println("Value: " + measurementDevices.get(i).getMeasuredValue() + " "
-          + measurementDevices.get(i).getUnit());
+      System.out.println(
+	  "Value: " + measurementDevices.get(i).getMeasuredValue() + " " + measurementDevices.get(i).getUnit());
       if (measurementDevices.get(i).isOnlineSignal()) {
-        System.out.println("Online value: " + measurementDevices.get(i).getOnlineSignal().getValue()
-            + " " + measurementDevices.get(i).getOnlineSignal().getUnit());
+	System.out.println("Online value: " + measurementDevices.get(i).getOnlineSignal().getValue() + " "
+	    + measurementDevices.get(i).getOnlineSignal().getUnit());
       }
     }
   }
@@ -4450,8 +4336,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * @return a {@link neqsim.process.processmodel.ProcessSystem} object
    */
   public static ProcessSystem open(String filePath) {
-    try (ObjectInputStream objectinputstream =
-        new ObjectInputStream(new FileInputStream(filePath))) {
+    try (ObjectInputStream objectinputstream = new ObjectInputStream(new FileInputStream(filePath))) {
       return (ProcessSystem) objectinputstream.readObject();
       // logger.info("process file open ok: " + filePath);
     } catch (Exception ex) {
@@ -4473,19 +4358,19 @@ public class ProcessSystem extends SimulationBaseClass {
     int numb = 0;
     for (int i = 0; i < unitOperations.size(); i++) {
       for (int k = 0; k < unitOperations.get(i).reportResults().length; k++) {
-        text[numb++] = unitOperations.get(i).reportResults()[k];
+	text[numb++] = unitOperations.get(i).reportResults()[k];
       }
     }
     return text;
   }
 
   /**
-   * Returns a consolidated formatted stream summary table showing key properties for all streams in
-   * this process system. Similar to the Workbook/Stream Summary in commercial process simulators.
+   * Returns a consolidated formatted stream summary table showing key properties for all streams in this process
+   * system. Similar to the Workbook/Stream Summary in commercial process simulators.
    *
    * <p>
-   * The table includes: stream name, temperature (C), pressure (bara), total molar flow (kmole/hr),
-   * mass flow (kg/hr), vapor fraction, molar mass (kg/kmol), and mole fraction of each component.
+   * The table includes: stream name, temperature (C), pressure (bara), total molar flow (kmole/hr), mass flow (kg/hr),
+   * vapor fraction, molar mass (kg/kmol), and mole fraction of each component.
    * </p>
    *
    * @return formatted string table of all stream properties
@@ -4551,52 +4436,52 @@ public class ProcessSystem extends SimulationBaseClass {
       sb.append(String.format("%-" + labelWidth + "s", label));
 
       if (label.startsWith("---")) {
-        // Section header - no data
-        sb.append("\n");
-        continue;
+	// Section header - no data
+	sb.append("\n");
+	continue;
       }
 
       for (StreamInterface stream : streams) {
-        SystemInterface fluid = stream.getFluid();
-        String value;
+	SystemInterface fluid = stream.getFluid();
+	String value;
 
-        if (row == 0) {
-          // Temperature in C
-          value = String.format("%.2f", fluid.getTemperature("C"));
-        } else if (row == 1) {
-          // Pressure in bara
-          value = String.format("%.4f", fluid.getPressure("bara"));
-        } else if (row == 2) {
-          // Mass flow kg/hr
-          value = String.format("%.2f", stream.getFlowRate("kg/hr"));
-        } else if (row == 3) {
-          // Molar flow kmole/hr
-          value = String.format("%.4f", fluid.getTotalNumberOfMoles() * 3600.0);
-        } else if (row == 4) {
-          // Vapor fraction
-          if (fluid.getNumberOfPhases() > 1) {
-            value = String.format("%.6f", fluid.getBeta());
-          } else {
-            if (fluid.getPhase(0).getType() == neqsim.thermo.phase.PhaseType.GAS) {
-              value = "1.000000";
-            } else {
-              value = "0.000000";
-            }
-          }
-        } else if (row == 5) {
-          // Molar mass kg/kmol
-          value = String.format("%.4f", fluid.getMolarMass() * 1000.0);
-        } else {
-          // Component mole fractions (row >= 7, component index = row - 7)
-          int compIdx = row - 7;
-          if (compIdx >= 0 && compIdx < fluid.getPhase(0).getNumberOfComponents()) {
-            value = String.format("%.6f", fluid.getPhase(0).getComponent(compIdx).getz());
-          } else {
-            value = "---";
-          }
-        }
+	if (row == 0) {
+	  // Temperature in C
+	  value = String.format("%.2f", fluid.getTemperature("C"));
+	} else if (row == 1) {
+	  // Pressure in bara
+	  value = String.format("%.4f", fluid.getPressure("bara"));
+	} else if (row == 2) {
+	  // Mass flow kg/hr
+	  value = String.format("%.2f", stream.getFlowRate("kg/hr"));
+	} else if (row == 3) {
+	  // Molar flow kmole/hr
+	  value = String.format("%.4f", fluid.getTotalNumberOfMoles() * 3600.0);
+	} else if (row == 4) {
+	  // Vapor fraction
+	  if (fluid.getNumberOfPhases() > 1) {
+	    value = String.format("%.6f", fluid.getBeta());
+	  } else {
+	    if (fluid.getPhase(0).getType() == neqsim.thermo.phase.PhaseType.GAS) {
+	      value = "1.000000";
+	    } else {
+	      value = "0.000000";
+	    }
+	  }
+	} else if (row == 5) {
+	  // Molar mass kg/kmol
+	  value = String.format("%.4f", fluid.getMolarMass() * 1000.0);
+	} else {
+	  // Component mole fractions (row >= 7, component index = row - 7)
+	  int compIdx = row - 7;
+	  if (compIdx >= 0 && compIdx < fluid.getPhase(0).getNumberOfComponents()) {
+	    value = String.format("%.6f", fluid.getPhase(0).getComponent(compIdx).getz());
+	  } else {
+	    value = "---";
+	  }
+	}
 
-        sb.append(String.format("  %" + colWidth + "s", value));
+	sb.append(String.format("  %" + colWidth + "s", value));
       }
       sb.append("\n");
     }
@@ -4605,8 +4490,8 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Returns a consolidated stream summary as a JSON string. Each stream is a key in the JSON object
-   * containing temperature, pressure, flow rates, vapor fraction, molar mass, and composition.
+   * Returns a consolidated stream summary as a JSON string. Each stream is a key in the JSON object containing
+   * temperature, pressure, flow rates, vapor fraction, molar mass, and composition.
    *
    * @return JSON string with stream summary data
    */
@@ -4624,13 +4509,13 @@ public class ProcessSystem extends SimulationBaseClass {
       streamObj.addProperty("molarFlow_kmole_hr", fluid.getTotalNumberOfMoles() * 3600.0);
 
       if (fluid.getNumberOfPhases() > 1) {
-        streamObj.addProperty("vaporFraction", fluid.getBeta());
+	streamObj.addProperty("vaporFraction", fluid.getBeta());
       } else {
-        if (fluid.getPhase(0).getType() == neqsim.thermo.phase.PhaseType.GAS) {
-          streamObj.addProperty("vaporFraction", 1.0);
-        } else {
-          streamObj.addProperty("vaporFraction", 0.0);
-        }
+	if (fluid.getPhase(0).getType() == neqsim.thermo.phase.PhaseType.GAS) {
+	  streamObj.addProperty("vaporFraction", 1.0);
+	} else {
+	  streamObj.addProperty("vaporFraction", 0.0);
+	}
       }
 
       streamObj.addProperty("molarMass_kg_kmol", fluid.getMolarMass() * 1000.0);
@@ -4638,21 +4523,21 @@ public class ProcessSystem extends SimulationBaseClass {
       // Composition
       com.google.gson.JsonObject compObj = new com.google.gson.JsonObject();
       for (int i = 0; i < fluid.getPhase(0).getNumberOfComponents(); i++) {
-        compObj.addProperty(fluid.getPhase(0).getComponent(i).getComponentName(),
-            fluid.getPhase(0).getComponent(i).getz());
+	compObj.addProperty(fluid.getPhase(0).getComponent(i).getComponentName(),
+	    fluid.getPhase(0).getComponent(i).getz());
       }
       streamObj.add("composition_mole", compObj);
 
       root.add(stream.getName(), streamObj);
     }
 
-    return new com.google.gson.GsonBuilder().setPrettyPrinting()
-        .serializeSpecialFloatingPointValues().create().toJson(root);
+    return new com.google.gson.GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
+	.toJson(root);
   }
 
   /**
-   * Returns a list of all streams in this process system. Collects all inlet and outlet streams
-   * from all equipment, removing duplicates.
+   * Returns a list of all streams in this process system. Collects all inlet and outlet streams from all equipment,
+   * removing duplicates.
    *
    * @return list of unique streams in the process
    */
@@ -4660,7 +4545,7 @@ public class ProcessSystem extends SimulationBaseClass {
     java.util.LinkedHashSet<StreamInterface> streamSet = new java.util.LinkedHashSet<>();
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit instanceof StreamInterface) {
-        streamSet.add((StreamInterface) unit);
+	streamSet.add((StreamInterface) unit);
       }
     }
     return new ArrayList<>(streamSet);
@@ -4674,8 +4559,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param filename a {@link java.lang.String} object
    */
   public void printLogFile(String filename) {
-    neqsim.datapresentation.filehandling.TextFile tempFile =
-        new neqsim.datapresentation.filehandling.TextFile();
+    neqsim.datapresentation.filehandling.TextFile tempFile = new neqsim.datapresentation.filehandling.TextFile();
     tempFile.setOutputFileName(filename);
     tempFile.setValues(measurementHistory.toArray());
     tempFile.createFile();
@@ -4718,8 +4602,8 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Sets the maximum number of entries retained in the measurement history. A value less than or
-   * equal to zero disables truncation (unbounded history).
+   * Sets the maximum number of entries retained in the measurement history. A value less than or equal to zero disables
+   * truncation (unbounded history).
    *
    * @param maxEntries maximum number of entries to keep, or non-positive for unlimited
    */
@@ -4728,8 +4612,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Returns the configured history capacity. A value less than or equal to zero means the history
-   * grows without bounds.
+   * Returns the configured history capacity. A value less than or equal to zero means the history grows without bounds.
    *
    * @return configured maximum number of history entries or non-positive for unlimited
    */
@@ -4738,22 +4621,19 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Stores a snapshot of the current process system state that can later be restored with
-   * {@link #reset()}.
+   * Stores a snapshot of the current process system state that can later be restored with {@link #reset()}.
    */
   public void storeInitialState() {
     captureInitialState(true);
   }
 
   /**
-   * Restores the process system to the stored initial state. The initial state is captured
-   * automatically the first time a transient run is executed, or manually via
-   * {@link #storeInitialState()}.
+   * Restores the process system to the stored initial state. The initial state is captured automatically the first time
+   * a transient run is executed, or manually via {@link #storeInitialState()}.
    */
   public void reset() {
     if (initialStateSnapshot == null) {
-      throw new IllegalStateException(
-          "Initial state has not been stored. Call storeInitialState() before reset().");
+      throw new IllegalStateException("Initial state has not been stored. Call storeInitialState() before reset().");
     }
     ProcessSystem restored = initialStateSnapshot.copy();
     applyState(restored);
@@ -4867,23 +4747,22 @@ public class ProcessSystem extends SimulationBaseClass {
    * ({@code ProcessModel.setRunStep(true)}).
    *
    * <p>
-   * By default ({@code false}) every area advances exactly one pass per model step. When set to
-   * {@code true} this specific area is fully converged (recycles included) on each model step,
-   * while other areas still single-step. This is useful when one sub-process (for example an
-   * anti-surge recycle loop) must reach a consistent state every step while the rest of the plant
-   * is advanced incrementally.
+   * By default ({@code false}) every area advances exactly one pass per model step. When set to {@code true} this
+   * specific area is fully converged (recycles included) on each model step, while other areas still single-step. This
+   * is useful when one sub-process (for example an anti-surge recycle loop) must reach a consistent state every step
+   * while the rest of the plant is advanced incrementally.
    * </p>
    *
-   * @param solveFullyInModelStep {@code true} to fully solve this area on each model step,
-   *        {@code false} to advance only a single pass
+   * @param solveFullyInModelStep {@code true} to fully solve this area on each model step, {@code false} to advance
+   *                              only a single pass
    */
   public void setSolveFullyInModelStep(boolean solveFullyInModelStep) {
     this.solveFullyInModelStep = solveFullyInModelStep;
   }
 
   /**
-   * Returns whether this process area is fully converged on each step when its owning
-   * {@link ProcessModel} is run in step mode.
+   * Returns whether this process area is fully converged on each step when its owning {@link ProcessModel} is run in
+   * step mode.
    *
    * @return {@code true} if this area fully solves on each model step, otherwise {@code false}
    */
@@ -4892,12 +4771,11 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Sum of the entropy production across all unit operations in this process system. Individual
-   * entries are <em>not</em> logged to avoid flooding stdout on large flowsheets; iterate with
-   * {@link #getUnitOperations()} if per-unit detail is required.
+   * Sum of the entropy production across all unit operations in this process system. Individual entries are
+   * <em>not</em> logged to avoid flooding stdout on large flowsheets; iterate with {@link #getUnitOperations()} if
+   * per-unit detail is required.
    *
-   * @param unit target unit passed straight through to
-   *        {@link ProcessEquipmentInterface#getEntropyProduction(String)}
+   * @param unit target unit passed straight through to {@link ProcessEquipmentInterface#getEntropyProduction(String)}
    * @return total entropy production
    */
   public double getEntropyProduction(String unit) {
@@ -4909,10 +4787,9 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Net change in stream exergy (outlet minus inlet) aggregated over all unit operations, using
-   * this system's {@link #getSurroundingTemperature() surrounding temperature} as the dead state.
-   * The returned value is in the requested {@code unit} (supported values:
-   * {@code J, kJ, MJ, W, kW, MW}); unknown units fall back to J.
+   * Net change in stream exergy (outlet minus inlet) aggregated over all unit operations, using this system's
+   * {@link #getSurroundingTemperature() surrounding temperature} as the dead state. The returned value is in the
+   * requested {@code unit} (supported values: {@code J, kJ, MJ, W, kW, MW}); unknown units fall back to J.
    *
    * @param unit energy / power unit of the returned value
    * @return total exergy change across all units in the requested unit
@@ -4922,10 +4799,9 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Net change in stream exergy aggregated over all unit operations using an explicit surrounding
-   * temperature.
+   * Net change in stream exergy aggregated over all unit operations using an explicit surrounding temperature.
    *
-   * @param unit energy / power unit of the returned value
+   * @param unit                   energy / power unit of the returned value
    * @param surroundingTemperature dead-state temperature in K
    * @return total exergy change across all units
    */
@@ -4949,10 +4825,9 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Total exergy destruction rate aggregated over all unit operations using an explicit surrounding
-   * temperature.
+   * Total exergy destruction rate aggregated over all unit operations using an explicit surrounding temperature.
    *
-   * @param unit energy / power unit of the returned value
+   * @param unit                   energy / power unit of the returned value
    * @param surroundingTemperature dead-state temperature in K
    * @return total exergy destruction in the requested unit
    */
@@ -4965,8 +4840,8 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Build a structured {@link neqsim.process.util.exergy.ExergyAnalysisReport} with one entry per
-   * unit operation. Useful for identifying exergy-destruction hot spots on large flowsheets.
+   * Build a structured {@link neqsim.process.util.exergy.ExergyAnalysisReport} with one entry per unit operation.
+   * Useful for identifying exergy-destruction hot spots on large flowsheets.
    *
    * @return a new report using this system's surrounding temperature
    */
@@ -4975,28 +4850,27 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Build a structured {@link neqsim.process.util.exergy.ExergyAnalysisReport} with one entry per
-   * unit operation using an explicit dead-state temperature.
+   * Build a structured {@link neqsim.process.util.exergy.ExergyAnalysisReport} with one entry per unit operation using
+   * an explicit dead-state temperature.
    *
    * @param surroundingTemperature dead-state temperature in K
    * @return a new report
    */
-  public neqsim.process.util.exergy.ExergyAnalysisReport getExergyAnalysis(
-      double surroundingTemperature) {
-    neqsim.process.util.exergy.ExergyAnalysisReport report =
-        new neqsim.process.util.exergy.ExergyAnalysisReport(surroundingTemperature);
+  public neqsim.process.util.exergy.ExergyAnalysisReport getExergyAnalysis(double surroundingTemperature) {
+    neqsim.process.util.exergy.ExergyAnalysisReport report = new neqsim.process.util.exergy.ExergyAnalysisReport(
+	surroundingTemperature);
     populateExergyAnalysis(report, surroundingTemperature, null);
     return report;
   }
 
   /**
    * Populate an existing report with entries for this process system. Intended to be called by
-   * {@link neqsim.process.processmodel.ProcessModel#getExergyAnalysis()} so that multi-area
-   * aggregation keeps area labels on every row.
+   * {@link neqsim.process.processmodel.ProcessModel#getExergyAnalysis()} so that multi-area aggregation keeps area
+   * labels on every row.
    *
-   * @param report report instance to append to
+   * @param report                 report instance to append to
    * @param surroundingTemperature dead-state temperature in K
-   * @param areaName optional area name tag; may be {@code null}
+   * @param areaName               optional area name tag; may be {@code null}
    */
   public void populateExergyAnalysis(neqsim.process.util.exergy.ExergyAnalysisReport report,
       double surroundingTemperature, String areaName) {
@@ -5008,17 +4882,17 @@ public class ProcessSystem extends SimulationBaseClass {
       double dEJ = 0.0;
       double dDestJ = 0.0;
       try {
-        dEJ = op.getExergyChange("J", surroundingTemperature);
+	dEJ = op.getExergyChange("J", surroundingTemperature);
       } catch (RuntimeException ex) {
-        logger.debug("getExergyChange failed for {}: {}", op.getName(), ex.getMessage());
+	logger.debug("getExergyChange failed for {}: {}", op.getName(), ex.getMessage());
       }
       try {
-        dDestJ = op.getExergyDestruction("J", surroundingTemperature);
+	dDestJ = op.getExergyDestruction("J", surroundingTemperature);
       } catch (RuntimeException ex) {
-        logger.debug("getExergyDestruction failed for {}: {}", op.getName(), ex.getMessage());
+	logger.debug("getExergyDestruction failed for {}: {}", op.getName(), ex.getMessage());
       }
       report.addEntry(new neqsim.process.util.exergy.ExergyAnalysisReport.Entry(op.getName(),
-          op.getClass().getSimpleName(), areaName, dEJ, dDestJ));
+	  op.getClass().getSimpleName(), areaName, dEJ, dDestJ));
     }
   }
 
@@ -5026,7 +4900,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * Convert a value in Joules to the requested unit.
    *
    * @param valueJ value in Joules (or watts, treated identically)
-   * @param unit target unit: J, kJ, MJ, W, kW, MW (unknown falls back to J)
+   * @param unit   target unit: J, kJ, MJ, W, kW, MW (unknown falls back to J)
    * @return converted value
    */
   private static double convertEnergy(double valueJ, String unit) {
@@ -5058,9 +4932,9 @@ public class ProcessSystem extends SimulationBaseClass {
     for (int i = 0; i < unitOperations.size(); i++) {
       ProcessEquipmentInterface unitOp = unitOperations.get(i);
       if (unitOp instanceof Compressor) {
-        power += ((Compressor) unitOp).getPower();
+	power += ((Compressor) unitOp).getPower();
       } else if (unitOp instanceof Pump) {
-        power += ((Pump) unitOp).getPower();
+	power += ((Pump) unitOp).getPower();
       }
     }
     if (unit.equals("MW")) {
@@ -5085,7 +4959,7 @@ public class ProcessSystem extends SimulationBaseClass {
     for (int i = 0; i < unitOperations.size(); i++) {
       ProcessEquipmentInterface unitOp = unitOperations.get(i);
       if (unitOp instanceof Cooler) {
-        heat += ((Cooler) unitOp).getDuty();
+	heat += ((Cooler) unitOp).getDuty();
       }
     }
     if (unit.equals("MW")) {
@@ -5110,7 +4984,7 @@ public class ProcessSystem extends SimulationBaseClass {
     for (int i = 0; i < unitOperations.size(); i++) {
       ProcessEquipmentInterface unitOp = unitOperations.get(i);
       if (unitOp instanceof Heater) {
-        heat += ((Heater) unitOp).getDuty();
+	heat += ((Heater) unitOp).getDuty();
       }
     }
     if (unit.equals("MW")) {
@@ -5165,11 +5039,11 @@ public class ProcessSystem extends SimulationBaseClass {
     try {
       ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
       try (ObjectOutputStream out = new ObjectOutputStream(byteOut)) {
-        out.writeObject(this);
+	out.writeObject(this);
       }
       ByteArrayInputStream byteIn = new ByteArrayInputStream(byteOut.toByteArray());
       try (ObjectInputStream in = new ObjectInputStream(byteIn)) {
-        return (ProcessSystem) in.readObject();
+	return (ProcessSystem) in.readObject();
       }
     } catch (Exception e) {
       throw new RuntimeException("Failed to copy ProcessSystem", e);
@@ -5197,15 +5071,13 @@ public class ProcessSystem extends SimulationBaseClass {
     Map<String, MassBalanceResult> massBalanceResults = new HashMap<>();
     for (ProcessEquipmentInterface unitOp : unitOperations) {
       try {
-        double massBalanceError = unitOp.getMassBalance(unit);
-        double inletFlow = calculateInletFlow(unitOp, unit);
-        double percentError = calculatePercentError(massBalanceError, inletFlow);
-        massBalanceResults.put(unitOp.getName(),
-            new MassBalanceResult(massBalanceError, percentError, unit));
+	double massBalanceError = unitOp.getMassBalance(unit);
+	double inletFlow = calculateInletFlow(unitOp, unit);
+	double percentError = calculatePercentError(massBalanceError, inletFlow);
+	massBalanceResults.put(unitOp.getName(), new MassBalanceResult(massBalanceError, percentError, unit));
       } catch (Exception e) {
-        logger.warn("Failed to calculate mass balance for unit: " + unitOp.getName(), e);
-        massBalanceResults.put(unitOp.getName(),
-            new MassBalanceResult(Double.NaN, Double.NaN, unit));
+	logger.warn("Failed to calculate mass balance for unit: " + unitOp.getName(), e);
+	massBalanceResults.put(unitOp.getName(), new MassBalanceResult(Double.NaN, Double.NaN, unit));
       }
     }
     return massBalanceResults;
@@ -5223,7 +5095,7 @@ public class ProcessSystem extends SimulationBaseClass {
   /**
    * Get unit operations that failed mass balance check based on percentage error threshold.
    *
-   * @param unit unit for mass flow rate (e.g., "kg/sec", "kg/hr", "mole/sec")
+   * @param unit             unit for mass flow rate (e.g., "kg/sec", "kg/hr", "mole/sec")
    * @param percentThreshold percentage error threshold (default: 0.1%)
    * @return a map with failed unit operation names and their mass balance results
    */
@@ -5248,12 +5120,11 @@ public class ProcessSystem extends SimulationBaseClass {
 
       // Skip units with insignificant inlet flow
       if (Math.abs(inletFlow) < minimumFlowInUnit) {
-        continue;
+	continue;
       }
 
-      if (Double.isNaN(result.getPercentError())
-          || Math.abs(result.getPercentError()) > percentThreshold) {
-        failedUnits.put(entry.getKey(), result);
+      if (Double.isNaN(result.getPercentError()) || Math.abs(result.getPercentError()) > percentThreshold) {
+	failedUnits.put(entry.getKey(), result);
       }
     }
     return failedUnits;
@@ -5294,7 +5165,7 @@ public class ProcessSystem extends SimulationBaseClass {
       report.append("No unit operations found.\n");
     } else {
       for (Map.Entry<String, MassBalanceResult> entry : results.entrySet()) {
-        report.append(String.format("  %-30s: %s\n", entry.getKey(), entry.getValue().toString()));
+	report.append(String.format("  %-30s: %s\n", entry.getKey(), entry.getValue().toString()));
       }
     }
     return report.toString();
@@ -5312,7 +5183,7 @@ public class ProcessSystem extends SimulationBaseClass {
   /**
    * Get a formatted report of failed mass balance checks for this process system.
    *
-   * @param unit unit for mass flow rate (e.g., "kg/sec", "kg/hr", "mole/sec")
+   * @param unit             unit for mass flow rate (e.g., "kg/sec", "kg/hr", "mole/sec")
    * @param percentThreshold percentage error threshold
    * @return a formatted string report with failed unit operations
    */
@@ -5326,15 +5197,14 @@ public class ProcessSystem extends SimulationBaseClass {
       report.append("Process: ").append(getName()).append("\n");
       report.append(String.format("%0" + 60 + "d", 0).replace('0', '=')).append("\n");
       for (Map.Entry<String, MassBalanceResult> entry : failedResults.entrySet()) {
-        report.append(String.format("  %-30s: %s\n", entry.getKey(), entry.getValue().toString()));
+	report.append(String.format("  %-30s: %s\n", entry.getKey(), entry.getValue().toString()));
       }
     }
     return report.toString();
   }
 
   /**
-   * Get a formatted report of failed mass balance checks for this process system using kg/sec and
-   * default threshold.
+   * Get a formatted report of failed mass balance checks for this process system using kg/sec and default threshold.
    *
    * @return a formatted string report with failed unit operations
    */
@@ -5343,8 +5213,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Get a formatted report of failed mass balance checks for this process system using specified
-   * threshold.
+   * Get a formatted report of failed mass balance checks for this process system using specified threshold.
    *
    * @param percentThreshold percentage error threshold
    * @return a formatted string report with failed unit operations in kg/sec
@@ -5372,8 +5241,8 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Set the minimum flow threshold for mass balance error checking. Units with inlet flow below
-   * this threshold are not considered errors.
+   * Set the minimum flow threshold for mass balance error checking. Units with inlet flow below this threshold are not
+   * considered errors.
    *
    * @param minimumFlow minimum flow in kg/sec (e.g., 1e-6)
    */
@@ -5394,36 +5263,33 @@ public class ProcessSystem extends SimulationBaseClass {
    * Calculates total inlet flow for a unit from its reported inlet streams.
    *
    * @param unitOp unit operation to inspect
-   * @param unit flow-rate unit
+   * @param unit   flow-rate unit
    * @return total inlet flow in the requested unit, or fallback flow for source units
    */
   private double calculateInletFlow(ProcessEquipmentInterface unitOp, String unit) {
     try {
       List<StreamInterface> inletStreams = getReportedInletStreams(unitOp);
       if (inletStreams != null && !inletStreams.isEmpty()) {
-        return sumStreamFlows(inletStreams, unit);
+	return sumStreamFlows(inletStreams, unit);
       }
     } catch (Exception e) {
-      logger.debug("Could not read inlet streams for unit {}: {}", unitOp.getName(),
-          e.getMessage());
+      logger.debug("Could not read inlet streams for unit {}: {}", unitOp.getName(), e.getMessage());
     }
 
     if (unitOp instanceof StreamInterface) {
       try {
-        return ((StreamInterface) unitOp).getFlowRate(unit);
+	return ((StreamInterface) unitOp).getFlowRate(unit);
       } catch (Exception e) {
-        logger.debug("Could not read stream flow for unit {}: {}", unitOp.getName(),
-            e.getMessage());
+	logger.debug("Could not read stream flow for unit {}: {}", unitOp.getName(), e.getMessage());
       }
     }
 
     try {
       if (unitOp.getThermoSystem() != null) {
-        return unitOp.getThermoSystem().getFlowRate(unit);
+	return unitOp.getThermoSystem().getFlowRate(unit);
       }
     } catch (Exception e) {
-      logger.debug("Could not read thermo-system flow for unit {}: {}", unitOp.getName(),
-          e.getMessage());
+      logger.debug("Could not read thermo-system flow for unit {}: {}", unitOp.getName(), e.getMessage());
     }
     return 0.0;
   }
@@ -5452,10 +5318,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * Adds stream entries to a destination list while preserving identity uniqueness.
    *
    * @param sourceStreams source stream entries
-   * @param destination destination stream list
+   * @param destination   destination stream list
    */
-  private void addUniqueStreams(Iterable<StreamInterface> sourceStreams,
-      List<StreamInterface> destination) {
+  private void addUniqueStreams(Iterable<StreamInterface> sourceStreams, List<StreamInterface> destination) {
     if (sourceStreams == null) {
       return;
     }
@@ -5467,7 +5332,7 @@ public class ProcessSystem extends SimulationBaseClass {
   /**
    * Adds a stream if the same stream object is not already present.
    *
-   * @param stream stream to add
+   * @param stream  stream to add
    * @param streams destination stream list
    */
   private void addUniqueStream(StreamInterface stream, List<StreamInterface> streams) {
@@ -5476,7 +5341,7 @@ public class ProcessSystem extends SimulationBaseClass {
     }
     for (StreamInterface existing : streams) {
       if (existing == stream) {
-        return;
+	return;
       }
     }
     streams.add(stream);
@@ -5485,9 +5350,9 @@ public class ProcessSystem extends SimulationBaseClass {
   /**
    * Adds streams returned by a no-argument getter if the unit exposes it.
    *
-   * @param unitOp unit operation to inspect
+   * @param unitOp     unit operation to inspect
    * @param getterName name of the getter method
-   * @param streams destination stream list
+   * @param streams    destination stream list
    */
   private void addStreamsFromGetter(ProcessEquipmentInterface unitOp, String getterName,
       List<StreamInterface> streams) {
@@ -5496,23 +5361,22 @@ public class ProcessSystem extends SimulationBaseClass {
       getter.setAccessible(true);
       Object value = getter.invoke(unitOp);
       if (value instanceof StreamInterface) {
-        addUniqueStream((StreamInterface) value, streams);
+	addUniqueStream((StreamInterface) value, streams);
       } else if (value instanceof Iterable<?>) {
-        for (Object stream : (Iterable<?>) value) {
-          if (stream instanceof StreamInterface) {
-            addUniqueStream((StreamInterface) stream, streams);
-          }
-        }
+	for (Object stream : (Iterable<?>) value) {
+	  if (stream instanceof StreamInterface) {
+	    addUniqueStream((StreamInterface) stream, streams);
+	  }
+	}
       } else if (value instanceof StreamInterface[]) {
-        for (StreamInterface stream : (StreamInterface[]) value) {
-          addUniqueStream(stream, streams);
-        }
+	for (StreamInterface stream : (StreamInterface[]) value) {
+	  addUniqueStream(stream, streams);
+	}
       }
     } catch (NoSuchMethodException e) {
       logger.trace("Unit {} has no {} method", unitOp.getName(), getterName);
     } catch (Exception e) {
-      logger.debug("Could not invoke {} on unit {}: {}", getterName, unitOp.getName(),
-          e.getMessage());
+      logger.debug("Could not invoke {} on unit {}: {}", getterName, unitOp.getName(), e.getMessage());
     }
   }
 
@@ -5520,14 +5384,14 @@ public class ProcessSystem extends SimulationBaseClass {
    * Sums flow rates for reported streams.
    *
    * @param streams streams to sum
-   * @param unit flow-rate unit
+   * @param unit    flow-rate unit
    * @return total flow rate in the requested unit
    */
   private double sumStreamFlows(List<StreamInterface> streams, String unit) {
     double totalFlow = 0.0;
     for (StreamInterface stream : streams) {
       if (stream != null) {
-        totalFlow += stream.getFlowRate(unit);
+	totalFlow += stream.getFlowRate(unit);
       }
     }
     return totalFlow;
@@ -5552,8 +5416,8 @@ public class ProcessSystem extends SimulationBaseClass {
      * Constructor for MassBalanceResult.
      *
      * @param absoluteError absolute mass balance error (outlet - inlet)
-     * @param percentError percentage error
-     * @param unit unit of measurement
+     * @param percentError  percentage error
+     * @param unit          unit of measurement
      */
     public MassBalanceResult(double absoluteError, double percentError, String unit) {
       this.absoluteError = absoluteError;
@@ -5599,9 +5463,8 @@ public class ProcessSystem extends SimulationBaseClass {
   public int hashCode() {
     final int prime = 31;
     int result = 1;
-    result = prime * result + Objects.hash(alarmManager, measurementDevices, measurementHistory,
-        name, recycleController, surroundingTemperature, time, timeStep, timeStepNumber,
-        unitOperations);
+    result = prime * result + Objects.hash(alarmManager, measurementDevices, measurementHistory, name,
+	recycleController, surroundingTemperature, time, timeStep, timeStepNumber, unitOperations);
     return result;
   }
 
@@ -5619,16 +5482,13 @@ public class ProcessSystem extends SimulationBaseClass {
     }
     ProcessSystem other = (ProcessSystem) obj;
     return Objects.equals(alarmManager, other.alarmManager)
-        && Objects.equals(measurementDevices, other.measurementDevices)
-        && Objects.equals(name, other.name)
-        && Objects.equals(recycleController, other.recycleController)
-        && Objects.equals(measurementHistory, other.measurementHistory)
-        && Double.doubleToLongBits(surroundingTemperature) == Double
-            .doubleToLongBits(other.surroundingTemperature)
-        && Double.doubleToLongBits(time) == Double.doubleToLongBits(other.time)
-        && Double.doubleToLongBits(timeStep) == Double.doubleToLongBits(other.timeStep)
-        && timeStepNumber == other.timeStepNumber
-        && Objects.equals(unitOperations, other.unitOperations);
+	&& Objects.equals(measurementDevices, other.measurementDevices) && Objects.equals(name, other.name)
+	&& Objects.equals(recycleController, other.recycleController)
+	&& Objects.equals(measurementHistory, other.measurementHistory)
+	&& Double.doubleToLongBits(surroundingTemperature) == Double.doubleToLongBits(other.surroundingTemperature)
+	&& Double.doubleToLongBits(time) == Double.doubleToLongBits(other.time)
+	&& Double.doubleToLongBits(timeStep) == Double.doubleToLongBits(other.timeStep)
+	&& timeStepNumber == other.timeStepNumber && Objects.equals(unitOperations, other.unitOperations);
   }
 
   /** {@inheritDoc} */
@@ -5642,9 +5502,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * addUnit.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name          a {@link java.lang.String} object
    * @param equipmentType a {@link java.lang.String} object
-   * @param <T> a T class
+   * @param <T>           a T class
    * @return a T object
    */
   @SuppressWarnings("unchecked")
@@ -5672,9 +5532,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * addUnit.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name          a {@link java.lang.String} object
    * @param equipmentEnum a {@link neqsim.process.equipment.EquipmentEnum} object
-   * @param <T> a T class
+   * @param <T>           a T class
    * @return a T object
    */
   @SuppressWarnings("unchecked")
@@ -5689,7 +5549,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * </p>
    *
    * @param equipmentType a {@link java.lang.String} object
-   * @param <T> a T class
+   * @param <T>           a T class
    * @return a T object
    */
   @SuppressWarnings("unchecked")
@@ -5704,7 +5564,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * </p>
    *
    * @param equipmentEnum a {@link neqsim.process.equipment.EquipmentEnum} object
-   * @param <T> a T class
+   * @param <T>           a T class
    * @return a T object
    */
   @SuppressWarnings("unchecked")
@@ -5715,10 +5575,10 @@ public class ProcessSystem extends SimulationBaseClass {
   /**
    * Adds a new process equipment unit of the specified type and name, and sets its inlet stream.
    *
-   * @param <T> the type of process equipment
-   * @param name the name of the equipment (if null or empty, a unique name is generated)
+   * @param <T>           the type of process equipment
+   * @param name          the name of the equipment (if null or empty, a unique name is generated)
    * @param equipmentType the type of equipment to create (as a String)
-   * @param stream the inlet stream to set for the new equipment
+   * @param stream        the inlet stream to set for the new equipment
    * @return the created and added process equipment unit
    */
   public <T extends ProcessEquipmentInterface> T addUnit(String name, String equipmentType,
@@ -5733,7 +5593,7 @@ public class ProcessSystem extends SimulationBaseClass {
     // Set the inlet stream if possible
     try {
       java.lang.reflect.Method setInlet = unit.getClass().getMethod("setInletStream",
-          neqsim.process.equipment.stream.StreamInterface.class);
+	  neqsim.process.equipment.stream.StreamInterface.class);
       setInlet.invoke(unit, stream);
     } catch (NoSuchMethodException ignored) {
       // If the method does not exist, do nothing
@@ -5751,7 +5611,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * addUnit.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name      a {@link java.lang.String} object
    * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    * @return a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
@@ -5795,9 +5655,9 @@ public class ProcessSystem extends SimulationBaseClass {
       Object outletStream = getOutlet.invoke(fromUnit);
 
       if (outletStream != null) {
-        java.lang.reflect.Method setInlet = toUnit.getClass().getMethod("setInletStream",
-            neqsim.process.equipment.stream.StreamInterface.class);
-        setInlet.invoke(toUnit, outletStream);
+	java.lang.reflect.Method setInlet = toUnit.getClass().getMethod("setInletStream",
+	    neqsim.process.equipment.stream.StreamInterface.class);
+	setInlet.invoke(toUnit, outletStream);
       }
     } catch (NoSuchMethodException ignored) {
     } catch (Exception e) {
@@ -5812,10 +5672,10 @@ public class ProcessSystem extends SimulationBaseClass {
 
     void add(String[] entry) {
       if (entry == null) {
-        throw new IllegalArgumentException("History entry cannot be null");
+	throw new IllegalArgumentException("History entry cannot be null");
       }
       if (maxSize > 0 && entries.size() >= maxSize) {
-        entries.removeFirst();
+	entries.removeFirst();
       }
       entries.addLast(Arrays.copyOf(entry, entry.length));
     }
@@ -5835,9 +5695,9 @@ public class ProcessSystem extends SimulationBaseClass {
     void setMaxSize(int maxSize) {
       this.maxSize = maxSize;
       if (maxSize > 0) {
-        while (entries.size() > maxSize) {
-          entries.removeFirst();
-        }
+	while (entries.size() > maxSize) {
+	  entries.removeFirst();
+	}
       }
     }
 
@@ -5845,7 +5705,7 @@ public class ProcessSystem extends SimulationBaseClass {
       MeasurementHistory copy = new MeasurementHistory();
       copy.maxSize = maxSize;
       for (String[] entry : entries) {
-        copy.entries.addLast(Arrays.copyOf(entry, entry.length));
+	copy.entries.addLast(Arrays.copyOf(entry, entry.length));
       }
       return copy;
     }
@@ -5854,7 +5714,7 @@ public class ProcessSystem extends SimulationBaseClass {
       String[][] array = new String[entries.size()][];
       int index = 0;
       for (String[] entry : entries) {
-        array[index++] = Arrays.copyOf(entry, entry.length);
+	array[index++] = Arrays.copyOf(entry, entry.length);
       }
       return array;
     }
@@ -5871,10 +5731,10 @@ public class ProcessSystem extends SimulationBaseClass {
     @Override
     public boolean equals(Object obj) {
       if (this == obj) {
-        return true;
+	return true;
       }
       if (obj == null || getClass() != obj.getClass()) {
-        return false;
+	return false;
       }
       MeasurementHistory other = (MeasurementHistory) obj;
       return maxSize == other.maxSize && Arrays.deepEquals(toArray(), other.toArray());
@@ -5896,10 +5756,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * Export the process to Graphviz with configurable stream annotations.
    *
    * @param filename the Graphviz output file
-   * @param options export options controlling stream annotations and table output
+   * @param options  export options controlling stream annotations and table output
    */
-  public void exportToGraphviz(String filename,
-      ProcessSystemGraphvizExporter.GraphvizExportOptions options) {
+  public void exportToGraphviz(String filename, ProcessSystemGraphvizExporter.GraphvizExportOptions options) {
     new ProcessSystemGraphvizExporter().export(this, filename, options);
   }
 
@@ -5920,9 +5779,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * Builds a ProcessSystem from a JSON process definition string.
    *
    * <p>
-   * This is the primary entry point for web API and Python integration. Accepts a declarative JSON
-   * definition of fluids, equipment, and stream connections and returns a structured result with
-   * the built ProcessSystem or detailed error information.
+   * This is the primary entry point for web API and Python integration. Accepts a declarative JSON definition of
+   * fluids, equipment, and stream connections and returns a structured result with the built ProcessSystem or detailed
+   * error information.
    * </p>
    *
    * @param json the JSON process definition string
@@ -5937,14 +5796,13 @@ public class ProcessSystem extends SimulationBaseClass {
     return ProcessJsonValidator.validate(json);
   }
 
-
   /**
    * Exports this ProcessSystem to the JSON schema consumed by {@link JsonProcessBuilder}.
    *
    * <p>
-   * The exported JSON is round-trippable: the output can be fed back into {@link #fromJson(String)}
-   * to reconstruct an equivalent ProcessSystem. This enables exporting NeqSim process models to
-   * external simulators (e.g., UniSim Design via COM automation).
+   * The exported JSON is round-trippable: the output can be fed back into {@link #fromJson(String)} to reconstruct an
+   * equivalent ProcessSystem. This enables exporting NeqSim process models to external simulators (e.g., UniSim Design
+   * via COM automation).
    * </p>
    *
    * @return JSON string representing this process system
@@ -5959,8 +5817,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Builds and immediately runs a ProcessSystem from a JSON definition.
    *
    * <p>
-   * Convenience method that combines building and execution in a single call. The result contains
-   * the full simulation report JSON.
+   * Convenience method that combines building and execution in a single call. The result contains the full simulation
+   * report JSON.
    * </p>
    *
    * @param json the JSON process definition string
@@ -5975,14 +5833,13 @@ public class ProcessSystem extends SimulationBaseClass {
    * Builds and runs a process simulation from a JSON definition using a pre-built fluid.
    *
    * <p>
-   * This overload is used when the fluid has been loaded from an external source (e.g., an Eclipse
-   * E300 file via {@link neqsim.thermo.util.readwrite.EclipseFluidReadWrite}) and should be used
-   * instead of parsing the fluid section in the JSON. The pre-built fluid preserves all component
-   * critical properties (Tc, Pc, acentric factor, MW, BIPs) for both standard and
-   * hypothetical/pseudo components.
+   * This overload is used when the fluid has been loaded from an external source (e.g., an Eclipse E300 file via
+   * {@link neqsim.thermo.util.readwrite.EclipseFluidReadWrite}) and should be used instead of parsing the fluid section
+   * in the JSON. The pre-built fluid preserves all component critical properties (Tc, Pc, acentric factor, MW, BIPs)
+   * for both standard and hypothetical/pseudo components.
    * </p>
    *
-   * @param json the JSON process definition string (the 'fluid' section is ignored)
+   * @param json  the JSON process definition string (the 'fluid' section is ignored)
    * @param fluid the pre-built thermodynamic system to use
    * @return a SimulationResult containing the executed process and report, or errors
    * @see JsonProcessBuilder#buildAndRun(String, SystemInterface)
@@ -6035,94 +5892,91 @@ public class ProcessSystem extends SimulationBaseClass {
 
     try {
       switch (port) {
-        case "gasout":
-        case "gasoutstream":
-        case "gas":
-          return (StreamInterface) unit.getClass().getMethod("getGasOutStream").invoke(unit);
-        case "liquidout":
-        case "liquidoutstream":
-        case "liquid":
-          return (StreamInterface) unit.getClass().getMethod("getLiquidOutStream").invoke(unit);
-        case "oilout":
-        case "oil":
-          return (StreamInterface) unit.getClass().getMethod("getOilOutStream").invoke(unit);
-        case "waterout":
-        case "water":
-          return (StreamInterface) unit.getClass().getMethod("getWaterOutStream").invoke(unit);
-        case "out":
-        case "outstream":
-        case "outlet":
-        default:
-          // Handle legacy indexed split aliases: "splitStream_0", "splitStream_1", etc.
-          if (port.startsWith("splitstream_") && port.length() > 12) {
-            try {
-              int idx = Integer.parseInt(port.substring(12));
-              return (StreamInterface) unit.getClass().getMethod("getSplitStream", int.class)
-                  .invoke(unit, idx);
-            } catch (NumberFormatException nfe) {
-              // fall through to default outlet
-            }
-          }
-          // Handle indexed split streams: "split0", "split1", etc.
-          if (port.startsWith("split") && port.length() > 5) {
-            try {
-              int idx = Integer.parseInt(port.substring(5));
-              return (StreamInterface) unit.getClass().getMethod("getSplitStream", int.class)
-                  .invoke(unit, idx);
-            } catch (NumberFormatException nfe) {
-              // fall through to default outlet
-            }
-          }
-          // Handle indexed HeatExchanger ports emitted by JsonProcessExporter:
-          // "outlet1", "outlet2", etc. Plain "outlet" remains the first outlet.
-          if (port.startsWith("outlet") && port.length() > 6) {
-            try {
-              int idx = Integer.parseInt(port.substring(6));
-              if (unit instanceof HeatExchanger) {
-                return ((HeatExchanger) unit).getOutStream(idx);
-              }
-            } catch (NumberFormatException nfe) {
-              // fall through to default outlet
-            }
-          }
-          // Handle indexed HeatExchanger ports: "hx0", "hx1", etc.
-          if (port.startsWith("hx") && port.length() > 2) {
-            try {
-              int idx = Integer.parseInt(port.substring(2));
-              if (unit instanceof HeatExchanger) {
-                return ((HeatExchanger) unit).getOutStream(idx);
-              }
-            } catch (NumberFormatException nfe) {
-              // fall through to default outlet
-            }
-          }
-          // Handle HeatExchanger which uses getOutStream(int) instead of
-          // getOutletStream()
-          if (unit instanceof HeatExchanger) {
-            return ((HeatExchanger) unit).getOutStream(0);
-          }
-          return (StreamInterface) unit.getClass().getMethod("getOutletStream").invoke(unit);
+      case "gasout":
+      case "gasoutstream":
+      case "gas":
+	return (StreamInterface) unit.getClass().getMethod("getGasOutStream").invoke(unit);
+      case "liquidout":
+      case "liquidoutstream":
+      case "liquid":
+	return (StreamInterface) unit.getClass().getMethod("getLiquidOutStream").invoke(unit);
+      case "oilout":
+      case "oil":
+	return (StreamInterface) unit.getClass().getMethod("getOilOutStream").invoke(unit);
+      case "waterout":
+      case "water":
+	return (StreamInterface) unit.getClass().getMethod("getWaterOutStream").invoke(unit);
+      case "out":
+      case "outstream":
+      case "outlet":
+      default:
+	// Handle legacy indexed split aliases: "splitStream_0", "splitStream_1", etc.
+	if (port.startsWith("splitstream_") && port.length() > 12) {
+	  try {
+	    int idx = Integer.parseInt(port.substring(12));
+	    return (StreamInterface) unit.getClass().getMethod("getSplitStream", int.class).invoke(unit, idx);
+	  } catch (NumberFormatException nfe) {
+	    // fall through to default outlet
+	  }
+	}
+	// Handle indexed split streams: "split0", "split1", etc.
+	if (port.startsWith("split") && port.length() > 5) {
+	  try {
+	    int idx = Integer.parseInt(port.substring(5));
+	    return (StreamInterface) unit.getClass().getMethod("getSplitStream", int.class).invoke(unit, idx);
+	  } catch (NumberFormatException nfe) {
+	    // fall through to default outlet
+	  }
+	}
+	// Handle indexed HeatExchanger ports emitted by JsonProcessExporter:
+	// "outlet1", "outlet2", etc. Plain "outlet" remains the first outlet.
+	if (port.startsWith("outlet") && port.length() > 6) {
+	  try {
+	    int idx = Integer.parseInt(port.substring(6));
+	    if (unit instanceof HeatExchanger) {
+	      return ((HeatExchanger) unit).getOutStream(idx);
+	    }
+	  } catch (NumberFormatException nfe) {
+	    // fall through to default outlet
+	  }
+	}
+	// Handle indexed HeatExchanger ports: "hx0", "hx1", etc.
+	if (port.startsWith("hx") && port.length() > 2) {
+	  try {
+	    int idx = Integer.parseInt(port.substring(2));
+	    if (unit instanceof HeatExchanger) {
+	      return ((HeatExchanger) unit).getOutStream(idx);
+	    }
+	  } catch (NumberFormatException nfe) {
+	    // fall through to default outlet
+	  }
+	}
+	// Handle HeatExchanger which uses getOutStream(int) instead of
+	// getOutletStream()
+	if (unit instanceof HeatExchanger) {
+	  return ((HeatExchanger) unit).getOutStream(0);
+	}
+	return (StreamInterface) unit.getClass().getMethod("getOutletStream").invoke(unit);
       }
     } catch (NoSuchMethodException e) {
       // Fallback chain: getOutStream(int) -> getOutletStreams().get(0) ->
       // getOutStream()
       try {
-        return (StreamInterface) unit.getClass().getMethod("getOutStream", int.class).invoke(unit,
-            0);
+	return (StreamInterface) unit.getClass().getMethod("getOutStream", int.class).invoke(unit, 0);
       } catch (Exception ex2) {
-        try {
-          List<StreamInterface> outlets = unit.getOutletStreams();
-          if (outlets != null && !outlets.isEmpty()) {
-            return outlets.get(0);
-          }
-        } catch (Exception ex3) {
-          // ignore
-        }
-        try {
-          return (StreamInterface) unit.getClass().getMethod("getOutStream").invoke(unit);
-        } catch (Exception ex4) {
-          return null;
-        }
+	try {
+	  List<StreamInterface> outlets = unit.getOutletStreams();
+	  if (outlets != null && !outlets.isEmpty()) {
+	    return outlets.get(0);
+	  }
+	} catch (Exception ex3) {
+	  // ignore
+	}
+	try {
+	  return (StreamInterface) unit.getClass().getMethod("getOutStream").invoke(unit);
+	} catch (Exception ex4) {
+	  return null;
+	}
       }
     } catch (Exception e) {
       return null;
@@ -6137,7 +5991,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * </p>
    *
    * @param targetUnitName the name of the equipment to wire the inlet to
-   * @param sourceRef the stream reference (e.g., "feed", "HP Sep.gasOut")
+   * @param sourceRef      the stream reference (e.g., "feed", "HP Sep.gasOut")
    * @return true if wiring succeeded, false if source or target not found
    */
   public boolean wireStream(String targetUnitName, String sourceRef) {
@@ -6154,23 +6008,20 @@ public class ProcessSystem extends SimulationBaseClass {
     }
 
     try {
-      java.lang.reflect.Method setInlet =
-          target.getClass().getMethod("setInletStream", StreamInterface.class);
+      java.lang.reflect.Method setInlet = target.getClass().getMethod("setInletStream", StreamInterface.class);
       setInlet.invoke(target, stream);
       return true;
     } catch (NoSuchMethodException e) {
       try {
-        java.lang.reflect.Method addStream =
-            target.getClass().getMethod("addStream", StreamInterface.class);
-        addStream.invoke(target, stream);
-        return true;
+	java.lang.reflect.Method addStream = target.getClass().getMethod("addStream", StreamInterface.class);
+	addStream.invoke(target, stream);
+	return true;
       } catch (Exception ex) {
-        logger.warn("wireStream: cannot set inlet on '{}': {}", targetUnitName, ex.getMessage());
-        return false;
+	logger.warn("wireStream: cannot set inlet on '{}': {}", targetUnitName, ex.getMessage());
+	return false;
       }
     } catch (Exception e) {
-      logger.warn("wireStream: error wiring '{}' to '{}': {}", sourceRef, targetUnitName,
-          e.getMessage());
+      logger.warn("wireStream: error wiring '{}' to '{}': {}", sourceRef, targetUnitName, e.getMessage());
       return false;
     }
   }
@@ -6189,8 +6040,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * {@link neqsim.process.equipment.capacity.CapacityConstrainedEquipment}</li>
    * </ul>
    *
-   * @return a {@link neqsim.process.equipment.ProcessEquipmentInterface} object representing the
-   *         bottleneck, or null if no equipment has capacity defined
+   * @return a {@link neqsim.process.equipment.ProcessEquipmentInterface} object representing the bottleneck, or null if
+   *         no equipment has capacity defined
    */
   public ProcessEquipmentInterface getBottleneck() {
     ProcessEquipmentInterface bottleneck = null;
@@ -6201,22 +6052,20 @@ public class ProcessSystem extends SimulationBaseClass {
 
       // Check if equipment implements CapacityConstrainedEquipment (multi-constraint)
       if (unit instanceof neqsim.process.equipment.capacity.CapacityConstrainedEquipment) {
-        neqsim.process.equipment.capacity.CapacityConstrainedEquipment constrained =
-            (neqsim.process.equipment.capacity.CapacityConstrainedEquipment) unit;
-        utilization = constrained.getMaxUtilization();
+	neqsim.process.equipment.capacity.CapacityConstrainedEquipment constrained = (neqsim.process.equipment.capacity.CapacityConstrainedEquipment) unit;
+	utilization = constrained.getMaxUtilization();
       } else {
-        // Fall back to traditional single capacity metric
-        double capacity = unit.getCapacityMax();
-        double duty = unit.getCapacityDuty();
-        if (capacity > 1e-12) {
-          utilization = duty / capacity;
-        }
+	// Fall back to traditional single capacity metric
+	double capacity = unit.getCapacityMax();
+	double duty = unit.getCapacityDuty();
+	if (capacity > 1e-12) {
+	  utilization = duty / capacity;
+	}
       }
 
-      if (!Double.isNaN(utilization) && !Double.isInfinite(utilization)
-          && utilization > maxUtilization) {
-        maxUtilization = utilization;
-        bottleneck = unit;
+      if (!Double.isNaN(utilization) && !Double.isInfinite(utilization) && utilization > maxUtilization) {
+	maxUtilization = utilization;
+	bottleneck = unit;
       }
     }
     return bottleneck;
@@ -6234,8 +6083,7 @@ public class ProcessSystem extends SimulationBaseClass {
     }
 
     if (bottleneck instanceof neqsim.process.equipment.capacity.CapacityConstrainedEquipment) {
-      return ((neqsim.process.equipment.capacity.CapacityConstrainedEquipment) bottleneck)
-          .getMaxUtilization();
+      return ((neqsim.process.equipment.capacity.CapacityConstrainedEquipment) bottleneck).getMaxUtilization();
     }
 
     double capacity = bottleneck.getCapacityMax();
@@ -6291,8 +6139,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Forces a rebuild of the process graph on next access.
    *
    * <p>
-   * Use this method when you have made structural changes to the process that the automatic
-   * detection may have missed (e.g., modifying stream connections directly).
+   * Use this method when you have made structural changes to the process that the automatic detection may have missed
+   * (e.g., modifying stream connections directly).
    * </p>
    */
   public void invalidateGraph() {
@@ -6309,10 +6157,9 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Invalidates all structure-derived caches in a single call. Equivalent to
-   * {@link #invalidateGraph()} but named to reflect the general contract: any mutation of
-   * {@code unitOperations} (add/remove/replace/clear) MUST call this method. Keeping the
-   * invalidation in one place prevents the common bug of adding a new cache field and forgetting to
+   * Invalidates all structure-derived caches in a single call. Equivalent to {@link #invalidateGraph()} but named to
+   * reflect the general contract: any mutation of {@code unitOperations} (add/remove/replace/clear) MUST call this
+   * method. Keeping the invalidation in one place prevents the common bug of adding a new cache field and forgetting to
    * clear it at one of the mutation sites.
    */
   private void invalidateStructureCaches() {
@@ -6323,9 +6170,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * Returns the current topology version for this process system.
    *
    * <p>
-   * The value increments whenever topology-derived caches are invalidated, including unit additions
-   * and explicit calls to {@link #invalidateGraph()}. Parent {@link ProcessModel}s use this to
-   * detect child wiring changes after an area has already been registered.
+   * The value increments whenever topology-derived caches are invalidated, including unit additions and explicit calls
+   * to {@link #invalidateGraph()}. Parent {@link ProcessModel}s use this to detect child wiring changes after an area
+   * has already been registered.
    * </p>
    *
    * @return monotonic structure version for topology-sensitive caches
@@ -6337,8 +6184,7 @@ public class ProcessSystem extends SimulationBaseClass {
   /**
    * Enable or disable coordinated Broyden acceleration for coupled recycle groups.
    *
-   * @param useCoordinatedAcceleration true to apply coordinated acceleration across
-   *        current-priority recycle loops
+   * @param useCoordinatedAcceleration true to apply coordinated acceleration across current-priority recycle loops
    */
   public void setUseCoordinatedRecycleAcceleration(boolean useCoordinatedAcceleration) {
     recycleController.setUseCoordinatedAcceleration(useCoordinatedAcceleration);
@@ -6354,14 +6200,13 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Apply an acceleration method to every {@link Recycle} unit in this {@code ProcessSystem}.
-   * Convenience wrapper that avoids iterating and configuring each {@code Recycle} individually.
+   * Apply an acceleration method to every {@link Recycle} unit in this {@code ProcessSystem}. Convenience wrapper that
+   * avoids iterating and configuring each {@code Recycle} individually.
    *
    * <p>
-   * Wegstein acceleration (see {@link neqsim.process.equipment.util.AccelerationMethod#WEGSTEIN})
-   * typically reduces outer-loop iteration count by 2-3x on single-variable recycle loops and is a
-   * safe default for most flowsheets. Broyden's method is more effective for tightly coupled
-   * multi-recycle systems.
+   * Wegstein acceleration (see {@link neqsim.process.equipment.util.AccelerationMethod#WEGSTEIN}) typically reduces
+   * outer-loop iteration count by 2-3x on single-variable recycle loops and is a safe default for most flowsheets.
+   * Broyden's method is more effective for tightly coupled multi-recycle systems.
    * </p>
    *
    * @param method acceleration method to apply (must not be {@code null})
@@ -6374,32 +6219,29 @@ public class ProcessSystem extends SimulationBaseClass {
     int count = 0;
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit instanceof Recycle) {
-        ((Recycle) unit).setAccelerationMethod(method);
-        count++;
+	((Recycle) unit).setAccelerationMethod(method);
+	count++;
       }
     }
     return count;
   }
 
   /**
-   * Reorder the iterative section so that within each non-trivial SCC the {@link Recycle} units
-   * appear <em>after</em> their SCC peers. Relative order of non-Recycle units is preserved exactly
-   * (stable), and the position of each SCC block relative to units outside the SCC is preserved
-   * (anchored at the first member in insertion order).
+   * Reorder the iterative section so that within each non-trivial SCC the {@link Recycle} units appear <em>after</em>
+   * their SCC peers. Relative order of non-Recycle units is preserved exactly (stable), and the position of each SCC
+   * block relative to units outside the SCC is preserved (anchored at the first member in insertion order).
    *
    * <p>
-   * This is a safe, conservative refinement of the insertion-order iterative section used by
-   * {@link #runHybrid(UUID)}. It only moves {@code Recycle} units within their own SCC block, never
-   * across SCC boundaries or across non-SCC units, so it cannot change the fixed point of
-   * successive substitution. For flowsheets that already follow the common convention of adding
-   * {@code Recycle} units last, this method is a no-op.
+   * This is a safe, conservative refinement of the insertion-order iterative section used by {@link #runHybrid(UUID)}.
+   * It only moves {@code Recycle} units within their own SCC block, never across SCC boundaries or across non-SCC
+   * units, so it cannot change the fixed point of successive substitution. For flowsheets that already follow the
+   * common convention of adding {@code Recycle} units last, this method is a no-op.
    * </p>
    *
    * @param iterativeSection insertion-ordered iterative section
    * @return refined list with recycles moved to end of their SCC block
    */
-  private List<ProcessEquipmentInterface> reorderRecyclesWithinSCCs(
-      List<ProcessEquipmentInterface> iterativeSection) {
+  private List<ProcessEquipmentInterface> reorderRecyclesWithinSCCs(List<ProcessEquipmentInterface> iterativeSection) {
     if (iterativeSection.size() < 2) {
       return iterativeSection;
     }
@@ -6418,15 +6260,14 @@ public class ProcessSystem extends SimulationBaseClass {
     }
     // Map equipment -> SCC index (only for non-trivial SCCs, size > 1).
     java.util.Map<ProcessEquipmentInterface, Integer> eqToScc = new java.util.IdentityHashMap<>();
-    java.util.List<java.util.List<neqsim.process.processmodel.graph.ProcessNode>> comps =
-        sccRes.getComponents();
+    java.util.List<java.util.List<neqsim.process.processmodel.graph.ProcessNode>> comps = sccRes.getComponents();
     for (int i = 0; i < comps.size(); i++) {
       java.util.List<neqsim.process.processmodel.graph.ProcessNode> scc = comps.get(i);
       if (scc.size() < 2) {
-        continue;
+	continue;
       }
       for (neqsim.process.processmodel.graph.ProcessNode n : scc) {
-        eqToScc.put(n.getEquipment(), i);
+	eqToScc.put(n.getEquipment(), i);
       }
     }
     if (eqToScc.isEmpty()) {
@@ -6440,27 +6281,27 @@ public class ProcessSystem extends SimulationBaseClass {
       ProcessEquipmentInterface unit = iterativeSection.get(idx);
       Integer sccIdx = eqToScc.get(unit);
       if (sccIdx == null) {
-        result.add(unit);
-        continue;
+	result.add(unit);
+	continue;
       }
       if (emittedSccs.contains(sccIdx)) {
-        // Already flushed this SCC block when we hit its first member.
-        continue;
+	// Already flushed this SCC block when we hit its first member.
+	continue;
       }
       emittedSccs.add(sccIdx);
       // Gather all remaining members of this SCC in insertion order.
       List<ProcessEquipmentInterface> nonRecycles = new ArrayList<>();
       List<ProcessEquipmentInterface> recycles = new ArrayList<>();
       for (int j = idx; j < iterativeSection.size(); j++) {
-        ProcessEquipmentInterface u = iterativeSection.get(j);
-        Integer s = eqToScc.get(u);
-        if (s != null && s.equals(sccIdx)) {
-          if (u instanceof Recycle) {
-            recycles.add(u);
-          } else {
-            nonRecycles.add(u);
-          }
-        }
+	ProcessEquipmentInterface u = iterativeSection.get(j);
+	Integer s = eqToScc.get(u);
+	if (s != null && s.equals(sccIdx)) {
+	  if (u instanceof Recycle) {
+	    recycles.add(u);
+	  } else {
+	    nonRecycles.add(u);
+	  }
+	}
       }
       result.addAll(nonRecycles);
       result.addAll(recycles);
@@ -6472,9 +6313,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Sets whether to use graph-based execution order.
    *
    * <p>
-   * When enabled, the run() method will execute units in topological order derived from stream
-   * connections rather than the order units were added. This can be safer when unit insertion order
-   * doesn't match the physical flow.
+   * When enabled, the run() method will execute units in topological order derived from stream connections rather than
+   * the order units were added. This can be safer when unit insertion order doesn't match the physical flow.
    * </p>
    *
    * @param useGraphBased true to use topological execution order, false to use insertion order
@@ -6500,13 +6340,13 @@ public class ProcessSystem extends SimulationBaseClass {
    * </p>
    * <ul>
    * <li>For processes WITHOUT recycles: parallel execution for maximum speed (28-57% faster)</li>
-   * <li>For processes WITH recycles: hybrid execution - parallel for feed-forward sections, then
-   * iterative for recycle sections (28-38% faster)</li>
+   * <li>For processes WITH recycles: hybrid execution - parallel for feed-forward sections, then iterative for recycle
+   * sections (28-38% faster)</li>
    * </ul>
    *
    * <p>
-   * When disabled, run() uses sequential execution in insertion order (legacy behavior). This may
-   * be useful for debugging or when deterministic single-threaded execution is required.
+   * When disabled, run() uses sequential execution in insertion order (legacy behavior). This may be useful for
+   * debugging or when deterministic single-threaded execution is required.
    * </p>
    *
    * @param useOptimized true to use optimized execution (default), false for sequential execution
@@ -6519,8 +6359,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Returns whether optimized execution is enabled.
    *
    * <p>
-   * When true (default), run() delegates to runOptimized() which automatically selects the best
-   * execution strategy based on process topology.
+   * When true (default), run() delegates to runOptimized() which automatically selects the best execution strategy
+   * based on process topology.
    * </p>
    *
    * @return true if optimized execution is enabled
@@ -6530,21 +6370,20 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Enable or disable the warm-start K-value path for flash calculations performed during this
-   * process system's {@link #run(java.util.UUID)} (and the no-arg {@code run()}).
+   * Enable or disable the warm-start K-value path for flash calculations performed during this process system's
+   * {@link #run(java.util.UUID)} (and the no-arg {@code run()}).
    *
    * <p>
-   * When enabled, {@code ThermodynamicModelSettings.setUseWarmStartKValues(true)} is set on the
-   * calling thread for the duration of the run and restored to its prior value in a finally block.
-   * This makes every TPflash issued during equipment evaluation re-use the previously converged
-   * K-values as the initial estimate rather than seeding from the Wilson correlation on every call.
-   * Recycle loops, parametric sweeps, and any flowsheet that re-flashes the same fluid at
-   * near-identical conditions typically see 10–20% wall-time reduction with no change to the
-   * converged solution. Default is {@code false} (historical behaviour).
+   * When enabled, {@code ThermodynamicModelSettings.setUseWarmStartKValues(true)} is set on the calling thread for the
+   * duration of the run and restored to its prior value in a finally block. This makes every TPflash issued during
+   * equipment evaluation re-use the previously converged K-values as the initial estimate rather than seeding from the
+   * Wilson correlation on every call. Recycle loops, parametric sweeps, and any flowsheet that re-flashes the same
+   * fluid at near-identical conditions typically see 10–20% wall-time reduction with no change to the converged
+   * solution. Default is {@code false} (historical behaviour).
    * </p>
    *
-   * @param useWarmStart true to enable warm-start K-values during run, false to keep the current
-   *        thread-local setting unchanged
+   * @param useWarmStart true to enable warm-start K-values during run, false to keep the current thread-local setting
+   *                     unchanged
    */
   public void setUseFlashWarmStart(boolean useWarmStart) {
     this.useFlashWarmStart = useWarmStart;
@@ -6563,9 +6402,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * Gets the calculation order derived from process topology.
    *
    * <p>
-   * This method returns units in the order they should be calculated based on stream connections,
-   * not the order they were added to the ProcessSystem. This is safer than relying on insertion
-   * order, which can lead to wrong results if units are rearranged or recycles are added late.
+   * This method returns units in the order they should be calculated based on stream connections, not the order they
+   * were added to the ProcessSystem. This is safer than relying on insertion order, which can lead to wrong results if
+   * units are rearranged or recycles are added late.
    * </p>
    *
    * @return list of equipment in topology-derived calculation order
@@ -6642,8 +6481,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Gets the strongly connected components (SCCs) in the process graph.
    *
    * <p>
-   * SCCs with more than one unit represent recycle loops that require iterative convergence. This
-   * method uses Tarjan's algorithm to identify these components.
+   * SCCs with more than one unit represent recycle loops that require iterative convergence. This method uses Tarjan's
+   * algorithm to identify these components.
    * </p>
    *
    * @return list of SCCs, each containing a list of equipment in that component
@@ -6658,7 +6497,7 @@ public class ProcessSystem extends SimulationBaseClass {
     for (List<ProcessNode> loop : recycleLoops) {
       List<ProcessEquipmentInterface> block = new java.util.ArrayList<>();
       for (ProcessNode node : loop) {
-        block.add(node.getEquipment());
+	block.add(node.getEquipment());
       }
       recycleBlocks.add(block);
     }
@@ -6683,7 +6522,7 @@ public class ProcessSystem extends SimulationBaseClass {
   public boolean isInRecycleLoop(ProcessEquipmentInterface unit) {
     for (List<ProcessEquipmentInterface> block : getRecycleBlocks()) {
       if (block.contains(unit)) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -6709,8 +6548,7 @@ public class ProcessSystem extends SimulationBaseClass {
     for (List<ProcessEquipmentInterface> block : blocks) {
       sb.append("Block ").append(blockNum++).append(" (").append(block.size()).append(" units):\n");
       for (ProcessEquipmentInterface unit : block) {
-        sb.append("  - ").append(unit.getName()).append(" [")
-            .append(unit.getClass().getSimpleName()).append("]\n");
+	sb.append("  - ").append(unit.getName()).append(" [").append(unit.getClass().getSimpleName()).append("]\n");
       }
       sb.append("\n");
     }
@@ -6723,9 +6561,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Exports the current state of this process system for checkpointing or versioning.
    *
    * <p>
-   * This method captures all equipment states, fluid compositions, and operating conditions into a
-   * serializable format that can be saved to disk, stored in a database, or used for model
-   * versioning in digital twin applications.
+   * This method captures all equipment states, fluid compositions, and operating conditions into a serializable format
+   * that can be saved to disk, stored in a database, or used for model versioning in digital twin applications.
    * </p>
    *
    * <p>
@@ -6758,15 +6595,15 @@ public class ProcessSystem extends SimulationBaseClass {
    * Loads process state from a JSON file and applies it to this system.
    *
    * <p>
-   * Note: This method updates equipment states but does not recreate equipment. The process
-   * structure must match the saved state.
+   * Note: This method updates equipment states but does not recreate equipment. The process structure must match the
+   * saved state.
    * </p>
    *
    * @param filename the file path to load state from
    */
   public void loadStateFromFile(String filename) {
-    neqsim.process.processmodel.lifecycle.ProcessSystemState state =
-        neqsim.process.processmodel.lifecycle.ProcessSystemState.loadFromFile(filename);
+    neqsim.process.processmodel.lifecycle.ProcessSystemState state = neqsim.process.processmodel.lifecycle.ProcessSystemState
+	.loadFromFile(filename);
     if (state != null) {
       state.applyTo(this);
     }
@@ -6778,8 +6615,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Saves this process system to a compressed .neqsim file using XStream serialization.
    *
    * <p>
-   * This is the recommended format for production use, providing compact storage with full process
-   * state preservation. The file can be loaded with {@link #loadFromNeqsim(String)}.
+   * This is the recommended format for production use, providing compact storage with full process state preservation.
+   * The file can be loaded with {@link #loadFromNeqsim(String)}.
    * </p>
    *
    * <p>
@@ -6802,8 +6639,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Loads a process system from a compressed .neqsim file.
    *
    * <p>
-   * After loading, the process is automatically run to reinitialize calculations. This ensures the
-   * internal state is consistent.
+   * After loading, the process is automatically run to reinitialize calculations. This ensures the internal state is
+   * consistent.
    * </p>
    *
    * <p>
@@ -6822,13 +6659,13 @@ public class ProcessSystem extends SimulationBaseClass {
     try {
       Object loaded = neqsim.util.serialization.NeqSimXtream.openNeqsim(filename);
       if (loaded instanceof ProcessSystem) {
-        ProcessSystem process = (ProcessSystem) loaded;
-        process.run();
-        return process;
+	ProcessSystem process = (ProcessSystem) loaded;
+	process.run();
+	return process;
       } else {
-        logger.error("Loaded object is not a ProcessSystem: "
-            + (loaded != null ? loaded.getClass().getName() : "null"));
-        return null;
+	logger
+	    .error("Loaded object is not a ProcessSystem: " + (loaded != null ? loaded.getClass().getName() : "null"));
+	return null;
       }
     } catch (java.io.IOException e) {
       logger.error("Failed to load process from file: " + filename, e);
@@ -6856,19 +6693,19 @@ public class ProcessSystem extends SimulationBaseClass {
       return saveToNeqsim(filename);
     } else if (lowerName.endsWith(".json")) {
       try {
-        exportStateToFile(filename);
-        return true;
+	exportStateToFile(filename);
+	return true;
       } catch (Exception e) {
-        logger.error("Failed to save JSON state: " + filename, e);
-        return false;
+	logger.error("Failed to save JSON state: " + filename, e);
+	return false;
       }
     } else {
       try {
-        save(filename);
-        return true;
+	save(filename);
+	return true;
       } catch (Exception e) {
-        logger.error("Failed to save process: " + filename, e);
-        return false;
+	logger.error("Failed to save process: " + filename, e);
+	return false;
       }
     }
   }
@@ -6923,8 +6760,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * @see neqsim.process.sustainability.EmissionsTracker
    */
   public neqsim.process.sustainability.EmissionsTracker.EmissionsReport getEmissions() {
-    neqsim.process.sustainability.EmissionsTracker tracker =
-        new neqsim.process.sustainability.EmissionsTracker(this);
+    neqsim.process.sustainability.EmissionsTracker tracker = new neqsim.process.sustainability.EmissionsTracker(this);
     return tracker.calculateEmissions();
   }
 
@@ -6932,18 +6768,15 @@ public class ProcessSystem extends SimulationBaseClass {
    * Calculates emissions using a custom grid emission factor.
    *
    * <p>
-   * Different regions have different electricity grid carbon intensities. Use this method to apply
-   * location-specific emission factors.
+   * Different regions have different electricity grid carbon intensities. Use this method to apply location-specific
+   * emission factors.
    * </p>
    *
-   * @param gridEmissionFactor kg CO2 per kWh of electricity (e.g., 0.05 for Norway, 0.4 for global
-   *        average)
+   * @param gridEmissionFactor kg CO2 per kWh of electricity (e.g., 0.05 for Norway, 0.4 for global average)
    * @return emissions report with equipment breakdown
    */
-  public neqsim.process.sustainability.EmissionsTracker.EmissionsReport getEmissions(
-      double gridEmissionFactor) {
-    neqsim.process.sustainability.EmissionsTracker tracker =
-        new neqsim.process.sustainability.EmissionsTracker(this);
+  public neqsim.process.sustainability.EmissionsTracker.EmissionsReport getEmissions(double gridEmissionFactor) {
+    neqsim.process.sustainability.EmissionsTracker tracker = new neqsim.process.sustainability.EmissionsTracker(this);
     tracker.setGridEmissionFactor(gridEmissionFactor);
     return tracker.calculateEmissions();
   }
@@ -6952,8 +6785,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * Gets total CO2-equivalent emissions from this process in kg/hr.
    *
    * <p>
-   * This is a convenience method for quick emission checks. For detailed breakdown, use
-   * {@link #getEmissions()}.
+   * This is a convenience method for quick emission checks. For detailed breakdown, use {@link #getEmissions()}.
    * </p>
    *
    * @return total CO2e emissions in kg/hr
@@ -6968,19 +6800,17 @@ public class ProcessSystem extends SimulationBaseClass {
    * Creates a batch study builder for running parallel parameter studies on this process.
    *
    * <p>
-   * Batch studies allow exploring the design space by running many variations of this process in
-   * parallel. Useful for concept screening, sensitivity analysis, and optimization.
+   * Batch studies allow exploring the design space by running many variations of this process in parallel. Useful for
+   * concept screening, sensitivity analysis, and optimization.
    * </p>
    *
    * <p>
    * Example usage:
    *
    * <pre>
-   * BatchStudy study =
-   *     system.createBatchStudy().addParameter("separator1", "pressure", 30.0, 50.0, 70.0)
-   *         .addParameter("compressor1", "outletPressure", 80.0, 100.0, 120.0)
-   *         .addObjective("totalPower", true) // minimize
-   *         .withParallelism(4).build();
+   * BatchStudy study = system.createBatchStudy().addParameter("separator1", "pressure", 30.0, 50.0, 70.0)
+   *     .addParameter("compressor1", "outletPressure", 80.0, 100.0, 120.0).addObjective("totalPower", true) // minimize
+   *     .withParallelism(4).build();
    * BatchStudyResult result = study.run();
    * </pre>
    *
@@ -6997,8 +6827,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * Generates automatic safety scenarios based on equipment failure modes.
    *
    * <p>
-   * This method analyzes the process structure and generates scenarios for common failure modes
-   * such as:
+   * This method analyzes the process structure and generates scenarios for common failure modes such as:
    * <ul>
    * <li>Cooling system failure</li>
    * <li>Valve stuck open/closed</li>
@@ -7023,8 +6852,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * @see neqsim.process.safety.scenario.AutomaticScenarioGenerator
    */
   public List<neqsim.process.safety.ProcessSafetyScenario> generateSafetyScenarios() {
-    neqsim.process.safety.scenario.AutomaticScenarioGenerator generator =
-        new neqsim.process.safety.scenario.AutomaticScenarioGenerator(this);
+    neqsim.process.safety.scenario.AutomaticScenarioGenerator generator = new neqsim.process.safety.scenario.AutomaticScenarioGenerator(
+	this);
     return generator.enableAllFailureModes().generateSingleFailures();
   }
 
@@ -7038,10 +6867,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param maxSimultaneousFailures maximum number of failures to combine (2-3 recommended)
    * @return list of combination scenarios
    */
-  public List<neqsim.process.safety.ProcessSafetyScenario> generateCombinationScenarios(
-      int maxSimultaneousFailures) {
-    neqsim.process.safety.scenario.AutomaticScenarioGenerator generator =
-        new neqsim.process.safety.scenario.AutomaticScenarioGenerator(this);
+  public List<neqsim.process.safety.ProcessSafetyScenario> generateCombinationScenarios(int maxSimultaneousFailures) {
+    neqsim.process.safety.scenario.AutomaticScenarioGenerator generator = new neqsim.process.safety.scenario.AutomaticScenarioGenerator(
+	this);
     return generator.enableAllFailureModes().generateCombinations(maxSimultaneousFailures);
   }
 
@@ -7051,8 +6879,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * Exports the process as a DOT format diagram string.
    *
    * <p>
-   * Generates a professional oil &amp; gas style process flow diagram (PFD) following industry
-   * conventions:
+   * Generates a professional oil &amp; gas style process flow diagram (PFD) following industry conventions:
    * </p>
    * <ul>
    * <li>Gravity logic - Gas equipment at top, liquid at bottom</li>
@@ -7086,8 +6913,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * @see neqsim.process.processmodel.diagram.DiagramDetailLevel
    */
   public String toDOT(neqsim.process.processmodel.diagram.DiagramDetailLevel detailLevel) {
-    return new neqsim.process.processmodel.diagram.ProcessDiagramExporter(this)
-        .setDetailLevel(detailLevel).toDOT();
+    return new neqsim.process.processmodel.diagram.ProcessDiagramExporter(this).setDetailLevel(detailLevel).toDOT();
   }
 
   /**
@@ -7098,9 +6924,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * </p>
    *
    * <pre>
-   * process.createDiagramExporter().setTitle("Gas Processing Plant")
-   *     .setDetailLevel(DiagramDetailLevel.ENGINEERING).setVerticalLayout(true)
-   *     .exportSVG(Path.of("diagram.svg"));
+   * process.createDiagramExporter().setTitle("Gas Processing Plant").setDetailLevel(DiagramDetailLevel.ENGINEERING)
+   *     .setVerticalLayout(true).exportSVG(Path.of("diagram.svg"));
    * </pre>
    *
    * @return a new ProcessDiagramExporter configured for this process
@@ -7160,8 +6985,8 @@ public class ProcessSystem extends SimulationBaseClass {
     int count = 0;
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit instanceof ProcessEquipmentBaseClass) {
-        ((ProcessEquipmentBaseClass) unit).setCapacityAnalysisEnabled(enabled);
-        count++;
+	((ProcessEquipmentBaseClass) unit).setCapacityAnalysisEnabled(enabled);
+	count++;
       }
     }
     return count;
@@ -7171,18 +6996,17 @@ public class ProcessSystem extends SimulationBaseClass {
    * Gets all capacity-constrained equipment in the process.
    *
    * <p>
-   * Returns equipment that implements the CapacityConstrainedEquipment interface, such as
-   * separators, compressors, pumps, etc.
+   * Returns equipment that implements the CapacityConstrainedEquipment interface, such as separators, compressors,
+   * pumps, etc.
    * </p>
    *
    * @return list of capacity-constrained equipment
    */
   public java.util.List<neqsim.process.equipment.capacity.CapacityConstrainedEquipment> getConstrainedEquipment() {
-    java.util.List<neqsim.process.equipment.capacity.CapacityConstrainedEquipment> result =
-        new java.util.ArrayList<>();
+    java.util.List<neqsim.process.equipment.capacity.CapacityConstrainedEquipment> result = new java.util.ArrayList<>();
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit instanceof neqsim.process.equipment.capacity.CapacityConstrainedEquipment) {
-        result.add((neqsim.process.equipment.capacity.CapacityConstrainedEquipment) unit);
+	result.add((neqsim.process.equipment.capacity.CapacityConstrainedEquipment) unit);
       }
     }
     return result;
@@ -7192,18 +7016,17 @@ public class ProcessSystem extends SimulationBaseClass {
    * Finds the process bottleneck with detailed constraint information.
    *
    * <p>
-   * This method extends {@link #getBottleneck()} by returning detailed information about which
-   * specific constraint is limiting the bottleneck equipment. Uses the universal constraint API on
-   * {@link ProcessEquipmentInterface} so ALL equipment types are checked, not just those
-   * implementing CapacityConstrainedEquipment.
+   * This method extends {@link #getBottleneck()} by returning detailed information about which specific constraint is
+   * limiting the bottleneck equipment. Uses the universal constraint API on {@link ProcessEquipmentInterface} so ALL
+   * equipment types are checked, not just those implementing CapacityConstrainedEquipment.
    * </p>
    *
    * <p>
    * For simple bottleneck detection without constraint details, use {@link #getBottleneck()}.
    * </p>
    *
-   * @return BottleneckResult containing the bottleneck equipment, limiting constraint, and
-   *         utilization; returns empty result if no constrained equipment found
+   * @return BottleneckResult containing the bottleneck equipment, limiting constraint, and utilization; returns empty
+   *         result if no constrained equipment found
    * @see #getBottleneck()
    */
   public neqsim.process.equipment.capacity.BottleneckResult findBottleneck() {
@@ -7214,34 +7037,32 @@ public class ProcessSystem extends SimulationBaseClass {
     for (ProcessEquipmentInterface unit : unitOperations) {
       // Skip equipment with capacity analysis disabled
       if (unit instanceof ProcessEquipmentBaseClass
-          && !((ProcessEquipmentBaseClass) unit).isCapacityAnalysisEnabled()) {
-        continue;
+	  && !((ProcessEquipmentBaseClass) unit).isCapacityAnalysisEnabled()) {
+	continue;
       }
-      neqsim.process.equipment.capacity.CapacityConstraint constraint =
-          unit.getBottleneckConstraint();
+      neqsim.process.equipment.capacity.CapacityConstraint constraint = unit.getBottleneckConstraint();
       if (constraint != null && constraint.isEnabled()) {
-        double util = constraint.getUtilization();
-        if (!Double.isNaN(util) && util > maxUtil) {
-          maxUtil = util;
-          bottleneckEquipment = unit;
-          limitingConstraint = constraint;
-        }
+	double util = constraint.getUtilization();
+	if (!Double.isNaN(util) && util > maxUtil) {
+	  maxUtil = util;
+	  bottleneckEquipment = unit;
+	  limitingConstraint = constraint;
+	}
       }
     }
 
     if (bottleneckEquipment == null) {
       return neqsim.process.equipment.capacity.BottleneckResult.empty();
     }
-    return new neqsim.process.equipment.capacity.BottleneckResult(bottleneckEquipment,
-        limitingConstraint, maxUtil);
+    return new neqsim.process.equipment.capacity.BottleneckResult(bottleneckEquipment, limitingConstraint, maxUtil);
   }
 
   /**
    * Checks if any equipment in the process is overloaded (exceeds design capacity).
    *
    * <p>
-   * All equipment with capacity constraints is checked, not just those implementing
-   * CapacityConstrainedEquipment. Only equipment with capacity analysis enabled is checked.
+   * All equipment with capacity constraints is checked, not just those implementing CapacityConstrainedEquipment. Only
+   * equipment with capacity analysis enabled is checked.
    * </p>
    *
    * @return true if any equipment has capacity utilization above 100%
@@ -7249,11 +7070,11 @@ public class ProcessSystem extends SimulationBaseClass {
   public boolean isAnyEquipmentOverloaded() {
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit instanceof ProcessEquipmentBaseClass
-          && !((ProcessEquipmentBaseClass) unit).isCapacityAnalysisEnabled()) {
-        continue;
+	  && !((ProcessEquipmentBaseClass) unit).isCapacityAnalysisEnabled()) {
+	continue;
       }
       if (unit.isCapacityExceeded()) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -7263,8 +7084,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Checks if any equipment exceeds a HARD capacity limit.
    *
    * <p>
-   * HARD limits represent absolute equipment limits that cannot be exceeded without trip or damage,
-   * such as maximum compressor speed or surge limits. All equipment is checked.
+   * HARD limits represent absolute equipment limits that cannot be exceeded without trip or damage, such as maximum
+   * compressor speed or surge limits. All equipment is checked.
    * </p>
    *
    * @return true if any HARD constraint is exceeded
@@ -7272,11 +7093,11 @@ public class ProcessSystem extends SimulationBaseClass {
   public boolean isAnyHardLimitExceeded() {
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit instanceof ProcessEquipmentBaseClass
-          && !((ProcessEquipmentBaseClass) unit).isCapacityAnalysisEnabled()) {
-        continue;
+	  && !((ProcessEquipmentBaseClass) unit).isCapacityAnalysisEnabled()) {
+	continue;
       }
       if (unit.isHardLimitExceeded()) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -7286,8 +7107,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Gets a summary of capacity utilization for all equipment with constraints.
    *
    * <p>
-   * Returns a map of equipment names to their maximum constraint utilization. Only equipment with
-   * capacity analysis enabled and at least one enabled constraint is included.
+   * Returns a map of equipment names to their maximum constraint utilization. Only equipment with capacity analysis
+   * enabled and at least one enabled constraint is included.
    * </p>
    *
    * @return map of equipment name to utilization percentage
@@ -7296,12 +7117,12 @@ public class ProcessSystem extends SimulationBaseClass {
     java.util.Map<String, Double> summary = new java.util.LinkedHashMap<>();
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit instanceof ProcessEquipmentBaseClass
-          && !((ProcessEquipmentBaseClass) unit).isCapacityAnalysisEnabled()) {
-        continue;
+	  && !((ProcessEquipmentBaseClass) unit).isCapacityAnalysisEnabled()) {
+	continue;
       }
       double util = unit.getMaxUtilization();
       if (!Double.isNaN(util) && util > 0.0) {
-        summary.put(unit.getName(), util * 100.0);
+	summary.put(unit.getName(), util * 100.0);
       }
     }
     return summary;
@@ -7311,8 +7132,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Gets equipment that is near its capacity limit (above warning threshold).
    *
    * <p>
-   * Returns equipment where at least one constraint is above its warning threshold (typically 90%
-   * of design). All equipment is checked.
+   * Returns equipment where at least one constraint is above its warning threshold (typically 90% of design). All
+   * equipment is checked.
    * </p>
    *
    * @return list of equipment names that are near capacity limits
@@ -7321,11 +7142,11 @@ public class ProcessSystem extends SimulationBaseClass {
     java.util.List<String> nearLimit = new java.util.ArrayList<>();
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit instanceof ProcessEquipmentBaseClass
-          && !((ProcessEquipmentBaseClass) unit).isCapacityAnalysisEnabled()) {
-        continue;
+	  && !((ProcessEquipmentBaseClass) unit).isCapacityAnalysisEnabled()) {
+	continue;
       }
       if (unit.isNearCapacityLimit()) {
-        nearLimit.add(unit.getName());
+	nearLimit.add(unit.getName());
       }
     }
     return nearLimit;
@@ -7335,13 +7156,13 @@ public class ProcessSystem extends SimulationBaseClass {
    * Disables all capacity constraints on all equipment in the process system.
    *
    * <p>
-   * Use this for what-if scenarios where you want to ignore capacity limits and see what the
-   * process would do without constraints. To re-enable, call {@link #enableAllConstraints()}.
+   * Use this for what-if scenarios where you want to ignore capacity limits and see what the process would do without
+   * constraints. To re-enable, call {@link #enableAllConstraints()}.
    * </p>
    *
    * <p>
-   * This method also sets {@code capacityAnalysisEnabled = false} on each equipment, which prevents
-   * the optimizer from using fallback capacity rules for equipment types.
+   * This method also sets {@code capacityAnalysisEnabled = false} on each equipment, which prevents the optimizer from
+   * using fallback capacity rules for equipment types.
    * </p>
    *
    * @return the total number of constraints that were disabled
@@ -7359,8 +7180,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Enables all capacity constraints on all equipment in the process system.
    *
    * <p>
-   * Re-enables all constraints that were previously disabled. This restores normal capacity
-   * analysis mode for the entire process.
+   * Re-enables all constraints that were previously disabled. This restores normal capacity analysis mode for the
+   * entire process.
    * </p>
    *
    * <p>
@@ -7383,16 +7204,15 @@ public class ProcessSystem extends SimulationBaseClass {
    * {@link com.google.gson.JsonArray}.
    *
    * <p>
-   * The snapshot is <b>side-effect free</b> &mdash; it does not call {@link #run()} and only reads
-   * already-computed capacity utilization from each unit's
-   * {@link neqsim.process.equipment.capacity.CapacityConstraint constraints}. It is intended as the
-   * observation vector for machine-learning / reinforcement-learning optimization loops, paired
-   * with {@link neqsim.process.automation.ProcessAutomation#evaluate} (action + reward). Units are
-   * emitted in insertion order so the observation vector is deterministic across calls.
+   * The snapshot is <b>side-effect free</b> &mdash; it does not call {@link #run()} and only reads already-computed
+   * capacity utilization from each unit's {@link neqsim.process.equipment.capacity.CapacityConstraint constraints}. It
+   * is intended as the observation vector for machine-learning / reinforcement-learning optimization loops, paired with
+   * {@link neqsim.process.automation.ProcessAutomation#evaluate} (action + reward). Units are emitted in insertion
+   * order so the observation vector is deterministic across calls.
    * </p>
    *
-   * @param areaLabel optional area name to attach to each unit (use {@code null} for a single,
-   *        non-area-qualified process system)
+   * @param areaLabel optional area name to attach to each unit (use {@code null} for a single, non-area-qualified
+   *                  process system)
    * @return a JSON array of per-unit utilization objects
    */
   com.google.gson.JsonArray buildUtilizationUnitsJson(String areaLabel) {
@@ -7400,13 +7220,13 @@ public class ProcessSystem extends SimulationBaseClass {
     for (ProcessEquipmentInterface unit : getUnitOperations()) {
       com.google.gson.JsonObject u = new com.google.gson.JsonObject();
       if (areaLabel != null) {
-        u.addProperty("area", areaLabel);
+	u.addProperty("area", areaLabel);
       }
       u.addProperty("name", unit.getName());
       u.addProperty("type", unit.getClass().getSimpleName());
 
       boolean analysisEnabled = !(unit instanceof ProcessEquipmentBaseClass)
-          || ((ProcessEquipmentBaseClass) unit).isCapacityAnalysisEnabled();
+	  || ((ProcessEquipmentBaseClass) unit).isCapacityAnalysisEnabled();
       u.addProperty("capacityAnalysisEnabled", analysisEnabled);
 
       double maxUtil = 0.0;
@@ -7415,68 +7235,66 @@ public class ProcessSystem extends SimulationBaseClass {
       boolean hardLimitExceeded = false;
       com.google.gson.JsonArray constraintsArr = new com.google.gson.JsonArray();
       if (analysisEnabled) {
-        try {
-          maxUtil = unit.getMaxUtilization();
-        } catch (Exception e) {
-          maxUtil = 0.0;
-        }
-        try {
-          neqsim.process.equipment.capacity.CapacityConstraint bottleneck =
-              unit.getBottleneckConstraint();
-          if (bottleneck != null) {
-            limitingConstraint = bottleneck.getName();
-          }
-        } catch (Exception e) {
-          // no limiting constraint available
-        }
-        try {
-          feasible = !unit.isCapacityExceeded();
-        } catch (Exception e) {
-          feasible = true;
-        }
-        try {
-          hardLimitExceeded = unit.isHardLimitExceeded();
-        } catch (Exception e) {
-          hardLimitExceeded = false;
-        }
-        try {
-          for (neqsim.process.equipment.capacity.CapacityConstraint c : unit
-              .getCapacityConstraints().values()) {
-            com.google.gson.JsonObject co = new com.google.gson.JsonObject();
-            co.addProperty("name", c.getName());
-            double cu = c.getUtilization();
-            co.addProperty("utilization", cu);
-            co.addProperty("utilizationPercent", cu * 100.0);
-            co.addProperty("current", c.getCurrentValue());
-            co.addProperty("design", c.getDisplayDesignValue());
-            if (c.getUnit() != null) {
-              co.addProperty("unit", c.getUnit());
-            }
-            co.addProperty("enabled", c.isEnabled());
-            co.addProperty("violated", c.isViolated());
-            if (c.getDataSource() != null) {
-              co.addProperty("dataSource", c.getDataSource());
-            }
-            constraintsArr.add(co);
-          }
-        } catch (Exception e) {
-          // skip constraint detail on failure
-        }
+	try {
+	  maxUtil = unit.getMaxUtilization();
+	} catch (Exception e) {
+	  maxUtil = 0.0;
+	}
+	try {
+	  neqsim.process.equipment.capacity.CapacityConstraint bottleneck = unit.getBottleneckConstraint();
+	  if (bottleneck != null) {
+	    limitingConstraint = bottleneck.getName();
+	  }
+	} catch (Exception e) {
+	  // no limiting constraint available
+	}
+	try {
+	  feasible = !unit.isCapacityExceeded();
+	} catch (Exception e) {
+	  feasible = true;
+	}
+	try {
+	  hardLimitExceeded = unit.isHardLimitExceeded();
+	} catch (Exception e) {
+	  hardLimitExceeded = false;
+	}
+	try {
+	  for (neqsim.process.equipment.capacity.CapacityConstraint c : unit.getCapacityConstraints().values()) {
+	    com.google.gson.JsonObject co = new com.google.gson.JsonObject();
+	    co.addProperty("name", c.getName());
+	    double cu = c.getUtilization();
+	    co.addProperty("utilization", cu);
+	    co.addProperty("utilizationPercent", cu * 100.0);
+	    co.addProperty("current", c.getCurrentValue());
+	    co.addProperty("design", c.getDisplayDesignValue());
+	    if (c.getUnit() != null) {
+	      co.addProperty("unit", c.getUnit());
+	    }
+	    co.addProperty("enabled", c.isEnabled());
+	    co.addProperty("violated", c.isViolated());
+	    if (c.getDataSource() != null) {
+	      co.addProperty("dataSource", c.getDataSource());
+	    }
+	    constraintsArr.add(co);
+	  }
+	} catch (Exception e) {
+	  // skip constraint detail on failure
+	}
       }
 
       u.addProperty("maxUtilization", Double.isNaN(maxUtil) ? 0.0 : maxUtil);
       u.addProperty("maxUtilizationPercent", Double.isNaN(maxUtil) ? 0.0 : maxUtil * 100.0);
       if (limitingConstraint != null) {
-        u.addProperty("limitingConstraint", limitingConstraint);
+	u.addProperty("limitingConstraint", limitingConstraint);
       } else {
-        u.add("limitingConstraint", com.google.gson.JsonNull.INSTANCE);
+	u.add("limitingConstraint", com.google.gson.JsonNull.INSTANCE);
       }
       u.addProperty("feasible", feasible);
       u.addProperty("hardLimitExceeded", hardLimitExceeded);
 
       Double powerKw = readPowerKwSafe(unit);
       if (powerKw != null) {
-        u.addProperty("power_kW", powerKw.doubleValue());
+	u.addProperty("power_kW", powerKw.doubleValue());
       }
       u.add("constraints", constraintsArr);
       unitsArr.add(u);
@@ -7485,8 +7303,8 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Reads the shaft power of a unit in kW without throwing, returning {@code null} when the unit
-   * has no meaningful power reading.
+   * Reads the shaft power of a unit in kW without throwing, returning {@code null} when the unit has no meaningful
+   * power reading.
    *
    * @param unit the equipment to read power from
    * @return power in kW, or {@code null} if not applicable / unavailable
@@ -7494,11 +7312,10 @@ public class ProcessSystem extends SimulationBaseClass {
   private Double readPowerKwSafe(ProcessEquipmentInterface unit) {
     try {
       if (unit instanceof neqsim.process.equipment.compressor.Compressor) {
-        return Double
-            .valueOf(((neqsim.process.equipment.compressor.Compressor) unit).getPower("kW"));
+	return Double.valueOf(((neqsim.process.equipment.compressor.Compressor) unit).getPower("kW"));
       }
       if (unit instanceof neqsim.process.equipment.pump.Pump) {
-        return Double.valueOf(((neqsim.process.equipment.pump.Pump) unit).getPower("kW"));
+	return Double.valueOf(((neqsim.process.equipment.pump.Pump) unit).getPower("kW"));
       }
     } catch (Exception e) {
       return null;
@@ -7507,21 +7324,19 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Returns a stable, side-effect-free JSON utilization snapshot of every unit in this process
-   * system.
+   * Returns a stable, side-effect-free JSON utilization snapshot of every unit in this process system.
    *
    * <p>
-   * This is the recommended observation endpoint for machine-learning / reinforcement-learning
-   * optimization loops. It reports, for every unit, the maximum capacity utilization, the limiting
-   * constraint name, a per-constraint breakdown, feasibility, and (for compressors and pumps) the
-   * shaft power. The process-wide {@code bottleneck} and {@code anyOverloaded} flags summarise the
-   * whole flowsheet. Schema is versioned by {@code schemaVersion} ("1.0").
+   * This is the recommended observation endpoint for machine-learning / reinforcement-learning optimization loops. It
+   * reports, for every unit, the maximum capacity utilization, the limiting constraint name, a per-constraint
+   * breakdown, feasibility, and (for compressors and pumps) the shaft power. The process-wide {@code bottleneck} and
+   * {@code anyOverloaded} flags summarise the whole flowsheet. Schema is versioned by {@code schemaVersion} ("1.0").
    * </p>
    *
    * <p>
    * The method does <b>not</b> run the flowsheet; call {@link #run()} (or
-   * {@link neqsim.process.automation.ProcessAutomation#evaluate}) first so the reported utilization
-   * reflects the latest setpoints.
+   * {@link neqsim.process.automation.ProcessAutomation#evaluate}) first so the reported utilization reflects the latest
+   * setpoints.
    * </p>
    *
    * @return JSON string {@code {schemaVersion, name, units:[...], bottleneck:{...}, anyOverloaded,
@@ -7542,7 +7357,7 @@ public class ProcessSystem extends SimulationBaseClass {
       bn.addProperty("utilization", bottleneck.getUtilization());
       bn.addProperty("utilizationPercent", bottleneck.getUtilization() * 100.0);
       if (bottleneck.getConstraint() != null) {
-        bn.addProperty("limitingConstraint", bottleneck.getConstraint().getName());
+	bn.addProperty("limitingConstraint", bottleneck.getConstraint().getName());
       }
       root.add("bottleneck", bn);
     } else {
@@ -7561,10 +7376,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * Automatically sizes all equipment in the process system that implements AutoSizeable.
    *
    * <p>
-   * This method iterates through all unit operations and calls autoSize() on each one that
-   * implements the {@link neqsim.process.design.AutoSizeable} interface. Equipment dimensions are
-   * calculated based on current flow conditions, so the process should be run before calling this
-   * method.
+   * This method iterates through all unit operations and calls autoSize() on each one that implements the
+   * {@link neqsim.process.design.AutoSizeable} interface. Equipment dimensions are calculated based on current flow
+   * conditions, so the process should be run before calling this method.
    * </p>
    *
    * <p>
@@ -7587,10 +7401,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * Automatically sizes all equipment in the process system with specified safety factor.
    *
    * <p>
-   * This method iterates through all unit operations and calls autoSize() on each one that
-   * implements the {@link neqsim.process.design.AutoSizeable} interface. Equipment dimensions are
-   * calculated based on current flow conditions, so the process should be run before calling this
-   * method.
+   * This method iterates through all unit operations and calls autoSize() on each one that implements the
+   * {@link neqsim.process.design.AutoSizeable} interface. Equipment dimensions are calculated based on current flow
+   * conditions, so the process should be run before calling this method.
    * </p>
    *
    * @param safetyFactor multiplier for design capacity, typically 1.1-1.3 (10-30% over design)
@@ -7600,8 +7413,8 @@ public class ProcessSystem extends SimulationBaseClass {
     int count = 0;
     for (ProcessEquipmentInterface equipment : unitOperations) {
       if (equipment instanceof neqsim.process.design.AutoSizeable) {
-        ((neqsim.process.design.AutoSizeable) equipment).autoSize(safetyFactor);
-        count++;
+	((neqsim.process.design.AutoSizeable) equipment).autoSize(safetyFactor);
+	count++;
       }
     }
     return count;
@@ -7611,36 +7424,34 @@ public class ProcessSystem extends SimulationBaseClass {
    * Automatically sizes all equipment using company-specific design standards.
    *
    * <p>
-   * This method applies design rules from the specified company's technical requirements (TR)
-   * documents. The standards are loaded from the NeqSim design database.
+   * This method applies design rules from the specified company's technical requirements (TR) documents. The standards
+   * are loaded from the NeqSim design database.
    * </p>
    *
    * @param companyStandard company name (e.g., "Equinor", "Shell", "TotalEnergies")
-   * @param trDocument TR document reference (e.g., "TR2000", "DEP-31.38.01.11")
+   * @param trDocument      TR document reference (e.g., "TR2000", "DEP-31.38.01.11")
    * @return the number of equipment items that were auto-sized
    */
   public int autoSizeEquipment(String companyStandard, String trDocument) {
     int count = 0;
     for (ProcessEquipmentInterface equipment : unitOperations) {
       if (equipment instanceof neqsim.process.design.AutoSizeable) {
-        ((neqsim.process.design.AutoSizeable) equipment).autoSize(companyStandard, trDocument);
-        count++;
+	((neqsim.process.design.AutoSizeable) equipment).autoSize(companyStandard, trDocument);
+	count++;
       }
     }
     return count;
   }
 
   /**
-   * Applies mechanical-design-derived capacity constraints to every equipment item in this process
-   * system.
+   * Applies mechanical-design-derived capacity constraints to every equipment item in this process system.
    *
    * <p>
    * This is the bulk counterpart of
-   * {@link neqsim.process.equipment.ProcessEquipmentInterface#applyMechanicalDesignCapacityConstraints()}.
-   * It iterates over all unit operations and, for each, derives capacity constraints from the
-   * limits configured on its {@link neqsim.process.mechanicaldesign.MechanicalDesign} (for example
-   * {@code setMaxDesignPower}, {@code setMaxDesignVolumeFlow}, {@code setMaxDesignDuty}). After
-   * this call the limits surface in
+   * {@link neqsim.process.equipment.ProcessEquipmentInterface#applyMechanicalDesignCapacityConstraints()}. It iterates
+   * over all unit operations and, for each, derives capacity constraints from the limits configured on its
+   * {@link neqsim.process.mechanicaldesign.MechanicalDesign} (for example {@code setMaxDesignPower},
+   * {@code setMaxDesignVolumeFlow}, {@code setMaxDesignDuty}). After this call the limits surface in
    * {@link neqsim.process.equipment.ProcessEquipmentInterface#getMaxUtilization()} and in
    * {@link #getUtilizationSnapshotJson()}.
    * </p>
@@ -7657,13 +7468,12 @@ public class ProcessSystem extends SimulationBaseClass {
    * </pre>
    *
    * <p>
-   * The method is idempotent (derived constraints use stable names) and never throws &mdash; an
-   * equipment whose mechanical design cannot be read simply contributes no derived constraints.
-   * Call it again whenever design limits or operating conditions change.
+   * The method is idempotent (derived constraints use stable names) and never throws &mdash; an equipment whose
+   * mechanical design cannot be read simply contributes no derived constraints. Call it again whenever design limits or
+   * operating conditions change.
    * </p>
    *
-   * @return the total number of mechanical-design-derived constraints registered across all
-   *         equipment
+   * @return the total number of mechanical-design-derived constraints registered across all equipment
    */
   public int applyMechanicalDesignCapacityConstraints() {
     int count = 0;
@@ -7677,8 +7487,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Gets the design report for all auto-sized equipment in JSON format.
    *
    * <p>
-   * Returns a JSON object containing design reports for all equipment that implements AutoSizeable.
-   * Each equipment's report includes design basis, calculated dimensions, and capacity constraints.
+   * Returns a JSON object containing design reports for all equipment that implements AutoSizeable. Each equipment's
+   * report includes design basis, calculated dimensions, and capacity constraints.
    * </p>
    *
    * <p>
@@ -7703,60 +7513,58 @@ public class ProcessSystem extends SimulationBaseClass {
 
     for (ProcessEquipmentInterface equipment : unitOperations) {
       if (equipment instanceof neqsim.process.design.AutoSizeable) {
-        neqsim.process.design.AutoSizeable sizeable =
-            (neqsim.process.design.AutoSizeable) equipment;
+	neqsim.process.design.AutoSizeable sizeable = (neqsim.process.design.AutoSizeable) equipment;
 
-        com.google.gson.JsonObject equipReport = new com.google.gson.JsonObject();
-        equipReport.addProperty("name", equipment.getName());
-        equipReport.addProperty("type", equipment.getClass().getSimpleName());
-        equipReport.addProperty("autoSized", sizeable.isAutoSized());
+	com.google.gson.JsonObject equipReport = new com.google.gson.JsonObject();
+	equipReport.addProperty("name", equipment.getName());
+	equipReport.addProperty("type", equipment.getClass().getSimpleName());
+	equipReport.addProperty("autoSized", sizeable.isAutoSized());
 
-        // Get JSON sizing report if available
-        String jsonReport = sizeable.getSizingReportJson();
-        if (jsonReport != null && !jsonReport.equals("{}")) {
-          try {
-            com.google.gson.JsonObject sizingData =
-                com.google.gson.JsonParser.parseString(jsonReport).getAsJsonObject();
-            equipReport.add("sizingData", sizingData);
-          } catch (Exception e) {
-            equipReport.addProperty("sizingData", jsonReport);
-          }
-        }
+	// Get JSON sizing report if available
+	String jsonReport = sizeable.getSizingReportJson();
+	if (jsonReport != null && !jsonReport.equals("{}")) {
+	  try {
+	    com.google.gson.JsonObject sizingData = com.google.gson.JsonParser.parseString(jsonReport)
+		.getAsJsonObject();
+	    equipReport.add("sizingData", sizingData);
+	  } catch (Exception e) {
+	    equipReport.addProperty("sizingData", jsonReport);
+	  }
+	}
 
-        // Add capacity constraints if equipment is capacity-constrained
-        if (equipment instanceof neqsim.process.equipment.capacity.CapacityConstrainedEquipment) {
-          neqsim.process.equipment.capacity.CapacityConstrainedEquipment constrained =
-              (neqsim.process.equipment.capacity.CapacityConstrainedEquipment) equipment;
+	// Add capacity constraints if equipment is capacity-constrained
+	if (equipment instanceof neqsim.process.equipment.capacity.CapacityConstrainedEquipment) {
+	  neqsim.process.equipment.capacity.CapacityConstrainedEquipment constrained = (neqsim.process.equipment.capacity.CapacityConstrainedEquipment) equipment;
 
-          com.google.gson.JsonObject capacityData = new com.google.gson.JsonObject();
-          capacityData.addProperty("maxUtilization", constrained.getMaxUtilization() * 100.0);
-          capacityData.addProperty("capacityExceeded", constrained.isCapacityExceeded());
+	  com.google.gson.JsonObject capacityData = new com.google.gson.JsonObject();
+	  capacityData.addProperty("maxUtilization", constrained.getMaxUtilization() * 100.0);
+	  capacityData.addProperty("capacityExceeded", constrained.isCapacityExceeded());
 
-          com.google.gson.JsonArray constraintsArray = new com.google.gson.JsonArray();
-          for (java.util.Map.Entry<String, neqsim.process.equipment.capacity.CapacityConstraint> entry : constrained
-              .getCapacityConstraints().entrySet()) {
-            neqsim.process.equipment.capacity.CapacityConstraint constraint = entry.getValue();
-            com.google.gson.JsonObject constraintObj = new com.google.gson.JsonObject();
-            constraintObj.addProperty("name", constraint.getName());
-            constraintObj.addProperty("currentValue", constraint.getCurrentValue());
-            constraintObj.addProperty("designValue", constraint.getDesignValue());
-            constraintObj.addProperty("unit", constraint.getUnit());
-            constraintObj.addProperty("utilization", constraint.getUtilization() * 100.0);
-            constraintObj.addProperty("violated", constraint.isViolated());
-            constraintsArray.add(constraintObj);
-          }
-          capacityData.add("constraints", constraintsArray);
-          equipReport.add("capacityConstraints", capacityData);
-        }
+	  com.google.gson.JsonArray constraintsArray = new com.google.gson.JsonArray();
+	  for (java.util.Map.Entry<String, neqsim.process.equipment.capacity.CapacityConstraint> entry : constrained
+	      .getCapacityConstraints().entrySet()) {
+	    neqsim.process.equipment.capacity.CapacityConstraint constraint = entry.getValue();
+	    com.google.gson.JsonObject constraintObj = new com.google.gson.JsonObject();
+	    constraintObj.addProperty("name", constraint.getName());
+	    constraintObj.addProperty("currentValue", constraint.getCurrentValue());
+	    constraintObj.addProperty("designValue", constraint.getDesignValue());
+	    constraintObj.addProperty("unit", constraint.getUnit());
+	    constraintObj.addProperty("utilization", constraint.getUtilization() * 100.0);
+	    constraintObj.addProperty("violated", constraint.isViolated());
+	    constraintsArray.add(constraintObj);
+	  }
+	  capacityData.add("constraints", constraintsArray);
+	  equipReport.add("capacityConstraints", capacityData);
+	}
 
-        equipmentArray.add(equipReport);
+	equipmentArray.add(equipReport);
       }
     }
 
     report.add("equipment", equipmentArray);
 
-    return new com.google.gson.GsonBuilder().setPrettyPrinting()
-        .serializeSpecialFloatingPointValues().create().toJson(report);
+    return new com.google.gson.GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
+	.toJson(report);
   }
 
   /**
@@ -7776,12 +7584,11 @@ public class ProcessSystem extends SimulationBaseClass {
 
     for (ProcessEquipmentInterface equipment : unitOperations) {
       if (equipment instanceof neqsim.process.design.AutoSizeable) {
-        neqsim.process.design.AutoSizeable sizeable =
-            (neqsim.process.design.AutoSizeable) equipment;
-        sb.append("--- ").append(equipment.getName()).append(" (")
-            .append(equipment.getClass().getSimpleName()).append(") ---\n");
-        sb.append("Auto-sized: ").append(sizeable.isAutoSized()).append("\n");
-        sb.append(sizeable.getSizingReport()).append("\n");
+	neqsim.process.design.AutoSizeable sizeable = (neqsim.process.design.AutoSizeable) equipment;
+	sb.append("--- ").append(equipment.getName()).append(" (").append(equipment.getClass().getSimpleName())
+	    .append(") ---\n");
+	sb.append("Auto-sized: ").append(sizeable.isAutoSized()).append("\n");
+	sb.append(sizeable.getSizingReport()).append("\n");
       }
     }
 
@@ -7825,16 +7632,15 @@ public class ProcessSystem extends SimulationBaseClass {
    * Creates a FlowRateOptimizer for this process system.
    *
    * <p>
-   * The FlowRateOptimizer provides detailed flow rate optimization capabilities including lift
-   * curve generation and Eclipse VFP export.
+   * The FlowRateOptimizer provides detailed flow rate optimization capabilities including lift curve generation and
+   * Eclipse VFP export.
    * </p>
    *
-   * @param inletStreamName name of the inlet stream
+   * @param inletStreamName  name of the inlet stream
    * @param outletStreamName name of the outlet stream (or equipment)
    * @return a new FlowRateOptimizer configured for this process
    */
-  public FlowRateOptimizer createFlowRateOptimizer(String inletStreamName,
-      String outletStreamName) {
+  public FlowRateOptimizer createFlowRateOptimizer(String inletStreamName, String outletStreamName) {
     return new FlowRateOptimizer(this, inletStreamName, outletStreamName);
   }
 
@@ -7842,21 +7648,20 @@ public class ProcessSystem extends SimulationBaseClass {
    * Finds the maximum throughput for given pressure boundaries.
    *
    * <p>
-   * This is a convenience method that creates an optimizer, runs the optimization, and returns the
-   * result. For more control over the optimization process, use {@link #createOptimizer()}.
+   * This is a convenience method that creates an optimizer, runs the optimization, and returns the result. For more
+   * control over the optimization process, use {@link #createOptimizer()}.
    * </p>
    *
-   * @param inletPressure inlet pressure in bara
+   * @param inletPressure  inlet pressure in bara
    * @param outletPressure outlet pressure in bara
-   * @param minFlow minimum flow rate to consider in kg/hr
-   * @param maxFlow maximum flow rate to consider in kg/hr
+   * @param minFlow        minimum flow rate to consider in kg/hr
+   * @param maxFlow        maximum flow rate to consider in kg/hr
    * @return the maximum feasible flow rate in kg/hr, or NaN if optimization fails
    */
-  public double findMaxThroughput(double inletPressure, double outletPressure, double minFlow,
-      double maxFlow) {
+  public double findMaxThroughput(double inletPressure, double outletPressure, double minFlow, double maxFlow) {
     ProcessOptimizationEngine engine = createOptimizer();
-    ProcessOptimizationEngine.OptimizationResult result =
-        engine.findMaximumThroughput(inletPressure, outletPressure, minFlow, maxFlow);
+    ProcessOptimizationEngine.OptimizationResult result = engine.findMaximumThroughput(inletPressure, outletPressure,
+	minFlow, maxFlow);
     return result.getOptimalValue();
   }
 
@@ -7867,7 +7672,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * Uses default minimum flow of 100 kg/hr and maximum flow of 1,000,000 kg/hr.
    * </p>
    *
-   * @param inletPressure inlet pressure in bara
+   * @param inletPressure  inlet pressure in bara
    * @param outletPressure outlet pressure in bara
    * @return the maximum feasible flow rate in kg/hr, or NaN if optimization fails
    */
@@ -7879,18 +7684,18 @@ public class ProcessSystem extends SimulationBaseClass {
    * Optimizes the process throughput and returns detailed results.
    *
    * <p>
-   * This method provides a complete optimization result including the optimal flow rate, constraint
-   * status, and bottleneck information.
+   * This method provides a complete optimization result including the optimal flow rate, constraint status, and
+   * bottleneck information.
    * </p>
    *
-   * @param inletPressure inlet pressure in bara
+   * @param inletPressure  inlet pressure in bara
    * @param outletPressure outlet pressure in bara
-   * @param minFlow minimum flow rate to consider in kg/hr
-   * @param maxFlow maximum flow rate to consider in kg/hr
+   * @param minFlow        minimum flow rate to consider in kg/hr
+   * @param maxFlow        maximum flow rate to consider in kg/hr
    * @return optimization result with detailed information
    */
-  public ProcessOptimizationEngine.OptimizationResult optimizeThroughput(double inletPressure,
-      double outletPressure, double minFlow, double maxFlow) {
+  public ProcessOptimizationEngine.OptimizationResult optimizeThroughput(double inletPressure, double outletPressure,
+      double minFlow, double maxFlow) {
     ProcessOptimizationEngine engine = createOptimizer();
     return engine.findMaximumThroughput(inletPressure, outletPressure, minFlow, maxFlow);
   }
@@ -7899,8 +7704,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Evaluates all equipment constraints in the process.
    *
    * <p>
-   * Returns a detailed report of all capacity constraints across all equipment in the process.
-   * Useful for understanding the current operating status and identifying potential bottlenecks.
+   * Returns a detailed report of all capacity constraints across all equipment in the process. Useful for understanding
+   * the current operating status and identifying potential bottlenecks.
    * </p>
    *
    * @return constraint report with utilization information for all equipment
@@ -7914,18 +7719,18 @@ public class ProcessSystem extends SimulationBaseClass {
    * Generates a lift curve for this process.
    *
    * <p>
-   * Creates a table of maximum flow rates for different pressure and temperature conditions. The
-   * result can be exported to Eclipse VFP format for reservoir simulation.
+   * Creates a table of maximum flow rates for different pressure and temperature conditions. The result can be exported
+   * to Eclipse VFP format for reservoir simulation.
    * </p>
    *
-   * @param pressures array of pressures to evaluate (bara)
+   * @param pressures    array of pressures to evaluate (bara)
    * @param temperatures array of temperatures to evaluate (K)
-   * @param waterCuts array of water cuts as fraction
-   * @param GORs array of gas-oil ratios in Sm3/Sm3
+   * @param waterCuts    array of water cuts as fraction
+   * @param GORs         array of gas-oil ratios in Sm3/Sm3
    * @return lift curve data
    */
-  public ProcessOptimizationEngine.LiftCurveData generateLiftCurve(double[] pressures,
-      double[] temperatures, double[] waterCuts, double[] GORs) {
+  public ProcessOptimizationEngine.LiftCurveData generateLiftCurve(double[] pressures, double[] temperatures,
+      double[] waterCuts, double[] GORs) {
     ProcessOptimizationEngine engine = createOptimizer();
     return engine.generateLiftCurve(pressures, temperatures, waterCuts, GORs);
   }
@@ -7934,17 +7739,17 @@ public class ProcessSystem extends SimulationBaseClass {
    * Performs sensitivity analysis at the given flow rate.
    *
    * <p>
-   * Calculates how sensitive the process is to changes in flow rate, identifying which constraints
-   * become binding and the rate of change of key variables.
+   * Calculates how sensitive the process is to changes in flow rate, identifying which constraints become binding and
+   * the rate of change of key variables.
    * </p>
    *
-   * @param optimalFlow optimal flow rate to analyze in kg/hr
-   * @param inletPressure inlet pressure in bara
+   * @param optimalFlow    optimal flow rate to analyze in kg/hr
+   * @param inletPressure  inlet pressure in bara
    * @param outletPressure outlet pressure in bara
    * @return sensitivity analysis result
    */
-  public ProcessOptimizationEngine.SensitivityResult analyzeSensitivity(double optimalFlow,
-      double inletPressure, double outletPressure) {
+  public ProcessOptimizationEngine.SensitivityResult analyzeSensitivity(double optimalFlow, double inletPressure,
+      double outletPressure) {
     ProcessOptimizationEngine engine = createOptimizer();
     return engine.analyzeSensitivity(optimalFlow, inletPressure, outletPressure);
   }
@@ -7984,8 +7789,7 @@ public class ProcessSystem extends SimulationBaseClass {
     private double outletPressure = 10.0;
     private double minFlow = 100.0;
     private double maxFlow = 1000000.0;
-    private ProcessOptimizationEngine.SearchAlgorithm algorithm =
-        ProcessOptimizationEngine.SearchAlgorithm.GOLDEN_SECTION;
+    private ProcessOptimizationEngine.SearchAlgorithm algorithm = ProcessOptimizationEngine.SearchAlgorithm.GOLDEN_SECTION;
     private int maxIterations = 50;
     private double tolerance = 1e-4;
 
@@ -8001,7 +7805,7 @@ public class ProcessSystem extends SimulationBaseClass {
     /**
      * Sets the inlet and outlet pressures.
      *
-     * @param inlet inlet pressure in bara
+     * @param inlet  inlet pressure in bara
      * @param outlet outlet pressure in bara
      * @return this builder for chaining
      */
@@ -8067,8 +7871,8 @@ public class ProcessSystem extends SimulationBaseClass {
       engine.setSearchAlgorithm(algorithm);
       engine.setMaxIterations(maxIterations);
       engine.setTolerance(tolerance);
-      ProcessOptimizationEngine.OptimizationResult result =
-          engine.findMaximumThroughput(inletPressure, outletPressure, minFlow, maxFlow);
+      ProcessOptimizationEngine.OptimizationResult result = engine.findMaximumThroughput(inletPressure, outletPressure,
+	  minFlow, maxFlow);
       return result.getOptimalValue();
     }
 
@@ -8088,14 +7892,14 @@ public class ProcessSystem extends SimulationBaseClass {
     /**
      * Generates a lift curve with the configured settings.
      *
-     * @param pressures array of pressures to evaluate (bara)
+     * @param pressures    array of pressures to evaluate (bara)
      * @param temperatures array of temperatures to evaluate (K)
-     * @param waterCuts array of water cuts as fraction
-     * @param GORs array of gas-oil ratios in Sm3/Sm3
+     * @param waterCuts    array of water cuts as fraction
+     * @param GORs         array of gas-oil ratios in Sm3/Sm3
      * @return lift curve data
      */
-    public ProcessOptimizationEngine.LiftCurveData generateLiftCurve(double[] pressures,
-        double[] temperatures, double[] waterCuts, double[] GORs) {
+    public ProcessOptimizationEngine.LiftCurveData generateLiftCurve(double[] pressures, double[] temperatures,
+	double[] waterCuts, double[] GORs) {
       ProcessOptimizationEngine engine = new ProcessOptimizationEngine(process);
       engine.setSearchAlgorithm(algorithm);
       engine.setMaxIterations(maxIterations);
@@ -8105,13 +7909,12 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /*
-   * @XmlRootElement private class Report extends Object{ public Double name; public
-   * ArrayList<ReportInterface> unitOperationsReports = new ArrayList<ReportInterface>();
+   * @XmlRootElement private class Report extends Object{ public Double name; public ArrayList<ReportInterface>
+   * unitOperationsReports = new ArrayList<ReportInterface>();
    *
    * Report(){ name= getName();
    *
-   * for (int i = 0; i < unitOperations.size(); i++) {
-   * unitOperationsReports.add(unitOperations.getReport()); } } }
+   * for (int i = 0; i < unitOperations.size(); i++) { unitOperationsReports.add(unitOperations.getReport()); } } }
    *
    * public Report getReport(){ return this.new Report(); }
    */
@@ -8130,19 +7933,18 @@ public class ProcessSystem extends SimulationBaseClass {
    * Initialize mechanical design for all equipment in the process.
    *
    * <p>
-   * This method calls initMechanicalDesign() on each equipment item, preparing them for mechanical
-   * design calculations. Should be called after process simulation has run.
+   * This method calls initMechanicalDesign() on each equipment item, preparing them for mechanical design calculations.
+   * Should be called after process simulation has run.
    * </p>
    *
    * <p>
-   * Workflow: ProcessSystem.run() → initAllMechanicalDesigns() → runAllMechanicalDesigns() →
-   * getCostEstimate()
+   * Workflow: ProcessSystem.run() → initAllMechanicalDesigns() → runAllMechanicalDesigns() → getCostEstimate()
    * </p>
    */
   public void initAllMechanicalDesigns() {
     for (ProcessEquipmentInterface equipment : unitOperations) {
       if (equipment != null) {
-        equipment.initMechanicalDesign();
+	equipment.initMechanicalDesign();
       }
     }
   }
@@ -8156,20 +7958,18 @@ public class ProcessSystem extends SimulationBaseClass {
    * </p>
    *
    * <p>
-   * Workflow: ProcessSystem.run() → initAllMechanicalDesigns() → runAllMechanicalDesigns() →
-   * getCostEstimate()
+   * Workflow: ProcessSystem.run() → initAllMechanicalDesigns() → runAllMechanicalDesigns() → getCostEstimate()
    * </p>
    */
   public void runAllMechanicalDesigns() {
     for (ProcessEquipmentInterface equipment : unitOperations) {
       if (equipment != null) {
-        // Ensure mechanical design is initialized
-        equipment.initMechanicalDesign();
-        neqsim.process.mechanicaldesign.MechanicalDesign mecDesign =
-            equipment.getMechanicalDesign();
-        if (mecDesign != null) {
-          mecDesign.calcDesign();
-        }
+	// Ensure mechanical design is initialized
+	equipment.initMechanicalDesign();
+	neqsim.process.mechanicaldesign.MechanicalDesign mecDesign = equipment.getMechanicalDesign();
+	if (mecDesign != null) {
+	  mecDesign.calcDesign();
+	}
       }
     }
   }
@@ -8178,8 +7978,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Get the system-level mechanical design aggregator.
    *
    * <p>
-   * The SystemMechanicalDesign provides aggregated views of all equipment mechanical designs,
-   * including total weights, dimensions, and utility requirements.
+   * The SystemMechanicalDesign provides aggregated views of all equipment mechanical designs, including total weights,
+   * dimensions, and utility requirements.
    * </p>
    *
    * <p>
@@ -8209,8 +8009,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Get the process-level cost estimate.
    *
    * <p>
-   * The ProcessCostEstimate provides comprehensive cost estimation for the entire process,
-   * including purchased equipment cost, bare module cost, total module cost, and grass roots cost.
+   * The ProcessCostEstimate provides comprehensive cost estimation for the entire process, including purchased
+   * equipment cost, bare module cost, total module cost, and grass roots cost.
    * </p>
    *
    * <p>
@@ -8287,8 +8087,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Get a comprehensive JSON report of mechanical design and cost estimation.
    *
    * <p>
-   * This method runs the full mechanical design and cost estimation workflow if not already done,
-   * then returns a combined JSON report including both mechanical design data and cost estimates.
+   * This method runs the full mechanical design and cost estimation workflow if not already done, then returns a
+   * combined JSON report including both mechanical design data and cost estimates.
    * </p>
    *
    * @return JSON string with combined mechanical design and cost estimate data
@@ -8333,8 +8133,8 @@ public class ProcessSystem extends SimulationBaseClass {
     combined.put("costByEquipmentType_USD", costEst.getCostByEquipmentType());
     combined.put("costByDiscipline_USD", costEst.getCostByDiscipline());
 
-    return new com.google.gson.GsonBuilder().setPrettyPrinting()
-        .serializeSpecialFloatingPointValues().create().toJson(combined);
+    return new com.google.gson.GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
+	.toJson(combined);
   }
 
   /**
@@ -8343,8 +8143,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param equipmentName name of the equipment
    * @return the cost estimate for the equipment, or null if not found
    */
-  public neqsim.process.costestimation.UnitCostEstimateBaseClass getEquipmentCostEstimate(
-      String equipmentName) {
+  public neqsim.process.costestimation.UnitCostEstimateBaseClass getEquipmentCostEstimate(String equipmentName) {
     ProcessEquipmentInterface equipment = getUnit(equipmentName);
     if (equipment == null) {
       return null;
@@ -8365,8 +8164,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param equipmentName name of the equipment
    * @return the mechanical design for the equipment, or null if not found
    */
-  public neqsim.process.mechanicaldesign.MechanicalDesign getEquipmentMechanicalDesign(
-      String equipmentName) {
+  public neqsim.process.mechanicaldesign.MechanicalDesign getEquipmentMechanicalDesign(String equipmentName) {
     ProcessEquipmentInterface equipment = getUnit(equipmentName);
     if (equipment == null) {
       return null;
@@ -8387,14 +8185,14 @@ public class ProcessSystem extends SimulationBaseClass {
    * Initialize electrical design for all equipment in the process.
    *
    * <p>
-   * Calls initElectricalDesign() on each equipment item, preparing them for electrical design
-   * calculations. Should be called after process simulation has run.
+   * Calls initElectricalDesign() on each equipment item, preparing them for electrical design calculations. Should be
+   * called after process simulation has run.
    * </p>
    */
   public void initAllElectricalDesigns() {
     for (ProcessEquipmentInterface equipment : unitOperations) {
       if (equipment != null) {
-        equipment.initElectricalDesign();
+	equipment.initElectricalDesign();
       }
     }
   }
@@ -8403,18 +8201,17 @@ public class ProcessSystem extends SimulationBaseClass {
    * Run electrical design calculations for all equipment in the process.
    *
    * <p>
-   * Calls calcDesign() on each equipment's electrical design. Automatically initializes electrical
-   * designs that have not been initialized.
+   * Calls calcDesign() on each equipment's electrical design. Automatically initializes electrical designs that have
+   * not been initialized.
    * </p>
    */
   public void runAllElectricalDesigns() {
     for (ProcessEquipmentInterface equipment : unitOperations) {
       if (equipment != null) {
-        neqsim.process.electricaldesign.ElectricalDesign elecDesign =
-            equipment.getElectricalDesign();
-        if (elecDesign != null) {
-          elecDesign.calcDesign();
-        }
+	neqsim.process.electricaldesign.ElectricalDesign elecDesign = equipment.getElectricalDesign();
+	if (elecDesign != null) {
+	  elecDesign.calcDesign();
+	}
       }
     }
   }
@@ -8423,8 +8220,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Get the electrical load list for all equipment in the process.
    *
    * <p>
-   * Aggregates electrical loads from all equipment into a single load list with summary
-   * calculations for transformer and generator sizing.
+   * Aggregates electrical loads from all equipment into a single load list with summary calculations for transformer
+   * and generator sizing.
    * </p>
    *
    * <p>
@@ -8444,21 +8241,20 @@ public class ProcessSystem extends SimulationBaseClass {
    * @return the electrical load list
    */
   public neqsim.process.electricaldesign.loadanalysis.ElectricalLoadList getElectricalLoadList() {
-    neqsim.process.electricaldesign.loadanalysis.ElectricalLoadList loadList =
-        new neqsim.process.electricaldesign.loadanalysis.ElectricalLoadList(getName());
+    neqsim.process.electricaldesign.loadanalysis.ElectricalLoadList loadList = new neqsim.process.electricaldesign.loadanalysis.ElectricalLoadList(
+	getName());
 
     for (ProcessEquipmentInterface equipment : unitOperations) {
       if (equipment == null) {
-        continue;
+	continue;
       }
       neqsim.process.electricaldesign.ElectricalDesign elecDesign = equipment.getElectricalDesign();
       if (elecDesign == null || elecDesign.getElectricalInputKW() <= 0) {
-        continue;
+	continue;
       }
 
-      neqsim.process.electricaldesign.loadanalysis.LoadItem item =
-          new neqsim.process.electricaldesign.loadanalysis.LoadItem(equipment.getName(),
-              equipment.getClass().getSimpleName(), elecDesign.getMotor().getRatedPowerKW());
+      neqsim.process.electricaldesign.loadanalysis.LoadItem item = new neqsim.process.electricaldesign.loadanalysis.LoadItem(
+	  equipment.getName(), equipment.getClass().getSimpleName(), elecDesign.getMotor().getRatedPowerKW());
       item.setAbsorbedPowerKW(elecDesign.getElectricalInputKW());
       item.setApparentPowerKVA(elecDesign.getApparentPowerKVA());
       item.setPowerFactor(elecDesign.getPowerFactor());
@@ -8480,8 +8276,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param equipmentName name of the equipment
    * @return the electrical design, or null if not found
    */
-  public neqsim.process.electricaldesign.ElectricalDesign getEquipmentElectricalDesign(
-      String equipmentName) {
+  public neqsim.process.electricaldesign.ElectricalDesign getEquipmentElectricalDesign(String equipmentName) {
     ProcessEquipmentInterface equipment = getUnit(equipmentName);
     if (equipment == null) {
       return null;
@@ -8497,30 +8292,30 @@ public class ProcessSystem extends SimulationBaseClass {
    * Create a system-level electrical design for the entire process.
    *
    * <p>
-   * Runs all equipment-level electrical designs and produces a plant-wide summary including utility
-   * loads, UPS loads, and main transformer/generator sizing.
+   * Runs all equipment-level electrical designs and produces a plant-wide summary including utility loads, UPS loads,
+   * and main transformer/generator sizing.
    * </p>
    *
    * @return the system electrical design with aggregated results
    */
   public neqsim.process.electricaldesign.system.SystemElectricalDesign getSystemElectricalDesign() {
-    neqsim.process.electricaldesign.system.SystemElectricalDesign systemDesign =
-        new neqsim.process.electricaldesign.system.SystemElectricalDesign(this);
+    neqsim.process.electricaldesign.system.SystemElectricalDesign systemDesign = new neqsim.process.electricaldesign.system.SystemElectricalDesign(
+	this);
     systemDesign.calcDesign();
     return systemDesign;
   }
 
   /**
    * <p>
-   * Get a system-wide instrument design summary that aggregates instrument lists, I/O counts, DCS
-   * and SIS cabinet sizing, and cost estimates across all equipment in this process system.
+   * Get a system-wide instrument design summary that aggregates instrument lists, I/O counts, DCS and SIS cabinet
+   * sizing, and cost estimates across all equipment in this process system.
    * </p>
    *
    * @return the system instrument design with aggregated results
    */
   public neqsim.process.instrumentdesign.system.SystemInstrumentDesign getSystemInstrumentDesign() {
-    neqsim.process.instrumentdesign.system.SystemInstrumentDesign systemDesign =
-        new neqsim.process.instrumentdesign.system.SystemInstrumentDesign(this);
+    neqsim.process.instrumentdesign.system.SystemInstrumentDesign systemDesign = new neqsim.process.instrumentdesign.system.SystemInstrumentDesign(
+	this);
     systemDesign.calcDesign();
     return systemDesign;
   }
@@ -8528,20 +8323,19 @@ public class ProcessSystem extends SimulationBaseClass {
   // ========================== Automation API ==========================
 
   /**
-   * Cached automation facade for this process system. Lazily initialized on first call to
-   * {@link #getAutomation()} so that diagnostic state (learned corrections, operation history,
-   * dirty flag) accumulates across calls instead of being thrown away.
+   * Cached automation facade for this process system. Lazily initialized on first call to {@link #getAutomation()} so
+   * that diagnostic state (learned corrections, operation history, dirty flag) accumulates across calls instead of
+   * being thrown away.
    */
   private transient neqsim.process.automation.ProcessAutomation cachedAutomation;
 
   /**
-   * Returns an automation facade for this process system. The facade provides a stable,
-   * string-addressable API for scripts and AI agents to interact with the simulation without
-   * navigating Java object hierarchies.
+   * Returns an automation facade for this process system. The facade provides a stable, string-addressable API for
+   * scripts and AI agents to interact with the simulation without navigating Java object hierarchies.
    *
    * <p>
-   * The facade is cached and reused across calls so that diagnostics (learned corrections,
-   * operation history, dirty-state tracking) persist for the lifetime of the process system.
+   * The facade is cached and reused across calls so that diagnostics (learned corrections, operation history,
+   * dirty-state tracking) persist for the lifetime of the process system.
    * </p>
    *
    * @return a {@link neqsim.process.automation.ProcessAutomation} facade
@@ -8576,11 +8370,10 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Reads the current value of a simulation variable by its dot-notation address. Convenience
-   * delegate for
+   * Reads the current value of a simulation variable by its dot-notation address. Convenience delegate for
    * {@link neqsim.process.automation.ProcessAutomation#getVariableValue(String, String)}.
    *
-   * @param address the dot-notation address, e.g. "separator-1.gasOutStream.temperature"
+   * @param address       the dot-notation address, e.g. "separator-1.gasOutStream.temperature"
    * @param unitOfMeasure the desired unit, e.g. "C", "bara", "kg/hr"
    * @return the variable value in the requested unit
    * @throws IllegalArgumentException if the address cannot be resolved
@@ -8593,8 +8386,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Sets the value of a simulation input variable. Convenience delegate for
    * {@link neqsim.process.automation.ProcessAutomation#setVariableValue(String, double, String)}.
    *
-   * @param address the dot-notation address, e.g. "Compressor.outletPressure"
-   * @param value the value to set
+   * @param address       the dot-notation address, e.g. "Compressor.outletPressure"
+   * @param value         the value to set
    * @param unitOfMeasure the unit of the provided value, e.g. "bara", "C"
    * @throws IllegalArgumentException if the address cannot be resolved or the variable is read-only
    */

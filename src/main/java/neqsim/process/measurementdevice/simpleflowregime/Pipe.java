@@ -144,8 +144,7 @@ public class Pipe {
     } else if (unit.equals("Radian")) {
       return this.angle * pi / 180;
     }
-    throw new RuntimeException(
-        new neqsim.util.exception.InvalidInputException(this, "getAngle", "unit"));
+    throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getAngle", "unit"));
   }
 
   /**

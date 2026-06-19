@@ -11,10 +11,9 @@ import com.google.gson.JsonObject;
  * Standard API envelope for all MCP runner responses.
  *
  * <p>
- * Wraps a typed result payload with status, tool metadata, warnings, errors, provenance,
- * validation, and quality-gate metadata in a consistent format. This provides a dual interface —
- * call {@link #toJson()} for the string-based MCP protocol, or use {@link #getData()} for typed
- * Java access.
+ * Wraps a typed result payload with status, tool metadata, warnings, errors, provenance, validation, and quality-gate
+ * metadata in a consistent format. This provides a dual interface — call {@link #toJson()} for the string-based MCP
+ * protocol, or use {@link #getData()} for typed Java access.
  * </p>
  *
  * <h2>Success envelope:</h2>
@@ -34,8 +33,7 @@ public class ApiEnvelope<T> {
   /** Contract version emitted by MCP runners. */
   public static final String API_VERSION = "1.0";
 
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   private final String status;
   private final T data;
@@ -49,9 +47,9 @@ public class ApiEnvelope<T> {
   /**
    * Private constructor — use factory methods.
    *
-   * @param status "success" or "error"
-   * @param data the data payload, or null on error
-   * @param errors the error list
+   * @param status   "success" or "error"
+   * @param data     the data payload, or null on error
+   * @param errors   the error list
    * @param warnings the warning list
    */
   private ApiEnvelope(String status, T data, List<DiagnosticIssue> errors, List<String> warnings) {
@@ -64,14 +62,14 @@ public class ApiEnvelope<T> {
   /**
    * Adds standard contract fields to a JSON response object.
    *
-   * @param response the response object to mutate
-   * @param toolName the MCP tool name that produced the response
-   * @param provenance optional calculation provenance
-   * @param validation optional validation block
+   * @param response    the response object to mutate
+   * @param toolName    the MCP tool name that produced the response
+   * @param provenance  optional calculation provenance
+   * @param validation  optional validation block
    * @param qualityGate optional quality-gate block
    */
-  public static void applyStandardFields(JsonObject response, String toolName,
-      ResultProvenance provenance, JsonObject validation, JsonObject qualityGate) {
+  public static void applyStandardFields(JsonObject response, String toolName, ResultProvenance provenance,
+      JsonObject validation, JsonObject qualityGate) {
     response.addProperty("apiVersion", API_VERSION);
     if (toolName != null && !toolName.trim().isEmpty()) {
       response.addProperty("tool", toolName);
@@ -84,17 +82,15 @@ public class ApiEnvelope<T> {
     if (!response.has("validation")) {
       boolean success = isSuccessfulResponse(response);
       response.add("validation",
-          validation != null ? validation
-              : validationStatus(success, "runner", success ? "Runner input checks completed"
-                  : "Runner returned an error before validation completed"));
+	  validation != null ? validation
+	      : validationStatus(success, "runner",
+		  success ? "Runner input checks completed" : "Runner returned an error before validation completed"));
     }
 
     if (!response.has("qualityGate")) {
       boolean success = isSuccessfulResponse(response);
-      response.add("qualityGate",
-          qualityGate != null ? qualityGate
-              : qualityGate(success ? "passed" : "failed",
-                  success ? "Calculation completed" : "Calculation failed", true));
+      response.add("qualityGate", qualityGate != null ? qualityGate
+	  : qualityGate(success ? "passed" : "failed", success ? "Calculation completed" : "Calculation failed", true));
     }
 
     if (!response.has("warnings")) {
@@ -105,8 +101,8 @@ public class ApiEnvelope<T> {
   /**
    * Builds a standard validation block.
    *
-   * @param valid true when validation passed
-   * @param phase validation phase name
+   * @param valid   true when validation passed
+   * @param phase   validation phase name
    * @param message validation summary
    * @return validation JSON object
    */
@@ -121,13 +117,12 @@ public class ApiEnvelope<T> {
   /**
    * Builds a standard quality-gate block.
    *
-   * @param verdict gate verdict such as {@code passed}, {@code warning}, or {@code failed}
-   * @param summary short gate summary
+   * @param verdict                   gate verdict such as {@code passed}, {@code warning}, or {@code failed}
+   * @param summary                   short gate summary
    * @param engineeringReviewRequired true if qualified engineering review is still required
    * @return quality-gate JSON object
    */
-  public static JsonObject qualityGate(String verdict, String summary,
-      boolean engineeringReviewRequired) {
+  public static JsonObject qualityGate(String verdict, String summary, boolean engineeringReviewRequired) {
     JsonObject qualityGate = new JsonObject();
     qualityGate.addProperty("verdict", verdict);
     qualityGate.addProperty("summary", summary);
@@ -149,20 +144,19 @@ public class ApiEnvelope<T> {
    * Creates a success envelope with the given data.
    *
    * @param data the result payload
-   * @param <T> the payload type
+   * @param <T>  the payload type
    * @return the success envelope
    */
   public static <T> ApiEnvelope<T> success(T data) {
-    return new ApiEnvelope<T>("success", data, new ArrayList<DiagnosticIssue>(),
-        new ArrayList<String>());
+    return new ApiEnvelope<T>("success", data, new ArrayList<DiagnosticIssue>(), new ArrayList<String>());
   }
 
   /**
    * Creates a success envelope with data and warnings.
    *
-   * @param data the result payload
+   * @param data     the result payload
    * @param warnings the warning messages
-   * @param <T> the payload type
+   * @param <T>      the payload type
    * @return the success envelope
    */
   public static <T> ApiEnvelope<T> success(T data, List<String> warnings) {
@@ -172,10 +166,10 @@ public class ApiEnvelope<T> {
   /**
    * Creates an error envelope with a single issue.
    *
-   * @param code the error code
-   * @param message the error message
+   * @param code        the error code
+   * @param message     the error message
    * @param remediation the fix suggestion
-   * @param <T> the payload type
+   * @param <T>         the payload type
    * @return the error envelope
    */
   public static <T> ApiEnvelope<T> error(String code, String message, String remediation) {
@@ -188,7 +182,7 @@ public class ApiEnvelope<T> {
    * Creates an error envelope with multiple issues.
    *
    * @param issues the diagnostic issues
-   * @param <T> the payload type
+   * @param <T>    the payload type
    * @return the error envelope
    */
   public static <T> ApiEnvelope<T> errors(List<DiagnosticIssue> issues) {
@@ -370,7 +364,7 @@ public class ApiEnvelope<T> {
     if (!errors.isEmpty()) {
       JsonArray errArray = new JsonArray();
       for (DiagnosticIssue issue : errors) {
-        errArray.add(issue.toJson());
+	errArray.add(issue.toJson());
       }
       root.add("errors", errArray);
     }

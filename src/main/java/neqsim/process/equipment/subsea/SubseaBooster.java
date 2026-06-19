@@ -12,8 +12,8 @@ import neqsim.thermo.system.SystemInterface;
  * Subsea Booster equipment class.
  *
  * <p>
- * A subsea booster is a subsea-installed pump or compressor used to enhance production from subsea
- * wells. Key applications include:
+ * A subsea booster is a subsea-installed pump or compressor used to enhance production from subsea wells. Key
+ * applications include:
  * </p>
  * <ul>
  * <li>Subsea boosting (multiphase pumping)</li>
@@ -315,7 +315,7 @@ public class SubseaBooster extends TwoPortEquipment {
   /**
    * Constructor with name and inlet stream.
    *
-   * @param name equipment name
+   * @param name     equipment name
    * @param inStream inlet stream
    */
   public SubseaBooster(String name, StreamInterface inStream) {
@@ -329,12 +329,12 @@ public class SubseaBooster extends TwoPortEquipment {
   private void initializeInternalEquipment() {
     if (inStream != null) {
       if (isCompressor()) {
-        internalCompressor = new Compressor(getName() + " Compressor", inStream);
-        internalCompressor.setUsePolytropicCalc(true);
-        internalCompressor.setPolytropicEfficiency(efficiency);
+	internalCompressor = new Compressor(getName() + " Compressor", inStream);
+	internalCompressor.setUsePolytropicCalc(true);
+	internalCompressor.setPolytropicEfficiency(efficiency);
       } else {
-        internalPump = new Pump(getName() + " Pump", inStream);
-        // Configure pump
+	internalPump = new Pump(getName() + " Pump", inStream);
+	// Configure pump
       }
     }
   }
@@ -342,13 +342,12 @@ public class SubseaBooster extends TwoPortEquipment {
   /**
    * Create multiphase pump booster.
    *
-   * @param name booster name
-   * @param inStream inlet stream
+   * @param name           booster name
+   * @param inStream       inlet stream
    * @param outletPressure target outlet pressure in bara
    * @return configured booster
    */
-  public static SubseaBooster createMultiphasePump(String name, StreamInterface inStream,
-      double outletPressure) {
+  public static SubseaBooster createMultiphasePump(String name, StreamInterface inStream, double outletPressure) {
     SubseaBooster booster = new SubseaBooster(name, inStream);
     booster.setBoosterType(BoosterType.MULTIPHASE_PUMP);
     booster.setPumpType(PumpType.HELICO_AXIAL);
@@ -359,13 +358,12 @@ public class SubseaBooster extends TwoPortEquipment {
   /**
    * Create wet gas compressor booster.
    *
-   * @param name booster name
-   * @param inStream inlet stream
+   * @param name          booster name
+   * @param inStream      inlet stream
    * @param pressureRatio pressure ratio
    * @return configured booster
    */
-  public static SubseaBooster createWetGasCompressor(String name, StreamInterface inStream,
-      double pressureRatio) {
+  public static SubseaBooster createWetGasCompressor(String name, StreamInterface inStream, double pressureRatio) {
     SubseaBooster booster = new SubseaBooster(name, inStream);
     booster.setBoosterType(BoosterType.WET_GAS_COMPRESSOR);
     booster.setCompressorType(CompressorType.CENTRIFUGAL);
@@ -402,9 +400,9 @@ public class SubseaBooster extends TwoPortEquipment {
       // Calculate required pressure increase
       double inletPressure = inStream.getPressure();
       if (outletPressure > inletPressure) {
-        outFluid.setPressure(outletPressure);
+	outFluid.setPressure(outletPressure);
       } else {
-        outFluid.setPressure(inletPressure + differentialPressure);
+	outFluid.setPressure(inletPressure + differentialPressure);
       }
 
       // Estimate temperature rise (compression heating)
@@ -424,8 +422,7 @@ public class SubseaBooster extends TwoPortEquipment {
    * @return true if compressor
    */
   public boolean isCompressor() {
-    return boosterType == BoosterType.WET_GAS_COMPRESSOR
-        || boosterType == BoosterType.DRY_GAS_COMPRESSOR;
+    return boosterType == BoosterType.WET_GAS_COMPRESSOR || boosterType == BoosterType.DRY_GAS_COMPRESSOR;
   }
 
   /**
@@ -437,8 +434,7 @@ public class SubseaBooster extends TwoPortEquipment {
     if (isCompressor()) {
       // Adiabatic compression temperature rise
       double gamma = 1.3; // Approximate for hydrocarbon gas
-      double tempRise = inStream.getTemperature()
-          * (Math.pow(pressureRatio, (gamma - 1) / gamma) - 1) / efficiency;
+      double tempRise = inStream.getTemperature() * (Math.pow(pressureRatio, (gamma - 1) / gamma) - 1) / efficiency;
       return tempRise;
     } else {
       // Pump temperature rise is minimal

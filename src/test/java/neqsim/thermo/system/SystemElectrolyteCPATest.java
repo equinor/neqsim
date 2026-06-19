@@ -54,7 +54,8 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
    * </p>
    */
   @AfterAll
-  public static void tearDown() {}
+  public static void tearDown() {
+  }
 
   /**
    * <p>
@@ -151,19 +152,17 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
     nonIonicSystem.addComponent("methane", 0.5);
     nonIonicSystem.addComponent("water", 0.5);
     nonIonicSystem.setMixingRule("classic");
-    assertEquals(false, nonIonicSystem.hasIons(),
-        "System without ions should return hasIons() = false");
+    assertEquals(false, nonIonicSystem.hasIons(), "System without ions should return hasIons() = false");
   }
 
   /**
-   * Test that adding heavier hydrocarbons (butane) to an electrolyte system does not cause CH4
-   * solubility to increase with salinity. This regression test ensures proper salting-out behavior
-   * for multi-component hydrocarbon mixtures.
+   * Test that adding heavier hydrocarbons (butane) to an electrolyte system does not cause CH4 solubility to increase
+   * with salinity. This regression test ensures proper salting-out behavior for multi-component hydrocarbon mixtures.
    *
    * <p>
-   * Bug description: Prior to fix, adding n-butane caused CH4 solubility to INCREASE with salinity
-   * instead of DECREASE (salting-out effect). This was because heavier hydrocarbons were not
-   * assigned proper gas-ion Wij interaction parameters.
+   * Bug description: Prior to fix, adding n-butane caused CH4 solubility to INCREASE with salinity instead of DECREASE
+   * (salting-out effect). This was because heavier hydrocarbons were not assigned proper gas-ion Wij interaction
+   * parameters.
    * </p>
    */
   @Test
@@ -193,13 +192,12 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
     opsSalt.TPflash();
     salineWater.initProperties();
 
-    double ch4InWaterWithSalt =
-        salineWater.getPhase(PhaseType.AQUEOUS).getComponent("methane").getx();
+    double ch4InWaterWithSalt = salineWater.getPhase(PhaseType.AQUEOUS).getComponent("methane").getx();
 
     // CH4 solubility should DECREASE with salinity (salting-out effect)
     assertTrue(ch4InWaterWithSalt < ch4InWaterNoSalt,
-        "CH4 solubility should decrease with salinity (salting-out effect). " + "Without salt: "
-            + ch4InWaterNoSalt + ", With salt: " + ch4InWaterWithSalt);
+	"CH4 solubility should decrease with salinity (salting-out effect). " + "Without salt: " + ch4InWaterNoSalt
+	    + ", With salt: " + ch4InWaterWithSalt);
   }
 
   /**
@@ -208,7 +206,7 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("test salting-out effect for ethane, propane, and pentane")
   public void testSaltingOutVariousHydrocarbons() {
-    String[] hydrocarbons = {"ethane", "propane", "n-pentane"};
+    String[] hydrocarbons = { "ethane", "propane", "n-pentane" };
 
     for (String hc : hydrocarbons) {
       // System without salt
@@ -237,18 +235,18 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
 
       double ch4WithSalt = salineWater.getPhase(PhaseType.AQUEOUS).getComponent("methane").getx();
 
-      assertTrue(ch4WithSalt < ch4NoSalt, "CH4 solubility should decrease with salinity when " + hc
-          + " is present. " + "Without salt: " + ch4NoSalt + ", With salt: " + ch4WithSalt);
+      assertTrue(ch4WithSalt < ch4NoSalt, "CH4 solubility should decrease with salinity when " + hc + " is present. "
+	  + "Without salt: " + ch4NoSalt + ", With salt: " + ch4WithSalt);
     }
   }
 
   /**
-   * Test three-phase equilibrium (gas-oil-water) with ions. This verifies that the salting-out
-   * effect works correctly when an oil phase is present in addition to gas and aqueous phases.
+   * Test three-phase equilibrium (gas-oil-water) with ions. This verifies that the salting-out effect works correctly
+   * when an oil phase is present in addition to gas and aqueous phases.
    *
    * <p>
-   * In three-phase systems, the presence of ions in the aqueous phase should still reduce
-   * hydrocarbon solubility in water (salting-out effect), regardless of the oil phase.
+   * In three-phase systems, the presence of ions in the aqueous phase should still reduce hydrocarbon solubility in
+   * water (salting-out effect), regardless of the oil phase.
    * </p>
    */
   @Test
@@ -267,13 +265,10 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
 
     // Should have 3 phases
     int numPhasesNoSalt = threePhaseNoSalt.getNumberOfPhases();
-    assertTrue(numPhasesNoSalt >= 2,
-        "System should have at least 2 phases, got: " + numPhasesNoSalt);
+    assertTrue(numPhasesNoSalt >= 2, "System should have at least 2 phases, got: " + numPhasesNoSalt);
 
-    double ch4InWaterNoSalt =
-        threePhaseNoSalt.getPhase(PhaseType.AQUEOUS).getComponent("methane").getx();
-    double butaneInWaterNoSalt =
-        threePhaseNoSalt.getPhase(PhaseType.AQUEOUS).getComponent("n-butane").getx();
+    double ch4InWaterNoSalt = threePhaseNoSalt.getPhase(PhaseType.AQUEOUS).getComponent("methane").getx();
+    double butaneInWaterNoSalt = threePhaseNoSalt.getPhase(PhaseType.AQUEOUS).getComponent("n-butane").getx();
 
     // Three-phase system with salt
     SystemInterface threePhaseWithSalt = new SystemElectrolyteCPAstatoil(298.15, 20.0);
@@ -288,24 +283,22 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
     opsSalt.TPflash();
     threePhaseWithSalt.initProperties();
 
-    double ch4InWaterWithSalt =
-        threePhaseWithSalt.getPhase(PhaseType.AQUEOUS).getComponent("methane").getx();
-    double butaneInWaterWithSalt =
-        threePhaseWithSalt.getPhase(PhaseType.AQUEOUS).getComponent("n-butane").getx();
+    double ch4InWaterWithSalt = threePhaseWithSalt.getPhase(PhaseType.AQUEOUS).getComponent("methane").getx();
+    double butaneInWaterWithSalt = threePhaseWithSalt.getPhase(PhaseType.AQUEOUS).getComponent("n-butane").getx();
 
     // Salting-out: hydrocarbon solubility in water should DECREASE with salt
     assertTrue(ch4InWaterWithSalt < ch4InWaterNoSalt,
-        "CH4 solubility in aqueous phase should decrease with salt in 3-phase system. "
-            + "Without salt: " + ch4InWaterNoSalt + ", With salt: " + ch4InWaterWithSalt);
+	"CH4 solubility in aqueous phase should decrease with salt in 3-phase system. " + "Without salt: "
+	    + ch4InWaterNoSalt + ", With salt: " + ch4InWaterWithSalt);
 
     assertTrue(butaneInWaterWithSalt < butaneInWaterNoSalt,
-        "n-Butane solubility in aqueous phase should decrease with salt in 3-phase system. "
-            + "Without salt: " + butaneInWaterNoSalt + ", With salt: " + butaneInWaterWithSalt);
+	"n-Butane solubility in aqueous phase should decrease with salt in 3-phase system. " + "Without salt: "
+	    + butaneInWaterNoSalt + ", With salt: " + butaneInWaterWithSalt);
   }
 
   /**
-   * Test three-phase equilibrium with multiple ions (NaCl + CaCl2). This verifies that the model
-   * handles divalent ions (Ca2+) correctly in three-phase systems.
+   * Test three-phase equilibrium with multiple ions (NaCl + CaCl2). This verifies that the model handles divalent ions
+   * (Ca2+) correctly in three-phase systems.
    */
   @Test
   @DisplayName("test three-phase equilibrium with multiple ion types")
@@ -339,20 +332,19 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
     opsMixed.TPflash();
     withMixedSalt.initProperties();
 
-    double propaneWithMixedSalt =
-        withMixedSalt.getPhase(PhaseType.AQUEOUS).getComponent("propane").getx();
+    double propaneWithMixedSalt = withMixedSalt.getPhase(PhaseType.AQUEOUS).getComponent("propane").getx();
 
     // Higher ionic strength should give stronger salting-out effect
     // Using propane since it has higher solubility than methane in this system
     assertTrue(propaneWithMixedSalt <= propaneWithNaCl,
-        "Higher ionic strength (NaCl+CaCl2) should give equal or stronger salting-out than NaCl alone. "
-            + "With NaCl: " + propaneWithNaCl + ", With NaCl+CaCl2: " + propaneWithMixedSalt);
+	"Higher ionic strength (NaCl+CaCl2) should give equal or stronger salting-out than NaCl alone. " + "With NaCl: "
+	    + propaneWithNaCl + ", With NaCl+CaCl2: " + propaneWithMixedSalt);
   }
 
   /**
-   * \n * Test salting-out effect for nitrogen (N2). Nitrogen is the most common inert gas\n * in
-   * natural gas and should exhibit proper salting-out behavior.\n * Note: H2S is an acid gas and H2
-   * is very small - both have complex behaviors\n * that require further investigation.\n
+   * \n * Test salting-out effect for nitrogen (N2). Nitrogen is the most common inert gas\n * in natural gas and should
+   * exhibit proper salting-out behavior.\n * Note: H2S is an acid gas and H2 is very small - both have complex
+   * behaviors\n * that require further investigation.\n
    */
   @Test
   @DisplayName("test salting-out effect for nitrogen")
@@ -382,12 +374,12 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
     double n2WithSalt = salineWater.getPhase(PhaseType.AQUEOUS).getComponent("nitrogen").getx();
 
     assertTrue(n2WithSalt < n2NoSalt, "N2 solubility should decrease with salinity "
-        + "(salting-out effect). Without salt: " + n2NoSalt + ", With salt: " + n2WithSalt);
+	+ "(salting-out effect). Without salt: " + n2NoSalt + ", With salt: " + n2WithSalt);
   }
 
   /**
-   * Test salting-out effect for natural gas mixture with inerts. This simulates a realistic natural
-   * gas composition with N2, CO2, and hydrocarbons.
+   * Test salting-out effect for natural gas mixture with inerts. This simulates a realistic natural gas composition
+   * with N2, CO2, and hydrocarbons.
    */
   @Test
   @DisplayName("test salting-out for natural gas mixture with inerts")
@@ -423,12 +415,10 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
     double n2WithSalt = salineWater.getPhase(PhaseType.AQUEOUS).getComponent("nitrogen").getx();
 
     // All gas components should show salting-out
-    assertTrue(ch4WithSalt < ch4NoSalt,
-        "CH4 should show salting-out in natural gas mixture. Without salt: " + ch4NoSalt
-            + ", With salt: " + ch4WithSalt);
+    assertTrue(ch4WithSalt < ch4NoSalt, "CH4 should show salting-out in natural gas mixture. Without salt: " + ch4NoSalt
+	+ ", With salt: " + ch4WithSalt);
     assertTrue(n2WithSalt < n2NoSalt,
-        "N2 should show salting-out in natural gas mixture. Without salt: " + n2NoSalt
-            + ", With salt: " + n2WithSalt);
+	"N2 should show salting-out in natural gas mixture. Without salt: " + n2NoSalt + ", With salt: " + n2WithSalt);
   }
 
   // ============================================================================
@@ -436,8 +426,8 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
   // ============================================================================
 
   /**
-   * Test basic hydrate formation temperature calculation with electrolyte CPA. Verifies that
-   * hydrate calculations work with the SystemElectrolyteCPAstatoil model.
+   * Test basic hydrate formation temperature calculation with electrolyte CPA. Verifies that hydrate calculations work
+   * with the SystemElectrolyteCPAstatoil model.
    *
    * @throws Exception if calculation fails
    */
@@ -461,18 +451,16 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
 
     // At 100 bar, methane hydrate forms around 15-20°C
     assertTrue(hydrateTemp > 10.0 && hydrateTemp < 30.0,
-        "Hydrate formation temperature at 100 bar should be between 10-30°C, got: " + hydrateTemp
-            + "°C");
+	"Hydrate formation temperature at 100 bar should be between 10-30°C, got: " + hydrateTemp + "°C");
   }
 
   /**
-   * Test that salt in formation water increases hydrate stability temperature (due to lower water
-   * activity / salting-out effect).
+   * Test that salt in formation water increases hydrate stability temperature (due to lower water activity /
+   * salting-out effect).
    *
    * <p>
-   * Note: In practice, salt LOWERS the hydrate equilibrium temperature because it reduces water
-   * activity. This is the thermodynamic hydrate inhibition effect of salt. However, the exact
-   * magnitude depends on the model implementation.
+   * Note: In practice, salt LOWERS the hydrate equilibrium temperature because it reduces water activity. This is the
+   * thermodynamic hydrate inhibition effect of salt. However, the exact magnitude depends on the model implementation.
    * </p>
    *
    * @throws Exception if calculation fails
@@ -508,9 +496,9 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
 
     // Both should find valid hydrate temperatures
     assertTrue(hydrateTempNoSalt > 0.0,
-        "Hydrate temperature without salt should be positive, got: " + hydrateTempNoSalt);
+	"Hydrate temperature without salt should be positive, got: " + hydrateTempNoSalt);
     assertTrue(hydrateTempWithSalt > 0.0,
-        "Hydrate temperature with salt should be positive, got: " + hydrateTempWithSalt);
+	"Hydrate temperature with salt should be positive, got: " + hydrateTempWithSalt);
 
     // Log the results for inspection
     logger.info("Hydrate temp without salt: " + hydrateTempNoSalt + "°C");
@@ -518,8 +506,8 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
   }
 
   /**
-   * Test hydrate equilibrium with MEG inhibitor using electrolyte CPA. MEG is a thermodynamic
-   * hydrate inhibitor that should lower the hydrate formation temperature.
+   * Test hydrate equilibrium with MEG inhibitor using electrolyte CPA. MEG is a thermodynamic hydrate inhibitor that
+   * should lower the hydrate formation temperature.
    *
    * @throws Exception if calculation fails
    */
@@ -555,8 +543,8 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
 
     // MEG should lower the hydrate formation temperature
     assertTrue(hydrateTempWithMEG < hydrateTempNoMEG,
-        "MEG should inhibit hydrate formation (lower temperature). Without MEG: " + hydrateTempNoMEG
-            + "°C, With MEG: " + hydrateTempWithMEG + "°C");
+	"MEG should inhibit hydrate formation (lower temperature). Without MEG: " + hydrateTempNoMEG + "°C, With MEG: "
+	    + hydrateTempWithMEG + "°C");
 
     logger.info("Hydrate temp without MEG: " + hydrateTempNoMEG + "°C");
     logger.info("Hydrate temp with MEG: " + hydrateTempWithMEG + "°C");
@@ -564,8 +552,8 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
   }
 
   /**
-   * Test hydrate equilibrium with methanol inhibitor using electrolyte CPA. Methanol is a strong
-   * thermodynamic hydrate inhibitor.
+   * Test hydrate equilibrium with methanol inhibitor using electrolyte CPA. Methanol is a strong thermodynamic hydrate
+   * inhibitor.
    *
    * @throws Exception if calculation fails
    */
@@ -597,18 +585,17 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
 
     // Methanol should lower the hydrate formation temperature
     assertTrue(hydrateTempWithMeOH < hydrateTempNoMeOH,
-        "Methanol should inhibit hydrate formation (lower temperature). Without MeOH: "
-            + hydrateTempNoMeOH + "°C, With MeOH: " + hydrateTempWithMeOH + "°C");
+	"Methanol should inhibit hydrate formation (lower temperature). Without MeOH: " + hydrateTempNoMeOH
+	    + "°C, With MeOH: " + hydrateTempWithMeOH + "°C");
 
     logger.info("Hydrate temp without methanol: " + hydrateTempNoMeOH + "°C");
     logger.info("Hydrate temp with methanol: " + hydrateTempWithMeOH + "°C");
-    System.out
-        .println("Methanol inhibition effect: " + (hydrateTempNoMeOH - hydrateTempWithMeOH) + "°C");
+    System.out.println("Methanol inhibition effect: " + (hydrateTempNoMeOH - hydrateTempWithMeOH) + "°C");
   }
 
   /**
-   * Test hydrate equilibrium with natural gas mixture including inerts (N2, CO2). Verifies that
-   * hydrate calculations work with complex gas compositions.
+   * Test hydrate equilibrium with natural gas mixture including inerts (N2, CO2). Verifies that hydrate calculations
+   * work with complex gas compositions.
    *
    * @throws Exception if calculation fails
    */
@@ -635,15 +622,14 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
 
     // Should find a valid hydrate temperature
     assertTrue(hydrateTemp > 5.0 && hydrateTemp < 30.0,
-        "Hydrate temperature for natural gas at 100 bar should be 5-30°C, got: " + hydrateTemp
-            + "°C");
+	"Hydrate temperature for natural gas at 100 bar should be 5-30°C, got: " + hydrateTemp + "°C");
 
     logger.info("Hydrate temp for natural gas with inerts: " + hydrateTemp + "°C");
   }
 
   /**
-   * Test hydrate equilibrium with heavy hydrocarbon (oil) fractions. Heavier hydrocarbons (C5+)
-   * don't form hydrates but can affect the equilibrium.
+   * Test hydrate equilibrium with heavy hydrocarbon (oil) fractions. Heavier hydrocarbons (C5+) don't form hydrates but
+   * can affect the equilibrium.
    *
    * @throws Exception if calculation fails
    */
@@ -672,15 +658,14 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
 
     // Should find a valid hydrate temperature
     assertTrue(hydrateTemp > 0.0 && hydrateTemp < 30.0,
-        "Hydrate temperature for gas-condensate at 100 bar should be 0-30°C, got: " + hydrateTemp
-            + "°C");
+	"Hydrate temperature for gas-condensate at 100 bar should be 0-30°C, got: " + hydrateTemp + "°C");
 
     logger.info("Hydrate temp for gas-condensate with oil fractions: " + hydrateTemp + "°C");
   }
 
   /**
-   * Test comprehensive hydrate scenario with natural gas, inerts, inhibitor, and formation water
-   * (brine). This is a realistic offshore production scenario.
+   * Test comprehensive hydrate scenario with natural gas, inerts, inhibitor, and formation water (brine). This is a
+   * realistic offshore production scenario.
    *
    * @throws Exception if calculation fails
    */
@@ -722,8 +707,7 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
 
     // Should find a valid hydrate temperature
     assertTrue(hydrateTemp > -10.0 && hydrateTemp < 35.0,
-        "Hydrate temperature for complex offshore fluid should be reasonable, got: " + hydrateTemp
-            + "°C");
+	"Hydrate temperature for complex offshore fluid should be reasonable, got: " + hydrateTemp + "°C");
 
     logger.info("Comprehensive offshore scenario hydrate temp: " + hydrateTemp + "°C");
 
@@ -732,8 +716,8 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
   }
 
   /**
-   * Test hydrate TPflash with electrolyte CPA model. Verifies that the TPflash correctly identifies
-   * hydrate formation conditions.
+   * Test hydrate TPflash with electrolyte CPA model. Verifies that the TPflash correctly identifies hydrate formation
+   * conditions.
    */
   @Test
   @DisplayName("test hydrate TPflash with electrolyte CPA")
@@ -786,8 +770,8 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
   }
 
   /**
-   * Test hydrate inhibitor concentration calculation with electrolyte CPA. This calculates how much
-   * MEG is needed to inhibit hydrate at given conditions.
+   * Test hydrate inhibitor concentration calculation with electrolyte CPA. This calculates how much MEG is needed to
+   * inhibit hydrate at given conditions.
    *
    * @throws Exception if calculation fails
    */
@@ -819,17 +803,16 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
     double waterMassKg = waterMoles * fluid.getPhase(0).getComponent("water").getMolarMass();
     double megWtPercent = 100.0 * megMassKg / (megMassKg + waterMassKg);
 
-    logger.info(
-        "Required MEG concentration to inhibit hydrate at 5°C, 100 bar: " + megWtPercent + " wt%");
+    logger.info("Required MEG concentration to inhibit hydrate at 5°C, 100 bar: " + megWtPercent + " wt%");
 
     // MEG concentration should be positive and reasonable (typically 20-60 wt%)
     assertTrue(megWtPercent > 0.0, "MEG concentration should be positive");
   }
 
   /**
-   * Test hydrate equilibrium with BOTH inhibitor (MEG) AND ions (Na+/Cl-) together. This verifies
-   * the combined effect of thermodynamic inhibitor and salt on hydrate formation. Both MEG and salt
-   * should reduce hydrate formation temperature.
+   * Test hydrate equilibrium with BOTH inhibitor (MEG) AND ions (Na+/Cl-) together. This verifies the combined effect
+   * of thermodynamic inhibitor and salt on hydrate formation. Both MEG and salt should reduce hydrate formation
+   * temperature.
    *
    * @throws Exception if calculation fails
    */
@@ -866,35 +849,33 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
 
     // Both should find valid hydrate temperatures (both are inhibiting)
     assertTrue(hydrateTempMegOnly > -20.0 && hydrateTempMegOnly < 20.0,
-        "Hydrate temp with MEG only should be reasonable, got: " + hydrateTempMegOnly);
+	"Hydrate temp with MEG only should be reasonable, got: " + hydrateTempMegOnly);
     assertTrue(hydrateTempMegAndSalt > -25.0 && hydrateTempMegAndSalt < 20.0,
-        "Hydrate temp with MEG+salt should be reasonable, got: " + hydrateTempMegAndSalt);
+	"Hydrate temp with MEG+salt should be reasonable, got: " + hydrateTempMegAndSalt);
 
     // Combined effect: salt should provide additional inhibition on top of MEG
     // (hydrate temp should be lower with MEG+salt than MEG alone)
     assertTrue(hydrateTempMegAndSalt <= hydrateTempMegOnly,
-        "Combined MEG+salt should give equal or lower hydrate temp than MEG alone. " + "MEG only: "
-            + hydrateTempMegOnly + "°C, MEG+salt: " + hydrateTempMegAndSalt + "°C");
+	"Combined MEG+salt should give equal or lower hydrate temp than MEG alone. " + "MEG only: " + hydrateTempMegOnly
+	    + "°C, MEG+salt: " + hydrateTempMegAndSalt + "°C");
 
     logger.info("Hydrate temp with MEG only: " + hydrateTempMegOnly + "°C");
     logger.info("Hydrate temp with MEG + NaCl: " + hydrateTempMegAndSalt + "°C");
-    logger.info("Additional salt inhibition effect: " + (hydrateTempMegOnly - hydrateTempMegAndSalt)
-        + "°C");
+    logger.info("Additional salt inhibition effect: " + (hydrateTempMegOnly - hydrateTempMegAndSalt) + "°C");
   }
 
   /**
    * Test hydrate equilibrium with methanol inhibitor AND ions together.
    *
    * <p>
-   * According to the Hu-Lee-Sum correlation (AIChE Journal, 2017-2018), the water activity effects
-   * from salts and organic inhibitors should be ADDITIVE: ln(aw) = ln(aw_salt) + ln(aw_OI).
-   * Therefore, combined methanol + salt should give equal or MORE hydrate temperature suppression
-   * than methanol alone.
+   * According to the Hu-Lee-Sum correlation (AIChE Journal, 2017-2018), the water activity effects from salts and
+   * organic inhibitors should be ADDITIVE: ln(aw) = ln(aw_salt) + ln(aw_OI). Therefore, combined methanol + salt should
+   * give equal or MORE hydrate temperature suppression than methanol alone.
    * </p>
    *
    * <p>
-   * The organic inhibitor-ion (OI-ion) parameters in FurstElectrolyteConstants ensure additive
-   * behavior per Hu-Lee-Sum correlation.
+   * The organic inhibitor-ion (OI-ion) parameters in FurstElectrolyteConstants ensure additive behavior per Hu-Lee-Sum
+   * correlation.
    * </p>
    *
    * @throws Exception if calculation fails
@@ -930,46 +911,43 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
 
     // Both should find valid hydrate temperatures
     assertTrue(hydrateTempMeohOnly > -20.0 && hydrateTempMeohOnly < 15.0,
-        "Hydrate temp with methanol only should be reasonable, got: " + hydrateTempMeohOnly);
+	"Hydrate temp with methanol only should be reasonable, got: " + hydrateTempMeohOnly);
     assertTrue(hydrateTempMeohAndSalt > -20.0 && hydrateTempMeohAndSalt < 15.0,
-        "Hydrate temp with methanol+salt should be reasonable, got: " + hydrateTempMeohAndSalt);
+	"Hydrate temp with methanol+salt should be reasonable, got: " + hydrateTempMeohAndSalt);
 
     // Both should provide significant inhibition compared to uninhibited (~20°C at 100 bar)
     assertTrue(hydrateTempMeohOnly < 10.0,
-        "Methanol should provide significant inhibition, got: " + hydrateTempMeohOnly);
+	"Methanol should provide significant inhibition, got: " + hydrateTempMeohOnly);
     assertTrue(hydrateTempMeohAndSalt < 10.0,
-        "Methanol+salt should provide significant inhibition, got: " + hydrateTempMeohAndSalt);
+	"Methanol+salt should provide significant inhibition, got: " + hydrateTempMeohAndSalt);
 
     logger.info("Hydrate temp with methanol only: " + hydrateTempMeohOnly + "°C");
     logger.info("Hydrate temp with methanol + NaCl: " + hydrateTempMeohAndSalt + "°C");
-    logger.info("Salt effect on methanol-inhibited system: "
-        + (hydrateTempMeohOnly - hydrateTempMeohAndSalt) + "°C");
+    logger.info("Salt effect on methanol-inhibited system: " + (hydrateTempMeohOnly - hydrateTempMeohAndSalt) + "°C");
 
     // Per Hu-Lee-Sum correlation, combined effect should be additive (more inhibition)
     // With OI-ion parameters fitted, methanol+salt should give lower hydrate temp than methanol
     // alone
     assertTrue(hydrateTempMeohAndSalt <= hydrateTempMeohOnly,
-        "Combined methanol+salt should give equal or lower hydrate temp than methanol alone. "
-            + "Methanol only: " + hydrateTempMeohOnly + "°C, Methanol+salt: "
-            + hydrateTempMeohAndSalt + "°C");
+	"Combined methanol+salt should give equal or lower hydrate temp than methanol alone. " + "Methanol only: "
+	    + hydrateTempMeohOnly + "°C, Methanol+salt: " + hydrateTempMeohAndSalt + "°C");
   }
 
   /**
    * Test water activity calculations per Hu-Lee-Sum correlation.
    *
    * <p>
-   * According to Hu-Lee-Sum (AIChE Journal 2017, 2018), the hydrate temperature suppression is
-   * related to water activity by: ΔT/(T₀T) = -β_gas × ln(a_w)
+   * According to Hu-Lee-Sum (AIChE Journal 2017, 2018), the hydrate temperature suppression is related to water
+   * activity by: ΔT/(T₀T) = -β_gas × ln(a_w)
    * </p>
    *
    * <p>
-   * For combined salt + organic inhibitor systems, water activities should be approximately
-   * multiplicative (additive in ln): ln(a_w_combined) ≈ ln(a_w_salt) + ln(a_w_OI)
+   * For combined salt + organic inhibitor systems, water activities should be approximately multiplicative (additive in
+   * ln): ln(a_w_combined) ≈ ln(a_w_salt) + ln(a_w_OI)
    * </p>
    *
    * <p>
-   * This test validates that the electrolyte CPA EOS correctly predicts this additive behavior for
-   * hydrate inhibition.
+   * This test validates that the electrolyte CPA EOS correctly predicts this additive behavior for hydrate inhibition.
    * </p>
    *
    * @throws Exception if calculation fails
@@ -989,9 +967,9 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
     ThermodynamicOperations opsPure = new ThermodynamicOperations(pureWater);
     opsPure.TPflash();
     pureWater.initProperties();
-    double awPure = pureWater.getPhase(PhaseType.AQUEOUS).getActivityCoefficient(
-        pureWater.getPhase(PhaseType.AQUEOUS).getComponent("water").getComponentNumber())
-        * pureWater.getPhase(PhaseType.AQUEOUS).getComponent("water").getx();
+    double awPure = pureWater.getPhase(PhaseType.AQUEOUS)
+	.getActivityCoefficient(pureWater.getPhase(PhaseType.AQUEOUS).getComponent("water").getComponentNumber())
+	* pureWater.getPhase(PhaseType.AQUEOUS).getComponent("water").getx();
 
     // 2. With salt only (NaCl)
     SystemInterface withSalt = new SystemElectrolyteCPAstatoil(temperature, pressure);
@@ -1003,9 +981,9 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
     ThermodynamicOperations opsSalt = new ThermodynamicOperations(withSalt);
     opsSalt.TPflash();
     withSalt.initProperties();
-    double awSalt = withSalt.getPhase(PhaseType.AQUEOUS).getActivityCoefficient(
-        withSalt.getPhase(PhaseType.AQUEOUS).getComponent("water").getComponentNumber())
-        * withSalt.getPhase(PhaseType.AQUEOUS).getComponent("water").getx();
+    double awSalt = withSalt.getPhase(PhaseType.AQUEOUS)
+	.getActivityCoefficient(withSalt.getPhase(PhaseType.AQUEOUS).getComponent("water").getComponentNumber())
+	* withSalt.getPhase(PhaseType.AQUEOUS).getComponent("water").getx();
 
     // 3. With MEG only
     SystemInterface withMEG = new SystemElectrolyteCPAstatoil(temperature, pressure);
@@ -1016,9 +994,9 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
     ThermodynamicOperations opsMEG = new ThermodynamicOperations(withMEG);
     opsMEG.TPflash();
     withMEG.initProperties();
-    double awMEG = withMEG.getPhase(PhaseType.AQUEOUS).getActivityCoefficient(
-        withMEG.getPhase(PhaseType.AQUEOUS).getComponent("water").getComponentNumber())
-        * withMEG.getPhase(PhaseType.AQUEOUS).getComponent("water").getx();
+    double awMEG = withMEG.getPhase(PhaseType.AQUEOUS)
+	.getActivityCoefficient(withMEG.getPhase(PhaseType.AQUEOUS).getComponent("water").getComponentNumber())
+	* withMEG.getPhase(PhaseType.AQUEOUS).getComponent("water").getx();
 
     // 4. With MEG + salt combined
     SystemInterface withBoth = new SystemElectrolyteCPAstatoil(temperature, pressure);
@@ -1031,9 +1009,9 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
     ThermodynamicOperations opsBoth = new ThermodynamicOperations(withBoth);
     opsBoth.TPflash();
     withBoth.initProperties();
-    double awBoth = withBoth.getPhase(PhaseType.AQUEOUS).getActivityCoefficient(
-        withBoth.getPhase(PhaseType.AQUEOUS).getComponent("water").getComponentNumber())
-        * withBoth.getPhase(PhaseType.AQUEOUS).getComponent("water").getx();
+    double awBoth = withBoth.getPhase(PhaseType.AQUEOUS)
+	.getActivityCoefficient(withBoth.getPhase(PhaseType.AQUEOUS).getComponent("water").getComponentNumber())
+	* withBoth.getPhase(PhaseType.AQUEOUS).getComponent("water").getx();
 
     // Calculate ln(aw) values
     double lnAwPure = Math.log(awPure);
@@ -1055,11 +1033,10 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
 
     // Combined inhibitors should give lower water activity than either alone
     assertTrue(awBoth < awSalt && awBoth < awMEG,
-        "Combined MEG+salt should give lower water activity than either alone. " + "a_w(salt): "
-            + awSalt + ", a_w(MEG): " + awMEG + ", a_w(both): " + awBoth);
+	"Combined MEG+salt should give lower water activity than either alone. " + "a_w(salt): " + awSalt
+	    + ", a_w(MEG): " + awMEG + ", a_w(both): " + awBoth);
 
     // The ln(aw) should be more negative for combined system (more inhibition)
-    assertTrue(lnAwBoth < lnAwSalt && lnAwBoth < lnAwMEG,
-        "Combined system should have more negative ln(a_w)");
+    assertTrue(lnAwBoth < lnAwSalt && lnAwBoth < lnAwMEG, "Combined system should have more negative ln(a_w)");
   }
 }

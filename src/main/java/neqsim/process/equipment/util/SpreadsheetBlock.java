@@ -14,10 +14,10 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.StreamInterface;
 
 /**
- * Inline spreadsheet / calculator block for embedding custom calculations directly in a flowsheet.
- * Similar to UniSim's spreadsheet, this block lets users define named import cells that pull values
- * from process streams or equipment, named formula cells that perform arithmetic on those values,
- * and export cells that push computed results back into the process.
+ * Inline spreadsheet / calculator block for embedding custom calculations directly in a flowsheet. Similar to UniSim's
+ * spreadsheet, this block lets users define named import cells that pull values from process streams or equipment,
+ * named formula cells that perform arithmetic on those values, and export cells that push computed results back into
+ * the process.
  *
  * <p>
  * Usage example:
@@ -29,8 +29,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  * sheet.addStreamImportCell("T_out", product, s -&gt; s.getTemperature("C"));
  * sheet.addStreamImportCell("mdot", feed, s -&gt; s.getFlowRate("kg/hr"));
  * sheet.addFormulaCell("deltaT", cells -&gt; cells.get("T_out") - cells.get("T_in"));
- * sheet.addFormulaCell("duty_kW",
- *     cells -&gt; cells.get("mdot") * 4.18 * cells.get("deltaT") / 3600.0);
+ * sheet.addFormulaCell("duty_kW", cells -&gt; cells.get("mdot") * 4.18 * cells.get("deltaT") / 3600.0);
  * sheet.addExportCell("duty_kW", cooler, (eq, val) -&gt; ((Cooler) eq).setEnergyInput(val));
  * </pre>
  *
@@ -65,11 +64,10 @@ public class SpreadsheetBlock extends ProcessEquipmentBaseClass {
    * Add an import cell that reads a value from a stream each time the block runs.
    *
    * @param cellName unique name for this cell (e.g. "T_inlet")
-   * @param stream the source stream to read from
-   * @param reader function that extracts a double value from the stream
+   * @param stream   the source stream to read from
+   * @param reader   function that extracts a double value from the stream
    */
-  public void addStreamImportCell(String cellName, StreamInterface stream,
-      Function<StreamInterface, Double> reader) {
+  public void addStreamImportCell(String cellName, StreamInterface stream, Function<StreamInterface, Double> reader) {
     if (cellName == null || cellName.trim().isEmpty()) {
       throw new IllegalArgumentException("Cell name cannot be null or empty");
     }
@@ -79,9 +77,9 @@ public class SpreadsheetBlock extends ProcessEquipmentBaseClass {
   /**
    * Add an import cell that reads a value from any process equipment each time the block runs.
    *
-   * @param cellName unique name for this cell
+   * @param cellName  unique name for this cell
    * @param equipment the source equipment to read from
-   * @param reader function that extracts a double value from the equipment
+   * @param reader    function that extracts a double value from the equipment
    */
   public void addImportCell(String cellName, ProcessEquipmentInterface equipment,
       Function<ProcessEquipmentInterface, Double> reader) {
@@ -95,7 +93,7 @@ public class SpreadsheetBlock extends ProcessEquipmentBaseClass {
    * Add a constant cell with a fixed value.
    *
    * @param cellName unique name for this cell
-   * @param value the constant value
+   * @param value    the constant value
    */
   public void addConstantCell(String cellName, double value) {
     if (cellName == null || cellName.trim().isEmpty()) {
@@ -105,12 +103,11 @@ public class SpreadsheetBlock extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Add a formula cell that computes a value from the current cell values. Formula cells can
-   * reference any previously defined cell (import, constant, or earlier formula cells).
+   * Add a formula cell that computes a value from the current cell values. Formula cells can reference any previously
+   * defined cell (import, constant, or earlier formula cells).
    *
    * @param cellName unique name for this cell
-   * @param formula function that takes the map of current cell values and returns the computed
-   *        value
+   * @param formula  function that takes the map of current cell values and returns the computed value
    */
   public void addFormulaCell(String cellName, Function<Map<String, Double>, Double> formula) {
     if (cellName == null || cellName.trim().isEmpty()) {
@@ -120,15 +117,13 @@ public class SpreadsheetBlock extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Add an export target that pushes a computed cell value back into process equipment after
-   * calculation.
+   * Add an export target that pushes a computed cell value back into process equipment after calculation.
    *
    * @param cellName the cell whose value to export
-   * @param target the equipment to receive the value
-   * @param writer biconsumer that applies the value to the equipment
+   * @param target   the equipment to receive the value
+   * @param writer   biconsumer that applies the value to the equipment
    */
-  public void addExportCell(String cellName, ProcessEquipmentInterface target,
-      ExportWriter writer) {
+  public void addExportCell(String cellName, ProcessEquipmentInterface target, ExportWriter writer) {
     exportTargets.add(new ExportTarget(cellName, target, writer));
   }
 
@@ -169,11 +164,11 @@ public class SpreadsheetBlock extends ProcessEquipmentBaseClass {
       String cellName = entry.getKey();
       CellDefinition def = entry.getValue();
       try {
-        double value = def.evaluate(cellValues);
-        cellValues.put(cellName, value);
+	double value = def.evaluate(cellValues);
+	cellValues.put(cellName, value);
       } catch (Exception ex) {
-        logger.error("Error evaluating cell '" + cellName + "'", ex);
-        cellValues.put(cellName, Double.NaN);
+	logger.error("Error evaluating cell '" + cellName + "'", ex);
+	cellValues.put(cellName, Double.NaN);
       }
     }
 
@@ -181,13 +176,13 @@ public class SpreadsheetBlock extends ProcessEquipmentBaseClass {
     for (ExportTarget export : exportTargets) {
       Double value = cellValues.get(export.cellName);
       if (value == null || Double.isNaN(value)) {
-        logger.warn("Skipping export of cell '" + export.cellName + "': value is NaN or missing");
-        continue;
+	logger.warn("Skipping export of cell '" + export.cellName + "': value is NaN or missing");
+	continue;
       }
       try {
-        export.writer.apply(export.target, value);
+	export.writer.apply(export.target, value);
       } catch (Exception ex) {
-        logger.error("Error exporting cell '" + export.cellName + "'", ex);
+	logger.error("Error exporting cell '" + export.cellName + "'", ex);
       }
     }
 
@@ -203,7 +198,7 @@ public class SpreadsheetBlock extends ProcessEquipmentBaseClass {
      * Apply the computed value to the target equipment.
      *
      * @param equipment the target equipment
-     * @param value the computed cell value
+     * @param value     the computed cell value
      */
     void apply(ProcessEquipmentInterface equipment, double value);
   }
@@ -250,8 +245,7 @@ public class SpreadsheetBlock extends ProcessEquipmentBaseClass {
     private final ProcessEquipmentInterface equipment;
     private final transient Function<ProcessEquipmentInterface, Double> reader;
 
-    ImportCellFromEquipment(ProcessEquipmentInterface equipment,
-        Function<ProcessEquipmentInterface, Double> reader) {
+    ImportCellFromEquipment(ProcessEquipmentInterface equipment, Function<ProcessEquipmentInterface, Double> reader) {
       this.equipment = equipment;
       this.reader = reader;
     }

@@ -52,8 +52,7 @@ public class GORfitterTest {
     multiPhaseMeter2.setTemperature(90.0, "C");
     multiPhaseMeter2.setPressure(60.0, "bara");
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(multiPhaseMeter);
     operations.add(gORFItter);
@@ -68,27 +67,31 @@ public class GORfitterTest {
     // mimic MPM
 
     double gor_sm3gas_sm3oil = stream_2.getFluid().getPhase("gas").getFlowRate("Sm3/hr")
-        / stream_2.getFluid().getPhase("oil").getFlowRate("Sm3/hr");
+	/ stream_2.getFluid().getPhase("oil").getFlowRate("Sm3/hr");
 
     double gor_sm3gas_sm3oil_corrected = stream_2.getFluid().getPhase("gas").getCorrectedVolume()
-        / stream_2.getFluid().getPhase("oil").getCorrectedVolume();
+	/ stream_2.getFluid().getPhase("oil").getCorrectedVolume();
 
-    logger.info("Stream 2 (results outside MPM) " + " GOR sm3/sm3 " + gor_sm3gas_sm3oil
-        + " GOR Corrected by volume " + gor_sm3gas_sm3oil_corrected);
+    logger.info("Stream 2 (results outside MPM) " + " GOR sm3/sm3 " + gor_sm3gas_sm3oil + " GOR Corrected by volume "
+	+ gor_sm3gas_sm3oil_corrected);
 
     logger.info("Stream 2 (results outside MPM) getPhase(gas).getCorrectedVolume() "
-        + stream_2.getFluid().getPhase("gas").getCorrectedVolume());
+	+ stream_2.getFluid().getPhase("gas").getCorrectedVolume());
     logger.info("Stream 2 (results outside MPM) getPhase(oil).getCorrectedVolume() "
-        + stream_2.getFluid().getPhase("oil").getCorrectedVolume());
+	+ stream_2.getFluid().getPhase("oil").getCorrectedVolume());
 
     // Assertions.assertEquals(51.3073530232923, multiPhaseMeter.getMeasuredValue("GOR", ""),
     // 1e-12);
     // Assertions.assertEquals(3106.7708277963447, multiPhaseMeter.getMeasuredValue("GOR_std", ""),
     // 1e-12);
     Assertions.assertEquals(10.1, multiPhaseMeter2.getMeasuredValue("GOR", ""), 1e-10);
-    Assertions.assertEquals(682.1045749623208, multiPhaseMeter2.getMeasuredValue("GOR_std", ""),
-        1e-8); // the value of GOR sm3/sm3 3.48551599242607 is quite far if we take by flow
-               // getStandardFlow
+    Assertions.assertEquals(682.1045749623208, multiPhaseMeter2.getMeasuredValue("GOR_std", ""), 1e-8); // the value of
+													// GOR sm3/sm3
+													// 3.48551599242607
+													// is quite far
+													// if we take by
+													// flow
+													// getStandardFlow
     Assertions.assertEquals(1000000.0, stream_2.getFlowRate("kg/hr"), 1e-8);
   }
 }

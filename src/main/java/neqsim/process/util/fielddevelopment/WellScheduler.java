@@ -44,8 +44,8 @@ import neqsim.process.util.optimizer.ProductionOptimizer;
  *
  * <h2>Intervention Planning</h2>
  * <p>
- * Interventions are scheduled activities that temporarily take a well offline but may improve its
- * performance afterward. The scheduler calculates:
+ * Interventions are scheduled activities that temporarily take a well offline but may improve its performance
+ * afterward. The scheduler calculates:
  * <ul>
  * <li>Deferred production during intervention</li>
  * <li>Expected production gain after intervention</li>
@@ -55,8 +55,7 @@ import neqsim.process.util.optimizer.ProductionOptimizer;
  *
  * <h2>Integration with Facility Model</h2>
  * <p>
- * When a {@link ProcessSystem} is provided, the scheduler accounts for facility bottlenecks. This
- * ensures that:
+ * When a {@link ProcessSystem} is provided, the scheduler accounts for facility bottlenecks. This ensures that:
  * <ul>
  * <li>Production is capped at facility capacity even when well potential exceeds it</li>
  * <li>Interventions on non-bottleneck wells may not increase total production</li>
@@ -74,17 +73,15 @@ import neqsim.process.util.optimizer.ProductionOptimizer;
  * scheduler.addWell("Well-C", 3000.0, "Sm3/day");
  *
  * // Schedule interventions
- * scheduler
- *     .scheduleIntervention(Intervention.builder("Well-A").type(InterventionType.COILED_TUBING)
- *         .startDate(LocalDate.of(2024, 6, 15)).durationDays(5).expectedGain(0.15) // 15%
- *                                                                                  // improvement
- *         .cost(500000, "USD").build());
+ * scheduler.scheduleIntervention(Intervention.builder("Well-A").type(InterventionType.COILED_TUBING)
+ *     .startDate(LocalDate.of(2024, 6, 15)).durationDays(5).expectedGain(0.15) // 15%
+ * 									     // improvement
+ *     .cost(500000, "USD").build());
  *
  * // Optimize the schedule
- * ScheduleResult result =
- *     scheduler.optimizeSchedule(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31), 1); // max 1
- *                                                                                          // concurrent
- *                                                                                          // intervention
+ * ScheduleResult result = scheduler.optimizeSchedule(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31), 1); // max 1
+ * 													     // concurrent
+ * 													     // intervention
  *
  * System.out.println("Total deferred: " + result.getTotalDeferredProduction());
  * System.out.println("Total gain: " + result.getTotalProductionGain());
@@ -119,8 +116,8 @@ public class WellScheduler implements Serializable {
    * Well operational status.
    *
    * <p>
-   * Defines the possible states a well can be in during field operations. The status affects both
-   * production contribution and intervention scheduling.
+   * Defines the possible states a well can be in during field operations. The status affects both production
+   * contribution and intervention scheduling.
    */
   public enum WellStatus {
     /**
@@ -184,8 +181,7 @@ public class WellScheduler implements Serializable {
    * Types of well interventions.
    *
    * <p>
-   * Each intervention type has typical duration ranges and cost factors that can be used for
-   * planning purposes.
+   * Each intervention type has typical duration ranges and cost factors that can be used for planning purposes.
    */
   public enum InterventionType {
     /**
@@ -406,7 +402,7 @@ public class WellScheduler implements Serializable {
      * Checks if the intervention overlaps with a date range.
      *
      * @param rangeStart start of date range
-     * @param rangeEnd end of date range
+     * @param rangeEnd   end of date range
      * @return true if any overlap exists
      */
     public boolean overlaps(LocalDate rangeStart, LocalDate rangeEnd) {
@@ -428,15 +424,15 @@ public class WellScheduler implements Serializable {
     public int compareTo(Intervention other) {
       int priorityCompare = Integer.compare(this.priority, other.priority);
       if (priorityCompare != 0) {
-        return priorityCompare;
+	return priorityCompare;
       }
       return this.startDate.compareTo(other.startDate);
     }
 
     @Override
     public String toString() {
-      return String.format("Intervention[%s on %s, %s, %d days, gain=%.1f%%]",
-          type.getDisplayName(), wellName, startDate, durationDays, expectedProductionGain * 100);
+      return String.format("Intervention[%s on %s, %s, %d days, gain=%.1f%%]", type.getDisplayName(), wellName,
+	  startDate, durationDays, expectedProductionGain * 100);
     }
 
     /**
@@ -454,7 +450,7 @@ public class WellScheduler implements Serializable {
       private int priority = 5;
 
       private Builder(String wellName) {
-        this.wellName = Objects.requireNonNull(wellName, "Well name is required");
+	this.wellName = Objects.requireNonNull(wellName, "Well name is required");
       }
 
       /**
@@ -464,8 +460,8 @@ public class WellScheduler implements Serializable {
        * @return this builder
        */
       public Builder type(InterventionType type) {
-        this.type = Objects.requireNonNull(type);
-        return this;
+	this.type = Objects.requireNonNull(type);
+	return this;
       }
 
       /**
@@ -475,8 +471,8 @@ public class WellScheduler implements Serializable {
        * @return this builder
        */
       public Builder startDate(LocalDate startDate) {
-        this.startDate = Objects.requireNonNull(startDate);
-        return this;
+	this.startDate = Objects.requireNonNull(startDate);
+	return this;
       }
 
       /**
@@ -486,11 +482,11 @@ public class WellScheduler implements Serializable {
        * @return this builder
        */
       public Builder durationDays(int durationDays) {
-        if (durationDays <= 0) {
-          throw new IllegalArgumentException("Duration must be positive");
-        }
-        this.durationDays = durationDays;
-        return this;
+	if (durationDays <= 0) {
+	  throw new IllegalArgumentException("Duration must be positive");
+	}
+	this.durationDays = durationDays;
+	return this;
       }
 
       /**
@@ -500,21 +496,21 @@ public class WellScheduler implements Serializable {
        * @return this builder
        */
       public Builder expectedGain(double gain) {
-        this.expectedProductionGain = gain;
-        return this;
+	this.expectedProductionGain = gain;
+	return this;
       }
 
       /**
        * Sets the cost.
        *
-       * @param cost intervention cost
+       * @param cost     intervention cost
        * @param currency currency code
        * @return this builder
        */
       public Builder cost(double cost, String currency) {
-        this.cost = cost;
-        this.currency = Objects.requireNonNull(currency);
-        return this;
+	this.cost = cost;
+	this.currency = Objects.requireNonNull(currency);
+	return this;
       }
 
       /**
@@ -524,8 +520,8 @@ public class WellScheduler implements Serializable {
        * @return this builder
        */
       public Builder description(String description) {
-        this.description = description;
-        return this;
+	this.description = description;
+	return this;
       }
 
       /**
@@ -535,8 +531,8 @@ public class WellScheduler implements Serializable {
        * @return this builder
        */
       public Builder priority(int priority) {
-        this.priority = priority;
-        return this;
+	this.priority = priority;
+	return this;
       }
 
       /**
@@ -545,7 +541,7 @@ public class WellScheduler implements Serializable {
        * @return new Intervention
        */
       public Intervention build() {
-        return new Intervention(this);
+	return new Intervention(this);
       }
     }
   }
@@ -554,8 +550,7 @@ public class WellScheduler implements Serializable {
    * Well record for availability and production tracking.
    *
    * <p>
-   * Maintains the complete history of a well's status and production, along with scheduled
-   * interventions.
+   * Maintains the complete history of a well's status and production, along with scheduled interventions.
    */
   public static final class WellRecord implements Serializable {
     private static final long serialVersionUID = 1000L;
@@ -572,9 +567,9 @@ public class WellScheduler implements Serializable {
     /**
      * Creates a new well record.
      *
-     * @param wellName well identifier
+     * @param wellName         well identifier
      * @param initialPotential initial production potential
-     * @param rateUnit rate unit
+     * @param rateUnit         rate unit
      */
     public WellRecord(String wellName, double initialPotential, String rateUnit) {
       this.wellName = wellName;
@@ -645,7 +640,7 @@ public class WellScheduler implements Serializable {
      * Sets the current well status and records it in history.
      *
      * @param status new status
-     * @param date date of status change
+     * @param date   date of status change
      */
     public void setStatus(WellStatus status, LocalDate date) {
       this.currentStatus = status;
@@ -662,17 +657,17 @@ public class WellScheduler implements Serializable {
       // Find the most recent status on or before the date
       WellStatus status = currentStatus;
       for (Map.Entry<LocalDate, WellStatus> entry : statusHistory.entrySet()) {
-        if (!entry.getKey().isAfter(date)) {
-          status = entry.getValue();
-        } else {
-          break;
-        }
+	if (!entry.getKey().isAfter(date)) {
+	  status = entry.getValue();
+	} else {
+	  break;
+	}
       }
       // Check if there's an intervention on this date
       for (Intervention intervention : scheduledInterventions) {
-        if (intervention.isActiveOn(date)) {
-          return WellStatus.WORKOVER;
-        }
+	if (intervention.isActiveOn(date)) {
+	  return WellStatus.WORKOVER;
+	}
       }
       return status;
     }
@@ -710,7 +705,7 @@ public class WellScheduler implements Serializable {
      * Calculates availability over a period.
      *
      * @param startDate start of period
-     * @param endDate end of period
+     * @param endDate   end of period
      * @return availability fraction (0-1)
      */
     public double calculateAvailability(LocalDate startDate, LocalDate endDate) {
@@ -718,9 +713,9 @@ public class WellScheduler implements Serializable {
       long producingDays = 0;
 
       for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
-        if (getStatusOn(date).isProducing()) {
-          producingDays++;
-        }
+	if (getStatusOn(date).isProducing()) {
+	  producingDays++;
+	}
       }
 
       return (double) producingDays / totalDays;
@@ -730,12 +725,11 @@ public class WellScheduler implements Serializable {
      * Gets interventions within a date range.
      *
      * @param startDate start of range
-     * @param endDate end of range
+     * @param endDate   end of range
      * @return list of interventions overlapping the range
      */
     public List<Intervention> getInterventionsInRange(LocalDate startDate, LocalDate endDate) {
-      return scheduledInterventions.stream().filter(i -> i.overlaps(startDate, endDate))
-          .collect(Collectors.toList());
+      return scheduledInterventions.stream().filter(i -> i.overlaps(startDate, endDate)).collect(Collectors.toList());
     }
   }
 
@@ -743,8 +737,8 @@ public class WellScheduler implements Serializable {
    * Schedule optimization result.
    *
    * <p>
-   * Contains the complete optimized schedule and associated metrics including deferred production,
-   * production gains, and facility utilization.
+   * Contains the complete optimized schedule and associated metrics including deferred production, production gains,
+   * and facility utilization.
    */
   public static final class ScheduleResult implements Serializable {
     private static final long serialVersionUID = 1000L;
@@ -761,27 +755,25 @@ public class WellScheduler implements Serializable {
     /**
      * Creates a schedule result.
      *
-     * @param optimizedSchedule list of scheduled interventions
-     * @param wellUptime map of well name to uptime fraction
+     * @param optimizedSchedule       list of scheduled interventions
+     * @param wellUptime              map of well name to uptime fraction
      * @param totalDeferredProduction production lost during interventions
-     * @param totalProductionGain production gained from interventions
-     * @param dailyFacilityRate daily total production rates
-     * @param dailyBottleneck daily bottleneck equipment
-     * @param overallAvailability overall system availability
-     * @param rateUnit rate unit for production values
+     * @param totalProductionGain     production gained from interventions
+     * @param dailyFacilityRate       daily total production rates
+     * @param dailyBottleneck         daily bottleneck equipment
+     * @param overallAvailability     overall system availability
+     * @param rateUnit                rate unit for production values
      */
     public ScheduleResult(List<Intervention> optimizedSchedule, Map<String, Double> wellUptime,
-        double totalDeferredProduction, double totalProductionGain,
-        Map<LocalDate, Double> dailyFacilityRate, Map<LocalDate, String> dailyBottleneck,
-        double overallAvailability, String rateUnit) {
+	double totalDeferredProduction, double totalProductionGain, Map<LocalDate, Double> dailyFacilityRate,
+	Map<LocalDate, String> dailyBottleneck, double overallAvailability, String rateUnit) {
       this.optimizedSchedule = new ArrayList<>(optimizedSchedule);
       this.wellUptime = new HashMap<>(wellUptime);
       this.totalDeferredProduction = totalDeferredProduction;
       this.totalProductionGain = totalProductionGain;
       this.dailyFacilityRate = dailyFacilityRate != null ? new LinkedHashMap<>(dailyFacilityRate)
-          : new LinkedHashMap<>();
-      this.dailyBottleneck =
-          dailyBottleneck != null ? new LinkedHashMap<>(dailyBottleneck) : new LinkedHashMap<>();
+	  : new LinkedHashMap<>();
+      this.dailyBottleneck = dailyBottleneck != null ? new LinkedHashMap<>(dailyBottleneck) : new LinkedHashMap<>();
       this.overallAvailability = overallAvailability;
       this.rateUnit = rateUnit;
     }
@@ -871,16 +863,15 @@ public class WellScheduler implements Serializable {
       sb.append("    dateFormat YYYY-MM-DD\n");
 
       // Group interventions by well
-      Map<String, List<Intervention>> byWell =
-          optimizedSchedule.stream().collect(Collectors.groupingBy(Intervention::getWellName));
+      Map<String, List<Intervention>> byWell = optimizedSchedule.stream()
+	  .collect(Collectors.groupingBy(Intervention::getWellName));
 
       for (Map.Entry<String, List<Intervention>> entry : byWell.entrySet()) {
-        sb.append("    section ").append(entry.getKey()).append("\n");
-        for (Intervention intervention : entry.getValue()) {
-          sb.append("    ").append(intervention.getType().getDisplayName()).append(" :")
-              .append(intervention.getStartDate()).append(", ")
-              .append(intervention.getDurationDays()).append("d\n");
-        }
+	sb.append("    section ").append(entry.getKey()).append("\n");
+	for (Intervention intervention : entry.getValue()) {
+	  sb.append("    ").append(intervention.getType().getDisplayName()).append(" :")
+	      .append(intervention.getStartDate()).append(", ").append(intervention.getDurationDays()).append("d\n");
+	}
       }
       sb.append("```\n");
       return sb.toString();
@@ -895,18 +886,15 @@ public class WellScheduler implements Serializable {
       StringBuilder sb = new StringBuilder();
       sb.append("## Schedule Summary\n\n");
       sb.append(String.format("- **Overall Availability**: %.1f%%\n", overallAvailability * 100));
-      sb.append(String.format("- **Total Deferred Production**: %.2f %s-days\n",
-          totalDeferredProduction, rateUnit));
-      sb.append(String.format("- **Total Production Gain**: %.2f %s-days\n", totalProductionGain,
-          rateUnit));
-      sb.append(
-          String.format("- **Net Impact**: %.2f %s-days\n\n", getNetProductionImpact(), rateUnit));
+      sb.append(String.format("- **Total Deferred Production**: %.2f %s-days\n", totalDeferredProduction, rateUnit));
+      sb.append(String.format("- **Total Production Gain**: %.2f %s-days\n", totalProductionGain, rateUnit));
+      sb.append(String.format("- **Net Impact**: %.2f %s-days\n\n", getNetProductionImpact(), rateUnit));
 
       sb.append("### Well Uptime\n\n");
       sb.append("| Well | Uptime |\n");
       sb.append("|---|---|\n");
       for (Map.Entry<String, Double> entry : wellUptime.entrySet()) {
-        sb.append(String.format("| %s | %.1f%% |\n", entry.getKey(), entry.getValue() * 100));
+	sb.append(String.format("| %s | %.1f%% |\n", entry.getKey(), entry.getValue() * 100));
       }
       sb.append("\n");
 
@@ -914,11 +902,9 @@ public class WellScheduler implements Serializable {
       sb.append("| Well | Type | Start | Duration | Expected Gain | Cost |\n");
       sb.append("|---|---|---|---|---|---|\n");
       for (Intervention intervention : optimizedSchedule) {
-        sb.append(String.format("| %s | %s | %s | %d days | %.1f%% | %.0f %s |\n",
-            intervention.getWellName(), intervention.getType().getDisplayName(),
-            intervention.getStartDate(), intervention.getDurationDays(),
-            intervention.getExpectedProductionGain() * 100, intervention.getCost(),
-            intervention.getCurrency()));
+	sb.append(String.format("| %s | %s | %s | %d days | %.1f%% | %.0f %s |\n", intervention.getWellName(),
+	    intervention.getType().getDisplayName(), intervention.getStartDate(), intervention.getDurationDays(),
+	    intervention.getExpectedProductionGain() * 100, intervention.getCost(), intervention.getCurrency()));
       }
 
       return sb.toString();
@@ -936,7 +922,7 @@ public class WellScheduler implements Serializable {
    * Creates a well scheduler with reservoir and facility models.
    *
    * @param reservoir reservoir model for production tracking
-   * @param facility surface facility for bottleneck analysis
+   * @param facility  surface facility for bottleneck analysis
    */
   public WellScheduler(SimpleReservoir reservoir, ProcessSystem facility) {
     this.reservoir = reservoir;
@@ -947,9 +933,9 @@ public class WellScheduler implements Serializable {
   /**
    * Adds a well with initial production potential.
    *
-   * @param name well name (unique identifier)
+   * @param name             well name (unique identifier)
    * @param initialPotential unconstrained production rate
-   * @param rateUnit rate unit (e.g., "Sm3/day")
+   * @param rateUnit         rate unit (e.g., "Sm3/day")
    * @return the created well record
    */
   public WellRecord addWell(String name, double initialPotential, String rateUnit) {
@@ -1022,13 +1008,12 @@ public class WellScheduler implements Serializable {
    * <li>Facility constraints (if facility is provided)</li>
    * </ul>
    *
-   * @param startDate start of scheduling period
-   * @param endDate end of scheduling period
+   * @param startDate                  start of scheduling period
+   * @param endDate                    end of scheduling period
    * @param maxConcurrentInterventions maximum number of simultaneous interventions
    * @return optimized schedule result
    */
-  public ScheduleResult optimizeSchedule(LocalDate startDate, LocalDate endDate,
-      int maxConcurrentInterventions) {
+  public ScheduleResult optimizeSchedule(LocalDate startDate, LocalDate endDate, int maxConcurrentInterventions) {
     Objects.requireNonNull(startDate, "Start date is required");
     Objects.requireNonNull(endDate, "End date is required");
     if (maxConcurrentInterventions <= 0) {
@@ -1037,8 +1022,8 @@ public class WellScheduler implements Serializable {
 
     // Get all interventions and sort by priority/NPV
     List<Intervention> allInterventions = getAllInterventions();
-    allInterventions.sort(Comparator.comparingInt(Intervention::getPriority).thenComparing(
-        i -> -i.getExpectedProductionGain() * getWell(i.getWellName()).getCurrentPotential()));
+    allInterventions.sort(Comparator.comparingInt(Intervention::getPriority)
+	.thenComparing(i -> -i.getExpectedProductionGain() * getWell(i.getWellName()).getCurrentPotential()));
 
     // Simple greedy scheduling: assign earliest available slot for each
     // intervention
@@ -1047,35 +1032,33 @@ public class WellScheduler implements Serializable {
 
     for (Intervention intervention : allInterventions) {
       if (!intervention.overlaps(startDate, endDate)) {
-        continue; // Skip interventions outside the period
+	continue; // Skip interventions outside the period
       }
 
       // Find earliest available start date
       LocalDate availableDate = intervention.getStartDate();
       if (availableDate.isBefore(startDate)) {
-        availableDate = startDate;
+	availableDate = startDate;
       }
 
       // Check resource constraints
       while (!availableDate.isAfter(endDate)) {
-        // Count concurrent interventions on this date
-        long concurrent = countConcurrentOnDate(scheduledInterventions, availableDate);
-        if (concurrent < maxConcurrentInterventions) {
-          break;
-        }
-        availableDate = availableDate.plusDays(1);
+	// Count concurrent interventions on this date
+	long concurrent = countConcurrentOnDate(scheduledInterventions, availableDate);
+	if (concurrent < maxConcurrentInterventions) {
+	  break;
+	}
+	availableDate = availableDate.plusDays(1);
       }
 
       if (!availableDate.isAfter(endDate.minusDays(intervention.getDurationDays() - 1))) {
-        // Reschedule to available date
-        Intervention rescheduled =
-            Intervention.builder(intervention.getWellName()).type(intervention.getType())
-                .startDate(availableDate).durationDays(intervention.getDurationDays())
-                .expectedGain(intervention.getExpectedProductionGain())
-                .cost(intervention.getCost(), intervention.getCurrency())
-                .description(intervention.getDescription()).priority(intervention.getPriority())
-                .build();
-        scheduledInterventions.add(rescheduled);
+	// Reschedule to available date
+	Intervention rescheduled = Intervention.builder(intervention.getWellName()).type(intervention.getType())
+	    .startDate(availableDate).durationDays(intervention.getDurationDays())
+	    .expectedGain(intervention.getExpectedProductionGain())
+	    .cost(intervention.getCost(), intervention.getCurrency()).description(intervention.getDescription())
+	    .priority(intervention.getPriority()).build();
+	scheduledInterventions.add(rescheduled);
       }
     }
 
@@ -1102,38 +1085,37 @@ public class WellScheduler implements Serializable {
     for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
       double dayRate = 0;
       for (WellRecord well : wells.values()) {
-        // Check if intervention just completed
-        for (Intervention intervention : scheduledInterventions) {
-          if (intervention.getWellName().equals(well.getWellName())
-              && intervention.getEndDate().equals(date.minusDays(1))) {
-            // Apply production gain
-            double currentPot = postInterventionPotential.get(well.getWellName());
-            double newPot = currentPot * (1.0 + intervention.getExpectedProductionGain());
-            postInterventionPotential.put(well.getWellName(), newPot);
-          }
-        }
+	// Check if intervention just completed
+	for (Intervention intervention : scheduledInterventions) {
+	  if (intervention.getWellName().equals(well.getWellName())
+	      && intervention.getEndDate().equals(date.minusDays(1))) {
+	    // Apply production gain
+	    double currentPot = postInterventionPotential.get(well.getWellName());
+	    double newPot = currentPot * (1.0 + intervention.getExpectedProductionGain());
+	    postInterventionPotential.put(well.getWellName(), newPot);
+	  }
+	}
 
-        // Check if currently in intervention
-        boolean inIntervention = false;
-        for (Intervention intervention : scheduledInterventions) {
-          if (intervention.getWellName().equals(well.getWellName())
-              && intervention.isActiveOn(date)) {
-            inIntervention = true;
-            totalDeferred += well.getCurrentPotential();
-            break;
-          }
-        }
+	// Check if currently in intervention
+	boolean inIntervention = false;
+	for (Intervention intervention : scheduledInterventions) {
+	  if (intervention.getWellName().equals(well.getWellName()) && intervention.isActiveOn(date)) {
+	    inIntervention = true;
+	    totalDeferred += well.getCurrentPotential();
+	    break;
+	  }
+	}
 
-        if (!inIntervention && well.getCurrentStatus().isProducing()) {
-          dayRate += postInterventionPotential.get(well.getWellName());
-        }
+	if (!inIntervention && well.getCurrentStatus().isProducing()) {
+	  dayRate += postInterventionPotential.get(well.getWellName());
+	}
       }
       dailyRate.put(date, dayRate);
 
       // Get bottleneck if facility is available
       if (facility != null) {
-        neqsim.process.equipment.ProcessEquipmentInterface bottleneck = facility.getBottleneck();
-        dailyBottleneck.put(date, bottleneck != null ? bottleneck.getName() : null);
+	neqsim.process.equipment.ProcessEquipmentInterface bottleneck = facility.getBottleneck();
+	dailyBottleneck.put(date, bottleneck != null ? bottleneck.getName() : null);
       }
     }
 
@@ -1141,39 +1123,37 @@ public class WellScheduler implements Serializable {
     for (Map.Entry<String, Double> entry : postInterventionPotential.entrySet()) {
       WellRecord well = wells.get(entry.getKey());
       if (well != null) {
-        double gain = entry.getValue() - well.getCurrentPotential();
-        if (gain > 0) {
-          // Calculate remaining days after last intervention on this well
-          LocalDate lastIntEnd = startDate;
-          for (Intervention intervention : scheduledInterventions) {
-            if (intervention.getWellName().equals(entry.getKey())) {
-              if (intervention.getEndDate().isAfter(lastIntEnd)) {
-                lastIntEnd = intervention.getEndDate();
-              }
-            }
-          }
-          long remainingDays = ChronoUnit.DAYS.between(lastIntEnd, endDate);
-          if (remainingDays > 0) {
-            totalGain += gain * remainingDays;
-          }
-        }
+	double gain = entry.getValue() - well.getCurrentPotential();
+	if (gain > 0) {
+	  // Calculate remaining days after last intervention on this well
+	  LocalDate lastIntEnd = startDate;
+	  for (Intervention intervention : scheduledInterventions) {
+	    if (intervention.getWellName().equals(entry.getKey())) {
+	      if (intervention.getEndDate().isAfter(lastIntEnd)) {
+		lastIntEnd = intervention.getEndDate();
+	      }
+	    }
+	  }
+	  long remainingDays = ChronoUnit.DAYS.between(lastIntEnd, endDate);
+	  if (remainingDays > 0) {
+	    totalGain += gain * remainingDays;
+	  }
+	}
       }
     }
 
-    double overallAvailability =
-        wellUptime.values().stream().mapToDouble(Double::doubleValue).average().orElse(1.0);
+    double overallAvailability = wellUptime.values().stream().mapToDouble(Double::doubleValue).average().orElse(1.0);
 
-    return new ScheduleResult(scheduledInterventions, wellUptime, totalDeferred, totalGain,
-        dailyRate, dailyBottleneck, overallAvailability,
-        wells.values().iterator().hasNext() ? wells.values().iterator().next().getRateUnit()
-            : defaultRateUnit);
+    return new ScheduleResult(scheduledInterventions, wellUptime, totalDeferred, totalGain, dailyRate, dailyBottleneck,
+	overallAvailability,
+	wells.values().iterator().hasNext() ? wells.values().iterator().next().getRateUnit() : defaultRateUnit);
   }
 
   /**
    * Counts concurrent interventions on a specific date.
    *
    * @param interventions list of interventions to check
-   * @param date the date to check for concurrency
+   * @param date          the date to check for concurrency
    * @return the count of concurrent interventions on the specified date
    */
   private long countConcurrentOnDate(List<Intervention> interventions, LocalDate date) {
@@ -1184,7 +1164,7 @@ public class WellScheduler implements Serializable {
    * Calculates system-wide availability over a period.
    *
    * @param startDate start of period
-   * @param endDate end of period
+   * @param endDate   end of period
    * @return weighted average availability across all wells
    */
   public double calculateSystemAvailability(LocalDate startDate, LocalDate endDate) {
@@ -1211,7 +1191,7 @@ public class WellScheduler implements Serializable {
     double total = 0;
     for (WellRecord well : wells.values()) {
       if (well.getStatusOn(date).isProducing()) {
-        total += well.getCurrentPotential();
+	total += well.getCurrentPotential();
       }
     }
     return total;
@@ -1244,4 +1224,3 @@ public class WellScheduler implements Serializable {
     this.defaultRateUnit = Objects.requireNonNull(rateUnit);
   }
 }
-

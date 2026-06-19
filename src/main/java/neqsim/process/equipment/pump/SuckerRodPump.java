@@ -9,22 +9,21 @@ import neqsim.process.equipment.stream.StreamInterface;
  * Sucker-rod (beam) pump artificial-lift model.
  *
  * <p>
- * A sucker-rod pump is a positive-displacement plunger pump driven by a surface beam unit through a
- * rod string. Its delivered rate is set by the swept volume per stroke and the pumping speed, not
- * by upstream pressure. This class implements the standard volumetric-displacement sizing used in
- * artificial-lift design.
+ * A sucker-rod pump is a positive-displacement plunger pump driven by a surface beam unit through a rod string. Its
+ * delivered rate is set by the swept volume per stroke and the pumping speed, not by upstream pressure. This class
+ * implements the standard volumetric-displacement sizing used in artificial-lift design.
  * </p>
  *
  * <p>
- * Theoretical displacement: q_th = A_plunger &middot; S &middot; N &middot; &eta;_v, where
- * A_plunger is the plunger cross-sectional area, S the effective stroke length, N the pumping speed
- * (strokes per minute) and &eta;_v the volumetric efficiency (slippage, gas interference and
- * fillage). A simplified polished-rod load is also provided for beam-unit sizing.
+ * Theoretical displacement: q_th = A_plunger &middot; S &middot; N &middot; &eta;_v, where A_plunger is the plunger
+ * cross-sectional area, S the effective stroke length, N the pumping speed (strokes per minute) and &eta;_v the
+ * volumetric efficiency (slippage, gas interference and fillage). A simplified polished-rod load is also provided for
+ * beam-unit sizing.
  * </p>
  *
  * <p>
- * In {@link #run(UUID)} the device acts as a pressure booster to the configured discharge pressure
- * while exposing the displacement and rod-load diagnostics.
+ * In {@link #run(UUID)} the device acts as a pressure booster to the configured discharge pressure while exposing the
+ * displacement and rod-load diagnostics.
  * </p>
  *
  * @author NeqSim
@@ -63,7 +62,7 @@ public class SuckerRodPump extends Pump {
   /**
    * Constructor for SuckerRodPump.
    *
-   * @param name name of sucker-rod pump
+   * @param name        name of sucker-rod pump
    * @param inletStream inlet (pump intake) stream
    */
   public SuckerRodPump(String name, StreamInterface inletStream) {
@@ -188,8 +187,7 @@ public class SuckerRodPump extends Pump {
    * {@inheritDoc}
    *
    * <p>
-   * Computes the displacement and rod load, then boosts the inlet stream to the configured
-   * discharge pressure.
+   * Computes the displacement and rod load, then boosts the inlet stream to the configured discharge pressure.
    * </p>
    */
   @Override

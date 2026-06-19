@@ -64,8 +64,8 @@ public class DebottleneckingValidationTest {
     valve.setOutletPressure(20.0);
     process.add(valve);
 
-    separator = new Separator.Builder("Test Separator").inletStream(valve.getOutletStream())
-        .orientation("horizontal").length(5.0).diameter(2.0).build();
+    separator = new Separator.Builder("Test Separator").inletStream(valve.getOutletStream()).orientation("horizontal")
+	.length(5.0).diameter(2.0).build();
     separator.setDesignGasLoadFactor(0.10);
     process.add(separator);
 
@@ -83,8 +83,7 @@ public class DebottleneckingValidationTest {
   @Test
   public void testCompressorSimulationValidNormalOperation() {
     // Normal operation should be valid
-    assertTrue(compressor.isSimulationValid(),
-        "Compressor should report valid simulation for normal operation");
+    assertTrue(compressor.isSimulationValid(), "Compressor should report valid simulation for normal operation");
 
     List<String> errors = compressor.getSimulationValidationErrors();
     assertTrue(errors.isEmpty(), "No validation errors expected: " + errors);
@@ -102,8 +101,7 @@ public class DebottleneckingValidationTest {
   @Test
   public void testCompressorOperatingEnvelope() {
     // Without compressor chart, should be within envelope
-    assertTrue(compressor.isWithinOperatingEnvelope(),
-        "Compressor without chart should be within envelope");
+    assertTrue(compressor.isWithinOperatingEnvelope(), "Compressor without chart should be within envelope");
     assertNull(compressor.getOperatingEnvelopeViolation(), "No envelope violation expected");
 
     // Set up compressor chart
@@ -115,8 +113,7 @@ public class DebottleneckingValidationTest {
     process.run();
 
     // With chart at design point, should still be within envelope
-    assertTrue(compressor.isWithinOperatingEnvelope(),
-        "Compressor at design point should be within envelope");
+    assertTrue(compressor.isWithinOperatingEnvelope(), "Compressor at design point should be within envelope");
   }
 
   /**
@@ -134,8 +131,7 @@ public class DebottleneckingValidationTest {
     pureGasFeed.setFlowRate(5000.0, "kg/hr");
     pureGasFeed.run();
 
-    Separator singlePhaseSep =
-        new Separator.Builder("Single Phase Sep").inletStream(pureGasFeed).build();
+    Separator singlePhaseSep = new Separator.Builder("Single Phase Sep").inletStream(pureGasFeed).build();
     singlePhaseSep.run();
 
     // Single phase gas still has a velocity limit, so utilization should be > 0
@@ -171,36 +167,35 @@ public class DebottleneckingValidationTest {
   @Test
   public void testConstraintSeverityLevels() {
     // Create constraint with CRITICAL severity
-    CapacityConstraint criticalConstraint =
-        new CapacityConstraint("surge", "m3/hr", CapacityConstraint.ConstraintType.HARD);
-    criticalConstraint.setDesignValue(100.0)
-        .setSeverity(CapacityConstraint.ConstraintSeverity.CRITICAL).setValueSupplier(() -> 110.0); // Exceeded
+    CapacityConstraint criticalConstraint = new CapacityConstraint("surge", "m3/hr",
+	CapacityConstraint.ConstraintType.HARD);
+    criticalConstraint.setDesignValue(100.0).setSeverity(CapacityConstraint.ConstraintSeverity.CRITICAL)
+	.setValueSupplier(() -> 110.0); // Exceeded
 
     assertEquals(CapacityConstraint.ConstraintSeverity.CRITICAL, criticalConstraint.getSeverity(),
-        "Severity should be CRITICAL");
+	"Severity should be CRITICAL");
     assertTrue(criticalConstraint.isViolated(), "Constraint should be violated");
     assertTrue(criticalConstraint.isCriticalViolation(), "Should be critical violation");
 
     // Create constraint with SOFT severity
-    CapacityConstraint softConstraint =
-        new CapacityConstraint("efficiency", "%", CapacityConstraint.ConstraintType.SOFT);
+    CapacityConstraint softConstraint = new CapacityConstraint("efficiency", "%",
+	CapacityConstraint.ConstraintType.SOFT);
     softConstraint.setDesignValue(80.0).setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
-        .setValueSupplier(() -> 75.0); // Below design but not critical
+	.setValueSupplier(() -> 75.0); // Below design but not critical
 
-    assertEquals(CapacityConstraint.ConstraintSeverity.SOFT, softConstraint.getSeverity(),
-        "Severity should be SOFT");
+    assertEquals(CapacityConstraint.ConstraintSeverity.SOFT, softConstraint.getSeverity(), "Severity should be SOFT");
     assertFalse(softConstraint.isCriticalViolation(), "Should not be critical violation");
 
     // Create ADVISORY constraint
-    CapacityConstraint advisoryConstraint =
-        new CapacityConstraint("turndown", "ratio", CapacityConstraint.ConstraintType.DESIGN);
-    advisoryConstraint.setDesignValue(1.0)
-        .setSeverity(CapacityConstraint.ConstraintSeverity.ADVISORY).setValueSupplier(() -> 1.5); // Exceeded
-                                                                                                  // but
-                                                                                                  // advisory
+    CapacityConstraint advisoryConstraint = new CapacityConstraint("turndown", "ratio",
+	CapacityConstraint.ConstraintType.DESIGN);
+    advisoryConstraint.setDesignValue(1.0).setSeverity(CapacityConstraint.ConstraintSeverity.ADVISORY)
+	.setValueSupplier(() -> 1.5); // Exceeded
+				      // but
+				      // advisory
 
     assertEquals(CapacityConstraint.ConstraintSeverity.ADVISORY, advisoryConstraint.getSeverity(),
-        "Severity should be ADVISORY");
+	"Severity should be ADVISORY");
     assertFalse(advisoryConstraint.isCriticalViolation(), "Advisory violations are not critical");
   }
 

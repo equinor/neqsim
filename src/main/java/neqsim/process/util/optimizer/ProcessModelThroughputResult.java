@@ -51,12 +51,11 @@ public class ProcessModelThroughputResult implements Serializable {
   /**
    * Creates a throughput result.
    *
-   * @param studyName study name
+   * @param studyName     study name
    * @param objectiveName objective name
    * @param objectiveUnit objective unit
    */
-  public ProcessModelThroughputResult(String studyName, String objectiveName,
-      String objectiveUnit) {
+  public ProcessModelThroughputResult(String studyName, String objectiveName, String objectiveUnit) {
     this.studyName = studyName;
     this.objectiveName = objectiveName;
     this.objectiveUnit = objectiveUnit;
@@ -73,12 +72,11 @@ public class ProcessModelThroughputResult implements Serializable {
     }
     caseRows.add(row);
     if (row.isFeasible()) {
-      if (bestFeasibleCase == null
-          || row.getThroughputMultiplier() > bestFeasibleCase.getThroughputMultiplier()) {
-        bestFeasibleCase = row;
+      if (bestFeasibleCase == null || row.getThroughputMultiplier() > bestFeasibleCase.getThroughputMultiplier()) {
+	bestFeasibleCase = row;
       }
     } else if (firstInfeasibleCase == null
-        || row.getThroughputMultiplier() < firstInfeasibleCase.getThroughputMultiplier()) {
+	|| row.getThroughputMultiplier() < firstInfeasibleCase.getThroughputMultiplier()) {
       firstInfeasibleCase = row;
     }
   }
@@ -233,8 +231,7 @@ public class ProcessModelThroughputResult implements Serializable {
     map.put("lowerBoundFeasible", lowerBoundFeasible);
     map.put("upperBoundFeasible", upperBoundFeasible);
     map.put("bestFeasibleCase", bestFeasibleCase == null ? null : bestFeasibleCase.toMap());
-    map.put("firstInfeasibleCase",
-        firstInfeasibleCase == null ? null : firstInfeasibleCase.toMap());
+    map.put("firstInfeasibleCase", firstInfeasibleCase == null ? null : firstInfeasibleCase.toMap());
 
     List<Map<String, Object>> rows = new ArrayList<Map<String, Object>>();
     for (ThroughputCaseRow row : caseRows) {
@@ -250,8 +247,7 @@ public class ProcessModelThroughputResult implements Serializable {
    * @return JSON result string
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   /**
@@ -274,43 +270,43 @@ public class ProcessModelThroughputResult implements Serializable {
     BufferedWriter writer = Files.newBufferedWriter(filePath, StandardCharsets.UTF_8);
     try {
       writer.write("caseNumber,throughputMultiplier,objectiveValue,feasible,"
-          + "simulationConverged,activeArea,activeEquipment,activeConstraint,"
-          + "utilization,currentValue,designValue,capacityMargin,utilizationMargin,unit,"
-          + "errorMessage,evaluationTimeMs");
+	  + "simulationConverged,activeArea,activeEquipment,activeConstraint,"
+	  + "utilization,currentValue,designValue,capacityMargin,utilizationMargin,unit,"
+	  + "errorMessage,evaluationTimeMs");
       writer.newLine();
       for (ThroughputCaseRow row : caseRows) {
-        writer.write(Integer.toString(row.getCaseNumber()));
-        writer.write(",");
-        writer.write(Double.toString(row.getThroughputMultiplier()));
-        writer.write(",");
-        writer.write(Double.toString(row.getObjectiveValue()));
-        writer.write(",");
-        writer.write(Boolean.toString(row.isFeasible()));
-        writer.write(",");
-        writer.write(Boolean.toString(row.isSimulationConverged()));
-        writer.write(",");
-        writer.write(csvEscape(row.getActiveArea()));
-        writer.write(",");
-        writer.write(csvEscape(row.getActiveEquipment()));
-        writer.write(",");
-        writer.write(csvEscape(row.getActiveConstraint()));
-        writer.write(",");
-        writer.write(Double.toString(row.getUtilization()));
-        writer.write(",");
-        writer.write(Double.toString(row.getCurrentValue()));
-        writer.write(",");
-        writer.write(Double.toString(row.getDesignValue()));
-        writer.write(",");
-        writer.write(Double.toString(row.getCapacityMargin()));
-        writer.write(",");
-        writer.write(Double.toString(row.getUtilizationMargin()));
-        writer.write(",");
-        writer.write(csvEscape(row.getUnit()));
-        writer.write(",");
-        writer.write(csvEscape(row.getErrorMessage()));
-        writer.write(",");
-        writer.write(Long.toString(row.getEvaluationTimeMs()));
-        writer.newLine();
+	writer.write(Integer.toString(row.getCaseNumber()));
+	writer.write(",");
+	writer.write(Double.toString(row.getThroughputMultiplier()));
+	writer.write(",");
+	writer.write(Double.toString(row.getObjectiveValue()));
+	writer.write(",");
+	writer.write(Boolean.toString(row.isFeasible()));
+	writer.write(",");
+	writer.write(Boolean.toString(row.isSimulationConverged()));
+	writer.write(",");
+	writer.write(csvEscape(row.getActiveArea()));
+	writer.write(",");
+	writer.write(csvEscape(row.getActiveEquipment()));
+	writer.write(",");
+	writer.write(csvEscape(row.getActiveConstraint()));
+	writer.write(",");
+	writer.write(Double.toString(row.getUtilization()));
+	writer.write(",");
+	writer.write(Double.toString(row.getCurrentValue()));
+	writer.write(",");
+	writer.write(Double.toString(row.getDesignValue()));
+	writer.write(",");
+	writer.write(Double.toString(row.getCapacityMargin()));
+	writer.write(",");
+	writer.write(Double.toString(row.getUtilizationMargin()));
+	writer.write(",");
+	writer.write(csvEscape(row.getUnit()));
+	writer.write(",");
+	writer.write(csvEscape(row.getErrorMessage()));
+	writer.write(",");
+	writer.write(Long.toString(row.getEvaluationTimeMs()));
+	writer.newLine();
       }
     } finally {
       writer.close();
@@ -327,8 +323,7 @@ public class ProcessModelThroughputResult implements Serializable {
     if (value == null) {
       return "";
     }
-    if (value.indexOf(',') < 0 && value.indexOf('"') < 0 && value.indexOf('\n') < 0
-        && value.indexOf('\r') < 0) {
+    if (value.indexOf(',') < 0 && value.indexOf('"') < 0 && value.indexOf('\n') < 0 && value.indexOf('\r') < 0) {
       return value;
     }
     return "\"" + value.replace("\"", "\"\"") + "\"";

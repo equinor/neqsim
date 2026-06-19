@@ -17,8 +17,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Simple amine absorber model for acid gas removal (CO2 and H2S).
  *
  * <p>
- * Models the gas sweetening process using amine solvents (MDEA, DEA, MEA, or blends). The model
- * calculates acid gas removal based on:
+ * Models the gas sweetening process using amine solvents (MDEA, DEA, MEA, or blends). The model calculates acid gas
+ * removal based on:
  * </p>
  * <ul>
  * <li>Acid gas loading (mole acid gas per mole amine)</li>
@@ -157,7 +157,7 @@ public class SimpleAmineAbsorber extends SimpleAbsorber {
   /**
    * Creates a simple amine absorber with a sour gas feed stream.
    *
-   * @param name equipment name
+   * @param name          equipment name
    * @param sourGasStream sour gas inlet stream
    */
   public SimpleAmineAbsorber(String name, StreamInterface sourGasStream) {
@@ -357,8 +357,8 @@ public class SimpleAmineAbsorber extends SimpleAbsorber {
    * Sets the approach to equilibrium fraction for acid gas loading.
    *
    * <p>
-   * Experience demonstrates that the loading of acid gas is limited to around 70% of the
-   * equilibrium loading in the liquid phase.
+   * Experience demonstrates that the loading of acid gas is limited to around 70% of the equilibrium loading in the
+   * liquid phase.
    * </p>
    *
    * @param fraction approach fraction (typically 0.70)
@@ -420,16 +420,15 @@ public class SimpleAmineAbsorber extends SimpleAbsorber {
    * Calculates the acid gas loading on the rich amine.
    *
    * <p>
-   * The acid gas pick-up is described as mole acid gas per mole amine. The practical loading is
-   * limited by the approach to equilibrium, typically 70% of the thermodynamic equilibrium value.
+   * The acid gas pick-up is described as mole acid gas per mole amine. The practical loading is limited by the approach
+   * to equilibrium, typically 70% of the thermodynamic equilibrium value.
    * </p>
    *
    * @param equilibriumLoading equilibrium loading (mol acid gas / mol amine)
    * @return practical rich amine loading
    */
   public double calcRichAmineLoading(double equilibriumLoading) {
-    richAmineLoading =
-        leanAmineLoading + (equilibriumLoading - leanAmineLoading) * approachToEquilibrium;
+    richAmineLoading = leanAmineLoading + (equilibriumLoading - leanAmineLoading) * approachToEquilibrium;
     return richAmineLoading;
   }
 
@@ -450,17 +449,16 @@ public class SimpleAmineAbsorber extends SimpleAbsorber {
    * </p>
    *
    * <pre>
-   * Q_amine =
-   *     F_gas * y_acidgas * efficiency / (rho_amine * x_amine * (loading_rich - loading_lean))
+   * Q_amine = F_gas * y_acidgas * efficiency / (rho_amine * x_amine * (loading_rich - loading_lean))
    * </pre>
    *
    * @param acidGasMolFlowMolPerSec molar flow of acid gas to remove (mol/s)
-   * @param amineDensityKgPerM3 lean amine solution density (kg/m3)
-   * @param amineMolarMassKgPerMol amine molar mass (kg/mol)
+   * @param amineDensityKgPerM3     lean amine solution density (kg/m3)
+   * @param amineMolarMassKgPerMol  amine molar mass (kg/mol)
    * @return required circulation rate in m3/h
    */
-  public double calcRequiredCirculationRate(double acidGasMolFlowMolPerSec,
-      double amineDensityKgPerM3, double amineMolarMassKgPerMol) {
+  public double calcRequiredCirculationRate(double acidGasMolFlowMolPerSec, double amineDensityKgPerM3,
+      double amineMolarMassKgPerMol) {
     double netLoading = richAmineLoading - leanAmineLoading;
     if (netLoading <= 0.0 || amineDensityKgPerM3 <= 0.0 || amineMolarMassKgPerMol <= 0.0) {
       return 0.0;
@@ -485,13 +483,13 @@ public class SimpleAmineAbsorber extends SimpleAbsorber {
    * Calculates the required packing height and number of sections.
    *
    * <p>
-   * The packing height is estimated from the number of transfer units and the height of a transfer
-   * unit (HTU). Multiple sections with liquid redistribution are used when the height exceeds the
-   * maximum per section (typically 5-6 m for fixed installations, 3-5 m for floating).
+   * The packing height is estimated from the number of transfer units and the height of a transfer unit (HTU). Multiple
+   * sections with liquid redistribution are used when the height exceeds the maximum per section (typically 5-6 m for
+   * fixed installations, 3-5 m for floating).
    * </p>
    *
    * @param htuM height of a transfer unit in metres (typically 0.5-1.5 m)
-   * @param ntu number of transfer units
+   * @param ntu  number of transfer units
    */
   public void calcPackingHeight(double htuM, double ntu) {
     setHTU(htuM);
@@ -528,18 +526,16 @@ public class SimpleAmineAbsorber extends SimpleAbsorber {
    * K = Vs * sqrt(rho_gas / (rho_liquid - rho_gas))
    * </pre>
    *
-   * @param gasVelocityMs superficial gas velocity through the demister (m/s)
-   * @param gasDensityKgM3 gas density (kg/m3)
+   * @param gasVelocityMs     superficial gas velocity through the demister (m/s)
+   * @param gasDensityKgM3    gas density (kg/m3)
    * @param liquidDensityKgM3 amine liquid density (kg/m3)
    * @return K-factor in m/s
    */
-  public double calcDemisterKFactor(double gasVelocityMs, double gasDensityKgM3,
-      double liquidDensityKgM3) {
+  public double calcDemisterKFactor(double gasVelocityMs, double gasDensityKgM3, double liquidDensityKgM3) {
     if (liquidDensityKgM3 <= gasDensityKgM3) {
       return 0.0;
     }
-    calculatedDemisterKFactor =
-        gasVelocityMs * Math.sqrt(gasDensityKgM3 / (liquidDensityKgM3 - gasDensityKgM3));
+    calculatedDemisterKFactor = gasVelocityMs * Math.sqrt(gasDensityKgM3 / (liquidDensityKgM3 - gasDensityKgM3));
     return calculatedDemisterKFactor;
   }
 
@@ -589,17 +585,15 @@ public class SimpleAmineAbsorber extends SimpleAbsorber {
   }
 
   /**
-   * Checks if the amine temperature has sufficient margin above the gas feed temperature to prevent
-   * hydrocarbon condensation in the contactor.
+   * Checks if the amine temperature has sufficient margin above the gas feed temperature to prevent hydrocarbon
+   * condensation in the contactor.
    *
-   * @param gasFeedTemperatureC gas feed temperature in degrees Celsius
+   * @param gasFeedTemperatureC    gas feed temperature in degrees Celsius
    * @param amineInletTemperatureC lean amine inlet temperature in degrees Celsius
    * @return true if the margin is sufficient
    */
-  public boolean checkAmineTemperatureMargin(double gasFeedTemperatureC,
-      double amineInletTemperatureC) {
-    amineTemperatureAdequate =
-        (amineInletTemperatureC - gasFeedTemperatureC) >= amineTemperatureMarginC;
+  public boolean checkAmineTemperatureMargin(double gasFeedTemperatureC, double amineInletTemperatureC) {
+    amineTemperatureAdequate = (amineInletTemperatureC - gasFeedTemperatureC) >= amineTemperatureMarginC;
     return amineTemperatureAdequate;
   }
 
@@ -696,28 +690,26 @@ public class SimpleAmineAbsorber extends SimpleAbsorber {
       SystemInterface richAmineSystem = leanAmineInStream.getThermoSystem().clone();
       // Acid gas picked up by amine appears in the rich amine
       if (sourGasInStream.getThermoSystem().hasComponent("CO2")) {
-        double co2Moles =
-            sourGasInStream.getThermoSystem().getPhase(0).getComponent("CO2").getNumberOfmoles();
-        double co2Removed = co2Moles * co2RemovalEfficiency;
-        if (richAmineSystem.hasComponent("CO2")) {
-          richAmineSystem.addComponent("CO2", co2Removed);
-        }
+	double co2Moles = sourGasInStream.getThermoSystem().getPhase(0).getComponent("CO2").getNumberOfmoles();
+	double co2Removed = co2Moles * co2RemovalEfficiency;
+	if (richAmineSystem.hasComponent("CO2")) {
+	  richAmineSystem.addComponent("CO2", co2Removed);
+	}
       }
       if (sourGasInStream.getThermoSystem().hasComponent("H2S")) {
-        double h2sMoles =
-            sourGasInStream.getThermoSystem().getPhase(0).getComponent("H2S").getNumberOfmoles();
-        double h2sRemoved = h2sMoles * h2sRemovalEfficiency;
-        if (richAmineSystem.hasComponent("H2S")) {
-          richAmineSystem.addComponent("H2S", h2sRemoved);
-        }
+	double h2sMoles = sourGasInStream.getThermoSystem().getPhase(0).getComponent("H2S").getNumberOfmoles();
+	double h2sRemoved = h2sMoles * h2sRemovalEfficiency;
+	if (richAmineSystem.hasComponent("H2S")) {
+	  richAmineSystem.addComponent("H2S", h2sRemoved);
+	}
       }
       richAmineSystem.init(0);
       ThermodynamicOperations richOps = new ThermodynamicOperations(richAmineSystem);
       try {
-        richOps.TPflash();
-        richAmineSystem.init(2);
+	richOps.TPflash();
+	richAmineSystem.init(2);
       } catch (Exception ex) {
-        logger.error("Flash failed for rich amine in amine absorber", ex);
+	logger.error("Flash failed for rich amine in amine absorber", ex);
       }
       richAmineOutStream.setThermoSystem(richAmineSystem);
       richAmineOutStream.setCalculationIdentifier(id);
@@ -739,36 +731,32 @@ public class SimpleAmineAbsorber extends SimpleAbsorber {
     Map<String, DesignCheck> checks = new LinkedHashMap<>();
 
     // Check 1: Foaming margin applied
-    checks.put("foaming_margin",
-        new DesignCheck("Foaming design margin", foamingDesignMargin >= 0.10, String.format(
-            "%.0f%% margin applied (minimum 10%% recommended)", foamingDesignMargin * 100.0)));
+    checks.put("foaming_margin", new DesignCheck("Foaming design margin", foamingDesignMargin >= 0.10,
+	String.format("%.0f%% margin applied (minimum 10%% recommended)", foamingDesignMargin * 100.0)));
 
     // Check 2: Packing section height
     if (requiredPackingHeight > 0) {
       double heightPerSection = requiredPackingHeight / numberOfPackingSections;
       checks.put("packing_height",
-          new DesignCheck("Packing height per section",
-              heightPerSection <= maxPackingHeightPerSection,
-              String.format("%.1f m per section (max %.1f m, %d sections)", heightPerSection,
-                  maxPackingHeightPerSection, numberOfPackingSections)));
+	  new DesignCheck("Packing height per section", heightPerSection <= maxPackingHeightPerSection,
+	      String.format("%.1f m per section (max %.1f m, %d sections)", heightPerSection,
+		  maxPackingHeightPerSection, numberOfPackingSections)));
     }
 
     // Check 3: Approach to equilibrium
     checks.put("approach_to_equilibrium",
-        new DesignCheck("Approach to equilibrium loading", approachToEquilibrium <= 0.80,
-            String.format("%.0f%% of equilibrium (max 70-80%% recommended)",
-                approachToEquilibrium * 100.0)));
+	new DesignCheck("Approach to equilibrium loading", approachToEquilibrium <= 0.80,
+	    String.format("%.0f%% of equilibrium (max 70-80%% recommended)", approachToEquilibrium * 100.0)));
 
     // Check 4: Demister K-factor
     if (calculatedDemisterKFactor > 0) {
       checks.put("demister_kfactor", new DesignCheck("Demister K-factor", isDemisterWithinLimit(),
-          String.format("%.4f m/s (max %.3f m/s)", calculatedDemisterKFactor, maxDemisterKFactor)));
+	  String.format("%.4f m/s (max %.3f m/s)", calculatedDemisterKFactor, maxDemisterKFactor)));
     }
 
     // Check 5: Amine temperature margin
-    checks.put("amine_temperature",
-        new DesignCheck("Amine temperature margin", amineTemperatureAdequate,
-            String.format("Required margin: %.1f degC above gas feed", amineTemperatureMarginC)));
+    checks.put("amine_temperature", new DesignCheck("Amine temperature margin", amineTemperatureAdequate,
+	String.format("Required margin: %.1f degC above gas feed", amineTemperatureMarginC)));
 
     return checks;
   }
@@ -790,11 +778,10 @@ public class SimpleAmineAbsorber extends SimpleAbsorber {
     sb.append(String.format("Lean amine loading: %.3f mol/mol\n", leanAmineLoading));
     sb.append(String.format("Approach to equilibrium: %.0f%%\n", approachToEquilibrium * 100.0));
     sb.append(String.format("Required circulation rate: %.1f m3/h\n", requiredCirculationRate));
-    sb.append(String.format("Required packing height: %.1f m in %d sections\n",
-        requiredPackingHeight, numberOfPackingSections));
+    sb.append(String.format("Required packing height: %.1f m in %d sections\n", requiredPackingHeight,
+	numberOfPackingSections));
     sb.append(String.format("Gas carry-under: %.3f Am3/Am3\n", gasCarryUnder));
-    sb.append(String.format("Demister K-factor: %.4f m/s (max %.3f)\n", calculatedDemisterKFactor,
-        maxDemisterKFactor));
+    sb.append(String.format("Demister K-factor: %.4f m/s (max %.3f)\n", calculatedDemisterKFactor, maxDemisterKFactor));
     return sb.toString();
   }
 
@@ -818,7 +805,7 @@ public class SimpleAmineAbsorber extends SimpleAbsorber {
     /**
      * Creates a design check result.
      *
-     * @param name check name
+     * @param name   check name
      * @param passed whether it passed
      * @param detail description
      */

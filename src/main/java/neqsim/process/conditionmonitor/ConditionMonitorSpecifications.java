@@ -14,6 +14,5 @@ public interface ConditionMonitorSpecifications extends java.io.Serializable {
   /**
    * Constant <code>HXmaxDeltaT_ErrorMsg="Too high temperature difference between"{trunked}</code>.
    */
-  String HXmaxDeltaT_ErrorMsg =
-      "Too high temperature difference between streams. Max difference: " + HXmaxDeltaT;
+  String HXmaxDeltaT_ErrorMsg = "Too high temperature difference between streams. Max difference: " + HXmaxDeltaT;
 }

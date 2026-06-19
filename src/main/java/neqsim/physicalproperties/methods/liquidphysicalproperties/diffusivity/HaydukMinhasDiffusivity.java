@@ -6,16 +6,16 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * Hayduk-Minhas diffusivity model for liquid hydrocarbon systems.
  *
  * <p>
- * This model is more accurate for oil/gas applications than Siddiqi-Lucas, particularly for
- * hydrocarbon solvents. It provides separate correlations for paraffin and aqueous solvents.
+ * This model is more accurate for oil/gas applications than Siddiqi-Lucas, particularly for hydrocarbon solvents. It
+ * provides separate correlations for paraffin and aqueous solvents.
  * </p>
  *
  * <p>
  * References:
  * </p>
  * <ul>
- * <li>Hayduk, W. and Minhas, B.S. (1982). "Correlations for prediction of molecular diffusivities
- * in liquids." Can. J. Chem. Eng., 60, 295-299.</li>
+ * <li>Hayduk, W. and Minhas, B.S. (1982). "Correlations for prediction of molecular diffusivities in liquids." Can. J.
+ * Chem. Eng., 60, 295-299.</li>
  * </ul>
  *
  * @author Even Solbraa
@@ -98,11 +98,11 @@ public class HaydukMinhasDiffusivity extends Diffusivity {
     try {
       double waterMoleFraction = 0.0;
       for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
-        String name = liquidPhase.getPhase().getComponent(i).getComponentName().toLowerCase();
-        if (name.equals("water") || name.equals("h2o")) {
-          waterMoleFraction = liquidPhase.getPhase().getComponent(i).getx();
-          break;
-        }
+	String name = liquidPhase.getPhase().getComponent(i).getComponentName().toLowerCase();
+	if (name.equals("water") || name.equals("h2o")) {
+	  waterMoleFraction = liquidPhase.getPhase().getComponent(i).getx();
+	  break;
+	}
       }
       return waterMoleFraction > 0.5;
     } catch (Exception e) {
@@ -120,7 +120,7 @@ public class HaydukMinhasDiffusivity extends Diffusivity {
     // Use Le Bas method or stored value
     // V_b ≈ V_c / 0.285 or from normal liquid density
     double molarMass = liquidPhase.getPhase().getComponent(i).getMolarMass() * 1000; // kg/mol ->
-                                                                                     // g/mol
+										     // g/mol
     // normalLiquidDensity is in g/cm³
     double normalLiquidDensity = liquidPhase.getPhase().getComponent(i).getNormalLiquidDensity();
 
@@ -183,7 +183,7 @@ public class HaydukMinhasDiffusivity extends Diffusivity {
       double exponent = 9.58 / Vi - 1.12;
       double viTerm = Math.pow(Vi, -0.19) - 0.292;
       if (viTerm <= 0) {
-        viTerm = 0.01; // Prevent negative or zero values
+	viTerm = 0.01; // Prevent negative or zero values
       }
       D = 1.25e-8 * viTerm * Math.pow(T, 1.52) * Math.pow(etaCp, exponent);
     } else {
@@ -210,12 +210,10 @@ public class HaydukMinhasDiffusivity extends Diffusivity {
 
   /** {@inheritDoc} */
   @Override
-  public double[][] calcDiffusionCoefficients(int binaryDiffusionCoefficientMethod,
-      int multicomponentDiffusionMethod) {
+  public double[][] calcDiffusionCoefficients(int binaryDiffusionCoefficientMethod, int multicomponentDiffusionMethod) {
     for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
       for (int j = 0; j < liquidPhase.getPhase().getNumberOfComponents(); j++) {
-        binaryDiffusionCoefficients[i][j] =
-            calcBinaryDiffusionCoefficient(i, j, binaryDiffusionCoefficientMethod);
+	binaryDiffusionCoefficients[i][j] = calcBinaryDiffusionCoefficient(i, j, binaryDiffusionCoefficientMethod);
       }
     }
 

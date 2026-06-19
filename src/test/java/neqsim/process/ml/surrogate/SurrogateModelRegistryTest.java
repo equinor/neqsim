@@ -37,7 +37,7 @@ public class SurrogateModelRegistryTest {
 
   @Test
   void testRegisterModel() {
-    SurrogateModelRegistry.SurrogateModel model = input -> new double[] {input[0] * 2};
+    SurrogateModelRegistry.SurrogateModel model = input -> new double[] { input[0] * 2 };
 
     registry.register("test-model", model);
 
@@ -46,7 +46,7 @@ public class SurrogateModelRegistryTest {
 
   @Test
   void testGetModel() {
-    SurrogateModelRegistry.SurrogateModel model = input -> new double[] {input[0] * 2};
+    SurrogateModelRegistry.SurrogateModel model = input -> new double[] { input[0] * 2 };
     registry.register("test-model", model);
 
     Optional<SurrogateModelRegistry.SurrogateModel> retrieved = registry.get("test-model");
@@ -63,7 +63,7 @@ public class SurrogateModelRegistryTest {
 
   @Test
   void testUnregisterModel() {
-    SurrogateModelRegistry.SurrogateModel model = input -> new double[] {input[0] * 2};
+    SurrogateModelRegistry.SurrogateModel model = input -> new double[] { input[0] * 2 };
     registry.register("test-model", model);
 
     assertTrue(registry.hasModel("test-model"));
@@ -76,8 +76,8 @@ public class SurrogateModelRegistryTest {
 
   @Test
   void testGetAllModels() {
-    registry.register("model1", input -> new double[] {1.0});
-    registry.register("model2", input -> new double[] {2.0});
+    registry.register("model1", input -> new double[] { 1.0 });
+    registry.register("model2", input -> new double[] { 2.0 });
 
     Map<String, SurrogateModelRegistry.SurrogateMetadata> allModels = registry.getAllModels();
 
@@ -88,19 +88,19 @@ public class SurrogateModelRegistryTest {
 
   @Test
   void testPredictWithFallback() {
-    SurrogateModelRegistry.SurrogateModel model = input -> new double[] {input[0] * 2};
+    SurrogateModelRegistry.SurrogateModel model = input -> new double[] { input[0] * 2 };
     registry.register("test-model", model);
 
-    double[] input = new double[] {5.0};
-    double[] result = registry.predictWithFallback("test-model", input, x -> new double[] {0.0});
+    double[] input = new double[] { 5.0 };
+    double[] result = registry.predictWithFallback("test-model", input, x -> new double[] { 0.0 });
 
-    assertArrayEquals(new double[] {10.0}, result, 0.001);
+    assertArrayEquals(new double[] { 10.0 }, result, 0.001);
   }
 
   @Test
   void testFallbackWhenModelNotRegistered() {
-    double[] input = new double[] {5.0};
-    double[] fallbackResult = new double[] {99.0};
+    double[] input = new double[] { 5.0 };
+    double[] fallbackResult = new double[] { 99.0 };
 
     double[] result = registry.predictWithFallback("non-existent", input, x -> fallbackResult);
 
@@ -109,15 +109,13 @@ public class SurrogateModelRegistryTest {
 
   @Test
   void testMetadataRetrieval() {
-    SurrogateModelRegistry.SurrogateMetadata metadata =
-        new SurrogateModelRegistry.SurrogateMetadata();
+    SurrogateModelRegistry.SurrogateMetadata metadata = new SurrogateModelRegistry.SurrogateMetadata();
     metadata.setModelType("neural-network");
     metadata.setTrainingDataSource("flash-data-2024");
 
-    registry.register("test-model", input -> new double[] {0.0}, metadata);
+    registry.register("test-model", input -> new double[] { 0.0 }, metadata);
 
-    Optional<SurrogateModelRegistry.SurrogateMetadata> retrieved =
-        registry.getMetadata("test-model");
+    Optional<SurrogateModelRegistry.SurrogateMetadata> retrieved = registry.getMetadata("test-model");
 
     assertTrue(retrieved.isPresent());
     assertEquals("neural-network", retrieved.get().getModelType());
@@ -125,8 +123,8 @@ public class SurrogateModelRegistryTest {
 
   @Test
   void testClear() {
-    registry.register("model1", input -> new double[] {1.0});
-    registry.register("model2", input -> new double[] {2.0});
+    registry.register("model1", input -> new double[] { 1.0 });
+    registry.register("model2", input -> new double[] { 2.0 });
 
     registry.clear();
 
@@ -151,24 +149,22 @@ public class SurrogateModelRegistryTest {
 
   @Test
   void testMetadataInputBounds() {
-    SurrogateModelRegistry.SurrogateMetadata metadata =
-        new SurrogateModelRegistry.SurrogateMetadata();
-    metadata.setInputBounds(new double[] {0.0, 0.0}, new double[] {100.0, 100.0});
+    SurrogateModelRegistry.SurrogateMetadata metadata = new SurrogateModelRegistry.SurrogateMetadata();
+    metadata.setInputBounds(new double[] { 0.0, 0.0 }, new double[] { 100.0, 100.0 });
 
     // Within bounds
-    assertTrue(metadata.isInputValid(new double[] {50.0, 50.0}));
+    assertTrue(metadata.isInputValid(new double[] { 50.0, 50.0 }));
 
     // Outside bounds
-    assertFalse(metadata.isInputValid(new double[] {150.0, 50.0}));
+    assertFalse(metadata.isInputValid(new double[] { 150.0, 50.0 }));
   }
 
   @Test
   void testMetadataNoInputBounds() {
-    SurrogateModelRegistry.SurrogateMetadata metadata =
-        new SurrogateModelRegistry.SurrogateMetadata();
+    SurrogateModelRegistry.SurrogateMetadata metadata = new SurrogateModelRegistry.SurrogateMetadata();
 
     // Without bounds, any input should be considered valid
-    assertTrue(metadata.isInputValid(new double[] {1000.0, -1000.0}));
+    assertTrue(metadata.isInputValid(new double[] { 1000.0, -1000.0 }));
   }
 
   @Test
@@ -176,28 +172,28 @@ public class SurrogateModelRegistryTest {
     SurrogateModelRegistry.SurrogateModel model = new SurrogateModelRegistry.SurrogateModel() {
       @Override
       public double[] predict(double[] input) {
-        return new double[] {input[0] + input[1]};
+	return new double[] { input[0] + input[1] };
       }
 
       @Override
       public int getInputDimension() {
-        return 2;
+	return 2;
       }
 
       @Override
       public int getOutputDimension() {
-        return 1;
+	return 1;
       }
     };
 
     assertEquals(2, model.getInputDimension());
     assertEquals(1, model.getOutputDimension());
-    assertArrayEquals(new double[] {7.0}, model.predict(new double[] {3.0, 4.0}), 0.001);
+    assertArrayEquals(new double[] { 7.0 }, model.predict(new double[] { 3.0, 4.0 }), 0.001);
   }
 
   @Test
   void testDefaultDimensions() {
-    SurrogateModelRegistry.SurrogateModel model = input -> new double[] {0.0};
+    SurrogateModelRegistry.SurrogateModel model = input -> new double[] { 0.0 };
 
     assertEquals(-1, model.getInputDimension());
     assertEquals(-1, model.getOutputDimension());
@@ -205,8 +201,7 @@ public class SurrogateModelRegistryTest {
 
   @Test
   void testMetadataTrainedAt() {
-    SurrogateModelRegistry.SurrogateMetadata metadata =
-        new SurrogateModelRegistry.SurrogateMetadata();
+    SurrogateModelRegistry.SurrogateMetadata metadata = new SurrogateModelRegistry.SurrogateMetadata();
 
     assertNotNull(metadata.getTrainedAt());
   }

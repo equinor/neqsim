@@ -86,8 +86,8 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
    * </p>
    *
    * @param compName a {@link java.lang.String} object
-   * @param rate a double
-   * @param unit a {@link java.lang.String} object
+   * @param rate     a double
+   * @param unit     a {@link java.lang.String} object
    */
   public void setComponentRate(String compName, double rate, String unit) {
     moleFractionReduction = false;
@@ -95,9 +95,8 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
     if (unit.equals("litre/MSm^3")) {
       // System.out.println("density .." +
       // thermoSystem.getPhase(0).getComponent(compName).getNormalLiquidDensity());
-      this.moleFrac =
-          rate * thermoSystem.getPhase(0).getComponent(compName).getNormalLiquidDensity()
-              / thermoSystem.getPhase(0).getComponent(compName).getMolarMass() / 42294896.67;
+      this.moleFrac = rate * thermoSystem.getPhase(0).getComponent(compName).getNormalLiquidDensity()
+	  / thermoSystem.getPhase(0).getComponent(compName).getMolarMass() / 42294896.67;
     } else {
       // System.out.println("error ..unit not defined..");
     }
@@ -109,7 +108,7 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
    * setRelativeMoleFractionReduction.
    * </p>
    *
-   * @param compName a {@link java.lang.String} object
+   * @param compName      a {@link java.lang.String} object
    * @param moleFracRatio a double
    */
   public void setRelativeMoleFractionReduction(String compName, double moleFracRatio) {
@@ -128,8 +127,7 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
       thermoSystem.init(1);
       double deltaFrac = moleFrac - thermoSystem.getPhase(0).getComponent(compName).getz();
       if (moleFractionReduction) {
-        deltaFrac =
-            (moleFractionReductionRatio) * thermoSystem.getPhase(0).getComponent(compName).getz();
+	deltaFrac = (moleFractionReductionRatio) * thermoSystem.getPhase(0).getComponent(compName).getz();
       }
       double molesChange = deltaFrac * thermoSystem.getTotalNumberOfMoles();
       thermoSystem.addComponent(compName, molesChange); // deltaFrac*thermoSystem.getTotalNumberOfMoles());

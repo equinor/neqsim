@@ -56,12 +56,10 @@ class MultiStageSeparatorTestTest {
 
     double apiGravity = sepTest.getStockTankAPIGravity();
     // API can be negative for very heavy oils or simulation artifacts
-    assertTrue(apiGravity > -50 && apiGravity < 85,
-        "API gravity should be between -50 and 85, got " + apiGravity);
+    assertTrue(apiGravity > -50 && apiGravity < 85, "API gravity should be between -50 and 85, got " + apiGravity);
 
     double density = sepTest.getStockTankOilDensity();
-    assertTrue(density > 500 && density < 1200,
-        "Stock tank density should be 500-1200 kg/m3, got " + density);
+    assertTrue(density > 500 && density < 1200, "Stock tank density should be 500-1200 kg/m3, got " + density);
   }
 
   @Test
@@ -74,8 +72,7 @@ class MultiStageSeparatorTestTest {
 
     sepTest.run();
 
-    java.util.List<MultiStageSeparatorTest.SeparatorStageResult> results =
-        sepTest.getStageResults();
+    java.util.List<MultiStageSeparatorTest.SeparatorStageResult> results = sepTest.getStageResults();
     assertNotNull(results);
     assertEquals(3, results.size());
 
@@ -94,8 +91,7 @@ class MultiStageSeparatorTestTest {
 
     sepTest.run();
 
-    java.util.List<MultiStageSeparatorTest.SeparatorStageResult> results =
-        sepTest.getStageResults();
+    java.util.List<MultiStageSeparatorTest.SeparatorStageResult> results = sepTest.getStageResults();
     assertEquals(2, results.size());
 
     MultiStageSeparatorTest.SeparatorStageResult stage1 = results.get(0);
@@ -142,8 +138,7 @@ class MultiStageSeparatorTestTest {
     sepTest.setTypicalThreeStage(50.0, 40.0, 10.0, 30.0);
     sepTest.run();
 
-    java.util.List<MultiStageSeparatorTest.SeparatorStageResult> results =
-        sepTest.getStageResults();
+    java.util.List<MultiStageSeparatorTest.SeparatorStageResult> results = sepTest.getStageResults();
 
     // Cumulative GOR should increase with each stage
     double prevCumGOR = 0;

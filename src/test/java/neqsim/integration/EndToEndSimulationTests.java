@@ -59,7 +59,7 @@ public class EndToEndSimulationTests {
     // Mass balance check
     double inMass = chokedStream.getFluid().getFlowRate("kg/hr");
     double outMass = hpSep.getGasOutStream().getFluid().getFlowRate("kg/hr")
-        + hpSep.getLiquidOutStream().getFluid().getFlowRate("kg/hr");
+	+ hpSep.getLiquidOutStream().getFluid().getFlowRate("kg/hr");
     assertEquals(inMass, outMass, inMass * 0.02, "Mass balance within 2%");
   }
 

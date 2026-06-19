@@ -8,10 +8,9 @@ import java.util.Map;
  * Reaction route option for process research candidate generation.
  *
  * <p>
- * A reaction option records the reactor model, expected product component, and operating metadata
- * used to generate reactor-containing candidate flowsheets. It deliberately avoids pretending to be
- * a full reaction-network generator; stoichiometry and kinetics can be added around this class as
- * the route library matures.
+ * A reaction option records the reactor model, expected product component, and operating metadata used to generate
+ * reactor-containing candidate flowsheets. It deliberately avoids pretending to be a full reaction-network generator;
+ * stoichiometry and kinetics can be added around this class as the route library matures.
  * </p>
  *
  * @author NeqSim Development Team
@@ -97,7 +96,7 @@ public class ReactionOption {
    * Adds a stoichiometric coefficient for traceability.
    *
    * @param componentName component name
-   * @param coefficient negative for reactants and positive for products
+   * @param coefficient   negative for reactants and positive for products
    * @return this reaction option
    */
   public ReactionOption addStoichiometricCoefficient(String componentName, double coefficient) {

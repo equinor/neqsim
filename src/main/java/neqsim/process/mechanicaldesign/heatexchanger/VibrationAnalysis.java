@@ -14,8 +14,8 @@ package neqsim.process.mechanicaldesign.heatexchanger;
  * </ul>
  *
  * <p>
- * If any critical velocity ratio exceeds 1.0, the exchanger should be redesigned (wider pitch,
- * shorter span, different baffle type).
+ * If any critical velocity ratio exceeds 1.0, the exchanger should be redesigned (wider pitch, shorter span, different
+ * baffle type).
  * </p>
  *
  * @author NeqSim Development Team
@@ -36,7 +36,8 @@ public final class VibrationAnalysis {
   /**
    * Private constructor to prevent instantiation.
    */
-  private VibrationAnalysis() {}
+  private VibrationAnalysis() {
+  }
 
   /**
    * Calculates the natural frequency of a straight tube span using beam vibration theory.
@@ -50,19 +51,18 @@ public final class VibrationAnalysis {
    * <li>Clamped-simply supported: C_n = 15.42</li>
    * </ul>
    *
-   * @param tubeOD tube outer diameter (m)
-   * @param tubeID tube inner diameter (m)
-   * @param unsupportedSpan distance between supports (m)
-   * @param tubeMaterialE Young's modulus of tube material (Pa)
-   * @param tubeDensity tube material density (kg/m3)
-   * @param fluidDensityTube density of fluid inside tube (kg/m3)
+   * @param tubeOD            tube outer diameter (m)
+   * @param tubeID            tube inner diameter (m)
+   * @param unsupportedSpan   distance between supports (m)
+   * @param tubeMaterialE     Young's modulus of tube material (Pa)
+   * @param tubeDensity       tube material density (kg/m3)
+   * @param fluidDensityTube  density of fluid inside tube (kg/m3)
    * @param fluidDensityShell density of fluid on shell side (kg/m3)
-   * @param endCondition boundary condition: "pinned", "fixed", or "clamped-pinned"
+   * @param endCondition      boundary condition: "pinned", "fixed", or "clamped-pinned"
    * @return natural frequency (Hz)
    */
-  public static double calcNaturalFrequency(double tubeOD, double tubeID, double unsupportedSpan,
-      double tubeMaterialE, double tubeDensity, double fluidDensityTube, double fluidDensityShell,
-      String endCondition) {
+  public static double calcNaturalFrequency(double tubeOD, double tubeID, double unsupportedSpan, double tubeMaterialE,
+      double tubeDensity, double fluidDensityTube, double fluidDensityShell, String endCondition) {
     if (tubeOD <= 0 || tubeID >= tubeOD || unsupportedSpan <= 0 || tubeMaterialE <= 0) {
       return 0.0;
     }
@@ -96,8 +96,7 @@ public final class VibrationAnalysis {
       Cn = 9.87;
     }
 
-    double fn =
-        Cn / (2.0 * Math.PI) * Math.sqrt(tubeMaterialE * I / (mEff * Math.pow(unsupportedSpan, 4)));
+    double fn = Cn / (2.0 * Math.PI) * Math.sqrt(tubeMaterialE * I / (mEff * Math.pow(unsupportedSpan, 4)));
     return fn;
   }
 
@@ -109,12 +108,11 @@ public final class VibrationAnalysis {
    * </p>
    *
    * @param crossflowVelocity shell-side crossflow velocity (m/s)
-   * @param tubeOD tube outer diameter (m)
-   * @param tubePitch tube pitch (m)
+   * @param tubeOD            tube outer diameter (m)
+   * @param tubePitch         tube pitch (m)
    * @return vortex shedding frequency (Hz)
    */
-  public static double calcVortexSheddingFrequency(double crossflowVelocity, double tubeOD,
-      double tubePitch) {
+  public static double calcVortexSheddingFrequency(double crossflowVelocity, double tubeOD, double tubePitch) {
     if (tubeOD <= 0 || crossflowVelocity <= 0) {
       return 0.0;
     }
@@ -141,17 +139,16 @@ public final class VibrationAnalysis {
    * where K is Connors' constant (typically 3.3 for triangular, 3.4 for square pitch).
    * </p>
    *
-   * @param naturalFrequency tube natural frequency (Hz)
-   * @param tubeOD tube outer diameter (m)
-   * @param dampingRatio logarithmic decrement of damping (typical 0.01-0.05)
+   * @param naturalFrequency       tube natural frequency (Hz)
+   * @param tubeOD                 tube outer diameter (m)
+   * @param dampingRatio           logarithmic decrement of damping (typical 0.01-0.05)
    * @param effectiveMassPerLength effective tube mass per unit length (kg/m)
-   * @param shellFluidDensity shell-side fluid density (kg/m3)
-   * @param triangularPitch true for triangular layout, false for square
+   * @param shellFluidDensity      shell-side fluid density (kg/m3)
+   * @param triangularPitch        true for triangular layout, false for square
    * @return critical velocity for instability (m/s)
    */
-  public static double calcCriticalVelocityConnors(double naturalFrequency, double tubeOD,
-      double dampingRatio, double effectiveMassPerLength, double shellFluidDensity,
-      boolean triangularPitch) {
+  public static double calcCriticalVelocityConnors(double naturalFrequency, double tubeOD, double dampingRatio,
+      double effectiveMassPerLength, double shellFluidDensity, boolean triangularPitch) {
     if (naturalFrequency <= 0 || tubeOD <= 0 || shellFluidDensity <= 0) {
       return Double.MAX_VALUE;
     }
@@ -169,9 +166,9 @@ public final class VibrationAnalysis {
    * f_ac = n * c / (2 * W_eff) for standing waves across the shell
    * </p>
    *
-   * @param shellID shell inside diameter (m)
+   * @param shellID       shell inside diameter (m)
    * @param sonicVelocity speed of sound in shell-side fluid (m/s)
-   * @param mode acoustic mode number (1, 2, 3, ...)
+   * @param mode          acoustic mode number (1, 2, 3, ...)
    * @return acoustic resonance frequency (Hz)
    */
   public static double calcAcousticFrequency(double shellID, double sonicVelocity, int mode) {
@@ -186,8 +183,8 @@ public final class VibrationAnalysis {
   }
 
   /**
-   * Estimates the speed of sound in the shell-side fluid considering the presence of tubes
-   * (effective acoustic velocity).
+   * Estimates the speed of sound in the shell-side fluid considering the presence of tubes (effective acoustic
+   * velocity).
    *
    * <p>
    * c_eff = c_fluid / sqrt(1 + sigma * rho_fluid / rho_tube)
@@ -201,8 +198,7 @@ public final class VibrationAnalysis {
    * @param tubeVolumeFraction fraction of shell volume occupied by tubes
    * @return effective acoustic velocity in the bundle (m/s)
    */
-  public static double calcEffectiveAcousticVelocity(double fluidSonicVelocity,
-      double tubeVolumeFraction) {
+  public static double calcEffectiveAcousticVelocity(double fluidSonicVelocity, double tubeVolumeFraction) {
     if (fluidSonicVelocity <= 0) {
       return 0.0;
     }
@@ -223,51 +219,47 @@ public final class VibrationAnalysis {
    * Returns a result object with pass/fail status and individual mechanism assessments.
    * </p>
    *
-   * @param tubeOD tube outer diameter (m)
-   * @param tubeID tube inner diameter (m)
-   * @param unsupportedSpan longest unsupported tube span (m)
-   * @param tubePitch tube pitch (m)
-   * @param tubeMaterialE tube material Young's modulus (Pa)
-   * @param tubeDensity tube material density (kg/m3)
+   * @param tubeOD            tube outer diameter (m)
+   * @param tubeID            tube inner diameter (m)
+   * @param unsupportedSpan   longest unsupported tube span (m)
+   * @param tubePitch         tube pitch (m)
+   * @param tubeMaterialE     tube material Young's modulus (Pa)
+   * @param tubeDensity       tube material density (kg/m3)
    * @param crossflowVelocity shell-side crossflow velocity (m/s)
    * @param shellFluidDensity shell-side fluid density (kg/m3)
-   * @param tubeFluidDensity tube-side fluid density (kg/m3)
-   * @param shellID shell inside diameter (m)
-   * @param sonicVelocity speed of sound in shell fluid (m/s)
-   * @param dampingRatio tube damping ratio (typical 0.03 in liquid, 0.01 in gas)
-   * @param triangularPitch true for triangular layout
+   * @param tubeFluidDensity  tube-side fluid density (kg/m3)
+   * @param shellID           shell inside diameter (m)
+   * @param sonicVelocity     speed of sound in shell fluid (m/s)
+   * @param dampingRatio      tube damping ratio (typical 0.03 in liquid, 0.01 in gas)
+   * @param triangularPitch   true for triangular layout
    * @return vibration screening result
    */
-  public static VibrationResult performScreening(double tubeOD, double tubeID,
-      double unsupportedSpan, double tubePitch, double tubeMaterialE, double tubeDensity,
-      double crossflowVelocity, double shellFluidDensity, double tubeFluidDensity, double shellID,
-      double sonicVelocity, double dampingRatio, boolean triangularPitch) {
+  public static VibrationResult performScreening(double tubeOD, double tubeID, double unsupportedSpan, double tubePitch,
+      double tubeMaterialE, double tubeDensity, double crossflowVelocity, double shellFluidDensity,
+      double tubeFluidDensity, double shellID, double sonicVelocity, double dampingRatio, boolean triangularPitch) {
 
     VibrationResult result = new VibrationResult();
 
     // 1. Natural frequency
-    double fn = calcNaturalFrequency(tubeOD, tubeID, unsupportedSpan, tubeMaterialE, tubeDensity,
-        tubeFluidDensity, shellFluidDensity, "pinned");
+    double fn = calcNaturalFrequency(tubeOD, tubeID, unsupportedSpan, tubeMaterialE, tubeDensity, tubeFluidDensity,
+	shellFluidDensity, "pinned");
     result.naturalFrequencyHz = fn;
 
     // 2. Vortex shedding
     double fvs = calcVortexSheddingFrequency(crossflowVelocity, tubeOD, tubePitch);
     result.vortexSheddingFrequencyHz = fvs;
     result.vortexSheddingRatio = (fn > 0) ? fvs / fn : 0.0;
-    result.vortexSheddingCritical =
-        (result.vortexSheddingRatio > 0.8 && result.vortexSheddingRatio < 1.2);
+    result.vortexSheddingCritical = (result.vortexSheddingRatio > 0.8 && result.vortexSheddingRatio < 1.2);
 
     // 3. Fluid-elastic instability
     double aTube = Math.PI / 4.0 * (tubeOD * tubeOD - tubeID * tubeID);
     double aCore = Math.PI / 4.0 * tubeID * tubeID;
-    double mEff = tubeDensity * aTube + tubeFluidDensity * aCore
-        + shellFluidDensity * Math.PI / 4.0 * tubeOD * tubeOD;
-    double vCrit = calcCriticalVelocityConnors(fn, tubeOD, dampingRatio, mEff, shellFluidDensity,
-        triangularPitch);
+    double mEff = tubeDensity * aTube + tubeFluidDensity * aCore + shellFluidDensity * Math.PI / 4.0 * tubeOD * tubeOD;
+    double vCrit = calcCriticalVelocityConnors(fn, tubeOD, dampingRatio, mEff, shellFluidDensity, triangularPitch);
     result.criticalVelocityMs = vCrit;
     result.velocityRatio = (vCrit > 0 && vCrit < Double.MAX_VALUE)
-        ? crossflowVelocity / (vCrit * FLUIDELASTIC_SAFETY_FACTOR)
-        : 0.0;
+	? crossflowVelocity / (vCrit * FLUIDELASTIC_SAFETY_FACTOR)
+	: 0.0;
     result.fluidElasticCritical = result.velocityRatio > 1.0;
 
     // 4. Acoustic resonance
@@ -277,8 +269,7 @@ public final class VibrationAnalysis {
     result.acousticCritical = (result.acousticRatio > 0.8 && result.acousticRatio < 1.2);
 
     // Overall assessment
-    result.passed =
-        !result.vortexSheddingCritical && !result.fluidElasticCritical && !result.acousticCritical;
+    result.passed = !result.vortexSheddingCritical && !result.fluidElasticCritical && !result.acousticCritical;
 
     return result;
   }
@@ -326,7 +317,8 @@ public final class VibrationAnalysis {
     /**
      * Default constructor for VibrationResult.
      */
-    public VibrationResult() {}
+    public VibrationResult() {
+    }
 
     /**
      * Returns a summary message indicating the vibration screening status.
@@ -337,13 +329,12 @@ public final class VibrationAnalysis {
       StringBuilder sb = new StringBuilder();
       sb.append("Vibration Screening: ").append(passed ? "PASS" : "FAIL").append("\n");
       sb.append(String.format("  Natural frequency: %.1f Hz%n", naturalFrequencyHz));
-      sb.append(
-          String.format("  Vortex shedding: %.1f Hz (ratio=%.2f) %s%n", vortexSheddingFrequencyHz,
-              vortexSheddingRatio, vortexSheddingCritical ? "CRITICAL" : "OK"));
-      sb.append(String.format("  Fluid-elastic: V_crit=%.2f m/s (ratio=%.2f) %s%n",
-          criticalVelocityMs, velocityRatio, fluidElasticCritical ? "CRITICAL" : "OK"));
-      sb.append(String.format("  Acoustic: %.1f Hz (ratio=%.2f) %s%n", acousticFrequencyHz,
-          acousticRatio, acousticCritical ? "CRITICAL" : "OK"));
+      sb.append(String.format("  Vortex shedding: %.1f Hz (ratio=%.2f) %s%n", vortexSheddingFrequencyHz,
+	  vortexSheddingRatio, vortexSheddingCritical ? "CRITICAL" : "OK"));
+      sb.append(String.format("  Fluid-elastic: V_crit=%.2f m/s (ratio=%.2f) %s%n", criticalVelocityMs, velocityRatio,
+	  fluidElasticCritical ? "CRITICAL" : "OK"));
+      sb.append(String.format("  Acoustic: %.1f Hz (ratio=%.2f) %s%n", acousticFrequencyHz, acousticRatio,
+	  acousticCritical ? "CRITICAL" : "OK"));
       return sb.toString();
     }
   }

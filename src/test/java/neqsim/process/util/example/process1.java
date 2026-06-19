@@ -25,8 +25,8 @@ public class process1 {
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 25.0), 50.00);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 25.0),
+	50.00);
     testSystem.addComponent("methane", 180.00);
     testSystem.addComponent("ethane", 10.00);
     testSystem.addComponent("propane", 1.00);
@@ -55,22 +55,20 @@ public class process1 {
 
     Stream stream_1 = new Stream("Stream1", testSystem);
 
-    neqsim.process.equipment.compressor.Compressor compr =
-        new neqsim.process.equipment.compressor.Compressor("compr", stream_1);
+    neqsim.process.equipment.compressor.Compressor compr = new neqsim.process.equipment.compressor.Compressor("compr",
+	stream_1);
     compr.setOutletPressure(80.0);
     compr.setOutTemperature(345.0);
     compr.setUsePolytropicCalc(true);
     // compr.setNumberOfCompressorCalcSteps(10);
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(compr);
 
     operations.run();
     compr.displayResult();
-    System.out
-        .println("polytropic head " + stream_1.getThermoSystem().getFlowRate("m3/hr") + " m3/hr");
+    System.out.println("polytropic head " + stream_1.getThermoSystem().getFlowRate("m3/hr") + " m3/hr");
     logger.info("polytropic head " + compr.getPolytropicHead("kJ/kg") + " kJ/kg");
     logger.info("polytropic efficiency " + compr.getPolytropicEfficiency());
 

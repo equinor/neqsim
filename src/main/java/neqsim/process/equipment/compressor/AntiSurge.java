@@ -6,8 +6,8 @@ import java.util.Objects;
  * AntiSurge class for compressor surge protection in dynamic simulations.
  *
  * <p>
- * This class models anti-surge control systems including recycle valve control, surge detection,
- * and various control strategies used to protect centrifugal compressors from surge.
+ * This class models anti-surge control systems including recycle valve control, surge detection, and various control
+ * strategies used to protect centrifugal compressors from surge.
  * </p>
  *
  * @author asmund
@@ -80,7 +80,8 @@ public class AntiSurge implements java.io.Serializable {
   /**
    * Default constructor.
    */
-  public AntiSurge() {}
+  public AntiSurge() {
+  }
 
   /**
    * Constructor with control strategy.
@@ -299,7 +300,7 @@ public class AntiSurge implements java.io.Serializable {
    * Update the anti-surge controller.
    *
    * @param surgeMargin current distance to surge
-   * @param timeStep time step in seconds
+   * @param timeStep    time step in seconds
    * @return the calculated valve position
    */
   public double updateController(double surgeMargin, double timeStep) {
@@ -314,24 +315,24 @@ public class AntiSurge implements java.io.Serializable {
 
     // Calculate target valve position based on control strategy
     switch (controlStrategy) {
-      case ON_OFF:
-        targetValvePosition = calculateOnOffControl(surgeMargin);
-        break;
-      case PROPORTIONAL:
-        targetValvePosition = calculateProportionalControl(surgeMargin);
-        break;
-      case PID:
-        targetValvePosition = calculatePIDControl(surgeMargin, timeStep);
-        break;
-      case PREDICTIVE:
-        targetValvePosition = calculatePredictiveControl(surgeMargin, timeStep);
-        break;
-      case DUAL_LOOP:
-        targetValvePosition = calculateDualLoopControl(surgeMargin, timeStep);
-        break;
-      default:
-        targetValvePosition = calculateProportionalControl(surgeMargin);
-        break;
+    case ON_OFF:
+      targetValvePosition = calculateOnOffControl(surgeMargin);
+      break;
+    case PROPORTIONAL:
+      targetValvePosition = calculateProportionalControl(surgeMargin);
+      break;
+    case PID:
+      targetValvePosition = calculatePIDControl(surgeMargin, timeStep);
+      break;
+    case PREDICTIVE:
+      targetValvePosition = calculatePredictiveControl(surgeMargin, timeStep);
+      break;
+    case DUAL_LOOP:
+      targetValvePosition = calculateDualLoopControl(surgeMargin, timeStep);
+      break;
+    default:
+      targetValvePosition = calculateProportionalControl(surgeMargin);
+      break;
     }
 
     // Apply valve rate limiting
@@ -376,7 +377,7 @@ public class AntiSurge implements java.io.Serializable {
    * Calculate PID control output.
    *
    * @param surgeMargin current surge margin
-   * @param timeStep time step in seconds
+   * @param timeStep    time step in seconds
    * @return valve position (0-1)
    */
   private double calculatePIDControl(double surgeMargin, double timeStep) {
@@ -404,7 +405,7 @@ public class AntiSurge implements java.io.Serializable {
    * Calculate predictive control output.
    *
    * @param surgeMargin current surge margin
-   * @param timeStep time step in seconds
+   * @param timeStep    time step in seconds
    * @return valve position (0-1)
    */
   private double calculatePredictiveControl(double surgeMargin, double timeStep) {
@@ -424,7 +425,7 @@ public class AntiSurge implements java.io.Serializable {
    * Calculate dual-loop control output.
    *
    * @param surgeMargin current surge margin
-   * @param timeStep time step in seconds
+   * @param timeStep    time step in seconds
    * @return valve position (0-1)
    */
   private double calculateDualLoopControl(double surgeMargin, double timeStep) {
@@ -645,8 +646,7 @@ public class AntiSurge implements java.io.Serializable {
   /** {@inheritDoc} */
   @Override
   public int hashCode() {
-    return Objects.hash(currentSurgeFraction, isActive, isSurge, surgeControlFactor,
-        controlStrategy, valvePosition);
+    return Objects.hash(currentSurgeFraction, isActive, isSurge, surgeControlFactor, controlStrategy, valvePosition);
   }
 
   /** {@inheritDoc} */
@@ -662,13 +662,11 @@ public class AntiSurge implements java.io.Serializable {
       return false;
     }
     AntiSurge other = (AntiSurge) obj;
-    return Double.doubleToLongBits(currentSurgeFraction) == Double
-        .doubleToLongBits(other.currentSurgeFraction) && isActive == other.isActive
-        && isSurge == other.isSurge
-        && Double.doubleToLongBits(surgeControlFactor) == Double
-            .doubleToLongBits(other.surgeControlFactor)
-        && controlStrategy == other.controlStrategy
-        && Double.doubleToLongBits(valvePosition) == Double.doubleToLongBits(other.valvePosition);
+    return Double.doubleToLongBits(currentSurgeFraction) == Double.doubleToLongBits(other.currentSurgeFraction)
+	&& isActive == other.isActive && isSurge == other.isSurge
+	&& Double.doubleToLongBits(surgeControlFactor) == Double.doubleToLongBits(other.surgeControlFactor)
+	&& controlStrategy == other.controlStrategy
+	&& Double.doubleToLongBits(valvePosition) == Double.doubleToLongBits(other.valvePosition);
   }
 
   /**

@@ -6,9 +6,9 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * Phase-partitioned composition tracking device for monitoring impurity concentrations across gas,
- * liquid, and aqueous phases. Designed for CO2 injection systems where light impurities (H2, N2,
- * CH4) preferentially partition into the gas phase during two-phase conditions.
+ * Phase-partitioned composition tracking device for monitoring impurity concentrations across gas, liquid, and aqueous
+ * phases. Designed for CO2 injection systems where light impurities (H2, N2, CH4) preferentially partition into the gas
+ * phase during two-phase conditions.
  *
  * <p>
  * The monitor tracks:
@@ -58,7 +58,7 @@ public class ImpurityMonitor extends StreamMeasurementDeviceBaseClass {
   /**
    * Constructor for ImpurityMonitor with specified name.
    *
-   * @param name the device name/tag
+   * @param name   the device name/tag
    * @param stream the stream to monitor
    */
   public ImpurityMonitor(String name, StreamInterface stream) {
@@ -66,10 +66,9 @@ public class ImpurityMonitor extends StreamMeasurementDeviceBaseClass {
   }
 
   /**
-   * Adds a component to the tracked list. The alarm threshold is in mole fraction (e.g. 0.04 for
-   * 4%).
+   * Adds a component to the tracked list. The alarm threshold is in mole fraction (e.g. 0.04 for 4%).
    *
-   * @param componentName the name of the component as registered in the fluid
+   * @param componentName         the name of the component as registered in the fluid
    * @param alarmThresholdMolFrac the gas phase mole fraction threshold for alarm (0 to disable)
    */
   public void addTrackedComponent(String componentName, double alarmThresholdMolFrac) {
@@ -89,8 +88,7 @@ public class ImpurityMonitor extends StreamMeasurementDeviceBaseClass {
   }
 
   /**
-   * Sets the primary component whose gas phase concentration is returned by
-   * {@link #getMeasuredValue(String)}.
+   * Sets the primary component whose gas phase concentration is returned by {@link #getMeasuredValue(String)}.
    *
    * @param componentName the component name
    */
@@ -181,8 +179,7 @@ public class ImpurityMonitor extends StreamMeasurementDeviceBaseClass {
   }
 
   /**
-   * Gets the gas phase mole fraction (beta) of the stream. Returns 0 if single-phase liquid, 1 if
-   * single-phase gas.
+   * Gets the gas phase mole fraction (beta) of the stream. Returns 0 if single-phase liquid, 1 if single-phase gas.
    *
    * @return the gas phase mole fraction (0 to 1)
    */
@@ -292,10 +289,9 @@ public class ImpurityMonitor extends StreamMeasurementDeviceBaseClass {
       System.out.println("  Bulk z  = " + String.format("%.6f", getBulkMoleFraction(comp)));
       System.out.println("  Gas y   = " + String.format("%.6f", getGasPhaseMoleFraction(comp)));
       System.out.println("  Liquid x = " + String.format("%.6f", getLiquidPhaseMoleFraction(comp)));
-      System.out
-          .println("  Enrichment = " + String.format("%.2f", getEnrichmentFactor(comp)) + "x");
+      System.out.println("  Enrichment = " + String.format("%.2f", getEnrichmentFactor(comp)) + "x");
       if (isAlarmExceeded(comp)) {
-        System.out.println("  *** ALARM: exceeds " + trackedComponents.get(comp) + " threshold");
+	System.out.println("  *** ALARM: exceeds " + trackedComponents.get(comp) + " threshold");
       }
     }
   }

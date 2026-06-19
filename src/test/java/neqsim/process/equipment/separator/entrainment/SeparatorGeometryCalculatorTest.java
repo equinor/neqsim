@@ -33,8 +33,7 @@ class SeparatorGeometryCalculatorTest {
 
     // For 50% liquid level, gas and liquid areas should be approximately equal
     double totalArea = Math.PI * 2.0 * 2.0 / 4.0;
-    assertEquals(totalArea / 2.0, calc.getGasArea(), totalArea * 0.05,
-        "Gas area should be ~50% of total at 50% level");
+    assertEquals(totalArea / 2.0, calc.getGasArea(), totalArea * 0.05, "Gas area should be ~50% of total at 50% level");
   }
 
   /**
@@ -56,8 +55,7 @@ class SeparatorGeometryCalculatorTest {
 
     // Vertical: gas area = full cross section
     double fullArea = Math.PI * 1.5 * 1.5 / 4.0;
-    assertEquals(fullArea, calc.getGasArea(), fullArea * 0.01,
-        "Vertical gas area should be full cross section");
+    assertEquals(fullArea, calc.getGasArea(), fullArea * 0.01, "Vertical gas area should be full cross section");
   }
 
   /**
@@ -88,8 +86,7 @@ class SeparatorGeometryCalculatorTest {
     double gasDensity = 50.0;
     double liquidDensity = 800.0;
 
-    double kFactor =
-        SeparatorGeometryCalculator.calcKFactor(gasVelocity, gasDensity, liquidDensity);
+    double kFactor = SeparatorGeometryCalculator.calcKFactor(gasVelocity, gasDensity, liquidDensity);
     assertTrue(kFactor > 0, "K-factor should be positive");
     // Typical K-factor range for gas-liquid separators: 0.01 - 0.3 m/s
     assertTrue(kFactor < 1.0, "K-factor should be in reasonable range (< 1.0 m/s)");
@@ -111,8 +108,7 @@ class SeparatorGeometryCalculatorTest {
     calc.calculate(3.0, 0.1);
 
     double liquidArea = calc.getLiquidArea();
-    assertEquals(fullArea / 2.0, liquidArea, fullArea * 0.02,
-        "At 50% fill, liquid area should be half");
+    assertEquals(fullArea / 2.0, liquidArea, fullArea * 0.02, "At 50% fill, liquid area should be half");
   }
 
   /**
@@ -130,7 +126,7 @@ class SeparatorGeometryCalculatorTest {
 
     double liquidSettlingHeight = calc.getEffectiveLiquidSettlingHeight();
     assertTrue(liquidSettlingHeight > 0 && liquidSettlingHeight < 2.0,
-        "Liquid settling height should be between 0 and diameter");
+	"Liquid settling height should be between 0 and diameter");
   }
 
   /**

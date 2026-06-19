@@ -9,11 +9,11 @@ import neqsim.thermo.component.ComponentSAFTVRMie;
  * Phase class for the SAFT-VR Mie equation of state following Lafitte et al. (2013).
  *
  * <p>
- * Implements the Helmholtz free energy as: A = A_ideal + A_mono + A_chain where A_mono comprises
- * hard-sphere reference plus first-order (a1) and second-order (a2) Barker-Henderson perturbation
- * terms for the Mie potential, and A_chain is the chain-connectivity correction. The perturbation
- * terms use the Sutherland mean-field energy a1S with effective packing fraction mapping and the B
- * correction, following the exact formulation of Lafitte et al. J. Chem. Phys. 139, 154504 (2013).
+ * Implements the Helmholtz free energy as: A = A_ideal + A_mono + A_chain where A_mono comprises hard-sphere reference
+ * plus first-order (a1) and second-order (a2) Barker-Henderson perturbation terms for the Mie potential, and A_chain is
+ * the chain-connectivity correction. The perturbation terms use the Sutherland mean-field energy a1S with effective
+ * packing fraction mapping and the B correction, following the exact formulation of Lafitte et al. J. Chem. Phys. 139,
+ * 154504 (2013).
  * </p>
  *
  * @author Even Solbraa
@@ -32,8 +32,8 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   private transient boolean gMieCorrectionEnabled = true;
 
   /**
-   * Blending fraction for g_Mie perturbation correction in chain term. 0.0 = g_HS(x0) only, 1.0 =
-   * full g_Mie. Used by the continuation/homotopy solver.
+   * Blending fraction for g_Mie perturbation correction in chain term. 0.0 = g_HS(x0) only, 1.0 = full g_Mie. Used by
+   * the continuation/homotopy solver.
    */
   private transient double gMieBlendFraction = 1.0;
 
@@ -92,9 +92,8 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   double d2a3DispDetaDT = 0.0;
 
   /**
-   * Per-component weighted pair-sum of dispersion terms: aDispPerComp[i] = sum_l xs_l *
-   * (a1_il+a2_il+a3_il). Used for analytical dF_DISP/dNi computation. Only allocated for
-   * multi-component systems.
+   * Per-component weighted pair-sum of dispersion terms: aDispPerComp[i] = sum_l xs_l * (a1_il+a2_il+a3_il). Used for
+   * analytical dF_DISP/dNi computation. Only allocated for multi-component systems.
    */
   double[] aDispPerComp = null;
 
@@ -109,20 +108,20 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   int[] siteOffset = null;
 
   /**
-   * Self-association scheme indicator. selfAssocScheme[comp][siteA][siteB] = 1 if site A can bond
-   * with site B on the same component (0 otherwise).
+   * Self-association scheme indicator. selfAssocScheme[comp][siteA][siteB] = 1 if site A can bond with site B on the
+   * same component (0 otherwise).
    */
   int[][][] selfAssocScheme = null;
 
   /**
-   * Cross-association scheme indicator. crossAssocScheme[compI][compJ][siteA][siteB] = 1 if site A
-   * on comp I can bond with site B on comp J.
+   * Cross-association scheme indicator. crossAssocScheme[compI][compJ][siteA][siteB] = 1 if site A on comp I can bond
+   * with site B on comp J.
    */
   int[][][][] crossAssocScheme = null;
 
   /**
-   * Association strength delta[siteI][siteJ] between flattened sites (global indexing). Delta =
-   * scheme * (exp(eps_HB/RT) - 1) * sigma_ij^3 * NA * 1e5 * kappa_ij * g_HS.
+   * Association strength delta[siteI][siteJ] between flattened sites (global indexing). Delta = scheme *
+   * (exp(eps_HB/RT) - 1) * sigma_ij^3 * NA * 1e5 * kappa_ij * g_HS.
    */
   double[][] deltaAssoc = null;
 
@@ -155,66 +154,59 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   boolean assocDVDVValid = false;
 
   /**
-   * Effective packing fraction parameterization coefficients from Lafitte 2013. c_i(lambda) =
-   * A[i][0] + A[i][1]/(lambda-3) + A[i][2]/(lambda-3)^2 + A[i][3]/(lambda-3)^3 Rows: c1, c2, c3,
-   * c4.
+   * Effective packing fraction parameterization coefficients from Lafitte 2013. c_i(lambda) = A[i][0] +
+   * A[i][1]/(lambda-3) + A[i][2]/(lambda-3)^2 + A[i][3]/(lambda-3)^3 Rows: c1, c2, c3, c4.
    */
-  static final double[][] etaEffCoeffs =
-      {{0.81096, 1.7888, -37.578, 92.284}, {1.0205, -19.341, 151.26, -463.50},
-          {-1.9057, 22.845, -228.14, 973.92}, {1.08850, -6.1962, 106.98, -677.64}};
+  static final double[][] etaEffCoeffs = { { 0.81096, 1.7888, -37.578, 92.284 }, { 1.0205, -19.341, 151.26, -463.50 },
+      { -1.9057, 22.845, -228.14, 973.92 }, { 1.08850, -6.1962, 106.98, -677.64 } };
 
   /**
    * Pad\u00e9 coefficient matrix for f1-f6 functions (Lafitte 2013 Table 3).
    *
    * <p>
-   * Each column m (0-5) corresponds to function f_{m+1}. Rows 0-3: numerator coefficients (alpha^0
-   * to alpha^3). Rows 4-6: denominator coefficients (alpha^1 to alpha^3; alpha^0 = 1). f_m(alpha) =
-   * (phi[0][m] + phi[1][m]*alpha + phi[2][m]*alpha^2 + phi[3][m]*alpha^3) / (1 + phi[4][m]*alpha +
-   * phi[5][m]*alpha^2 + phi[6][m]*alpha^3).
+   * Each column m (0-5) corresponds to function f_{m+1}. Rows 0-3: numerator coefficients (alpha^0 to alpha^3). Rows
+   * 4-6: denominator coefficients (alpha^1 to alpha^3; alpha^0 = 1). f_m(alpha) = (phi[0][m] + phi[1][m]*alpha +
+   * phi[2][m]*alpha^2 + phi[3][m]*alpha^3) / (1 + phi[4][m]*alpha + phi[5][m]*alpha^2 + phi[6][m]*alpha^3).
    * </p>
    */
-  static final double[][] phiPade = {{7.5365557, -359.440, 1550.9, -1.199320, -1911.2800, 9236.9},
-      {-37.604630, 1825.60, -5070.1, 9.063632, 21390.175, -129430.0},
-      {71.745953, -3168.00, 6534.6, -17.94820, -51320.700, 357230.0},
-      {-46.835520, 1884.20, -3288.7, 11.34027, 37064.540, -315530.0},
-      {-2.4679820, -0.82376, -2.7171, 20.52142, 1103.7420, 1390.2},
-      {-0.5027200, -3.19350, 2.0883, -56.63770, -3264.6100, -4518.2},
-      {8.0956883, 3.70900, 0.0000, 40.53683, 2556.1810, 4241.6}};
+  static final double[][] phiPade = { { 7.5365557, -359.440, 1550.9, -1.199320, -1911.2800, 9236.9 },
+      { -37.604630, 1825.60, -5070.1, 9.063632, 21390.175, -129430.0 },
+      { 71.745953, -3168.00, 6534.6, -17.94820, -51320.700, 357230.0 },
+      { -46.835520, 1884.20, -3288.7, 11.34027, 37064.540, -315530.0 },
+      { -2.4679820, -0.82376, -2.7171, 20.52142, 1103.7420, 1390.2 },
+      { -0.5027200, -3.19350, 2.0883, -56.63770, -3264.6100, -4518.2 },
+      { 8.0956883, 3.70900, 0.0000, 40.53683, 2556.1810, 4241.6 } };
 
   /**
    * Dufal 2015 association integral I(T*, rho*) coefficient matrix.
    *
    * <p>
-   * From Dufal et al. (2015) Mol. Phys. 113(9-10), 948-984, Table A-1. I(Tr, rhoStar) = sum_n sum_m
-   * c[n][m] * Tr^m * rhoStar^n, where Tr = T / (epsilon/kB) and rhoStar = rhoS * sigma^3. The
-   * matrix is upper-triangular: for row n, m runs from 0 to 10-n. Row index n = power of rhoStar
-   * (0..10). Column index m = power of Tr (0..10).
+   * From Dufal et al. (2015) Mol. Phys. 113(9-10), 948-984, Table A-1. I(Tr, rhoStar) = sum_n sum_m c[n][m] * Tr^m *
+   * rhoStar^n, where Tr = T / (epsilon/kB) and rhoStar = rhoS * sigma^3. The matrix is upper-triangular: for row n, m
+   * runs from 0 to 10-n. Row index n = power of rhoStar (0..10). Column index m = power of Tr (0..10).
    * </p>
    */
   static final double[][] DUFAL_C = {
-      {0.0756425183020431, -0.128667137050961, 0.128350632316055, -0.0725321780970292,
-          0.0257782547511452, -0.00601170055221687, 0.000933363147191978, -9.55607377143667e-05,
-          6.19576039900837e-06, -2.30466608213628e-07, 3.74605718435540e-09},
-      {0.134228218276565, -0.182682168504886, 0.0771662412959262, -0.000717458641164565,
-          -0.00872427344283170, 0.00297971836051287, -0.000484863997651451, 4.35262491516424e-05,
-          -2.07789181640066e-06, 4.13749349344802e-08, 0},
-      {-0.565116428942893, 1.00930692226792, -0.660166945915607, 0.214492212294301,
-          -0.0388462990166792, 0.00406016982985030, -0.000239515566373142, 7.25488368831468e-06,
-          -8.58904640281928e-08, 0, 0},
-      {-0.387336382687019, -0.211614570109503, 0.450442894490509, -0.176931752538907,
-          0.0317171522104923, -0.00291368915845693, 0.000130193710011706, -2.14505500786531e-06, 0,
-          0, 0},
-      {2.13713180911797, -2.02798460133021, 0.336709255682693, 0.00118106507393722,
-          -0.00600058423301506, 0.000626343952584415, -2.03636395699819e-05, 0, 0, 0, 0},
-      {-0.300527494795524, 2.89920714512243, -0.567134839686498, 0.0518085125423494,
-          -0.00239326776760414, 4.15107362643844e-05, 0, 0, 0, 0, 0},
-      {-6.21028065719194, -1.92883360342573, 0.284109761066570, -0.0157606767372364,
-          0.000368599073256615, 0, 0, 0, 0, 0, 0},
-      {11.6083532818029, 0.742215544511197, -0.0823976531246117, 0.00186167650098254, 0, 0, 0, 0, 0,
-          0, 0},
-      {-10.2632535542427, -0.125035689035085, 0.0114299144831867, 0, 0, 0, 0, 0, 0, 0, 0},
-      {4.65297446837297, -0.00192518067137033, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-      {-0.867296219639940, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
+      { 0.0756425183020431, -0.128667137050961, 0.128350632316055, -0.0725321780970292, 0.0257782547511452,
+	  -0.00601170055221687, 0.000933363147191978, -9.55607377143667e-05, 6.19576039900837e-06,
+	  -2.30466608213628e-07, 3.74605718435540e-09 },
+      { 0.134228218276565, -0.182682168504886, 0.0771662412959262, -0.000717458641164565, -0.00872427344283170,
+	  0.00297971836051287, -0.000484863997651451, 4.35262491516424e-05, -2.07789181640066e-06, 4.13749349344802e-08,
+	  0 },
+      { -0.565116428942893, 1.00930692226792, -0.660166945915607, 0.214492212294301, -0.0388462990166792,
+	  0.00406016982985030, -0.000239515566373142, 7.25488368831468e-06, -8.58904640281928e-08, 0, 0 },
+      { -0.387336382687019, -0.211614570109503, 0.450442894490509, -0.176931752538907, 0.0317171522104923,
+	  -0.00291368915845693, 0.000130193710011706, -2.14505500786531e-06, 0, 0, 0 },
+      { 2.13713180911797, -2.02798460133021, 0.336709255682693, 0.00118106507393722, -0.00600058423301506,
+	  0.000626343952584415, -2.03636395699819e-05, 0, 0, 0, 0 },
+      { -0.300527494795524, 2.89920714512243, -0.567134839686498, 0.0518085125423494, -0.00239326776760414,
+	  4.15107362643844e-05, 0, 0, 0, 0, 0 },
+      { -6.21028065719194, -1.92883360342573, 0.284109761066570, -0.0157606767372364, 0.000368599073256615, 0, 0, 0, 0,
+	  0, 0 },
+      { 11.6083532818029, 0.742215544511197, -0.0823976531246117, 0.00186167650098254, 0, 0, 0, 0, 0, 0, 0 },
+      { -10.2632535542427, -0.125035689035085, 0.0114299144831867, 0, 0, 0, 0, 0, 0, 0, 0 },
+      { 4.65297446837297, -0.00192518067137033, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+      { -0.867296219639940, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } };
 
   /**
    * Evaluates the Dufal 2015 association integral I(Tr, rhoStar).
@@ -223,7 +215,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * I = sum_{n=0}^{10} sum_{m=0}^{10-n} c[n][m] * Tr^m * rhoStar^n
    * </p>
    *
-   * @param Tr reduced temperature T / (epsilon/kB)
+   * @param Tr      reduced temperature T / (epsilon/kB)
    * @param rhoStar reduced segment density rhoS * sigma^3
    * @return value of the I integral
    */
@@ -235,8 +227,8 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
       double TrM = 1.0;
       int mMax = 10 - n;
       for (int m = 0; m <= mMax; m++) {
-        sumM += DUFAL_C[n][m] * TrM;
-        TrM *= Tr;
+	sumM += DUFAL_C[n][m] * TrM;
+	TrM *= Tr;
       }
       result += sumM * rhoN;
       rhoN *= rhoStar;
@@ -247,7 +239,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   /**
    * Evaluates the partial derivative dI/d(rhoStar) of the Dufal 2015 association integral.
    *
-   * @param Tr reduced temperature T / (epsilon/kB)
+   * @param Tr      reduced temperature T / (epsilon/kB)
    * @param rhoStar reduced segment density rhoS * sigma^3
    * @return dI/d(rhoStar)
    */
@@ -259,8 +251,8 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
       double TrM = 1.0;
       int mMax = 10 - n;
       for (int m = 0; m <= mMax; m++) {
-        sumM += DUFAL_C[n][m] * TrM;
-        TrM *= Tr;
+	sumM += DUFAL_C[n][m] * TrM;
+	TrM *= Tr;
       }
       result += n * sumM * rhoNm1;
       rhoNm1 *= rhoStar;
@@ -271,7 +263,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   /**
    * Evaluates the partial derivative dI/dTr of the Dufal 2015 association integral.
    *
-   * @param Tr reduced temperature T / (epsilon/kB)
+   * @param Tr      reduced temperature T / (epsilon/kB)
    * @param rhoStar reduced segment density rhoS * sigma^3
    * @return dI/dTr
    */
@@ -283,8 +275,8 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
       double TrM = 1.0;
       int mMax = 10 - n;
       for (int m = 1; m <= mMax; m++) {
-        sumM += m * DUFAL_C[n][m] * TrM;
-        TrM *= Tr;
+	sumM += m * DUFAL_C[n][m] * TrM;
+	TrM *= Tr;
       }
       result += sumM * rhoN;
       rhoN *= rhoStar;
@@ -295,7 +287,8 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   /**
    * Constructor for PhaseSAFTVRMie.
    */
-  public PhaseSAFTVRMie() {}
+  public PhaseSAFTVRMie() {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -318,8 +311,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
-      double beta) {
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt, double beta) {
     if (initType == 0) {
       initAssociationSchemes(numberOfComponents);
     }
@@ -336,7 +328,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
     // Instead use eta: gas has eta < 0.15, liquid has eta > 0.15.
     if (initType != 0 && nSAFT > 0) {
       if (nSAFT < 0.15) {
-        setType(PhaseType.GAS);
+	setType(PhaseType.GAS);
       }
       // For liquid/oil/aqueous, keep the classification from PhaseEos
       // (it correctly distinguishes OIL vs AQUEOUS by composition)
@@ -344,8 +336,8 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   }
 
   /**
-   * Detects associating components and builds the site-site bonding scheme arrays. Called once at
-   * initType=0. Sets useASSOC=1 if any component has association sites.
+   * Detects associating components and builds the site-site bonding scheme arrays. Called once at initType=0. Sets
+   * useASSOC=1 if any component has association sites.
    *
    * @param numberOfComponents number of components
    */
@@ -357,7 +349,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
       siteOffset[i] = totalNumberOfAssociationSites;
       // Only count sites for components that have VR Mie params AND association params
       if (hasAssociationParams(i)) {
-        totalNumberOfAssociationSites += getComponent(i).getNumberOfAssociationSites();
+	totalNumberOfAssociationSites += getComponent(i).getNumberOfAssociationSites();
       }
     }
 
@@ -373,7 +365,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
       int nSitesI = hasAssociationParams(i) ? getComponent(i).getNumberOfAssociationSites() : 0;
       selfAssocScheme[i] = new int[nSitesI][nSitesI];
       if (nSitesI > 0) {
-        setupAssociationScheme(selfAssocScheme[i], getComponent(i).getAssociationScheme(), nSitesI);
+	setupAssociationScheme(selfAssocScheme[i], getComponent(i).getAssociationScheme(), nSitesI);
       }
     }
 
@@ -381,22 +373,21 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
     crossAssocScheme = new int[numberOfComponents][numberOfComponents][][];
     for (int i = 0; i < numberOfComponents; i++) {
       for (int j = 0; j < numberOfComponents; j++) {
-        int nSitesI = hasAssociationParams(i) ? getComponent(i).getNumberOfAssociationSites() : 0;
-        int nSitesJ = hasAssociationParams(j) ? getComponent(j).getNumberOfAssociationSites() : 0;
-        crossAssocScheme[i][j] = new int[nSitesI][nSitesJ];
-        if (i == j) {
-          // Self interaction: copy self scheme
-          for (int a = 0; a < nSitesI; a++) {
-            for (int b = 0; b < nSitesJ; b++) {
-              crossAssocScheme[i][j][a][b] = selfAssocScheme[i][a][b];
-            }
-          }
-        } else if (nSitesI > 0 && nSitesJ > 0) {
-          // Cross-association: use CR-1 combining rule
-          setupCrossAssociationScheme(crossAssocScheme[i][j],
-              getComponent(i).getAssociationScheme(), nSitesI,
-              getComponent(j).getAssociationScheme(), nSitesJ);
-        }
+	int nSitesI = hasAssociationParams(i) ? getComponent(i).getNumberOfAssociationSites() : 0;
+	int nSitesJ = hasAssociationParams(j) ? getComponent(j).getNumberOfAssociationSites() : 0;
+	crossAssocScheme[i][j] = new int[nSitesI][nSitesJ];
+	if (i == j) {
+	  // Self interaction: copy self scheme
+	  for (int a = 0; a < nSitesI; a++) {
+	    for (int b = 0; b < nSitesJ; b++) {
+	      crossAssocScheme[i][j][a][b] = selfAssocScheme[i][a][b];
+	    }
+	  }
+	} else if (nSitesI > 0 && nSitesJ > 0) {
+	  // Cross-association: use CR-1 combining rule
+	  setupCrossAssociationScheme(crossAssocScheme[i][j], getComponent(i).getAssociationScheme(), nSitesI,
+	      getComponent(j).getAssociationScheme(), nSitesJ);
+	}
       }
     }
 
@@ -413,8 +404,8 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   }
 
   /**
-   * Checks whether component i has valid SAFT-VR Mie association parameters (both VR Mie segment
-   * params and association energy/volume must be set).
+   * Checks whether component i has valid SAFT-VR Mie association parameters (both VR Mie segment params and association
+   * energy/volume must be set).
    *
    * @param compIndex component index
    * @return true if component has association params
@@ -422,17 +413,16 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   private boolean hasAssociationParams(int compIndex) {
     ComponentSAFTVRMie c = (ComponentSAFTVRMie) getComponent(compIndex);
     return c.getNumberOfAssociationSites() > 0 && c.getAssociationEnergySAFTVRMie() != 0.0
-        && (c.getAssociationVolumeSAFTVRMie() > 0 || c.getAssociationVolumeSAFT() != 0.0)
-        && c.getSigmaSAFTVRMie() > 0;
+	&& (c.getAssociationVolumeSAFTVRMie() > 0 || c.getAssociationVolumeSAFT() != 0.0) && c.getSigmaSAFTVRMie() > 0;
   }
 
   /**
-   * Sets up self-association scheme matrix for a given scheme type. Following the standard CPA/SAFT
-   * convention: sites are split into electron donors and acceptors.
+   * Sets up self-association scheme matrix for a given scheme type. Following the standard CPA/SAFT convention: sites
+   * are split into electron donors and acceptors.
    *
-   * @param scheme output matrix [nSites][nSites] to fill with 0/1
+   * @param scheme     output matrix [nSites][nSites] to fill with 0/1
    * @param schemeName scheme name from database: "4C", "2B", "3B", "1A", "2A"
-   * @param nSites number of sites
+   * @param nSites     number of sites
    */
   private void setupAssociationScheme(int[][] scheme, String schemeName, int nSites) {
     if (schemeName == null) {
@@ -473,17 +463,16 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   }
 
   /**
-   * Sets up cross-association scheme between two components using CR-1 combining rule. Donors on
-   * one component bond with acceptors on the other.
+   * Sets up cross-association scheme between two components using CR-1 combining rule. Donors on one component bond
+   * with acceptors on the other.
    *
-   * @param scheme output matrix [nSitesI][nSitesJ]
+   * @param scheme  output matrix [nSitesI][nSitesJ]
    * @param schemeI scheme name of component I
    * @param nSitesI number of sites on I
    * @param schemeJ scheme name of component J
    * @param nSitesJ number of sites on J
    */
-  private void setupCrossAssociationScheme(int[][] scheme, String schemeI, int nSitesI,
-      String schemeJ, int nSitesJ) {
+  private void setupCrossAssociationScheme(int[][] scheme, String schemeI, int nSitesI, String schemeJ, int nSitesJ) {
     // Simple approach: identify donor/acceptor sites for each component
     // and allow cross donor-acceptor bonding
     boolean[] donorsI = getSiteDonors(schemeI, nSitesI);
@@ -493,9 +482,9 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
 
     for (int a = 0; a < nSitesI; a++) {
       for (int b = 0; b < nSitesJ; b++) {
-        if ((donorsI[a] && acceptorsJ[b]) || (acceptorsI[a] && donorsJ[b])) {
-          scheme[a][b] = 1;
-        }
+	if ((donorsI[a] && acceptorsJ[b]) || (acceptorsI[a] && donorsJ[b])) {
+	  scheme[a][b] = 1;
+	}
       }
     }
   }
@@ -504,7 +493,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * Returns donor mask for sites of a given scheme type.
    *
    * @param schemeName scheme name
-   * @param nSites number of sites
+   * @param nSites     number of sites
    * @return boolean array where true = donor
    */
   private boolean[] getSiteDonors(String schemeName, int nSites) {
@@ -530,7 +519,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * Returns acceptor mask for sites of a given scheme type.
    *
    * @param schemeName scheme name
-   * @param nSites number of sites
+   * @param nSites     number of sites
    * @return boolean array where true = acceptor
    */
   private boolean[] getSiteAcceptors(String schemeName, int nSites) {
@@ -554,8 +543,8 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   // ===== Volume initialization =====
 
   /**
-   * Initializes all SAFT variables for the current molar volume. Called at each iteration of the
-   * volume solver and after volume is converged.
+   * Initializes all SAFT variables for the current molar volume. Called at each iteration of the volume solver and
+   * after volume is converged.
    */
   public void volInit() {
     volumeSAFT = getVolume() * 1.0e-5;
@@ -586,18 +575,16 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
     double eta = nSAFT;
     double om = 1.0 - eta;
     aHSSAFT = (4.0 * eta - 3.0 * eta * eta) / (om * om);
-    daHSSAFTdN =
-        (4.0 - 6.0 * eta) / (om * om) + 2.0 * (4.0 * eta - 3.0 * eta * eta) / (om * om * om);
+    daHSSAFTdN = (4.0 - 6.0 * eta) / (om * om) + 2.0 * (4.0 * eta - 3.0 * eta * eta) / (om * om * om);
     daHSSAFTdNdN = -6.0 / (om * om) + 2.0 * (4.0 - 6.0 * eta) / (om * om * om)
-        + 2.0 * (4.0 - 6.0 * eta) / (om * om * om)
-        + 6.0 * (4.0 * eta - 3.0 * eta * eta) / (om * om * om * om);
+	+ 2.0 * (4.0 - 6.0 * eta) / (om * om * om) + 6.0 * (4.0 * eta - 3.0 * eta * eta) / (om * om * om * om);
 
     // Hard-sphere radial distribution function at contact: g_HS
     // NOTE: the simple CS contact value is used as a base, then replaced by g_Mie below
     ghsSAFT = (1.0 - eta / 2.0) / (om * om * om);
     dgHSSAFTdN = -0.5 / (om * om * om) + 3.0 * (1.0 - eta / 2.0) / (om * om * om * om);
     dgHSSAFTdNdN = -0.5 * 3.0 / (om * om * om * om) + 3.0 * (-0.5) / (om * om * om * om)
-        + 12.0 * (1.0 - eta / 2.0) / Math.pow(om, 5.0);
+	+ 12.0 * (1.0 - eta / 2.0) / Math.pow(om, 5.0);
 
     // Compute Lafitte 2013 dispersion terms
     computeDispersionTerms();
@@ -615,25 +602,25 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
       double lnGChainEff = calcLnGChainEffective(eta, alpha);
 
       if (Double.isFinite(lnGChainEff)) {
-        ghsSAFT = Math.exp(lnGChainEff);
+	ghsSAFT = Math.exp(lnGChainEff);
 
-        if (ghsSAFT > 0.1) {
-          // Numerical eta-derivatives for volume/temperature derivatives
-          double dEtaG = Math.max(Math.abs(eta) * 1.0e-4, 1.0e-12);
-          double etaPG = eta + dEtaG;
-          double etaMG = Math.max(eta - dEtaG, 1.0e-15);
-          dEtaG = (etaPG - etaMG) / 2.0;
+	if (ghsSAFT > 0.1) {
+	  // Numerical eta-derivatives for volume/temperature derivatives
+	  double dEtaG = Math.max(Math.abs(eta) * 1.0e-4, 1.0e-12);
+	  double etaPG = eta + dEtaG;
+	  double etaMG = Math.max(eta - dEtaG, 1.0e-15);
+	  dEtaG = (etaPG - etaMG) / 2.0;
 
-          double lnGP = calcLnGChainEffective(etaPG, alpha);
-          double lnGM = calcLnGChainEffective(etaMG, alpha);
-          double gP = Math.exp(lnGP);
-          double gM = Math.exp(lnGM);
+	  double lnGP = calcLnGChainEffective(etaPG, alpha);
+	  double lnGM = calcLnGChainEffective(etaMG, alpha);
+	  double gP = Math.exp(lnGP);
+	  double gM = Math.exp(lnGM);
 
-          if (Double.isFinite(gP) && Double.isFinite(gM) && gP > 0 && gM > 0) {
-            dgHSSAFTdN = (gP - gM) / (2.0 * dEtaG);
-            dgHSSAFTdNdN = (gP - 2.0 * ghsSAFT + gM) / (dEtaG * dEtaG);
-          }
-        }
+	  if (Double.isFinite(gP) && Double.isFinite(gM) && gP > 0 && gM > 0) {
+	    dgHSSAFTdN = (gP - gM) / (2.0 * dEtaG);
+	    dgHSSAFTdNdN = (gP - 2.0 * ghsSAFT + gM) / (dEtaG * dEtaG);
+	  }
+	}
       }
     }
 
@@ -662,9 +649,9 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   }
 
   /**
-   * Recomputes the base SAFT quantities (nSAFT, dnSAFTdV, etc.) for the current molarVolume. This
-   * is used during numerical association derivative computation to update the SAFT state without
-   * running a full volInit (which would recurse).
+   * Recomputes the base SAFT quantities (nSAFT, dnSAFTdV, etc.) for the current molarVolume. This is used during
+   * numerical association derivative computation to update the SAFT state without running a full volInit (which would
+   * recurse).
    */
   private void recomputeSAFTBaseQuantities() {
     // Recompute the packing fraction and its volume derivatives for the current molarVolume
@@ -673,8 +660,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
     double dAvg3 = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       double xi = getComponent(i).getNumberOfMolesInPhase() / nMoles;
-      dAvg3 += xi * getComponent(i).getmSAFTi()
-          * Math.pow(((ComponentSAFTVRMie) getComponent(i)).getdSAFTi(), 3.0);
+      dAvg3 += xi * getComponent(i).getmSAFTi() * Math.pow(((ComponentSAFTVRMie) getComponent(i)).getdSAFTi(), 3.0);
     }
     nSAFT = Math.PI / 6.0 * ThermodynamicConstantsInterface.avagadroNumber * dAvg3 / volumeSAFT;
     if (nSAFT < 0 || nSAFT > 0.55) {
@@ -685,13 +671,12 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   }
 
   /**
-   * Computes the effective chain ln(g) as a composition-weighted average over components. ln(g_eff)
-   * = sum_i [w_i * ln(g_Mie_ii)] where w_i = x_i*(m_i-1) / sum_j x_j*(m_j-1). For a
-   * single-component system this reduces to ln(g_Mie_ii). For mixtures, components with m_i = 1 do
-   * not contribute (their chain weight is zero).
+   * Computes the effective chain ln(g) as a composition-weighted average over components. ln(g_eff) = sum_i [w_i *
+   * ln(g_Mie_ii)] where w_i = x_i*(m_i-1) / sum_j x_j*(m_j-1). For a single-component system this reduces to
+   * ln(g_Mie_ii). For mixtures, components with m_i = 1 do not contribute (their chain weight is zero).
    *
    * @param etaVal packing fraction
-   * @param alpha g_Mie blend fraction (0 = g_HS only, 1 = full g_Mie)
+   * @param alpha  g_Mie blend fraction (0 = g_HS only, 1 = full g_Mie)
    * @return weighted average ln(g)
    */
   private double calcLnGChainEffective(double etaVal, double alpha) {
@@ -703,7 +688,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
       double xi = ci.getNumberOfMolesInPhase() / getNumberOfMolesInPhase();
       double wi = xi * (ci.getmSAFTi() - 1.0);
       if (wi < 1.0e-30) {
-        continue;
+	continue;
       }
       double sigmaI = ci.getSigmaSAFTi();
       double dI = ci.getdSAFTi();
@@ -715,7 +700,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
 
       double gMieI = calcGMieBlended(etaVal, x0I, lrI, laI, epsOvKTI, cMieI, alpha);
       if (!Double.isFinite(gMieI) || gMieI <= 0) {
-        continue;
+	continue;
       }
       lnGWeighted += wi * Math.log(gMieI);
       totalWeight += wi;
@@ -730,23 +715,23 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   // ===== Lafitte 2013 Effective Packing Fraction =====
 
   /**
-   * Effective packing fraction coefficient c_i(lambda) (Lafitte 2013 Table 5). c_i(lambda) =
-   * A[i][0] + A[i][1]/lambda + A[i][2]/lambda^2 + A[i][3]/lambda^3.
+   * Effective packing fraction coefficient c_i(lambda) (Lafitte 2013 Table 5). c_i(lambda) = A[i][0] + A[i][1]/lambda +
+   * A[i][2]/lambda^2 + A[i][3]/lambda^3.
    *
-   * @param i coefficient index (0-3 for c1-c4)
+   * @param i      coefficient index (0-3 for c1-c4)
    * @param lambda Mie exponent
    * @return c_i(lambda)
    */
   static double calcEtaEffCoeff(int i, double lambda) {
     double invL = 1.0 / lambda;
     return etaEffCoeffs[i][0] + etaEffCoeffs[i][1] * invL + etaEffCoeffs[i][2] * invL * invL
-        + etaEffCoeffs[i][3] * invL * invL * invL;
+	+ etaEffCoeffs[i][3] * invL * invL * invL;
   }
 
   /**
    * Effective packing fraction eta_eff = c1*eta + c2*eta^2 + c3*eta^3 + c4*eta^4.
    *
-   * @param eta actual packing fraction
+   * @param eta    actual packing fraction
    * @param lambda Mie exponent
    * @return eta_eff
    */
@@ -761,7 +746,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   /**
    * d(eta_eff)/d(eta).
    *
-   * @param eta actual packing fraction
+   * @param eta    actual packing fraction
    * @param lambda Mie exponent
    * @return derivative
    */
@@ -778,36 +763,33 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   /**
    * First-order Sutherland mean-field energy a1S/(kT) (Lafitte 2013 Eq. 25).
    *
-   * @param eta packing fraction
-   * @param lambda Mie exponent
+   * @param eta       packing fraction
+   * @param lambda    Mie exponent
    * @param epsOverKT epsilon/(kT)
    * @return a1S_bar (dimensionless)
    */
   static double calcA1Sutherland(double eta, double lambda, double epsOverKT) {
     double etaEff = calcEtaEff(eta, lambda);
     double omEff = 1.0 - etaEff;
-    return -12.0 * epsOverKT * eta / (lambda - 3.0) * (1.0 - etaEff / 2.0)
-        / (omEff * omEff * omEff);
+    return -12.0 * epsOverKT * eta / (lambda - 3.0) * (1.0 - etaEff / 2.0) / (omEff * omEff * omEff);
   }
 
   /**
-   * B correction term (Lafitte 2013 Eq. 36) using I/J integrals and gHS contact value. B = 12 * eta
-   * * (eps/kT) * [gHS(eta)*I(x0,lambda) - 9*eta*(1+eta)/(2*(1-eta)^3)*J(x0,lambda)] where I = (1 -
-   * x0^(3-lambda))/(lambda-3) and J = (1 - (lambda-3)*x0^(4-lambda) + (lambda-4)*x0^(3-lambda)) /
-   * ((lambda-3)*(lambda-4)).
+   * B correction term (Lafitte 2013 Eq. 36) using I/J integrals and gHS contact value. B = 12 * eta * (eps/kT) *
+   * [gHS(eta)*I(x0,lambda) - 9*eta*(1+eta)/(2*(1-eta)^3)*J(x0,lambda)] where I = (1 - x0^(3-lambda))/(lambda-3) and J =
+   * (1 - (lambda-3)*x0^(4-lambda) + (lambda-4)*x0^(3-lambda)) / ((lambda-3)*(lambda-4)).
    *
-   * @param eta packing fraction
-   * @param lambda Mie exponent
+   * @param eta       packing fraction
+   * @param lambda    Mie exponent
    * @param epsOverKT epsilon/(kT)
-   * @param x0 sigma/d ratio
+   * @param x0        sigma/d ratio
    * @return B (dimensionless, including 12*eta*eps/kT factor)
    */
   static double calcBCorrection(double eta, double lambda, double epsOverKT, double x0) {
     double x0_3ml = Math.pow(x0, 3.0 - lambda);
     double x0_4ml = Math.pow(x0, 4.0 - lambda);
     double capI = (1.0 - x0_3ml) / (lambda - 3.0);
-    double capJ = (1.0 - (lambda - 3.0) * x0_4ml + (lambda - 4.0) * x0_3ml)
-        / ((lambda - 3.0) * (lambda - 4.0));
+    double capJ = (1.0 - (lambda - 3.0) * x0_4ml + (lambda - 4.0) * x0_3ml) / ((lambda - 3.0) * (lambda - 4.0));
     double om = 1.0 - eta;
     double om3 = om * om * om;
     double gHScontact = (1.0 - eta / 2.0) / om3;
@@ -818,16 +800,16 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   /**
    * Full first-order Mie perturbation a1/(NkT) at a given eta value (Lafitte 2013 Eq. 40).
    *
-   * @param eta packing fraction
-   * @param lambdaR repulsive exponent
-   * @param lambdaA attractive exponent
+   * @param eta       packing fraction
+   * @param lambdaR   repulsive exponent
+   * @param lambdaA   attractive exponent
    * @param epsOverKT epsilon/(kT)
-   * @param cMie Mie prefactor
-   * @param x0 sigma/d ratio
+   * @param cMie      Mie prefactor
+   * @param x0        sigma/d ratio
    * @return a1_Mie (dimensionless)
    */
-  public static double calcA1MieAtEta(double eta, double lambdaR, double lambdaA, double epsOverKT,
-      double cMie, double x0) {
+  public static double calcA1MieAtEta(double eta, double lambdaR, double lambdaA, double epsOverKT, double cMie,
+      double x0) {
     double a1sA = calcA1Sutherland(eta, lambdaA, epsOverKT);
     double bA = calcBCorrection(eta, lambdaA, epsOverKT, x0);
     double a1sR = calcA1Sutherland(eta, lambdaR, epsOverKT);
@@ -865,24 +847,23 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * Padé approximant function f_m(alpha) from Lafitte 2013 Table 3.
    *
    * @param funcIndex function index: 0=f1, 1=f2, 2=f3, 3=f4, 4=f5, 5=f6
-   * @param alpha Mie alpha parameter
+   * @param alpha     Mie alpha parameter
    * @return f_m(alpha)
    */
   public static double calcPadeF(int funcIndex, double alpha) {
     double a2 = alpha * alpha;
     double a3 = a2 * alpha;
     double num = phiPade[0][funcIndex] + phiPade[1][funcIndex] * alpha + phiPade[2][funcIndex] * a2
-        + phiPade[3][funcIndex] * a3;
-    double den = 1.0 + phiPade[4][funcIndex] * alpha + phiPade[5][funcIndex] * a2
-        + phiPade[6][funcIndex] * a3;
+	+ phiPade[3][funcIndex] * a3;
+    double den = 1.0 + phiPade[4][funcIndex] * alpha + phiPade[5][funcIndex] * a2 + phiPade[6][funcIndex] * a3;
     return num / den;
   }
 
   /**
-   * Chi correction for second-order perturbation (Lafitte 2013 Eq. 42). chi = f1(alpha) * zetaSt +
-   * f2(alpha) * zetaSt^5 + f3(alpha) * zetaSt^8, where zetaSt is the sigma-based packing fraction.
+   * Chi correction for second-order perturbation (Lafitte 2013 Eq. 42). chi = f1(alpha) * zetaSt + f2(alpha) * zetaSt^5
+   * + f3(alpha) * zetaSt^8, where zetaSt is the sigma-based packing fraction.
    *
-   * @param zetaSt sigma-based packing fraction (pi/6 * rhoS * sigma^3)
+   * @param zetaSt  sigma-based packing fraction (pi/6 * rhoS * sigma^3)
    * @param lambdaR repulsive exponent
    * @param lambdaA attractive exponent
    * @return chi
@@ -898,17 +879,17 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   /**
    * Full second-order Mie perturbation a2/(NkT) at a given eta value.
    *
-   * @param eta packing fraction (d-based)
-   * @param zetaSt sigma-based packing fraction
-   * @param lambdaR repulsive exponent
-   * @param lambdaA attractive exponent
+   * @param eta       packing fraction (d-based)
+   * @param zetaSt    sigma-based packing fraction
+   * @param lambdaR   repulsive exponent
+   * @param lambdaA   attractive exponent
    * @param epsOverKT epsilon/(kT)
-   * @param cMie Mie prefactor
-   * @param x0 sigma/d ratio
+   * @param cMie      Mie prefactor
+   * @param x0        sigma/d ratio
    * @return a2_Mie (dimensionless)
    */
-  public static double calcA2MieAtEta(double eta, double zetaSt, double lambdaR, double lambdaA,
-      double epsOverKT, double cMie, double x0) {
+  public static double calcA2MieAtEta(double eta, double zetaSt, double lambdaR, double lambdaA, double epsOverKT,
+      double cMie, double x0) {
     double khs = calcKHS(eta);
     double chi = calcChi(zetaSt, lambdaR, lambdaA);
 
@@ -920,19 +901,18 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
     double b2Lr = calcBCorrection(eta, 2.0 * lambdaR, epsOverKT, x0);
 
     double inner = Math.pow(x0, 2.0 * lambdaA) * (a1s2La + b2La)
-        - 2.0 * Math.pow(x0, lambdaA + lambdaR) * (a1sLaLr + bLaLr)
-        + Math.pow(x0, 2.0 * lambdaR) * (a1s2Lr + b2Lr);
+	- 2.0 * Math.pow(x0, lambdaA + lambdaR) * (a1sLaLr + bLaLr) + Math.pow(x0, 2.0 * lambdaR) * (a1s2Lr + b2Lr);
 
     return 0.5 * khs * (1.0 + chi) * epsOverKT * cMie * cMie * inner;
   }
 
   /**
-   * Third-order Mie perturbation a3/(NkT) (Lafitte 2013 Eq. 50). a3 = -(eps/kT)^3 * f4(alpha) *
-   * zetaSt * exp(f5(alpha) * zetaSt + f6(alpha) * zetaSt^2).
+   * Third-order Mie perturbation a3/(NkT) (Lafitte 2013 Eq. 50). a3 = -(eps/kT)^3 * f4(alpha) * zetaSt * exp(f5(alpha)
+   * * zetaSt + f6(alpha) * zetaSt^2).
    *
-   * @param zetaSt sigma-based packing fraction
-   * @param lambdaR repulsive exponent
-   * @param lambdaA attractive exponent
+   * @param zetaSt    sigma-based packing fraction
+   * @param lambdaR   repulsive exponent
+   * @param lambdaA   attractive exponent
    * @param epsOverKT epsilon/(kT)
    * @return a3 (dimensionless)
    */
@@ -947,10 +927,10 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   // ===== Chain contribution: g_Mie(σ) following Lafitte 2013 Eqs. 35-39 =====
 
   /**
-   * Bare first-order Sutherland mean-field (without 12*eps*eta/kT prefactor). Following Clapeyron
-   * convention: aS1_bare = -1/(lambda-3) * gCS(zetaEff).
+   * Bare first-order Sutherland mean-field (without 12*eps*eta/kT prefactor). Following Clapeyron convention: aS1_bare
+   * = -1/(lambda-3) * gCS(zetaEff).
    *
-   * @param eta packing fraction
+   * @param eta    packing fraction
    * @param lambda Mie exponent
    * @return aS1 bare (dimensionless)
    */
@@ -964,27 +944,27 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   /**
    * Bare B correction (without 12*eps*eta/kT prefactor). Following Clapeyron convention.
    *
-   * @param eta packing fraction
+   * @param eta    packing fraction
    * @param lambda Mie exponent
-   * @param x0 sigma/d ratio
+   * @param x0     sigma/d ratio
    * @return B bare (dimensionless)
    */
   public static double calcBBare(double eta, double lambda, double x0) {
     double x03l = Math.pow(x0, 3.0 - lambda);
     double capI = (1.0 - x03l) / (lambda - 3.0);
     double capJ = (1.0 - (lambda - 3.0) * Math.pow(x0, 4.0 - lambda) + (lambda - 4.0) * x03l)
-        / ((lambda - 3.0) * (lambda - 4.0));
+	/ ((lambda - 3.0) * (lambda - 4.0));
     double om = 1.0 - eta;
     double om3 = om * om * om;
     return capI * (1.0 - eta / 2.0) / om3 - 9.0 * capJ * eta * (eta + 1.0) / (2.0 * om3);
   }
 
   /**
-   * Hard-sphere RDF at separation x0 = sigma/d using the parametric form from Lafitte 2013. At x0=1
-   * this approximates the CS contact value. At x0 &gt; 1 it gives the correct RDF at sigma.
+   * Hard-sphere RDF at separation x0 = sigma/d using the parametric form from Lafitte 2013. At x0=1 this approximates
+   * the CS contact value. At x0 &gt; 1 it gives the correct RDF at sigma.
    *
    * @param eta packing fraction
-   * @param x0 sigma/d ratio
+   * @param x0  sigma/d ratio
    * @return g_d^HS(sigma)
    */
   public static double calcGHS_x0(double eta, double x0) {
@@ -1004,18 +984,17 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   }
 
   /**
-   * First-order perturbation correction g1 for the chain RDF at sigma (Lafitte 2013 Eq. 37). Uses
-   * the bare (Clapeyron-convention) perturbation terms.
+   * First-order perturbation correction g1 for the chain RDF at sigma (Lafitte 2013 Eq. 37). Uses the bare
+   * (Clapeyron-convention) perturbation terms.
    *
-   * @param eta packing fraction
+   * @param eta     packing fraction
    * @param lambdaR repulsive exponent
    * @param lambdaA attractive exponent
-   * @param cMie Mie prefactor
-   * @param x0 sigma/d ratio
+   * @param cMie    Mie prefactor
+   * @param x0      sigma/d ratio
    * @return g1 (dimensionless)
    */
-  public static double calcG1Chain(double eta, double lambdaR, double lambdaA, double cMie,
-      double x0) {
+  public static double calcG1Chain(double eta, double lambdaR, double lambdaA, double cMie, double x0) {
     double as1A = calcAS1Bare(eta, lambdaA);
     double bA = calcBBare(eta, lambdaA, x0);
     double as1R = calcAS1Bare(eta, lambdaR);
@@ -1038,25 +1017,25 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
 
     double da1DrhoS = cMie * (Math.pow(x0, lambdaA) * dFullA - Math.pow(x0, lambdaR) * dFullR);
 
-    return 3.0 * da1DrhoS - cMie * (lambdaA * Math.pow(x0, lambdaA) * (as1A + bA)
-        - lambdaR * Math.pow(x0, lambdaR) * (as1R + bR));
+    return 3.0 * da1DrhoS
+	- cMie * (lambdaA * Math.pow(x0, lambdaA) * (as1A + bA) - lambdaR * Math.pow(x0, lambdaR) * (as1R + bR));
   }
 
   /**
-   * Second-order perturbation correction g2 for the chain RDF at sigma (Lafitte 2013 Eq. 38). Uses
-   * the bare perturbation terms and gamma_c correction.
+   * Second-order perturbation correction g2 for the chain RDF at sigma (Lafitte 2013 Eq. 38). Uses the bare
+   * perturbation terms and gamma_c correction.
    *
-   * @param eta packing fraction
-   * @param zetaSt sigma-based packing fraction
-   * @param lambdaR repulsive exponent
-   * @param lambdaA attractive exponent
+   * @param eta       packing fraction
+   * @param zetaSt    sigma-based packing fraction
+   * @param lambdaR   repulsive exponent
+   * @param lambdaA   attractive exponent
    * @param epsOverKT epsilon/(kT)
-   * @param cMie Mie prefactor
-   * @param x0 sigma/d ratio
+   * @param cMie      Mie prefactor
+   * @param x0        sigma/d ratio
    * @return g2 (dimensionless)
    */
-  public static double calcG2Chain(double eta, double zetaSt, double lambdaR, double lambdaA,
-      double epsOverKT, double cMie, double x0) {
+  public static double calcG2Chain(double eta, double zetaSt, double lambdaR, double lambdaA, double epsOverKT,
+      double cMie, double x0) {
     double khs = calcKHS(eta);
     double alpha = calcMieAlpha(lambdaR, lambdaA);
 
@@ -1068,9 +1047,8 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
     double as12r = calcAS1Bare(eta, 2.0 * lambdaR);
     double b2r = calcBBare(eta, 2.0 * lambdaR, x0);
 
-    double innerA2 = Math.pow(x0, 2.0 * lambdaA) * (as12a + b2a)
-        - 2.0 * Math.pow(x0, lambdaA + lambdaR) * (as1ar + bar)
-        + Math.pow(x0, 2.0 * lambdaR) * (as12r + b2r);
+    double innerA2 = Math.pow(x0, 2.0 * lambdaA) * (as12a + b2a) - 2.0 * Math.pow(x0, lambdaA + lambdaR) * (as1ar + bar)
+	+ Math.pow(x0, 2.0 * lambdaR) * (as12r + b2r);
 
     // Numerical derivative of (eta * KHS * innerA2)
     double dEta = Math.max(Math.abs(eta) * 1.0e-5, 1.0e-12);
@@ -1082,18 +1060,16 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
     double khsM = calcKHS(etaM);
 
     double innerA2P = Math.pow(x0, 2.0 * lambdaA)
-        * (calcAS1Bare(etaP, 2.0 * lambdaA) + calcBBare(etaP, 2.0 * lambdaA, x0))
-        - 2.0 * Math.pow(x0, lambdaA + lambdaR)
-            * (calcAS1Bare(etaP, lambdaA + lambdaR) + calcBBare(etaP, lambdaA + lambdaR, x0))
-        + Math.pow(x0, 2.0 * lambdaR)
-            * (calcAS1Bare(etaP, 2.0 * lambdaR) + calcBBare(etaP, 2.0 * lambdaR, x0));
+	* (calcAS1Bare(etaP, 2.0 * lambdaA) + calcBBare(etaP, 2.0 * lambdaA, x0))
+	- 2.0 * Math.pow(x0, lambdaA + lambdaR)
+	    * (calcAS1Bare(etaP, lambdaA + lambdaR) + calcBBare(etaP, lambdaA + lambdaR, x0))
+	+ Math.pow(x0, 2.0 * lambdaR) * (calcAS1Bare(etaP, 2.0 * lambdaR) + calcBBare(etaP, 2.0 * lambdaR, x0));
 
     double innerA2M = Math.pow(x0, 2.0 * lambdaA)
-        * (calcAS1Bare(etaM, 2.0 * lambdaA) + calcBBare(etaM, 2.0 * lambdaA, x0))
-        - 2.0 * Math.pow(x0, lambdaA + lambdaR)
-            * (calcAS1Bare(etaM, lambdaA + lambdaR) + calcBBare(etaM, lambdaA + lambdaR, x0))
-        + Math.pow(x0, 2.0 * lambdaR)
-            * (calcAS1Bare(etaM, 2.0 * lambdaR) + calcBBare(etaM, 2.0 * lambdaR, x0));
+	* (calcAS1Bare(etaM, 2.0 * lambdaA) + calcBBare(etaM, 2.0 * lambdaA, x0))
+	- 2.0 * Math.pow(x0, lambdaA + lambdaR)
+	    * (calcAS1Bare(etaM, lambdaA + lambdaR) + calcBBare(etaM, lambdaA + lambdaR, x0))
+	+ Math.pow(x0, 2.0 * lambdaR) * (calcAS1Bare(etaM, 2.0 * lambdaR) + calcBBare(etaM, 2.0 * lambdaR, x0));
 
     // rhoS-derivative: d(rhoS * KHS * inner) / drhoS = d(eta * KHS * inner) / deta
     double da2prod = (etaP * khsP * innerA2P - etaM * khsM * innerA2M) / (2.0 * dEta);
@@ -1101,33 +1077,33 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
 
     // gMCA2 = 3*da2/drhoS - KHS*C^2*(lr*x0^2lr*(as1_2r+B_2r) - (la+lr)*... + la*...)
     double gMCA2 = 3.0 * da2DrhoS - khs * cMie * cMie
-        * (lambdaR * Math.pow(x0, 2.0 * lambdaR) * (as12r + b2r)
-            - (lambdaA + lambdaR) * Math.pow(x0, lambdaA + lambdaR) * (as1ar + bar)
-            + lambdaA * Math.pow(x0, 2.0 * lambdaA) * (as12a + b2a));
+	* (lambdaR * Math.pow(x0, 2.0 * lambdaR) * (as12r + b2r)
+	    - (lambdaA + lambdaR) * Math.pow(x0, lambdaA + lambdaR) * (as1ar + bar)
+	    + lambdaA * Math.pow(x0, 2.0 * lambdaA) * (as12a + b2a));
 
     // gamma_c correction (Lafitte 2013 Eq. 39)
     double theta = Math.exp(epsOverKT) - 1.0;
     double gammac = 10.0 * (-Math.tanh(10.0 * (0.57 - alpha)) + 1.0) * zetaSt * theta
-        * Math.exp(-6.7 * zetaSt - 8.0 * zetaSt * zetaSt);
+	* Math.exp(-6.7 * zetaSt - 8.0 * zetaSt * zetaSt);
 
     return (1.0 + gammac) * gMCA2;
   }
 
   /**
-   * Full Mie-corrected RDF at distance sigma for the chain contribution (Lafitte 2013 Eq. 35).
-   * g_Mie(sigma) = g_HS(x0; eta) * exp(tau * g1/g0 + tau^2 * g2/g0).
+   * Full Mie-corrected RDF at distance sigma for the chain contribution (Lafitte 2013 Eq. 35). g_Mie(sigma) = g_HS(x0;
+   * eta) * exp(tau * g1/g0 + tau^2 * g2/g0).
    *
-   * @param eta packing fraction
-   * @param zetaSt sigma-based packing fraction
-   * @param lambdaR repulsive exponent
-   * @param lambdaA attractive exponent
+   * @param eta       packing fraction
+   * @param zetaSt    sigma-based packing fraction
+   * @param lambdaR   repulsive exponent
+   * @param lambdaA   attractive exponent
    * @param epsOverKT epsilon/(kT)
-   * @param cMie Mie prefactor
-   * @param x0 sigma/d ratio
+   * @param cMie      Mie prefactor
+   * @param x0        sigma/d ratio
    * @return g_Mie(sigma)
    */
-  public static double calcGMie(double eta, double zetaSt, double lambdaR, double lambdaA,
-      double epsOverKT, double cMie, double x0) {
+  public static double calcGMie(double eta, double zetaSt, double lambdaR, double lambdaA, double epsOverKT,
+      double cMie, double x0) {
     // Safety bounds - g_MIE only valid for physical packing fractions
     if (eta < 1.0e-10 || eta > 0.7 || !Double.isFinite(eta)) {
       // Fall back to CS contact value for extreme eta
@@ -1146,20 +1122,20 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   }
 
   /**
-   * Blended g for the chain contribution: g_HS(x0) * exp(alpha * correction). When alpha=0, returns
-   * g_HS(x0). When alpha=1, returns full g_Mie.
+   * Blended g for the chain contribution: g_HS(x0) * exp(alpha * correction). When alpha=0, returns g_HS(x0). When
+   * alpha=1, returns full g_Mie.
    *
-   * @param eta packing fraction
-   * @param x0 sigma/d ratio
-   * @param lambdaR repulsive exponent
-   * @param lambdaA attractive exponent
+   * @param eta       packing fraction
+   * @param x0        sigma/d ratio
+   * @param lambdaR   repulsive exponent
+   * @param lambdaA   attractive exponent
    * @param epsOverKT epsilon/(kT)
-   * @param cMie Mie prefactor
-   * @param alpha blending fraction (0 to 1)
+   * @param cMie      Mie prefactor
+   * @param alpha     blending fraction (0 to 1)
    * @return blended g chain
    */
-  static double calcGMieBlended(double eta, double x0, double lambdaR, double lambdaA,
-      double epsOverKT, double cMie, double alpha) {
+  static double calcGMieBlended(double eta, double x0, double lambdaR, double lambdaA, double epsOverKT, double cMie,
+      double alpha) {
     if (eta < 1.0e-10 || eta > 0.7 || !Double.isFinite(eta)) {
       double om = 1.0 - Math.max(eta, 0.0);
       return (1.0 - Math.max(eta, 0.0) / 2.0) / (om * om * om);
@@ -1181,10 +1157,10 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   // ===== Main dispersion computation =====
 
   /**
-   * Computes first, second, and third-order perturbation terms and all their eta and T derivatives
-   * using pair summation per Lafitte 2013 Eqs. 37-40. For multi-component mixtures, a_k = sum_ij
-   * xs_i * xs_j * a_k^ij where a_k^ij uses pair-specific cross parameters (sigma_ij, eps_ij,
-   * lambda_ij). For single-component systems, falls back to direct evaluation.
+   * Computes first, second, and third-order perturbation terms and all their eta and T derivatives using pair summation
+   * per Lafitte 2013 Eqs. 37-40. For multi-component mixtures, a_k = sum_ij xs_i * xs_j * a_k^ij where a_k^ij uses
+   * pair-specific cross parameters (sigma_ij, eps_ij, lambda_ij). For single-component systems, falls back to direct
+   * evaluation.
    */
   private void computeDispersionTerms() {
     double eta = nSAFT;
@@ -1211,17 +1187,17 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   /**
    * Computes dispersion terms for a single effective fluid (pure component or one-fluid mapped).
    *
-   * @param eta packing fraction
+   * @param eta       packing fraction
    * @param epsOverKT reduced energy parameter
-   * @param cMie Mie prefactor
-   * @param x0 sigma/d ratio
-   * @param lambdaR repulsive exponent
-   * @param lambdaA attractive exponent
-   * @param sigma segment diameter in m
-   * @param epsk energy parameter eps/k in K
+   * @param cMie      Mie prefactor
+   * @param x0        sigma/d ratio
+   * @param lambdaR   repulsive exponent
+   * @param lambdaA   attractive exponent
+   * @param sigma     segment diameter in m
+   * @param epsk      energy parameter eps/k in K
    */
-  private void computeDispTermsSingleFluid(double eta, double epsOverKT, double cMie, double x0,
-      double lambdaR, double lambdaA, double sigma, double epsk) {
+  private void computeDispTermsSingleFluid(double eta, double epsOverKT, double cMie, double x0, double lambdaR,
+      double lambdaA, double sigma, double epsk) {
     a1Disp = calcA1MieAtEta(eta, lambdaR, lambdaA, epsOverKT, cMie, x0);
 
     double dEta = Math.max(Math.abs(eta) * 1.0e-5, 1.0e-12);
@@ -1298,10 +1274,9 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   }
 
   /**
-   * Computes pair-summed dispersion terms for multi-component mixtures. a_k = sum_ij xs_i * xs_j *
-   * a_k^ij per Lafitte 2013 Eqs. 37-40. Cross parameters follow Eq. 36: sigma_ij = arithmetic mean,
-   * eps_ij = geometric mean with sigma^3 correction, lambda_ij = 3 + geometric mean of (lambda-3),
-   * d_ij = BH diameter of cross potential.
+   * Computes pair-summed dispersion terms for multi-component mixtures. a_k = sum_ij xs_i * xs_j * a_k^ij per Lafitte
+   * 2013 Eqs. 37-40. Cross parameters follow Eq. 36: sigma_ij = arithmetic mean, eps_ij = geometric mean with sigma^3
+   * correction, lambda_ij = 3 + geometric mean of (lambda-3), d_ij = BH diameter of cross potential.
    *
    * @param eta packing fraction
    */
@@ -1355,11 +1330,10 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   }
 
   /**
-   * Evaluates pair-summed a1, a2, a3 at given eta and temperature. For each pair (i,j), computes
-   * cross parameters per Lafitte 2013 Eq. 36 including the sigma^3-corrected epsilon and BH
-   * diameter from the cross-potential.
+   * Evaluates pair-summed a1, a2, a3 at given eta and temperature. For each pair (i,j), computes cross parameters per
+   * Lafitte 2013 Eq. 36 including the sigma^3-corrected epsilon and BH diameter from the cross-potential.
    *
-   * @param eta packing fraction
+   * @param eta  packing fraction
    * @param temp temperature in K
    * @return double[3] = {a1_sum, a2_sum, a3_sum}
    */
@@ -1377,56 +1351,53 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
       double xsi = (mbar > 0) ? xi * mi / mbar : 0.0;
 
       for (int j = 0; j < numberOfComponents; j++) {
-        ComponentSAFTVRMie cj = (ComponentSAFTVRMie) getComponent(j);
-        double xj = cj.getNumberOfMolesInPhase() / nMoles;
-        double mj = cj.getmSAFTi();
-        double xsj = (mbar > 0) ? xj * mj / mbar : 0.0;
+	ComponentSAFTVRMie cj = (ComponentSAFTVRMie) getComponent(j);
+	double xj = cj.getNumberOfMolesInPhase() / nMoles;
+	double mj = cj.getmSAFTi();
+	double xsj = (mbar > 0) ? xj * mj / mbar : 0.0;
 
-        double w = xsi * xsj;
-        if (w < 1.0e-30) {
-          continue;
-        }
+	double w = xsi * xsj;
+	if (w < 1.0e-30) {
+	  continue;
+	}
 
-        // Cross parameters (Lafitte 2013 Eq. 36)
-        double sigi = ci.getSigmaSAFTi();
-        double sigj = cj.getSigmaSAFTi();
-        double sigij = 0.5 * (sigi + sigj);
+	// Cross parameters (Lafitte 2013 Eq. 36)
+	double sigi = ci.getSigmaSAFTi();
+	double sigj = cj.getSigmaSAFTi();
+	double sigij = 0.5 * (sigi + sigj);
 
-        // Epsilon with sigma^3 correction: eps_ij = sqrt(eps_i*eps_j) * sqrt(sig_i^3*sig_j^3) /
-        // sig_ij^3
-        double si3 = sigi * sigi * sigi;
-        double sj3 = sigj * sigj * sigj;
-        double sij3 = sigij * sigij * sigij;
-        double epsij =
-            Math.sqrt(ci.getEpsikSAFT() * cj.getEpsikSAFT()) * Math.sqrt(si3 * sj3) / sij3;
+	// Epsilon with sigma^3 correction: eps_ij = sqrt(eps_i*eps_j) * sqrt(sig_i^3*sig_j^3) /
+	// sig_ij^3
+	double si3 = sigi * sigi * sigi;
+	double sj3 = sigj * sigj * sigj;
+	double sij3 = sigij * sigij * sigij;
+	double epsij = Math.sqrt(ci.getEpsikSAFT() * cj.getEpsikSAFT()) * Math.sqrt(si3 * sj3) / sij3;
 
-        double lrij =
-            3.0 + Math.sqrt((ci.getLambdaRSAFTVRMie() - 3.0) * (cj.getLambdaRSAFTVRMie() - 3.0));
-        double laij =
-            3.0 + Math.sqrt((ci.getLambdaASAFTVRMie() - 3.0) * (cj.getLambdaASAFTVRMie() - 3.0));
+	double lrij = 3.0 + Math.sqrt((ci.getLambdaRSAFTVRMie() - 3.0) * (cj.getLambdaRSAFTVRMie() - 3.0));
+	double laij = 3.0 + Math.sqrt((ci.getLambdaASAFTVRMie() - 3.0) * (cj.getLambdaASAFTVRMie() - 3.0));
 
-        // BH diameter from cross potential (NOT arithmetic average of pure diameters)
-        double dij = ComponentSAFTVRMie.calcEffectiveDiameter(sigij, epsij, temp, lrij, laij);
+	// BH diameter from cross potential (NOT arithmetic average of pure diameters)
+	double dij = ComponentSAFTVRMie.calcEffectiveDiameter(sigij, epsij, temp, lrij, laij);
 
-        double cMieij = ComponentSAFTVRMie.calcMiePrefactor(lrij, laij);
-        double x0ij = (dij > 0) ? sigij / dij : 1.0;
-        double betaij = epsij / temp;
-        double zetaStij = eta * x0ij * x0ij * x0ij;
+	double cMieij = ComponentSAFTVRMie.calcMiePrefactor(lrij, laij);
+	double x0ij = (dij > 0) ? sigij / dij : 1.0;
+	double betaij = epsij / temp;
+	double zetaStij = eta * x0ij * x0ij * x0ij;
 
-        a1sum += w * calcA1MieAtEta(eta, lrij, laij, betaij, cMieij, x0ij);
-        a2sum += w * calcA2MieAtEta(eta, zetaStij, lrij, laij, betaij, cMieij, x0ij);
-        a3sum += w * calcA3Mie(zetaStij, lrij, laij, betaij);
+	a1sum += w * calcA1MieAtEta(eta, lrij, laij, betaij, cMieij, x0ij);
+	a2sum += w * calcA2MieAtEta(eta, zetaStij, lrij, laij, betaij, cMieij, x0ij);
+	a3sum += w * calcA3Mie(zetaStij, lrij, laij, betaij);
       }
     }
 
-    return new double[] {a1sum, a2sum, a3sum};
+    return new double[] { a1sum, a2sum, a3sum };
   }
 
   /**
-   * Computes per-component weighted dispersion sums: aDispPerComp[i] = sum_l xs_l *
-   * (a1_il+a2_il+a3_il). Used for the analytical dF_DISP/dNi formula.
+   * Computes per-component weighted dispersion sums: aDispPerComp[i] = sum_l xs_l * (a1_il+a2_il+a3_il). Used for the
+   * analytical dF_DISP/dNi formula.
    *
-   * @param eta packing fraction
+   * @param eta  packing fraction
    * @param temp temperature in K
    * @return array of per-component dispersion sums
    */
@@ -1444,33 +1415,32 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
       double sum = 0.0;
 
       for (int l = 0; l < numberOfComponents; l++) {
-        ComponentSAFTVRMie cl = (ComponentSAFTVRMie) getComponent(l);
-        double xl = cl.getNumberOfMolesInPhase() / nMoles;
-        double ml = cl.getmSAFTi();
-        double xsl = (mbar > 0) ? xl * ml / mbar : 0.0;
+	ComponentSAFTVRMie cl = (ComponentSAFTVRMie) getComponent(l);
+	double xl = cl.getNumberOfMolesInPhase() / nMoles;
+	double ml = cl.getmSAFTi();
+	double xsl = (mbar > 0) ? xl * ml / mbar : 0.0;
 
-        if (xsl < 1.0e-30) {
-          continue;
-        }
+	if (xsl < 1.0e-30) {
+	  continue;
+	}
 
-        double sigl = cl.getSigmaSAFTi();
-        double sigil = 0.5 * (sigi + sigl);
-        double si3 = sigi * sigi * sigi;
-        double sl3 = sigl * sigl * sigl;
-        double sil3 = sigil * sigil * sigil;
-        double epsil = Math.sqrt(epsi * cl.getEpsikSAFT()) * Math.sqrt(si3 * sl3) / sil3;
-        double lril = 3.0 + Math.sqrt((lri - 3.0) * (cl.getLambdaRSAFTVRMie() - 3.0));
-        double lail = 3.0 + Math.sqrt((lai - 3.0) * (cl.getLambdaASAFTVRMie() - 3.0));
-        double dil = ComponentSAFTVRMie.calcEffectiveDiameter(sigil, epsil, temp, lril, lail);
-        double cMieil = ComponentSAFTVRMie.calcMiePrefactor(lril, lail);
-        double x0il = (dil > 0) ? sigil / dil : 1.0;
-        double betail = epsil / temp;
-        double zetaStil = eta * x0il * x0il * x0il;
+	double sigl = cl.getSigmaSAFTi();
+	double sigil = 0.5 * (sigi + sigl);
+	double si3 = sigi * sigi * sigi;
+	double sl3 = sigl * sigl * sigl;
+	double sil3 = sigil * sigil * sigil;
+	double epsil = Math.sqrt(epsi * cl.getEpsikSAFT()) * Math.sqrt(si3 * sl3) / sil3;
+	double lril = 3.0 + Math.sqrt((lri - 3.0) * (cl.getLambdaRSAFTVRMie() - 3.0));
+	double lail = 3.0 + Math.sqrt((lai - 3.0) * (cl.getLambdaASAFTVRMie() - 3.0));
+	double dil = ComponentSAFTVRMie.calcEffectiveDiameter(sigil, epsil, temp, lril, lail);
+	double cMieil = ComponentSAFTVRMie.calcMiePrefactor(lril, lail);
+	double x0il = (dil > 0) ? sigil / dil : 1.0;
+	double betail = epsil / temp;
+	double zetaStil = eta * x0il * x0il * x0il;
 
-        double ail = calcA1MieAtEta(eta, lril, lail, betail, cMieil, x0il)
-            + calcA2MieAtEta(eta, zetaStil, lril, lail, betail, cMieil, x0il)
-            + calcA3Mie(zetaStil, lril, lail, betail);
-        sum += xsl * ail;
+	double ail = calcA1MieAtEta(eta, lril, lail, betail, cMieil, x0il)
+	    + calcA2MieAtEta(eta, zetaStil, lril, lail, betail, cMieil, x0il) + calcA3Mie(zetaStil, lril, lail, betail);
+	sum += xsl * ail;
       }
       result[i] = sum;
     }
@@ -1480,15 +1450,14 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   // ===== Association contribution (SAFT-VR Mie) =====
 
   /**
-   * Initializes association-related quantities for the current volume. Computes the Dufal 2015
-   * association integral I(Tr, rhoStar) and its volume derivatives using the polynomial from Dufal
-   * et al. (2015) Mol. Phys. 113(9-10), 948-984.
+   * Initializes association-related quantities for the current volume. Computes the Dufal 2015 association integral
+   * I(Tr, rhoStar) and its volume derivatives using the polynomial from Dufal et al. (2015) Mol. Phys. 113(9-10),
+   * 948-984.
    *
    * <p>
-   * The I integral replaces the simple g_HS contact RDF used in PC-SAFT. It captures the
-   * orientationally-averaged Mie potential Boltzmann factor integral and provides a more accurate
-   * association strength for SAFT-VR Mie. For the Michelsen-Hendriks dF/dV shortcut, gcpavAssoc is
-   * set to d(ln I)/dV.
+   * The I integral replaces the simple g_HS contact RDF used in PC-SAFT. It captures the orientationally-averaged Mie
+   * potential Boltzmann factor integral and provides a more accurate association strength for SAFT-VR Mie. For the
+   * Michelsen-Hendriks dF/dV shortcut, gcpavAssoc is set to d(ln I)/dV.
    * </p>
    */
   private void initAssocGDerivatives() {
@@ -1511,7 +1480,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
       double sigi = ci.getSigmaSAFTi();
       sigma3x += xSi * xSi * sigi * sigi * sigi;
       if (hasAssociationParams(i) && epsRef == 0.0) {
-        epsRef = ci.getEpsikSAFT();
+	epsRef = ci.getEpsikSAFT();
       }
     }
     if (totalSegMoles > 0) {
@@ -1565,9 +1534,9 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   }
 
   /**
-   * Computes the effective association g_Mie as a composition-weighted average over associating
-   * component pairs. For pure components, returns g_Mie(sigma; eta, T) directly. Uses the full Mie
-   * RDF from Lafitte 2013 Eq. 35 instead of the simple hard-sphere g_HS contact value.
+   * Computes the effective association g_Mie as a composition-weighted average over associating component pairs. For
+   * pure components, returns g_Mie(sigma; eta, T) directly. Uses the full Mie RDF from Lafitte 2013 Eq. 35 instead of
+   * the simple hard-sphere g_HS contact value.
    *
    * @param etaVal packing fraction
    * @return effective g_Mie for association delta computation
@@ -1584,48 +1553,44 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
 
     for (int i = 0; i < numberOfComponents; i++) {
       if (!hasAssociationParams(i)) {
-        continue;
+	continue;
       }
       ComponentSAFTVRMie ci = (ComponentSAFTVRMie) getComponent(i);
       double xi = ci.getNumberOfMolesInPhase() / nMoles;
       int nSitesI = ci.getNumberOfAssociationSites();
 
       for (int j = 0; j < numberOfComponents; j++) {
-        if (!hasAssociationParams(j)) {
-          continue;
-        }
-        ComponentSAFTVRMie cj = (ComponentSAFTVRMie) getComponent(j);
-        double xj = cj.getNumberOfMolesInPhase() / nMoles;
-        int nSitesJ = cj.getNumberOfAssociationSites();
+	if (!hasAssociationParams(j)) {
+	  continue;
+	}
+	ComponentSAFTVRMie cj = (ComponentSAFTVRMie) getComponent(j);
+	double xj = cj.getNumberOfMolesInPhase() / nMoles;
+	int nSitesJ = cj.getNumberOfAssociationSites();
 
-        double weight = xi * nSitesI * xj * nSitesJ;
-        if (weight < 1.0e-30) {
-          continue;
-        }
+	double weight = xi * nSitesI * xj * nSitesJ;
+	if (weight < 1.0e-30) {
+	  continue;
+	}
 
-        // Cross parameters (same combining rules as dispersion)
-        double sigI = ci.getSigmaSAFTi();
-        double sigJ = cj.getSigmaSAFTi();
-        double sigIJ = (sigI + sigJ) / 2.0;
-        double si3 = sigI * sigI * sigI;
-        double sj3 = sigJ * sigJ * sigJ;
-        double sij3 = sigIJ * sigIJ * sigIJ;
-        double epsIJ_k =
-            Math.sqrt(ci.getEpsikSAFT() * cj.getEpsikSAFT()) * Math.sqrt(si3 * sj3) / sij3;
-        double lrIJ =
-            3.0 + Math.sqrt((ci.getLambdaRSAFTVRMie() - 3.0) * (cj.getLambdaRSAFTVRMie() - 3.0));
-        double laIJ =
-            3.0 + Math.sqrt((ci.getLambdaASAFTVRMie() - 3.0) * (cj.getLambdaASAFTVRMie() - 3.0));
-        double dIJ =
-            ComponentSAFTVRMie.calcEffectiveDiameter(sigIJ, epsIJ_k, temperature, lrIJ, laIJ);
-        double cMieIJ = ComponentSAFTVRMie.calcMiePrefactor(lrIJ, laIJ);
-        double x0IJ = (dIJ > 0) ? sigIJ / dIJ : 1.0;
-        double betaIJ = epsIJ_k / temperature;
-        double zetaStIJ = etaVal * x0IJ * x0IJ * x0IJ;
+	// Cross parameters (same combining rules as dispersion)
+	double sigI = ci.getSigmaSAFTi();
+	double sigJ = cj.getSigmaSAFTi();
+	double sigIJ = (sigI + sigJ) / 2.0;
+	double si3 = sigI * sigI * sigI;
+	double sj3 = sigJ * sigJ * sigJ;
+	double sij3 = sigIJ * sigIJ * sigIJ;
+	double epsIJ_k = Math.sqrt(ci.getEpsikSAFT() * cj.getEpsikSAFT()) * Math.sqrt(si3 * sj3) / sij3;
+	double lrIJ = 3.0 + Math.sqrt((ci.getLambdaRSAFTVRMie() - 3.0) * (cj.getLambdaRSAFTVRMie() - 3.0));
+	double laIJ = 3.0 + Math.sqrt((ci.getLambdaASAFTVRMie() - 3.0) * (cj.getLambdaASAFTVRMie() - 3.0));
+	double dIJ = ComponentSAFTVRMie.calcEffectiveDiameter(sigIJ, epsIJ_k, temperature, lrIJ, laIJ);
+	double cMieIJ = ComponentSAFTVRMie.calcMiePrefactor(lrIJ, laIJ);
+	double x0IJ = (dIJ > 0) ? sigIJ / dIJ : 1.0;
+	double betaIJ = epsIJ_k / temperature;
+	double zetaStIJ = etaVal * x0IJ * x0IJ * x0IJ;
 
-        double gMieIJ = calcGMie(etaVal, zetaStIJ, lrIJ, laIJ, betaIJ, cMieIJ, x0IJ);
-        lnGSum += weight * Math.log(gMieIJ);
-        weightSum += weight;
+	double gMieIJ = calcGMie(etaVal, zetaStIJ, lrIJ, laIJ, betaIJ, cMieIJ, x0IJ);
+	lnGSum += weight * Math.log(gMieIJ);
+	weightSum += weight;
       }
     }
 
@@ -1657,14 +1622,13 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   }
 
   /**
-   * Computes the association strength delta for all site-site pairs using Dufal 2015 I polynomial.
-   * Association cross parameters: epsilon_HB_ij = (eps_i + eps_j)/2 (CR-1), K_HB_ij = sqrt(K_HB_i *
-   * K_HB_j) (geometric mean).
+   * Computes the association strength delta for all site-site pairs using Dufal 2015 I polynomial. Association cross
+   * parameters: epsilon_HB_ij = (eps_i + eps_j)/2 (CR-1), K_HB_ij = sqrt(K_HB_i * K_HB_j) (geometric mean).
    *
    * <p>
-   * Uses delta = (exp(eps_HB/RT) - 1) * NA * K_HB * I(Tr, rho*) where I is the orientationally
-   * averaged association kernel from Dufal et al. (2015) Mol. Phys. 113(9-10), 948-984. The
-   * pair-specific reduced temperature Tr_ij = T / eps_disp_ij uses the dispersion cross epsilon.
+   * Uses delta = (exp(eps_HB/RT) - 1) * NA * K_HB * I(Tr, rho*) where I is the orientationally averaged association
+   * kernel from Dufal et al. (2015) Mol. Phys. 113(9-10), 948-984. The pair-specific reduced temperature Tr_ij = T /
+   * eps_disp_ij uses the dispersion cross epsilon.
    * </p>
    */
   private void computeDeltaAssoc() {
@@ -1695,54 +1659,53 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
     for (int i = 0; i < numberOfComponents; i++) {
       int nSitesI = hasAssociationParams(i) ? getComponent(i).getNumberOfAssociationSites() : 0;
       for (int j = 0; j < numberOfComponents; j++) {
-        int nSitesJ = hasAssociationParams(j) ? getComponent(j).getNumberOfAssociationSites() : 0;
-        if (nSitesI == 0 || nSitesJ == 0) {
-          continue;
-        }
+	int nSitesJ = hasAssociationParams(j) ? getComponent(j).getNumberOfAssociationSites() : 0;
+	if (nSitesI == 0 || nSitesJ == 0) {
+	  continue;
+	}
 
-        // Association cross parameters (CR-1 combining rule)
-        double epsHBI = getComponent(i).getAssociationEnergySAFTVRMie(); // J/mol
-        double epsHBJ = getComponent(j).getAssociationEnergySAFTVRMie();
-        double epsHBIJ = (epsHBI + epsHBJ) / 2.0;
+	// Association cross parameters (CR-1 combining rule)
+	double epsHBI = getComponent(i).getAssociationEnergySAFTVRMie(); // J/mol
+	double epsHBJ = getComponent(j).getAssociationEnergySAFTVRMie();
+	double epsHBIJ = (epsHBI + epsHBJ) / 2.0;
 
-        // K_HB bond volume (m^3); geometric mean for cross
-        double khbI = getComponent(i).getAssociationVolumeSAFTVRMie();
-        double khbJ = getComponent(j).getAssociationVolumeSAFTVRMie();
-        double khbIJ = Math.sqrt(Math.abs(khbI) * Math.abs(khbJ));
+	// K_HB bond volume (m^3); geometric mean for cross
+	double khbI = getComponent(i).getAssociationVolumeSAFTVRMie();
+	double khbJ = getComponent(j).getAssociationVolumeSAFTVRMie();
+	double khbIJ = Math.sqrt(Math.abs(khbI) * Math.abs(khbJ));
 
-        // Per-pair Dufal I using cross dispersion epsilon
-        double epsDispI = ((ComponentSAFTVRMie) getComponent(i)).getEpsikSAFT();
-        double epsDispJ = ((ComponentSAFTVRMie) getComponent(j)).getEpsikSAFT();
-        double epsDispIJ = Math.sqrt(epsDispI * epsDispJ);
-        double Tr_ij = temperature / epsDispIJ;
-        double I_ij = calcDufalI(Tr_ij, rhoStar);
+	// Per-pair Dufal I using cross dispersion epsilon
+	double epsDispI = ((ComponentSAFTVRMie) getComponent(i)).getEpsikSAFT();
+	double epsDispJ = ((ComponentSAFTVRMie) getComponent(j)).getEpsikSAFT();
+	double epsDispIJ = Math.sqrt(epsDispI * epsDispJ);
+	double Tr_ij = temperature / epsDispIJ;
+	double I_ij = calcDufalI(Tr_ij, rhoStar);
 
-        // Delta = (exp(eps_HB/RT) - 1) * NA * K_HB * I
-        double expTerm = Math.exp(epsHBIJ / (RGas * temperature)) - 1.0;
-        double deltaBase = expTerm * NA * khbIJ * I_ij;
+	// Delta = (exp(eps_HB/RT) - 1) * NA * K_HB * I
+	double expTerm = Math.exp(epsHBIJ / (RGas * temperature)) - 1.0;
+	double deltaBase = expTerm * NA * khbIJ * I_ij;
 
-        // Temperature derivative: d(delta)/dT = dF/dT * NA * K_HB * I + F * NA * K_HB * dI/dT
-        double dExpTermDT = -epsHBIJ / (RGas * temperature * temperature)
-            * Math.exp(epsHBIJ / (RGas * temperature));
-        double dIdT_ij = calcDufalIdTr(Tr_ij, rhoStar) / epsDispIJ;
-        double deltadTBase = dExpTermDT * NA * khbIJ * I_ij + expTerm * NA * khbIJ * dIdT_ij;
+	// Temperature derivative: d(delta)/dT = dF/dT * NA * K_HB * I + F * NA * K_HB * dI/dT
+	double dExpTermDT = -epsHBIJ / (RGas * temperature * temperature) * Math.exp(epsHBIJ / (RGas * temperature));
+	double dIdT_ij = calcDufalIdTr(Tr_ij, rhoStar) / epsDispIJ;
+	double deltadTBase = dExpTermDT * NA * khbIJ * I_ij + expTerm * NA * khbIJ * dIdT_ij;
 
-        // Fill global site arrays with scheme indicator
-        for (int a = 0; a < nSitesI; a++) {
-          for (int b = 0; b < nSitesJ; b++) {
-            int globalA = siteOffset[i] + a;
-            int globalB = siteOffset[j] + b;
-            deltaAssoc[globalA][globalB] = crossAssocScheme[i][j][a][b] * deltaBase;
-            deltadTAssoc[globalA][globalB] = crossAssocScheme[i][j][a][b] * deltadTBase;
-          }
-        }
+	// Fill global site arrays with scheme indicator
+	for (int a = 0; a < nSitesI; a++) {
+	  for (int b = 0; b < nSitesJ; b++) {
+	    int globalA = siteOffset[i] + a;
+	    int globalB = siteOffset[j] + b;
+	    deltaAssoc[globalA][globalB] = crossAssocScheme[i][j][a][b] * deltaBase;
+	    deltadTAssoc[globalA][globalB] = crossAssocScheme[i][j][a][b] * deltadTBase;
+	  }
+	}
       }
     }
   }
 
   /**
-   * Solves the association fraction X_A for all sites using successive substitution. X_A = 1 / (1 +
-   * (1/V) * sum_j nj * sum_B delta_AB * X_B).
+   * Solves the association fraction X_A for all sites using successive substitution. X_A = 1 / (1 + (1/V) * sum_j nj *
+   * sum_B delta_AB * X_B).
    *
    * @return true if converged
    */
@@ -1758,31 +1721,30 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
       double maxChange = 0.0;
 
       for (int i = 0; i < numberOfComponents; i++) {
-        ComponentSAFTVRMie ci = (ComponentSAFTVRMie) getComponent(i);
-        int nSitesI = hasAssociationParams(i) ? getComponent(i).getNumberOfAssociationSites() : 0;
+	ComponentSAFTVRMie ci = (ComponentSAFTVRMie) getComponent(i);
+	int nSitesI = hasAssociationParams(i) ? getComponent(i).getNumberOfAssociationSites() : 0;
 
-        for (int a = 0; a < nSitesI; a++) {
-          double sum = 0.0;
-          for (int j = 0; j < numberOfComponents; j++) {
-            ComponentSAFTVRMie cj = (ComponentSAFTVRMie) getComponent(j);
-            int nSitesJ =
-                hasAssociationParams(j) ? getComponent(j).getNumberOfAssociationSites() : 0;
-            double nj = cj.getNumberOfMolesInPhase();
-            for (int b = 0; b < nSitesJ; b++) {
-              int globalA = siteOffset[i] + a;
-              int globalB = siteOffset[j] + b;
-              sum += nj / volumeSAFT * deltaAssoc[globalA][globalB] * cj.getXsiteAssoc()[b];
-            }
-          }
-          double xNew = 1.0 / (1.0 + sum);
-          double xOld = ci.getXsiteAssoc()[a];
-          maxChange = Math.max(maxChange, Math.abs(xNew - xOld));
-          ci.setXsiteAssoc(a, xNew);
-        }
+	for (int a = 0; a < nSitesI; a++) {
+	  double sum = 0.0;
+	  for (int j = 0; j < numberOfComponents; j++) {
+	    ComponentSAFTVRMie cj = (ComponentSAFTVRMie) getComponent(j);
+	    int nSitesJ = hasAssociationParams(j) ? getComponent(j).getNumberOfAssociationSites() : 0;
+	    double nj = cj.getNumberOfMolesInPhase();
+	    for (int b = 0; b < nSitesJ; b++) {
+	      int globalA = siteOffset[i] + a;
+	      int globalB = siteOffset[j] + b;
+	      sum += nj / volumeSAFT * deltaAssoc[globalA][globalB] * cj.getXsiteAssoc()[b];
+	    }
+	  }
+	  double xNew = 1.0 / (1.0 + sum);
+	  double xOld = ci.getXsiteAssoc()[a];
+	  maxChange = Math.max(maxChange, Math.abs(xNew - xOld));
+	  ci.setXsiteAssoc(a, xNew);
+	}
       }
 
       if (maxChange < tol) {
-        return true;
+	return true;
       }
     }
     return false; // Did not converge
@@ -1805,7 +1767,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
       int nSites = hasAssociationParams(i) ? getComponent(i).getNumberOfAssociationSites() : 0;
       double ni = ci.getNumberOfMolesInPhase();
       for (int a = 0; a < nSites; a++) {
-        hcpatot += ni * (1.0 - ci.getXsiteAssoc()[a]);
+	hcpatot += ni * (1.0 - ci.getXsiteAssoc()[a]);
       }
     }
 
@@ -1815,9 +1777,8 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   }
 
   /**
-   * Calculates temperature derivatives of hcpatot using perturbation of delta. dh/dT = sum_i ni *
-   * sum_A (-dX_A/dT), where the XA T-derivative comes from implicit differentiation of the
-   * association equation.
+   * Calculates temperature derivatives of hcpatot using perturbation of delta. dh/dT = sum_i ni * sum_A (-dX_A/dT),
+   * where the XA T-derivative comes from implicit differentiation of the association equation.
    */
   private void calcHcpatotDerivatives() {
     // Numerical approach: perturb temperature, re-solve XA, take finite difference
@@ -1830,7 +1791,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
       int nSites = hasAssociationParams(i) ? getComponent(i).getNumberOfAssociationSites() : 0;
       xSave[i] = new double[nSites];
       for (int a = 0; a < nSites; a++) {
-        xSave[i][a] = ci.getXsiteAssoc()[a];
+	xSave[i][a] = ci.getXsiteAssoc()[a];
       }
     }
 
@@ -1845,7 +1806,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
       ComponentSAFTVRMie ci = (ComponentSAFTVRMie) getComponent(i);
       int nSites = hasAssociationParams(i) ? getComponent(i).getNumberOfAssociationSites() : 0;
       for (int a = 0; a < nSites; a++) {
-        hPlus += ci.getNumberOfMolesInPhase() * (1.0 - ci.getXsiteAssoc()[a]);
+	hPlus += ci.getNumberOfMolesInPhase() * (1.0 - ci.getXsiteAssoc()[a]);
       }
     }
 
@@ -1853,7 +1814,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
     for (int i = 0; i < numberOfComponents; i++) {
       ComponentSAFTVRMie ci = (ComponentSAFTVRMie) getComponent(i);
       for (int a = 0; a < xSave[i].length; a++) {
-        ci.setXsiteAssoc(a, xSave[i][a]);
+	ci.setXsiteAssoc(a, xSave[i][a]);
       }
     }
     temperature = origTemp - dT;
@@ -1865,7 +1826,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
       ComponentSAFTVRMie ci = (ComponentSAFTVRMie) getComponent(i);
       int nSites = hasAssociationParams(i) ? getComponent(i).getNumberOfAssociationSites() : 0;
       for (int a = 0; a < nSites; a++) {
-        hMinus += ci.getNumberOfMolesInPhase() * (1.0 - ci.getXsiteAssoc()[a]);
+	hMinus += ci.getNumberOfMolesInPhase() * (1.0 - ci.getXsiteAssoc()[a]);
       }
     }
 
@@ -1878,16 +1839,15 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
     for (int i = 0; i < numberOfComponents; i++) {
       ComponentSAFTVRMie ci = (ComponentSAFTVRMie) getComponent(i);
       for (int a = 0; a < xSave[i].length; a++) {
-        ci.setXsiteAssoc(a, xSave[i][a]);
+	ci.setXsiteAssoc(a, xSave[i][a]);
       }
     }
     solveAssociation();
   }
 
   /**
-   * Performs the full association calculation sequence: compute g and its derivatives, compute
-   * delta, solve for XA, and compute hcpatot. Called inside the molarVolume solver at each
-   * iteration.
+   * Performs the full association calculation sequence: compute g and its derivatives, compute delta, solve for XA, and
+   * compute hcpatot. Called inside the molarVolume solver at each iteration.
    */
   private void solveAssociationFull() {
     if (useASSOC == 0) {
@@ -1902,8 +1862,8 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   // ===== Association Helmholtz free energy and derivatives =====
 
   /**
-   * Association Helmholtz free energy following PCSAFTa/CPA convention. F_ASSOC = sum_i ni * sum_A
-   * [ln(X_Ai) - X_Ai/2 + 1/2].
+   * Association Helmholtz free energy following PCSAFTa/CPA convention. F_ASSOC = sum_i ni * sum_A [ln(X_Ai) - X_Ai/2 +
+   * 1/2].
    *
    * @return F_ASSOC
    */
@@ -1917,8 +1877,8 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
       int nSites = hasAssociationParams(i) ? getComponent(i).getNumberOfAssociationSites() : 0;
       double ni = ci.getNumberOfMolesInPhase();
       for (int a = 0; a < nSites; a++) {
-        double xa = ci.getXsiteAssoc()[a];
-        sum += ni * (Math.log(xa) - xa / 2.0 + 0.5);
+	double xa = ci.getXsiteAssoc()[a];
+	sum += ni * (Math.log(xa) - xa / 2.0 + 0.5);
       }
     }
     return sum;
@@ -1937,10 +1897,10 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   }
 
   /**
-   * d2F_ASSOC/dV2 (w.r.t. V_m3). Computed via cloned-phase numerical differentiation to correctly
-   * capture the full implicit XA response (Michelsen-Hendriks Q-function correction). The
-   * analytical product-rule of dFdV fails for strong association (e.g., water) because hcpatot is
-   * nearly V-independent while F_ASSOC (through ln XA) varies steeply.
+   * d2F_ASSOC/dV2 (w.r.t. V_m3). Computed via cloned-phase numerical differentiation to correctly capture the full
+   * implicit XA response (Michelsen-Hendriks Q-function correction). The analytical product-rule of dFdV fails for
+   * strong association (e.g., water) because hcpatot is nearly V-independent while F_ASSOC (through ln XA) varies
+   * steeply.
    *
    * @return second volume derivative in SI units (m^-6)
    */
@@ -1955,9 +1915,9 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   }
 
   /**
-   * Computes d2F_ASSOC/dV_SI2 numerically via cloned phases. Clones the phase, perturbs molar
-   * volume, runs volInit on the clone (which re-solves XA), and takes central difference of
-   * F_ASSOC. This avoids corrupting the original phase state.
+   * Computes d2F_ASSOC/dV_SI2 numerically via cloned phases. Clones the phase, perturbs molar volume, runs volInit on
+   * the clone (which re-solves XA), and takes central difference of F_ASSOC. This avoids corrupting the original phase
+   * state.
    */
   private void computeAssocDVDV() {
     double vm = getMolarVolume();
@@ -2085,9 +2045,8 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * @return 1 if sites can bond, 0 otherwise
    */
   public int getCrossAssociationScheme(int comp1, int comp2, int site1, int site2) {
-    if (crossAssocScheme == null || comp1 >= crossAssocScheme.length
-        || comp2 >= crossAssocScheme[comp1].length || site1 >= crossAssocScheme[comp1][comp2].length
-        || site2 >= crossAssocScheme[comp1][comp2][site1].length) {
+    if (crossAssocScheme == null || comp1 >= crossAssocScheme.length || comp2 >= crossAssocScheme[comp1].length
+	|| site1 >= crossAssocScheme[comp1][comp2].length || site2 >= crossAssocScheme[comp1][comp2][site1].length) {
       return 0;
     }
     return crossAssocScheme[comp1][comp2][site1][site2];
@@ -2131,15 +2090,13 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   /** {@inheritDoc} */
   @Override
   public double dFdV() {
-    return (useHS * dF_HC_SAFTdV() + useDISP * dF_DISP_SAFTdV() + useASSOC * dF_ASSOC_SAFTdV())
-        * 1.0e-5;
+    return (useHS * dF_HC_SAFTdV() + useDISP * dF_DISP_SAFTdV() + useASSOC * dF_ASSOC_SAFTdV()) * 1.0e-5;
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdVdV() {
-    return (useHS * dF_HC_SAFTdVdV() + useDISP * dF_DISP_SAFTdVdV()
-        + useASSOC * dF_ASSOC_SAFTdVdV()) * 1.0e-10;
+    return (useHS * dF_HC_SAFTdVdV() + useDISP * dF_DISP_SAFTdVdV() + useASSOC * dF_ASSOC_SAFTdVdV()) * 1.0e-10;
   }
 
   /** {@inheritDoc} */
@@ -2182,8 +2139,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   /** {@inheritDoc} */
   @Override
   public double dFdTdV() {
-    return (useHS * dF_HC_SAFTdTdV() + useDISP * dF_DISP_SAFTdTdV()
-        + useASSOC * dF_ASSOC_SAFTdTdV()) * 1.0e-5;
+    return (useHS * dF_HC_SAFTdTdV() + useDISP * dF_DISP_SAFTdTdV() + useASSOC * dF_ASSOC_SAFTdTdV()) * 1.0e-5;
   }
 
   // ===== Hard-chain contribution =====
@@ -2203,8 +2159,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * @return derivative
    */
   public double dF_HC_SAFTdV() {
-    return getNumberOfMolesInPhase()
-        * (mSAFT * daHSSAFTdN * dnSAFTdV - mmin1SAFT / ghsSAFT * dgHSSAFTdN * dnSAFTdV);
+    return getNumberOfMolesInPhase() * (mSAFT * daHSSAFTdN * dnSAFTdV - mmin1SAFT / ghsSAFT * dgHSSAFTdN * dnSAFTdV);
   }
 
   /**
@@ -2215,9 +2170,8 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   public double dF_HC_SAFTdVdV() {
     double n = getNumberOfMolesInPhase();
     return n * (mSAFT * daHSSAFTdNdN * dnSAFTdV * dnSAFTdV + mSAFT * daHSSAFTdN * dnSAFTdVdV
-        + mmin1SAFT * Math.pow(ghsSAFT, -2.0) * Math.pow(dgHSSAFTdN, 2.0) * dnSAFTdV * dnSAFTdV
-        - mmin1SAFT / ghsSAFT * dgHSSAFTdNdN * dnSAFTdV * dnSAFTdV
-        - mmin1SAFT / ghsSAFT * dgHSSAFTdN * dnSAFTdVdV);
+	+ mmin1SAFT * Math.pow(ghsSAFT, -2.0) * Math.pow(dgHSSAFTdN, 2.0) * dnSAFTdV * dnSAFTdV
+	- mmin1SAFT / ghsSAFT * dgHSSAFTdNdN * dnSAFTdV * dnSAFTdV - mmin1SAFT / ghsSAFT * dgHSSAFTdN * dnSAFTdVdV);
   }
 
   /**
@@ -2226,8 +2180,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * @return derivative
    */
   public double dF_HC_SAFTdT() {
-    return getNumberOfMolesInPhase()
-        * (mSAFT * daHSSAFTdN * dNSAFTdT - mmin1SAFT / ghsSAFT * dgHSSAFTdN * dNSAFTdT);
+    return getNumberOfMolesInPhase() * (mSAFT * daHSSAFTdN * dNSAFTdT - mmin1SAFT / ghsSAFT * dgHSSAFTdN * dNSAFTdT);
   }
 
   /**
@@ -2238,9 +2191,8 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   public double dF_HC_SAFTdTdT() {
     double n = getNumberOfMolesInPhase();
     return n * (mSAFT * daHSSAFTdNdN * dNSAFTdT * dNSAFTdT + mSAFT * daHSSAFTdN * dNSAFTdTdT
-        + mmin1SAFT * Math.pow(ghsSAFT, -2.0) * Math.pow(dgHSSAFTdN, 2.0) * dNSAFTdT * dNSAFTdT
-        - mmin1SAFT / ghsSAFT * dgHSSAFTdNdN * dNSAFTdT * dNSAFTdT
-        - mmin1SAFT / ghsSAFT * dgHSSAFTdN * dNSAFTdTdT);
+	+ mmin1SAFT * Math.pow(ghsSAFT, -2.0) * Math.pow(dgHSSAFTdN, 2.0) * dNSAFTdT * dNSAFTdT
+	- mmin1SAFT / ghsSAFT * dgHSSAFTdNdN * dNSAFTdT * dNSAFTdT - mmin1SAFT / ghsSAFT * dgHSSAFTdN * dNSAFTdTdT);
   }
 
   /**
@@ -2251,16 +2203,14 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   public double dF_HC_SAFTdTdV() {
     double n = getNumberOfMolesInPhase();
     return n * (mSAFT * daHSSAFTdNdN * dNSAFTdT * dnSAFTdV + mSAFT * daHSSAFTdN * dNSAFTdTdV
-        + mmin1SAFT * Math.pow(ghsSAFT, -2.0) * Math.pow(dgHSSAFTdN, 2.0) * dNSAFTdT * dnSAFTdV
-        - mmin1SAFT / ghsSAFT * dgHSSAFTdNdN * dNSAFTdT * dnSAFTdV
-        - mmin1SAFT / ghsSAFT * dgHSSAFTdN * dNSAFTdTdV);
+	+ mmin1SAFT * Math.pow(ghsSAFT, -2.0) * Math.pow(dgHSSAFTdN, 2.0) * dNSAFTdT * dnSAFTdV
+	- mmin1SAFT / ghsSAFT * dgHSSAFTdNdN * dNSAFTdT * dnSAFTdV - mmin1SAFT / ghsSAFT * dgHSSAFTdN * dNSAFTdTdV);
   }
 
   // ===== Dispersion contribution (Lafitte 2013) =====
 
   /**
-   * Total dispersion Helmholtz free energy. F_disp = n * m_bar * (a1 + a2 + a3) where m_bar is the
-   * mean segment number.
+   * Total dispersion Helmholtz free energy. F_disp = n * m_bar * (a1 + a2 + a3) where m_bar is the mean segment number.
    *
    * @return F_DISP
    */
@@ -2274,8 +2224,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * @return derivative
    */
   public double dF_DISP_SAFTdV() {
-    return getNumberOfMolesInPhase() * mSAFT
-        * ((da1DispDeta + da2DispDeta + da3DispDeta) * dnSAFTdV);
+    return getNumberOfMolesInPhase() * mSAFT * ((da1DispDeta + da2DispDeta + da3DispDeta) * dnSAFTdV);
   }
 
   /**
@@ -2284,9 +2233,8 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * @return derivative
    */
   public double dF_DISP_SAFTdVdV() {
-    return getNumberOfMolesInPhase() * mSAFT
-        * ((d2a1DispDeta2 + d2a2DispDeta2 + d2a3DispDeta2) * dnSAFTdV * dnSAFTdV
-            + (da1DispDeta + da2DispDeta + da3DispDeta) * dnSAFTdVdV);
+    return getNumberOfMolesInPhase() * mSAFT * ((d2a1DispDeta2 + d2a2DispDeta2 + d2a3DispDeta2) * dnSAFTdV * dnSAFTdV
+	+ (da1DispDeta + da2DispDeta + da3DispDeta) * dnSAFTdVdV);
   }
 
   /**
@@ -2295,8 +2243,8 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * @return derivative
    */
   public double dF_DISP_SAFTdT() {
-    return getNumberOfMolesInPhase() * mSAFT * (da1DispDT + da2DispDT + da3DispDT
-        + (da1DispDeta + da2DispDeta + da3DispDeta) * dNSAFTdT);
+    return getNumberOfMolesInPhase() * mSAFT
+	* (da1DispDT + da2DispDT + da3DispDT + (da1DispDeta + da2DispDeta + da3DispDeta) * dNSAFTdT);
   }
 
   /**
@@ -2306,10 +2254,9 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    */
   public double dF_DISP_SAFTdTdT() {
     return getNumberOfMolesInPhase() * mSAFT
-        * (d2a1DispDT2 + d2a2DispDT2 + d2a3DispDT2
-            + 2.0 * (d2a1DispDetaDT + d2a2DispDetaDT + d2a3DispDetaDT) * dNSAFTdT
-            + (d2a1DispDeta2 + d2a2DispDeta2 + d2a3DispDeta2) * dNSAFTdT * dNSAFTdT
-            + (da1DispDeta + da2DispDeta + da3DispDeta) * dNSAFTdTdT);
+	* (d2a1DispDT2 + d2a2DispDT2 + d2a3DispDT2 + 2.0 * (d2a1DispDetaDT + d2a2DispDetaDT + d2a3DispDetaDT) * dNSAFTdT
+	    + (d2a1DispDeta2 + d2a2DispDeta2 + d2a3DispDeta2) * dNSAFTdT * dNSAFTdT
+	    + (da1DispDeta + da2DispDeta + da3DispDeta) * dNSAFTdTdT);
   }
 
   /**
@@ -2319,9 +2266,9 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    */
   public double dF_DISP_SAFTdTdV() {
     return getNumberOfMolesInPhase() * mSAFT
-        * ((d2a1DispDetaDT + d2a2DispDetaDT + d2a3DispDetaDT) * dnSAFTdV
-            + (d2a1DispDeta2 + d2a2DispDeta2 + d2a3DispDeta2) * dNSAFTdT * dnSAFTdV
-            + (da1DispDeta + da2DispDeta + da3DispDeta) * dNSAFTdTdV);
+	* ((d2a1DispDetaDT + d2a2DispDetaDT + d2a3DispDetaDT) * dnSAFTdV
+	    + (d2a1DispDeta2 + d2a2DispDeta2 + d2a3DispDeta2) * dNSAFTdT * dnSAFTdV
+	    + (da1DispDeta + da2DispDeta + da3DispDeta) * dNSAFTdTdV);
   }
 
   // ===== Molar volume solver =====
@@ -2335,8 +2282,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    */
   @Override
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
-      throws neqsim.util.exception.IsNaNException,
-      neqsim.util.exception.TooManyIterationsException {
+      throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
     // SAFT-specific initial guess using segment diameter and packing fraction.
     // The SRK-based BonV guess doesn't work well for SAFT-VR Mie near spinodals.
     double initialVmNeqsim = -1.0;
@@ -2347,26 +2293,25 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
       double dCheck = 0.0;
       double nMolesCheck = getNumberOfMolesInPhase();
       for (int i = 0; i < numberOfComponents; i++) {
-        double xi = getComponent(i).getNumberOfMolesInPhase() / nMolesCheck;
-        double di = 0.0;
-        if (getComponent(i) instanceof ComponentSAFTVRMie) {
-          di = ((ComponentSAFTVRMie) getComponent(i)).getdSAFTi();
-        }
-        if (di < 1.0e-15) {
-          di = getComponent(i).getSigmaSAFTi();
-        }
-        if (di > 1.0e-15) {
-          dCheck += xi * getComponent(i).getmSAFTi() * Math.pow(di, 3.0);
-        }
+	double xi = getComponent(i).getNumberOfMolesInPhase() / nMolesCheck;
+	double di = 0.0;
+	if (getComponent(i) instanceof ComponentSAFTVRMie) {
+	  di = ((ComponentSAFTVRMie) getComponent(i)).getdSAFTi();
+	}
+	if (di < 1.0e-15) {
+	  di = getComponent(i).getSigmaSAFTi();
+	}
+	if (di > 1.0e-15) {
+	  dCheck += xi * getComponent(i).getmSAFTi() * Math.pow(di, 3.0);
+	}
       }
       double segVolCheck = Math.PI / 6.0 * 6.023e23 * dCheck;
       double VmSI_cached = cachedMolarVolume * 1.0e-5;
       double etaCached = (VmSI_cached > 0 && segVolCheck > 0) ? segVolCheck / VmSI_cached : -1.0;
       // Gas should have eta < 0.1, liquid should have eta > 0.15
-      boolean cacheMatchesType =
-          (pt == PhaseType.GAS && etaCached < 0.15) || (pt != PhaseType.GAS && etaCached > 0.1);
+      boolean cacheMatchesType = (pt == PhaseType.GAS && etaCached < 0.15) || (pt != PhaseType.GAS && etaCached > 0.1);
       if (cacheMatchesType) {
-        initialVmNeqsim = cachedMolarVolume;
+	initialVmNeqsim = cachedMolarVolume;
       }
       // If cache doesn't match, fall through to generate fresh initial guess
     } else {
@@ -2375,41 +2320,40 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
       double dAvg = 0.0;
       double nMoles = getNumberOfMolesInPhase();
       for (int i = 0; i < numberOfComponents; i++) {
-        double xi = getComponent(i).getNumberOfMolesInPhase() / nMoles;
-        double di = 0.0;
-        if (getComponent(i) instanceof ComponentSAFTVRMie) {
-          di = ((ComponentSAFTVRMie) getComponent(i)).getdSAFTi();
-        }
-        if (di < 1.0e-15) {
-          // BH diameter not yet computed — use sigma as fallback
-          di = getComponent(i).getSigmaSAFTi();
-        }
-        if (di > 1.0e-15) {
-          dAvg += xi * getComponent(i).getmSAFTi() * Math.pow(di, 3.0);
-        }
+	double xi = getComponent(i).getNumberOfMolesInPhase() / nMoles;
+	double di = 0.0;
+	if (getComponent(i) instanceof ComponentSAFTVRMie) {
+	  di = ((ComponentSAFTVRMie) getComponent(i)).getdSAFTi();
+	}
+	if (di < 1.0e-15) {
+	  // BH diameter not yet computed — use sigma as fallback
+	  di = getComponent(i).getSigmaSAFTi();
+	}
+	if (di > 1.0e-15) {
+	  dAvg += xi * getComponent(i).getmSAFTi() * Math.pow(di, 3.0);
+	}
       }
       double segVol = Math.PI / 6.0 * 6.023e23 * dAvg; // N_A * sum(xi*mi*di^3) * pi/6
       if (segVol > 1.0e-15 && pt != PhaseType.GAS) {
-        // Liquid: target eta ~ 0.35 (typical liquid packing)
-        double targetEta = 0.35;
-        double VmSI = segVol / targetEta; // m3/mol
-        initialVmNeqsim = VmSI * 1.0e5;
+	// Liquid: target eta ~ 0.35 (typical liquid packing)
+	double targetEta = 0.35;
+	double VmSI = segVol / targetEta; // m3/mol
+	initialVmNeqsim = VmSI * 1.0e5;
       } else if (segVol > 1.0e-15 && pt == PhaseType.GAS) {
-        // Gas: use ideal gas as starting point, then fall back to SRK if needed
-        double VmSI_ideal = R * temperature / (pressure * 1.0e5); // R*T/P in m3/mol
-        initialVmNeqsim = VmSI_ideal * 1.0e5 * nMoles;
+	// Gas: use ideal gas as starting point, then fall back to SRK if needed
+	double VmSI_ideal = R * temperature / (pressure * 1.0e5); // R*T/P in m3/mol
+	initialVmNeqsim = VmSI_ideal * 1.0e5 * nMoles;
       }
     }
 
     if (initialVmNeqsim < 1.0e-10) {
       // Fallback to SRK-based initial guess
-      double BonV =
-          pt == PhaseType.GAS ? pressure * getB() / (numberOfMolesInPhase * temperature * R)
-              : 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
+      double BonV = pt == PhaseType.GAS ? pressure * getB() / (numberOfMolesInPhase * temperature * R)
+	  : 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
       BonV = Math.max(1.0e-4, Math.min(1.0 - 1.0e-4, BonV));
       double Btemp = getB();
       if (Btemp <= 0) {
-        logger.info("b negative in SAFT-VR Mie volume calc");
+	logger.info("b negative in SAFT-VR Mie volume calc");
       }
       initialVmNeqsim = 1.0 / BonV * Btemp / numberOfMolesInPhase;
     }
@@ -2428,17 +2372,17 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
     {
       double nMolesCheck2 = getNumberOfMolesInPhase();
       for (int i = 0; i < numberOfComponents; i++) {
-        double xi = getComponent(i).getNumberOfMolesInPhase() / nMolesCheck2;
-        double di = 0.0;
-        if (getComponent(i) instanceof ComponentSAFTVRMie) {
-          di = ((ComponentSAFTVRMie) getComponent(i)).getdSAFTi();
-        }
-        if (di < 1.0e-15) {
-          di = getComponent(i).getSigmaSAFTi();
-        }
-        if (di > 1.0e-15) {
-          segVolForCheck += xi * getComponent(i).getmSAFTi() * Math.pow(di, 3.0);
-        }
+	double xi = getComponent(i).getNumberOfMolesInPhase() / nMolesCheck2;
+	double di = 0.0;
+	if (getComponent(i) instanceof ComponentSAFTVRMie) {
+	  di = ((ComponentSAFTVRMie) getComponent(i)).getdSAFTi();
+	}
+	if (di < 1.0e-15) {
+	  di = getComponent(i).getSigmaSAFTi();
+	}
+	if (di > 1.0e-15) {
+	  segVolForCheck += xi * getComponent(i).getmSAFTi() * Math.pow(di, 3.0);
+	}
       }
       segVolForCheck *= Math.PI / 6.0 * 6.023e23;
     }
@@ -2459,72 +2403,72 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
       double bracketHi = Double.NaN;
 
       for (int i = 0; i <= nScan; i++) {
-        double logV = logVLo + i * dLogV;
-        setMolarVolume(Math.exp(logV));
-        this.volInit();
-        double pScan = calcPressure();
+	double logV = logVLo + i * dLogV;
+	setMolarVolume(Math.exp(logV));
+	this.volInit();
+	double pScan = calcPressure();
 
-        if (!Double.isNaN(prevP)) {
-          // First crossing: P drops from above target to below (liquid branch)
-          if (prevP >= pressure && pScan < pressure) {
-            bracketLo = prevLogV;
-            bracketHi = logV;
-            break;
-          }
-        }
-        prevP = pScan;
-        prevLogV = logV;
+	if (!Double.isNaN(prevP)) {
+	  // First crossing: P drops from above target to below (liquid branch)
+	  if (prevP >= pressure && pScan < pressure) {
+	    bracketLo = prevLogV;
+	    bracketHi = logV;
+	    break;
+	  }
+	}
+	prevP = pScan;
+	prevLogV = logV;
       }
 
       if (!Double.isNaN(bracketLo)) {
-        // Bisect in log-V space to machine precision
-        for (int bisIter = 0; bisIter < 60; bisIter++) {
-          double logVMid = 0.5 * (bracketLo + bracketHi);
-          setMolarVolume(Math.exp(logVMid));
-          this.volInit();
-          double pMid = calcPressure();
+	// Bisect in log-V space to machine precision
+	for (int bisIter = 0; bisIter < 60; bisIter++) {
+	  double logVMid = 0.5 * (bracketLo + bracketHi);
+	  setMolarVolume(Math.exp(logVMid));
+	  this.volInit();
+	  double pMid = calcPressure();
 
-          if (pMid > pressure) {
-            bracketLo = logVMid;
-          } else {
-            bracketHi = logVMid;
-          }
-          if (bracketHi - bracketLo < 1.0e-13) {
-            break;
-          }
-        }
-        double logVFinal = 0.5 * (bracketLo + bracketHi);
-        setMolarVolume(Math.exp(logVFinal));
-        this.volInit();
-        Z = pressure * getMolarVolume() / (R * temperature);
+	  if (pMid > pressure) {
+	    bracketLo = logVMid;
+	  } else {
+	    bracketHi = logVMid;
+	  }
+	  if (bracketHi - bracketLo < 1.0e-13) {
+	    break;
+	  }
+	}
+	double logVFinal = 0.5 * (bracketLo + bracketHi);
+	setMolarVolume(Math.exp(logVFinal));
+	this.volInit();
+	Z = pressure * getMolarVolume() / (R * temperature);
       } else {
-        // No bracket found (P below spinodal minimum — no liquid root at this P).
-        // Fall back to homotopy: best-effort volume for the VLE solver.
-        setMolarVolume(initialVmNeqsim);
-        double[] alphaStepsFb = new double[] {0.0, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9, 1.0};
-        for (double alpha : alphaStepsFb) {
-          gMieBlendFraction = alpha;
-          double logVm = Math.log(getMolarVolume());
-          double oldLogVm = logVm;
-          int iter = 0;
-          do {
-            iter++;
-            this.volInit();
-            oldLogVm = logVm;
-            double Vtotal = getMolarVolume() * numberOfMolesInPhase;
-            double pCalc = calcPressure();
-            double dPdVtotal = calcPressuredV();
-            double h = pressure - pCalc;
-            if (Math.abs(dPdVtotal) < 1.0e-100) {
-              break;
-            }
-            double deltaLogV = h / (Vtotal * dPdVtotal);
-            deltaLogV = Math.max(-2.0, Math.min(2.0, deltaLogV));
-            logVm = logVm + 0.9 * deltaLogV;
-            setMolarVolume(Math.exp(logVm));
-            Z = pressure * getMolarVolume() / (R * temperature);
-          } while (Math.abs(logVm - oldLogVm) > 1.0e-8 && iter < 300);
-        }
+	// No bracket found (P below spinodal minimum — no liquid root at this P).
+	// Fall back to homotopy: best-effort volume for the VLE solver.
+	setMolarVolume(initialVmNeqsim);
+	double[] alphaStepsFb = new double[] { 0.0, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9, 1.0 };
+	for (double alpha : alphaStepsFb) {
+	  gMieBlendFraction = alpha;
+	  double logVm = Math.log(getMolarVolume());
+	  double oldLogVm = logVm;
+	  int iter = 0;
+	  do {
+	    iter++;
+	    this.volInit();
+	    oldLogVm = logVm;
+	    double Vtotal = getMolarVolume() * numberOfMolesInPhase;
+	    double pCalc = calcPressure();
+	    double dPdVtotal = calcPressuredV();
+	    double h = pressure - pCalc;
+	    if (Math.abs(dPdVtotal) < 1.0e-100) {
+	      break;
+	    }
+	    double deltaLogV = h / (Vtotal * dPdVtotal);
+	    deltaLogV = Math.max(-2.0, Math.min(2.0, deltaLogV));
+	    logVm = logVm + 0.9 * deltaLogV;
+	    setMolarVolume(Math.exp(logVm));
+	    Z = pressure * getMolarVolume() / (R * temperature);
+	  } while (Math.abs(logVm - oldLogVm) > 1.0e-8 && iter < 300);
+	}
       }
     } else if (needsScanBisect && pt == PhaseType.GAS && segVolForCheck > 1e-15) {
       // --- GAS ROOT for chain molecules or associated fluids: scan + bisect ---
@@ -2554,99 +2498,97 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
 
       // Scan from dilute (high V, high index) to dense (low V, low index)
       for (int i = nScan; i >= 0; i--) {
-        double logV = logVLo + i * dLogV;
-        setMolarVolume(Math.exp(logV));
-        this.volInit();
-        double pScan = calcPressure();
+	double logV = logVLo + i * dLogV;
+	setMolarVolume(Math.exp(logV));
+	this.volInit();
+	double pScan = calcPressure();
 
-        if (pScan > maxPScan) {
-          maxPScan = pScan;
-          logVAtMaxP = logV;
-        }
+	if (pScan > maxPScan) {
+	  maxPScan = pScan;
+	  logVAtMaxP = logV;
+	}
 
-        if (!Double.isNaN(prevP)) {
-          // Gas root crossing: P rises through target as V decreases
-          if (prevP <= pressure && pScan > pressure) {
-            bracketHi = prevLogV; // larger V, lower P
-            bracketLo = logV; // smaller V, higher P
-            break;
-          }
-        }
-        prevP = pScan;
-        prevLogV = logV;
+	if (!Double.isNaN(prevP)) {
+	  // Gas root crossing: P rises through target as V decreases
+	  if (prevP <= pressure && pScan > pressure) {
+	    bracketHi = prevLogV; // larger V, lower P
+	    bracketLo = logV; // smaller V, higher P
+	    break;
+	  }
+	}
+	prevP = pScan;
+	prevLogV = logV;
       }
 
       if (!Double.isNaN(bracketLo)) {
-        // Bisect: bracketLo has P > target (smaller V), bracketHi has P < target (larger V)
-        for (int bisIter = 0; bisIter < 60; bisIter++) {
-          double logVMid = 0.5 * (bracketLo + bracketHi);
-          setMolarVolume(Math.exp(logVMid));
-          this.volInit();
-          double pMid = calcPressure();
+	// Bisect: bracketLo has P > target (smaller V), bracketHi has P < target (larger V)
+	for (int bisIter = 0; bisIter < 60; bisIter++) {
+	  double logVMid = 0.5 * (bracketLo + bracketHi);
+	  setMolarVolume(Math.exp(logVMid));
+	  this.volInit();
+	  double pMid = calcPressure();
 
-          if (pMid > pressure) {
-            bracketLo = logVMid;
-          } else {
-            bracketHi = logVMid;
-          }
-          if (bracketHi - bracketLo < 1.0e-13) {
-            break;
-          }
-        }
-        double logVFinal = 0.5 * (bracketLo + bracketHi);
-        setMolarVolume(Math.exp(logVFinal));
-        this.volInit();
-        Z = pressure * getMolarVolume() / (R * temperature);
+	  if (pMid > pressure) {
+	    bracketLo = logVMid;
+	  } else {
+	    bracketHi = logVMid;
+	  }
+	  if (bracketHi - bracketLo < 1.0e-13) {
+	    break;
+	  }
+	}
+	double logVFinal = 0.5 * (bracketLo + bracketHi);
+	setMolarVolume(Math.exp(logVFinal));
+	this.volInit();
+	Z = pressure * getMolarVolume() / (R * temperature);
       } else {
-        // No gas root found: P > gas spinodal max (above Psat).
-        // Use the gas spinodal volume as fallback. This gives a physically
-        // meaningful gas-like state whose fugacity coefficient properly reflects
-        // that the pressure is too high for a gas to exist, driving the VLE
-        // solver to reduce pressure.
-        setMolarVolume(Math.exp(logVAtMaxP));
-        this.volInit();
-        Z = pressure * getMolarVolume() / (R * temperature);
+	// No gas root found: P > gas spinodal max (above Psat).
+	// Use the gas spinodal volume as fallback. This gives a physically
+	// meaningful gas-like state whose fugacity coefficient properly reflects
+	// that the pressure is too high for a gas to exist, driving the VLE
+	// solver to reduce pressure.
+	setMolarVolume(Math.exp(logVAtMaxP));
+	this.volInit();
+	Z = pressure * getMolarVolume() / (R * temperature);
       }
     } else {
       // --- Non-associated MONOMER (m=1): homotopy continuation + Newton ---
-      double[] alphaSteps =
-          needsChainCorrection ? new double[] {0.0, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9, 1.0}
-              : new double[] {0.0};
+      double[] alphaSteps = needsChainCorrection ? new double[] { 0.0, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9, 1.0 }
+	  : new double[] { 0.0 };
       double logVmTol = needsChainCorrection ? 1.0e-8 : 1.0e-10;
 
       for (double alpha : alphaSteps) {
-        gMieBlendFraction = alpha;
+	gMieBlendFraction = alpha;
 
-        double logVm = Math.log(getMolarVolume());
-        double oldLogVm = logVm;
-        int iterations = 0;
-        int maxIterations = 300;
+	double logVm = Math.log(getMolarVolume());
+	double oldLogVm = logVm;
+	int iterations = 0;
+	int maxIterations = 300;
 
-        do {
-          iterations++;
-          this.volInit();
-          oldLogVm = logVm;
-          double Vtotal = getMolarVolume() * numberOfMolesInPhase;
-          double pCalc = calcPressure();
-          double dPdVtotal = calcPressuredV();
-          double h = pressure - pCalc;
+	do {
+	  iterations++;
+	  this.volInit();
+	  oldLogVm = logVm;
+	  double Vtotal = getMolarVolume() * numberOfMolesInPhase;
+	  double pCalc = calcPressure();
+	  double dPdVtotal = calcPressuredV();
+	  double h = pressure - pCalc;
 
-          if (Math.abs(dPdVtotal) < 1.0e-100) {
-            break;
-          }
+	  if (Math.abs(dPdVtotal) < 1.0e-100) {
+	    break;
+	  }
 
-          double deltaLogV = h / (Vtotal * dPdVtotal);
-          deltaLogV = Math.max(-2.0, Math.min(2.0, deltaLogV));
+	  double deltaLogV = h / (Vtotal * dPdVtotal);
+	  deltaLogV = Math.max(-2.0, Math.min(2.0, deltaLogV));
 
-          logVm = logVm + 0.9 * deltaLogV;
-          setMolarVolume(Math.exp(logVm));
-          Z = pressure * getMolarVolume() / (R * temperature);
-        } while (Math.abs(logVm - oldLogVm) > logVmTol && iterations < maxIterations);
+	  logVm = logVm + 0.9 * deltaLogV;
+	  setMolarVolume(Math.exp(logVm));
+	  Z = pressure * getMolarVolume() / (R * temperature);
+	} while (Math.abs(logVm - oldLogVm) > logVmTol && iterations < maxIterations);
 
-        if (iterations >= maxIterations) {
-          throw new neqsim.util.exception.TooManyIterationsException(this, "molarVolume",
-              maxIterations);
-        }
+	if (iterations >= maxIterations) {
+	  throw new neqsim.util.exception.TooManyIterationsException(this, "molarVolume", maxIterations);
+	}
       }
     }
 
@@ -2670,8 +2612,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   public double calcmSAFT() {
     double temp = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
-      temp += getComponent(i).getNumberOfMolesInPhase() / getNumberOfMolesInPhase()
-          * getComponent(i).getmSAFTi();
+      temp += getComponent(i).getNumberOfMolesInPhase() / getNumberOfMolesInPhase() * getComponent(i).getmSAFTi();
     }
     return temp;
   }
@@ -2685,7 +2626,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
     double temp = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       temp += getComponent(i).getNumberOfMolesInPhase() / getNumberOfMolesInPhase()
-          * (getComponent(i).getmSAFTi() - 1.0);
+	  * (getComponent(i).getmSAFTi() - 1.0);
     }
     return temp;
   }
@@ -2698,9 +2639,8 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   public double calcdSAFT() {
     double temp = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
-      temp += getComponent(i).getNumberOfMolesInPhase() / getNumberOfMolesInPhase()
-          * getComponent(i).getmSAFTi()
-          * Math.pow(((ComponentSAFTVRMie) getComponent(i)).getdSAFTi(), 3.0);
+      temp += getComponent(i).getNumberOfMolesInPhase() / getNumberOfMolesInPhase() * getComponent(i).getmSAFTi()
+	  * Math.pow(((ComponentSAFTVRMie) getComponent(i)).getdSAFTi(), 3.0);
     }
     return temp;
   }
@@ -2715,7 +2655,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
     double den = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       num += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getmSAFTi()
-          * Math.pow(((ComponentSAFTVRMie) getComponent(i)).getdSAFTi(), 3.0);
+	  * Math.pow(((ComponentSAFTVRMie) getComponent(i)).getdSAFTi(), 3.0);
       den += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getmSAFTi();
     }
     if (den < 1.0e-100) {
@@ -2735,8 +2675,8 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
       ComponentSAFTVRMie comp = (ComponentSAFTVRMie) getComponent(i);
       double ddi = comp.getdSAFTi();
       double ddidT = comp.getDdSAFTidT();
-      temp += getComponent(i).getNumberOfMolesInPhase() / getNumberOfMolesInPhase()
-          * getComponent(i).getmSAFTi() * 3.0 * ddi * ddi * ddidT;
+      temp += getComponent(i).getNumberOfMolesInPhase() / getNumberOfMolesInPhase() * getComponent(i).getmSAFTi() * 3.0
+	  * ddi * ddi * ddidT;
     }
     return temp;
   }
@@ -2807,9 +2747,8 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   }
 
   /**
-   * Returns the per-component weighted dispersion sum: aDispPerComp[i] = sum_l xs_l *
-   * (a1_il+a2_il+a3_il). Used for analytical dF_DISP/dNi. Returns 0 if not computed (single
-   * component).
+   * Returns the per-component weighted dispersion sum: aDispPerComp[i] = sum_l xs_l * (a1_il+a2_il+a3_il). Used for
+   * analytical dF_DISP/dNi. Returns 0 if not computed (single component).
    *
    * @param compIndex component index
    * @return per-component dispersion sum
@@ -2923,8 +2862,8 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   /**
    * Returns the d(dSAFT)/dN_i helper for composition differentiation.
    *
-   * @param mi segment number of component i
-   * @param di diameter of component i
+   * @param mi     segment number of component i
+   * @param di     diameter of component i
    * @param nMoles total moles
    * @return d(dSAFT)/dN_i contribution (partial through d^3 sum)
    */

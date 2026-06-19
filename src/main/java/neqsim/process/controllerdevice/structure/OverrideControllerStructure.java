@@ -3,10 +3,9 @@ package neqsim.process.controllerdevice.structure;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
 
 /**
- * Override (selector) control structure that selects the output of one of two controllers using a
- * HIGH-select or LOW-select strategy. This is commonly used for safety overrides where a
- * temperature or pressure controller can take over from a flow controller when limits are
- * approached.
+ * Override (selector) control structure that selects the output of one of two controllers using a HIGH-select or
+ * LOW-select strategy. This is commonly used for safety overrides where a temperature or pressure controller can take
+ * over from a flow controller when limits are approached.
  *
  * <p>
  * In {@link SelectionType#HIGH_SELECT} mode, the controller with the highest output wins. In
@@ -39,9 +38,9 @@ public class OverrideControllerStructure implements ControlStructureInterface {
   /**
    * Create an override control structure.
    *
-   * @param primaryController the normal-operation controller
+   * @param primaryController  the normal-operation controller
    * @param overrideController the safety/override controller
-   * @param selectionType HIGH_SELECT or LOW_SELECT
+   * @param selectionType      HIGH_SELECT or LOW_SELECT
    */
   public OverrideControllerStructure(ControllerDeviceInterface primaryController,
       ControllerDeviceInterface overrideController, SelectionType selectionType) {
@@ -74,8 +73,8 @@ public class OverrideControllerStructure implements ControlStructureInterface {
   /**
    * Check whether the override controller is currently dominating the output.
    *
-   * @return {@code true} if the override controller output was selected, {@code false} if the
-   *         primary controller is in control
+   * @return {@code true} if the override controller output was selected, {@code false} if the primary controller is in
+   *         control
    */
   public boolean isOverrideActive() {
     return overrideActive;

@@ -17,14 +17,14 @@ import neqsim.thermo.system.SystemInterface;
  * Column internals designer for distillation columns.
  *
  * <p>
- * High-level facade that evaluates hydraulic performance on every tray in a converged
- * {@link DistillationColumn}, identifies the controlling tray (highest vapor/liquid loading), sizes
- * the column diameter, and produces a comprehensive JSON report.
+ * High-level facade that evaluates hydraulic performance on every tray in a converged {@link DistillationColumn},
+ * identifies the controlling tray (highest vapor/liquid loading), sizes the column diameter, and produces a
+ * comprehensive JSON report.
  * </p>
  *
  * <p>
- * Supports both tray columns (sieve, valve, bubble-cap via {@link TrayHydraulicsCalculator}) and
- * packed columns ({@link PackingHydraulicsCalculator}).
+ * Supports both tray columns (sieve, valve, bubble-cap via {@link TrayHydraulicsCalculator}) and packed columns
+ * ({@link PackingHydraulicsCalculator}).
  * </p>
  *
  * <p>
@@ -134,7 +134,8 @@ public class ColumnInternalsDesigner implements Serializable {
   /**
    * Default constructor. Column must be set via {@link #setColumn(DistillationColumn)}.
    */
-  public ColumnInternalsDesigner() {}
+  public ColumnInternalsDesigner() {
+  }
 
   /**
    * Set the distillation column.
@@ -248,8 +249,8 @@ public class ColumnInternalsDesigner implements Serializable {
    * Run all internals sizing calculations.
    *
    * <p>
-   * For tray columns, evaluates hydraulics on EVERY tray, finds the controlling tray, and sizes the
-   * column diameter. For packed columns, runs the packing hydraulics calculator.
+   * For tray columns, evaluates hydraulics on EVERY tray, finds the controlling tray, and sizes the column diameter.
+   * For packed columns, runs the packing hydraulics calculator.
    * </p>
    */
   public void calculate() {
@@ -286,11 +287,11 @@ public class ColumnInternalsDesigner implements Serializable {
       SimpleTray tray = trays.get(i);
       double[] flows = getTrayFlows(tray);
       if (flows[0] > maxVaporMassFlow) {
-        maxVaporMassFlow = flows[0];
-        maxVaporTrayIdx = i;
+	maxVaporMassFlow = flows[0];
+	maxVaporTrayIdx = i;
       }
       if (flows[1] > maxLiquidMassFlow) {
-        maxLiquidMassFlow = flows[1];
+	maxLiquidMassFlow = flows[1];
       }
     }
     controllingTrayIndex = maxVaporTrayIdx;
@@ -356,14 +357,14 @@ public class ColumnInternalsDesigner implements Serializable {
 
       totalPressureDrop += calc.getTotalTrayPressureDrop();
       if (calc.getPercentFlood() > maxPercentFlood) {
-        maxPercentFlood = calc.getPercentFlood();
+	maxPercentFlood = calc.getPercentFlood();
       }
       if (calc.getPercentFlood() > 0 && calc.getPercentFlood() < minPercentFlood) {
-        minPercentFlood = calc.getPercentFlood();
+	minPercentFlood = calc.getPercentFlood();
       }
 
       if (!calc.isDesignOk()) {
-        designOk = false;
+	designOk = false;
       }
 
       effSum += calc.getTrayEfficiency();
@@ -434,23 +435,22 @@ public class ColumnInternalsDesigner implements Serializable {
     double liquidMass = 0.0;
     try {
       if (tray.getGasOutStream() != null) {
-        vaporMass = tray.getGasOutStream().getFlowRate("kg/hr") / 3600.0;
+	vaporMass = tray.getGasOutStream().getFlowRate("kg/hr") / 3600.0;
       }
       if (tray.getLiquidOutStream() != null) {
-        liquidMass = tray.getLiquidOutStream().getFlowRate("kg/hr") / 3600.0;
+	liquidMass = tray.getLiquidOutStream().getFlowRate("kg/hr") / 3600.0;
       }
     } catch (Exception ex) {
       logger.debug("Could not read tray flows: " + ex.getMessage());
     }
-    return new double[] {Math.max(vaporMass, 1e-6), Math.max(liquidMass, 1e-6)};
+    return new double[] { Math.max(vaporMass, 1e-6), Math.max(liquidMass, 1e-6) };
   }
 
   /**
    * Extract physical properties from a tray's fluid.
    *
    * @param tray the tray to query
-   * @return array {vaporDensity, liquidDensity, liquidViscosity, surfaceTension,
-   *         relativeVolatility} in SI units
+   * @return array {vaporDensity, liquidDensity, liquidViscosity, surfaceTension, relativeVolatility} in SI units
    */
   private double[] getTrayProperties(SimpleTray tray) {
     double vaporDensity = 1.0;
@@ -462,75 +462,75 @@ public class ColumnInternalsDesigner implements Serializable {
     try {
       SystemInterface fluid = tray.getFluid();
       if (fluid != null && fluid.getNumberOfPhases() >= 2) {
-        fluid.initProperties();
+	fluid.initProperties();
 
-        // Vapor properties
-        if (fluid.hasPhaseType("gas")) {
-          vaporDensity = fluid.getPhase("gas").getDensity("kg/m3");
-        } else {
-          vaporDensity = fluid.getPhase(0).getDensity("kg/m3");
-        }
+	// Vapor properties
+	if (fluid.hasPhaseType("gas")) {
+	  vaporDensity = fluid.getPhase("gas").getDensity("kg/m3");
+	} else {
+	  vaporDensity = fluid.getPhase(0).getDensity("kg/m3");
+	}
 
-        // Liquid properties
-        int liqPhase = fluid.hasPhaseType("oil") ? fluid.getPhaseNumberOfPhase("oil")
-            : (fluid.hasPhaseType("aqueous") ? fluid.getPhaseNumberOfPhase("aqueous") : 1);
-        liquidDensity = fluid.getPhase(liqPhase).getDensity("kg/m3");
+	// Liquid properties
+	int liqPhase = fluid.hasPhaseType("oil") ? fluid.getPhaseNumberOfPhase("oil")
+	    : (fluid.hasPhaseType("aqueous") ? fluid.getPhaseNumberOfPhase("aqueous") : 1);
+	liquidDensity = fluid.getPhase(liqPhase).getDensity("kg/m3");
 
-        try {
-          liquidViscosity = fluid.getPhase(liqPhase).getViscosity("kg/msec");
-          if (liquidViscosity <= 0) {
-            liquidViscosity = 0.001;
-          }
-        } catch (Exception ex) {
-          liquidViscosity = 0.001;
-        }
+	try {
+	  liquidViscosity = fluid.getPhase(liqPhase).getViscosity("kg/msec");
+	  if (liquidViscosity <= 0) {
+	    liquidViscosity = 0.001;
+	  }
+	} catch (Exception ex) {
+	  liquidViscosity = 0.001;
+	}
 
-        // Surface tension — try to get from interface, fall back to estimate
-        try {
-          surfaceTension = fluid.getInterphaseProperties().getSurfaceTension(0, 1);
-          if (surfaceTension <= 0 || Double.isNaN(surfaceTension)) {
-            surfaceTension = 0.02;
-          }
-        } catch (Exception ex) {
-          surfaceTension = 0.02;
-        }
+	// Surface tension — try to get from interface, fall back to estimate
+	try {
+	  surfaceTension = fluid.getInterphaseProperties().getSurfaceTension(0, 1);
+	  if (surfaceTension <= 0 || Double.isNaN(surfaceTension)) {
+	    surfaceTension = 0.02;
+	  }
+	} catch (Exception ex) {
+	  surfaceTension = 0.02;
+	}
 
-        // Relative volatility from K-values of lightest and heaviest components
-        try {
-          double maxK = 0.0;
-          double minK = 1e10;
-          for (int i = 0; i < fluid.getPhase(0).getNumberOfComponents(); i++) {
-            double yi = fluid.getPhase(0).getComponent(i).getx();
-            double xi = fluid.getPhase(liqPhase).getComponent(i).getx();
-            if (xi > 1e-10 && yi > 1e-10) {
-              double k = yi / xi;
-              if (k > maxK) {
-                maxK = k;
-              }
-              if (k < minK) {
-                minK = k;
-              }
-            }
-          }
-          if (minK > 0) {
-            alpha = maxK / minK;
-          }
-          alpha = Math.min(alpha, 20.0);
-        } catch (Exception ex) {
-          alpha = 2.0;
-        }
+	// Relative volatility from K-values of lightest and heaviest components
+	try {
+	  double maxK = 0.0;
+	  double minK = 1e10;
+	  for (int i = 0; i < fluid.getPhase(0).getNumberOfComponents(); i++) {
+	    double yi = fluid.getPhase(0).getComponent(i).getx();
+	    double xi = fluid.getPhase(liqPhase).getComponent(i).getx();
+	    if (xi > 1e-10 && yi > 1e-10) {
+	      double k = yi / xi;
+	      if (k > maxK) {
+		maxK = k;
+	      }
+	      if (k < minK) {
+		minK = k;
+	      }
+	    }
+	  }
+	  if (minK > 0) {
+	    alpha = maxK / minK;
+	  }
+	  alpha = Math.min(alpha, 20.0);
+	} catch (Exception ex) {
+	  alpha = 2.0;
+	}
       } else if (fluid != null) {
-        // Single phase — use available data
-        vaporDensity = fluid.getPhase(0).getDensity("kg/m3");
-        if (fluid.getPhase(0).getType() == PhaseType.GAS) {
-          liquidDensity = 600.0; // estimate
-        }
+	// Single phase — use available data
+	vaporDensity = fluid.getPhase(0).getDensity("kg/m3");
+	if (fluid.getPhase(0).getType() == PhaseType.GAS) {
+	  liquidDensity = 600.0; // estimate
+	}
       }
     } catch (Exception ex) {
       logger.debug("Could not read tray properties: " + ex.getMessage());
     }
 
-    return new double[] {vaporDensity, liquidDensity, liquidViscosity, surfaceTension, alpha};
+    return new double[] { vaporDensity, liquidDensity, liquidViscosity, surfaceTension, alpha };
   }
 
   // ======================== Result Getters ========================
@@ -660,8 +660,7 @@ public class ColumnInternalsDesigner implements Serializable {
       packing.addProperty("pressureDropPerMeter_Pa", packingResult.getPressureDropPerMeter());
       packing.addProperty("totalPressureDrop_Pa", packingResult.getTotalPressureDrop());
       packing.addProperty("HETP_m", packingResult.getHETP());
-      packing.addProperty("numberOfTheoreticalStages",
-          packingResult.getNumberOfTheoreticalStages());
+      packing.addProperty("numberOfTheoreticalStages", packingResult.getNumberOfTheoreticalStages());
       packing.addProperty("wettedArea_m2m3", packingResult.getWettedArea());
       packing.addProperty("kGa", packingResult.getKGa());
       packing.addProperty("kLa", packingResult.getKLa());
@@ -688,32 +687,31 @@ public class ColumnInternalsDesigner implements Serializable {
       // Per-tray profile
       JsonArray trayArray = new JsonArray();
       for (int i = 0; i < trayResults.size(); i++) {
-        TrayHydraulicsCalculator t = trayResults.get(i);
-        JsonObject trayObj = new JsonObject();
-        trayObj.addProperty("trayNumber", i + 1);
-        trayObj.addProperty("percentFlood", t.getPercentFlood());
-        trayObj.addProperty("floodingVelocity_ms", t.getFloodingVelocity());
-        trayObj.addProperty("actualVelocity_ms", t.getActualVaporVelocity());
-        trayObj.addProperty("fsFactor", t.getFsFactor());
-        trayObj.addProperty("weepingOk", t.isWeepingOk());
-        trayObj.addProperty("entrainment", t.getEntrainment());
-        trayObj.addProperty("entrainmentOk", t.isEntrainmentOk());
-        trayObj.addProperty("downcommerBackup_m", t.getDowncommerBackup());
-        trayObj.addProperty("downcommerBackupFraction", t.getDowncommerBackupFraction());
-        trayObj.addProperty("downcommerBackupOk", t.isDowncommerBackupOk());
-        trayObj.addProperty("totalPressureDrop_Pa", t.getTotalTrayPressureDrop());
-        trayObj.addProperty("totalPressureDrop_mbar", t.getTotalTrayPressureDropMbar());
-        trayObj.addProperty("dryTrayDP_Pa", t.getDryTrayPressureDrop());
-        trayObj.addProperty("liquidHeadDP_Pa", t.getLiquidHeadPressureDrop());
-        trayObj.addProperty("residualHeadDP_Pa", t.getResidualHeadPressureDrop());
-        trayObj.addProperty("trayEfficiency", t.getTrayEfficiency());
-        trayObj.addProperty("designOk", t.isDesignOk());
-        trayArray.add(trayObj);
+	TrayHydraulicsCalculator t = trayResults.get(i);
+	JsonObject trayObj = new JsonObject();
+	trayObj.addProperty("trayNumber", i + 1);
+	trayObj.addProperty("percentFlood", t.getPercentFlood());
+	trayObj.addProperty("floodingVelocity_ms", t.getFloodingVelocity());
+	trayObj.addProperty("actualVelocity_ms", t.getActualVaporVelocity());
+	trayObj.addProperty("fsFactor", t.getFsFactor());
+	trayObj.addProperty("weepingOk", t.isWeepingOk());
+	trayObj.addProperty("entrainment", t.getEntrainment());
+	trayObj.addProperty("entrainmentOk", t.isEntrainmentOk());
+	trayObj.addProperty("downcommerBackup_m", t.getDowncommerBackup());
+	trayObj.addProperty("downcommerBackupFraction", t.getDowncommerBackupFraction());
+	trayObj.addProperty("downcommerBackupOk", t.isDowncommerBackupOk());
+	trayObj.addProperty("totalPressureDrop_Pa", t.getTotalTrayPressureDrop());
+	trayObj.addProperty("totalPressureDrop_mbar", t.getTotalTrayPressureDropMbar());
+	trayObj.addProperty("dryTrayDP_Pa", t.getDryTrayPressureDrop());
+	trayObj.addProperty("liquidHeadDP_Pa", t.getLiquidHeadPressureDrop());
+	trayObj.addProperty("residualHeadDP_Pa", t.getResidualHeadPressureDrop());
+	trayObj.addProperty("trayEfficiency", t.getTrayEfficiency());
+	trayObj.addProperty("designOk", t.isDesignOk());
+	trayArray.add(trayObj);
       }
       root.add("trayProfile", trayArray);
     }
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(root);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(root);
   }
 }

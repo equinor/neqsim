@@ -17,8 +17,8 @@ import neqsim.thermo.phase.PhaseInterface;
 
 /**
  * <p>
- * PhysicalPropertyHandler class. Containing the physical property functions for all kinds of
- * phasetypes. WAX, HYDRATE, SOLID and SOLIDCOMPLEX are all considered as solid phases.
+ * PhysicalPropertyHandler class. Containing the physical property functions for all kinds of phasetypes. WAX, HYDRATE,
+ * SOLID and SOLIDCOMPLEX are all considered as solid phases.
  * </p>
  *
  * @author ESOL
@@ -41,7 +41,8 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
    * Constructor for PhysicalPropertyHandler.
    * </p>
    */
-  public PhysicalPropertyHandler() {}
+  public PhysicalPropertyHandler() {
+  }
 
   /**
    * <p>
@@ -49,50 +50,49 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param ppm PhysicalPropertyModel enum object
+   * @param ppm   PhysicalPropertyModel enum object
    */
   public void setPhysicalProperties(PhaseInterface phase, PhysicalPropertyModel ppm) {
     switch (ppm) {
-      case DEFAULT: // Default
-        gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
-        oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
-        aqueousPhysicalProperties = new WaterPhysicalProperties(phase, 0, 0);
-        break;
-      case WATER: // Water
-        gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
-        oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
-        aqueousPhysicalProperties = new WaterPhysicalProperties(phase, 0, 0);
-        break;
-      case SALT_WATER: // Water
-        gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
-        oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
-        aqueousPhysicalProperties = new SaltWaterPhysicalProperties(phase, 0, 0);
-        break;
-      case GLYCOL: // Glycol
-        gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
-        oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
-        aqueousPhysicalProperties = new GlycolPhysicalProperties(phase, 0, 0);
-        break;
-      case AMINE: // Amine
-        gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
-        oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
-        aqueousPhysicalProperties = new AminePhysicalProperties(phase, 0, 0);
-        break;
-      case CO2WATER:
-        gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
-        oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
-        aqueousPhysicalProperties = new CO2waterPhysicalProperties(phase, 0, 0);
-        break;
-      case BASIC:
-        gasPhysicalProperties = new DefaultPhysicalProperties(phase, 0, 0);
-        oilPhysicalProperties = new DefaultPhysicalProperties(phase, 0, 0);
-        aqueousPhysicalProperties = new DefaultPhysicalProperties(phase, 0, 0);
-        break;
-      default:
-        logger
-            .error("error selecting physical properties model.\n Continue using default model...");
-        setPhysicalProperties(phase, PhysicalPropertyModel.DEFAULT);
-        break;
+    case DEFAULT: // Default
+      gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
+      oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
+      aqueousPhysicalProperties = new WaterPhysicalProperties(phase, 0, 0);
+      break;
+    case WATER: // Water
+      gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
+      oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
+      aqueousPhysicalProperties = new WaterPhysicalProperties(phase, 0, 0);
+      break;
+    case SALT_WATER: // Water
+      gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
+      oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
+      aqueousPhysicalProperties = new SaltWaterPhysicalProperties(phase, 0, 0);
+      break;
+    case GLYCOL: // Glycol
+      gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
+      oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
+      aqueousPhysicalProperties = new GlycolPhysicalProperties(phase, 0, 0);
+      break;
+    case AMINE: // Amine
+      gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
+      oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
+      aqueousPhysicalProperties = new AminePhysicalProperties(phase, 0, 0);
+      break;
+    case CO2WATER:
+      gasPhysicalProperties = new GasPhysicalProperties(phase, 0, 0);
+      oilPhysicalProperties = new LiquidPhysicalProperties(phase, 0, 0);
+      aqueousPhysicalProperties = new CO2waterPhysicalProperties(phase, 0, 0);
+      break;
+    case BASIC:
+      gasPhysicalProperties = new DefaultPhysicalProperties(phase, 0, 0);
+      oilPhysicalProperties = new DefaultPhysicalProperties(phase, 0, 0);
+      aqueousPhysicalProperties = new DefaultPhysicalProperties(phase, 0, 0);
+      break;
+    default:
+      logger.error("error selecting physical properties model.\n Continue using default model...");
+      setPhysicalProperties(phase, PhysicalPropertyModel.DEFAULT);
+      break;
     }
     solidPhysicalProperties = new SolidPhysicalProperties(phase);
     mixingRule = new neqsim.physicalproperties.mixingrule.PhysicalPropertyMixingRule();
@@ -112,22 +112,22 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
    */
   public PhysicalProperties getPhysicalProperties(PhaseInterface phase) {
     switch (phase.getType()) {
-      case GAS:
-        return gasPhysicalProperties;
-      case LIQUID:
-        // TODO: check if it should be AQUEOUS?
-      case OIL:
-        return oilPhysicalProperties;
-      case AQUEOUS:
-        return aqueousPhysicalProperties;
-      case WAX:
-      case HYDRATE:
-      case SOLID:
-      case SOLIDCOMPLEX:
-      case ASPHALTENE:
-        return solidPhysicalProperties;
-      default:
-        return gasPhysicalProperties;
+    case GAS:
+      return gasPhysicalProperties;
+    case LIQUID:
+      // TODO: check if it should be AQUEOUS?
+    case OIL:
+      return oilPhysicalProperties;
+    case AQUEOUS:
+      return aqueousPhysicalProperties;
+    case WAX:
+    case HYDRATE:
+    case SOLID:
+    case SOLIDCOMPLEX:
+    case ASPHALTENE:
+      return solidPhysicalProperties;
+    default:
+      return gasPhysicalProperties;
     }
   }
 
@@ -143,19 +143,19 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
     }
     try {
       if (gasPhysicalProperties != null) {
-        clonedHandler.gasPhysicalProperties = gasPhysicalProperties.clone();
+	clonedHandler.gasPhysicalProperties = gasPhysicalProperties.clone();
       }
       if (oilPhysicalProperties != null) {
-        clonedHandler.oilPhysicalProperties = oilPhysicalProperties.clone();
+	clonedHandler.oilPhysicalProperties = oilPhysicalProperties.clone();
       }
       if (aqueousPhysicalProperties != null) {
-        clonedHandler.aqueousPhysicalProperties = aqueousPhysicalProperties.clone();
+	clonedHandler.aqueousPhysicalProperties = aqueousPhysicalProperties.clone();
       }
       if (solidPhysicalProperties != null) {
-        clonedHandler.solidPhysicalProperties = solidPhysicalProperties.clone();
+	clonedHandler.solidPhysicalProperties = solidPhysicalProperties.clone();
       }
       if (mixingRule != null) {
-        clonedHandler.mixingRule = mixingRule.clone();
+	clonedHandler.mixingRule = mixingRule.clone();
       }
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);

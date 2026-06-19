@@ -31,31 +31,28 @@ class TiebackTest {
   void setUp() {
     // Create gas tieback concept using builder pattern
     gasTieback = FieldConcept.builder("Marginal Gas Field")
-        .reservoir(ReservoirInput.leanGas().co2Percent(1.5).h2sPercent(0.0).build())
-        .wells(WellsInput.builder().producerCount(2).ratePerWell(1.5e6, "Sm3/d").build())
-        .infrastructure(InfrastructureInput.builder().tiebackLength(25.0).build()).build();
+	.reservoir(ReservoirInput.leanGas().co2Percent(1.5).h2sPercent(0.0).build())
+	.wells(WellsInput.builder().producerCount(2).ratePerWell(1.5e6, "Sm3/d").build())
+	.infrastructure(InfrastructureInput.builder().tiebackLength(25.0).build()).build();
 
     // Create oil tieback concept using builder pattern
-    oilTieback = FieldConcept.builder("Small Oil Field")
-        .reservoir(ReservoirInput.blackOil().waterCut(0.1).build())
-        .wells(WellsInput.builder().producerCount(3).ratePerWell(5000.0, "bbl/d").build())
-        .infrastructure(InfrastructureInput.builder().tiebackLength(30.0).build()).build();
+    oilTieback = FieldConcept.builder("Small Oil Field").reservoir(ReservoirInput.blackOil().waterCut(0.1).build())
+	.wells(WellsInput.builder().producerCount(3).ratePerWell(5000.0, "bbl/d").build())
+	.infrastructure(InfrastructureInput.builder().tiebackLength(30.0).build()).build();
 
     // Create host facilities
     hosts = new ArrayList<HostFacility>();
 
-    hosts.add(
-        HostFacility.builder("Platform A").location(61.5, 2.3).waterDepth(120).spareGasCapacity(5.0) // MSm3/d
-            .spareOilCapacity(20000) // bbl/d
-            .minTieInPressure(80).build());
+    hosts.add(HostFacility.builder("Platform A").location(61.5, 2.3).waterDepth(120).spareGasCapacity(5.0) // MSm3/d
+	.spareOilCapacity(20000) // bbl/d
+	.minTieInPressure(80).build());
 
-    hosts.add(HostFacility.builder("FPSO B").location(61.8, 2.1).waterDepth(350)
-        .spareGasCapacity(8.0).spareOilCapacity(50000).build());
+    hosts.add(HostFacility.builder("FPSO B").location(61.8, 2.1).waterDepth(350).spareGasCapacity(8.0)
+	.spareOilCapacity(50000).build());
 
-    hosts.add(
-        HostFacility.builder("Platform C").location(62.0, 2.5).waterDepth(90).spareGasCapacity(2.0) // Limited
-                                                                                                    // capacity
-            .build());
+    hosts.add(HostFacility.builder("Platform C").location(62.0, 2.5).waterDepth(90).spareGasCapacity(2.0) // Limited
+													  // capacity
+	.build());
 
     // Create analyzer
     analyzer = new TiebackAnalyzer();
@@ -67,9 +64,8 @@ class TiebackTest {
 
   @Test
   void testHostFacilityBuilder() {
-    HostFacility host = HostFacility.builder("Test Platform").location(60.0, 3.0).waterDepth(150)
-        .spareGasCapacity(10.0).spareOilCapacity(30000).waterCapacity(50000).minTieInPressure(100)
-        .build();
+    HostFacility host = HostFacility.builder("Test Platform").location(60.0, 3.0).waterDepth(150).spareGasCapacity(10.0)
+	.spareOilCapacity(30000).waterCapacity(50000).minTieInPressure(100).build();
 
     assertEquals("Test Platform", host.getName());
     assertEquals(60.0, host.getLatitude(), 0.001);
@@ -82,8 +78,7 @@ class TiebackTest {
 
   @Test
   void testHostFacilityCapacityCheck() {
-    HostFacility host =
-        HostFacility.builder("Test").spareGasCapacity(5.0).spareOilCapacity(20000).build();
+    HostFacility host = HostFacility.builder("Test").spareGasCapacity(5.0).spareOilCapacity(20000).build();
 
     assertTrue(host.canAcceptGasRate(4.0));
     assertFalse(host.canAcceptGasRate(6.0));
@@ -94,7 +89,7 @@ class TiebackTest {
   @Test
   void testHostFacilityCapacityReport() {
     HostFacility host = HostFacility.builder("Test").spareGasCapacity(5.0).spareOilCapacity(20000.0)
-        .waterCapacity(10000.0).liquidCapacity(25000.0).build();
+	.waterCapacity(10000.0).liquidCapacity(25000.0).build();
 
     HostFacility.HostCapacityReport report = host.assessCapacity(4.0, 15000.0, 5000.0, 20000.0);
 
@@ -213,14 +208,11 @@ class TiebackTest {
 
   @Test
   void testSingleTiebackUsesRouteNetworkSummary() {
-    TiebackRouteNetwork route = TiebackRouteNetwork.builder("Shared corridor to Platform A")
-        .hostHub("Platform A hub").addSharedCorridor("Common corridor", 20.0, 12.0, 300.0)
-        .addFlowline("Discovery flowline", 10.0, 10.0, 350.0)
-        .addBranch("Future branch", 5.0, 8.0, 350.0)
-        .addRiser("Steel catenary riser", 1.0, 10.0, 300.0).build();
+    TiebackRouteNetwork route = TiebackRouteNetwork.builder("Shared corridor to Platform A").hostHub("Platform A hub")
+	.addSharedCorridor("Common corridor", 20.0, 12.0, 300.0).addFlowline("Discovery flowline", 10.0, 10.0, 350.0)
+	.addBranch("Future branch", 5.0, 8.0, 350.0).addRiser("Steel catenary riser", 1.0, 10.0, 300.0).build();
 
-    TiebackOption option =
-        analyzer.evaluateSingleTieback(gasTieback, hosts.get(0), route, 61.6, 2.4);
+    TiebackOption option = analyzer.evaluateSingleTieback(gasTieback, hosts.get(0), route, 61.6, 2.4);
 
     assertEquals("Shared corridor to Platform A", option.getRouteNetworkName());
     assertEquals(31.0, option.getDistanceKm(), 0.001);
@@ -293,7 +285,7 @@ class TiebackTest {
     if (feasible.size() > 1) {
       // Should be sorted by NPV, highest first
       for (int i = 0; i < feasible.size() - 1; i++) {
-        assertTrue(feasible.get(i).getNpvMusd() >= feasible.get(i + 1).getNpvMusd());
+	assertTrue(feasible.get(i).getNpvMusd() >= feasible.get(i + 1).getNpvMusd());
       }
     }
   }

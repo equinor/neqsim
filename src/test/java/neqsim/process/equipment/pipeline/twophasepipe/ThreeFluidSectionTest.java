@@ -122,8 +122,7 @@ class ThreeFluidSectionTest {
 
     // Water level should be positive
     assertTrue(section.getWaterLevel() > 0, "Water level should be positive");
-    assertTrue(section.getWaterLevel() < section.getDiameter(),
-        "Water level should be less than diameter");
+    assertTrue(section.getWaterLevel() < section.getDiameter(), "Water level should be less than diameter");
 
     // Oil level should be positive
     assertTrue(section.getOilLevel() >= 0, "Oil level should be non-negative");
@@ -139,8 +138,7 @@ class ThreeFluidSectionTest {
     section.setHoldups(0.5, 0.3, 0.2);
     section.updateThreeLayerGeometry();
 
-    assertTrue(section.getWaterWettedPerimeter() >= 0,
-        "Water wetted perimeter should be non-negative");
+    assertTrue(section.getWaterWettedPerimeter() >= 0, "Water wetted perimeter should be non-negative");
     assertTrue(section.getOilWettedPerimeter() >= 0, "Oil wetted perimeter should be non-negative");
   }
 
@@ -149,10 +147,8 @@ class ThreeFluidSectionTest {
     section.setHoldups(0.5, 0.3, 0.2);
     section.updateThreeLayerGeometry();
 
-    assertTrue(section.getOilWaterInterfacialWidth() >= 0,
-        "Oil-water interfacial width should be non-negative");
-    assertTrue(section.getGasOilInterfacialWidth() >= 0,
-        "Gas-oil interfacial width should be non-negative");
+    assertTrue(section.getOilWaterInterfacialWidth() >= 0, "Oil-water interfacial width should be non-negative");
+    assertTrue(section.getGasOilInterfacialWidth() >= 0, "Gas-oil interfacial width should be non-negative");
   }
 
   @Test

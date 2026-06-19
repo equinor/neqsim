@@ -35,7 +35,7 @@ public class NeqSimLogging {
     // Update all loggers in the neqsim package
     config.getLoggers().forEach((name, loggerConfig) -> {
       if (name.startsWith("neqsim")) {
-        loggerConfig.setLevel(logLevel);
+	loggerConfig.setLevel(logLevel);
       }
     });
 
@@ -65,8 +65,8 @@ public class NeqSimLogging {
       LoggerContext context = (LoggerContext) LogManager.getContext(false);
       java.net.URL resource = NeqSimLogging.class.getClassLoader().getResource("log4j2.properties");
       if (resource == null) {
-        logger.error("Resource 'log4j2.properties' not found. Unable to reset loggers.");
-        return;
+	logger.error("Resource 'log4j2.properties' not found. Unable to reset loggers.");
+	return;
       }
       context.setConfigLocation(resource.toURI());
       context.reconfigure();
@@ -75,4 +75,3 @@ public class NeqSimLogging {
     }
   }
 }
-

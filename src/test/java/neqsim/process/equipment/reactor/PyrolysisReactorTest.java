@@ -28,13 +28,12 @@ class PyrolysisReactorTest {
 
     // Fast pyrolysis should maximise bio-oil
     assertTrue(reactor.getActualBioOilYield() > reactor.getActualCharYield(),
-        "Bio-oil yield should exceed char yield in fast mode");
+	"Bio-oil yield should exceed char yield in fast mode");
     assertTrue(reactor.getActualBioOilYield() > reactor.getActualGasYield(),
-        "Bio-oil yield should exceed gas yield in fast mode");
+	"Bio-oil yield should exceed gas yield in fast mode");
 
     // Yields should sum to approximately 1.0
-    double sum =
-        reactor.getActualCharYield() + reactor.getActualBioOilYield() + reactor.getActualGasYield();
+    double sum = reactor.getActualCharYield() + reactor.getActualBioOilYield() + reactor.getActualGasYield();
     assertEquals(1.0, sum, 0.01, "Yields should sum to 1.0");
   }
 
@@ -50,8 +49,7 @@ class PyrolysisReactorTest {
 
     assertNotNull(reactor.getGasOutStream());
     // Slow pyrolysis should have higher char yield than fast
-    assertTrue(reactor.getActualCharYield() >= 0.25,
-        "Slow pyrolysis char yield should be at least 25%");
+    assertTrue(reactor.getActualCharYield() >= 0.25, "Slow pyrolysis char yield should be at least 25%");
   }
 
   @Test
@@ -100,10 +98,8 @@ class PyrolysisReactorTest {
     highT.setPyrolysisTemperature(700.0, "C");
     highT.run();
 
-    assertTrue(highT.getActualGasYield() > lowT.getActualGasYield(),
-        "Higher T should increase gas yield");
-    assertTrue(highT.getActualCharYield() < lowT.getActualCharYield(),
-        "Higher T should decrease char yield");
+    assertTrue(highT.getActualGasYield() > lowT.getActualGasYield(), "Higher T should increase gas yield");
+    assertTrue(highT.getActualCharYield() < lowT.getActualCharYield(), "Higher T should decrease char yield");
   }
 
   @Test

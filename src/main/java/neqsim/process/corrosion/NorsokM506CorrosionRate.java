@@ -12,10 +12,9 @@ import com.google.gson.GsonBuilder;
  * CO2 corrosion rate prediction model per NORSOK M-506 (2005/2017).
  *
  * <p>
- * Implements the NORSOK M-506 standard "CO2 corrosion rate calculation model" for internal
- * corrosion of carbon steel pipelines and process piping in CO2-containing environments with free
- * water. The model is based on the de Waard-Milliams-Lotz equations with NORSOK-specific
- * corrections.
+ * Implements the NORSOK M-506 standard "CO2 corrosion rate calculation model" for internal corrosion of carbon steel
+ * pipelines and process piping in CO2-containing environments with free water. The model is based on the de
+ * Waard-Milliams-Lotz equations with NORSOK-specific corrections.
  * </p>
  *
  * <p>
@@ -23,10 +22,10 @@ import com.google.gson.GsonBuilder;
  * </p>
  * <ul>
  * <li>CO2 fugacity from partial pressure using a simplified Peng-Robinson correction</li>
- * <li>In-situ pH of CO2-saturated water considering temperature, fugacity, bicarbonate
- * concentration, and ionic strength</li>
- * <li>Baseline corrosion rate from the de Waard-Milliams equation (different regimes for T below
- * and above 20 degrees C)</li>
+ * <li>In-situ pH of CO2-saturated water considering temperature, fugacity, bicarbonate concentration, and ionic
+ * strength</li>
+ * <li>Baseline corrosion rate from the de Waard-Milliams equation (different regimes for T below and above 20 degrees
+ * C)</li>
  * <li>pH correction factor (Fpht) with asymmetric formula per NORSOK M-506</li>
  * <li>Scaling temperature (Tscale) for protective FeCO3 film formation</li>
  * <li>Wall shear stress and flow correction factor</li>
@@ -175,17 +174,17 @@ public class NorsokM506CorrosionRate implements Serializable {
   /**
    * Creates a new NorsokM506CorrosionRate with default parameters.
    */
-  public NorsokM506CorrosionRate() {}
+  public NorsokM506CorrosionRate() {
+  }
 
   /**
    * Creates a new NorsokM506CorrosionRate with specified conditions.
    *
-   * @param temperatureC operating temperature in Celsius (5 to 150)
+   * @param temperatureC      operating temperature in Celsius (5 to 150)
    * @param totalPressureBara total system pressure in bara
-   * @param co2MoleFraction CO2 mole fraction in gas phase (0 to 1)
+   * @param co2MoleFraction   CO2 mole fraction in gas phase (0 to 1)
    */
-  public NorsokM506CorrosionRate(double temperatureC, double totalPressureBara,
-      double co2MoleFraction) {
+  public NorsokM506CorrosionRate(double temperatureC, double totalPressureBara, double co2MoleFraction) {
     this.temperatureC = temperatureC;
     this.totalPressureBara = totalPressureBara;
     this.co2MoleFraction = co2MoleFraction;
@@ -237,8 +236,8 @@ public class NorsokM506CorrosionRate implements Serializable {
    * Sets the actual pH of the aqueous phase.
    *
    * <p>
-   * If set to a positive value, this overrides the equilibrium pH calculation. Set to -1 to use the
-   * calculated equilibrium pH from CO2-water chemistry.
+   * If set to a positive value, this overrides the equilibrium pH calculation. Set to -1 to use the calculated
+   * equilibrium pH from CO2-water chemistry.
    * </p>
    *
    * @param pH actual pH (3.0 to 7.0, or -1 to calculate)
@@ -252,8 +251,8 @@ public class NorsokM506CorrosionRate implements Serializable {
    * Sets the bicarbonate concentration in formation water.
    *
    * <p>
-   * Bicarbonate ions raise the pH above the pure CO2-water value, which reduces the corrosion rate.
-   * This is important for fields with high bicarbonate formation water.
+   * Bicarbonate ions raise the pH above the pure CO2-water value, which reduces the corrosion rate. This is important
+   * for fields with high bicarbonate formation water.
    * </p>
    *
    * @param concentrationMgL bicarbonate concentration in mg/L (0 to 10000)
@@ -267,8 +266,7 @@ public class NorsokM506CorrosionRate implements Serializable {
    * Sets the ionic strength of the aqueous phase.
    *
    * <p>
-   * Ionic strength affects activity coefficients and thus pH. Typical seawater has I approximately
-   * 0.7 mol/L.
+   * Ionic strength affects activity coefficients and thus pH. Typical seawater has I approximately 0.7 mol/L.
    * </p>
    *
    * @param ionicStrength ionic strength in mol/L (0 to 5)
@@ -332,8 +330,7 @@ public class NorsokM506CorrosionRate implements Serializable {
    * Sets the glycol (MEG/DEG) weight fraction in the aqueous phase.
    *
    * <p>
-   * Glycol reduces water activity and thus the corrosion rate. Typical MEG injection gives 40-80
-   * wt%.
+   * Glycol reduces water activity and thus the corrosion rate. Typical MEG injection gives 40-80 wt%.
    * </p>
    *
    * @param weightFraction glycol weight fraction (0.0 to 1.0)
@@ -379,8 +376,8 @@ public class NorsokM506CorrosionRate implements Serializable {
    * Runs all calculation steps per NORSOK M-506.
    *
    * <p>
-   * Calculates CO2 fugacity, in-situ pH, baseline rate, all correction factors, and the final
-   * corrected corrosion rate. Results are available via getter methods after calling this method.
+   * Calculates CO2 fugacity, in-situ pH, baseline rate, all correction factors, and the final corrected corrosion rate.
+   * Results are available via getter methods after calling this method.
    * </p>
    */
   public void calculate() {
@@ -413,8 +410,8 @@ public class NorsokM506CorrosionRate implements Serializable {
 
     glycolCorrectionFactor = calculateGlycolCorrectionFactor();
 
-    correctedCorrosionRate = baselineCorrosionRate * phCorrectionFactor * scaleCorrectionFactor
-        * flowCorrectionFactor * glycolCorrectionFactor * (1.0 - inhibitorEfficiency);
+    correctedCorrosionRate = baselineCorrosionRate * phCorrectionFactor * scaleCorrectionFactor * flowCorrectionFactor
+	* glycolCorrectionFactor * (1.0 - inhibitorEfficiency);
 
     hasBeenCalculated = true;
   }
@@ -464,9 +461,8 @@ public class NorsokM506CorrosionRate implements Serializable {
    * Calculates the in-situ pH of CO2-saturated water at the given temperature and CO2 fugacity.
    *
    * <p>
-   * Uses the combined equilibrium approach where pH of CO2-saturated water is calculated from the
-   * product of Henry's law constant (KH) and the apparent first dissociation constant (Ka1') of
-   * carbonic acid:
+   * Uses the combined equilibrium approach where pH of CO2-saturated water is calculated from the product of Henry's
+   * law constant (KH) and the apparent first dissociation constant (Ka1') of carbonic acid:
    * </p>
    *
    * <pre>
@@ -478,14 +474,13 @@ public class NorsokM506CorrosionRate implements Serializable {
    * </pre>
    *
    * <p>
-   * The correlation is calibrated against literature data for CO2-water systems (de Waard-Lotz
-   * 1993, Dugstad et al.) giving pH approximately 3.9 at 25 degrees C and 1 bar CO2, increasing
-   * slightly with temperature.
+   * The correlation is calibrated against literature data for CO2-water systems (de Waard-Lotz 1993, Dugstad et al.)
+   * giving pH approximately 3.9 at 25 degrees C and 1 bar CO2, increasing slightly with temperature.
    * </p>
    *
    * <p>
-   * When bicarbonate is present, the pH is calculated from the charge balance. The ionic strength
-   * correction uses the extended Debye-Huckel equation.
+   * When bicarbonate is present, the pH is calculated from the charge balance. The ionic strength correction uses the
+   * extended Debye-Huckel equation.
    * </p>
    *
    * @return calculated pH
@@ -508,8 +503,7 @@ public class NorsokM506CorrosionRate implements Serializable {
 
     // Apply ionic strength correction (extended Debye-Huckel)
     if (ionicStrengthMolL > 0.0) {
-      double correction =
-          DEBYE_HUCKEL_A * Math.sqrt(ionicStrengthMolL) / (1.0 + Math.sqrt(ionicStrengthMolL));
+      double correction = DEBYE_HUCKEL_A * Math.sqrt(ionicStrengthMolL) / (1.0 + Math.sqrt(ionicStrengthMolL));
       // Ionic strength increases apparent Ka1 (lowers pKa1) and slightly affects KH
       pKa1 -= 2.0 * correction;
     }
@@ -527,7 +521,7 @@ public class NorsokM506CorrosionRate implements Serializable {
       double hPlus = (-hco3MolL + Math.sqrt(discriminant)) / 2.0;
 
       if (hPlus <= 0.0) {
-        return 7.0;
+	return 7.0;
       }
       return -Math.log10(hPlus);
     } else {
@@ -550,8 +544,8 @@ public class NorsokM506CorrosionRate implements Serializable {
    * </pre>
    *
    * <p>
-   * where CR is in mm/yr, T in Kelvin, fCO2 (CO2 fugacity) in bar. This equation is valid for the
-   * full temperature range of 5 to 150 degrees C per NORSOK M-506.
+   * where CR is in mm/yr, T in Kelvin, fCO2 (CO2 fugacity) in bar. This equation is valid for the full temperature
+   * range of 5 to 150 degrees C per NORSOK M-506.
    * </p>
    *
    * @return baseline corrosion rate in mm/yr
@@ -644,8 +638,8 @@ public class NorsokM506CorrosionRate implements Serializable {
    * Calculates the scale correction factor (Fscale) for protective FeCO3 film.
    *
    * <p>
-   * Per NORSOK M-506, when the operating temperature exceeds the scaling temperature, a protective
-   * FeCO3 scale forms that reduces the corrosion rate:
+   * Per NORSOK M-506, when the operating temperature exceeds the scaling temperature, a protective FeCO3 scale forms
+   * that reduces the corrosion rate:
    * </p>
    * <ul>
    * <li>T below Tscale: Fscale = 1.0 (no protective scale)</li>
@@ -715,9 +709,9 @@ public class NorsokM506CorrosionRate implements Serializable {
    * Calculates the flow correction factor based on wall shear stress.
    *
    * <p>
-   * Higher flow velocity increases mass transfer of CO2 to the wall and can remove protective
-   * scales. Per NORSOK M-506, the flow correction is based on wall shear stress relative to a
-   * reference stress of 1 Pa. The correction is capped at a factor of 5 per the standard.
+   * Higher flow velocity increases mass transfer of CO2 to the wall and can remove protective scales. Per NORSOK M-506,
+   * the flow correction is based on wall shear stress relative to a reference stress of 1 Pa. The correction is capped
+   * at a factor of 5 per the standard.
    * </p>
    *
    * @return flow correction factor (1.0 to 5.0)
@@ -738,8 +732,8 @@ public class NorsokM506CorrosionRate implements Serializable {
    * Calculates the glycol (MEG/DEG) correction factor.
    *
    * <p>
-   * Per NORSOK M-506, glycol reduces water activity and thus the corrosion rate. The correction
-   * follows an empirical relationship:
+   * Per NORSOK M-506, glycol reduces water activity and thus the corrosion rate. The correction follows an empirical
+   * relationship:
    * </p>
    * <ul>
    * <li>Below 50 wt%: Fglyc = 1 - wg (linear reduction)</li>
@@ -1015,11 +1009,10 @@ public class NorsokM506CorrosionRate implements Serializable {
    *
    * @param minTempC minimum temperature in Celsius
    * @param maxTempC maximum temperature in Celsius
-   * @param steps number of temperature steps
+   * @param steps    number of temperature steps
    * @return list of maps with temperature and corrosion results at each step
    */
-  public List<Map<String, Object>> runTemperatureSweep(double minTempC, double maxTempC,
-      int steps) {
+  public List<Map<String, Object>> runTemperatureSweep(double minTempC, double maxTempC, int steps) {
     List<Map<String, Object>> results = new ArrayList<Map<String, Object>>();
     double savedTemp = this.temperatureC;
 
@@ -1052,11 +1045,10 @@ public class NorsokM506CorrosionRate implements Serializable {
    *
    * @param minPressure minimum total pressure in bara
    * @param maxPressure maximum total pressure in bara
-   * @param steps number of pressure steps
+   * @param steps       number of pressure steps
    * @return list of maps with pressure and corrosion results at each step
    */
-  public List<Map<String, Object>> runPressureSweep(double minPressure, double maxPressure,
-      int steps) {
+  public List<Map<String, Object>> runPressureSweep(double minPressure, double maxPressure, int steps) {
     List<Map<String, Object>> results = new ArrayList<Map<String, Object>>();
     double savedPressure = this.totalPressureBara;
 
@@ -1173,8 +1165,7 @@ public class NorsokM506CorrosionRate implements Serializable {
    * @return JSON string with all parameters and results
    */
   public String toJson() {
-    Gson gson =
-        new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
+    Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
     return gson.toJson(toMap());
   }
 

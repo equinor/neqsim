@@ -9,8 +9,8 @@ import java.util.List;
  * Ordered set of plant-agnostic operational actions for a NeqSim process model.
  *
  * <p>
- * Use this class to represent P&amp;ID-driven changes such as closing a valve, changing a controller
- * output, applying live boundary data, and then running steady-state or dynamic calculations.
+ * Use this class to represent P&amp;ID-driven changes such as closing a valve, changing a controller output, applying
+ * live boundary data, and then running steady-state or dynamic calculations.
  * </p>
  *
  * @author ESOL
@@ -82,7 +82,7 @@ public final class OperationalScenario implements Serializable {
      */
     public Builder addAction(OperationalAction action) {
       if (action == null) {
-        throw new IllegalArgumentException("action must not be null");
+	throw new IllegalArgumentException("action must not be null");
       }
       actions.add(action);
       return this;
@@ -101,7 +101,7 @@ public final class OperationalScenario implements Serializable {
   /**
    * Requires a non-empty text value.
    *
-   * @param text text to validate
+   * @param text      text to validate
    * @param fieldName field name used in error messages
    * @return trimmed text
    * @throws IllegalArgumentException if the text is null or empty

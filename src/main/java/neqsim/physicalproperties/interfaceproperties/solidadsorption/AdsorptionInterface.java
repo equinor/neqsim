@@ -6,15 +6,14 @@ import java.io.Serializable;
  * Interface for adsorption isotherm models.
  *
  * <p>
- * Defines the contract for all gas-solid adsorption calculations in NeqSim, including surface
- * excess computation, solid material selection, and model identification.
+ * Defines the contract for all gas-solid adsorption calculations in NeqSim, including surface excess computation, solid
+ * material selection, and model identification.
  * </p>
  *
  * @author ESOL
  * @version 2.0
  */
-public interface AdsorptionInterface
-    extends neqsim.thermo.ThermodynamicConstantsInterface, Serializable {
+public interface AdsorptionInterface extends neqsim.thermo.ThermodynamicConstantsInterface, Serializable {
 
   /**
    * Calculate adsorption for the specified phase.

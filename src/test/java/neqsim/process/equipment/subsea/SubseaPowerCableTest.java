@@ -60,8 +60,7 @@ public class SubseaPowerCableTest extends neqsim.NeqSimTest {
     cable2.setConductorArea(1000.0);
     cable2.run();
 
-    assertTrue(cable2.getTotalPowerLoss() > cable1.getTotalPowerLoss(),
-        "Longer cable should have higher losses");
+    assertTrue(cable2.getTotalPowerLoss() > cable1.getTotalPowerLoss(), "Longer cable should have higher losses");
   }
 
   @Test
@@ -95,8 +94,8 @@ public class SubseaPowerCableTest extends neqsim.NeqSimTest {
 
   @Test
   public void testEquipmentFactory() {
-    SubseaPowerCable cable = (SubseaPowerCable) neqsim.process.equipment
-        .EquipmentFactory.createEquipment("cable", "subseapowercable");
+    SubseaPowerCable cable = (SubseaPowerCable) neqsim.process.equipment.EquipmentFactory.createEquipment("cable",
+	"subseapowercable");
     assertTrue(cable instanceof SubseaPowerCable);
   }
 }

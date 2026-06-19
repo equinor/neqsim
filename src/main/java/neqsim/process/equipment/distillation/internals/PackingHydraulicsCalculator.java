@@ -8,8 +8,7 @@ import org.apache.logging.log4j.Logger;
  * Packing hydraulics calculator for packed distillation columns.
  *
  * <p>
- * Calculates hydraulic performance and HETP for random and structured packing using
- * industry-standard correlations:
+ * Calculates hydraulic performance and HETP for random and structured packing using industry-standard correlations:
  * </p>
  * <ul>
  * <li>Flooding velocity — Eckert generalized correlation (GPDC chart)</li>
@@ -20,9 +19,8 @@ import org.apache.logging.log4j.Logger;
  * </ul>
  *
  * <p>
- * References: Eckert, J.S. Chem. Eng. Prog. (1970); Leva, M. Chem. Eng. Prog. (1954); Onda, K. J.
- * Chem. Eng. Japan (1968); Kister, H.Z. "Distillation Design" (1992); Billet, R. "Packed Towers"
- * (1995).
+ * References: Eckert, J.S. Chem. Eng. Prog. (1970); Leva, M. Chem. Eng. Prog. (1954); Onda, K. J. Chem. Eng. Japan
+ * (1968); Kister, H.Z. "Distillation Design" (1992); Billet, R. "Packed Towers" (1995).
  * </p>
  *
  * @author NeqSim
@@ -156,7 +154,8 @@ public class PackingHydraulicsCalculator implements Serializable {
   /**
    * Default constructor.
    */
-  public PackingHydraulicsCalculator() {}
+  public PackingHydraulicsCalculator() {
+  }
 
   /**
    * Perform all packing hydraulic calculations.
@@ -179,8 +178,8 @@ public class PackingHydraulicsCalculator implements Serializable {
    * Calculate flooding velocity using the Eckert Generalized Pressure Drop Correlation (GPDC).
    *
    * <p>
-   * The GPDC relates the flow parameter FLV to the capacity parameter Y at flooding. The
-   * Sherwood/Leva/Eckert chart is fitted with a polynomial in log-log space.
+   * The GPDC relates the flow parameter FLV to the capacity parameter Y at flooding. The Sherwood/Leva/Eckert chart is
+   * fitted with a polynomial in log-log space.
    * </p>
    */
   private void calculateFloodingVelocity() {
@@ -235,8 +234,7 @@ public class PackingHydraulicsCalculator implements Serializable {
    * Calculate pressure drop using the Leva correlation for irrigated packing.
    *
    * <p>
-   * Uses the dry packing Ergun-type equation with a Leva wet correction factor that increases with
-   * liquid loading.
+   * Uses the dry packing Ergun-type equation with a Leva wet correction factor that increases with liquid loading.
    * </p>
    */
   private void calculatePressureDrop() {
@@ -253,8 +251,8 @@ public class PackingHydraulicsCalculator implements Serializable {
     double liquidLoading = (columnArea > 0) ? liquidMassFlow / columnArea : 0.0;
 
     // Dry pressure drop per meter
-    double dryDp = a1 * packingFactor * vaporDensity * actualVelocity * actualVelocity
-        / Math.pow(voidFraction, 3) * 0.01; // Pa/m, empirical scale
+    double dryDp = a1 * packingFactor * vaporDensity * actualVelocity * actualVelocity / Math.pow(voidFraction, 3)
+	* 0.01; // Pa/m, empirical scale
 
     // Wet correction factor (Leva): increases exponentially with liquid loading
     double levaC = 0.015; // Typical for metal packing
@@ -278,8 +276,8 @@ public class PackingHydraulicsCalculator implements Serializable {
    * Calculate mass transfer coefficients using the Onda correlation.
    *
    * <p>
-   * The Onda correlation (1968) predicts gas and liquid phase mass transfer coefficients and the
-   * effective wetted area for random and structured packings.
+   * The Onda correlation (1968) predicts gas and liquid phase mass transfer coefficients and the effective wetted area
+   * for random and structured packings.
    * </p>
    */
   private void calculateMassTransfer() {
@@ -308,7 +306,7 @@ public class PackingHydraulicsCalculator implements Serializable {
     double sigmaRatio = criticalSurfaceTension / surfaceTension;
 
     double exponent = -1.45 * Math.pow(sigmaRatio, 0.75) * Math.pow(reL, 0.1) * Math.pow(frL, -0.05)
-        * Math.pow(weL, 0.2);
+	* Math.pow(weL, 0.2);
     double awRatio = 1.0 - Math.exp(exponent);
     awRatio = Math.max(awRatio, 0.2);
     awRatio = Math.min(awRatio, 1.0);
@@ -323,8 +321,7 @@ public class PackingHydraulicsCalculator implements Serializable {
 
     // kG*a = C * (a * D_G / dp^2) * Re_V^0.7 * Sc_V^(1/3)
     double cKg = 5.23; // Onda constant for metal packing
-    kGa = cKg * (specificSurfaceArea * vaporDiffusivity / (dp * dp)) * Math.pow(reV, 0.7)
-        * Math.pow(scV, 1.0 / 3.0);
+    kGa = cKg * (specificSurfaceArea * vaporDiffusivity / (dp * dp)) * Math.pow(reV, 0.7) * Math.pow(scV, 1.0 / 3.0);
 
     // === Liquid-phase mass transfer coefficient (Onda) ===
     // kL * (rho_L / (mu_L * g))^(1/3) = 0.0051 * (L/(aw*mu_L))^(2/3) * (mu_L/(rho_L*D_L))^(-1/2) *
@@ -333,8 +330,8 @@ public class PackingHydraulicsCalculator implements Serializable {
     double scL = liquidViscosity / (liquidDensity * liquidDiffusivity);
 
     double lhsFactor = Math.pow(liquidDensity / (liquidViscosity * g), 1.0 / 3.0);
-    kLa = 0.0051 * Math.pow(reL2, 2.0 / 3.0) * Math.pow(scL, -0.5)
-        * Math.pow(specificSurfaceArea * dp, 0.4) / lhsFactor;
+    kLa = 0.0051 * Math.pow(reL2, 2.0 / 3.0) * Math.pow(scL, -0.5) * Math.pow(specificSurfaceArea * dp, 0.4)
+	/ lhsFactor;
     kLa = kLa * wettedArea; // volumetric coefficient [1/s]
   }
 
@@ -342,8 +339,8 @@ public class PackingHydraulicsCalculator implements Serializable {
    * Calculate HETP from mass transfer coefficients.
    *
    * <p>
-   * Uses the two-resistance model: 1/KOG = 1/kG + m/kL, then HTU_OG = G/(KOG * a * P), and HETP =
-   * HTU_OG * ln(lambda) / (lambda - 1), where lambda = m * G_m / L_m is the stripping factor.
+   * Uses the two-resistance model: 1/KOG = 1/kG + m/kL, then HTU_OG = G/(KOG * a * P), and HETP = HTU_OG * ln(lambda) /
+   * (lambda - 1), where lambda = m * G_m / L_m is the stripping factor.
    * </p>
    */
   private void calculateHETP() {
@@ -411,7 +408,7 @@ public class PackingHydraulicsCalculator implements Serializable {
       // Typical: 25mm Pall Ring → 0.42m, 50mm Pall Ring → 0.72m
       double hetpEst = 0.12 + 0.012 * nominalSize;
       if (columnDiameter > 1.0) {
-        hetpEst *= (1.0 + 0.1 * (columnDiameter - 1.0));
+	hetpEst *= (1.0 + 0.1 * (columnDiameter - 1.0));
       }
       return Math.max(hetpEst, 0.15);
     }
@@ -421,8 +418,8 @@ public class PackingHydraulicsCalculator implements Serializable {
    * Get effective packing diameter for mass-transfer correlations.
    *
    * <p>
-   * Random packings normally provide a nominal size. Structured packings often do not, so an
-   * equivalent hydraulic diameter {@code 4 epsilon / a} is used as a finite fallback.
+   * Random packings normally provide a nominal size. Structured packings often do not, so an equivalent hydraulic
+   * diameter {@code 4 epsilon / a} is used as a finite fallback.
    * </p>
    *
    * @return effective packing diameter in metres
@@ -457,8 +454,8 @@ public class PackingHydraulicsCalculator implements Serializable {
 
     wettingOk = actualRate >= minimumWettingRate;
     if (!wettingOk) {
-      logger.warn("Liquid rate below minimum wetting rate for packing. " + "Actual: " + actualRate
-          + " m3/(m2.s), Min: " + minimumWettingRate);
+      logger.warn("Liquid rate below minimum wetting rate for packing. " + "Actual: " + actualRate + " m3/(m2.s), Min: "
+	  + minimumWettingRate);
     }
   }
 
@@ -470,13 +467,13 @@ public class PackingHydraulicsCalculator implements Serializable {
     if (!designOk) {
       StringBuilder sb = new StringBuilder("Packing hydraulics issues: ");
       if (!wettingOk) {
-        sb.append("[WETTING: liquid rate below minimum for packing] ");
+	sb.append("[WETTING: liquid rate below minimum for packing] ");
       }
       if (percentFlood > 80.0) {
-        sb.append("[FLOODING: > 80% of packing flood, increase diameter] ");
+	sb.append("[FLOODING: > 80% of packing flood, increase diameter] ");
       }
       if (percentFlood < 40.0) {
-        sb.append("[LOW LOAD: < 40% flood, column oversized] ");
+	sb.append("[LOW LOAD: < 40% flood, column oversized] ");
       }
       logger.warn(sb.toString());
     }
@@ -513,11 +510,11 @@ public class PackingHydraulicsCalculator implements Serializable {
    * @return standard diameter [m]
    */
   private double roundToStandardDiameter(double diameter) {
-    double[] standardSizes = {0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.4, 1.5, 1.6, 1.8,
-        2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.4, 3.6, 3.8, 4.0, 4.5, 5.0, 5.5, 6.0, 7.0, 8.0};
+    double[] standardSizes = { 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.4, 1.5, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6,
+	2.8, 3.0, 3.2, 3.4, 3.6, 3.8, 4.0, 4.5, 5.0, 5.5, 6.0, 7.0, 8.0 };
     for (double stdSize : standardSizes) {
       if (stdSize >= diameter) {
-        return stdSize;
+	return stdSize;
       }
     }
     return Math.ceil(diameter * 2.0) / 2.0;
@@ -529,9 +526,8 @@ public class PackingHydraulicsCalculator implements Serializable {
    * Set packing to a standard random packing type.
    *
    * <p>
-   * Supported presets are provided by {@link PackingSpecificationLibrary}. The old hard-coded names
-   * remain available, and additional entries can be supplied through
-   * {@code designdata/Packing.csv}.
+   * Supported presets are provided by {@link PackingSpecificationLibrary}. The old hard-coded names remain available,
+   * and additional entries can be supplied through {@code designdata/Packing.csv}.
    * </p>
    *
    * @param preset packing name preset
@@ -549,9 +545,8 @@ public class PackingHydraulicsCalculator implements Serializable {
    * Set packing to a standard structured packing type.
    *
    * <p>
-   * Supported presets are provided by {@link PackingSpecificationLibrary}. The old hard-coded names
-   * remain available, and additional entries can be supplied through
-   * {@code designdata/Packing.csv}.
+   * Supported presets are provided by {@link PackingSpecificationLibrary}. The old hard-coded names remain available,
+   * and additional entries can be supplied through {@code designdata/Packing.csv}.
    * </p>
    *
    * @param preset structured packing name preset
@@ -559,8 +554,7 @@ public class PackingHydraulicsCalculator implements Serializable {
   public void setStructuredPackingPreset(String preset) {
     PackingSpecification specification = PackingSpecificationLibrary.get(preset);
     if (specification == null) {
-      logger
-          .warn("Unknown structured packing preset: " + preset + ". Using Mellapak-250Y defaults.");
+      logger.warn("Unknown structured packing preset: " + preset + ". Using Mellapak-250Y defaults.");
       specification = PackingSpecificationLibrary.getOrDefault("Mellapak-250Y");
     }
     setPackingSpecification(specification);

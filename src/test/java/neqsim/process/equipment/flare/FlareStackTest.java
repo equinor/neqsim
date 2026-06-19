@@ -41,4 +41,3 @@ public class FlareStackTest {
     assertTrue(flareStack.getEmissionsKgPerHr().get("CO2_kg_h") > 0.0);
   }
 }
-

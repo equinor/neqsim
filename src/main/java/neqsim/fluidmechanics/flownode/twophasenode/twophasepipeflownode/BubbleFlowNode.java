@@ -41,16 +41,14 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface}
-   *        object
+   * @param pipe   a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public BubbleFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
     super(system, pipe);
     this.flowNodeType = "bubble";
     this.interphaseTransportCoefficient = new InterphaseDropletFlow(this);
-    this.fluidBoundary =
-        new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
-            this);
+    this.fluidBoundary = new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
+	this);
   }
 
   /**
@@ -58,19 +56,16 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
    * Constructor for BubbleFlowNode.
    * </p>
    *
-   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   * @param system           a {@link neqsim.thermo.system.SystemInterface} object
    * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface}
-   *        object
+   * @param pipe             a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
-  public BubbleFlowNode(SystemInterface system, SystemInterface interphaseSystem,
-      GeometryDefinitionInterface pipe) {
+  public BubbleFlowNode(SystemInterface system, SystemInterface interphaseSystem, GeometryDefinitionInterface pipe) {
     super(system, pipe);
     this.flowNodeType = "bubble";
     this.interphaseTransportCoefficient = new InterphaseDropletFlow(this);
-    this.fluidBoundary =
-        new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
-            this);
+    this.fluidBoundary = new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
+	this);
   }
 
   /** {@inheritDoc} */
@@ -117,9 +112,8 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
   /** {@inheritDoc} */
   @Override
   public double calcContactLength() {
-    double phaseAngel =
-        pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
-            + Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
+    double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
+	+ Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
     wallContactLength[1] = phaseAngel * pipe.getDiameter();
     wallContactLength[0] = pi * pipe.getDiameter() - wallContactLength[1];
     interphaseContactLength[0] = pipe.getDiameter() * Math.sin(phaseAngel);
@@ -139,8 +133,7 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
    * {@inheritDoc}
    *
    * <p>
-   * For bubble flow, the interfacial area per unit volume is calculated using Sauter mean diameter:
-   * a = 6 * α_G / d_32
+   * For bubble flow, the interfacial area per unit volume is calculated using Sauter mean diameter: a = 6 * α_G / d_32
    * </p>
    */
   @Override
@@ -156,8 +149,7 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
    * {@inheritDoc}
    *
    * <p>
-   * For bubble flow, uses Hinze theory for maximum stable bubble size: d_max = 0.725 * (σ/ρ_L)^0.6
-   * * ε^(-0.4)
+   * For bubble flow, uses Hinze theory for maximum stable bubble size: d_max = 0.725 * (σ/ρ_L)^0.6 * ε^(-0.4)
    * </p>
    */
   @Override
@@ -175,7 +167,7 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
       // Use d_32 ≈ 0.6 * d_max for Sauter mean diameter
       double d32 = 0.6 * dMax;
       if (d32 > 0 && phaseFraction[0] > 0) {
-        return 6.0 * phaseFraction[0] / d32;
+	return 6.0 * phaseFraction[0] / d32;
       }
     }
     return calcGeometricInterfacialAreaPerVolume();
@@ -204,8 +196,7 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
   @SuppressWarnings("unused")
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
-    SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkSchwartzentruberEos(295.3, 50.01325);
+    SystemInterface testSystem = new neqsim.thermo.system.SystemSrkSchwartzentruberEos(295.3, 50.01325);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     PipeData pipe1 = new PipeData(0.0250203, 0.00025);
     testSystem.addComponent("CO2", 100.1061152181, "kg/hr", 0);
@@ -234,15 +225,15 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
       test.initFlowCalc();
       test.calcFluxes();
       if (i > 1 && (i % 100) == 0) {
-        k++;
-        test.display("length " + length);
-        test.getBulkSystem().display("length " + length);
-        // test.getInterphaseSystem().display("length " + length);
-        // test.getFluidBoundary().display("length " + length);
-        // test.setLengthOfNode(0.000005 + test.getLengthOfNode() / 2.0);
-        temperatures2[0][k] = length;
-        temperatures2[1][k] = test.getGeometry().getInnerWallTemperature();
-        // test.getFluidBoundary().display("test");
+	k++;
+	test.display("length " + length);
+	test.getBulkSystem().display("length " + length);
+	// test.getInterphaseSystem().display("length " + length);
+	// test.getFluidBoundary().display("length " + length);
+	// test.setLengthOfNode(0.000005 + test.getLengthOfNode() / 2.0);
+	temperatures2[0][k] = length;
+	temperatures2[1][k] = test.getGeometry().getInnerWallTemperature();
+	// test.getFluidBoundary().display("test");
       }
 
       // test.getBulkSystem().display();

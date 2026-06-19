@@ -14,8 +14,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Tests for {@link CapillaryDewPointFlash}.
  *
  * <p>
- * Verifies that the capillary dew point temperature is higher than the bulk dew point, and that the
- * shift increases with decreasing pore radius.
+ * Verifies that the capillary dew point temperature is higher than the bulk dew point, and that the shift increases
+ * with decreasing pore radius.
  * </p>
  */
 public class CapillaryDewPointFlashTest {
@@ -45,8 +45,7 @@ public class CapillaryDewPointFlashTest {
     capOps.capillaryDewPointTemperatureFlash(1.0e-6);
     double tCap = capFluid.getTemperature();
 
-    assertTrue(tCap > tBulk,
-        "Capillary dew point (" + tCap + " K) should be higher than bulk (" + tBulk + " K)");
+    assertTrue(tCap > tBulk, "Capillary dew point (" + tCap + " K) should be higher than bulk (" + tBulk + " K)");
     double deltaT = tCap - tBulk;
     assertTrue(deltaT > 0.0001, "Temperature shift should be measurable, got: " + deltaT + " K");
     assertTrue(deltaT < 50.0, "Temperature shift should be reasonable, got: " + deltaT + " K");
@@ -87,7 +86,7 @@ public class CapillaryDewPointFlashTest {
     double shiftSmall = tSmall - tBulk;
 
     assertTrue(shiftSmall > shiftLarge,
-        "Smaller pore should give larger shift: " + shiftSmall + " K vs " + shiftLarge + " K");
+	"Smaller pore should give larger shift: " + shiftSmall + " K vs " + shiftLarge + " K");
   }
 
   /**
@@ -182,8 +181,7 @@ public class CapillaryDewPointFlashTest {
     double shift30 = t30 - tBulk;
 
     // Contact angle reduces the effective capillary pressure, so shift should be smaller
-    assertTrue(shift30 < shiftPerfect,
-        "30 degree contact angle should give smaller shift than perfect wetting");
+    assertTrue(shift30 < shiftPerfect, "30 degree contact angle should give smaller shift than perfect wetting");
     assertTrue(shift30 > 0, "30 degree contact angle should still give positive shift");
   }
 
@@ -227,7 +225,6 @@ public class CapillaryDewPointFlashTest {
 
     double deltaT = tCap - tBulk;
     // For 1 mm pore, shift should be negligible (< 0.001 K)
-    assertEquals(0.0, deltaT, 0.01,
-        "Large pore (1 mm) should give negligible shift, got: " + deltaT + " K");
+    assertEquals(0.0, deltaT, 0.01, "Large pore (1 mm) should give negligible shift, got: " + deltaT + " K");
   }
 }

@@ -9,15 +9,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Structured result of an exergy analysis over a {@code ProcessSystem} or {@code ProcessModel}.
- * Contains one row per unit operation with its exergy change across material streams and its exergy
- * destruction rate, plus convenience aggregation / ranking / reporting helpers suitable for large
- * flowsheets.
+ * Structured result of an exergy analysis over a {@code ProcessSystem} or {@code ProcessModel}. Contains one row per
+ * unit operation with its exergy change across material streams and its exergy destruction rate, plus convenience
+ * aggregation / ranking / reporting helpers suitable for large flowsheets.
  *
  * <p>
- * All energies are stored internally in Joules (J). For steady-state process simulations in NeqSim,
- * stream enthalpy/entropy are per-second quantities so "J" is equivalent to "W" and may be reported
- * as such via {@link #toString(String)}.
+ * All energies are stored internally in Joules (J). For steady-state process simulations in NeqSim, stream
+ * enthalpy/entropy are per-second quantities so "J" is equivalent to "W" and may be reported as such via
+ * {@link #toString(String)}.
  * </p>
  *
  * @author esol
@@ -40,14 +39,13 @@ public class ExergyAnalysisReport implements Serializable {
     /**
      * Create a new entry.
      *
-     * @param name unit name
-     * @param type simple class name of the unit
-     * @param area process area name (may be {@code null} for flat ProcessSystem)
-     * @param exergyChangeJ net change in stream exergy across the unit (outlet − inlet) in Joules
+     * @param name               unit name
+     * @param type               simple class name of the unit
+     * @param area               process area name (may be {@code null} for flat ProcessSystem)
+     * @param exergyChangeJ      net change in stream exergy across the unit (outlet − inlet) in Joules
      * @param exergyDestructionJ exergy destruction rate in Joules (always non-negative)
      */
-    public Entry(String name, String type, String area, double exergyChangeJ,
-        double exergyDestructionJ) {
+    public Entry(String name, String type, String area, double exergyChangeJ, double exergyDestructionJ) {
       this.name = name;
       this.type = type;
       this.area = area;
@@ -113,8 +111,7 @@ public class ExergyAnalysisReport implements Serializable {
   /**
    * Create an empty report.
    *
-   * @param surroundingTemperatureK surrounding ("dead-state") temperature in K used when computing
-   *        exergy
+   * @param surroundingTemperatureK surrounding ("dead-state") temperature in K used when computing exergy
    */
   public ExergyAnalysisReport(double surroundingTemperatureK) {
     this.surroundingTemperatureK = surroundingTemperatureK;
@@ -153,8 +150,8 @@ public class ExergyAnalysisReport implements Serializable {
   }
 
   /**
-   * Returns the top-N entries with the largest exergy destruction. Useful for hot-spot
-   * identification on large processes.
+   * Returns the top-N entries with the largest exergy destruction. Useful for hot-spot identification on large
+   * processes.
    *
    * @param n number of entries to return; values &lt;= 0 return the full list sorted
    * @return a new list of entries sorted by descending destruction
@@ -164,7 +161,7 @@ public class ExergyAnalysisReport implements Serializable {
     Collections.sort(sorted, new Comparator<Entry>() {
       @Override
       public int compare(Entry a, Entry b) {
-        return Double.compare(b.exergyDestructionJ, a.exergyDestructionJ);
+	return Double.compare(b.exergyDestructionJ, a.exergyDestructionJ);
       }
     });
     if (n <= 0 || n >= sorted.size()) {
@@ -198,8 +195,7 @@ public class ExergyAnalysisReport implements Serializable {
   }
 
   /**
-   * Groups the total exergy destruction by process area. Returns an empty map when no entries carry
-   * an area.
+   * Groups the total exergy destruction by process area. Returns an empty map when no entries carry an area.
    *
    * @param unit energy unit
    * @return map from area name to total destruction in the requested unit
@@ -208,7 +204,7 @@ public class ExergyAnalysisReport implements Serializable {
     Map<String, Double> out = new LinkedHashMap<String, Double>();
     for (Entry e : entries) {
       if (e.area == null) {
-        continue;
+	continue;
       }
       Double prev = out.get(e.area);
       double cur = prev == null ? 0.0 : prev.doubleValue();
@@ -242,20 +238,20 @@ public class ExergyAnalysisReport implements Serializable {
    */
   public String toString(String unit) {
     StringBuilder sb = new StringBuilder();
-    sb.append("Exergy analysis (T0 = ").append(String.format("%.2f", surroundingTemperatureK))
-        .append(" K, unit = ").append(unit).append(")\n");
-    sb.append(String.format("%-30s %-20s %-15s %15s %15s%n", "Unit", "Type", "Area",
-        "dE (" + unit + ")", "Destr (" + unit + ")"));
+    sb.append("Exergy analysis (T0 = ").append(String.format("%.2f", surroundingTemperatureK)).append(" K, unit = ")
+	.append(unit).append(")\n");
+    sb.append(String.format("%-30s %-20s %-15s %15s %15s%n", "Unit", "Type", "Area", "dE (" + unit + ")",
+	"Destr (" + unit + ")"));
     sb.append(repeat('-', 100)).append('\n');
     List<Entry> sorted = getTopDestructionHotspots(0);
     for (Entry e : sorted) {
-      sb.append(String.format("%-30s %-20s %-15s %15.3f %15.3f%n", clip(e.name, 30),
-          clip(e.type == null ? "" : e.type, 20), clip(e.area == null ? "" : e.area, 15),
-          e.getExergyChange(unit), e.getExergyDestruction(unit)));
+      sb.append(
+	  String.format("%-30s %-20s %-15s %15.3f %15.3f%n", clip(e.name, 30), clip(e.type == null ? "" : e.type, 20),
+	      clip(e.area == null ? "" : e.area, 15), e.getExergyChange(unit), e.getExergyDestruction(unit)));
     }
     sb.append(repeat('-', 100)).append('\n');
-    sb.append(String.format("%-67s %15.3f %15.3f%n", "TOTAL", getTotalExergyChange(unit),
-        getTotalExergyDestruction(unit)));
+    sb.append(
+	String.format("%-67s %15.3f %15.3f%n", "TOTAL", getTotalExergyChange(unit), getTotalExergyDestruction(unit)));
     return sb.toString();
   }
 
@@ -265,8 +261,7 @@ public class ExergyAnalysisReport implements Serializable {
   }
 
   /**
-   * Serialize the report to JSON. Output contains surrounding temperature, totals and an array of
-   * per-unit rows.
+   * Serialize the report to JSON. Output contains surrounding temperature, totals and an array of per-unit rows.
    *
    * @return a JSON string
    */
@@ -280,14 +275,13 @@ public class ExergyAnalysisReport implements Serializable {
     for (int i = 0; i < entries.size(); i++) {
       Entry e = entries.get(i);
       if (i > 0) {
-        sb.append(',');
+	sb.append(',');
       }
-      sb.append('{').append("\"name\":\"").append(escape(e.name)).append('\"').append(',')
-          .append("\"type\":\"").append(escape(e.type == null ? "" : e.type)).append('\"')
-          .append(',').append("\"area\":")
-          .append(e.area == null ? "null" : ("\"" + escape(e.area) + "\"")).append(',')
-          .append("\"exergyChangeJ\":").append(e.exergyChangeJ).append(',')
-          .append("\"exergyDestructionJ\":").append(e.exergyDestructionJ).append('}');
+      sb.append('{').append("\"name\":\"").append(escape(e.name)).append('\"').append(',').append("\"type\":\"")
+	  .append(escape(e.type == null ? "" : e.type)).append('\"').append(',').append("\"area\":")
+	  .append(e.area == null ? "null" : ("\"" + escape(e.area) + "\"")).append(',').append("\"exergyChangeJ\":")
+	  .append(e.exergyChangeJ).append(',').append("\"exergyDestructionJ\":").append(e.exergyDestructionJ)
+	  .append('}');
     }
     sb.append("]}");
     return sb.toString();
@@ -301,7 +295,7 @@ public class ExergyAnalysisReport implements Serializable {
    * Convert Joules to the requested unit.
    *
    * @param valueJ value in Joules
-   * @param unit target unit ("J", "kJ", "MJ", "W", "kW", "MW")
+   * @param unit   target unit ("J", "kJ", "MJ", "W", "kW", "MW")
    * @return converted value
    */
   private static double convert(double valueJ, String unit) {
@@ -338,7 +332,7 @@ public class ExergyAnalysisReport implements Serializable {
   /**
    * Truncate {@code s} to at most {@code max} characters.
    *
-   * @param s input string (may be {@code null})
+   * @param s   input string (may be {@code null})
    * @param max maximum length
    * @return truncated string, never {@code null}
    */
@@ -366,23 +360,23 @@ public class ExergyAnalysisReport implements Serializable {
     for (int i = 0; i < s.length(); i++) {
       char c = s.charAt(i);
       switch (c) {
-        case '"':
-          sb.append("\\\"");
-          break;
-        case '\\':
-          sb.append("\\\\");
-          break;
-        case '\n':
-          sb.append("\\n");
-          break;
-        case '\r':
-          sb.append("\\r");
-          break;
-        case '\t':
-          sb.append("\\t");
-          break;
-        default:
-          sb.append(c);
+      case '"':
+	sb.append("\\\"");
+	break;
+      case '\\':
+	sb.append("\\\\");
+	break;
+      case '\n':
+	sb.append("\\n");
+	break;
+      case '\r':
+	sb.append("\\r");
+	break;
+      case '\t':
+	sb.append("\\t");
+	break;
+      default:
+	sb.append(c);
       }
     }
     return sb.toString();

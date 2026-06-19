@@ -31,22 +31,23 @@ public final class NumericalDerivative implements java.io.Serializable {
   /**
    * Dummy constructor, not for use. Class is to be considered static.
    */
-  private NumericalDerivative() {}
+  private NumericalDerivative() {
+  }
 
   /**
    * <p>
    * fugcoefDiffPres.
    * </p>
    *
-   * @param component a {@link neqsim.thermo.component.ComponentInterface} object
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param component          a {@link neqsim.thermo.component.ComponentInterface} object
+   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature a double
-   * @param pressure a double
+   * @param temperature        a double
+   * @param pressure           a double
    * @return a double
    */
-  public static double fugcoefDiffPres(ComponentInterface component, PhaseInterface phase,
-      int numberOfComponents, double temperature, double pressure) {
+  public static double fugcoefDiffPres(ComponentInterface component, PhaseInterface phase, int numberOfComponents,
+      double temperature, double pressure) {
     double ans = 00001;
     // double errt, fac, hh, err = 0.0000000001;
     // double h = pressure / 50;
@@ -93,16 +94,16 @@ public final class NumericalDerivative implements java.io.Serializable {
    * fugcoefDiffTemp.
    * </p>
    *
-   * @param component a {@link neqsim.thermo.component.ComponentInterface} object
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param component          a {@link neqsim.thermo.component.ComponentInterface} object
+   * @param phase              a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
-   * @param temperature a double
-   * @param pressure a double
-   * @param pt the PhaseType of the phase
+   * @param temperature        a double
+   * @param pressure           a double
+   * @param pt                 the PhaseType of the phase
    * @return a double
    */
-  public static double fugcoefDiffTemp(ComponentInterface component, PhaseInterface phase,
-      int numberOfComponents, double temperature, double pressure, PhaseType pt) {
+  public static double fugcoefDiffTemp(ComponentInterface component, PhaseInterface phase, int numberOfComponents,
+      double temperature, double pressure, PhaseType pt) {
     double ans = 0.000001;
     // double errt, fac, hh, err = 0.00000000000001;
     // double h = temperature / 50;

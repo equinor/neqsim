@@ -20,7 +20,7 @@ public class ModelTest {
   private static final Logger logger = LogManager.getLogger(ModelTest.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.
@@ -71,8 +71,7 @@ public class ModelTest {
     testOps.TPflash();
     testSystem.init(3);
 
-    neqsim.thermo.ThermodynamicModelTest testModel =
-        new neqsim.thermo.ThermodynamicModelTest(testSystem);
+    neqsim.thermo.ThermodynamicModelTest testModel = new neqsim.thermo.ThermodynamicModelTest(testSystem);
     testModel.runTest();
     // testSystem.display();
 

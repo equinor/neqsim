@@ -17,9 +17,8 @@ import neqsim.thermo.system.SystemInterface;
  * Top-level orchestrator for LNG ageing simulations.
  *
  * <p>
- * Coordinates all sub-models (layered tank, vapor space, BOG handling, rollover detection, heel
- * management, voyage profile) to produce a time-resolved simulation of LNG composition and quality
- * changes during transport.
+ * Coordinates all sub-models (layered tank, vapor space, BOG handling, rollover detection, heel management, voyage
+ * profile) to produce a time-resolved simulation of LNG composition and quality changes during transport.
  * </p>
  *
  * <p>
@@ -148,7 +147,7 @@ public class LNGAgeingScenario extends ProcessEquipmentBaseClass {
   /**
    * Constructor with name and inlet stream.
    *
-   * @param name equipment name
+   * @param name        equipment name
    * @param inletStream LNG cargo stream
    */
   public LNGAgeingScenario(String name, StreamInterface inletStream) {
@@ -207,8 +206,7 @@ public class LNGAgeingScenario extends ProcessEquipmentBaseClass {
     initialResult.setPressure(tankPressure);
     initialResult.setDensity(tankModel.getBulkDensity());
     initialResult.setLiquidMoles(tankModel.getTotalLiquidMoles());
-    initialResult.setLiquidComposition(
-        new LinkedHashMap<String, Double>(tankModel.getBulkLiquidComposition()));
+    initialResult.setLiquidComposition(new LinkedHashMap<String, Double>(tankModel.getBulkLiquidComposition()));
     initialResult.setAmbientTemperature(getAmbientTemperatureAt(0));
     initialResult.setNumberOfLayers(tankModel.getLayers().size());
     results.add(initialResult);
@@ -230,35 +228,33 @@ public class LNGAgeingScenario extends ProcessEquipmentBaseClass {
       double bogMassKg = stepResult.getBogMassFlowRate() * timeStepHours;
       double liquidVol = stepResult.getLiquidVolume();
       vaporSpaceModel.update(bogMassKg, bogMassKg, liquidVol, stepResult.getVaporComposition(),
-          stepResult.getTemperature());
+	  stepResult.getTemperature());
       stepResult.setPressure(vaporSpaceModel.getTankPressure());
 
       // Rollover assessment
-      LNGRolloverDetector.RolloverAssessment rollover =
-          rolloverDetector.assess(tankModel.getLayers());
+      LNGRolloverDetector.RolloverAssessment rollover = rolloverDetector.assess(tankModel.getLayers());
       stepResult.setMaxLayerDensityDifference(rollover.getMaxDensityDifference());
-      stepResult.setRolloverRisk(rollover.getRiskLevel()
-          .ordinal() >= LNGRolloverDetector.RolloverRiskLevel.MEDIUM.ordinal());
+      stepResult
+	  .setRolloverRisk(rollover.getRiskLevel().ordinal() >= LNGRolloverDetector.RolloverRiskLevel.MEDIUM.ordinal());
 
       // BOG handling disposition
-      LNGBOGHandlingNetwork.BOGDisposition disposition =
-          bogNetwork.calculateDisposition(stepResult.getBogMassFlowRate());
+      LNGBOGHandlingNetwork.BOGDisposition disposition = bogNetwork
+	  .calculateDisposition(stepResult.getBogMassFlowRate());
 
       results.add(stepResult);
 
       // Log warnings if rollover risk detected
-      if (rollover.getRiskLevel().ordinal() >= LNGRolloverDetector.RolloverRiskLevel.MEDIUM
-          .ordinal()) {
-        logger.warn(String.format("Rollover risk %s at t=%.1f h: max drho=%.2f kg/m3",
-            rollover.getRiskLevel(), currentTime, rollover.getMaxDensityDifference()));
+      if (rollover.getRiskLevel().ordinal() >= LNGRolloverDetector.RolloverRiskLevel.MEDIUM.ordinal()) {
+	logger.warn(String.format("Rollover risk %s at t=%.1f h: max drho=%.2f kg/m3", rollover.getRiskLevel(),
+	    currentTime, rollover.getMaxDensityDifference()));
       }
     }
 
     // Create outlet streams from final state
     createOutletStreams(lngFluid);
 
-    logger.info(String.format("LNG ageing simulation complete: %d steps, %.1f hours, %d results",
-        numSteps, simulationTime, results.size()));
+    logger.info(String.format("LNG ageing simulation complete: %d steps, %.1f hours, %d results", numSteps,
+	simulationTime, results.size()));
   }
 
   /**
@@ -274,9 +270,9 @@ public class LNGAgeingScenario extends ProcessEquipmentBaseClass {
       // Create aged LNG stream
       SystemInterface agedFluid = baseFluid.clone();
       for (int i = 0; i < agedFluid.getNumberOfComponents(); i++) {
-        String compName = agedFluid.getComponent(i).getComponentName();
-        double moleFrac = liqComp.containsKey(compName) ? liqComp.get(compName) : 0;
-        agedFluid.addComponent(i, moleFrac - agedFluid.getComponent(i).getz());
+	String compName = agedFluid.getComponent(i).getComponentName();
+	double moleFrac = liqComp.containsKey(compName) ? liqComp.get(compName) : 0;
+	agedFluid.addComponent(i, moleFrac - agedFluid.getComponent(i).getz());
       }
       agedFluid.setTemperature(lastResult.getTemperature());
       agedFluid.setPressure(lastResult.getPressure());
@@ -673,25 +669,17 @@ public class LNGAgeingScenario extends ProcessEquipmentBaseClass {
 
     StringBuilder sb = new StringBuilder();
     sb.append("=== LNG Ageing Simulation Summary ===\n");
-    sb.append(
-        String.format("Duration: %.1f hours (%.1f days)\n", simulationTime, simulationTime / 24.0));
-    sb.append(String.format("Tank volume: %.0f m3, fill: %.0f%%\n", tankVolume,
-        initialFillingRatio * 100));
+    sb.append(String.format("Duration: %.1f hours (%.1f days)\n", simulationTime, simulationTime / 24.0));
+    sb.append(String.format("Tank volume: %.0f m3, fill: %.0f%%\n", tankVolume, initialFillingRatio * 100));
     sb.append(String.format("Heat transfer coeff: %.4f W/m2/K\n", overallHeatTransferCoeff));
     sb.append("\n--- Initial vs Final ---\n");
-    sb.append(String.format("Temperature: %.2f -> %.2f K (%.2f -> %.2f C)\n",
-        first.getTemperature(), last.getTemperature(), first.getTemperature() - 273.15,
-        last.getTemperature() - 273.15));
-    sb.append(
-        String.format("Density: %.2f -> %.2f kg/m3\n", first.getDensity(), last.getDensity()));
-    sb.append(String.format("Wobbe Index: %.2f -> %.2f MJ/Sm3\n", first.getWobbeIndex(),
-        last.getWobbeIndex()));
-    sb.append(String.format("GCV (vol): %.2f -> %.2f MJ/Sm3\n", first.getGcvVolumetric(),
-        last.getGcvVolumetric()));
-    sb.append(
-        String.format("GCV (mass): %.4f -> %.4f MJ/kg\n", first.getGcvMass(), last.getGcvMass()));
-    sb.append(String.format("Liquid volume: %.0f -> %.0f m3\n", first.getLiquidVolume(),
-        last.getLiquidVolume()));
+    sb.append(String.format("Temperature: %.2f -> %.2f K (%.2f -> %.2f C)\n", first.getTemperature(),
+	last.getTemperature(), first.getTemperature() - 273.15, last.getTemperature() - 273.15));
+    sb.append(String.format("Density: %.2f -> %.2f kg/m3\n", first.getDensity(), last.getDensity()));
+    sb.append(String.format("Wobbe Index: %.2f -> %.2f MJ/Sm3\n", first.getWobbeIndex(), last.getWobbeIndex()));
+    sb.append(String.format("GCV (vol): %.2f -> %.2f MJ/Sm3\n", first.getGcvVolumetric(), last.getGcvVolumetric()));
+    sb.append(String.format("GCV (mass): %.4f -> %.4f MJ/kg\n", first.getGcvMass(), last.getGcvMass()));
+    sb.append(String.format("Liquid volume: %.0f -> %.0f m3\n", first.getLiquidVolume(), last.getLiquidVolume()));
 
     // BOR statistics
     double maxBOR = 0;
@@ -712,9 +700,9 @@ public class LNGAgeingScenario extends ProcessEquipmentBaseClass {
    * Represents an operational event during an LNG voyage or storage period.
    *
    * <p>
-   * Events change the tank operating mode at a specified time. Supported event types include
-   * loading/unloading (which add/remove cargo), cooldown (spray-cooling to reduce temperature), and
-   * mode changes (e.g., switch between laden voyage and ballast).
+   * Events change the tank operating mode at a specified time. Supported event types include loading/unloading (which
+   * add/remove cargo), cooldown (spray-cooling to reduce temperature), and mode changes (e.g., switch between laden
+   * voyage and ballast).
    * </p>
    *
    * @author NeqSim
@@ -762,9 +750,9 @@ public class LNGAgeingScenario extends ProcessEquipmentBaseClass {
     /**
      * Constructor.
      *
-     * @param eventType type of event
+     * @param eventType      type of event
      * @param startTimeHours start time (hours)
-     * @param durationHours duration (hours)
+     * @param durationHours  duration (hours)
      */
     public OperationalEvent(EventType eventType, double startTimeHours, double durationHours) {
       this.eventType = eventType;

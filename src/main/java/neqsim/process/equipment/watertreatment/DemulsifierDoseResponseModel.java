@@ -10,10 +10,9 @@ import com.google.gson.GsonBuilder;
  * Calibratable dose-response model for demulsifier impact on oil-in-water concentration.
  *
  * <p>
- * The model uses a Hill saturation curve for normal demulsifier response and an overdose penalty
- * above an optimum dose. It is intended for screening, reconciliation to bottle tests, and hybrid
- * physics-data workflows where NeqSim supplies fluid and separator features while plant data
- * calibrates the field response.
+ * The model uses a Hill saturation curve for normal demulsifier response and an overdose penalty above an optimum dose.
+ * It is intended for screening, reconciliation to bottle tests, and hybrid physics-data workflows where NeqSim supplies
+ * fluid and separator features while plant data calibrates the field response.
  * </p>
  *
  * @author ESOL
@@ -55,7 +54,8 @@ public class DemulsifierDoseResponseModel implements Serializable {
   /**
    * Creates a dose-response model with conservative default parameters.
    */
-  public DemulsifierDoseResponseModel() {}
+  public DemulsifierDoseResponseModel() {
+  }
 
   /**
    * Calculates the fractional OIW removal from an effective demulsifier dose.
@@ -85,7 +85,7 @@ public class DemulsifierDoseResponseModel implements Serializable {
    * Predicts outlet OIW from untreated OIW and effective demulsifier dose.
    *
    * @param untreatedOilInWaterMgL untreated or pre-chemical OIW concentration in mg/L
-   * @param effectiveDosePpm effective demulsifier dose in ppm by produced-water mass
+   * @param effectiveDosePpm       effective demulsifier dose in ppm by produced-water mass
    * @return predicted OIW concentration in mg/L
    */
   public double predictOilInWater(double untreatedOilInWaterMgL, double effectiveDosePpm) {
@@ -105,20 +105,17 @@ public class DemulsifierDoseResponseModel implements Serializable {
    * Calibrates the model parameters to paired dose and OIW field or bottle-test data.
    *
    * <p>
-   * The calibration uses a deterministic grid search so it remains dependency-free and Java 8
-   * compatible. It is suitable for initial model fitting before a more advanced external optimizer
-   * is used.
+   * The calibration uses a deterministic grid search so it remains dependency-free and Java 8 compatible. It is
+   * suitable for initial model fitting before a more advanced external optimizer is used.
    * </p>
    *
-   * @param dosePpm demulsifier doses in ppm
-   * @param observedOilInWaterMgL observed OIW concentrations in mg/L
+   * @param dosePpm                demulsifier doses in ppm
+   * @param observedOilInWaterMgL  observed OIW concentrations in mg/L
    * @param untreatedOilInWaterMgL untreated or zero-chemical reference OIW in mg/L
    * @return root mean square error after calibration in mg/L
-   * @throws IllegalArgumentException if the arrays are null, have different lengths, or contain
-   *         fewer than two points
+   * @throws IllegalArgumentException if the arrays are null, have different lengths, or contain fewer than two points
    */
-  public double calibrate(double[] dosePpm, double[] observedOilInWaterMgL,
-      double untreatedOilInWaterMgL) {
+  public double calibrate(double[] dosePpm, double[] observedOilInWaterMgL, double untreatedOilInWaterMgL) {
     validateCalibrationData(dosePpm, observedOilInWaterMgL);
     double minPositiveDose = findMinPositiveDose(dosePpm);
     double maxDose = findMaxDose(dosePpm);
@@ -127,9 +124,9 @@ public class DemulsifierDoseResponseModel implements Serializable {
     }
 
     double[] halfDoseCandidates = buildHalfDoseCandidates(minPositiveDose, maxDose);
-    double[] hillCandidates = {0.8, 1.0, 1.5, 2.0, 3.0};
-    double[] optimumCandidates = {0.6 * maxDose, 0.8 * maxDose, maxDose, 1.25 * maxDose};
-    double[] overdoseCandidates = {0.0, 0.15, 0.30, 0.60, 1.0};
+    double[] hillCandidates = { 0.8, 1.0, 1.5, 2.0, 3.0 };
+    double[] optimumCandidates = { 0.6 * maxDose, 0.8 * maxDose, maxDose, 1.25 * maxDose };
+    double[] overdoseCandidates = { 0.0, 0.15, 0.30, 0.60, 1.0 };
 
     double bestError = Double.POSITIVE_INFINITY;
     double bestMaxRemoval = maxRemovalFraction;
@@ -140,28 +137,26 @@ public class DemulsifierDoseResponseModel implements Serializable {
 
     for (double maxRemoval = 0.10; maxRemoval <= 0.951; maxRemoval += 0.05) {
       for (int halfIndex = 0; halfIndex < halfDoseCandidates.length; halfIndex++) {
-        for (int hillIndex = 0; hillIndex < hillCandidates.length; hillIndex++) {
-          for (int optimumIndex = 0; optimumIndex < optimumCandidates.length; optimumIndex++) {
-            for (int overdoseIndex =
-                0; overdoseIndex < overdoseCandidates.length; overdoseIndex++) {
-              maxRemovalFraction = maxRemoval;
-              halfEffectDosePpm = halfDoseCandidates[halfIndex];
-              hillCoefficient = hillCandidates[hillIndex];
-              optimumDosePpm = Math.max(minPositiveDose, optimumCandidates[optimumIndex]);
-              overdoseSensitivity = overdoseCandidates[overdoseIndex];
-              double error = calculateRootMeanSquareError(dosePpm, observedOilInWaterMgL,
-                  untreatedOilInWaterMgL);
-              if (error < bestError) {
-                bestError = error;
-                bestMaxRemoval = maxRemovalFraction;
-                bestHalfDose = halfEffectDosePpm;
-                bestHill = hillCoefficient;
-                bestOptimum = optimumDosePpm;
-                bestOverdose = overdoseSensitivity;
-              }
-            }
-          }
-        }
+	for (int hillIndex = 0; hillIndex < hillCandidates.length; hillIndex++) {
+	  for (int optimumIndex = 0; optimumIndex < optimumCandidates.length; optimumIndex++) {
+	    for (int overdoseIndex = 0; overdoseIndex < overdoseCandidates.length; overdoseIndex++) {
+	      maxRemovalFraction = maxRemoval;
+	      halfEffectDosePpm = halfDoseCandidates[halfIndex];
+	      hillCoefficient = hillCandidates[hillIndex];
+	      optimumDosePpm = Math.max(minPositiveDose, optimumCandidates[optimumIndex]);
+	      overdoseSensitivity = overdoseCandidates[overdoseIndex];
+	      double error = calculateRootMeanSquareError(dosePpm, observedOilInWaterMgL, untreatedOilInWaterMgL);
+	      if (error < bestError) {
+		bestError = error;
+		bestMaxRemoval = maxRemovalFraction;
+		bestHalfDose = halfEffectDosePpm;
+		bestHill = hillCoefficient;
+		bestOptimum = optimumDosePpm;
+		bestOverdose = overdoseSensitivity;
+	      }
+	    }
+	  }
+	}
       }
     }
 
@@ -202,8 +197,7 @@ public class DemulsifierDoseResponseModel implements Serializable {
     data.put("lastDosePpm", lastDosePpm);
     data.put("lastEffectiveRemovalFraction", lastEffectiveRemovalFraction);
     data.put("lastPredictedOilInWaterMgL", lastPredictedOilInWaterMgL);
-    Gson gson =
-        new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+    Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
     return gson.toJson(data);
   }
 
@@ -224,7 +218,7 @@ public class DemulsifierDoseResponseModel implements Serializable {
   /**
    * Validates calibration arrays before fitting.
    *
-   * @param dosePpm dose array
+   * @param dosePpm               dose array
    * @param observedOilInWaterMgL observed OIW array
    * @throws IllegalArgumentException if the arrays cannot be calibrated
    */
@@ -243,8 +237,8 @@ public class DemulsifierDoseResponseModel implements Serializable {
   /**
    * Calculates RMSE for the current parameters.
    *
-   * @param dosePpm dose array
-   * @param observedOilInWaterMgL observed OIW array
+   * @param dosePpm                dose array
+   * @param observedOilInWaterMgL  observed OIW array
    * @param untreatedOilInWaterMgL untreated OIW reference
    * @return root mean square error in mg/L
    */
@@ -263,7 +257,7 @@ public class DemulsifierDoseResponseModel implements Serializable {
    * Builds half-dose candidates for the deterministic grid search.
    *
    * @param minPositiveDose minimum positive dose in the data
-   * @param maxDose maximum dose in the data
+   * @param maxDose         maximum dose in the data
    * @return array of candidate half-effect doses
    */
   private double[] buildHalfDoseCandidates(double minPositiveDose, double maxDose) {
@@ -287,7 +281,7 @@ public class DemulsifierDoseResponseModel implements Serializable {
     double minDose = Double.POSITIVE_INFINITY;
     for (int index = 0; index < dosePpm.length; index++) {
       if (dosePpm[index] > 0.0 && dosePpm[index] < minDose) {
-        minDose = dosePpm[index];
+	minDose = dosePpm[index];
       }
     }
     return Double.isInfinite(minDose) ? 1.0 : minDose;

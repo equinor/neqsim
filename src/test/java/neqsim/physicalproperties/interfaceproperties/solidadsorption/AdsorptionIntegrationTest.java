@@ -13,8 +13,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Integration tests for adsorption and capillary condensation models.
  *
  * <p>
- * Tests realistic scenarios combining adsorption isotherms with capillary condensation for
- * mesoporous materials.
+ * Tests realistic scenarios combining adsorption isotherms with capillary condensation for mesoporous materials.
  * </p>
  *
  * @author ESOL

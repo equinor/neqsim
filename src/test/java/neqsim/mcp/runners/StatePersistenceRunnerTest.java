@@ -42,36 +42,31 @@ class StatePersistenceRunnerTest {
 
   @Test
   void loadStateRejectsFilePathOutsideStorageDirectory() {
-    String outside = Paths.get(System.getProperty("java.io.tmpdir"), "outside-state.json")
-        .toString().replace("\\", "\\\\");
-    String result =
-        StatePersistenceRunner.run("{\"action\": \"load\", \"filePath\": \"" + outside + "\"}");
+    String outside = Paths.get(System.getProperty("java.io.tmpdir"), "outside-state.json").toString().replace("\\",
+	"\\\\");
+    String result = StatePersistenceRunner.run("{\"action\": \"load\", \"filePath\": \"" + outside + "\"}");
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
     assertEquals("error", obj.get("status").getAsString());
-    assertEquals("INVALID_PATH",
-        obj.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
+    assertEquals("INVALID_PATH", obj.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
   }
 
   @Test
   void deleteStateRejectsTraversalFilename() {
-    String result =
-        StatePersistenceRunner.run("{\"action\": \"delete\", \"filename\": \"../outside.json\"}");
+    String result = StatePersistenceRunner.run("{\"action\": \"delete\", \"filename\": \"../outside.json\"}");
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
     assertEquals("error", obj.get("status").getAsString());
-    assertEquals("INVALID_FILENAME",
-        obj.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
+    assertEquals("INVALID_FILENAME", obj.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
   }
 
   @Test
   void setStorageDirectoryRejectsExternalDirectoryByDefault() {
-    String outside = Paths.get(System.getProperty("java.io.tmpdir"), "neqsim-external-state")
-        .toString().replace("\\", "\\\\");
-    String result = StatePersistenceRunner
-        .run("{\"action\": \"setStorageDir\", \"directory\": \"" + outside + "\"}");
+    String outside = Paths.get(System.getProperty("java.io.tmpdir"), "neqsim-external-state").toString().replace("\\",
+	"\\\\");
+    String result = StatePersistenceRunner.run("{\"action\": \"setStorageDir\", \"directory\": \"" + outside + "\"}");
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
     assertEquals("error", obj.get("status").getAsString());
     assertEquals("DIR_OUTSIDE_SANDBOX",
-        obj.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
+	obj.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
   }
 
   @Test
@@ -82,9 +77,9 @@ class StatePersistenceRunnerTest {
       assertEquals("9.9.9-test", StatePersistenceRunner.getNeqSimVersion());
     } finally {
       if (previousVersion == null) {
-        System.clearProperty("neqsim.version");
+	System.clearProperty("neqsim.version");
       } else {
-        System.setProperty("neqsim.version", previousVersion);
+	System.setProperty("neqsim.version", previousVersion);
       }
     }
   }

@@ -3,20 +3,17 @@ package neqsim.process.equipment.pipeline;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * CO2-specific correction factors for two-phase flow correlations. The standard Beggs and Brill
- * (1973) correlation was developed for oil-gas-water systems and may not accurately represent the
- * flow behaviour of CO2-dominated streams where the liquid phase is dense-phase CO2 rather than
- * conventional hydrocarbon liquid.
+ * CO2-specific correction factors for two-phase flow correlations. The standard Beggs and Brill (1973) correlation was
+ * developed for oil-gas-water systems and may not accurately represent the flow behaviour of CO2-dominated streams
+ * where the liquid phase is dense-phase CO2 rather than conventional hydrocarbon liquid.
  *
  * <p>
  * This utility class provides correction factors for:
  * <ul>
- * <li>Liquid holdup: CO2 liquid has lower viscosity and higher density than typical oil, affecting
- * hold-up</li>
+ * <li>Liquid holdup: CO2 liquid has lower viscosity and higher density than typical oil, affecting hold-up</li>
  * <li>Friction factor: dense-phase CO2 has different friction characteristics</li>
  * <li>Flow pattern transitions: CO2 liquid-gas transitions differ from oil-gas boundaries</li>
- * <li>Surface tension: CO2 liquid-vapour interfacial tension is typically much lower than
- * hydrocarbon systems</li>
+ * <li>Surface tension: CO2 liquid-vapour interfacial tension is typically much lower than hydrocarbon systems</li>
  * </ul>
  *
  * <p>
@@ -33,8 +30,8 @@ import neqsim.thermo.system.SystemInterface;
  * </pre>
  *
  * <p>
- * Reference: Peletiri, S.P., Rahmanian, N. and Mujtaba, I.M. (2018). CO2 Pipeline Design: A Review.
- * Energies, 11(9), 2184.
+ * Reference: Peletiri, S.P., Rahmanian, N. and Mujtaba, I.M. (2018). CO2 Pipeline Design: A Review. Energies, 11(9),
+ * 2184.
  * </p>
  *
  * @author neqsim
@@ -77,10 +74,10 @@ public final class CO2FlowCorrections {
   public static double getCO2MoleFraction(SystemInterface system) {
     try {
       for (int i = 0; i < system.getNumberOfComponents(); i++) {
-        String name = system.getPhase(0).getComponent(i).getComponentName();
-        if ("CO2".equals(name)) {
-          return system.getPhase(0).getComponent(i).getz();
-        }
+	String name = system.getPhase(0).getComponent(i).getComponentName();
+	if ("CO2".equals(name)) {
+	  return system.getPhase(0).getComponent(i).getz();
+	}
       }
       return 0.0;
     } catch (Exception e) {
@@ -89,19 +86,19 @@ public final class CO2FlowCorrections {
   }
 
   /**
-   * Calculates a correction factor for liquid holdup in CO2-dominated two-phase flow. CO2 liquid
-   * has lower viscosity and higher density ratio (liquid/gas) compared to typical oil, resulting in
-   * lower liquid holdup for the same superficial velocities.
+   * Calculates a correction factor for liquid holdup in CO2-dominated two-phase flow. CO2 liquid has lower viscosity
+   * and higher density ratio (liquid/gas) compared to typical oil, resulting in lower liquid holdup for the same
+   * superficial velocities.
    *
    * <p>
-   * The correction factor is based on the reduced temperature (T/Tc). Near the critical point, CO2
-   * liquid and gas properties converge, reducing the holdup correction. Far below Tc, CO2 liquid
-   * behaves more like a conventional dense liquid.
+   * The correction factor is based on the reduced temperature (T/Tc). Near the critical point, CO2 liquid and gas
+   * properties converge, reducing the holdup correction. Far below Tc, CO2 liquid behaves more like a conventional
+   * dense liquid.
    * </p>
    *
    * @param system the thermodynamic system
-   * @return the holdup correction factor (multiply by Beggs-Brill holdup). Returns 1.0 for non-CO2
-   *         systems or single-phase conditions
+   * @return the holdup correction factor (multiply by Beggs-Brill holdup). Returns 1.0 for non-CO2 systems or
+   *         single-phase conditions
    */
   public static double getLiquidHoldupCorrectionFactor(SystemInterface system) {
     if (!isCO2DominatedFluid(system) || system.getNumberOfPhases() <= 1) {
@@ -124,12 +121,11 @@ public final class CO2FlowCorrections {
   }
 
   /**
-   * Calculates a correction factor for friction in CO2-dominated two-phase flow. Dense-phase CO2
-   * has lower viscosity than typical crude oil, generally resulting in lower friction factors.
+   * Calculates a correction factor for friction in CO2-dominated two-phase flow. Dense-phase CO2 has lower viscosity
+   * than typical crude oil, generally resulting in lower friction factors.
    *
    * @param system the thermodynamic system
-   * @return the friction correction factor (multiply by Beggs-Brill friction factor). Returns 1.0
-   *         for non-CO2 systems
+   * @return the friction correction factor (multiply by Beggs-Brill friction factor). Returns 1.0 for non-CO2 systems
    */
   public static double getFrictionCorrectionFactor(SystemInterface system) {
     if (!isCO2DominatedFluid(system)) {
@@ -148,12 +144,12 @@ public final class CO2FlowCorrections {
   }
 
   /**
-   * Estimates the CO2 liquid-vapour surface tension based on the reduced temperature. This can be
-   * used to correct flow pattern transition criteria.
+   * Estimates the CO2 liquid-vapour surface tension based on the reduced temperature. This can be used to correct flow
+   * pattern transition criteria.
    *
    * <p>
-   * Uses the Sugden correlation adapted for CO2: sigma = sigma_0 * (1 - Tr)^n where sigma_0 and n
-   * are fitted parameters for CO2.
+   * Uses the Sugden correlation adapted for CO2: sigma = sigma_0 * (1 - Tr)^n where sigma_0 and n are fitted parameters
+   * for CO2.
    * </p>
    *
    * @param system the thermodynamic system
@@ -173,9 +169,8 @@ public final class CO2FlowCorrections {
   }
 
   /**
-   * Checks whether the fluid conditions are in the dense phase region (supercritical but
-   * liquid-like). In this region, single-phase flow is expected but properties differ from
-   * conventional gas.
+   * Checks whether the fluid conditions are in the dense phase region (supercritical but liquid-like). In this region,
+   * single-phase flow is expected but properties differ from conventional gas.
    *
    * @param system the thermodynamic system
    * @return true if T is above Tc and P is above Pc (supercritical/dense phase)

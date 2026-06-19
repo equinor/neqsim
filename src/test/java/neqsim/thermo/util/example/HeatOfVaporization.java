@@ -20,7 +20,7 @@ public class HeatOfVaporization {
   private static final Logger logger = LogManager.getLogger(HeatOfVaporization.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.

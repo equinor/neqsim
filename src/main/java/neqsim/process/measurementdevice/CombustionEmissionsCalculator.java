@@ -55,7 +55,7 @@ public class CombustionEmissionsCalculator extends StreamMeasurementDeviceBaseCl
    * Constructor for CombustionEmissionsCalculator.
    * </p>
    *
-   * @param name Name of WaterDewPointAnalyser
+   * @param name   Name of WaterDewPointAnalyser
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public CombustionEmissionsCalculator(String name, StreamInterface stream) {
@@ -117,8 +117,7 @@ public class CombustionEmissionsCalculator extends StreamMeasurementDeviceBaseCl
   @Override
   public double getMeasuredValue(String unit) {
     setComponents();
-    return calculateCO2Emissions(NATURAL_GAS_COMPOSITION, CO2_EMISSIONS_FACTORS)
-        * stream.getFluid().getFlowRate(unit);
+    return calculateCO2Emissions(NATURAL_GAS_COMPOSITION, CO2_EMISSIONS_FACTORS) * stream.getFluid().getFlowRate(unit);
   }
 
   /**
@@ -126,12 +125,11 @@ public class CombustionEmissionsCalculator extends StreamMeasurementDeviceBaseCl
    * calculateCO2Emissions.
    * </p>
    *
-   * @param composition a {@link java.util.Map} object with mole fractions
+   * @param composition      a {@link java.util.Map} object with mole fractions
    * @param emissionsFactors a {@link java.util.Map} object in kg CO2 per kg of component
    * @return a double
    */
-  public static double calculateCO2Emissions(Map<String, Double> composition,
-      Map<String, Double> emissionsFactors) {
+  public static double calculateCO2Emissions(Map<String, Double> composition, Map<String, Double> emissionsFactors) {
     double totalEmissions = 0.0;
 
     // First, calculate total mass
@@ -141,7 +139,7 @@ public class CombustionEmissionsCalculator extends StreamMeasurementDeviceBaseCl
       double moleFraction = entry.getValue();
 
       if (COMPONENT_MOLAR_MASS.containsKey(component)) {
-        totalMass += moleFraction * COMPONENT_MOLAR_MASS.get(component);
+	totalMass += moleFraction * COMPONENT_MOLAR_MASS.get(component);
       }
     }
 
@@ -151,12 +149,12 @@ public class CombustionEmissionsCalculator extends StreamMeasurementDeviceBaseCl
       double moleFraction = entry.getValue();
 
       if (COMPONENT_MOLAR_MASS.containsKey(component) && emissionsFactors.containsKey(component)) {
-        // Convert mole fraction to mass fraction
-        double massFraction = (moleFraction * COMPONENT_MOLAR_MASS.get(component)) / totalMass;
-        double emissionsFactor = emissionsFactors.get(component);
-        double componentEmissions = massFraction * emissionsFactor;
+	// Convert mole fraction to mass fraction
+	double massFraction = (moleFraction * COMPONENT_MOLAR_MASS.get(component)) / totalMass;
+	double emissionsFactor = emissionsFactors.get(component);
+	double componentEmissions = massFraction * emissionsFactor;
 
-        totalEmissions += componentEmissions;
+	totalEmissions += componentEmissions;
       }
     }
 

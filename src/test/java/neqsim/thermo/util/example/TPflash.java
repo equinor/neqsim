@@ -20,7 +20,7 @@ public class TPflash {
   private static final Logger logger = LogManager.getLogger(TPflash.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.
@@ -45,16 +45,13 @@ public class TPflash {
     testSystem.addComponent("n-pentane", 14);
     testSystem.addComponent("i-pentane", 14);
     /*
-     * testSystem.addTBPfraction("C6", 1.0, 85.0253 / 1000.0, 0.667229);
-     * testSystem.addTBPfraction("C7", 1.0, 90.3717 / 1000.0, 746.3681 / 1000.0);
-     * testSystem.addTBPfraction("C8", 1.0, 102.4695 / 1000.0, 770.9114 / 1000.0);
-     * testSystem.addTBPfraction("C9", 1.0, 115.6 / 1000.0, 790.1 / 1000.0);
-     * testSystem.addTBPfraction("C10", 1.0, 225.5046 / 1000.0, 841.1014 / 1000.0);
-     * testSystem.setMolarComposition(new double[] { 0.829, 0, 0.0007, 0.002, 0.0707, 0.0072,
-     * 0.0051, 0.0019, 0.0062, 0.0048, 0.006, 0.0074, 0.0109, 0.0109, 0.0062, 0.031 });
+     * testSystem.addTBPfraction("C6", 1.0, 85.0253 / 1000.0, 0.667229); testSystem.addTBPfraction("C7", 1.0, 90.3717 /
+     * 1000.0, 746.3681 / 1000.0); testSystem.addTBPfraction("C8", 1.0, 102.4695 / 1000.0, 770.9114 / 1000.0);
+     * testSystem.addTBPfraction("C9", 1.0, 115.6 / 1000.0, 790.1 / 1000.0); testSystem.addTBPfraction("C10", 1.0,
+     * 225.5046 / 1000.0, 841.1014 / 1000.0); testSystem.setMolarComposition(new double[] { 0.829, 0, 0.0007, 0.002,
+     * 0.0707, 0.0072, 0.0051, 0.0019, 0.0062, 0.0048, 0.006, 0.0074, 0.0109, 0.0109, 0.0062, 0.031 });
      *
-     * testSystem.setHeavyTBPfractionAsPlusFraction();
-     * testSystem.getCharacterization().characterisePlusFraction();
+     * testSystem.setHeavyTBPfractionAsPlusFraction(); testSystem.getCharacterization().characterisePlusFraction();
      */
     testSystem.setMixingRule(2);
     testSystem.setMultiPhaseCheck(true);

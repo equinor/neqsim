@@ -13,8 +13,7 @@ import org.apache.logging.log4j.Logger;
  *
  * @author ESOL
  */
-public class CompressorChartAlternativeMapLookupExtrapolate
-    extends CompressorChartAlternativeMapLookup {
+public class CompressorChartAlternativeMapLookupExtrapolate extends CompressorChartAlternativeMapLookup {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -29,8 +28,7 @@ public class CompressorChartAlternativeMapLookupExtrapolate
     }
 
     if (closestSpeeds.isEmpty()) {
-      throw new IllegalStateException(
-          "No reference speeds available. Ensure chartValues is populated.");
+      throw new IllegalStateException("No reference speeds available. Ensure chartValues is populated.");
     }
 
     closestSpeeds.sort(Double::compareTo);
@@ -38,15 +36,15 @@ public class CompressorChartAlternativeMapLookupExtrapolate
     ArrayList<Double> result = new ArrayList<>();
     for (int i = 0; i < closestSpeeds.size(); i++) {
       if (speed == closestSpeeds.get(i)) {
-        result.add(speed);
-        return result;
+	result.add(speed);
+	return result;
       }
       if (speed < closestSpeeds.get(i)) {
-        if (i > 0) {
-          result.add(closestSpeeds.get(i - 1));
-        }
-        result.add(closestSpeeds.get(i));
-        return result;
+	if (i > 0) {
+	  result.add(closestSpeeds.get(i - 1));
+	}
+	result.add(closestSpeeds.get(i));
+	return result;
       }
     }
 
@@ -59,8 +57,8 @@ public class CompressorChartAlternativeMapLookupExtrapolate
    * {@inheritDoc}
    *
    * <p>
-   * Calculates the polytropic head for a given flow and speed by interpolating or extrapolating
-   * between reference compressor curves.
+   * Calculates the polytropic head for a given flow and speed by interpolating or extrapolating between reference
+   * compressor curves.
    * </p>
    */
   @Override
@@ -87,7 +85,7 @@ public class CompressorChartAlternativeMapLookupExtrapolate
 
     if (interpolatedHeads.size() == 1) {
       return interpolatedHeads.get(0) * (speed / speeds.get(0)); // Scale head proportionally to
-                                                                 // speed
+								 // speed
     }
 
     double speed1 = speeds.get(0);
@@ -108,8 +106,8 @@ public class CompressorChartAlternativeMapLookupExtrapolate
    * {@inheritDoc}
    *
    * <p>
-   * Calculates the polytropic efficiency for a given flow and speed by interpolating or
-   * extrapolating between reference compressor curves.
+   * Calculates the polytropic efficiency for a given flow and speed by interpolating or extrapolating between reference
+   * compressor curves.
    * </p>
    */
   @Override
@@ -117,8 +115,7 @@ public class CompressorChartAlternativeMapLookupExtrapolate
     ArrayList<Double> closestRefSpeeds = getClosestRefSpeeds(speed);
 
     if (closestRefSpeeds.isEmpty()) {
-      throw new IllegalArgumentException(
-          "No valid reference speeds found for the given speed: " + speed);
+      throw new IllegalArgumentException("No valid reference speeds found for the given speed: " + speed);
     }
 
     SplineInterpolator interpolator = new SplineInterpolator();
@@ -129,13 +126,11 @@ public class CompressorChartAlternativeMapLookupExtrapolate
       CompressorCurve curve = getCurveAtRefSpeed(refSpeed);
 
       if (curve.flow.length == 0 || curve.polytropicEfficiency.length == 0) {
-        throw new IllegalArgumentException("Invalid curve data for speed: " + refSpeed);
+	throw new IllegalArgumentException("Invalid curve data for speed: " + refSpeed);
       }
 
-      PolynomialSplineFunction spline =
-          interpolator.interpolate(curve.flow, curve.polytropicEfficiency);
-      double efficiencyValue =
-          extrapolateOrInterpolate(flow, curve.flow, curve.polytropicEfficiency, spline);
+      PolynomialSplineFunction spline = interpolator.interpolate(curve.flow, curve.polytropicEfficiency);
+      double efficiencyValue = extrapolateOrInterpolate(flow, curve.flow, curve.polytropicEfficiency, spline);
       interpolatedEfficiencies.add(efficiencyValue);
       speeds.add(refSpeed);
     }
@@ -153,13 +148,13 @@ public class CompressorChartAlternativeMapLookupExtrapolate
   }
 
   /**
-   * Extrapolates or interpolates a value based on the given flow using the provided flow data,
-   * value data, and polynomial spline function.
+   * Extrapolates or interpolates a value based on the given flow using the provided flow data, value data, and
+   * polynomial spline function.
    *
-   * @param flow the flow value for which the corresponding value needs to be determined
-   * @param flowData an array of flow data points
+   * @param flow      the flow value for which the corresponding value needs to be determined
+   * @param flowData  an array of flow data points
    * @param valueData an array of value data points corresponding to the flow data points
-   * @param spline a polynomial spline function created from the flow and value data points
+   * @param spline    a polynomial spline function created from the flow and value data points
    * @return the extrapolated or interpolated value corresponding to the given flow
    */
   private double extrapolateOrInterpolate(double flow, double[] flowData, double[] valueData,
@@ -171,11 +166,9 @@ public class CompressorChartAlternativeMapLookupExtrapolate
       double slope = (valueData[1] - valueData[0]) / (flowData[1] - flowData[0]);
       return valueData[0] + slope * (flow - flowData[0]);
     } else if (flow > knots[knots.length - 1]) {
-      logger.debug("Extrapolating above range: flow={}, knots[last]={}", flow,
-          knots[knots.length - 1]);
+      logger.debug("Extrapolating above range: flow={}, knots[last]={}", flow, knots[knots.length - 1]);
       int last = flowData.length - 1;
-      double slope =
-          (valueData[last] - valueData[last - 1]) / (flowData[last] - flowData[last - 1]);
+      double slope = (valueData[last] - valueData[last - 1]) / (flowData[last] - flowData[last - 1]);
       return valueData[last] + slope * (flow - flowData[last]);
     }
 
@@ -184,18 +177,18 @@ public class CompressorChartAlternativeMapLookupExtrapolate
   }
 
   /**
-   * Extrapolates or interpolates a value based on the given speed and two reference speeds with
-   * their corresponding values.
+   * Extrapolates or interpolates a value based on the given speed and two reference speeds with their corresponding
+   * values.
    *
-   * @param speed the speed at which to extrapolate or interpolate the value
+   * @param speed  the speed at which to extrapolate or interpolate the value
    * @param speed1 the first reference speed
    * @param speed2 the second reference speed
    * @param value1 the value corresponding to the first reference speed
    * @param value2 the value corresponding to the second reference speed
    * @return the extrapolated or interpolated value at the given speed
    */
-  private double extrapolateOrInterpolateSpeed(double speed, double speed1, double speed2,
-      double value1, double value2) {
+  private double extrapolateOrInterpolateSpeed(double speed, double speed1, double speed2, double value1,
+      double value2) {
     if (speed < speed1) {
       // Extrapolate below the range
       double slope = (value2 - value1) / (speed2 - speed1);
@@ -209,10 +202,10 @@ public class CompressorChartAlternativeMapLookupExtrapolate
   }
 
   /**
-   * Performs linear interpolation to estimate the value of y at a given x, based on two known
-   * points (x1, y1) and (x2, y2).
+   * Performs linear interpolation to estimate the value of y at a given x, based on two known points (x1, y1) and (x2,
+   * y2).
    *
-   * @param x the x-value at which to interpolate
+   * @param x  the x-value at which to interpolate
    * @param x1 the x-value of the first known point
    * @param x2 the x-value of the second known point
    * @param y1 the y-value of the first known point

@@ -54,8 +54,8 @@ class Standard_ISO6976_2016_Test extends neqsim.NeqSimTest {
   }
 
   /**
-   * Regression test: getValue("WI") must vary with composition. Previously returned a near-constant
-   * compression-factor / molar-density value because "WI" was not aliased to "SuperiorWobbeIndex".
+   * Regression test: getValue("WI") must vary with composition. Previously returned a near-constant compression-factor
+   * / molar-density value because "WI" was not aliased to "SuperiorWobbeIndex".
    */
   @Test
   void testWIAliasVariesWithComposition() {
@@ -83,24 +83,23 @@ class Standard_ISO6976_2016_Test extends neqsim.NeqSimTest {
     double richWI = richStd.getValue("WI");
 
     Assertions.assertTrue(Math.abs(leanWI - richWI) > 1000.0,
-        "WI should differ between lean and rich gas, got lean=" + leanWI + " rich=" + richWI);
-    Assertions.assertTrue(richWI > leanWI,
-        "Rich gas should have higher WI, got lean=" + leanWI + " rich=" + richWI);
+	"WI should differ between lean and rich gas, got lean=" + leanWI + " rich=" + richWI);
+    Assertions.assertTrue(richWI > leanWI, "Rich gas should have higher WI, got lean=" + leanWI + " rich=" + richWI);
     Assertions.assertTrue(leanWI > 45000.0 && leanWI < 60000.0, "leanWI=" + leanWI);
     Assertions.assertTrue(richWI > 45000.0 && richWI < 60000.0, "richWI=" + richWI);
   }
 
   /**
-   * Test method for {@link neqsim.standards.gasquality.Standard_ISO6976#calculate()} if wrong
-   * reference state is gven. Valid reference states should be 0, 15 and 20 C and 15F (15.55C). If
-   * wrong reference state is given, the program should use standard conditions (15C).
+   * Test method for {@link neqsim.standards.gasquality.Standard_ISO6976#calculate()} if wrong reference state is gven.
+   * Valid reference states should be 0, 15 and 20 C and 15F (15.55C). If wrong reference state is given, the program
+   * should use standard conditions (15C).
    */
   @Test
   void testCalculateWithWrongReferenceState() {
     double volumeReferenceState = 0;
     double energyReferenceState = 15.55;
-    Standard_ISO6976_2016 standard =
-        new Standard_ISO6976_2016(testSystem, volumeReferenceState, energyReferenceState, "volume");
+    Standard_ISO6976_2016 standard = new Standard_ISO6976_2016(testSystem, volumeReferenceState, energyReferenceState,
+	"volume");
     standard.setReferenceState("real");
     standard.setReferenceType("volume");
     standard.calculate();
@@ -167,13 +166,11 @@ class Standard_ISO6976_2016_Test extends neqsim.NeqSimTest {
 
     // standard.display("test");
     /*
-     * StandardInterface standardUK = new UKspecifications_ICF_SI(testSystem);
-     * standardUK.calculate(); logger.info("ICF " +
-     * standardUK.getValue("IncompleteCombustionFactor", ""));
+     * StandardInterface standardUK = new UKspecifications_ICF_SI(testSystem); standardUK.calculate();
+     * logger.info("ICF " + standardUK.getValue("IncompleteCombustionFactor", ""));
      *
-     * logger.info("HID " + testSystem.getPhase(0).getComponent("methane").getHID(273.15 - 150.0));
-     * logger.info("Hres " + testSystem.getPhase(0).getComponent("methane").getHresTP(273.15 -
-     * 150.0));
+     * logger.info("HID " + testSystem.getPhase(0).getComponent("methane").getHID(273.15 - 150.0)); logger.info("Hres "
+     * + testSystem.getPhase(0).getComponent("methane").getHresTP(273.15 - 150.0));
      */
   }
 

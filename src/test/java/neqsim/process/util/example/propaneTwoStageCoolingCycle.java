@@ -33,8 +33,7 @@ public class propaneTwoStageCoolingCycle {
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemPrEos((273.15 + 30.0), 10.79);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemPrEos((273.15 + 30.0), 10.79);
     // testSystem.addComponent("ethane", 10.0, "kg/hr");
     testSystem.addComponent("propane", 4759.0, "kg/hr");
     testSystem.createDatabase(true);
@@ -78,8 +77,7 @@ public class propaneTwoStageCoolingCycle {
     cooler3.setSpecification("out stream");
     cooler3.setOutletStream(stream_1);
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(JTvalve1);
     operations.add(medPresSep);
@@ -129,13 +127,11 @@ public class propaneTwoStageCoolingCycle {
 
     // logger.info("compressor isentropic ef " +
     // compressor1.getIsentropicEfficiency());
-    logger.info("cooler2 mass flow " + cooler2.getOutletStream().getFluid().getFlowRate("kg/hr")
-        + " kg/hr");
-    logger.info("cooler3 mass flow " + cooler3.getOutletStream().getFluid().getFlowRate("kg/hr")
-        + " kg/hr");
+    logger.info("cooler2 mass flow " + cooler2.getOutletStream().getFluid().getFlowRate("kg/hr") + " kg/hr");
+    logger.info("cooler3 mass flow " + cooler3.getOutletStream().getFluid().getFlowRate("kg/hr") + " kg/hr");
 
-    logger.info("delta enthalpy " + (stream_3.getFluid().getEnthalpy()
-        - JTvalve2.getOutletStream().getFluid().getEnthalpy()));
+    logger.info(
+	"delta enthalpy " + (stream_3.getFluid().getEnthalpy() - JTvalve2.getOutletStream().getFluid().getEnthalpy()));
 
     logger.info("cooler2 duty " + cooler2.getEnergyInput() / 1.0e3 + " kW");
     logger.info("cooler3 duty " + cooler3.getEnergyInput() / 1.0e3 + " kW");

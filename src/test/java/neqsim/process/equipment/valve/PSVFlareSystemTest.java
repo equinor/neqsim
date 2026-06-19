@@ -161,7 +161,6 @@ public class PSVFlareSystemTest {
     logger.info("PSV full open pressure: 60.5 bara (10% overpressure)");
     logger.info("Flare header pressure: ~1.5 bara");
 
-
     // Run initial steady state
     logger.info("═══ INITIAL STEADY STATE ═══");
     feedStream.run();
@@ -174,9 +173,9 @@ public class PSVFlareSystemTest {
 
     double initialPressure = separator.getGasOutStream().getPressure("bara");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Separator pressure: %.2f bara%n", initialPressure);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Outlet valve opening: %.1f%%%n", outletValve.getPercentValveOpening());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Outlet valve opening: %.1f%%%n",
+	outletValve.getPercentValveOpening());
     logger.printf(org.apache.logging.log4j.Level.INFO, "PSV status: CLOSED (pressure below set point)%n");
-
 
     // Dynamic simulation parameters
     double dt = 2.0; // 2 second time steps
@@ -195,25 +194,22 @@ public class PSVFlareSystemTest {
     flare.resetCumulative();
 
     logger.info("═══ DYNAMIC SIMULATION ═══");
-    logger.info(
-        "Time (s) | Sep Press | Outlet Vlv | PSV Open | Relief Flow | Heat Release | Cumulative Heat");
-    logger.info(
-        "         |   (bara)  |    (%)     |   (%)    |   (kg/hr)   |     (MW)     |      (GJ)");
-    logger.info(
-        "---------|-----------|------------|----------|-------------|--------------|----------------");
+    logger.info("Time (s) | Sep Press | Outlet Vlv | PSV Open | Relief Flow | Heat Release | Cumulative Heat");
+    logger.info("         |   (bara)  |    (%)     |   (%)    |   (kg/hr)   |     (MW)     |      (GJ)");
+    logger.info("---------|-----------|------------|----------|-------------|--------------|----------------");
 
     for (double time = 0.0; time <= simulationTime; time += dt) {
       // Simulate outlet valve failure (blocks at 50s) and recovery (opens at 200s)
       if (time >= incidentStart && time < incidentEnd) {
-        if (time == incidentStart) {
-          logger.info("\n>>> INCIDENT: Outlet valve FAILS CLOSED <<<\n");
-        }
-        outletValve.setPercentValveOpening(1.0); // Valve stuck nearly closed
+	if (time == incidentStart) {
+	  logger.info("\n>>> INCIDENT: Outlet valve FAILS CLOSED <<<\n");
+	}
+	outletValve.setPercentValveOpening(1.0); // Valve stuck nearly closed
       } else if (time >= incidentEnd) {
-        if (time == incidentEnd) {
-          logger.info("\n>>> RECOVERY: Outlet valve REOPENED <<<\n");
-        }
-        outletValve.setPercentValveOpening(50.0); // Normal operation restored
+	if (time == incidentEnd) {
+	  logger.info("\n>>> RECOVERY: Outlet valve REOPENED <<<\n");
+	}
+	outletValve.setPercentValveOpening(50.0); // Normal operation restored
       }
 
       // Run process equipment
@@ -242,8 +238,8 @@ public class PSVFlareSystemTest {
       double heatReleaseRate = flare.getHeatDuty("MW"); // MW
 
       if (reliefFlow > 0.01) {
-        // Track peak heat release rate
-        peakHeatReleaseRate = Math.max(peakHeatReleaseRate, heatReleaseRate);
+	// Track peak heat release rate
+	peakHeatReleaseRate = Math.max(peakHeatReleaseRate, heatReleaseRate);
       }
 
       // Track maximum values
@@ -252,16 +248,17 @@ public class PSVFlareSystemTest {
 
       // Check if PSV opened
       if (psv.getPercentValveOpening() > 0.1 && !psvHasOpened) {
-        psvHasOpened = true;
-        psvOpenTime = time;
-        logger.info("\n>>> PSV OPENED at t=" + time + " s <<<\n");
+	psvHasOpened = true;
+	psvOpenTime = time;
+	logger.info("\n>>> PSV OPENED at t=" + time + " s <<<\n");
       }
 
       // Print every 10 seconds
       if (time % 10.0 < dt) {
-        logger.printf(org.apache.logging.log4j.Level.INFO, "%7.0f  | %9.2f | %10.1f | %8.1f | %11.1f | %12.3f | %14.3f%n", time,
-            sepPressure, outletValve.getPercentValveOpening(), psv.getPercentValveOpening(),
-            reliefFlow, heatReleaseRate, flare.getCumulativeHeatReleased("GJ"));
+	logger.printf(org.apache.logging.log4j.Level.INFO,
+	    "%7.0f  | %9.2f | %10.1f | %8.1f | %11.1f | %12.3f | %14.3f%n", time, sepPressure,
+	    outletValve.getPercentValveOpening(), psv.getPercentValveOpening(), reliefFlow, heatReleaseRate,
+	    flare.getCumulativeHeatReleased("GJ"));
       }
     }
 
@@ -274,8 +271,7 @@ public class PSVFlareSystemTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "PSV opened: %.0f s%n", psvOpenTime);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Incident end (outlet valve reopened): %.0f s%n", incidentEnd);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Total incident duration: %.0f s (%.1f minutes)%n",
-        incidentEnd - incidentStart, (incidentEnd - incidentStart) / 60.0);
-
+	incidentEnd - incidentStart, (incidentEnd - incidentStart) / 60.0);
 
     logger.info("═══ PRESSURE PROFILE ═══");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Initial separator pressure: %.2f bara%n", initialPressure);
@@ -283,22 +279,21 @@ public class PSVFlareSystemTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "Maximum separator pressure: %.2f bara%n", maxPressure);
     logger.printf(org.apache.logging.log4j.Level.INFO, "PSV full open pressure: 60.5 bara%n");
 
-
     logger.info("═══ PSV RELIEF PERFORMANCE ═══");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Maximum relief flow: %.1f kg/hr (%.2f kg/s)%n", maxReliefFlow,
-        maxReliefFlow / 3600.0);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Total gas relieved: %.1f kg%n", flare.getCumulativeGasBurned("kg"));
+	maxReliefFlow / 3600.0);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Total gas relieved: %.1f kg%n",
+	flare.getCumulativeGasBurned("kg"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Average relief rate: %.1f kg/hr%n",
-        flare.getCumulativeGasBurned("kg") / ((incidentEnd - psvOpenTime) / 3600.0));
+	flare.getCumulativeGasBurned("kg") / ((incidentEnd - psvOpenTime) / 3600.0));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Required PSV Cv: %.1f%n", psv.getCv());
-
 
     logger.info("═══ FLARE SYSTEM PERFORMANCE ═══");
     logger.printf(org.apache.logging.log4j.Level.INFO, "Peak heat release rate: %.2f MW%n", peakHeatReleaseRate);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Total heat released: %.2f GJ (%.2f MMBtu)%n",
-        flare.getCumulativeHeatReleased("GJ"), flare.getCumulativeHeatReleased("MMBtu"));
+	flare.getCumulativeHeatReleased("GJ"), flare.getCumulativeHeatReleased("MMBtu"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Average heat release rate: %.2f MW%n",
-        flare.getCumulativeHeatReleased("GJ") * 1000.0 / (incidentEnd - psvOpenTime));
+	flare.getCumulativeHeatReleased("GJ") * 1000.0 / (incidentEnd - psvOpenTime));
 
     // Gas composition to flare
 
@@ -308,29 +303,27 @@ public class PSVFlareSystemTest {
       String compName = reliefGas.getPhase(0).getComponent(i).getComponentName();
       double moleFrac = reliefGas.getPhase(0).getComponent(i).getz() * 100.0;
       if (moleFrac > 0.01) {
-        logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s: %6.2f mol%%%n", compName, moleFrac);
+	logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s: %6.2f mol%%%n", compName, moleFrac);
       }
     }
-
 
     logger.info("═══ ENVIRONMENTAL IMPACT ═══");
     // Get CO2 emissions from flare unit operation
     logger.printf(org.apache.logging.log4j.Level.INFO, "Estimated CO2 emissions: %.1f kg (%.2f tonnes)%n",
-        flare.getCumulativeCO2Emission("kg"), flare.getCumulativeCO2Emission("tonnes"));
-
+	flare.getCumulativeCO2Emission("kg"), flare.getCumulativeCO2Emission("tonnes"));
 
     logger.info("═══ VALIDATION CHECKS ═══");
     assertTrue(psvHasOpened, "PSV should have opened during incident");
     assertTrue(maxPressure <= 55.0 * 1.15, "Max pressure should not exceed 115% of set pressure");
     assertTrue(flare.getCumulativeGasBurned("kg") > 0, "Gas should have been relieved to flare");
-    assertTrue(flare.getCumulativeHeatReleased("GJ") > 0,
-        "Heat should have been released from flare");
+    assertTrue(flare.getCumulativeHeatReleased("GJ") > 0, "Heat should have been released from flare");
     logger.info("✓ PSV opened and relieved gas to flare");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "✓ Maximum pressure (%.2f bara) within acceptable limits%n", maxPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "✓ Maximum pressure (%.2f bara) within acceptable limits%n",
+	maxPressure);
     logger.printf(org.apache.logging.log4j.Level.INFO, "✓ Total %.1f kg of gas burned in flare%n",
-        flare.getCumulativeGasBurned("kg"));
+	flare.getCumulativeGasBurned("kg"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "✓ Total %.2f GJ heat released to atmosphere%n",
-        flare.getCumulativeHeatReleased("GJ"));
+	flare.getCumulativeHeatReleased("GJ"));
 
     logger.info("\n╔════════════════════════════════════════════════════════════════╗");
     logger.info("║              SIMULATION COMPLETED SUCCESSFULLY                 ║");
@@ -341,8 +334,8 @@ public class PSVFlareSystemTest {
    * Test flare system with multiple relief sources.
    *
    * <p>
-   * This test simulates a scenario where multiple PSVs relieve simultaneously into a common flare
-   * header, demonstrating header capacity and combined heat release.
+   * This test simulates a scenario where multiple PSVs relieve simultaneously into a common flare header, demonstrating
+   * header capacity and combined heat release.
    */
   @Test
   void testMultiplePSVReliefToCommonFlare() {
@@ -371,7 +364,6 @@ public class PSVFlareSystemTest {
     logger.info("PSV-101: Primary separator (5000 kg/hr capacity)");
     logger.info("PSV-102: Secondary source (3000 kg/hr capacity)");
     logger.info("Common flare header collecting both relief streams");
-
 
     // Simulate relief event - manually set both PSVs to relieve
     logger.info("═══ SIMULTANEOUS RELIEF EVENT ═══");
@@ -404,18 +396,21 @@ public class PSVFlareSystemTest {
     // Get combined heat release from flare unit operation
     double heatRelease = flare.getHeatDuty("MW"); // MW
 
-    logger.printf(org.apache.logging.log4j.Level.INFO, "PSV-101 relief flow: %.1f kg/hr%n", psvRelief.getFlowRate("kg/hr"));
-    logger.printf(org.apache.logging.log4j.Level.INFO, "PSV-102 relief flow: %.1f kg/hr%n", psv2Relief.getFlowRate("kg/hr"));
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Total relief to flare: %.1f kg/hr (%.2f kg/s)%n", totalReliefFlow,
-        totalReliefFlow / 3600.0);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "PSV-101 relief flow: %.1f kg/hr%n",
+	psvRelief.getFlowRate("kg/hr"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "PSV-102 relief flow: %.1f kg/hr%n",
+	psv2Relief.getFlowRate("kg/hr"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Total relief to flare: %.1f kg/hr (%.2f kg/s)%n",
+	totalReliefFlow, totalReliefFlow / 3600.0);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Combined heat release rate: %.2f MW%n", heatRelease);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Flare header pressure: %.2f bara%n", flareHeaderOutlet.getPressure("bara"));
-
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Flare header pressure: %.2f bara%n",
+	flareHeaderOutlet.getPressure("bara"));
 
     assertTrue(totalReliefFlow > 0, "Combined relief flow should be positive");
     assertTrue(heatRelease > 0, "Heat release should be positive");
     logger.info("✓ Multiple PSV sources successfully combined in flare header");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "✓ Total %.2f MW heat release from combined relief%n", heatRelease);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "✓ Total %.2f MW heat release from combined relief%n",
+	heatRelease);
 
     logger.info("\n╔════════════════════════════════════════════════════════════════╗");
     logger.info("║          MULTIPLE SOURCE TEST COMPLETED SUCCESSFULLY           ║");

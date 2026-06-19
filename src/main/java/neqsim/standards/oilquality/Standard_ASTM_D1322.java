@@ -8,17 +8,15 @@ import neqsim.thermo.system.SystemInterface;
  * Estimated Smoke Point - ASTM D1322 (screening correlation).
  *
  * <p>
- * The smoke point is the maximum flame height in millimetres at which a kerosene / jet fuel burns
- * without smoking. It is a measure of the burning quality and is controlled in aviation turbine
- * fuel specifications (e.g. Jet A-1 requires a smoke point of at least 25 mm). A high smoke point
- * indicates a paraffinic, low-aromatic fuel.
+ * The smoke point is the maximum flame height in millimetres at which a kerosene / jet fuel burns without smoking. It
+ * is a measure of the burning quality and is controlled in aviation turbine fuel specifications (e.g. Jet A-1 requires
+ * a smoke point of at least 25 mm). A high smoke point indicates a paraffinic, low-aromatic fuel.
  * </p>
  *
  * <p>
- * <b>This class returns an estimate, not a laboratory measurement.</b> The smoke point tracks
- * aromaticity, which is captured here through the estimated aniline point from
- * {@link Standard_ASTM_D611}. A more paraffinic fuel has a higher aniline point and a higher smoke
- * point:
+ * <b>This class returns an estimate, not a laboratory measurement.</b> The smoke point tracks aromaticity, which is
+ * captured here through the estimated aniline point from {@link Standard_ASTM_D611}. A more paraffinic fuel has a
+ * higher aniline point and a higher smoke point:
  * </p>
  *
  * <pre>
@@ -28,11 +26,10 @@ import neqsim.thermo.system.SystemInterface;
  * </pre>
  *
  * <p>
- * with defaults {@code sp0 = 8.5}, {@code sp1 = 0.325}, anchored to: paraffinic kerosene (aniline
- * point &asymp; 60 &deg;C &rarr; smoke point &asymp; 28 mm) and aromatic kerosene (aniline point
- * &asymp; 20 &deg;C &rarr; smoke point &asymp; 15 mm). The coefficients are configurable so the
- * correlation can be calibrated to measured assay data. For rigorous work, calibrate against ASTM
- * D1322 laboratory data.
+ * with defaults {@code sp0 = 8.5}, {@code sp1 = 0.325}, anchored to: paraffinic kerosene (aniline point &asymp; 60
+ * &deg;C &rarr; smoke point &asymp; 28 mm) and aromatic kerosene (aniline point &asymp; 20 &deg;C &rarr; smoke point
+ * &asymp; 15 mm). The coefficients are configurable so the correlation can be calibrated to measured assay data. For
+ * rigorous work, calibrate against ASTM D1322 laboratory data.
  * </p>
  *
  * <p>
@@ -91,13 +88,13 @@ public class Standard_ASTM_D1322 extends neqsim.standards.Standard {
       anilinePointC = d611.getValue("anilinePoint");
 
       if (Double.isNaN(anilinePointC)) {
-        logger.error("Smoke point input unavailable (aniline point)");
-        return;
+	logger.error("Smoke point input unavailable (aniline point)");
+	return;
       }
 
       smokePointMm = sp0 + sp1 * anilinePointC;
       if (smokePointMm < 0.0) {
-        smokePointMm = 0.0;
+	smokePointMm = 0.0;
       }
     } catch (Exception ex) {
       logger.error("Smoke point calculation failed: {}", ex.getMessage());
@@ -115,8 +112,7 @@ public class Standard_ASTM_D1322 extends neqsim.standards.Standard {
   public double getValue(String returnParameter) {
     if ("smokePoint".equalsIgnoreCase(returnParameter) || "SP".equalsIgnoreCase(returnParameter)) {
       return smokePointMm;
-    } else if ("anilinePoint".equalsIgnoreCase(returnParameter)
-        || "AP".equalsIgnoreCase(returnParameter)) {
+    } else if ("anilinePoint".equalsIgnoreCase(returnParameter) || "AP".equalsIgnoreCase(returnParameter)) {
       return anilinePointC;
     } else {
       logger.error("returnParameter not supported: {}", returnParameter);
@@ -127,8 +123,7 @@ public class Standard_ASTM_D1322 extends neqsim.standards.Standard {
   /** {@inheritDoc} */
   @Override
   public String getUnit(String returnParameter) {
-    if ("anilinePoint".equalsIgnoreCase(returnParameter)
-        || "AP".equalsIgnoreCase(returnParameter)) {
+    if ("anilinePoint".equalsIgnoreCase(returnParameter) || "AP".equalsIgnoreCase(returnParameter)) {
       return "C";
     }
     return "mm";
@@ -158,8 +153,7 @@ public class Standard_ASTM_D1322 extends neqsim.standards.Standard {
   }
 
   /**
-   * Sets an optional minimum smoke-point specification limit in millimetres used by
-   * {@link #isOnSpec()}.
+   * Sets an optional minimum smoke-point specification limit in millimetres used by {@link #isOnSpec()}.
    *
    * @param minSmokeMm minimum allowed smoke point in mm
    */

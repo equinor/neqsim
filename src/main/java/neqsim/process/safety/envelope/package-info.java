@@ -4,10 +4,9 @@
  * <p>
  * This package provides tools for calculating operational safety envelopes including:
  * <ul>
- * <li>{@link neqsim.process.safety.envelope.SafetyEnvelope} - P-T envelope with interpolation and
- * safety checks</li>
- * <li>{@link neqsim.process.safety.envelope.SafetyEnvelopeCalculator} - Calculator for hydrate,
- * WAX, CO2 freezing, MDMT, and phase envelopes</li>
+ * <li>{@link neqsim.process.safety.envelope.SafetyEnvelope} - P-T envelope with interpolation and safety checks</li>
+ * <li>{@link neqsim.process.safety.envelope.SafetyEnvelopeCalculator} - Calculator for hydrate, WAX, CO2 freezing,
+ * MDMT, and phase envelopes</li>
  * </ul>
  *
  * <p>

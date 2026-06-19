@@ -21,8 +21,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * Test class that generates a Graphviz SVG diagram for a gas-oil-water process.
  *
  * <p>
- * This test creates a realistic oil and gas production process with valves, pumps, and compressors
- * to visualize the process flow diagram functionality.
+ * This test creates a realistic oil and gas production process with valves, pumps, and compressors to visualize the
+ * process flow diagram functionality.
  * </p>
  *
  * @author esol
@@ -30,8 +30,8 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 public class GasOilWaterProcessSvgExportTest extends neqsim.NeqSimTest {
   /**
-   * Creates a well fluid with typical oil and gas components plus water.**@return a configured
-   * SystemInterface with gas,oil, and water components
+   * Creates a well fluid with typical oil and gas components plus water.**@return a configured SystemInterface with
+   * gas,oil, and water components
    */
 
   private SystemInterface createWellFluid() {
@@ -89,23 +89,20 @@ public class GasOilWaterProcessSvgExportTest extends neqsim.NeqSimTest {
     inletHeater.setOutTemperature(70.0, "C");
 
     // ===== HP SEPARATION (50 bara) =====
-    ThreePhaseSeparator hpSeparator =
-        new ThreePhaseSeparator("HP 3-Phase Separator", inletHeater.getOutStream());
+    ThreePhaseSeparator hpSeparator = new ThreePhaseSeparator("HP 3-Phase Separator", inletHeater.getOutStream());
 
     // HP Gas to compression
     Cooler hpGasCooler = new Cooler("HP Gas Cooler", hpSeparator.getGasOutStream());
     hpGasCooler.setOutTemperature(40.0, "C");
 
-    Compressor stage1Compressor =
-        new Compressor("1st Stage Compressor", hpGasCooler.getOutStream());
+    Compressor stage1Compressor = new Compressor("1st Stage Compressor", hpGasCooler.getOutStream());
     stage1Compressor.setOutletPressure(80.0, "bara");
     stage1Compressor.setIsentropicEfficiency(0.75);
 
     Cooler stage1Aftercooler = new Cooler("1st Stage Aftercooler", stage1Compressor.getOutStream());
     stage1Aftercooler.setOutTemperature(40.0, "C");
 
-    Compressor stage2Compressor =
-        new Compressor("2nd Stage Compressor", stage1Aftercooler.getOutStream());
+    Compressor stage2Compressor = new Compressor("2nd Stage Compressor", stage1Aftercooler.getOutStream());
     stage2Compressor.setOutletPressure(120.0, "bara");
     stage2Compressor.setIsentropicEfficiency(0.75);
 
@@ -125,8 +122,7 @@ public class GasOilWaterProcessSvgExportTest extends neqsim.NeqSimTest {
     Stream hpWaterDisposal = new Stream("HP Water Disposal", hpWaterPump.getOutStream());
 
     // ===== MP SEPARATION (15 bara) =====
-    ThreePhaseSeparator mpSeparator =
-        new ThreePhaseSeparator("MP 3-Phase Separator", hpToMpValve.getOutStream());
+    ThreePhaseSeparator mpSeparator = new ThreePhaseSeparator("MP 3-Phase Separator", hpToMpValve.getOutStream());
 
     // MP Gas - vent or flare (simplified)
     Stream mpGasVent = new Stream("MP Gas Vent", mpSeparator.getGasOutStream());
@@ -142,8 +138,7 @@ public class GasOilWaterProcessSvgExportTest extends neqsim.NeqSimTest {
     Stream mpWaterDisposal = new Stream("MP Water Disposal", mpWaterPump.getOutStream());
 
     // ===== LP SEPARATION (2 bara) =====
-    ThreePhaseSeparator lpSeparator =
-        new ThreePhaseSeparator("LP 3-Phase Separator", mpToLpValve.getOutStream());
+    ThreePhaseSeparator lpSeparator = new ThreePhaseSeparator("LP 3-Phase Separator", mpToLpValve.getOutStream());
 
     // LP Gas - vent or flare (simplified)
     Stream lpGasVent = new Stream("LP Gas Vent", lpSeparator.getGasOutStream());

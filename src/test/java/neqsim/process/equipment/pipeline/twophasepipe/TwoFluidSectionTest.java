@@ -73,8 +73,7 @@ public class TwoFluidSectionTest {
 
     // After updating, geometry parameters should be set
     assertTrue(section.getGasWettedPerimeter() > 0, "Gas wetted perimeter should be positive");
-    assertTrue(section.getLiquidWettedPerimeter() > 0,
-        "Liquid wetted perimeter should be positive");
+    assertTrue(section.getLiquidWettedPerimeter() > 0, "Liquid wetted perimeter should be positive");
     assertTrue(section.getInterfacialWidth() > 0, "Interface width should be positive");
   }
 
@@ -184,12 +183,11 @@ public class TwoFluidSectionTest {
     section.setWaterDensity(1000.0);
     section.setLiquidDensity(850.0);
     section.setWaterCut(0.25);
-    section.setStateVector(new double[] {8.0, -1.0, 3.0, 16.0, -2.0, 6.0, 100.0});
+    section.setStateVector(new double[] { 8.0, -1.0, 3.0, 16.0, -2.0, 6.0, 100.0 });
 
     section.extractPrimitiveVariables();
 
-    double totalMass = section.getGasMassPerLength() + section.getOilMassPerLength()
-        + section.getWaterMassPerLength();
+    double totalMass = section.getGasMassPerLength() + section.getOilMassPerLength() + section.getWaterMassPerLength();
     assertTrue(section.getGasMassPerLength() >= 0.0);
     assertTrue(section.getOilMassPerLength() >= 0.0);
     assertTrue(section.getWaterMassPerLength() >= 0.0);
@@ -204,17 +202,15 @@ public class TwoFluidSectionTest {
     section.setWaterDensity(1000.0);
     section.setLiquidDensity(850.0);
     section.setWaterCut(0.4);
-    section.setStateVector(new double[] {5.0, 4.0, 6.0, 25.0, 8.0, 18.0, 100.0});
+    section.setStateVector(new double[] { 5.0, 4.0, 6.0, 25.0, 8.0, 18.0, 100.0 });
 
     section.extractPrimitiveVariables();
     section.updateWaterOilHoldups();
 
-    assertEquals(section.getGasMomentumPerLength() / section.getGasMassPerLength(),
-        section.getGasVelocity(), 1e-12);
-    assertEquals(section.getOilMomentumPerLength() / section.getOilMassPerLength(),
-        section.getOilVelocity(), 1e-12);
-    assertEquals(section.getWaterMomentumPerLength() / section.getWaterMassPerLength(),
-        section.getWaterVelocity(), 1e-12);
+    assertEquals(section.getGasMomentumPerLength() / section.getGasMassPerLength(), section.getGasVelocity(), 1e-12);
+    assertEquals(section.getOilMomentumPerLength() / section.getOilMassPerLength(), section.getOilVelocity(), 1e-12);
+    assertEquals(section.getWaterMomentumPerLength() / section.getWaterMassPerLength(), section.getWaterVelocity(),
+	1e-12);
   }
 
   @Test
@@ -272,7 +268,7 @@ public class TwoFluidSectionTest {
     TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
     TwoFluidSection section2 = section.clone();
     section2.setPosition(section.getLength());
-    equations.calcRHS(new TwoFluidSection[] {section, section2}, section.getLength());
+    equations.calcRHS(new TwoFluidSection[] { section, section2 }, section.getLength());
 
     assertTrue(section.getEntrainmentFraction() >= 0.0);
     assertTrue(section.getEntrainedDropletDiameter() >= 0.0);
@@ -291,7 +287,7 @@ public class TwoFluidSectionTest {
 
     TwoFluidSection riserBase2 = riserBase.clone();
     riserBase2.setPosition(riserBase.getLength());
-    equations.calcRHS(new TwoFluidSection[] {riserBase, riserBase2}, riserBase.getLength());
+    equations.calcRHS(new TwoFluidSection[] { riserBase, riserBase2 }, riserBase.getLength());
 
     assertTrue(riserBase.getSevereSluggingNumber() < 1.0);
     assertTrue(riserBase.isSevereSlugPotential());

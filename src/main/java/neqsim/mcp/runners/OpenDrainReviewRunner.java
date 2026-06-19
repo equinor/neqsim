@@ -14,9 +14,8 @@ import neqsim.process.safety.opendrain.OpenDrainReviewReport;
  * Stateless MCP runner for NORSOK S-001 open-drain review.
  *
  * <p>
- * The runner accepts normalized STID/P&amp;ID extracts and optional tagreader/historian evidence.
- * It does not connect to STID or tagreader directly; those systems should feed normalized JSON into
- * the runner.
+ * The runner accepts normalized STID/P&amp;ID extracts and optional tagreader/historian evidence. It does not connect
+ * to STID or tagreader directly; those systems should feed normalized JSON into the runner.
  * </p>
  *
  * @author NeqSim contributors
@@ -24,13 +23,13 @@ import neqsim.process.safety.opendrain.OpenDrainReviewReport;
  */
 public final class OpenDrainReviewRunner {
   /** JSON serializer. */
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   /**
    * Private constructor for a static runner.
    */
-  private OpenDrainReviewRunner() {}
+  private OpenDrainReviewRunner() {
+  }
 
   /**
    * Runs an open-drain review from JSON.
@@ -41,22 +40,22 @@ public final class OpenDrainReviewRunner {
   public static String run(String json) {
     if (json == null || json.trim().isEmpty()) {
       return errorJson("INPUT_ERROR", "JSON input is null or empty",
-          "Provide normalized open-drain items, openDrainAreas, drainAreas, or stidData.");
+	  "Provide normalized open-drain items, openDrainAreas, drainAreas, or stidData.");
     }
     JsonObject input;
     try {
       input = JsonParser.parseString(json).getAsJsonObject();
     } catch (Exception ex) {
       return errorJson("JSON_PARSE_ERROR", "Failed to parse open-drain-review JSON input.",
-          "Ensure the input JSON is well formed and does not contain comments or trailing commas.");
+	  "Ensure the input JSON is well formed and does not contain comments or trailing commas.");
     }
     long startTime = System.currentTimeMillis();
     try {
       OpenDrainReviewInput reviewInput = OpenDrainReviewInput.fromJsonObject(input);
       if (reviewInput.getItems().isEmpty()) {
-        return errorJson("MISSING_OPEN_DRAIN_DATA",
-            "No open-drain items, drainAreas, openDrainAreas, or stidData were supplied.",
-            "Provide at least one normalized area or drain-system record from STID/P&ID evidence.");
+	return errorJson("MISSING_OPEN_DRAIN_DATA",
+	    "No open-drain items, drainAreas, openDrainAreas, or stidData were supplied.",
+	    "Provide at least one normalized area or drain-system record from STID/P&ID evidence.");
       }
       OpenDrainReviewReport report = new OpenDrainReviewEngine().evaluate(reviewInput);
       JsonObject root = JsonParser.parseString(report.toJson()).getAsJsonObject();
@@ -65,21 +64,20 @@ public final class OpenDrainReviewRunner {
       provenance.setConverged(!"FAIL".equals(report.getOverallVerdict()));
       provenance.setComputationTimeMs(System.currentTimeMillis() - startTime);
       provenance.addAssumption("Normalized STID/P&ID evidence supplied by caller.");
-      provenance
-          .addLimitation("No direct STID or tagreader connection is opened by the Java runner.");
+      provenance.addLimitation("No direct STID or tagreader connection is opened by the Java runner.");
       root.add("provenance", GSON.toJsonTree(provenance));
       return GSON.toJson(root);
     } catch (Exception ex) {
       return errorJson("OPEN_DRAIN_REVIEW_ERROR", "Open-drain review failed during evaluation.",
-          "Check normalized evidence keys, numeric units, and JSON shape.");
+	  "Check normalized evidence keys, numeric units, and JSON shape.");
     }
   }
 
   /**
    * Creates a standard error JSON string.
    *
-   * @param code error code
-   * @param message error message
+   * @param code        error code
+   * @param message     error message
    * @param remediation recommended remediation
    * @return JSON error string
    */

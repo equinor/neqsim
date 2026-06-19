@@ -18,8 +18,8 @@ import neqsim.thermo.system.SystemSrkEos;
 public class ChemistryDepositionAccumulatorTest {
 
   /**
-   * Builds a small wet-gas + brine line and runs the accumulator. Asserts the accumulator
-   * evaluates, the segment lists match the increment count, and total mass &gt;= 0.
+   * Builds a small wet-gas + brine line and runs the accumulator. Asserts the accumulator evaluates, the segment lists
+   * match the increment count, and total mass &gt;= 0.
    */
   @Test
   public void depositionAccumulatorRunsAndProducesProfiles() {

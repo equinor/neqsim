@@ -36,8 +36,7 @@ class SeparatorInternalsDatabaseTest {
     SeparatorInternalsDatabase db = SeparatorInternalsDatabase.getInstance();
     List<SeparatorInternalsDatabase.InternalsRecord> all = db.getAllInternals();
     assertFalse(all.isEmpty(), "Should have internals records");
-    assertTrue(all.size() >= 60,
-        "Should have at least 60 internals records, got " + all.size());
+    assertTrue(all.size() >= 60, "Should have at least 60 internals records, got " + all.size());
   }
 
   /**
@@ -48,8 +47,7 @@ class SeparatorInternalsDatabaseTest {
     SeparatorInternalsDatabase db = SeparatorInternalsDatabase.getInstance();
     List<SeparatorInternalsDatabase.InletDeviceRecord> all = db.getAllInletDevices();
     assertFalse(all.isEmpty(), "Should have inlet device records");
-    assertTrue(all.size() >= 25,
-        "Should have at least 25 inlet device records, got " + all.size());
+    assertTrue(all.size() >= 25, "Should have at least 25 inlet device records, got " + all.size());
   }
 
   /**
@@ -60,8 +58,7 @@ class SeparatorInternalsDatabaseTest {
     SeparatorInternalsDatabase db = SeparatorInternalsDatabase.getInstance();
     List<SeparatorInternalsDatabase.VendorCurveRecord> all = db.getAllVendorCurves();
     assertFalse(all.isEmpty(), "Should have vendor curve records");
-    assertTrue(all.size() >= 20,
-        "Should have at least 20 vendor curve records, got " + all.size());
+    assertTrue(all.size() >= 20, "Should have at least 20 vendor curve records, got " + all.size());
   }
 
   /**
@@ -72,8 +69,7 @@ class SeparatorInternalsDatabaseTest {
     SeparatorInternalsDatabase db = SeparatorInternalsDatabase.getInstance();
     List<SeparatorInternalsDatabase.InternalsRecord> wireMesh = db.findByType("WIRE_MESH");
     assertFalse(wireMesh.isEmpty(), "Should find WIRE_MESH records");
-    assertTrue(wireMesh.size() >= 15,
-        "Should have at least 15 wire mesh variants, got " + wireMesh.size());
+    assertTrue(wireMesh.size() >= 15, "Should have at least 15 wire mesh variants, got " + wireMesh.size());
     for (SeparatorInternalsDatabase.InternalsRecord rec : wireMesh) {
       assertTrue(rec.internalsType.equals("WIRE_MESH"), "Record type should be WIRE_MESH");
       assertTrue(rec.maxKFactor > 0, "Max K-factor should be positive");
@@ -125,8 +121,7 @@ class SeparatorInternalsDatabaseTest {
   @Test
   void testFindByTypeAndSubType() {
     SeparatorInternalsDatabase db = SeparatorInternalsDatabase.getInstance();
-    SeparatorInternalsDatabase.InternalsRecord rec =
-        db.findByTypeAndSubType("WIRE_MESH", "Standard Knitted");
+    SeparatorInternalsDatabase.InternalsRecord rec = db.findByTypeAndSubType("WIRE_MESH", "Standard Knitted");
     assertNotNull(rec, "Should find Standard Knitted wire mesh");
     assertTrue(rec.d50_um > 0 && rec.d50_um < 50, "D50 should be in reasonable range");
   }
@@ -137,11 +132,9 @@ class SeparatorInternalsDatabaseTest {
   @Test
   void testFindInletDeviceByType() {
     SeparatorInternalsDatabase db = SeparatorInternalsDatabase.getInstance();
-    List<SeparatorInternalsDatabase.InletDeviceRecord> vanes =
-        db.findInletDeviceByType("INLET_VANE");
+    List<SeparatorInternalsDatabase.InletDeviceRecord> vanes = db.findInletDeviceByType("INLET_VANE");
     assertFalse(vanes.isEmpty(), "Should find INLET_VANE records");
-    assertTrue(vanes.size() >= 4,
-        "Should have at least 4 inlet vane variants, got " + vanes.size());
+    assertTrue(vanes.size() >= 4, "Should have at least 4 inlet vane variants, got " + vanes.size());
     for (SeparatorInternalsDatabase.InletDeviceRecord rec : vanes) {
       assertTrue(rec.deviceType.equals("INLET_VANE"), "Device type should be INLET_VANE");
       assertTrue(rec.maxMomentum_Pa > 0, "Max momentum should be positive");
@@ -161,8 +154,7 @@ class SeparatorInternalsDatabaseTest {
       // Check that the curve produces reasonable efficiencies
       double effSmall = curve.getEfficiency(1e-6); // 1 micron
       double effLarge = curve.getEfficiency(100e-6); // 100 micron
-      assertTrue(effSmall <= effLarge,
-          "Efficiency for larger droplets should be >= small droplets");
+      assertTrue(effSmall <= effLarge, "Efficiency for larger droplets should be >= small droplets");
     }
   }
 
@@ -178,15 +170,13 @@ class SeparatorInternalsDatabaseTest {
     SeparatorInternalsDatabase.VendorCurveRecord rec = curves.get(0);
     GradeEfficiencyCurve curve = rec.toGradeEfficiencyCurve();
     assertNotNull(curve, "Vendor grade efficiency curve should not be null");
-    assertTrue(curve.getType() == GradeEfficiencyCurve.InternalsType.CUSTOM,
-        "Vendor curve should produce CUSTOM type");
+    assertTrue(curve.getType() == GradeEfficiencyCurve.InternalsType.CUSTOM, "Vendor curve should produce CUSTOM type");
 
     // Check monotonically increasing efficiency
     double prevEff = 0.0;
     for (double d_um : rec.diameterPoints_um) {
       double eff = curve.getEfficiency(d_um * 1e-6);
-      assertTrue(eff >= prevEff - 0.001,
-          "Vendor curve efficiency should be non-decreasing at " + d_um + " um");
+      assertTrue(eff >= prevEff - 0.001, "Vendor curve efficiency should be non-decreasing at " + d_um + " um");
       prevEff = eff;
     }
     // Large droplets should have high efficiency
@@ -200,14 +190,12 @@ class SeparatorInternalsDatabaseTest {
   @Test
   void testFindVendorCurvesByType() {
     SeparatorInternalsDatabase db = SeparatorInternalsDatabase.getInstance();
-    List<SeparatorInternalsDatabase.VendorCurveRecord> wireMeshCurves =
-        db.findVendorCurvesByType("WIRE_MESH");
+    List<SeparatorInternalsDatabase.VendorCurveRecord> wireMeshCurves = db.findVendorCurvesByType("WIRE_MESH");
     assertFalse(wireMeshCurves.isEmpty(), "Should have WIRE_MESH vendor curves");
     assertTrue(wireMeshCurves.size() >= 5,
-        "Should have at least 5 wire mesh vendor curves, got " + wireMeshCurves.size());
+	"Should have at least 5 wire mesh vendor curves, got " + wireMeshCurves.size());
 
-    List<SeparatorInternalsDatabase.VendorCurveRecord> cycloneCurves =
-        db.findVendorCurvesByType("AXIAL_CYCLONE");
+    List<SeparatorInternalsDatabase.VendorCurveRecord> cycloneCurves = db.findVendorCurvesByType("AXIAL_CYCLONE");
     assertFalse(cycloneCurves.isEmpty(), "Should have AXIAL_CYCLONE vendor curves");
   }
 
@@ -217,12 +205,10 @@ class SeparatorInternalsDatabaseTest {
   @Test
   void testFindVendorCurvesByVendor() {
     SeparatorInternalsDatabase db = SeparatorInternalsDatabase.getInstance();
-    List<SeparatorInternalsDatabase.VendorCurveRecord> vendorA =
-        db.findVendorCurvesByVendor("VendorA");
+    List<SeparatorInternalsDatabase.VendorCurveRecord> vendorA = db.findVendorCurvesByVendor("VendorA");
     assertFalse(vendorA.isEmpty(), "Should find VendorA curves");
 
-    List<SeparatorInternalsDatabase.VendorCurveRecord> vendorB =
-        db.findVendorCurvesByVendor("VendorB");
+    List<SeparatorInternalsDatabase.VendorCurveRecord> vendorB = db.findVendorCurvesByVendor("VendorB");
     assertFalse(vendorB.isEmpty(), "Should find VendorB curves");
   }
 
@@ -238,9 +224,9 @@ class SeparatorInternalsDatabaseTest {
     assertNotNull(rec.diameterPoints_um, "Should have diameter points");
     assertNotNull(rec.efficiencyPoints, "Should have efficiency points");
     assertTrue(rec.diameterPoints_um.length == rec.efficiencyPoints.length,
-        "Diameter and efficiency arrays should have same length");
+	"Diameter and efficiency arrays should have same length");
     assertTrue(rec.diameterPoints_um.length >= 10,
-        "Should have at least 10 data points, got " + rec.diameterPoints_um.length);
+	"Should have at least 10 data points, got " + rec.diameterPoints_um.length);
   }
 
   /**
@@ -249,8 +235,8 @@ class SeparatorInternalsDatabaseTest {
   @Test
   void testFindVendorCurvesByTypeAndVendor() {
     SeparatorInternalsDatabase db = SeparatorInternalsDatabase.getInstance();
-    List<SeparatorInternalsDatabase.VendorCurveRecord> results =
-        db.findVendorCurvesByTypeAndVendor("AXIAL_CYCLONE", "VendorA");
+    List<SeparatorInternalsDatabase.VendorCurveRecord> results = db.findVendorCurvesByTypeAndVendor("AXIAL_CYCLONE",
+	"VendorA");
     assertFalse(results.isEmpty(), "Should find VendorA cyclone curves");
     for (SeparatorInternalsDatabase.VendorCurveRecord rec : results) {
       assertTrue(rec.internalsType.equals("AXIAL_CYCLONE"), "Type should be AXIAL_CYCLONE");
@@ -271,14 +257,13 @@ class SeparatorInternalsDatabaseTest {
       assertFalse(rec.vendorName.trim().isEmpty(), "Vendor name should not be empty for " + rec.curveId);
       assertNotNull(rec.testStandard, "Test standard should not be null for " + rec.curveId);
       assertTrue(rec.maxKFactor > 0, "Max K-factor should be positive for " + rec.curveId);
-      assertTrue(rec.diameterPoints_um.length >= 2,
-          "Should have at least 2 data points for " + rec.curveId);
+      assertTrue(rec.diameterPoints_um.length >= 2, "Should have at least 2 data points for " + rec.curveId);
     }
   }
 
   /**
-   * Tests that high-pressure vendor curves have lower max K-factor than atmospheric curves.
-   * At higher gas density the flooding velocity is lower, reducing the allowable K-factor.
+   * Tests that high-pressure vendor curves have lower max K-factor than atmospheric curves. At higher gas density the
+   * flooding velocity is lower, reducing the allowable K-factor.
    */
   @Test
   void testHighPressureVendorCurvesShifted() {
@@ -288,11 +273,10 @@ class SeparatorInternalsDatabaseTest {
     SeparatorInternalsDatabase.VendorCurveRecord hp = db.findVendorCurveById("VC007");
     assertNotNull(atm, "Should find atmospheric curve VC001");
     assertNotNull(hp, "Should find HP curve VC007");
-    assertTrue(hp.testPressure_bar > atm.testPressure_bar,
-        "HP curve should have higher test pressure");
+    assertTrue(hp.testPressure_bar > atm.testPressure_bar, "HP curve should have higher test pressure");
     // At high pressure the max K-factor is lower (flooding earlier)
     assertTrue(hp.maxKFactor < atm.maxKFactor,
-        "HP max K-factor should be lower: atm=" + atm.maxKFactor + " hp=" + hp.maxKFactor);
+	"HP max K-factor should be lower: atm=" + atm.maxKFactor + " hp=" + hp.maxKFactor);
     // Both should produce valid custom curves
     GradeEfficiencyCurve atmCurve = atm.toGradeEfficiencyCurve();
     GradeEfficiencyCurve hpCurve = hp.toGradeEfficiencyCurve();
@@ -323,9 +307,9 @@ class SeparatorInternalsDatabaseTest {
     SeparatorInternalsDatabase db = SeparatorInternalsDatabase.getInstance();
     for (SeparatorInternalsDatabase.InternalsRecord rec : db.getAllInternals()) {
       assertTrue(rec.d50_um > 0 && rec.d50_um < 10000,
-          "D50 should be between 0 and 10000 um for " + rec.internalsType + "/" + rec.subType);
+	  "D50 should be between 0 and 10000 um for " + rec.internalsType + "/" + rec.subType);
       assertTrue(rec.maxEfficiency > 0 && rec.maxEfficiency <= 1.0,
-          "Max efficiency should be (0,1] for " + rec.internalsType);
+	  "Max efficiency should be (0,1] for " + rec.internalsType);
       assertTrue(rec.maxKFactor >= rec.minKFactor, "Max K >= Min K for " + rec.internalsType);
     }
   }
@@ -336,9 +320,7 @@ class SeparatorInternalsDatabaseTest {
   @Test
   void testTotalRecordCountExceeds100() {
     SeparatorInternalsDatabase db = SeparatorInternalsDatabase.getInstance();
-    int total = db.getAllInternals().size() + db.getAllInletDevices().size()
-        + db.getAllVendorCurves().size();
-    assertTrue(total >= 100,
-        "Total records across all tables should be >= 100, got " + total);
+    int total = db.getAllInternals().size() + db.getAllInletDevices().size() + db.getAllVendorCurves().size();
+    assertTrue(total >= 100, "Total records across all tables should be >= 100, got " + total);
   }
 }

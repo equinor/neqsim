@@ -28,8 +28,7 @@ public class PhaseEnvelopeZeroCheckTest {
     double[] dewT = ops.get("dewT");
     double[] dewP = ops.get("dewP");
     assertTrue(cricondenbar[0] > 0.0 && cricondenbar[1] > 0.0, "cricondenbar should be calculated");
-    assertTrue(cricondentherm[0] > 0.0 && cricondentherm[1] > 0.0,
-        "cricondentherm should be calculated");
+    assertTrue(cricondentherm[0] > 0.0 && cricondentherm[1] > 0.0, "cricondentherm should be calculated");
     assertTrue(Arrays.stream(dewT).noneMatch(t -> t == 0.0), "dewT should not contain zeros");
     assertTrue(Arrays.stream(dewP).noneMatch(p -> p == 0.0), "dewP should not contain zeros");
   }
@@ -51,8 +50,7 @@ public class PhaseEnvelopeZeroCheckTest {
     double[] dewT = ops.get("dewT");
     double[] dewP = ops.get("dewP");
     assertTrue(cricondenbar[0] > 0.0 && cricondenbar[1] > 0.0, "cricondenbar should be calculated");
-    assertTrue(cricondentherm[0] > 0.0 && cricondentherm[1] > 0.0,
-        "cricondentherm should be calculated");
+    assertTrue(cricondentherm[0] > 0.0 && cricondentherm[1] > 0.0, "cricondentherm should be calculated");
     assertTrue(Arrays.stream(dewT).noneMatch(t -> t == 0.0), "dewT should not contain zeros");
     assertTrue(Arrays.stream(dewP).noneMatch(p -> p == 0.0), "dewP should not contain zeros");
   }

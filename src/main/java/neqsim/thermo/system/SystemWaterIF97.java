@@ -35,8 +35,8 @@ public class SystemWaterIF97 extends SystemEos {
   /**
    * Create a system with temperature, pressure and optional solid phase check.
    *
-   * @param T a double
-   * @param P a double
+   * @param T              a double
+   * @param P              a double
    * @param checkForSolids a boolean
    */
   public SystemWaterIF97(double T, double P, boolean checkForSolids) {

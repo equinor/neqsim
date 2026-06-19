@@ -16,10 +16,10 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Compares thermodynamic property predictions between two equations of state.
  *
  * <p>
- * Per TR1244 best practice, process design should cross-check results between SRK and PR78
- * equations of state to identify cases where EoS choice significantly affects separation
- * predictions, compressor duties, phase envelopes or hydrate curves. This class runs both EoS on
- * the same composition and conditions and flags deviations above configurable thresholds.
+ * Per TR1244 best practice, process design should cross-check results between SRK and PR78 equations of state to
+ * identify cases where EoS choice significantly affects separation predictions, compressor duties, phase envelopes or
+ * hydrate curves. This class runs both EoS on the same composition and conditions and flags deviations above
+ * configurable thresholds.
  * </p>
  *
  * <p>
@@ -78,8 +78,8 @@ public class DualEosComparison implements Serializable {
    * Creates a DualEosComparison from a base fluid system.
    *
    * <p>
-   * The composition is extracted from the supplied system. Both SRK and PR78 fluids will be built
-   * internally with the same composition. The base fluid's EoS type does not matter.
+   * The composition is extracted from the supplied system. Both SRK and PR78 fluids will be built internally with the
+   * same composition. The base fluid's EoS type does not matter.
    * </p>
    *
    * @param baseFluid the base fluid to extract composition from
@@ -95,9 +95,9 @@ public class DualEosComparison implements Serializable {
   /**
    * Creates a DualEosComparison from explicit composition.
    *
-   * @param componentNames array of component names
+   * @param componentNames   array of component names
    * @param molarComposition array of molar fractions (must sum to ~1.0)
-   * @param mixingRule mixing rule name (e.g., "classic")
+   * @param mixingRule       mixing rule name (e.g., "classic")
    */
   public DualEosComparison(String[] componentNames, double[] molarComposition, String mixingRule) {
     this.componentNames = componentNames;
@@ -127,20 +127,20 @@ public class DualEosComparison implements Serializable {
    * Adds a temperature-pressure condition to evaluate.
    *
    * @param temperatureKelvin temperature in Kelvin
-   * @param pressureBara pressure in bara
+   * @param pressureBara      pressure in bara
    */
   public void addCondition(double temperatureKelvin, double pressureBara) {
-    conditions.add(new double[] {temperatureKelvin, pressureBara});
+    conditions.add(new double[] { temperatureKelvin, pressureBara });
   }
 
   /**
    * Adds a temperature-pressure condition using Celsius.
    *
    * @param temperatureCelsius temperature in Celsius
-   * @param pressureBara pressure in bara
+   * @param pressureBara       pressure in bara
    */
   public void addConditionCelsius(double temperatureCelsius, double pressureBara) {
-    conditions.add(new double[] {temperatureCelsius + 273.15, pressureBara});
+    conditions.add(new double[] { temperatureCelsius + 273.15, pressureBara });
   }
 
   /**
@@ -156,14 +156,14 @@ public class DualEosComparison implements Serializable {
       // Build SRK fluid
       SystemInterface srkFluid = new SystemSrkEos(T, P);
       for (int i = 0; i < componentNames.length; i++) {
-        srkFluid.addComponent(componentNames[i], molarComposition[i]);
+	srkFluid.addComponent(componentNames[i], molarComposition[i]);
       }
       srkFluid.setMixingRule(mixingRule);
 
       // Build PR78 fluid
       SystemInterface pr78Fluid = new SystemPrEos1978(T, P);
       for (int i = 0; i < componentNames.length; i++) {
-        pr78Fluid.addComponent(componentNames[i], molarComposition[i]);
+	pr78Fluid.addComponent(componentNames[i], molarComposition[i]);
       }
       pr78Fluid.setMixingRule(mixingRule);
 
@@ -191,22 +191,22 @@ public class DualEosComparison implements Serializable {
 
       // Z factor (gas phase if present)
       if (srkFluid.hasPhaseType("gas") && pr78Fluid.hasPhaseType("gas")) {
-        cr.srkGasZ = srkFluid.getPhaseOfType("gas").getZ();
-        cr.pr78GasZ = pr78Fluid.getPhaseOfType("gas").getZ();
-        cr.srkGasDensity = srkFluid.getPhaseOfType("gas").getDensity("kg/m3");
-        cr.pr78GasDensity = pr78Fluid.getPhaseOfType("gas").getDensity("kg/m3");
-        cr.srkGasMW = srkFluid.getPhaseOfType("gas").getMolarMass() * 1000.0;
-        cr.pr78GasMW = pr78Fluid.getPhaseOfType("gas").getMolarMass() * 1000.0;
-        cr.srkGasViscosity = srkFluid.getPhaseOfType("gas").getViscosity("cP");
-        cr.pr78GasViscosity = pr78Fluid.getPhaseOfType("gas").getViscosity("cP");
+	cr.srkGasZ = srkFluid.getPhaseOfType("gas").getZ();
+	cr.pr78GasZ = pr78Fluid.getPhaseOfType("gas").getZ();
+	cr.srkGasDensity = srkFluid.getPhaseOfType("gas").getDensity("kg/m3");
+	cr.pr78GasDensity = pr78Fluid.getPhaseOfType("gas").getDensity("kg/m3");
+	cr.srkGasMW = srkFluid.getPhaseOfType("gas").getMolarMass() * 1000.0;
+	cr.pr78GasMW = pr78Fluid.getPhaseOfType("gas").getMolarMass() * 1000.0;
+	cr.srkGasViscosity = srkFluid.getPhaseOfType("gas").getViscosity("cP");
+	cr.pr78GasViscosity = pr78Fluid.getPhaseOfType("gas").getViscosity("cP");
       }
 
       // Liquid phase
       if (srkFluid.hasPhaseType("oil") && pr78Fluid.hasPhaseType("oil")) {
-        cr.srkLiqDensity = srkFluid.getPhaseOfType("oil").getDensity("kg/m3");
-        cr.pr78LiqDensity = pr78Fluid.getPhaseOfType("oil").getDensity("kg/m3");
-        cr.srkLiqViscosity = srkFluid.getPhaseOfType("oil").getViscosity("cP");
-        cr.pr78LiqViscosity = pr78Fluid.getPhaseOfType("oil").getViscosity("cP");
+	cr.srkLiqDensity = srkFluid.getPhaseOfType("oil").getDensity("kg/m3");
+	cr.pr78LiqDensity = pr78Fluid.getPhaseOfType("oil").getDensity("kg/m3");
+	cr.srkLiqViscosity = srkFluid.getPhaseOfType("oil").getViscosity("cP");
+	cr.pr78LiqViscosity = pr78Fluid.getPhaseOfType("oil").getViscosity("cP");
       }
 
       // Gas mole fraction
@@ -245,7 +245,7 @@ public class DualEosComparison implements Serializable {
   public boolean hasSignificantDeviations() {
     for (ComparisonResult cr : results) {
       if (!cr.flags.isEmpty()) {
-        return true;
+	return true;
       }
     }
     return false;
@@ -260,8 +260,7 @@ public class DualEosComparison implements Serializable {
     List<String> allFlags = new ArrayList<String>();
     for (ComparisonResult cr : results) {
       for (String flag : cr.flags) {
-        allFlags
-            .add(String.format("T=%.1fK P=%.1fbar: %s", cr.temperatureK, cr.pressureBara, flag));
+	allFlags.add(String.format("T=%.1fK P=%.1fbar: %s", cr.temperatureK, cr.pressureBara, flag));
       }
     }
     return allFlags;
@@ -297,8 +296,7 @@ public class DualEosComparison implements Serializable {
     }
     root.add("results", resArray);
 
-    Gson gson =
-        new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
+    Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
     return gson.toJson(root);
   }
 
@@ -397,8 +395,7 @@ public class DualEosComparison implements Serializable {
       flags.clear();
 
       if (srkNumPhases != pr78NumPhases) {
-        flags.add(
-            String.format("Phase count mismatch: SRK=%d PR78=%d", srkNumPhases, pr78NumPhases));
+	flags.add(String.format("Phase count mismatch: SRK=%d PR78=%d", srkNumPhases, pr78NumPhases));
       }
 
       checkDeviation("Density", srkDensity, pr78Density, "kg/m3", threshold);
@@ -415,25 +412,24 @@ public class DualEosComparison implements Serializable {
     /**
      * Checks a single property pair for deviation.
      *
-     * @param name property name
-     * @param srkVal SRK value
-     * @param pr78Val PR78 value
-     * @param unit unit string
+     * @param name      property name
+     * @param srkVal    SRK value
+     * @param pr78Val   PR78 value
+     * @param unit      unit string
      * @param threshold fractional deviation threshold
      */
-    private void checkDeviation(String name, double srkVal, double pr78Val, String unit,
-        double threshold) {
+    private void checkDeviation(String name, double srkVal, double pr78Val, String unit, double threshold) {
       if (Double.isNaN(srkVal) || Double.isNaN(pr78Val)) {
-        return;
+	return;
       }
       double avg = (Math.abs(srkVal) + Math.abs(pr78Val)) / 2.0;
       if (avg < 1e-10) {
-        return;
+	return;
       }
       double dev = Math.abs(srkVal - pr78Val) / avg;
       if (dev > threshold) {
-        flags.add(String.format("%s deviation %.1f%%: SRK=%.4g PR78=%.4g %s", name, dev * 100.0,
-            srkVal, pr78Val, unit));
+	flags
+	    .add(String.format("%s deviation %.1f%%: SRK=%.4g PR78=%.4g %s", name, dev * 100.0, srkVal, pr78Val, unit));
       }
     }
 
@@ -477,7 +473,7 @@ public class DualEosComparison implements Serializable {
       // Flags
       JsonArray flagArr = new JsonArray();
       for (String f : flags) {
-        flagArr.add(f);
+	flagArr.add(f);
       }
       obj.add("deviationFlags", flagArr);
 
@@ -487,9 +483,9 @@ public class DualEosComparison implements Serializable {
     /**
      * Adds an SRK/PR78/deviation triplet to a JSON object.
      *
-     * @param parent parent JSON object
-     * @param name property name
-     * @param srkVal SRK value
+     * @param parent  parent JSON object
+     * @param name    property name
+     * @param srkVal  SRK value
      * @param pr78Val PR78 value
      */
     private void addPair(JsonObject parent, String name, double srkVal, double pr78Val) {
@@ -497,11 +493,10 @@ public class DualEosComparison implements Serializable {
       pair.addProperty("SRK", srkVal);
       pair.addProperty("PR78", pr78Val);
       if (!Double.isNaN(srkVal) && !Double.isNaN(pr78Val)) {
-        double avg = (Math.abs(srkVal) + Math.abs(pr78Val)) / 2.0;
-        if (avg > 1e-10) {
-          pair.addProperty("deviation_pct",
-              Math.round(Math.abs(srkVal - pr78Val) / avg * 1000.0) / 10.0);
-        }
+	double avg = (Math.abs(srkVal) + Math.abs(pr78Val)) / 2.0;
+	if (avg > 1e-10) {
+	  pair.addProperty("deviation_pct", Math.round(Math.abs(srkVal - pr78Val) / avg * 1000.0) / 10.0);
+	}
       }
       parent.add(name, pair);
     }

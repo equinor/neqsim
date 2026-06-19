@@ -18,7 +18,7 @@ public class CompositionEstimation {
    * </p>
    *
    * @param reservoirTemperature a double
-   * @param reservoirPressure a double
+   * @param reservoirPressure    a double
    */
   public CompositionEstimation(double reservoirTemperature, double reservoirPressure) {
     this.reservoirTemperature = reservoirTemperature;
@@ -45,7 +45,6 @@ public class CompositionEstimation {
    * @return a double
    */
   public double estimateH2Sconcentration(double CO2concentration) {
-    return Math
-        .exp(11.7 - 4438.3 / reservoirTemperature + 0.7 * Math.log(CO2concentration * 100.0));
+    return Math.exp(11.7 - 4438.3 / reservoirTemperature + 0.7 * Math.log(CO2concentration * 100.0));
   }
 }

@@ -13,10 +13,9 @@ import neqsim.thermo.system.SystemPrEos;
  * Tests for compressor with CPA equation of state and water wash scenarios.
  *
  * <p>
- * These tests verify that compressor calculations complete without hanging when the inlet fluid
- * uses CPA EOS (autoSelectModel with water/MEG) and has two phases (gas + aqueous). Previously, the
- * PSflash Newton iteration would oscillate at 1e-6 error due to expensive stability analysis noise,
- * never reaching the 1e-8 convergence criterion.
+ * These tests verify that compressor calculations complete without hanging when the inlet fluid uses CPA EOS
+ * (autoSelectModel with water/MEG) and has two phases (gas + aqueous). Previously, the PSflash Newton iteration would
+ * oscillate at 1e-6 error due to expensive stability analysis noise, never reaching the 1e-8 convergence criterion.
  * </p>
  *
  * @author NeqSim
@@ -28,9 +27,8 @@ public class CompressorCPAHangTest extends neqsim.NeqSimTest {
    * Test isentropic compressor with CPA water wash and plus fractions.
    *
    * <p>
-   * Simulates gas compression from 27.9 to 122 bara with a mixed gas+water feed produced by
-   * scrubbing and water wash injection. The fluid uses CPA EOS via autoSelectModel due to water/MEG
-   * components.
+   * Simulates gas compression from 27.9 to 122 bara with a mixed gas+water feed produced by scrubbing and water wash
+   * injection. The fluid uses CPA EOS via autoSelectModel due to water/MEG components.
    * </p>
    */
   @Test
@@ -112,24 +110,24 @@ public class CompressorCPAHangTest extends neqsim.NeqSimTest {
     feedToCompressor.run();
 
     Assertions.assertEquals(2, feedToCompressor.getThermoSystem().getNumberOfPhases(),
-        "Feed should have 2 phases (gas + aqueous)");
+	"Feed should have 2 phases (gas + aqueous)");
 
     Compressor compressor1 = new Compressor("27AKA60", feedToCompressor);
     compressor1.setOutletPressure(compPout, "bara");
     compressor1.run();
 
     Assertions.assertTrue(compressor1.getOutletStream().getTemperature("C") > compTin,
-        "Outlet temperature should exceed inlet temperature");
+	"Outlet temperature should exceed inlet temperature");
     Assertions.assertEquals(compPout, compressor1.getOutletStream().getPressure("bara"), 0.1,
-        "Outlet pressure should match setpoint");
+	"Outlet pressure should match setpoint");
   }
 
   /**
    * Test polytropic detailed compressor with CPA gas (no water wash).
    *
    * <p>
-   * Verifies that polytropic detailed calculation with specified outlet temperature completes
-   * without hanging when using CPA EOS.
+   * Verifies that polytropic detailed calculation with specified outlet temperature completes without hanging when
+   * using CPA EOS.
    * </p>
    */
   @Test
@@ -177,8 +175,7 @@ public class CompressorCPAHangTest extends neqsim.NeqSimTest {
     compressor1.run();
 
     Assertions.assertEquals(compTout, compressor1.getOutletStream().getTemperature("C"), 1.0,
-        "Outlet temperature should match specified value");
-    Assertions.assertTrue(compressor1.getPolytropicEfficiency() > 0.5,
-        "Polytropic efficiency should be reasonable");
+	"Outlet temperature should match specified value");
+    Assertions.assertTrue(compressor1.getPolytropicEfficiency() > 0.5, "Polytropic efficiency should be reasonable");
   }
 }

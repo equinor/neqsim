@@ -20,10 +20,9 @@ import neqsim.thermo.system.SystemSrkEos;
  * Biomass gasifier reactor for thermochemical conversion of solid biomass to syngas.
  *
  * <p>
- * Models downdraft, updraft, and fluidized-bed gasification by combining empirical yield
- * correlations with constrained Gibbs equilibrium (via the existing {@link GibbsReactor}). The
- * gasifier accepts a biomass characterization and a gasification agent stream, producing a syngas
- * outlet stream and a solid residue (char/ash) outlet stream.
+ * Models downdraft, updraft, and fluidized-bed gasification by combining empirical yield correlations with constrained
+ * Gibbs equilibrium (via the existing {@link GibbsReactor}). The gasifier accepts a biomass characterization and a
+ * gasification agent stream, producing a syngas outlet stream and a solid residue (char/ash) outlet stream.
  * </p>
  *
  * <h2>Gasifier Types</h2>
@@ -153,7 +152,7 @@ public class BiomassGasifier extends ProcessEquipmentBaseClass {
   /**
    * Sets the biomass feedstock and feed rate.
    *
-   * @param biomass the biomass characterization
+   * @param biomass         the biomass characterization
    * @param feedRateKgPerHr dry biomass feed rate in kg/hr
    */
   public void setBiomass(BiomassCharacterization biomass, double feedRateKgPerHr) {
@@ -234,8 +233,7 @@ public class BiomassGasifier extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Sets the gasification temperature in Kelvin. If not set, operates in adiabatic equilibrium
-   * mode.
+   * Sets the gasification temperature in Kelvin. If not set, operates in adiabatic equilibrium mode.
    *
    * @param temperatureK temperature in Kelvin
    */
@@ -247,7 +245,7 @@ public class BiomassGasifier extends ProcessEquipmentBaseClass {
    * Sets the gasification temperature with unit specification.
    *
    * @param temperature temperature value
-   * @param unit unit string ("K", "C", "F")
+   * @param unit        unit string ("K", "C", "F")
    */
   public void setGasificationTemperature(double temperature, String unit) {
     if ("C".equalsIgnoreCase(unit)) {
@@ -305,8 +303,8 @@ public class BiomassGasifier extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Sets an optional external gasification agent inlet stream. When set, this stream provides the
-   * gasification agent (air, oxygen, steam) directly, overriding the auto-generated agent from ER.
+   * Sets an optional external gasification agent inlet stream. When set, this stream provides the gasification agent
+   * (air, oxygen, steam) directly, overriding the auto-generated agent from ER.
    *
    * @param stream the gasification agent stream
    */
@@ -395,8 +393,8 @@ public class BiomassGasifier extends ProcessEquipmentBaseClass {
    * Runs the biomass gasifier simulation.
    *
    * <p>
-   * Converts the biomass elemental composition and gasification agent into a NeqSim fluid, runs
-   * Gibbs equilibrium, and separates products into syngas and char/ash streams.
+   * Converts the biomass elemental composition and gasification agent into a NeqSim fluid, runs Gibbs equilibrium, and
+   * separates products into syngas and char/ash streams.
    * </p>
    *
    * @param id UUID for this run
@@ -444,30 +442,29 @@ public class BiomassGasifier extends ProcessEquipmentBaseClass {
     double actualAirKg = stoichAirKg * equivalenceRatio;
 
     switch (agentType) {
-      case AIR:
-        airMolesPerHr = actualAirKg / 28.97; // average MW of air
-        o2AgentMoles = airMolesPerHr * 0.21;
-        n2AgentMoles = airMolesPerHr * 0.79;
-        break;
-      case OXYGEN:
-        o2AgentMoles = (actualAirKg * 0.233) / (2.0 * MW_O);
-        break;
-      case STEAM:
-        steamAgentMoles = (steamToBiomassRatio * dryFeedKgPerHr) / 18.015;
-        break;
-      case AIR_STEAM:
-        airMolesPerHr = actualAirKg / 28.97;
-        o2AgentMoles = airMolesPerHr * 0.21;
-        n2AgentMoles = airMolesPerHr * 0.79;
-        steamAgentMoles = (steamToBiomassRatio * dryFeedKgPerHr) / 18.015;
-        break;
-      default:
-        break;
+    case AIR:
+      airMolesPerHr = actualAirKg / 28.97; // average MW of air
+      o2AgentMoles = airMolesPerHr * 0.21;
+      n2AgentMoles = airMolesPerHr * 0.79;
+      break;
+    case OXYGEN:
+      o2AgentMoles = (actualAirKg * 0.233) / (2.0 * MW_O);
+      break;
+    case STEAM:
+      steamAgentMoles = (steamToBiomassRatio * dryFeedKgPerHr) / 18.015;
+      break;
+    case AIR_STEAM:
+      airMolesPerHr = actualAirKg / 28.97;
+      o2AgentMoles = airMolesPerHr * 0.21;
+      n2AgentMoles = airMolesPerHr * 0.79;
+      steamAgentMoles = (steamToBiomassRatio * dryFeedKgPerHr) / 18.015;
+      break;
+    default:
+      break;
     }
 
     // ── Step 3: Build NeqSim fluid for Gibbs equilibrium ──
-    double initTemp =
-        Double.isNaN(gasificationTemperature) ? 273.15 + 800.0 : gasificationTemperature;
+    double initTemp = Double.isNaN(gasificationTemperature) ? 273.15 + 800.0 : gasificationTemperature;
     SystemInterface gasifierFluid = new SystemSrkEos(initTemp, gasificationPressure);
 
     // Add biomass-derived species to the reactor fluid
@@ -574,7 +571,7 @@ public class BiomassGasifier extends ProcessEquipmentBaseClass {
   /**
    * Ensures a component exists in the fluid (adds trace amount if missing).
    *
-   * @param fluid the SystemInterface
+   * @param fluid         the SystemInterface
    * @param componentName the component name
    */
   private void ensureComponent(SystemInterface fluid, String componentName) {
@@ -600,8 +597,7 @@ public class BiomassGasifier extends ProcessEquipmentBaseClass {
 
     // Nm3/hr at STP (0 C, 1 atm): 1 mole = 22.414 L
     double syngasNm3PerHr = totalMolesPerHr * 22.414 / 1000.0;
-    syngasYieldNm3PerKg =
-        biomassFeedRateKgPerHr > 0 ? syngasNm3PerHr / biomassFeedRateKgPerHr : 0.0;
+    syngasYieldNm3PerKg = biomassFeedRateKgPerHr > 0 ? syngasNm3PerHr / biomassFeedRateKgPerHr : 0.0;
 
     // Estimate syngas LHV from combustible fractions
     double coFraction = getMoleFraction(syngas, "CO");
@@ -620,14 +616,14 @@ public class BiomassGasifier extends ProcessEquipmentBaseClass {
   /**
    * Returns the mole fraction of a component in a system, or 0 if not present.
    *
-   * @param system the thermo system
+   * @param system        the thermo system
    * @param componentName component name
    * @return mole fraction
    */
   private double getMoleFraction(SystemInterface system, String componentName) {
     try {
       if (system.hasComponent(componentName)) {
-        return system.getPhase(0).getComponent(componentName).getz();
+	return system.getPhase(0).getComponent(componentName).getz();
       }
     } catch (Exception e) {
       logger.debug("Could not get mole fraction for {}: {}", componentName, e.getMessage());
@@ -654,15 +650,15 @@ public class BiomassGasifier extends ProcessEquipmentBaseClass {
     if (syngasOutStream != null) {
       SystemInterface syngas = syngasOutStream.getThermoSystem();
       if (syngas != null) {
-        Map<String, Double> composition = new LinkedHashMap<String, Double>();
-        for (int i = 0; i < syngas.getPhase(0).getNumberOfComponents(); i++) {
-          String name = syngas.getPhase(0).getComponent(i).getComponentName();
-          double z = syngas.getPhase(0).getComponent(i).getz();
-          if (z > 1e-10) {
-            composition.put(name, z);
-          }
-        }
-        results.put("syngasComposition_molFrac", composition);
+	Map<String, Double> composition = new LinkedHashMap<String, Double>();
+	for (int i = 0; i < syngas.getPhase(0).getNumberOfComponents(); i++) {
+	  String name = syngas.getPhase(0).getComponent(i).getComponentName();
+	  double z = syngas.getPhase(0).getComponent(i).getz();
+	  if (z > 1e-10) {
+	    composition.put(name, z);
+	  }
+	}
+	results.put("syngasComposition_molFrac", composition);
       }
     }
     return results;
@@ -675,8 +671,7 @@ public class BiomassGasifier extends ProcessEquipmentBaseClass {
    */
   @Override
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(getResults());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(getResults());
   }
 
   /** {@inheritDoc} */
@@ -688,8 +683,7 @@ public class BiomassGasifier extends ProcessEquipmentBaseClass {
     StringBuilder sb = new StringBuilder();
     sb.append("BiomassGasifier '").append(getName()).append("'\n");
     sb.append(String.format("  Type: %s, Agent: %s%n", gasifierType, agentType));
-    sb.append(
-        String.format("  ER = %.3f, CCE = %.3f%n", equivalenceRatio, carbonConversionEfficiency));
+    sb.append(String.format("  ER = %.3f, CCE = %.3f%n", equivalenceRatio, carbonConversionEfficiency));
     sb.append(String.format("  Cold gas efficiency = %.3f%n", coldGasEfficiency));
     sb.append(String.format("  Syngas yield = %.2f Nm3/kg%n", syngasYieldNm3PerKg));
     sb.append(String.format("  Syngas LHV = %.2f MJ/Nm3%n", syngasLHVMjPerNm3));

@@ -62,8 +62,8 @@ public class BottleneckAnalyzerTest {
     List<BottleneckResult> bottlenecks = analyzer.identifyBottlenecks();
     if (bottlenecks.size() > 1) {
       for (int i = 1; i < bottlenecks.size(); i++) {
-        assertTrue(bottlenecks.get(i - 1).getUtilization() >= bottlenecks.get(i).getUtilization(),
-            "Bottlenecks should be sorted by utilization (descending)");
+	assertTrue(bottlenecks.get(i - 1).getUtilization() >= bottlenecks.get(i).getUtilization(),
+	    "Bottlenecks should be sorted by utilization (descending)");
       }
     }
   }
@@ -81,8 +81,7 @@ public class BottleneckAnalyzerTest {
   void testDebottleneckOptions() {
     List<BottleneckResult> bottlenecks = analyzer.identifyBottlenecks();
     for (BottleneckResult bn : bottlenecks) {
-      List<DebottleneckOption> options =
-          analyzer.evaluateDebottleneckOptions(bn.getEquipmentName(), 0.20);
+      List<DebottleneckOption> options = analyzer.evaluateDebottleneckOptions(bn.getEquipmentName(), 0.20);
       assertNotNull(options, "Options list should not be null");
     }
   }

@@ -75,8 +75,8 @@ class ComponentQueryTest {
     boolean foundMethane = false;
     for (int i = 0; i < result.getAsJsonArray("components").size(); i++) {
       if ("methane".equals(result.getAsJsonArray("components").get(i).getAsString())) {
-        foundMethane = true;
-        break;
+	foundMethane = true;
+	break;
       }
     }
     assertTrue(foundMethane, "Search for 'meth' should include methane");
@@ -87,8 +87,7 @@ class ComponentQueryTest {
     String resultJson = ComponentQuery.search("");
     JsonObject result = JsonParser.parseString(resultJson).getAsJsonObject();
     assertEquals("success", result.get("status").getAsString());
-    assertTrue(result.get("matchCount").getAsInt() > 50,
-        "Empty query should return all components");
+    assertTrue(result.get("matchCount").getAsInt() > 50, "Empty query should return all components");
   }
 
   @Test
@@ -170,7 +169,7 @@ class ComponentQueryTest {
     assertEquals("error", result.get("status").getAsString());
     assertTrue(result.has("errors"));
     assertEquals("UNKNOWN_COMPONENT",
-        result.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
+	result.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
   }
 
   @Test
@@ -187,9 +186,7 @@ class ComponentQueryTest {
     JsonObject result = JsonParser.parseString(resultJson).getAsJsonObject();
     assertEquals("error", result.get("status").getAsString());
 
-    String remediation =
-        result.getAsJsonArray("errors").get(0).getAsJsonObject().get("remediation").getAsString();
-    assertTrue(remediation.contains("methane"),
-        "Should suggest 'methane' for 'metane', got: " + remediation);
+    String remediation = result.getAsJsonArray("errors").get(0).getAsJsonObject().get("remediation").getAsString();
+    assertTrue(remediation.contains("methane"), "Should suggest 'methane' for 'metane', got: " + remediation);
   }
 }

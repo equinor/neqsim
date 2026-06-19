@@ -17,7 +17,7 @@ public class SetValveOpeningAction implements LogicAction {
   /**
    * Creates a set valve opening action.
    *
-   * @param valve valve to control
+   * @param valve         valve to control
    * @param targetOpening target opening percentage (0-100)
    */
   public SetValveOpeningAction(ThrottlingValve valve, double targetOpening) {

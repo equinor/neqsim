@@ -6,16 +6,15 @@ import java.io.Serializable;
  * Pool-fire thermal radiation model for liquid hydrocarbon fires (API 521 / Mudan).
  *
  * <p>
- * Computes burn rate (mass-burning velocity), pool diameter (steady or growing), flame height
- * (Thomas correlation), surface emissive power (SEP), and view-factor-weighted incident heat
- * flux at a receiver.
+ * Computes burn rate (mass-burning velocity), pool diameter (steady or growing), flame height (Thomas correlation),
+ * surface emissive power (SEP), and view-factor-weighted incident heat flux at a receiver.
  *
  * <p>
  * <b>References:</b>
  * <ul>
  * <li>API STD 521, §4.6 Pool fires</li>
- * <li>Mudan K.S. (1984) — Thermal radiation hazards from hydrocarbon pool fires.
- *     Prog. Energy Combust. Sci. 10, 59–80</li>
+ * <li>Mudan K.S. (1984) — Thermal radiation hazards from hydrocarbon pool fires. Prog. Energy Combust. Sci. 10,
+ * 59–80</li>
  * <li>Thomas P.H. (1963) — The size of flames from natural fires. 9th Symp. Combustion</li>
  * </ul>
  *
@@ -35,15 +34,15 @@ public class PoolFireModel implements Serializable {
   /**
    * Construct a pool-fire model.
    *
-   * @param poolDiameterM equivalent circular pool diameter in m
-   * @param burnRateKgPerM2PerS mass burning rate per unit area, kg/(m²·s)
-   *        (typical 0.04 LNG, 0.055 gasoline, 0.078 crude oil)
+   * @param poolDiameterM          equivalent circular pool diameter in m
+   * @param burnRateKgPerM2PerS    mass burning rate per unit area, kg/(m²·s) (typical 0.04 LNG, 0.055 gasoline, 0.078
+   *                               crude oil)
    * @param heatOfCombustionJPerKg ΔHc lower heating value of fuel, J/kg
-   * @param liquidDensityKgPerM3 liquid density, kg/m³
-   * @param radiativeFraction fraction of combustion heat radiated (0.20 – 0.40)
+   * @param liquidDensityKgPerM3   liquid density, kg/m³
+   * @param radiativeFraction      fraction of combustion heat radiated (0.20 – 0.40)
    */
-  public PoolFireModel(double poolDiameterM, double burnRateKgPerM2PerS,
-      double heatOfCombustionJPerKg, double liquidDensityKgPerM3, double radiativeFraction) {
+  public PoolFireModel(double poolDiameterM, double burnRateKgPerM2PerS, double heatOfCombustionJPerKg,
+      double liquidDensityKgPerM3, double radiativeFraction) {
     if (poolDiameterM <= 0.0 || burnRateKgPerM2PerS <= 0.0) {
       throw new IllegalArgumentException("Pool diameter and burn rate must be positive");
     }
@@ -76,8 +75,7 @@ public class PoolFireModel implements Serializable {
   }
 
   /**
-   * Flame height (Thomas correlation, no wind):
-   * H/D = 42 · [m" / (ρa · √(g·D))]^0.61.
+   * Flame height (Thomas correlation, no wind): H/D = 42 · [m" / (ρa · √(g·D))]^0.61.
    *
    * @return flame height in m
    */
@@ -88,8 +86,8 @@ public class PoolFireModel implements Serializable {
   }
 
   /**
-   * Surface emissive power (SEP) using Mudan smoke-corrected correlation:
-   * SEP = SEP_max · exp(-s·D) + SEP_smoke · (1 − exp(-s·D)).
+   * Surface emissive power (SEP) using Mudan smoke-corrected correlation: SEP = SEP_max · exp(-s·D) + SEP_smoke · (1 −
+   * exp(-s·D)).
    *
    * @return SEP in W/m²
    */
@@ -102,8 +100,8 @@ public class PoolFireModel implements Serializable {
   }
 
   /**
-   * Approximate cylindrical-flame view factor at horizontal distance x from flame axis,
-   * receiver at ground level, normal-to-flame.
+   * Approximate cylindrical-flame view factor at horizontal distance x from flame axis, receiver at ground level,
+   * normal-to-flame.
    *
    * @param distanceM horizontal distance from pool centre in m
    * @return view factor (dimensionless, 0..1)
@@ -116,9 +114,7 @@ public class PoolFireModel implements Serializable {
     // Mudan vertical-cylinder closed-form approximation
     double A = (h * h + s * s + 1.0) / (2.0 * s);
     double F = (1.0 / Math.PI)
-        * (Math.atan(h / Math.sqrt(s * s - 1.0))
-            - (A - (s * s + 1.0) / (2.0 * s))
-                / Math.sqrt(A * A - 1.0));
+	* (Math.atan(h / Math.sqrt(s * s - 1.0)) - (A - (s * s + 1.0) / (2.0 * s)) / Math.sqrt(A * A - 1.0));
     if (F < 0.0) {
       F = 0.0;
     }
@@ -153,9 +149,9 @@ public class PoolFireModel implements Serializable {
     for (int i = 0; i < 60; i++) {
       double mid = 0.5 * (lo + hi);
       if (incidentHeatFlux(mid) > targetFluxWperM2) {
-        lo = mid;
+	lo = mid;
       } else {
-        hi = mid;
+	hi = mid;
       }
     }
     return 0.5 * (lo + hi);

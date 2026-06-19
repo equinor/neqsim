@@ -14,9 +14,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * Reusable penalty calculator for constrained process optimization.
  *
  * <p>
- * This utility class exposes the adaptive penalty logic used internally by
- * {@link ProductionOptimizer} so that external optimizers can apply the same penalty formulation
- * without reimplementing it.
+ * This utility class exposes the adaptive penalty logic used internally by {@link ProductionOptimizer} so that external
+ * optimizers can apply the same penalty formulation without reimplementing it.
  * </p>
  *
  * <p>
@@ -60,7 +59,8 @@ public class ConstraintPenaltyCalculator implements Serializable {
   /**
    * Creates an empty penalty calculator.
    */
-  public ConstraintPenaltyCalculator() {}
+  public ConstraintPenaltyCalculator() {
+  }
 
   /**
    * Adds a single constraint.
@@ -82,8 +82,7 @@ public class ConstraintPenaltyCalculator implements Serializable {
    * @param constraintList list of constraints to add
    * @return this calculator for chaining
    */
-  public ConstraintPenaltyCalculator addConstraints(
-      List<? extends ProcessConstraint> constraintList) {
+  public ConstraintPenaltyCalculator addConstraints(List<? extends ProcessConstraint> constraintList) {
     for (ProcessConstraint c : constraintList) {
       addConstraint(c);
     }
@@ -94,9 +93,9 @@ public class ConstraintPenaltyCalculator implements Serializable {
    * Auto-discovers and adds equipment capacity constraints from a process system.
    *
    * <p>
-   * Uses {@link EquipmentCapacityStrategyRegistry} to find all equipment constraints across the
-   * process and wraps them as {@link CapacityConstraintAdapter} instances. This ensures external
-   * optimizers get the same physical limits that internal optimizers discover automatically.
+   * Uses {@link EquipmentCapacityStrategyRegistry} to find all equipment constraints across the process and wraps them
+   * as {@link CapacityConstraintAdapter} instances. This ensures external optimizers get the same physical limits that
+   * internal optimizers discover automatically.
    * </p>
    *
    * @param process the process system to scan for equipment constraints
@@ -109,14 +108,14 @@ public class ConstraintPenaltyCalculator implements Serializable {
       ProcessEquipmentInterface equipment = units.get(i);
       EquipmentCapacityStrategy strategy = registry.findStrategy(equipment);
       if (strategy != null) {
-        Map<String, CapacityConstraint> equipConstraints = strategy.getConstraints(equipment);
-        for (Map.Entry<String, CapacityConstraint> entry : equipConstraints.entrySet()) {
-          CapacityConstraint cc = entry.getValue();
-          if (cc.isEnabled()) {
-            String qualifiedName = equipment.getName() + "/" + entry.getKey();
-            constraints.add(new CapacityConstraintAdapter(qualifiedName, cc));
-          }
-        }
+	Map<String, CapacityConstraint> equipConstraints = strategy.getConstraints(equipment);
+	for (Map.Entry<String, CapacityConstraint> entry : equipConstraints.entrySet()) {
+	  CapacityConstraint cc = entry.getValue();
+	  if (cc.isEnabled()) {
+	    String qualifiedName = equipment.getName() + "/" + entry.getKey();
+	    constraints.add(new CapacityConstraintAdapter(qualifiedName, cc));
+	  }
+	}
       }
     }
     return this;
@@ -144,9 +143,8 @@ public class ConstraintPenaltyCalculator implements Serializable {
    * Evaluates all constraints and returns a constraint margin vector.
    *
    * <p>
-   * The returned array is suitable for NLP solvers that expect a {@code g(x) >= 0} constraint
-   * vector. Each element corresponds to a constraint in registration order. Positive values mean
-   * satisfied; negative means violated.
+   * The returned array is suitable for NLP solvers that expect a {@code g(x) >= 0} constraint vector. Each element
+   * corresponds to a constraint in registration order. Positive values mean satisfied; negative means violated.
    * </p>
    *
    * @param process the process system (must have been run)
@@ -169,7 +167,7 @@ public class ConstraintPenaltyCalculator implements Serializable {
   public boolean isFeasible(ProcessSystem process) {
     for (ProcessConstraint c : constraints) {
       if (c.isHard() && !c.isSatisfied(process)) {
-        return false;
+	return false;
       }
     }
     return true;
@@ -179,8 +177,8 @@ public class ConstraintPenaltyCalculator implements Serializable {
    * Computes total penalty for all constraint violations.
    *
    * <p>
-   * Returns 0 when all constraints are satisfied. Each violated constraint contributes its
-   * individual penalty (typically quadratic in the margin).
+   * Returns 0 when all constraints are satisfied. Each violated constraint contributes its individual penalty
+   * (typically quadratic in the margin).
    * </p>
    *
    * @param process the process system
@@ -198,23 +196,21 @@ public class ConstraintPenaltyCalculator implements Serializable {
    * Applies the adaptive penalty formulation to a raw objective value.
    *
    * <p>
-   * This is the same formulation used by {@link ProductionOptimizer}: the penalty is scaled by the
-   * magnitude of the raw objective to be unit-independent. For a maximization problem, the
-   * penalized objective is always less than any feasible value when constraints are violated.
+   * This is the same formulation used by {@link ProductionOptimizer}: the penalty is scaled by the magnitude of the raw
+   * objective to be unit-independent. For a maximization problem, the penalized objective is always less than any
+   * feasible value when constraints are violated.
    * </p>
    *
    * <p>
    * Penalty components:
    * </p>
    * <ul>
-   * <li><strong>Hard/Critical violations:</strong> {@code -penaltyBase * (1 + |margin|)} per
-   * constraint</li>
-   * <li><strong>Soft violations:</strong> {@code -penaltyBase * weight * margin^2} per
-   * constraint</li>
+   * <li><strong>Hard/Critical violations:</strong> {@code -penaltyBase * (1 + |margin|)} per constraint</li>
+   * <li><strong>Soft violations:</strong> {@code -penaltyBase * weight * margin^2} per constraint</li>
    * </ul>
    *
    * @param rawObjective the raw (unpenalized) objective value
-   * @param process the process system (must have been run)
+   * @param process      the process system (must have been run)
    * @return penalized objective (equals rawObjective if feasible, worse if infeasible)
    */
   public double penalize(double rawObjective, ProcessSystem process) {
@@ -225,10 +221,10 @@ public class ConstraintPenaltyCalculator implements Serializable {
     for (ProcessConstraint c : constraints) {
       double m = c.margin(process);
       if (c.isHard()) {
-        hardList.add(m);
+	hardList.add(m);
       } else {
-        softList.add(m);
-        weightList.add(c.getPenaltyWeight());
+	softList.add(m);
+	weightList.add(c.getPenaltyWeight());
       }
     }
 
@@ -256,8 +252,8 @@ public class ConstraintPenaltyCalculator implements Serializable {
     List<ConstraintEvaluation> results = new ArrayList<ConstraintEvaluation>();
     for (ProcessConstraint c : constraints) {
       double m = c.margin(process);
-      results.add(new ConstraintEvaluation(c.getName(), c.getSeverityLevel(), m, m >= 0.0,
-          c.penalty(process), c.getDescription()));
+      results.add(new ConstraintEvaluation(c.getName(), c.getSeverityLevel(), m, m >= 0.0, c.penalty(process),
+	  c.getDescription()));
     }
     return results;
   }
@@ -274,39 +270,37 @@ public class ConstraintPenaltyCalculator implements Serializable {
   // ============================================================================
 
   /**
-   * Applies the shared adaptive penalty formula to a raw objective value given pre-evaluated
-   * constraint margins and severity flags.
+   * Applies the shared adaptive penalty formula to a raw objective value given pre-evaluated constraint margins and
+   * severity flags.
    *
    * <p>
    * This is the single source of truth for the penalty computation used by both
-   * {@link ConstraintPenaltyCalculator#penalize(double, ProcessSystem)} and
-   * {@link ProductionOptimizer}'s internal feasibility scoring. Extracting it here prevents the two
-   * formulations from diverging.
+   * {@link ConstraintPenaltyCalculator#penalize(double, ProcessSystem)} and {@link ProductionOptimizer}'s internal
+   * feasibility scoring. Extracting it here prevents the two formulations from diverging.
    * </p>
    *
    * @param rawObjective the raw (unpenalized) objective value
-   * @param hardMargins array of margins for hard/critical constraints (negative = violated)
-   * @param softMargins array of margins for soft/advisory constraints (negative = violated)
-   * @param softWeights array of penalty weights for each soft constraint (same length as
-   *        softMargins)
+   * @param hardMargins  array of margins for hard/critical constraints (negative = violated)
+   * @param softMargins  array of margins for soft/advisory constraints (negative = violated)
+   * @param softWeights  array of penalty weights for each soft constraint (same length as softMargins)
    * @return penalized objective (equals rawObjective if all margins &gt;= 0)
    */
-  public static double applyPenaltyFormula(double rawObjective, double[] hardMargins,
-      double[] softMargins, double[] softWeights) {
+  public static double applyPenaltyFormula(double rawObjective, double[] hardMargins, double[] softMargins,
+      double[] softWeights) {
     double penaltyBase = Math.max(Math.abs(rawObjective), 1.0);
     double penalty = 0.0;
     boolean anyViolation = false;
 
     for (int i = 0; i < hardMargins.length; i++) {
       if (hardMargins[i] < 0.0) {
-        anyViolation = true;
-        penalty -= penaltyBase * (1.0 + Math.abs(hardMargins[i]));
+	anyViolation = true;
+	penalty -= penaltyBase * (1.0 + Math.abs(hardMargins[i]));
       }
     }
     for (int i = 0; i < softMargins.length; i++) {
       if (softMargins[i] < 0.0) {
-        anyViolation = true;
-        penalty -= penaltyBase * softWeights[i] * softMargins[i] * softMargins[i];
+	anyViolation = true;
+	penalty -= penaltyBase * softWeights[i] * softMargins[i] * softMargins[i];
       }
     }
     if (!anyViolation) {
@@ -338,15 +332,15 @@ public class ConstraintPenaltyCalculator implements Serializable {
     /**
      * Constructs a constraint evaluation snapshot.
      *
-     * @param name constraint name
-     * @param severity severity level
-     * @param margin constraint margin
-     * @param satisfied whether the constraint is satisfied
-     * @param penalty computed penalty
+     * @param name        constraint name
+     * @param severity    severity level
+     * @param margin      constraint margin
+     * @param satisfied   whether the constraint is satisfied
+     * @param penalty     computed penalty
      * @param description constraint description
      */
-    public ConstraintEvaluation(String name, ConstraintSeverityLevel severity, double margin,
-        boolean satisfied, double penalty, String description) {
+    public ConstraintEvaluation(String name, ConstraintSeverityLevel severity, double margin, boolean satisfied,
+	double penalty, String description) {
       this.name = name;
       this.severity = severity;
       this.margin = margin;
@@ -412,7 +406,7 @@ public class ConstraintPenaltyCalculator implements Serializable {
     @Override
     public String toString() {
       return name + " [" + severity + "] margin=" + String.format("%.4f", margin)
-          + (satisfied ? " OK" : " VIOLATED penalty=" + String.format("%.2f", penalty));
+	  + (satisfied ? " OK" : " VIOLATED penalty=" + String.format("%.2f", penalty));
     }
   }
 }

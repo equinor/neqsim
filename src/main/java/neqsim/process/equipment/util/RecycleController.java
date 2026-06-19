@@ -42,7 +42,8 @@ public class RecycleController implements java.io.Serializable {
   /**
    * Constructor for RecycleController.
    */
-  public RecycleController() {}
+  public RecycleController() {
+  }
 
   /**
    * Initializes the controller for a new convergence cycle.
@@ -53,10 +54,10 @@ public class RecycleController implements java.io.Serializable {
     for (Recycle recyc : recycleArray) {
       recyc.resetIterations();
       if (recyc.getPriority() < minimumPriorityLevel) {
-        minimumPriorityLevel = recyc.getPriority();
+	minimumPriorityLevel = recyc.getPriority();
       }
       if (recyc.getPriority() > maximumPriorityLevel) {
-        maximumPriorityLevel = recyc.getPriority();
+	maximumPriorityLevel = recyc.getPriority();
       }
     }
 
@@ -131,9 +132,9 @@ public class RecycleController implements java.io.Serializable {
   public boolean solvedCurrentPriorityLevel() {
     for (Recycle recyc : recycleArray) {
       if (recyc.getPriority() == currentPriorityLevel) {
-        if (!recyc.solved()) {
-          return false;
-        }
+	if (!recyc.solved()) {
+	  return false;
+	}
       }
     }
     return true;
@@ -188,10 +189,10 @@ public class RecycleController implements java.io.Serializable {
   public boolean solvedAll() {
     for (Recycle recyc : recycleArray) {
       if (logger.isDebugEnabled()) {
-        logger.debug(recyc.getName() + " solved " + recyc.solved());
+	logger.debug(recyc.getName() + " solved " + recyc.solved());
       }
       if (!recyc.solved()) {
-        return false;
+	return false;
       }
     }
     return true;
@@ -235,8 +236,7 @@ public class RecycleController implements java.io.Serializable {
   /** {@inheritDoc} */
   @Override
   public int hashCode() {
-    return Objects.hash(currentPriorityLevel, maximumPriorityLevel, minimumPriorityLevel,
-        priorityArray, recycleArray);
+    return Objects.hash(currentPriorityLevel, maximumPriorityLevel, minimumPriorityLevel, priorityArray, recycleArray);
   }
 
   /** {@inheritDoc} */
@@ -252,11 +252,9 @@ public class RecycleController implements java.io.Serializable {
       return false;
     }
     RecycleController other = (RecycleController) obj;
-    return currentPriorityLevel == other.currentPriorityLevel
-        && maximumPriorityLevel == other.maximumPriorityLevel
-        && minimumPriorityLevel == other.minimumPriorityLevel
-        && Objects.equals(priorityArray, other.priorityArray)
-        && Objects.equals(recycleArray, other.recycleArray);
+    return currentPriorityLevel == other.currentPriorityLevel && maximumPriorityLevel == other.maximumPriorityLevel
+	&& minimumPriorityLevel == other.minimumPriorityLevel && Objects.equals(priorityArray, other.priorityArray)
+	&& Objects.equals(recycleArray, other.recycleArray);
   }
 
   // ============ ACCELERATION METHOD SUPPORT ============
@@ -275,13 +273,13 @@ public class RecycleController implements java.io.Serializable {
   /**
    * Sets the acceleration method for recycles at the specified priority level.
    *
-   * @param method the acceleration method to use
+   * @param method   the acceleration method to use
    * @param priority the priority level to apply to
    */
   public void setAccelerationMethod(AccelerationMethod method, int priority) {
     for (Recycle recycle : recycleArray) {
       if (recycle.getPriority() == priority) {
-        recycle.setAccelerationMethod(method);
+	recycle.setAccelerationMethod(method);
       }
     }
   }
@@ -299,9 +297,9 @@ public class RecycleController implements java.io.Serializable {
    * Enables or disables coordinated Broyden acceleration across all recycles at the same priority.
    *
    * <p>
-   * When enabled, all recycles at the current priority level will share a single Broyden
-   * accelerator, treating the combined tear stream values as a single multi-variable system. This
-   * can improve convergence for tightly coupled recycle loops.
+   * When enabled, all recycles at the current priority level will share a single Broyden accelerator, treating the
+   * combined tear stream values as a single multi-variable system. This can improve convergence for tightly coupled
+   * recycle loops.
    *
    * <p>
    * When disabled (default), each recycle uses its own acceleration method independently.
@@ -333,7 +331,7 @@ public class RecycleController implements java.io.Serializable {
     List<Recycle> result = new ArrayList<>();
     for (Recycle recycle : recycleArray) {
       if (recycle.getPriority() == currentPriorityLevel) {
-        result.add(recycle);
+	result.add(recycle);
       }
     }
     return result;
@@ -363,10 +361,9 @@ public class RecycleController implements java.io.Serializable {
    * Performs simultaneous modular solving for all recycles at the current priority level.
    *
    * <p>
-   * This method collects all tear stream variables from recycles at the current priority level into
-   * a single vector and applies global Broyden acceleration. This approach can significantly
-   * improve convergence for tightly coupled recycle loops compared to solving each recycle
-   * independently.
+   * This method collects all tear stream variables from recycles at the current priority level into a single vector and
+   * applies global Broyden acceleration. This approach can significantly improve convergence for tightly coupled
+   * recycle loops compared to solving each recycle independently.
    *
    * <p>
    * The algorithm:
@@ -390,12 +387,10 @@ public class RecycleController implements java.io.Serializable {
     int[] dimensions = new int[currentRecycles.size()];
     for (int i = 0; i < currentRecycles.size(); i++) {
       Recycle recycle = currentRecycles.get(i);
-      if (recycle.getOutletStream() != null
-          && recycle.getOutletStream().getThermoSystem() != null) {
-        int numComponents =
-            recycle.getOutletStream().getThermoSystem().getPhase(0).getNumberOfComponents();
-        dimensions[i] = 3 + numComponents; // T, P, flow, compositions
-        totalDimension += dimensions[i];
+      if (recycle.getOutletStream() != null && recycle.getOutletStream().getThermoSystem() != null) {
+	int numComponents = recycle.getOutletStream().getThermoSystem().getPhase(0).getNumberOfComponents();
+	dimensions[i] = 3 + numComponents; // T, P, flow, compositions
+	totalDimension += dimensions[i];
       }
     }
 
@@ -415,8 +410,8 @@ public class RecycleController implements java.io.Serializable {
       Recycle recycle = currentRecycles.get(i);
       double[] values = extractRecycleInputValues(recycle);
       if (values != null) {
-        System.arraycopy(values, 0, combinedInput, offset, values.length);
-        offset += values.length;
+	System.arraycopy(values, 0, combinedInput, offset, values.length);
+	offset += values.length;
       }
     }
 
@@ -427,8 +422,8 @@ public class RecycleController implements java.io.Serializable {
       Recycle recycle = currentRecycles.get(i);
       double[] values = extractRecycleOutputValues(recycle);
       if (values != null) {
-        System.arraycopy(values, 0, combinedOutput, offset, values.length);
-        offset += values.length;
+	System.arraycopy(values, 0, combinedOutput, offset, values.length);
+	offset += values.length;
       }
     }
 
@@ -503,7 +498,7 @@ public class RecycleController implements java.io.Serializable {
    * Applies accelerated values to a recycle's outlet stream.
    *
    * @param recycle the recycle to update
-   * @param values array of [temperature, pressure, flow, mole_fractions...]
+   * @param values  array of [temperature, pressure, flow, mole_fractions...]
    */
   private void applyAcceleratedValuesToRecycle(Recycle recycle, double[] values) {
     if (recycle.getOutletStream() == null || recycle.getOutletStream().getThermoSystem() == null) {
@@ -517,17 +512,17 @@ public class RecycleController implements java.io.Serializable {
     if (values.length >= 3 + numComponents) {
       double sum = 0.0;
       for (int i = 0; i < numComponents; i++) {
-        values[3 + i] = Math.max(0.0, values[3 + i]); // Ensure non-negative
-        sum += values[3 + i];
+	values[3 + i] = Math.max(0.0, values[3 + i]); // Ensure non-negative
+	sum += values[3 + i];
       }
 
       if (sum > 1e-15) {
-        for (int i = 0; i < numComponents; i++) {
-          double normalizedX = values[3 + i] / sum;
-          for (int phase = 0; phase < fluid.getNumberOfPhases(); phase++) {
-            fluid.getPhase(phase).getComponent(i).setx(normalizedX);
-          }
-        }
+	for (int i = 0; i < numComponents; i++) {
+	  double normalizedX = values[3 + i] / sum;
+	  for (int phase = 0; phase < fluid.getNumberOfPhases(); phase++) {
+	    fluid.getPhase(phase).getComponent(i).setx(normalizedX);
+	  }
+	}
       }
     }
   }
@@ -598,7 +593,7 @@ public class RecycleController implements java.io.Serializable {
 
     if (coordinatedAccelerator != null) {
       sb.append("  Coordinated accelerator residual norm: ")
-          .append(String.format("%.2e", coordinatedAccelerator.getResidualNorm())).append("\n");
+	  .append(String.format("%.2e", coordinatedAccelerator.getResidualNorm())).append("\n");
     }
 
     return sb.toString();
@@ -608,8 +603,8 @@ public class RecycleController implements java.io.Serializable {
    * Gets the sensitivity matrix from the Broyden convergence Jacobian.
    *
    * <p>
-   * This provides sensitivities computed as a byproduct of convergence, without additional
-   * simulations. The matrix represents d(output)/d(input) for tear stream variables.
+   * This provides sensitivities computed as a byproduct of convergence, without additional simulations. The matrix
+   * represents d(output)/d(input) for tear stream variables.
    *
    * @return SensitivityMatrix from convergence, or null if not available
    */
@@ -645,7 +640,7 @@ public class RecycleController implements java.io.Serializable {
     // Sensitivity is -invJ (since B ≈ I - dg/dx, B^{-1} ≈ dx*/dg)
     for (int i = 0; i < dim; i++) {
       for (int j = 0; j < dim; j++) {
-        matrix.setSensitivity(actualNames[i], actualNames[j], -invJ[i][j]);
+	matrix.setSensitivity(actualNames[i], actualNames[j], -invJ[i][j]);
       }
     }
 
@@ -690,6 +685,6 @@ public class RecycleController implements java.io.Serializable {
    */
   public boolean hasSensitivityData() {
     return coordinatedAccelerator != null && coordinatedAccelerator.getInverseJacobian() != null
-        && coordinatedAccelerator.getIterationCount() > 2;
+	&& coordinatedAccelerator.getIterationCount() > 2;
   }
 }

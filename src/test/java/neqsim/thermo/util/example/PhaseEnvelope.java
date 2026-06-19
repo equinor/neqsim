@@ -22,7 +22,7 @@ public class PhaseEnvelope {
   private static final Logger logger = LogManager.getLogger(PhaseEnvelope.class);
 
   /** Logger object for class. */
-  
+
   /**
    * <p>
    * main.
@@ -109,14 +109,12 @@ public class PhaseEnvelope {
     try {
       /*
        * testOps.setRunAsThread(true); testOps.waterDewPointLine(10, 200); boolean isFinished =
-       * testOps.waitAndCheckForFinishedCalculation(50000); double[][] waterData =
-       * testOps.getData();
+       * testOps.waitAndCheckForFinishedCalculation(50000); double[][] waterData = testOps.getData();
        *
-       * testOps.hydrateEquilibriumLine(10, 200); isFinished =
-       * testOps.waitAndCheckForFinishedCalculation(50000); double[][] hydData = testOps.getData();
+       * testOps.hydrateEquilibriumLine(10, 200); isFinished = testOps.waitAndCheckForFinishedCalculation(50000);
+       * double[][] hydData = testOps.getData();
        *
-       * testSystem.addComponent("water",
-       * -testSystem.getPhase(0).getComponent("water").getNumberOfmoles());
+       * testSystem.addComponent("water", -testSystem.getPhase(0).getComponent("water").getNumberOfmoles());
        */
       // testOps.calcPTphaseEnvelope(); //true);
       // testOps.displayResult();
