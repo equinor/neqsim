@@ -2,6 +2,10 @@ name: Run build, test and javadoc
 permissions:
   contents: read
 
+concurrency:
+  group: verify-build-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   workflow_dispatch:
   push:
