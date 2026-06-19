@@ -3,11 +3,15 @@ package neqsim.thermo.system;
 import org.junit.jupiter.api.Test;
 
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Tests for BNS EOS print output.
  */
 public class SystemBnsPrintTest {
+  private static final Logger logger = LogManager.getLogger(SystemBnsPrintTest.class);
+
   @Test
   public void printAll() {
     SystemBnsEos sys = new SystemBnsEos();
@@ -21,18 +25,18 @@ public class SystemBnsPrintTest {
     ThermodynamicOperations ops = new ThermodynamicOperations(sys);
     ops.TPflash();
     sys.initProperties();
-    System.out.println("=== Test 100bar ===");
-    System.out.println("Z = " + sys.getPhase(0).getZvolcorr());
-    System.out.println("density = " + sys.getDensity("kg/m3"));
-    System.out.println("cp = " + sys.getPhase(0).getCp("J/molK"));
-    System.out.println("cv = " + sys.getPhase(0).getCv("J/molK"));
-    System.out.println("jt = " + sys.getPhase(0).getJouleThomsonCoefficient() * 10.0);
+    logger.info("=== Test 100bar ===");
+    logger.info("Z = " + sys.getPhase(0).getZvolcorr());
+    logger.info("density = " + sys.getDensity("kg/m3"));
+    logger.info("cp = " + sys.getPhase(0).getCp("J/molK"));
+    logger.info("cv = " + sys.getPhase(0).getCv("J/molK"));
+    logger.info("jt = " + sys.getPhase(0).getJouleThomsonCoefficient() * 10.0);
     double gamma = sys.getPhase(0).getCp("J/molK") / sys.getPhase(0).getCv("J/molK");
     double speed =
         Math.sqrt(gamma * sys.getPhase(0).getZ() * neqsim.thermo.ThermodynamicConstantsInterface.R
             * sys.getTemperature() / sys.getMolarMass());
-    System.out.println("speed = " + speed);
-    System.out.println("MW = " + sys.getMolarMass());
+    logger.info("speed = " + speed);
+    logger.info("MW = " + sys.getMolarMass());
 
     SystemBnsEos sys2 = new SystemBnsEos();
     sys2.setTemperature(48.88889 + 273.15);
@@ -45,11 +49,11 @@ public class SystemBnsPrintTest {
     ops2.TPflash();
     sys2.initProperties();
     sys2.init(3);
-    System.out.println("=== Test Python ===");
-    System.out.println("Z = " + sys2.getZvolcorr());
-    System.out.println("density = " + sys2.getDensity("kg/m3"));
-    System.out.println("jt = " + sys2.getPhase(0).getJouleThomsonCoefficient() * 10.0);
-    System.out.println("cp = " + sys2.getPhase(0).getCp("J/molK"));
-    System.out.println("MW = " + sys2.getMolarMass());
+    logger.info("=== Test Python ===");
+    logger.info("Z = " + sys2.getZvolcorr());
+    logger.info("density = " + sys2.getDensity("kg/m3"));
+    logger.info("jt = " + sys2.getPhase(0).getJouleThomsonCoefficient() * 10.0);
+    logger.info("cp = " + sys2.getPhase(0).getCp("J/molK"));
+    logger.info("MW = " + sys2.getMolarMass());
   }
 }

@@ -1949,7 +1949,7 @@ public final class SchemaCatalog {
         "stream_simulation", "compose_multi_server_workflow", "manage_security", "manage_state",
         "manage_validation_profile", "query_data_catalog", "run_relief", "run_lopa", "run_sil",
         "run_risk_matrix", "run_flare_network", "manage_industrial_profile", "get_benchmark_trust",
-        "check_tool_access"));
+        "check_tool_access", "get_adjustable_parameters", "run_process_loop"));
   }
 
   /**

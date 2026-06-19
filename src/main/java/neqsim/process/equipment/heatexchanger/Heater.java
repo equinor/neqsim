@@ -7,6 +7,7 @@
 package neqsim.process.equipment.heatexchanger;
 
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import com.google.gson.GsonBuilder;
@@ -945,18 +946,22 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
       double duty = getDuty();
 
       sb.append("\n--- Operating Conditions ---\n");
-      sb.append("Inlet Temperature: ").append(String.format("%.2f C", inletTemp)).append("\n");
-      sb.append("Outlet Temperature: ").append(String.format("%.2f C", outletTemp)).append("\n");
-      sb.append("Temperature Change: ").append(String.format("%.2f C", outletTemp - inletTemp))
+        sb.append("Inlet Temperature: ").append(String.format(Locale.US, "%.2f C", inletTemp))
           .append("\n");
-      sb.append("Duty: ").append(String.format("%.2f kW", duty / 1000.0)).append("\n");
+        sb.append("Outlet Temperature: ").append(String.format(Locale.US, "%.2f C", outletTemp))
+          .append("\n");
+        sb.append("Temperature Change: ")
+          .append(String.format(Locale.US, "%.2f C", outletTemp - inletTemp)).append("\n");
+        sb.append("Duty: ").append(String.format(Locale.US, "%.2f kW", duty / 1000.0))
+          .append("\n");
 
       if (mechanicalDesign != null) {
         sb.append("\n--- Design Parameters ---\n");
         sb.append("Max Design Duty: ")
-            .append(String.format("%.2f kW", mechanicalDesign.maxDesignDuty / 1000.0)).append("\n");
+          .append(String.format(Locale.US, "%.2f kW", mechanicalDesign.maxDesignDuty / 1000.0))
+          .append("\n");
         sb.append("Duty Utilization: ")
-            .append(String.format("%.1f%%", Math.abs(duty) / mechanicalDesign.maxDesignDuty * 100))
+          .append(String.format(Locale.US, "%.1f%%", Math.abs(duty) / mechanicalDesign.maxDesignDuty * 100))
             .append("\n");
       }
     }

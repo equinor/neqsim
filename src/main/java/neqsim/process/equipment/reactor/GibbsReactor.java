@@ -390,6 +390,13 @@ public class GibbsReactor extends TwoPortEquipment {
   // variables.
   private final java.util.Set<String> inertComponents = new java.util.HashSet<>();
 
+  // Set of components (names in lowercase) automatically excluded from the optimization
+  // matrix for the current run because at least one of their constituent elements is not
+  // available in the feed (zero element mole balance in). Such species cannot physically
+  // form, so they are frozen at their feed amount and removed as optimization variables.
+  // This set is recomputed on every run() and is not user-controlled.
+  private final java.util.Set<String> feedExcludedComponents = new java.util.HashSet<>();
+
   // Mole balance calculations
   private Map<String, Double> initialMoles = new HashMap<>();
   private Map<String, Double> finalMoles = new HashMap<>();
@@ -450,6 +457,59 @@ public class GibbsReactor extends TwoPortEquipment {
    */
   public boolean isComponentInert(String componentName) {
     return componentName != null && inertComponents.contains(componentName.toLowerCase());
+  }
+
+  /**
+   * Check whether a component has been automatically excluded from the optimization matrix because
+   * one or more of its constituent elements is not available in the feed.
+   *
+   * <p>
+   * A species can only form if every element it contains is present in the feed. When an element
+   * has zero total feed availability, the corresponding element mass-balance constraint row is
+   * degenerate (its "determinator" is zero) and every species requiring that element is frozen at
+   * its feed amount and removed as an optimization variable. This prevents the solver from creating
+   * spurious trace amounts of species (for example sulfuric acid when no sulfur is fed).
+   * </p>
+   *
+   * @param componentName the name of the component to check
+   * @return true if the component was excluded for the current run, false otherwise
+   */
+  public boolean isComponentExcludedByFeed(String componentName) {
+    return componentName != null && feedExcludedComponents.contains(componentName.toLowerCase());
+  }
+
+  /**
+   * Determine which components must be excluded from the optimization matrix for the current run
+   * because at least one of their constituent elements is not available in the feed.
+   *
+   * <p>
+   * Uses the already-computed inlet element mole balance ({@link #elementMoleBalanceIn}). For each
+   * component, if it has a non-zero coefficient for an element whose total feed availability is at
+   * or below {@link #ELEMENT_ZERO_THRESHOLD}, the component is added to
+   * {@link #feedExcludedComponents}. The result is recomputed on every run.
+   * </p>
+   *
+   * @param system the thermodynamic system whose components are checked
+   */
+  private void determineFeedExcludedComponents(SystemInterface system) {
+    feedExcludedComponents.clear();
+    for (int i = 0; i < system.getNumberOfComponents(); i++) {
+      String compName = system.getComponent(i).getComponentName();
+      GibbsComponent comp = componentMap.get(compName.toLowerCase());
+      if (comp == null) {
+        continue;
+      }
+      double[] elements = comp.getElements();
+      for (int j = 0; j < elementNames.length; j++) {
+        if (Math.abs(elements[j]) > ELEMENT_ZERO_THRESHOLD
+            && Math.abs(elementMoleBalanceIn[j]) <= ELEMENT_ZERO_THRESHOLD) {
+          feedExcludedComponents.add(compName.toLowerCase());
+          logger.debug("Excluding component '" + compName + "' from Gibbs matrix: element '"
+              + elementNames[j] + "' not available in feed.");
+          break;
+        }
+      }
+    }
   }
 
   // Newton-Raphson iteration control
@@ -1110,6 +1170,11 @@ public class GibbsReactor extends TwoPortEquipment {
     // Calculate initial element mole balance
     calculateElementMoleBalance(system, elementMoleBalanceIn, true);
 
+    // Determine which species cannot form because a required element is absent from the feed.
+    // These are frozen at their feed amount and removed from the optimization matrix so the
+    // solver cannot create spurious trace amounts (e.g. sulfuric acid when no sulfur is fed).
+    determineFeedExcludedComponents(system);
+
     // Perform Gibbs minimization
     if (useAllDatabaseSpecies) {
       // Add all database species to system
@@ -1143,12 +1208,15 @@ public class GibbsReactor extends TwoPortEquipment {
       processedComponents.add(compName);
       processedComponentIndexMap.put(compName, i);
 
-      // Update outlet_mole with actual final values, enforcing minimum
-      double outletMoles = Math.max(moles, 1E-6);
+      boolean excludedByFeed = feedExcludedComponents.contains(compName.toLowerCase());
+
+      // Update outlet_mole with actual final values. Feed-excluded species keep their feed
+      // amount exactly (no minimum-concentration floor) so they are not reported as trace noise.
+      double outletMoles = excludedByFeed ? moles : Math.max(moles, 1E-6);
       outlet_mole.add(outletMoles);
 
-      // Only add to variableComponents if not inert
-      if (!inertComponents.contains(compName.toLowerCase())) {
+      // Only add to variableComponents if not inert and not excluded because of a missing element
+      if (!inertComponents.contains(compName.toLowerCase()) && !excludedByFeed) {
         variableComponents.add(compName);
       }
     }
@@ -1203,6 +1271,12 @@ public class GibbsReactor extends TwoPortEquipment {
     // Check if component is in system
     for (int i = 0; i < system.getNumberOfComponents(); i++) {
       String compName = system.getComponent(i).getComponentName();
+
+      // Do not seed a minimum amount for species that cannot form (a required element is absent
+      // from the feed). They must stay at their feed amount.
+      if (feedExcludedComponents.contains(compName.toLowerCase())) {
+        continue;
+      }
 
       if (initialGuess.containsKey(compName)) {
         double currentMoles = system.getComponent(i).getNumberOfMolesInPhase();
@@ -1857,6 +1931,11 @@ public class GibbsReactor extends TwoPortEquipment {
       if (componentMap.get(compName.toLowerCase()) == null) {
         continue;
       }
+      // Do not enforce a minimum for species that cannot form (a required element is absent from
+      // the feed); they must stay at their feed amount (typically zero).
+      if (feedExcludedComponents.contains(compName.toLowerCase())) {
+        continue;
+      }
       double currentMoles = system.getComponent(i).getNumberOfMolesInPhase();
 
       if (currentMoles < MIN_MOLES) {
@@ -1939,6 +2018,13 @@ public class GibbsReactor extends TwoPortEquipment {
 
     // Check each element to see if any component has a non-zero coefficient
     for (int elementIndex = 0; elementIndex < elementNames.length; elementIndex++) {
+      // Skip elements that are not available in the feed: their mass-balance constraint row is
+      // degenerate (zero "determinator"), so the corresponding Lagrange multiplier and constraint
+      // are dropped until the element is actually present.
+      if (Math.abs(elementMoleBalanceIn[elementIndex]) <= ELEMENT_ZERO_THRESHOLD) {
+        continue;
+      }
+
       boolean elementPresent = false;
 
       for (String compName : processedComponents) {
@@ -1970,6 +2056,11 @@ public class GibbsReactor extends TwoPortEquipment {
     List<Integer> activeIndices = new ArrayList<>();
 
     for (int elementIndex = 0; elementIndex < elementNames.length; elementIndex++) {
+      // Skip elements absent from the feed (degenerate constraint row / zero "determinator").
+      if (Math.abs(elementMoleBalanceIn[elementIndex]) <= ELEMENT_ZERO_THRESHOLD) {
+        continue;
+      }
+
       boolean hasNonZero = false;
 
       for (String compName : processedComponents) {

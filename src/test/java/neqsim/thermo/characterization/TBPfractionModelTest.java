@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Unit tests for TBP fraction models.
@@ -17,6 +19,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * </p>
  */
 public class TBPfractionModelTest {
+  private static final Logger logger = LogManager.getLogger(TBPfractionModelTest.class);
+
   @Test
   void testTwuModel() {
     SystemInterface thermoSystem = new SystemSrkEos(298.0, 10.0);
@@ -237,9 +241,9 @@ public class TBPfractionModelTest {
     // Models with known limitations
     String[] allModels = {"PedersenSRK", "Lee-Kesler", "RiaziDaubert", "Twu", "Cavett", "Standing"};
 
-    System.out.println("\n=== TBP Model Comparison for C10 (MW=142 g/mol, SG=0.78) ===");
-    System.out.println(String.format("%-15s %10s %10s %10s", "Model", "Tc (K)", "Pc (bar)", "ω"));
-    System.out.println("--------------------------------------------------");
+    logger.info("\n=== TBP Model Comparison for C10 (MW=142 g/mol, SG=0.78) ===");
+    logger.info(String.format("%-15s %10s %10s %10s", "Model", "Tc (K)", "Pc (bar)", "ω"));
+    logger.info("--------------------------------------------------");
 
     for (String modelName : allModels) {
       SystemInterface thermoSystem = new SystemSrkEos(298.0, 10.0);
@@ -250,7 +254,7 @@ public class TBPfractionModelTest {
       double Pc = thermoSystem.getComponent(0).getPC();
       double omega = thermoSystem.getComponent(0).getAcentricFactor();
 
-      System.out.println(String.format("%-15s %10.2f %10.2f %10.4f", modelName, Tc, Pc, omega));
+      logger.info(String.format("%-15s %10.2f %10.2f %10.4f", modelName, Tc, Pc, omega));
     }
 
     // Strict validation only for core models

@@ -2,6 +2,8 @@ package neqsim.fluidmechanics.flowsolver;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,6 +22,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author ESOL
  */
 public class AdvectionSchemeComparisonTest {
+  private static final Logger logger = LogManager.getLogger(AdvectionSchemeComparisonTest.class);
   private SystemInterface testFluidMethane;
   private SystemInterface testFluidNitrogen;
   private double pipeLength = 100.0; // meters
@@ -236,10 +239,10 @@ public class AdvectionSchemeComparisonTest {
         "TVD should reduce front width by more than 50%");
 
     // Report for documentation
-    System.out.println("=== Front Width Comparison (100m pipe, 5 m/s, dx=1m) ===");
+    logger.info("=== Front Width Comparison (100m pipe, 5 m/s, dx=1m) ===");
     System.out
         .println("First-Order Upwind front width: " + String.format("%.1f m", frontWidth_upwind));
-    System.out.println("TVD Van Leer front width: " + String.format("%.1f m", frontWidth_tvd));
+    logger.info("TVD Van Leer front width: " + String.format("%.1f m", frontWidth_tvd));
     System.out
         .println("Reduction factor: " + String.format("%.1f×", frontWidth_upwind / frontWidth_tvd));
   }

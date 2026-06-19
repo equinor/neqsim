@@ -18,9 +18,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class TestCharacterizationCondensate1 {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TestCharacterizationCondensate1.class);
+  private static final Logger logger = LogManager.getLogger(TestCharacterizationCondensate1.class);
 
+  /** Logger object for class. */
+  
   /**
    * <p>
    * main.
@@ -60,12 +61,12 @@ public class TestCharacterizationCondensate1 {
     /*
      * testSystem.getInterphaseProperties().setInterfacialTensionModel(0);
      */
-    // System.out.println("number of components " + testSystem.getNumberOfComponents());
+    // logger.info("number of components " + testSystem.getNumberOfComponents());
     testSystem.useVolumeCorrection(true);
     testSystem.createDatabase(true);
     testSystem.setMixingRule(2);
     testSystem.setMultiPhaseCheck(true);
-    // System.out.println("number of components " + testSystem.getNumberOfComponents());
+    // logger.info("number of components " + testSystem.getNumberOfComponents());
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
     try {
@@ -85,7 +86,7 @@ public class TestCharacterizationCondensate1 {
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
-    System.out.println("activity coefficient " + testSystem.getPhase(1).getActivityCoefficient(1));
+    logger.info("activity coefficient " + testSystem.getPhase(1).getActivityCoefficient(1));
     testSystem.display();
     ((PhaseEosInterface) testSystem.getPhase(0)).displayInteractionCoefficients("");
     testSystem.getPhase(0).getComponent(1).getAcentricFactor();

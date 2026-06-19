@@ -17,6 +17,8 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.optimizer.ProductionImpactResult.RecommendedAction;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Tests for ProductionImpactAnalyzer.
@@ -28,6 +30,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author NeqSim Development Team
  */
 public class ProductionImpactAnalyzerTest {
+  private static final Logger logger = LogManager.getLogger(ProductionImpactAnalyzerTest.class);
+
 
   private ProcessSystem process;
   private Stream feed;
@@ -107,7 +111,7 @@ public class ProductionImpactAnalyzerTest {
     // With compressor failed, production should be significantly reduced
     assertTrue(result.getBaselineProductionRate() > 0, "Baseline should have production");
 
-    System.out.println(result);
+    logger.info(result);
   }
 
   @Test
@@ -128,8 +132,8 @@ public class ProductionImpactAnalyzerTest {
     assertTrue(result.getLossVsFullShutdown() >= 0,
         "Degraded operation should produce >= shutdown");
 
-    System.out.println("=== Compare to Plant Stop ===");
-    System.out.println(result);
+    logger.info("=== Compare to Plant Stop ===");
+    logger.info(result);
   }
 
   @Test
@@ -214,10 +218,10 @@ public class ProductionImpactAnalyzerTest {
     assertNotNull(ranking);
     assertFalse(ranking.isEmpty());
 
-    System.out.println("=== Equipment Criticality Ranking ===");
+    logger.info("=== Equipment Criticality Ranking ===");
     for (int i = 0; i < ranking.size(); i++) {
       ProductionImpactResult result = ranking.get(i);
-      System.out.printf("%d. %s: %.1f%% loss%n", i + 1, result.getEquipmentName(),
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%d. %s: %.1f%% loss%n", i + 1, result.getEquipmentName(),
           result.getPercentLoss());
     }
 
@@ -272,8 +276,8 @@ public class ProductionImpactAnalyzerTest {
     assertTrue(json.contains("percentLoss"));
     assertTrue(json.contains("recommendedAction"));
 
-    System.out.println("=== JSON Output ===");
-    System.out.println(json);
+    logger.info("=== JSON Output ===");
+    logger.info(json);
   }
 
   @Test
@@ -293,8 +297,8 @@ public class ProductionImpactAnalyzerTest {
     assertTrue(result.getEquipmentName().contains("Stage 1 Compressor"));
     assertTrue(result.getEquipmentName().contains("Intercooler"));
 
-    System.out.println("=== Multiple Failures ===");
-    System.out.println(result);
+    logger.info("=== Multiple Failures ===");
+    logger.info(result);
   }
 
   @Test
@@ -312,9 +316,9 @@ public class ProductionImpactAnalyzerTest {
     // Check that optimized setpoints were calculated
     assertNotNull(result.getOptimizedSetpoints());
 
-    System.out.println("=== Optimized Setpoints ===");
+    logger.info("=== Optimized Setpoints ===");
     for (java.util.Map.Entry<String, Double> entry : result.getOptimizedSetpoints().entrySet()) {
-      System.out.printf("  %s: %.2f%n", entry.getKey(), entry.getValue());
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s: %.2f%n", entry.getKey(), entry.getValue());
     }
   }
 }

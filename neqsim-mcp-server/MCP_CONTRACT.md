@@ -48,6 +48,7 @@ benchmark trust metadata.
 | `listSimulationUnits` | ADVISORY | v1.0 | List addressable equipment in a process |
 | `listUnitVariables` | ADVISORY | v1.0 | List variables for a specific unit |
 | `getSimulationVariable` | ADVISORY | v1.0 | Read a variable by dot-notation address |
+| `getAdjustableParameters` | ADVISORY | v1.7 | Enumerate the bounded optimization decision space (adjustable INPUT variables) for a process |
 | `compareSimulationStates` | ADVISORY | v1.0 | Diff two state snapshots |
 | `diagnoseAutomation` | ADVISORY | v1.0 | Self-healing diagnostics for failed operations |
 | `getAutomationLearningReport` | ADVISORY | v1.0 | Automation operation history and insights |
@@ -103,6 +104,7 @@ industrial validation.
 | `runSafetySystemPerformance` | CALCULATION | v1.4 | Active/passive safety-system performance analysis with quantitative SIL/PFD bridge |
 | `runOperationalStudy` | EXECUTION | v1.5 | P&ID/tag-driven valve scenarios, field-data binding, controller response metrics, evidence-package bottleneck reports, and operating-envelope margin/trip screening on local simulation copies |
 | `runRootCauseAnalysis` | CALCULATION | v1.6 | Bayesian root cause analysis integrating OREDA, historian, STID, and simulation for ranked failure hypotheses |
+| `runProcessLoop` | CALCULATION | v1.7 | Build a process once, then sweep many setpoint trials through the cached `ProcessAutomation.evaluate()` primitive (per-trial convergence gating, feasibility flag, objective read-backs) for closed-loop optimization |
 
 ## Experimental Tools
 
@@ -117,7 +119,7 @@ domain-specific runners with limited qualification evidence.
 |------|----------|-------|-------------|
 | `solveTask` | EXECUTION | v1.1 | Autonomous task solver — results require independent engineer review |
 | `composeWorkflow` | EXECUTION | v1.1 | Chain simulation steps into multi-domain workflows |
-| `manageSession` | EXECUTION | v1.1 | Persistent simulation sessions (create, modify, run, snapshot, restore) |
+| `manageSession` | EXECUTION | v1.1 | Persistent simulation sessions (create, modify, run, snapshot, restore). Since v1.7 also supports closed-loop automation on the cached live process without rebuilding: `evaluate` (apply setpoints, run to convergence, read back objectives), `getValues`, `setValues`, `adjustables` |
 | `runReservoir` | CALCULATION | v1.1 | Material balance reservoir simulation |
 | `runFieldEconomics` | CALCULATION | v1.1 | NPV/IRR/cash flow with fiscal regimes + decline curves |
 | `runDynamic` | CALCULATION | v1.1 | Dynamic transient simulation with auto-instrumented controllers |

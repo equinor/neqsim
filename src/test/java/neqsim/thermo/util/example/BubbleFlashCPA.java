@@ -17,9 +17,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class BubbleFlashCPA {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(BubbleFlashCPA.class);
+  private static final Logger logger = LogManager.getLogger(BubbleFlashCPA.class);
 
+  /** Logger object for class. */
+  
   /**
    * <p>
    * main.

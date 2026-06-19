@@ -3,6 +3,8 @@ package neqsim.process.util.example;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -14,6 +16,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class TestMechanicalDesign {
+  private static final Logger logger = LogManager.getLogger(TestMechanicalDesign.class);
+
   /**
    * <p>
    * main.
@@ -89,16 +93,16 @@ public class TestMechanicalDesign {
     // Code");
     // scrubber.getMechanicalDesign().setDesignStandard("BS 5500 - Pressure
     // Vessel");
-    // System.out.println("vane top veight " + sep.getSeparatorSection("inlet
+    // logger.info("vane top veight " + sep.getSeparatorSection("inlet
     // vane").getMechanicalDesign().getTotalWeight());
-    // System.out.println("gas vel " + sep.getGasSuperficialVelocity());
-    // System.out.println("gas load factor oil " + sep.getGasLoadFactor());
-    // System.out.println("gas load factor water " + scrubber.getGasLoadFactor(2));
-    // System.out.println("derated gas load factor oil " +
+    // logger.info("gas vel " + sep.getGasSuperficialVelocity());
+    // logger.info("gas load factor oil " + sep.getGasLoadFactor());
+    // logger.info("gas load factor water " + scrubber.getGasLoadFactor(2));
+    // logger.info("derated gas load factor oil " +
     // sep.getDeRatedGasLoadFactor());
-    // System.out.println("derated gas load factor water " +
+    // logger.info("derated gas load factor water " +
     // scrubber.getDeRatedGasLoadFactor(2));
-    // System.out.println("minimum liquid seal height " +
+    // logger.info("minimum liquid seal height " +
     // sep.getSeparatorSection(0).getMinimumLiquidSealHeight());
     // sep.getMechanicalDesign().displayResults();
   }

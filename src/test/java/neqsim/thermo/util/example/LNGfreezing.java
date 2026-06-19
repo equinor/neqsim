@@ -17,9 +17,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class LNGfreezing {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(LNGfreezing.class);
+  private static final Logger logger = LogManager.getLogger(LNGfreezing.class);
 
+  /** Logger object for class. */
+  
   /**
    * <p>
    * main.
@@ -63,9 +64,9 @@ public class LNGfreezing {
       // thermodynamicOperations.flashOps.saturationOps.freezingPointTemperatureFlash
       // operation = new
       // thermodynamicOperations.flashOps.saturationOps.freezingPointTemperatureFlash(testSystem);
-      // System.out.println("funk " + operation.calcFunc());
+      // logger.info("funk " + operation.calcFunc());
       testOps.freezingPointTemperatureFlash();
-      // System.out.println("freeze temperature " + (testSystem.getTemperature() -
+      // logger.info("freeze temperature " + (testSystem.getTemperature() -
       // 273.15));
       // testOps.TPSolidflash();
       testSystem.display();

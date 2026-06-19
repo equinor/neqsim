@@ -13,9 +13,10 @@ import neqsim.util.database.NeqSimDataBase;
  * @author ESOL
  */
 class WaxFlashTest {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(WaxFlashTest.class);
+  private static final Logger logger = LogManager.getLogger(WaxFlashTest.class);
 
+  /** Logger object for class. */
+  
   static neqsim.thermo.system.SystemInterface testSystem = null;
   static ThermodynamicOperations testOps = null;
 

@@ -98,6 +98,7 @@ public class ProcessSystem extends SimulationBaseClass {
   RecycleController recycleController = new RecycleController();
   private double timeStep = 1.0;
   private boolean runStep = false;
+  private boolean solveFullyInModelStep = false;
 
   private final Map<String, Integer> equipmentCounter = new HashMap<>();
   private ProcessEquipmentInterface lastAddedUnit = null;
@@ -275,6 +276,12 @@ public class ProcessSystem extends SimulationBaseClass {
    * Stores the total elapsed wall-clock time of the last run() call in nanoseconds.
    */
   private transient long lastRunElapsedNanos = 0;
+
+  /**
+   * Structured per-unit outcome of the most recent {@link #run(UUID)} call. Populated during the
+   * run and queryable via {@link #getRunStatus()} and {@link #getRunStatusJson()}.
+   */
+  private transient RunStatus lastRunStatus = new RunStatus();
 
   /**
    * Interface for monitoring simulation progress during execution. Implementations receive
@@ -1252,6 +1259,10 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   private RuntimeException createUnitRunException(ProcessEquipmentInterface unit, Exception cause) {
     String unitName = unit == null ? "<unknown>" : unit.getName();
+    String unitType = unit == null ? null : unit.getClass().getSimpleName();
+    if (lastRunStatus != null) {
+      lastRunStatus.recordFailure(unitName, unitType, cause.getMessage());
+    }
     logger.error("equipment: " + unitName + " error: " + cause.getMessage(), cause);
     publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.ERROR, unitName,
         "Unit error: " + cause.getMessage(), ProcessEvent.Severity.ERROR));
@@ -2468,6 +2479,11 @@ public class ProcessSystem extends SimulationBaseClass {
   @Override
   public synchronized void run(UUID id) {
     enterRunScope();
+    if (lastRunStatus == null) {
+      lastRunStatus = new RunStatus();
+    }
+    lastRunStatus.reset();
+    boolean runThrew = false;
     try {
       resetExecutionProfile();
       resetActiveStates();
@@ -2490,9 +2506,71 @@ public class ProcessSystem extends SimulationBaseClass {
         }
         lastRunElapsedNanos = System.nanoTime() - wallStart;
       }
+    } catch (RuntimeException ex) {
+      runThrew = true;
+      throw ex;
     } finally {
+      finalizeRunStatus(runThrew);
       exitRunScope();
     }
+  }
+
+  /**
+   * Finalizes the {@link #lastRunStatus} after a run completes. On a clean run, records a success
+   * entry for every unit operation that has no prior failure entry; on a thrown run, marks the
+   * overall status as failed (the failed unit was already captured by
+   * {@link #createUnitRunException(ProcessEquipmentInterface, Exception)}).
+   *
+   * @param runThrew true if the run propagated a {@link RuntimeException}
+   */
+  private void finalizeRunStatus(boolean runThrew) {
+    if (lastRunStatus == null) {
+      return;
+    }
+    if (!runThrew) {
+      java.util.Set<String> failedNames = new java.util.HashSet<String>();
+      for (UnitRunStatus u : lastRunStatus.getUnits()) {
+        if (!u.isSuccess()) {
+          failedNames.add(u.getUnitName());
+        }
+      }
+      for (ProcessEquipmentInterface unit : unitOperations) {
+        if (unit == null) {
+          continue;
+        }
+        if (!failedNames.contains(unit.getName())) {
+          lastRunStatus.recordSuccess(unit.getName(), unit.getClass().getSimpleName());
+        }
+      }
+    }
+    lastRunStatus.markComplete(!runThrew);
+  }
+
+  /**
+   * Returns the structured outcome of the most recent {@link #run(UUID)} call.
+   *
+   * <p>
+   * The returned {@link RunStatus} reports whether the run succeeded and, on failure, the first
+   * unit that failed and its error message &mdash; allowing agents to react to a failed run without
+   * catching and parsing a {@link RuntimeException}.
+   * </p>
+   *
+   * @return the last run status (never null; reports {@code completed=false} before the first run)
+   */
+  public RunStatus getRunStatus() {
+    if (lastRunStatus == null) {
+      lastRunStatus = new RunStatus();
+    }
+    return lastRunStatus;
+  }
+
+  /**
+   * Returns the structured outcome of the most recent run as a JSON string.
+   *
+   * @return schema-versioned JSON describing the last run outcome
+   */
+  public String getRunStatusJson() {
+    return getRunStatus().toJson();
   }
 
   /**
@@ -3136,7 +3214,16 @@ public class ProcessSystem extends SimulationBaseClass {
             break;
           }
         }
+        // Fallback: detect other active feeds via stream wiring (inlet stream of u produced by a
+        // unit that is still active). This makes the guard work for flowsheets built with
+        // getOutletStream() wiring without explicit connect() registration.
+        if (!hasOtherActiveFeed && hasOtherActiveFeedViaStreams(u, visited)) {
+          hasOtherActiveFeed = true;
+        }
         if (hasOtherActiveFeed) {
+          // This node is a live boundary (a parallel feed keeps it active): do not descend past it
+          // and do not lock it. Only units strictly downstream of the start belong to the section.
+          visited.remove(u);
           continue;
         }
       }
@@ -3159,6 +3246,61 @@ public class ProcessSystem extends SimulationBaseClass {
       u.setLockedInactive(true);
     }
     return visited.size();
+  }
+
+  /**
+   * Detects whether a mixer/recycle node still has at least one active feed coming from a unit that
+   * is not already part of the deactivated set, using stream wiring (an inlet stream of the node is
+   * an outlet stream of some other still-active unit). Complements the {@link ProcessConnection}
+   * based check so the guard also protects flowsheets built with {@code getOutletStream()} wiring.
+   *
+   * @param node the mixer or recycle unit being evaluated
+   * @param visited the set of units already scheduled for deactivation
+   * @return {@code true} if another active feed reaches the node, {@code false} otherwise
+   */
+  private boolean hasOtherActiveFeedViaStreams(ProcessEquipmentInterface node,
+      java.util.Set<ProcessEquipmentInterface> visited) {
+    java.util.List<neqsim.process.equipment.stream.StreamInterface> nodeInlets;
+    try {
+      nodeInlets = node.getInletStreams();
+    } catch (Exception ex) {
+      return false;
+    }
+    if (nodeInlets == null || nodeInlets.isEmpty()) {
+      return false;
+    }
+    for (neqsim.process.equipment.stream.StreamInterface inlet : nodeInlets) {
+      if (inlet == null) {
+        continue;
+      }
+      // An inlet stream that is itself a still-active registered unit (e.g. a feed Stream, which
+      // is both a StreamInterface and a ProcessEquipmentInterface) counts as a live feed. Feed
+      // streams report no outlet streams, so they are not found by the source-outlet scan below.
+      if (inlet instanceof ProcessEquipmentInterface && unitOperations.contains(inlet)
+          && !visited.contains(inlet) && !((ProcessEquipmentInterface) inlet).isLockedInactive()) {
+        return true;
+      }
+      for (ProcessEquipmentInterface source : unitOperations) {
+        if (source == node || visited.contains(source) || source.isLockedInactive()) {
+          continue;
+        }
+        java.util.List<neqsim.process.equipment.stream.StreamInterface> sourceOutlets;
+        try {
+          sourceOutlets = source.getOutletStreams();
+        } catch (Exception ex) {
+          continue;
+        }
+        if (sourceOutlets == null) {
+          continue;
+        }
+        for (neqsim.process.equipment.stream.StreamInterface outlet : sourceOutlets) {
+          if (outlet == inlet) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   /**
@@ -4659,6 +4801,7 @@ public class ProcessSystem extends SimulationBaseClass {
     recycleController = source.recycleController;
     timeStep = source.timeStep;
     runStep = source.runStep;
+    solveFullyInModelStep = source.solveFullyInModelStep;
     equipmentCounter.clear();
     equipmentCounter.putAll(source.equipmentCounter);
     lastAddedUnit = source.lastAddedUnit;
@@ -4717,6 +4860,35 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   public boolean isRunStep() {
     return runStep;
+  }
+
+  /**
+   * Controls how this process area behaves when its owning {@link ProcessModel} is run in step mode
+   * ({@code ProcessModel.setRunStep(true)}).
+   *
+   * <p>
+   * By default ({@code false}) every area advances exactly one pass per model step. When set to
+   * {@code true} this specific area is fully converged (recycles included) on each model step,
+   * while other areas still single-step. This is useful when one sub-process (for example an
+   * anti-surge recycle loop) must reach a consistent state every step while the rest of the plant
+   * is advanced incrementally.
+   * </p>
+   *
+   * @param solveFullyInModelStep {@code true} to fully solve this area on each model step,
+   *        {@code false} to advance only a single pass
+   */
+  public void setSolveFullyInModelStep(boolean solveFullyInModelStep) {
+    this.solveFullyInModelStep = solveFullyInModelStep;
+  }
+
+  /**
+   * Returns whether this process area is fully converged on each step when its owning
+   * {@link ProcessModel} is run in step mode.
+   *
+   * @return {@code true} if this area fully solves on each model step, otherwise {@code false}
+   */
+  public boolean isSolveFullyInModelStep() {
+    return solveFullyInModelStep;
   }
 
   /**
@@ -7206,6 +7378,181 @@ public class ProcessSystem extends SimulationBaseClass {
     return totalCount;
   }
 
+  /**
+   * Builds a stable, machine-readable utilization observation for this process system as a
+   * {@link com.google.gson.JsonArray}.
+   *
+   * <p>
+   * The snapshot is <b>side-effect free</b> &mdash; it does not call {@link #run()} and only reads
+   * already-computed capacity utilization from each unit's
+   * {@link neqsim.process.equipment.capacity.CapacityConstraint constraints}. It is intended as the
+   * observation vector for machine-learning / reinforcement-learning optimization loops, paired
+   * with {@link neqsim.process.automation.ProcessAutomation#evaluate} (action + reward). Units are
+   * emitted in insertion order so the observation vector is deterministic across calls.
+   * </p>
+   *
+   * @param areaLabel optional area name to attach to each unit (use {@code null} for a single,
+   *        non-area-qualified process system)
+   * @return a JSON array of per-unit utilization objects
+   */
+  com.google.gson.JsonArray buildUtilizationUnitsJson(String areaLabel) {
+    com.google.gson.JsonArray unitsArr = new com.google.gson.JsonArray();
+    for (ProcessEquipmentInterface unit : getUnitOperations()) {
+      com.google.gson.JsonObject u = new com.google.gson.JsonObject();
+      if (areaLabel != null) {
+        u.addProperty("area", areaLabel);
+      }
+      u.addProperty("name", unit.getName());
+      u.addProperty("type", unit.getClass().getSimpleName());
+
+      boolean analysisEnabled = !(unit instanceof ProcessEquipmentBaseClass)
+          || ((ProcessEquipmentBaseClass) unit).isCapacityAnalysisEnabled();
+      u.addProperty("capacityAnalysisEnabled", analysisEnabled);
+
+      double maxUtil = 0.0;
+      String limitingConstraint = null;
+      boolean feasible = true;
+      boolean hardLimitExceeded = false;
+      com.google.gson.JsonArray constraintsArr = new com.google.gson.JsonArray();
+      if (analysisEnabled) {
+        try {
+          maxUtil = unit.getMaxUtilization();
+        } catch (Exception e) {
+          maxUtil = 0.0;
+        }
+        try {
+          neqsim.process.equipment.capacity.CapacityConstraint bottleneck =
+              unit.getBottleneckConstraint();
+          if (bottleneck != null) {
+            limitingConstraint = bottleneck.getName();
+          }
+        } catch (Exception e) {
+          // no limiting constraint available
+        }
+        try {
+          feasible = !unit.isCapacityExceeded();
+        } catch (Exception e) {
+          feasible = true;
+        }
+        try {
+          hardLimitExceeded = unit.isHardLimitExceeded();
+        } catch (Exception e) {
+          hardLimitExceeded = false;
+        }
+        try {
+          for (neqsim.process.equipment.capacity.CapacityConstraint c : unit
+              .getCapacityConstraints().values()) {
+            com.google.gson.JsonObject co = new com.google.gson.JsonObject();
+            co.addProperty("name", c.getName());
+            double cu = c.getUtilization();
+            co.addProperty("utilization", cu);
+            co.addProperty("utilizationPercent", cu * 100.0);
+            co.addProperty("current", c.getCurrentValue());
+            co.addProperty("design", c.getDisplayDesignValue());
+            if (c.getUnit() != null) {
+              co.addProperty("unit", c.getUnit());
+            }
+            co.addProperty("enabled", c.isEnabled());
+            co.addProperty("violated", c.isViolated());
+            if (c.getDataSource() != null) {
+              co.addProperty("dataSource", c.getDataSource());
+            }
+            constraintsArr.add(co);
+          }
+        } catch (Exception e) {
+          // skip constraint detail on failure
+        }
+      }
+
+      u.addProperty("maxUtilization", Double.isNaN(maxUtil) ? 0.0 : maxUtil);
+      u.addProperty("maxUtilizationPercent", Double.isNaN(maxUtil) ? 0.0 : maxUtil * 100.0);
+      if (limitingConstraint != null) {
+        u.addProperty("limitingConstraint", limitingConstraint);
+      } else {
+        u.add("limitingConstraint", com.google.gson.JsonNull.INSTANCE);
+      }
+      u.addProperty("feasible", feasible);
+      u.addProperty("hardLimitExceeded", hardLimitExceeded);
+
+      Double powerKw = readPowerKwSafe(unit);
+      if (powerKw != null) {
+        u.addProperty("power_kW", powerKw.doubleValue());
+      }
+      u.add("constraints", constraintsArr);
+      unitsArr.add(u);
+    }
+    return unitsArr;
+  }
+
+  /**
+   * Reads the shaft power of a unit in kW without throwing, returning {@code null} when the unit
+   * has no meaningful power reading.
+   *
+   * @param unit the equipment to read power from
+   * @return power in kW, or {@code null} if not applicable / unavailable
+   */
+  private Double readPowerKwSafe(ProcessEquipmentInterface unit) {
+    try {
+      if (unit instanceof neqsim.process.equipment.compressor.Compressor) {
+        return Double
+            .valueOf(((neqsim.process.equipment.compressor.Compressor) unit).getPower("kW"));
+      }
+      if (unit instanceof neqsim.process.equipment.pump.Pump) {
+        return Double.valueOf(((neqsim.process.equipment.pump.Pump) unit).getPower("kW"));
+      }
+    } catch (Exception e) {
+      return null;
+    }
+    return null;
+  }
+
+  /**
+   * Returns a stable, side-effect-free JSON utilization snapshot of every unit in this process
+   * system.
+   *
+   * <p>
+   * This is the recommended observation endpoint for machine-learning / reinforcement-learning
+   * optimization loops. It reports, for every unit, the maximum capacity utilization, the limiting
+   * constraint name, a per-constraint breakdown, feasibility, and (for compressors and pumps) the
+   * shaft power. The process-wide {@code bottleneck} and {@code anyOverloaded} flags summarise the
+   * whole flowsheet. Schema is versioned by {@code schemaVersion} ("1.0").
+   * </p>
+   *
+   * <p>
+   * The method does <b>not</b> run the flowsheet; call {@link #run()} (or
+   * {@link neqsim.process.automation.ProcessAutomation#evaluate}) first so the reported utilization
+   * reflects the latest setpoints.
+   * </p>
+   *
+   * @return JSON string {@code {schemaVersion, name, units:[...], bottleneck:{...}, anyOverloaded,
+   *         anyHardLimitExceeded}}
+   */
+  public String getUtilizationSnapshotJson() {
+    com.google.gson.JsonObject root = new com.google.gson.JsonObject();
+    root.addProperty("schemaVersion", "1.0");
+    if (getName() != null) {
+      root.addProperty("name", getName());
+    }
+    root.add("units", buildUtilizationUnitsJson(null));
+
+    neqsim.process.equipment.capacity.BottleneckResult bottleneck = findBottleneck();
+    com.google.gson.JsonObject bn = new com.google.gson.JsonObject();
+    if (bottleneck != null && bottleneck.getEquipment() != null) {
+      bn.addProperty("name", bottleneck.getEquipment().getName());
+      bn.addProperty("utilization", bottleneck.getUtilization());
+      bn.addProperty("utilizationPercent", bottleneck.getUtilization() * 100.0);
+      if (bottleneck.getConstraint() != null) {
+        bn.addProperty("limitingConstraint", bottleneck.getConstraint().getName());
+      }
+      root.add("bottleneck", bn);
+    } else {
+      root.add("bottleneck", com.google.gson.JsonNull.INSTANCE);
+    }
+    root.addProperty("anyOverloaded", isAnyEquipmentOverloaded());
+    root.addProperty("anyHardLimitExceeded", isAnyHardLimitExceeded());
+    return root.toString();
+  }
+
   // ==========================================================================
   // AUTO-SIZING METHODS
   // ==========================================================================
@@ -7279,6 +7626,49 @@ public class ProcessSystem extends SimulationBaseClass {
         ((neqsim.process.design.AutoSizeable) equipment).autoSize(companyStandard, trDocument);
         count++;
       }
+    }
+    return count;
+  }
+
+  /**
+   * Applies mechanical-design-derived capacity constraints to every equipment item in this process
+   * system.
+   *
+   * <p>
+   * This is the bulk counterpart of
+   * {@link neqsim.process.equipment.ProcessEquipmentInterface#applyMechanicalDesignCapacityConstraints()}.
+   * It iterates over all unit operations and, for each, derives capacity constraints from the
+   * limits configured on its {@link neqsim.process.mechanicaldesign.MechanicalDesign} (for example
+   * {@code setMaxDesignPower}, {@code setMaxDesignVolumeFlow}, {@code setMaxDesignDuty}). After
+   * this call the limits surface in
+   * {@link neqsim.process.equipment.ProcessEquipmentInterface#getMaxUtilization()} and in
+   * {@link #getUtilizationSnapshotJson()}.
+   * </p>
+   *
+   * <p>
+   * Typical workflow &mdash; size automatically, then light up utilization in one call:
+   * </p>
+   *
+   * <pre>
+   * processSystem.run();
+   * processSystem.autoSizeEquipment(); // populate maxDesign* limits from flow conditions
+   * processSystem.applyMechanicalDesignCapacityConstraints(); // surface them as utilization
+   * String snapshot = processSystem.getUtilizationSnapshotJson();
+   * </pre>
+   *
+   * <p>
+   * The method is idempotent (derived constraints use stable names) and never throws &mdash; an
+   * equipment whose mechanical design cannot be read simply contributes no derived constraints.
+   * Call it again whenever design limits or operating conditions change.
+   * </p>
+   *
+   * @return the total number of mechanical-design-derived constraints registered across all
+   *         equipment
+   */
+  public int applyMechanicalDesignCapacityConstraints() {
+    int count = 0;
+    for (ProcessEquipmentInterface equipment : getUnitOperations()) {
+      count += equipment.applyMechanicalDesignCapacityConstraints();
     }
     return count;
   }

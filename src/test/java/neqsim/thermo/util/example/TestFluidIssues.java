@@ -17,9 +17,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class TestFluidIssues {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TestFluidIssues.class);
+  private static final Logger logger = LogManager.getLogger(TestFluidIssues.class);
 
+  /** Logger object for class. */
+  
   /**
    * This method is just meant to test the thermo package.
    *

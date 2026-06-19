@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -27,6 +29,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class TwoFluidPipeLiteratureValidationTest {
+  private static final Logger logger =
+      LogManager.getLogger(TwoFluidPipeLiteratureValidationTest.class);
 
   private static SystemInterface gasOilFluid;
   private static SystemInterface leanGasFluid;
@@ -123,9 +127,9 @@ public class TwoFluidPipeLiteratureValidationTest {
     assertTrue(holdup1 >= 0.0 && holdup1 <= 1.0,
         "Holdup should be between 0 and 1, got: " + holdup1);
 
-    System.out.println("=== Beggs-Brill Validation Case 1 ===");
-    System.out.println("Average liquid holdup: " + String.format("%.4f", holdup1));
-    System.out.println("Beggs-Brill expected range: 0.15-0.25");
+    logger.info("=== Beggs-Brill Validation Case 1 ===");
+    logger.info("Average liquid holdup: " + String.format("%.4f", holdup1));
+    logger.info("Beggs-Brill expected range: 0.15-0.25");
   }
 
   /**
@@ -159,8 +163,8 @@ public class TwoFluidPipeLiteratureValidationTest {
     pipe.run();
 
     String regime = pipe.getDominantFlowRegime();
-    System.out.println("=== Taitel-Dukler Validation ===");
-    System.out.println("Detected flow regime: " + regime);
+    logger.info("=== Taitel-Dukler Validation ===");
+    logger.info("Detected flow regime: " + regime);
 
     // At high GOR and low liquid rate, expect stratified wavy or annular
     assertTrue(regime != null && !regime.isEmpty(), "Flow regime should be detected");
@@ -209,9 +213,9 @@ public class TwoFluidPipeLiteratureValidationTest {
     double vSG = pipe.getAverageSuperficialGasVelocity();
     double vSL = pipe.getAverageSuperficialLiquidVelocity();
 
-    System.out.println("=== Mandhane Validation ===");
-    System.out.println(String.format("v_SG = %.3f m/s, v_SL = %.3f m/s", vSG, vSL));
-    System.out.println("Detected regime: " + regime);
+    logger.info("=== Mandhane Validation ===");
+    logger.info(String.format("v_SG = %.3f m/s, v_SL = %.3f m/s", vSG, vSL));
+    logger.info("Detected regime: " + regime);
 
     // Validate velocities are reasonable
     assertTrue(vSG >= 0, "Superficial gas velocity should be non-negative");
@@ -250,14 +254,14 @@ public class TwoFluidPipeLiteratureValidationTest {
     // Manual verification
     double vEManual = cFactor / Math.sqrt(rhoMix);
 
-    System.out.println("=== API 14E Erosional Velocity Test ===");
-    System.out.println(String.format("Mixture density: %.2f kg/m³", rhoMix));
-    System.out.println(String.format("Erosional velocity (model): %.2f m/s", vE));
-    System.out.println(String.format("Erosional velocity (manual): %.2f m/s", vEManual));
-    System.out.println(String.format("Maximum velocity: %.2f m/s", vMax));
-    System.out.println(
-        String.format("Margin (V_max/V_e): %.3f", pipe.getErosionalVelocityMargin(cFactor)));
-    System.out.println("Exceeds limit: " + pipe.isVelocityAboveErosionalLimit(cFactor));
+    logger.info("=== API 14E Erosional Velocity Test ===");
+    logger.info(String.format("Mixture density: %.2f kg/m³", rhoMix));
+    logger.info(String.format("Erosional velocity (model): %.2f m/s", vE));
+    logger.info(String.format("Erosional velocity (manual): %.2f m/s", vEManual));
+    logger.info(String.format("Maximum velocity: %.2f m/s", vMax));
+    logger
+        .info(String.format("Margin (V_max/V_e): %.3f", pipe.getErosionalVelocityMargin(cFactor)));
+    logger.info("Exceeds limit: " + pipe.isVelocityAboveErosionalLimit(cFactor));
 
     // Verify calculation matches manual
     assertEquals(vEManual, vE, 0.01, "Erosional velocity should match manual calculation");
@@ -301,11 +305,11 @@ public class TwoFluidPipeLiteratureValidationTest {
     double dP = pIn - pOut;
     double dPdL = dP / pipe.getLength() * 1000; // bar/km
 
-    System.out.println("=== Pressure Gradient Validation ===");
-    System.out.println(String.format("Inlet pressure: %.2f bara", pIn));
-    System.out.println(String.format("Outlet pressure: %.2f bara", pOut));
-    System.out.println(String.format("Total pressure drop: %.3f bar", dP));
-    System.out.println(String.format("Pressure gradient: %.3f bar/km", dPdL));
+    logger.info("=== Pressure Gradient Validation ===");
+    logger.info(String.format("Inlet pressure: %.2f bara", pIn));
+    logger.info(String.format("Outlet pressure: %.2f bara", pOut));
+    logger.info(String.format("Total pressure drop: %.3f bar", dP));
+    logger.info(String.format("Pressure gradient: %.3f bar/km", dPdL));
 
     // Typical two-phase pressure gradients: 0.5-20 bar/km
     // Very dependent on flow rates and fluid
@@ -388,10 +392,10 @@ public class TwoFluidPipeLiteratureValidationTest {
 
     double holdupDown = pipeDown.getAverageLiquidHoldup();
 
-    System.out.println("=== Inclination Effect Validation ===");
-    System.out.println(String.format("Horizontal holdup: %.4f", holdupH));
-    System.out.println(String.format("Uphill (30°) holdup: %.4f", holdupUp));
-    System.out.println(String.format("Downhill (-30°) holdup: %.4f", holdupDown));
+    logger.info("=== Inclination Effect Validation ===");
+    logger.info(String.format("Horizontal holdup: %.4f", holdupH));
+    logger.info(String.format("Uphill (30°) holdup: %.4f", holdupUp));
+    logger.info(String.format("Downhill (-30°) holdup: %.4f", holdupDown));
 
     // Per Beggs-Brill, uphill flow should have higher holdup
     // Allow for model behavior differences
@@ -420,7 +424,7 @@ public class TwoFluidPipeLiteratureValidationTest {
     pipe.run();
 
     String summary = pipe.getFlowAnalysisSummary();
-    System.out.println(summary);
+    logger.info(summary);
 
     assertTrue(summary != null && summary.length() > 100,
         "Flow analysis summary should contain meaningful data");
@@ -448,7 +452,7 @@ public class TwoFluidPipeLiteratureValidationTest {
     pipe.run();
 
     String assessment = pipe.getErosionRiskAssessment(122.0);
-    System.out.println(assessment);
+    logger.info(assessment);
 
     assertTrue(assessment != null && assessment.length() > 50,
         "Risk assessment should contain meaningful data");

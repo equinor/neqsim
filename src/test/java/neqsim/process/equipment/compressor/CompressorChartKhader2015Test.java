@@ -2,6 +2,8 @@ package neqsim.process.equipment.compressor;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.compressor.CompressorChartKhader2015.RealCurve;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
@@ -9,6 +11,8 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class CompressorChartKhader2015Test {
+  private static final Logger logger = LogManager.getLogger(CompressorChartKhader2015Test.class);
+
   @Test
   void testSetCurves() {
     SystemInterface testFluid = new SystemSrkEos(298.15, 50.0);
@@ -326,13 +330,13 @@ public class CompressorChartKhader2015Test {
     double minFlow = singleCurve.flow[0]; // First point (minimum flow)
     double maxFlow = singleCurve.flow[singleCurve.flow.length - 1]; // Last point (maximum flow)
 
-    System.out.println("Single speed compressor operating envelope:");
-    System.out.println("  Speed: " + singleCurve.speed + " RPM");
-    System.out.println("  Surge point (min flow): " + minFlow + " m3/hr at head "
-        + singleCurve.head[0] + " kJ/kg");
-    System.out.println("  Stone wall point (max flow): " + maxFlow + " m3/hr at head "
+    logger.info("Single speed compressor operating envelope:");
+    logger.info("  Speed: " + singleCurve.speed + " RPM");
+    logger.info("  Surge point (min flow): " + minFlow + " m3/hr at head " + singleCurve.head[0]
+        + " kJ/kg");
+    logger.info("  Stone wall point (max flow): " + maxFlow + " m3/hr at head "
         + singleCurve.head[singleCurve.head.length - 1] + " kJ/kg");
-    System.out.println(
+    logger.info(
         "  Note: These are SINGLE POINTS, not curves. Multiple speeds are needed for surge/stone wall curves.");
 
     // Verify the compressor can still operate and calculate head/efficiency
@@ -379,20 +383,20 @@ public class CompressorChartKhader2015Test {
     double actualSurgeFlow = minFlow; // The actual surge point (minimum flow on curve)
     double safeSurgeFlow = actualSurgeFlow * antiSurge.getSurgeControlFactor();
 
-    System.out.println("\nSurge Safety Margin for Single Speed Compressor:");
-    System.out.println("  Actual surge flow (minimum flow point): " + actualSurgeFlow + " m3/hr");
-    System.out.println("  Surge control factor: " + antiSurge.getSurgeControlFactor());
-    System.out.println("  Safe minimum flow (with 5% margin): " + safeSurgeFlow + " m3/hr");
-    System.out.println("  Safety margin: " + (safeSurgeFlow - actualSurgeFlow) + " m3/hr ("
+    logger.info("\nSurge Safety Margin for Single Speed Compressor:");
+    logger.info("  Actual surge flow (minimum flow point): " + actualSurgeFlow + " m3/hr");
+    logger.info("  Surge control factor: " + antiSurge.getSurgeControlFactor());
+    logger.info("  Safe minimum flow (with 5% margin): " + safeSurgeFlow + " m3/hr");
+    logger.info("  Safety margin: " + (safeSurgeFlow - actualSurgeFlow) + " m3/hr ("
         + ((antiSurge.getSurgeControlFactor() - 1.0) * 100) + "%)");
 
     // User can modify the safety factor
     antiSurge.setSurgeControlFactor(1.10); // 10% safety margin
     Assertions.assertEquals(1.10, antiSurge.getSurgeControlFactor(), 0.001);
     double safeSurgeFlow10pct = actualSurgeFlow * 1.10;
-    System.out.println("\nWith 10% safety margin:");
-    System.out.println("  Safe minimum flow: " + safeSurgeFlow10pct + " m3/hr");
-    System.out.println("  Safety margin: " + (safeSurgeFlow10pct - actualSurgeFlow) + " m3/hr");
+    logger.info("\nWith 10% safety margin:");
+    logger.info("  Safe minimum flow: " + safeSurgeFlow10pct + " m3/hr");
+    logger.info("  Safety margin: " + (safeSurgeFlow10pct - actualSurgeFlow) + " m3/hr");
 
     // For a single speed compressor:
     // - The surge point is fixed at the minimum flow of that speed curve
@@ -404,27 +408,27 @@ public class CompressorChartKhader2015Test {
     Assertions.assertTrue(safeSurgeFlow10pct > safeSurgeFlow,
         "Higher safety factor should give more margin");
 
-    System.out.println("\nKey Point for Single Speed Compressors:");
-    System.out.println(
-        "  Since speed cannot be adjusted, the safety margin is ESSENTIAL to prevent surge.");
-    System.out.println("  The AntiSurge system will recirculate/add flow if operation gets too "
+    logger.info("\nKey Point for Single Speed Compressors:");
+    logger
+        .info("  Since speed cannot be adjusted, the safety margin is ESSENTIAL to prevent surge.");
+    logger.info("  The AntiSurge system will recirculate/add flow if operation gets too "
         + "close to surge point.");
 
     // ===== NEW: Using getSurgeFlowAtSpeed() and getSurgeHeadAtSpeed() =====
     // These methods work for BOTH single speed and multi-speed compressors
     // They retrieve the surge point at the current speed directly from the chart
-    System.out.println("\n=== Using getSurgeFlowAtSpeed() and getSurgeHeadAtSpeed() ===");
+    logger.info("\n=== Using getSurgeFlowAtSpeed() and getSurgeHeadAtSpeed() ===");
     double currentSpeed = comp1.getSpeed(); // This is now 12913 RPM
     double surgeFlowAtSpeed = compChart.getSurgeFlowAtSpeed(currentSpeed);
     double surgeHeadAtSpeed = compChart.getSurgeHeadAtSpeed(currentSpeed);
     double stoneWallFlowAtSpeed = compChart.getStoneWallFlowAtSpeed(currentSpeed);
     double stoneWallHeadAtSpeed = compChart.getStoneWallHeadAtSpeed(currentSpeed);
 
-    System.out.println("Current compressor speed: " + currentSpeed + " RPM");
-    System.out.println("Surge flow at this speed: " + surgeFlowAtSpeed + " m3/hr");
-    System.out.println("Surge head at this speed: " + surgeHeadAtSpeed + " kJ/kg");
-    System.out.println("Stone wall flow at this speed: " + stoneWallFlowAtSpeed + " m3/hr");
-    System.out.println("Stone wall head at this speed: " + stoneWallHeadAtSpeed + " kJ/kg");
+    logger.info("Current compressor speed: " + currentSpeed + " RPM");
+    logger.info("Surge flow at this speed: " + surgeFlowAtSpeed + " m3/hr");
+    logger.info("Surge head at this speed: " + surgeHeadAtSpeed + " kJ/kg");
+    logger.info("Stone wall flow at this speed: " + stoneWallFlowAtSpeed + " m3/hr");
+    logger.info("Stone wall head at this speed: " + stoneWallHeadAtSpeed + " kJ/kg");
 
     // Verify these match the curve data
     Assertions.assertEquals(minFlow, surgeFlowAtSpeed, 0.01,
@@ -434,50 +438,50 @@ public class CompressorChartKhader2015Test {
 
     // Calculate safe operating flow with surge control factor
     double safeMinFlowFromMethod = surgeFlowAtSpeed * antiSurge.getSurgeControlFactor();
-    System.out.println(
+    logger.info(
         "\nSafe minimum flow (using method + safety factor): " + safeMinFlowFromMethod + " m3/hr");
     Assertions.assertEquals(safeSurgeFlow10pct, safeMinFlowFromMethod, 0.01,
         "Safe flow calculated from method should match");
 
     // ===== NEW: Using getSafetyFactorCorrectedFlowHeadAtCurrentSpeed() =====
     // This convenience method returns both safe flow and head in one call
-    System.out.println("\n=== Using getSafetyFactorCorrectedFlowHeadAtCurrentSpeed() ===");
+    logger.info("\n=== Using getSafetyFactorCorrectedFlowHeadAtCurrentSpeed() ===");
     double[] safeFlowHead = comp1.getSafetyFactorCorrectedFlowHeadAtCurrentSpeed();
-    System.out.println("Safe operating point at current speed:");
-    System.out.println("  Safe flow (with " + ((antiSurge.getSurgeControlFactor() - 1.0) * 100)
+    logger.info("Safe operating point at current speed:");
+    logger.info("  Safe flow (with " + ((antiSurge.getSurgeControlFactor() - 1.0) * 100)
         + "% margin): " + safeFlowHead[0] + " m3/hr");
-    System.out.println("  Head at safe flow: " + safeFlowHead[1] + " kJ/kg");
+    logger.info("  Head at safe flow: " + safeFlowHead[1] + " kJ/kg");
 
     // Verify the results match
     Assertions.assertEquals(safeMinFlowFromMethod, safeFlowHead[0], 0.01,
         "Safe flow from convenience method should match manual calculation");
 
     // The head at safe flow should be slightly lower than surge head (since flow is higher)
-    System.out.println("\nComparison:");
-    System.out.println("  Surge head at surge flow: " + surgeHeadAtSpeed + " kJ/kg");
-    System.out.println("  Head at safe flow: " + safeFlowHead[1] + " kJ/kg");
-    System.out.println("  Head difference: " + (surgeHeadAtSpeed - safeFlowHead[1]) + " kJ/kg");
+    logger.info("\nComparison:");
+    logger.info("  Surge head at surge flow: " + surgeHeadAtSpeed + " kJ/kg");
+    logger.info("  Head at safe flow: " + safeFlowHead[1] + " kJ/kg");
+    logger.info("  Head difference: " + (surgeHeadAtSpeed - safeFlowHead[1]) + " kJ/kg");
 
     // ===== Test Distance to Surge (Current Implementation Issue) =====
-    System.out.println("\n=== Testing Distance to Surge for Single Speed ===");
+    logger.info("\n=== Testing Distance to Surge for Single Speed ===");
 
     // Run the compressor at a test flow to get actual operating point
     comp1.run();
     double actualFlow = comp1.getInletStream().getFlowRate("m3/hr");
-    System.out.println("Compressor inlet flow: " + actualFlow + " m3/hr");
+    logger.info("Compressor inlet flow: " + actualFlow + " m3/hr");
 
     // Try the existing getDistanceToSurge() method
     // This should NOW work for single speed because we updated the implementation
     double distanceToSurge = comp1.getDistanceToSurge();
-    System.out.println("Distance to surge (using getDistanceToSurge()): " + distanceToSurge);
-    System.out.println("  Operating at " + (distanceToSurge * 100) + "% above surge point");
+    logger.info("Distance to surge (using getDistanceToSurge()): " + distanceToSurge);
+    logger.info("  Operating at " + (distanceToSurge * 100) + "% above surge point");
 
     // Calculate distance to surge manually using the new methods to verify
     double manualDistanceToSurge = actualFlow / surgeFlowAtSpeed - 1.0;
-    System.out.println("\nManual calculation using getSurgeFlowAtSpeed():");
-    System.out.println("  Distance to surge: " + manualDistanceToSurge);
-    System.out.println("  Current flow / Surge flow = " + actualFlow + " / " + surgeFlowAtSpeed
-        + " = " + (actualFlow / surgeFlowAtSpeed));
+    logger.info("\nManual calculation using getSurgeFlowAtSpeed():");
+    logger.info("  Distance to surge: " + manualDistanceToSurge);
+    logger.info("  Current flow / Surge flow = " + actualFlow + " / " + surgeFlowAtSpeed + " = "
+        + (actualFlow / surgeFlowAtSpeed));
 
     // Verify they match
     Assertions.assertEquals(manualDistanceToSurge, distanceToSurge, 0.001,
@@ -485,16 +489,16 @@ public class CompressorChartKhader2015Test {
 
     // Test the new getDistanceToStoneWall() method
     double distanceToStoneWall = comp1.getDistanceToStoneWall();
-    System.out.println(
-        "\nDistance to stone wall (using getDistanceToStoneWall()): " + distanceToStoneWall);
-    System.out.println("  Stone wall is " + (distanceToStoneWall * 100) + "% above current flow");
+    logger
+        .info("\nDistance to stone wall (using getDistanceToStoneWall()): " + distanceToStoneWall);
+    logger.info("  Stone wall is " + (distanceToStoneWall * 100) + "% above current flow");
 
     // Calculate distance to stone wall manually to verify
     double manualDistanceToStoneWall = stoneWallFlowAtSpeed / actualFlow - 1.0;
-    System.out.println("\nManual calculation using getStoneWallFlowAtSpeed():");
-    System.out.println("  Distance to stone wall: " + manualDistanceToStoneWall);
-    System.out.println("  Stone wall flow / Current flow = " + stoneWallFlowAtSpeed + " / "
-        + actualFlow + " = " + (stoneWallFlowAtSpeed / actualFlow));
+    logger.info("\nManual calculation using getStoneWallFlowAtSpeed():");
+    logger.info("  Distance to stone wall: " + manualDistanceToStoneWall);
+    logger.info("  Stone wall flow / Current flow = " + stoneWallFlowAtSpeed + " / " + actualFlow
+        + " = " + (stoneWallFlowAtSpeed / actualFlow));
 
     // Verify they match
     Assertions.assertEquals(manualDistanceToStoneWall, distanceToStoneWall, 0.001,

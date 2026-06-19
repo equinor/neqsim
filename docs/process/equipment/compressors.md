@@ -188,6 +188,46 @@ compressor.getCompressorChart().getStoneWallCurve().setCurve(chartConditions, st
 > **📖 See Also:** [Compressor Curves and Performance Maps](compressor_curves) for detailed
 > documentation on curve setup, interpolation methods, and Python examples.
 
+### Structured Operating Point
+
+Instead of calling individual getters one at a time, `getOperatingPoint()` returns the full
+operating state of the compressor as a single map, and `getOperatingPointJson()` returns the
+same data as a schema-versioned JSON string. This is convenient for logging, reporting, and
+agentic workflows.
+
+```java
+Map<String, Object> point = compressor.getOperatingPoint();
+double power = (Double) point.get("power_MW");
+boolean withinChart = (Boolean) point.get("withinChart");
+String limiting = (String) point.get("limitingConstraint");
+
+String json = compressor.getOperatingPointJson();
+```
+
+The map / JSON contains the following fields:
+
+| Field | Unit | Description |
+|-------|------|-------------|
+| `schemaVersion` | — | JSON schema version (`"1.0"`) |
+| `name` | — | Compressor name |
+| `flow_m3hr` | m³/hr | Inlet actual volumetric flow rate |
+| `head_kJkg` | kJ/kg | Polytropic fluid head |
+| `speed_rpm` | rpm | Shaft speed |
+| `polytropicEfficiency` | — | Polytropic efficiency (fraction) |
+| `power_MW` / `power_kW` | MW / kW | Shaft power |
+| `outletPressure_bara` | bara | Discharge pressure |
+| `outletTemperature_C` | °C | Discharge temperature |
+| `chartActive` | — | Whether a performance chart is active |
+| `distanceToSurge` | — | Distance to surge (positive = safe) |
+| `distanceToStoneWall` | — | Distance to stone wall (positive = safe) |
+| `surgeFlowRate_m3hr` | m³/hr | Surge flow rate at current head |
+| `surgeFlowRateMargin_m3hr` | m³/hr | Margin between current flow and surge flow |
+| `withinChart` | — | True if the point is inside the operating envelope |
+| `limitingConstraint` | — | `none`, `surge`, `stonewall`, or `no_chart` |
+
+When no chart is active, `withinChart` is `true` and `limitingConstraint` is `no_chart`.
+Values that cannot be computed are returned as `NaN`.
+
 ---
 
 ## Compressor Staging

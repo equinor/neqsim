@@ -1,5 +1,7 @@
 package neqsim.process.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.mixer.StaticMixer;
 import neqsim.process.equipment.mixer.StaticPhaseMixer;
 import neqsim.process.equipment.separator.GasScrubber;
@@ -18,6 +20,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class MasstransferMeOH {
+  private static final Logger logger = LogManager.getLogger(MasstransferMeOH.class);
+
   /**
    * <p>
    * main.
@@ -91,12 +95,12 @@ public class MasstransferMeOH {
     // operations.run();
     // ((DistillationColumn)operations.getUnit("TEG regeneration
     // column")).setNumberOfTrays(2);
-    System.out.println(
+    logger.info(
         "water in wet gas [kg/MSm3] " + ((Stream) operations.getUnit("water saturated feed gas"))
             .getFluid().getPhase(0).getComponent("water").getz() * 1.0e6 * 0.01802
             * ThermodynamicConstantsInterface.atm / (ThermodynamicConstantsInterface.R * 288.15));
     // mainMixer.getFluid().display();
     // scrubber.getGasOutStream().displayResult();
-    System.out.println("hydt " + gasFromScrubber.getHydrateEquilibriumTemperature());
+    logger.info("hydt " + gasFromScrubber.getHydrateEquilibriumTemperature());
   }
 }

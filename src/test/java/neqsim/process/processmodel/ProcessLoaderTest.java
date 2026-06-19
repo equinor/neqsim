@@ -7,8 +7,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 class ProcessLoaderTest {
+  private static final Logger logger = LogManager.getLogger(ProcessLoaderTest.class);
+
   @Test
   void testLoadProcessFromYaml() throws Exception {
     // Create a temporary YAML file for testing
@@ -25,7 +29,7 @@ class ProcessLoaderTest {
     // Call the method under test
     ProcessLoader.loadProcessFromYaml(tempYamlFile, processSystem);
     processSystem.run();
-    // System.out.println(processSystem.getAllUnitNames());
+    // logger.info(processSystem.getAllUnitNames());
     // Verify the unit was added
     ThrottlingValve unit = (ThrottlingValve) processSystem.getUnit("throttlingValve_1");
     assertNotNull(unit, "Unit should be added to the process system");

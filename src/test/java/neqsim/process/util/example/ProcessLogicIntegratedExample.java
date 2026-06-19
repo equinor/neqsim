@@ -2,6 +2,8 @@ package neqsim.process.util.example;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
@@ -63,6 +65,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version 1.0
  */
 public class ProcessLogicIntegratedExample {
+  private static final Logger logger = LogManager.getLogger(ProcessLogicIntegratedExample.class);
 
   // Safety setpoints
   private static final double NORMAL_OPERATING_PRESSURE = 50.0; // bara
@@ -77,10 +80,10 @@ public class ProcessLogicIntegratedExample {
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
-    System.out.println("╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║    PROCESS LOGIC INTEGRATED SAFETY SYSTEM EXAMPLE              ║");
-    System.out.println("║    Using Enhanced NeqSim Framework                             ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝\n");
+    logger.info("╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║    PROCESS LOGIC INTEGRATED SAFETY SYSTEM EXAMPLE              ║");
+    logger.info("║    Using Enhanced NeqSim Framework                             ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝\n");
 
     // Build process system
     ProcessSystem processSystem = buildProcessSystem();
@@ -102,9 +105,9 @@ public class ProcessLogicIntegratedExample {
     // Run scenarios
     runTestScenarios(runner);
 
-    System.out.println("\n╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║    ALL SCENARIOS COMPLETED SUCCESSFULLY                        ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝");
+    logger.info("\n╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║    ALL SCENARIOS COMPLETED SUCCESSFULLY                        ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝");
   }
 
   /**
@@ -199,9 +202,9 @@ public class ProcessLogicIntegratedExample {
     System.out
         .println("Process system built with " + system.getUnitOperations().size() + " units:");
     for (int i = 0; i < system.getUnitOperations().size(); i++) {
-      System.out.println("  " + (i + 1) + ". " + system.getUnitOperations().get(i).getName());
+      logger.info("  " + (i + 1) + ". " + system.getUnitOperations().get(i).getName());
     }
-    System.out.println();
+
 
     return system;
   }
@@ -241,12 +244,12 @@ public class ProcessLogicIntegratedExample {
     // ESD push button
     setup.esdButton = new PushButton("ESD-PB-001");
 
-    System.out.println("Instrumentation setup completed:");
-    System.out.println("  - Separator monitoring: PT-101, TT-101");
-    System.out.println(
+    logger.info("Instrumentation setup completed:");
+    logger.info("  - Separator monitoring: PT-101, TT-101");
+    logger.info(
         "  - HIPPS monitoring: PT-HIPPS-1, PT-HIPPS-2, PT-HIPPS-3 (2oo3 voting) at inlet valve outlet");
-    System.out.println("  - Manual ESD button: ESD-PB-001");
-    System.out.println();
+    logger.info("  - Manual ESD button: ESD-PB-001");
+
 
     return setup;
   }
@@ -306,13 +309,13 @@ public class ProcessLogicIntegratedExample {
                                                                                      // 10s
     setup.startupLogic.addAction(new SetSeparatorModeAction(separator, true), 15.0); // Steady state
 
-    System.out.println("Process logic setup completed:");
-    System.out.println("  - HIPPS Logic: Independent fast-acting pressure protection");
+    logger.info("Process logic setup completed:");
+    logger.info("  - HIPPS Logic: Independent fast-acting pressure protection");
     System.out
         .println("  - ESD Logic: 5-step emergency shutdown sequence (inlet isolation + blowdown)");
-    System.out.println("  - Startup Logic: 4 permissives + 4-step startup sequence");
-    System.out.println("  - ESD button linked to ESD logic");
-    System.out.println();
+    logger.info("  - Startup Logic: 4 permissives + 4-step startup sequence");
+    logger.info("  - ESD button linked to ESD logic");
+
 
     return setup;
   }
@@ -457,7 +460,7 @@ public class ProcessLogicIntegratedExample {
       if (state == LogicState.IDLE || state == LogicState.COMPLETED) {
         state = LogicState.RUNNING;
         currentOpening = valve.getPercentValveOpening();
-        System.out.println(
+        logger.info(
             name + " activated: Current=" + currentOpening + "%, Target=" + targetOpening + "%");
       }
     }
@@ -484,7 +487,7 @@ public class ProcessLogicIntegratedExample {
           // Reached target
           valve.setPercentValveOpening(targetOpening);
           state = LogicState.COMPLETED;
-          System.out.println(name + " completed at " + targetOpening + "%");
+          logger.info(name + " completed at " + targetOpening + "%");
         }
       }
     }

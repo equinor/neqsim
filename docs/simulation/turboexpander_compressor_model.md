@@ -116,6 +116,46 @@ The iteration continues until the power mismatch is negligible or iteration limi
 
 ---
 
+## Specifying the Expander Outlet Temperature
+
+By default the expander outlet temperature is a **result** — it falls out of the actual isentropic efficiency $\eta_s$ (design efficiency × curve corrections). In some workflows the outlet temperature is known from plant data or a process target, and the **base (design) efficiency should be adjusted to reproduce it**. The model supports this inverse mode.
+
+### Activating the Mode
+
+```java
+turboExpanderComp.setExpanderOutTemperature(-40.8, "C");
+```
+
+This stores the target temperature (converted to Kelvin internally), sets `useOutTemperatureSpec = true`, and triggers the back-calculation during `run()`. The supported units are `"K"`, `"C"`, `"F"`, and `"R"`. The mode can be toggled with `setUseOutTemperatureSpec(boolean)` and queried with `isUseOutTemperatureSpec()`.
+
+### How It Works
+
+1. **Required actual efficiency.** Before the speed iteration, the actual isentropic efficiency needed to reach the target outlet temperature $T_{target}$ at the configured outlet pressure is computed from the inlet state, an isentropic flash, and an isothermal (TP) flash at the target:
+
+$$
+\eta_{s,req} = \frac{h_{in} - h_{out}(T_{target}, P_{out})}{h_{in} - h_{out,s}(P_{out})}
+$$
+
+Because both enthalpy drops depend only on the inlet state and the outlet pressure, $\eta_{s,req}$ is independent of shaft speed.
+
+2. **Fixed efficiency during speed matching.** The actual efficiency is held at $\eta_{s,req}$ throughout the Newton-Raphson iteration. The expander power $W_{expander} = \dot{m}\,\Delta h_s\,\eta_{s,req}$ is therefore constant, and the iteration simply finds the speed where the compressor plus bearing power balances it.
+
+3. **Back-calculated design efficiency.** After convergence the base (design) isentropic efficiency is recovered from the converged off-design correction factor $CF_{total} = f_{UC}(u_c)\cdot f_{Q/N}$:
+
+$$
+\eta_{s,design} = \frac{\eta_{s,req}}{CF_{total}}
+$$
+
+so that the standard forward relation $\eta_s = \eta_{s,design}\cdot CF_{total}$ reproduces the required efficiency. The value is available through `getExpanderDesignIsentropicEfficiency()`.
+
+### Round-Trip Consistency
+
+The forward and inverse modes are exact inverses of one another: running with a given design efficiency yields an outlet temperature, and running with that outlet temperature specified recovers the original design efficiency (and the same actual efficiency, speed, and power). This is verified by `TurboExpanderCompressorTest#testOutletTemperatureSpecConsistency`.
+
+> **Physical caveat:** A target temperature that implies $\eta_{s,req} > 1$ or $\eta_{s,req} < 0$ (e.g. an outlet colder than the isentropic outlet) is not physically achievable; the back-calculated design efficiency will reflect that and should be sanity-checked.
+
+---
+
 ## Reference Curves
 
 Three types of reference curves tune performance away from the design point:
@@ -241,6 +281,8 @@ double compressorPowerMW = turboExpanderComp.getPowerCompressor("MW");
 | Parameter | Description |
 |-----------|-------------|
 | `setExpanderOutPressure(P)` | Target outlet pressure for the isentropic flash that produces $\Delta h_s$ |
+| `setExpanderOutTemperature(T, unit)` | Specify the expander outlet temperature; the design isentropic efficiency is back-calculated to match it (see [Specifying the Expander Outlet Temperature](#specifying-the-expander-outlet-temperature)) |
+| `setUseOutTemperatureSpec(flag)` | Enable/disable the outlet-temperature specification mode |
 
 ### IGV Geometry
 
@@ -295,3 +337,230 @@ $$
 | `calcIGVOpening()` | Returns the calculated IGV opening fraction (0–1) |
 | `calcIGVOpenArea()` | Returns the actual open area [mm²] |
 | `getCurrentIGVArea()` | Returns the current IGV throat area [mm²] |
+
+---
+
+## Off-Design State-of-the-Art Enhancements
+
+The base model above uses 1-D reference curves. For high-fidelity off-design
+operability studies (turndown, trip/blowdown, mechanical limits, multi-variable
+envelopes) the following companion classes extend the expander side to the same
+fidelity as the composition-aware compressor side.
+
+### 1. Composition-Aware Expander Map — `ExpanderChartKhader`
+
+A 2-D radial-inflow expander performance map modeled on
+`CompressorChartKhader2015`. It returns isentropic efficiency and stage head
+drop as a function of velocity ratio $U/C$ and IGV position, and is
+**composition-aware**: head is normalized by the reference-fluid speed of
+sound squared and rescaled by the actual process-fluid $c_s^2$ at run time.
+
+$$
+\hat{H} = \frac{\Delta h_s}{c_{s,ref}^2}, \qquad
+\Delta h_s(\text{fluid}) = \hat{H}\,(U/C, \text{IGV}) \cdot c_{s,fluid}^2
+$$
+
+Efficiency and head are interpolated bilinearly over $U/C$ and IGV position
+with edge clamping. When a map is attached, `TurboExpanderCompressor`'s
+`computeExpanderEfficiency()` uses it; otherwise it falls back to the parabolic
+$U/C \times \eta_{design}$ law.
+
+```java
+ExpanderChartKhader chart = new ExpanderChartKhader(referenceFluid, 0.424);
+chart.setCurves(igvPositions, ucGrid, etaGrid, headDropKjPerKgGrid);
+turboExpanderComp.setExpanderChart(chart);
+double eta = chart.getEfficiency(0.7, 1.0);
+double dhDrop = chart.getStageHeadDrop(0.7, 1.0, processFluid);
+```
+
+### 2. IGV as a Controllable Degree of Freedom
+
+By default the IGV opening is recomputed by the model after every `run()`
+(see [IGV Handling](#igv-handling)). Enabling **IGV control mode** promotes
+`IGVopening` to a true input — the model no longer overwrites it — and couples
+it to an efficiency-penalty curve so the IGV can act as the primary turndown
+actuator with speed and power balanced around it.
+
+```java
+turboExpanderComp.setIgvControlMode(true);
+turboExpanderComp.setIgvEfficiencyPenaltyCurve(
+    new double[] {0.2, 0.4, 0.6, 0.8, 1.0},   // IGV opening fractions
+    new double[] {0.82, 0.90, 0.95, 0.99, 1.0}); // efficiency multipliers
+turboExpanderComp.setIGVopening(0.6);
+double penalty = turboExpanderComp.getIgvEfficiencyPenalty(0.6);
+```
+
+| Method | Description |
+|--------|-------------|
+| `setIgvControlMode(boolean)` | Enable/disable IGV as a fixed input (turndown actuator) |
+| `isIgvControlMode()` | Returns whether IGV control mode is active |
+| `setIgvEfficiencyPenaltyCurve(openings, factors)` | Set the $\eta(\text{IGV})$ loss curve |
+| `getIgvEfficiencyPenalty(igv)` | Linear-interpolated efficiency multiplier (1.0 if no curve) |
+
+### 3. Dynamic Anti-Surge Control — `AntiSurgeController`
+
+A transient regulator (subclass of `ControllerDeviceBaseClass`) that reads
+`Compressor.getDistanceToSurge()` and drives a recycle `ThrottlingValve` so the
+machine can run through trip, blowdown, startup, and load-rejection transients.
+It uses a reverse-acting PI law (error $= $ set-point $-$ surge margin) with
+anti-windup clamping, applied each `runTransient` timestep.
+
+```java
+AntiSurgeController asc = new AntiSurgeController("ASC", compressor, recycleValve);
+asc.setSurgeMarginSetPoint(0.10);
+asc.setProportionalGain(400.0);
+asc.setIntegralTime(20.0);
+asc.setOpeningRange(0.0, 100.0);
+recycleValve.addController("ASC", asc); // runs inside ProcessSystem.runTransient()
+```
+
+### 4. OEM Map Ingestion — `TurboExpanderMapIngestion`
+
+A loader that builds auditable maps from digitized OEM data sheets (e.g.
+ACR00162 design and Case B points). It constructs a
+`CompressorChartKhader2015` plus an `ExpanderChartKhader`, then validates the
+expander map against the certified anchor points within a tolerance.
+
+```java
+TurboExpanderMapIngestion ingest = new TurboExpanderMapIngestion();
+ingest.setReferenceFluid(referenceFluid);
+ingest.addAnchorPoint("design", 0.70, 1.0, 0.88);
+ingest.addAnchorPoint("caseB", 0.66, 0.6, 0.84);
+ExpanderChartKhader chart =
+    ingest.buildExpanderChart(igvPositions, ucGrid, etaGrid, headDropGrid);
+boolean ok = ingest.validateExpanderChart(chart, 0.02); // ±2% on anchors
+```
+
+### 5. Mechanical / Seal-Gas Envelope — `TurboExpanderSealGasEnvelope`
+
+Converts a thermodynamically feasible operating point into a mechanically
+allowable one by checking three independent limits:
+
+- **Axial thrust** vs differential pressure and thrust-bearing capacity
+  (with balance-piston offload).
+- **Seal-gas heater duty** against the installed heater rating
+  (default tuned to FE-25832 = 28 kW, 30 °C set-point).
+- **Critical-speed margin** between operating speed and the first critical
+  speed.
+
+$$
+\text{margin}_{crit} = \frac{N - N_{crit,1}}{N_{crit,1}}, \qquad
+Q_{seal} = 2\,\dot{m}_{seal}\,c_p\,\Delta T
+$$
+
+```java
+TurboExpanderSealGasEnvelope env = new TurboExpanderSealGasEnvelope(turboExpanderComp);
+env.setThrustAreas(0.0140, 0.0150);
+boolean allowable = env.evaluate(); // true if thrust, heater, and speed all OK
+String json = env.toJson();
+```
+
+### 6. Multi-Variable Operating Envelope — `TurboExpanderOperatingEnvelope`
+
+Sweeps inlet pressure × flow (extensible to composition) and produces grids of
+**feasibility**, **surge margin**, **cold-end temperature**, and **hydrate
+margin**, emitted via `toJson()` for the report generator.
+
+```java
+TurboExpanderOperatingEnvelope env = new TurboExpanderOperatingEnvelope(turboExpanderComp);
+env.setGrid(
+    new double[] {55.0, 60.95, 65.0},        // inlet pressures [bara]
+    new double[] {300000.0, 400000.0, 456000.0}); // flow rates [kg/hr]
+env.setSurgeQnLimit(0.6);
+env.setSpeedLimits(1100.0, 8950.0);
+env.run();
+String json = env.toJson(); // feasibility / surgeMargin / coldEndT / hydrateMargin grids
+```
+
+> See `docs/development/TASK_LOG.md` (2026-06-17 entry) for the design
+> rationale and the originating Oseberg turboexpander capability assessment.
+
+## Closing the Capability Gaps vs Commercial Software
+
+Three classes close the remaining honest gaps between NeqSim and dedicated
+turbomachinery / dynamic-simulation tools. They are deliberately transparent and
+fully tested rather than black-box, so the assumptions are inspectable.
+
+### 7. Validated Dynamics — `AntiSurgeDynamicBenchmark`
+
+HYSYS/UniSim Dynamics are the reference for compressor trip and anti-surge
+tuning. This benchmark gives NeqSim a **reproducible, deterministic transient
+case** that drives the production `AntiSurgeController` and a real
+`ThrottlingValve` against a transparent first-order gas-path surrogate:
+
+$$
+m_{k+1} = m_k - \dot{d}\,\Delta t + a\,\frac{u_k}{100}\,\Delta t
+$$
+
+where $m$ is the distance to surge, $\dot{d}$ the disturbance rate, $a$ the
+recycle authority and $u$ the valve opening. The closed loop must hold the
+margin at or above zero through the flow-reduction transient; the open-loop
+reference surges — proving the scenario is a genuine challenge and the
+controller adds value. The surrogate is a tuning aid (not validated field
+data), but it makes the controller's proportional kick, integral action,
+anti-windup and valve actuation analytically checkable before commissioning.
+
+```java
+AntiSurgeDynamicBenchmark benchmark = new AntiSurgeDynamicBenchmark();
+benchmark.run(true);                          // controller active
+boolean safe = benchmark.isSurgeAvoided();     // true: stayed out of surge
+double minMargin = benchmark.getMinimumSurgeMargin();
+double maxOpening = benchmark.getMaximumValveOpening();
+double[] marginTrace = benchmark.getSurgeMarginTrace();
+
+benchmark.run(false);                          // open-loop reference - surges
+```
+
+### 8. Reference Map Library — `TurboMachineryChartLibrary`
+
+Commercial tools ship validated OEM curve libraries. This class ships a small,
+versioned, **vendor-neutral reference-map library** so a user gets a
+physically-reasonable, dimensionally-correct map by name without digitising one.
+The maps are generic reference characteristics (not proprietary OEM data) and
+are composition-aware via the Khader normalisation, so one map serves many
+fluids. For fiscal or guarantee work the certified OEM curve is still required.
+
+```java
+TurboMachineryChartLibrary library = new TurboMachineryChartLibrary();
+library.listCompressorCharts(); // [GENERIC_CENTRIFUGAL_3SPEED]
+library.listExpanderCharts();   // [GENERIC_CRYO_EXPANDER, GEOMETRY_RADIAL_IFR]
+
+// fluid must be TPflashed before querying a compressor map (sound speed needed)
+new neqsim.thermodynamicoperations.ThermodynamicOperations(fluid).TPflash();
+fluid.initThermoProperties();
+CompressorChartKhader2015 cmap = library.getCompressorChart(
+    TurboMachineryChartLibrary.GENERIC_CENTRIFUGAL_3SPEED, fluid, 0.3);
+
+ExpanderChartKhader emap = library.getExpanderChart(
+    TurboMachineryChartLibrary.GENERIC_CRYO_EXPANDER, referenceFluid);
+```
+
+### 9. Geometry-Based Map Generation — `RadialExpanderGeometryMap`
+
+AxSTREAM / Concepts NREC generate maps from blade geometry. This class is a
+**preliminary mean-line radial-inflow (IFR) turbine model** that builds an
+`ExpanderChartKhader` from a small set of geometric inputs — useful for concept
+screening or to seed a map when no OEM curve exists. It is not a blade-to-blade
+or CFD design code. Working with the velocity ratio $\nu = U_2/c_0$ and the
+rotor-inlet flow angle $\alpha_2$, the nominal (zero-incidence) velocity ratio is
+
+$$
+\nu_{opt} = \sqrt{1-R}\,\sin\alpha_2
+$$
+
+and the total-to-static efficiency follows a classic incidence + nozzle/rotor
+loss accounting (Dixon & Hall; Whitfield & Baines) that produces the
+characteristic efficiency peak near $\nu_{opt}\approx 0.7$.
+
+```java
+RadialExpanderGeometryMap gen = new RadialExpanderGeometryMap(0.424, 0.45, 0.45);
+gen.setReferenceFluid(referenceFluid);
+gen.setDesignHeadDropKjPerKg(45.0);
+ExpanderChartKhader chart = gen.generateChart(
+    new double[] {0.5, 0.75, 1.0},     // IGV positions
+    new double[] {78.0, 74.0, 70.0});  // nozzle angle per IGV [deg]
+double nuOpt = gen.nominalVelocityRatio(70.0);
+```
+
+> See `docs/development/TASK_LOG.md` (2026-06-17 "Closing the three turbomachinery
+> capability gaps" entry) for the rationale, tuning, and test coverage.

@@ -14,12 +14,16 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.safety.ProcessSafetyScenario;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Test to verify that process simulation methods (run() and runTransient()) are actually being
  * called and producing thermodynamic results.
  */
 class ProcessScenarioRunnerSimulationTest {
+  private static final Logger logger = LogManager.getLogger(ProcessScenarioRunnerSimulationTest.class);
+
   private ProcessSystem system;
   private ProcessScenarioRunner runner;
 
@@ -71,9 +75,9 @@ class ProcessScenarioRunnerSimulationTest {
     assertTrue(pressure > 0, "Pressure should be positive after initialization");
     assertTrue(temperature > -273.15, "Temperature should be above absolute zero");
 
-    System.out.println("✓ Steady-state initialization produced valid results:");
-    System.out.println("  Pressure: " + pressure + " bara");
-    System.out.println("  Temperature: " + temperature + " °C");
+    logger.info("✓ Steady-state initialization produced valid results:");
+    logger.info("  Pressure: " + pressure + " bara");
+    logger.info("  Temperature: " + temperature + " °C");
   }
 
   @Test
@@ -103,10 +107,10 @@ class ProcessScenarioRunnerSimulationTest {
     assertTrue(summary.getErrors().isEmpty() || summary.getErrors().size() < 3,
         "Should have minimal or no simulation errors");
 
-    System.out.println("✓ Transient simulation completed:");
-    System.out.println("  Initial pressure: " + initialPressure + " bara");
-    System.out.println("  Final pressure: " + finalPressure + " bara");
-    System.out.println("  Errors: " + summary.getErrors().size());
+    logger.info("✓ Transient simulation completed:");
+    logger.info("  Initial pressure: " + initialPressure + " bara");
+    logger.info("  Final pressure: " + finalPressure + " bara");
+    logger.info("  Errors: " + summary.getErrors().size());
   }
 
   @Test
@@ -128,9 +132,9 @@ class ProcessScenarioRunnerSimulationTest {
     assertFalse(Double.isNaN(pressure2), "Pressure should not be NaN after reset");
     assertTrue(pressure2 > 0, "Pressure should be positive after reset");
 
-    System.out.println("✓ System reset maintained valid state:");
-    System.out.println("  Pressure before reset: " + pressure1 + " bara");
-    System.out.println("  Pressure after reset: " + pressure2 + " bara");
+    logger.info("✓ System reset maintained valid state:");
+    logger.info("  Pressure before reset: " + pressure1 + " bara");
+    logger.info("  Pressure after reset: " + pressure2 + " bara");
   }
 
   @Test
@@ -153,8 +157,8 @@ class ProcessScenarioRunnerSimulationTest {
 
     assertNotNull(summary, "Summary should be generated even with errors");
 
-    System.out.println("✓ Error handling test completed:");
-    System.out.println("  Errors encountered: " + summary.getErrors().size());
-    System.out.println("  Warnings: " + summary.getWarnings().size());
+    logger.info("✓ Error handling test completed:");
+    logger.info("  Errors encountered: " + summary.getErrors().size());
+    logger.info("  Warnings: " + summary.getWarnings().size());
   }
 }

@@ -21,10 +21,12 @@ import neqsim.process.measurementdevice.LevelTransmitter;
 import neqsim.process.measurementdevice.PressureTransmitter;
 import neqsim.process.measurementdevice.VolumeFlowTransmitter;
 import neqsim.thermo.system.SystemInterface;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
-  private static final org.apache.logging.log4j.Logger logger =
-      org.apache.logging.log4j.LogManager.getLogger(ProcessSystemRunTransientTest.class);
+  private static final Logger logger = LogManager.getLogger(ProcessSystemRunTransientTest.class);
+
   ProcessSystem p;
 
   @BeforeEach
@@ -108,7 +110,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     // transient behaviour
     p.setTimeStep(20.0);
     for (int i = 0; i < 200; i++) {
-      // System.out.println("volume flow " + flowTransmitter.getMeasuredValue() + " valve opening "
+      // logger.info("volume flow " + flowTransmitter.getMeasuredValue() + " valve opening "
       // + valve1.getPercentValveOpening() + " pressure "
       // + separator1.getGasOutStream().getPressure());
       p.runTransient();
@@ -219,7 +221,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     // p.displayResult();
     p.setTimeStep(10.0);
     for (int i = 0; i < 250; i++) {
-      // System.out.println("pressure " + separator1.getGasOutStream().getPressure() + " flow "
+      // logger.info("pressure " + separator1.getGasOutStream().getPressure() + " flow "
       // + separator1.getGasOutStream().getFlowRate("kg/hr") + " sepr height "
       // + separatorLevelTransmitter.getMeasuredValue() + "valve2 opening "
       // + valve2.getPercentValveOpening() + "valve3 opening " + valve3.getPercentValveOpening());
@@ -281,10 +283,9 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
 
     p.run();
     /*
-     * System.out.println(" speed " + compressor1.getSpeed() + "feed flow " +
-     * stream1.getFlowRate("kg/hr") + " compressor flow rate " +
-     * compressor1.getInletStream().getFlowRate("kg/hr") + " out flow " +
-     * valve2.getOutletStream().getFlowRate("kg/hr") + " delta p " +
+     * logger.info(" speed " + compressor1.getSpeed() + "feed flow " + stream1.getFlowRate("kg/hr")
+     * + " compressor flow rate " + compressor1.getInletStream().getFlowRate("kg/hr") + " out flow "
+     * + valve2.getOutletStream().getFlowRate("kg/hr") + " delta p " +
      * (compressor1.getOutletStream().getPressure() - compressor1.getInletStream().getPressure()) +
      * " pres inn " + compressor1.getInletStream().getPressure() + " pres out " +
      * compressor1.getOutletStream().getPressure());
@@ -298,10 +299,9 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     // compressor1.setCalculateSteadyState(true);
     p.run();
     /*
-     * System.out.println(" speed " + compressor1.getSpeed() + "feed flow " +
-     * stream1.getFlowRate("kg/hr") + " compressor flow rate " +
-     * compressor1.getInletStream().getFlowRate("kg/hr") + " out flow " +
-     * valve2.getOutletStream().getFlowRate("kg/hr") + " delta p " +
+     * logger.info(" speed " + compressor1.getSpeed() + "feed flow " + stream1.getFlowRate("kg/hr")
+     * + " compressor flow rate " + compressor1.getInletStream().getFlowRate("kg/hr") + " out flow "
+     * + valve2.getOutletStream().getFlowRate("kg/hr") + " delta p " +
      * (compressor1.getOutletStream().getPressure() - compressor1.getInletStream().getPressure()) +
      * " pres inn " + compressor1.getInletStream().getPressure() + " pres out " +
      * compressor1.getOutletStream().getPressure());
@@ -309,14 +309,13 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
 
     assertEquals(102.7, compressor1.getOutletStream().getPressure(), 2.01);
     assertEquals(50.0, separator1.getGasOutStream().getPressure(), 0.01);
-    // System.out.println("speed " + compressor1.getSpeed());
+    // logger.info("speed " + compressor1.getSpeed());
     p.setTimeStep(10.0);
     p.runTransient();
     /*
-     * System.out.println(" speed " + compressor1.getSpeed() + "feed flow " +
-     * stream1.getFlowRate("kg/hr") + " compressor flow rate " +
-     * compressor1.getInletStream().getFlowRate("kg/hr") + " out flow " +
-     * valve2.getOutletStream().getFlowRate("kg/hr") + " delta p " +
+     * logger.info(" speed " + compressor1.getSpeed() + "feed flow " + stream1.getFlowRate("kg/hr")
+     * + " compressor flow rate " + compressor1.getInletStream().getFlowRate("kg/hr") + " out flow "
+     * + valve2.getOutletStream().getFlowRate("kg/hr") + " delta p " +
      * (compressor1.getOutletStream().getPressure() - compressor1.getInletStream().getPressure()) +
      * " pres inn " + compressor1.getInletStream().getPressure() + " pres out " +
      * compressor1.getOutletStream().getPressure());
@@ -324,7 +323,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     compressor1.setSpeed(compressor1.getSpeed() + 500);
     for (int i = 0; i < 200; i++) {
       /*
-       * System.out.println("time " + i + " speed " + compressor1.getSpeed() + "feed flow " +
+       * logger.info("time " + i + " speed " + compressor1.getSpeed() + "feed flow " +
        * stream1.getFlowRate("kg/hr") + " compressor flow rate " +
        * compressor1.getInletStream().getFlowRate("kg/hr") + " out flow " +
        * valve2.getOutletStream().getFlowRate("kg/hr") + " delta p " +
@@ -338,7 +337,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     compressor1.setSpeed(compressor1.getSpeed() - 500);
     for (int i = 0; i < 200; i++) {
       /*
-       * System.out.println("time " + i + " speed " + compressor1.getSpeed() + "feed flow " +
+       * logger.info("time " + i + " speed " + compressor1.getSpeed() + "feed flow " +
        * stream1.getFlowRate("kg/hr") + " compressor flow rate " +
        * compressor1.getInletStream().getFlowRate("kg/hr") + " out flow " +
        * valve2.getOutletStream().getFlowRate("kg/hr") + " delta p " +
@@ -384,8 +383,8 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
 
     p.run();
     /*
-     * System.out.println(" steady staate no compressor curves....."); System.out.println(" speed "
-     * + compressor1.getSpeed() + "feed flow " + stream1.getFlowRate("kg/hr") +
+     * logger.info(" steady staate no compressor curves....."); logger.info(" speed " +
+     * compressor1.getSpeed() + "feed flow " + stream1.getFlowRate("kg/hr") +
      * " compressor flow rate " + compressor1.getInletStream().getFlowRate("kg/hr") + " out flow " +
      * valve2.getOutletStream().getFlowRate("kg/hr") + " delta p " +
      * (compressor1.getOutletStream().getPressure() - compressor1.getInletStream().getPressure()) +
@@ -394,7 +393,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
      */
     assertEquals(100.0, compressor1.getOutletStream().getPressure(), 0.01);
 
-    // System.out.println("steady state with compressor curves.....");
+    // logger.info("steady state with compressor curves.....");
     neqsim.process.equipment.compressor.CompressorChartGenerator compchartgenerator =
         new neqsim.process.equipment.compressor.CompressorChartGenerator(compressor1);
     compressor1.setCompressorChart(compchartgenerator.generateCompressorChart("normal"));
@@ -402,35 +401,32 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     // compressor1.setCalculateSteadyState(true);
     p.run();
     /*
-     * System.out.println(" speed " + compressor1.getSpeed() + "feed flow " +
-     * stream1.getFlowRate("kg/hr") + " compressor flow rate " +
-     * compressor1.getInletStream().getFlowRate("kg/hr") + " out flow " +
-     * valve2.getOutletStream().getFlowRate("kg/hr") + " delta p " +
+     * logger.info(" speed " + compressor1.getSpeed() + "feed flow " + stream1.getFlowRate("kg/hr")
+     * + " compressor flow rate " + compressor1.getInletStream().getFlowRate("kg/hr") + " out flow "
+     * + valve2.getOutletStream().getFlowRate("kg/hr") + " delta p " +
      * (compressor1.getOutletStream().getPressure() - compressor1.getInletStream().getPressure()) +
      * " pres inn " + compressor1.getInletStream().getPressure() + " pres out " +
      * compressor1.getOutletStream().getPressure());
      */
 
-    // System.out.println("dynamic first step state with compressor curves.....");
+    // logger.info("dynamic first step state with compressor curves.....");
     p.setTimeStep(1.0);
     p.runTransient();
     /*
-     * System.out.println(" speed " + compressor1.getSpeed() + "feed flow " +
-     * stream1.getFlowRate("kg/hr") + " compressor flow rate " +
-     * compressor1.getInletStream().getFlowRate("kg/hr") + " out flow " +
-     * valve2.getOutletStream().getFlowRate("kg/hr") + " delta p " +
+     * logger.info(" speed " + compressor1.getSpeed() + "feed flow " + stream1.getFlowRate("kg/hr")
+     * + " compressor flow rate " + compressor1.getInletStream().getFlowRate("kg/hr") + " out flow "
+     * + valve2.getOutletStream().getFlowRate("kg/hr") + " delta p " +
      * (compressor1.getOutletStream().getPressure() - compressor1.getInletStream().getPressure()) +
      * " pres inn " + compressor1.getInletStream().getPressure() + " pres out " +
      * compressor1.getOutletStream().getPressure());
      */
 
-    // System.out.println("dynamic seccond step state with compressor curves.....");
+    // logger.info("dynamic seccond step state with compressor curves.....");
     p.runTransient();
     /*
-     * System.out.println(" speed " + compressor1.getSpeed() + "feed flow " +
-     * stream1.getFlowRate("kg/hr") + " compressor flow rate " +
-     * compressor1.getInletStream().getFlowRate("kg/hr") + " out flow " +
-     * valve2.getOutletStream().getFlowRate("kg/hr") + " delta p " +
+     * logger.info(" speed " + compressor1.getSpeed() + "feed flow " + stream1.getFlowRate("kg/hr")
+     * + " compressor flow rate " + compressor1.getInletStream().getFlowRate("kg/hr") + " out flow "
+     * + valve2.getOutletStream().getFlowRate("kg/hr") + " delta p " +
      * (compressor1.getOutletStream().getPressure() - compressor1.getInletStream().getPressure()) +
      * " pres inn " + compressor1.getInletStream().getPressure() + " pres out " +
      * compressor1.getOutletStream().getPressure());
@@ -498,10 +494,9 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
 
     p.run();
     /*
-     * System.out.println(" speed " + compressor1.getSpeed() + "feed flow " +
-     * stream1.getFlowRate("kg/hr") + " compressor flow rate " +
-     * compressor1.getInletStream().getFlowRate("kg/hr") + " out flow " +
-     * valve2.getOutletStream().getFlowRate("kg/hr") + " delta p " +
+     * logger.info(" speed " + compressor1.getSpeed() + "feed flow " + stream1.getFlowRate("kg/hr")
+     * + " compressor flow rate " + compressor1.getInletStream().getFlowRate("kg/hr") + " out flow "
+     * + valve2.getOutletStream().getFlowRate("kg/hr") + " delta p " +
      * (compressor1.getOutletStream().getPressure() - compressor1.getInletStream().getPressure()) +
      * " pres inn " + compressor1.getInletStream().getPressure() + " pres out " +
      * compressor1.getOutletStream().getPressure());
@@ -515,10 +510,9 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     // compressor1.setCalculateSteadyState(true);
     p.run();
     /*
-     * System.out.println(" speed " + compressor1.getSpeed() + "feed flow " +
-     * stream1.getFlowRate("kg/hr") + " compressor flow rate " +
-     * compressor1.getInletStream().getFlowRate("kg/hr") + " out flow " +
-     * valve2.getOutletStream().getFlowRate("kg/hr") + " delta p " +
+     * logger.info(" speed " + compressor1.getSpeed() + "feed flow " + stream1.getFlowRate("kg/hr")
+     * + " compressor flow rate " + compressor1.getInletStream().getFlowRate("kg/hr") + " out flow "
+     * + valve2.getOutletStream().getFlowRate("kg/hr") + " delta p " +
      * (compressor1.getOutletStream().getPressure() - compressor1.getInletStream().getPressure()) +
      * " pres inn " + compressor1.getInletStream().getPressure() + " pres out " +
      * compressor1.getOutletStream().getPressure());
@@ -526,14 +520,13 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
 
     assertEquals(102.7, compressor1.getOutletStream().getPressure(), 2.01);
     assertEquals(50.0, separator1.getGasOutStream().getPressure(), 0.01);
-    // System.out.println("speed " + compressor1.getSpeed());
+    // logger.info("speed " + compressor1.getSpeed());
     p.setTimeStep(1.0);
     p.runTransient();
     /*
-     * System.out.println(" speed " + compressor1.getSpeed() + "feed flow " +
-     * stream1.getFlowRate("kg/hr") + " compressor flow rate " +
-     * compressor1.getInletStream().getFlowRate("kg/hr") + " out flow " +
-     * valve2.getOutletStream().getFlowRate("kg/hr") + " delta p " +
+     * logger.info(" speed " + compressor1.getSpeed() + "feed flow " + stream1.getFlowRate("kg/hr")
+     * + " compressor flow rate " + compressor1.getInletStream().getFlowRate("kg/hr") + " out flow "
+     * + valve2.getOutletStream().getFlowRate("kg/hr") + " delta p " +
      * (compressor1.getOutletStream().getPressure() - compressor1.getInletStream().getPressure()) +
      * " pres inn " + compressor1.getInletStream().getPressure() + " pres out " +
      * compressor1.getOutletStream().getPressure());
@@ -541,7 +534,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     // compressor1.setSpeed(compressor1.getSpeed() + 500);
     for (int i = 0; i < 200; i++) {
       /*
-       * System.out.println("time " + i + " speed " + compressor1.getSpeed() + "feed flow " +
+       * logger.info("time " + i + " speed " + compressor1.getSpeed() + "feed flow " +
        * stream1.getFlowRate("kg/hr") + " compressor flow rate " +
        * compressor1.getInletStream().getFlowRate("kg/hr") + " out flow " +
        * valve2.getOutletStream().getFlowRate("kg/hr") + " delta p " +
@@ -554,7 +547,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     speedController.setControllerSetPoint(120.0);
     for (int i = 0; i < 500; i++) {
       /*
-       * System.out.println("time " + i + " speed " + compressor1.getSpeed() + "feed flow " +
+       * logger.info("time " + i + " speed " + compressor1.getSpeed() + "feed flow " +
        * stream1.getFlowRate("kg/hr") + " compressor flow rate " +
        * compressor1.getInletStream().getFlowRate("kg/hr") + " out flow " +
        * valve2.getOutletStream().getFlowRate("kg/hr") + " delta p " +
@@ -770,10 +763,9 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     assertEquals(100.0, compressor1.getOutletStream().getPressure(), 0.01);
     recycleValve.setCv(valve2.getCv());
     /*
-     * System.out.println(" speed " + compressor1.getSpeed() + "feed flow " +
-     * stream1.getFlowRate("kg/hr") + " compressor flow rate " +
-     * compressor1.getInletStream().getFlowRate("kg/hr") + " out flow " +
-     * valve2.getOutletStream().getFlowRate("kg/hr") + " delta p " +
+     * logger.info(" speed " + compressor1.getSpeed() + "feed flow " + stream1.getFlowRate("kg/hr")
+     * + " compressor flow rate " + compressor1.getInletStream().getFlowRate("kg/hr") + " out flow "
+     * + valve2.getOutletStream().getFlowRate("kg/hr") + " delta p " +
      * (compressor1.getOutletStream().getPressure() - compressor1.getInletStream().getPressure()) +
      * " pres inn " + compressor1.getInletStream().getPressure() + " pres out " +
      * compressor1.getOutletStream().getPressure() + " distancetosurge ");
@@ -784,10 +776,9 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     compressor1.getCompressorChart().setUseCompressorChart(true);
     p.run();
     /*
-     * System.out.println(" speed " + compressor1.getSpeed() + "feed flow " +
-     * stream1.getFlowRate("kg/hr") + " compressor flow rate " +
-     * compressor1.getInletStream().getFlowRate("kg/hr") + " out flow " +
-     * valve2.getOutletStream().getFlowRate("kg/hr") + " delta p " +
+     * logger.info(" speed " + compressor1.getSpeed() + "feed flow " + stream1.getFlowRate("kg/hr")
+     * + " compressor flow rate " + compressor1.getInletStream().getFlowRate("kg/hr") + " out flow "
+     * + valve2.getOutletStream().getFlowRate("kg/hr") + " delta p " +
      * (compressor1.getOutletStream().getPressure() - compressor1.getInletStream().getPressure()) +
      * " pres inn " + compressor1.getInletStream().getPressure() + " pres out " +
      * compressor1.getOutletStream().getPressure() + " distancetosurge " +
@@ -797,7 +788,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
      * compressor1.getOutStream().getTemperature("C") + " power " + compressor1.getPower("kW"));
      */
 
-    // System.out.println("speed " + compressor1.getSpeed());
+    // logger.info("speed " + compressor1.getSpeed());
     p.setTimeStep(1.0);
 
     recycleValve.setPercentValveOpening(1.0);
@@ -805,7 +796,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
 
     for (int i = 0; i < 100; i++) {
       /*
-       * System.out.println("time " + i + " speed " + compressor1.getSpeed() + "feed flow " +
+       * logger.info("time " + i + " speed " + compressor1.getSpeed() + "feed flow " +
        * stream1.getFlowRate("kg/hr") + " compressor flow rate " +
        * compressor1.getInletStream().getFlowRate("kg/hr") + " out flow " +
        * valve2.getOutletStream().getFlowRate("kg/hr") + " delta p " +
@@ -829,7 +820,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
 
     for (int i = 0; i < 100; i++) {
       /*
-       * System.out.println("time " + i + " speed " + compressor1.getSpeed() + "feed flow " +
+       * logger.info("time " + i + " speed " + compressor1.getSpeed() + "feed flow " +
        * stream1.getFlowRate("kg/hr") + " compressor flow rate " +
        * compressor1.getInletStream().getFlowRate("kg/hr") + " out flow " +
        * valve2.getOutletStream().getFlowRate("kg/hr") + " delta p " +
@@ -853,7 +844,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
 
     for (int i = 0; i < 100; i++) {
       /*
-       * System.out.println("time " + i + " speed " + compressor1.getSpeed() + "feed flow " +
+       * logger.info("time " + i + " speed " + compressor1.getSpeed() + "feed flow " +
        * stream1.getFlowRate("kg/hr") + " compressor flow rate " +
        * compressor1.getInletStream().getFlowRate("kg/hr") + " out flow " +
        * valve2.getOutletStream().getFlowRate("kg/hr") + " delta p " +

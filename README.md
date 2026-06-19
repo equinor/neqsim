@@ -270,33 +270,6 @@ The agent creates a task folder, runs NeqSim simulations, validates results, and
 
 The Quick Start above shows the core pattern (create a fluid, run a flash, and read properties). For process simulation, add equipment to a `ProcessSystem` and call `run()`; see the [Java Getting Started Guide](docs/java-getting-started.md) for full examples.
 
-<details>
-<summary>GitHub Packages setup (latest snapshots)</summary>
-
-1. Configure authentication in your Maven `settings.xml`:
-
-```xml
-<servers>
-  <server>
-    <id>github</id>
-    <username>YOUR_GITHUB_USERNAME</username>
-    <password>${env.GITHUB_TOKEN}</password>
-  </server>
-</servers>
-```
-
-2. Add to your `pom.xml`:
-
-```xml
-<repositories>
-  <repository>
-    <id>github</id>
-    <url>https://maven.pkg.github.com/equinor/neqsim</url>
-  </repository>
-</repositories>
-```
-</details>
-
 **Learn more:** [Java Getting Started Guide](docs/java-getting-started.md) | [JavaDoc](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html) | [Wiki](https://github.com/equinor/neqsim/wiki) | [Colab demo](https://colab.research.google.com/drive/1XkQ_CrVj2gLTtJvXhFQMWALzXii522CL)
 
 ---

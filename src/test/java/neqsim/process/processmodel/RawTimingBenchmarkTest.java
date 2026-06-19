@@ -11,12 +11,16 @@ import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Lock-free timing harness: uses a ConcurrentHashMap with atomic accumulation so profiling overhead
  * is not confused with parallel scaling overhead.
  */
 public class RawTimingBenchmarkTest {
+  private static final Logger logger = LogManager.getLogger(RawTimingBenchmarkTest.class);
+
 
   private SystemInterface makeHeavyFluid() {
     SystemInterface f = new SystemSrkEos(298.0, 80.0);
@@ -108,14 +112,14 @@ public class RawTimingBenchmarkTest {
     double parallelPerRun = parallelNs / (double) ITERS / 1e6;
     double parallelPerCall = parallelPerRun / compressors.size();
 
-    System.out.println("\n===== RAW Compressor timing (8 independent compressors) =====");
-    System.out.printf("cores available:      %d%n", Runtime.getRuntime().availableProcessors());
-    System.out.printf("SERIAL:   wall=%.2f ms   per-call=%.3f ms%n", serialPerRun, serialPerCall);
-    System.out.printf("PARALLEL: wall=%.2f ms   per-call=%.3f ms (effective)%n", parallelPerRun,
+    logger.info("\n===== RAW Compressor timing (8 independent compressors) =====");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "cores available:      %d%n", Runtime.getRuntime().availableProcessors());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "SERIAL:   wall=%.2f ms   per-call=%.3f ms%n", serialPerRun, serialPerCall);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "PARALLEL: wall=%.2f ms   per-call=%.3f ms (effective)%n", parallelPerRun,
         parallelPerCall);
-    System.out.printf("Parallel speedup: %.2fx (ideal = %d)%n", serialPerRun / parallelPerRun,
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Parallel speedup: %.2fx (ideal = %d)%n", serialPerRun / parallelPerRun,
         compressors.size());
-    System.out.printf("Parallel slowdown per call: %.2fx%n", parallelPerCall / serialPerCall);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Parallel slowdown per call: %.2fx%n", parallelPerCall / serialPerCall);
   }
 
   @Test
@@ -144,9 +148,9 @@ public class RawTimingBenchmarkTest {
     }
     double seqWall = (System.nanoTime() - t0) / (double) RUNS / 1e6;
 
-    System.out.println("\n===== Framework wall-clock (no profiling) =====");
-    System.out.printf("sequential:  %.2f ms/run%n", seqWall);
-    System.out.printf("optimized:   %.2f ms/run%n", optWall);
-    System.out.printf("speedup:     %.2fx%n", seqWall / optWall);
+    logger.info("\n===== Framework wall-clock (no profiling) =====");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "sequential:  %.2f ms/run%n", seqWall);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "optimized:   %.2f ms/run%n", optWall);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "speedup:     %.2fx%n", seqWall / optWall);
   }
 }

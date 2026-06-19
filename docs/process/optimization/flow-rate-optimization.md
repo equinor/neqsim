@@ -94,7 +94,7 @@ optimizer.setMaxPowerLimit(5000.0); // 5 MW max
 optimizer.configureProcessCompressorCharts();
 
 // Find max flow rate
-FlowRateOptimizer.ProcessOperatingPoint result = 
+FlowRateOptimizer.ProcessOperatingPoint result =
     optimizer.findMaxFlowRateAtPressureBoundaries(50.0, 100.0, "bara", 0.95);
 
 if (result != null && result.isFeasible()) {
@@ -117,11 +117,11 @@ double[] inletPressures = {40.0, 50.0, 60.0, 70.0, 80.0};      // bara
 double[] outletPressures = {90.0, 100.0, 110.0, 120.0, 130.0}; // bara
 
 // Generate table (sequential by default)
-FlowRateOptimizer.ProcessCapacityTable table = 
+FlowRateOptimizer.ProcessCapacityTable table =
     optimizer.generateProcessCapacityTable(
-        inletPressures, 
-        outletPressures, 
-        "bara", 
+        inletPressures,
+        outletPressures,
+        "bara",
         0.95  // max utilization
     );
 
@@ -140,11 +140,11 @@ optimizer.setEnableParallelEvaluation(true);
 optimizer.setParallelThreads(4);  // Use 4 threads (default: CPU count)
 
 // Generate table in parallel - each pressure combination evaluated concurrently
-FlowRateOptimizer.ProcessCapacityTable table = 
+FlowRateOptimizer.ProcessCapacityTable table =
     optimizer.generateProcessCapacityTable(
         inletPressures,   // e.g., 10 inlet pressures
         outletPressures,  // e.g., 10 outlet pressures = 100 evaluations
-        "bara", 
+        "bara",
         0.95
     );
 ```
@@ -197,22 +197,19 @@ For production-quality lift curves, use the `LiftCurveConfiguration` builder:
 
 ```java
 // Configure lift curve generation
-FlowRateOptimizer.LiftCurveConfiguration config = 
+FlowRateOptimizer.LiftCurveConfiguration config =
     new FlowRateOptimizer.LiftCurveConfiguration()
-        .setTableName("Export_System_VFP")
-        .setTableNumber(1)
-        .setInletPressures(new double[] {40, 50, 60, 70, 80})
-        .setOutletPressures(new double[] {90, 100, 110, 120})
-        .setPressureUnit("bara")
-        .setFlowUnit("kg/hr")
-        .setMaxUtilization(0.95)
-        .setSurgeMargin(0.15)
-        .setMaxPowerLimit(5000.0)
-        .setIncludePowerData(true)
-        .setIncludeCompressorDetails(true);
+        .withInletPressureRange(40, 80, 5)    // min, max, number of points
+        .withOutletPressureRange(90, 120, 4)  // min, max, number of points
+        .withPressureUnit("bara")
+        .withFlowRateUnit("kg/hr")
+        .withMaxUtilization(0.95)
+        .withSurgeMargin(0.15)
+        .withMaxPowerLimit(5000.0)
+        .withTables(true, true, true);        // capacity, lift curve, performance
 
 // Generate professional lift curves
-FlowRateOptimizer.LiftCurveResult result = 
+FlowRateOptimizer.LiftCurveResult result =
     optimizer.generateProfessionalLiftCurves(config);
 
 // Get Eclipse format
@@ -224,7 +221,7 @@ for (String warning : result.getWarnings()) {
 }
 
 // Get statistics
-System.out.println("Total points: " + result.getTotalPoints());
+System.out.println("Total evaluations: " + result.getTotalEvaluations());
 System.out.println("Feasible points: " + result.getFeasiblePoints());
 System.out.println("Generation time: " + result.getGenerationTimeMs() + " ms");
 ```
@@ -236,17 +233,16 @@ System.out.println("Generation time: " + result.getGenerationTimeMs() + " ms");
 ### Compressor Constraints
 
 ```java
-// Set surge/stonewall margins
+// Set surge margin
 optimizer.setMinSurgeMargin(0.15);      // 15% minimum surge margin
-optimizer.setMinStonewallMargin(0.05);  // 5% minimum stonewall margin
 
 // Set power limits
-optimizer.setMaxPowerLimit(5000.0);     // Per compressor limit (kW)
-optimizer.setTotalMaxPower(15000.0);    // Total system power limit (kW)
+optimizer.setMaxPowerLimit(5000.0);        // Per compressor limit (kW)
+optimizer.setMaxTotalPowerLimit(15000.0);  // Total system power limit (kW)
 
-// Set speed limits
-optimizer.setMinSpeedRatio(0.7);        // Minimum 70% of design speed
-optimizer.setMaxSpeedRatio(1.05);       // Maximum 105% of design speed
+// Set speed limits (absolute RPM)
+optimizer.setMinSpeedLimit(7000.0);     // Minimum speed (RPM)
+optimizer.setMaxSpeedLimit(10500.0);    // Maximum speed (RPM)
 
 // Configure compressor charts automatically
 optimizer.configureProcessCompressorCharts();
@@ -255,12 +251,8 @@ optimizer.configureProcessCompressorCharts();
 ### Equipment Utilization Limits
 
 ```java
-// Set overall max utilization
-optimizer.setMaxUtilization(0.95);  // 95% max for all equipment
-
-// Set equipment-specific limits
-optimizer.setEquipmentUtilizationLimit("HP Separator", 0.85);
-optimizer.setEquipmentUtilizationLimit("Export Compressor", 0.90);
+// Set overall max equipment utilization (applies to all equipment)
+optimizer.setMaxEquipmentUtilizationLimit(0.95);  // 95% max for all equipment
 ```
 
 ---
@@ -274,7 +266,7 @@ Generate a table showing performance at different flow rates:
 ```java
 double[] flowRates = {30000, 50000, 70000, 90000, 110000};  // kg/hr
 
-FlowRateOptimizer.ProcessPerformanceTable perfTable = 
+FlowRateOptimizer.ProcessPerformanceTable perfTable =
     optimizer.generateProcessPerformanceTable(
         flowRates,
         "kg/hr",
@@ -300,14 +292,14 @@ for (int i = 0; i < flowRates.length; i++) {
 Each `ProcessOperatingPoint` includes detailed compressor data:
 
 ```java
-FlowRateOptimizer.ProcessOperatingPoint point = 
+FlowRateOptimizer.ProcessOperatingPoint point =
     optimizer.findMaxFlowRateAtPressureBoundaries(50.0, 100.0, "bara", 0.95);
 
 // Get compressor details
 for (String compName : point.getCompressorNames()) {
-    FlowRateOptimizer.CompressorOperatingPoint cop = 
+    FlowRateOptimizer.CompressorOperatingPoint cop =
         point.getCompressorOperatingPoint(compName);
-    
+
     System.out.println("Compressor: " + compName);
     System.out.println("  Power: " + cop.getPower() + " kW");
     System.out.println("  Speed: " + cop.getSpeed() + " RPM");
@@ -600,7 +592,7 @@ table = optimizer.generateProcessCapacityTable(
     0.95
 )
 
-print(f"Feasible points: {table.getFeasibleCount()}")
+print(f"Feasible points: {table.countFeasiblePoints()}")
 ```
 
 ### Professional Lift Curves with Configuration
@@ -610,17 +602,14 @@ print(f"Feasible points: {table.getFeasibleCount()}")
 LiftCurveConfiguration = FlowRateOptimizer.LiftCurveConfiguration
 
 config = LiftCurveConfiguration() \
-    .setTableName("Export_System_VFP") \
-    .setTableNumber(1) \
-    .setInletPressures(java_inlet) \
-    .setOutletPressures(java_outlet) \
-    .setPressureUnit("bara") \
-    .setFlowUnit("kg/hr") \
-    .setMaxUtilization(0.95) \
-    .setSurgeMargin(0.15) \
-    .setMaxPowerLimit(5000.0) \
-    .setIncludePowerData(True) \
-    .setIncludeCompressorDetails(True)
+    .withInletPressureRange(40, 80, 5) \
+    .withOutletPressureRange(90, 120, 4) \
+    .withPressureUnit("bara") \
+    .withFlowRateUnit("kg/hr") \
+    .withMaxUtilization(0.95) \
+    .withSurgeMargin(0.15) \
+    .withMaxPowerLimit(5000.0) \
+    .withTables(True, True, True)
 
 # Generate professional lift curves
 result = optimizer.generateProfessionalLiftCurves(config)
@@ -675,7 +664,7 @@ for i, pin in enumerate(inlet_pressures):
         if point is not None and point.isFeasible():
             flows.append(point.getFlowRate())
             pressures.append(pout)
-    
+
     if flows:
         ax.plot(flows, pressures, 'o-', label=f'Pin={pin} bara')
 
@@ -720,7 +709,7 @@ plt.show()
 | `toEclipseFormat()` | Export to Eclipse VFPPROD format |
 | `toJson()` | Export to JSON |
 | `getOperatingPoint(i, j)` | Get point at grid indices |
-| `getFeasibleCount()` | Count of feasible points |
+| `countFeasiblePoints()` | Count of feasible points |
 
 ### ProcessOperatingPoint
 

@@ -28,6 +28,7 @@ import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.tank.Tank;
+import neqsim.process.equipment.util.Adjuster;
 import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessModel;
@@ -352,6 +353,135 @@ public class ProcessAutomation {
       }
     }
     return Collections.unmodifiableList(filtered);
+  }
+
+  // ------------------------- Adjustable parameters -------------------------
+
+  /**
+   * Sentinel threshold above which an adjuster bound is treated as unbounded. Adjusters default to
+   * +/-1e10, so any magnitude at or beyond 1e9 is reported as {@code null} (no bound).
+   */
+  private static final double UNBOUNDED_THRESHOLD = 1.0e9;
+
+  /**
+   * Returns the registry of adjustable parameters (degrees of freedom) for the underlying process.
+   *
+   * <p>
+   * The registry combines two sources:
+   * </p>
+   * <ul>
+   * <li><strong>Writable INPUT variables</strong> &mdash; every {@link SimulationVariable} of type
+   * {@link VariableType#INPUT} that is writable, with its existing bounds and default unit.</li>
+   * <li><strong>Adjuster unit operations</strong> &mdash; each
+   * {@link neqsim.process.equipment.util.Adjuster} is reported with the unit operation and property
+   * it actually drives ({@link AdjustableParameter#getTargetUnitName()} and
+   * {@link AdjustableParameter#getTargetProperty()}). This removes the ambiguity that arises when
+   * an adjuster's name does not match the variable it controls.</li>
+   * </ul>
+   *
+   * @return an unmodifiable list of adjustable parameter descriptors
+   */
+  public List<AdjustableParameter> getAdjustableParameters() {
+    List<AdjustableParameter> params = new ArrayList<AdjustableParameter>();
+    for (String unitName : getUnitList()) {
+      ProcessEquipmentInterface unit;
+      try {
+        unit = resolveUnit(unitName).unit;
+      } catch (RuntimeException e) {
+        continue;
+      }
+      if (unit instanceof Adjuster) {
+        Adjuster adj = (Adjuster) unit;
+        ProcessEquipmentInterface adjusted = adj.getAdjustedEquipment();
+        String targetUnitName = adjusted == null ? null : adjusted.getName();
+        String adjustedVar = emptyToNull(adj.getAdjustedVariable());
+        String unitStr = adj.getAdjustedVariableUnit();
+        Double lo = sanitizeBound(adj.getMinAdjustedValue());
+        Double hi = sanitizeBound(adj.getMaxAdjustedValue());
+        String address;
+        if (targetUnitName != null && adjustedVar != null) {
+          address = targetUnitName + "." + adjustedVar;
+        } else {
+          address = unitName;
+        }
+        params.add(new AdjustableParameter(unitName, address, unitStr, lo, hi, targetUnitName,
+            adjustedVar, AdjustableParameter.Source.ADJUSTER));
+      } else {
+        List<SimulationVariable> inputs;
+        try {
+          inputs = getVariableList(unitName, VariableType.INPUT);
+        } catch (RuntimeException e) {
+          continue;
+        }
+        for (SimulationVariable v : inputs) {
+          if (!v.isWritable()) {
+            continue;
+          }
+          params.add(new AdjustableParameter(v.getName(), v.getAddress(), v.getDefaultUnit(),
+              v.getMinimumValue(), v.getMaximumValue(), unitName, v.getName(),
+              AdjustableParameter.Source.INPUT_VARIABLE));
+        }
+      }
+    }
+    return Collections.unmodifiableList(params);
+  }
+
+  /**
+   * Returns the registry of adjustable parameters as a JSON string.
+   *
+   * @return JSON string {@code {schemaVersion, count, parameters:[{name, address, unit, lowerBound,
+   *         upperBound, targetUnitName, targetProperty, source}]}}
+   */
+  public String getAdjustableParametersJson() {
+    List<AdjustableParameter> params = getAdjustableParameters();
+    com.google.gson.JsonObject root = new com.google.gson.JsonObject();
+    root.addProperty("schemaVersion", SCHEMA_VERSION);
+    root.addProperty("count", params.size());
+    com.google.gson.JsonArray arr = new com.google.gson.JsonArray();
+    for (AdjustableParameter p : params) {
+      arr.add(p.toJsonObject());
+    }
+    root.add("parameters", arr);
+    return root.toString();
+  }
+
+  /**
+   * Creates a new {@link AgenticProcessOptimizer} bound to this automation facade. This is the
+   * recommended entry point for closed-loop, ML- and agent-driven optimization over the underlying
+   * process: the optimizer drives {@link #evaluate(Map, String, java.util.List)} for every trial,
+   * speaks schema-versioned JSON, and never throws.
+   *
+   * @return a fresh optimizer wrapping this facade
+   */
+  public AgenticProcessOptimizer newOptimizer() {
+    return new AgenticProcessOptimizer(this);
+  }
+
+  /**
+   * Converts an adjuster bound to a nullable {@link Double}, mapping sentinel "unbounded" values
+   * (magnitude at or beyond {@link #UNBOUNDED_THRESHOLD}) and non-finite values to {@code null}.
+   *
+   * @param value the raw bound value
+   * @return the bound, or {@code null} if effectively unbounded
+   */
+  private static Double sanitizeBound(double value) {
+    if (Double.isNaN(value) || Double.isInfinite(value) || Math.abs(value) >= UNBOUNDED_THRESHOLD) {
+      return null;
+    }
+    return Double.valueOf(value);
+  }
+
+  /**
+   * Returns {@code null} for a null or empty string, otherwise the original string.
+   *
+   * @param s the string to check
+   * @return {@code null} if empty, otherwise {@code s}
+   */
+  private static String emptyToNull(String s) {
+    if (s == null || s.trim().isEmpty()) {
+      return null;
+    }
+    return s;
   }
 
   /**
@@ -1980,6 +2110,289 @@ public class ProcessAutomation {
     run();
   }
 
+  // ----------------------------- Agentic run gating & evaluation ------------------------------
+
+  /**
+   * Returns the structured outcome of the most recent run as a JSON string. Lets agents inspect
+   * whether the last run succeeded and, if not, which unit failed, without catching and parsing a
+   * {@link RuntimeException}.
+   *
+   * @return schema-versioned JSON describing the last run outcome (see
+   *         {@link neqsim.process.processmodel.RunStatus#toJson()})
+   */
+  public String getRunStatusJson() {
+    if (processModel != null) {
+      return processModel.getRunStatusJson();
+    }
+    return processSystem.getRunStatusJson();
+  }
+
+  /**
+   * Runs the underlying process and returns the structured
+   * {@link neqsim.process.processmodel.RunStatus RunStatus} as JSON, <strong>never
+   * throwing</strong> on a solver failure. This is the run primitive recommended for agentic loops:
+   * a diverging or failing trial is reported as {@code "success": false} with the offending unit
+   * named, instead of crashing the agent's control loop with an exception.
+   *
+   * <p>
+   * The dirty flag is cleared whether or not the run succeeded, so a subsequent
+   * {@link #runIfDirty()} will not re-run a known-failing configuration.
+   * </p>
+   *
+   * @return schema-versioned run-status JSON, with {@code success}, {@code failedUnitName} and
+   *         {@code failedUnitError} fields
+   */
+  public String runJson() {
+    try {
+      run();
+    } catch (RuntimeException e) {
+      // The run status is still recorded by the process; the dirty flag is cleared below so the
+      // agent does not silently re-run a known-failing setpoint.
+      this.dirty = false;
+    }
+    return getRunStatusJson();
+  }
+
+  /**
+   * Runs the process until convergence (or an iteration limit) and returns a unified JSON report
+   * suitable for per-trial feasibility gating in agentic optimization. Never throws on a solver
+   * failure.
+   *
+   * <p>
+   * For a multi-area {@link ProcessModel}, this delegates to
+   * {@link ProcessModel#runUntilConverged(int, double)} and merges
+   * {@link ProcessModel#getConvergenceReportJson()} with the run status. For a single
+   * {@link ProcessSystem}, a normal {@link ProcessSystem#run()} already iterates internal recycles;
+   * the {@code converged} flag then reflects whether the run completed without a failed unit (the
+   * {@link neqsim.process.processmodel.RunStatus RunStatus} success flag).
+   * </p>
+   *
+   * <p>
+   * Top-level fields: {@code schemaVersion}, {@code converged}, {@code runSucceeded},
+   * {@code failedUnitName}, {@code failedUnitError}, {@code iterations}, {@code maxIterations},
+   * {@code maxError}, and (multi-area only) the nested {@code convergence} report and {@code areas}
+   * array.
+   * </p>
+   *
+   * @param maxIterations maximum outer iterations (multi-area only); must be at least 1
+   * @param tolerance relative convergence tolerance (multi-area only); must be finite and positive
+   * @return schema-versioned convergence/run JSON
+   * @throws IllegalArgumentException if {@code maxIterations < 1} or {@code tolerance} is not a
+   *         finite positive number
+   */
+  public String runUntilConvergedJson(int maxIterations, double tolerance) {
+    if (maxIterations < 1) {
+      throw new IllegalArgumentException("maxIterations must be at least 1, was " + maxIterations);
+    }
+    if (Double.isNaN(tolerance) || Double.isInfinite(tolerance) || tolerance <= 0.0) {
+      throw new IllegalArgumentException(
+          "tolerance must be a finite positive number, was " + tolerance);
+    }
+
+    com.google.gson.JsonObject root = new com.google.gson.JsonObject();
+    root.addProperty("schemaVersion", SCHEMA_VERSION);
+    root.addProperty("maxIterations", maxIterations);
+
+    boolean runSucceeded = true;
+    boolean converged;
+    if (processModel != null) {
+      try {
+        converged = processModel.runUntilConverged(maxIterations, tolerance);
+      } catch (RuntimeException e) {
+        runSucceeded = false;
+        converged = false;
+      }
+      root.addProperty("converged", converged);
+      root.addProperty("iterations", processModel.getLastIterationCount());
+      root.addProperty("maxError", processModel.getError());
+      // Embed the full structured convergence report for area-level diagnostics.
+      try {
+        com.google.gson.JsonElement report =
+            com.google.gson.JsonParser.parseString(processModel.getConvergenceReportJson());
+        root.add("convergence", report);
+        if (report.isJsonObject() && report.getAsJsonObject().has("areas")) {
+          root.add("areas", report.getAsJsonObject().get("areas"));
+        }
+      } catch (RuntimeException e) {
+        // convergence report unavailable; primary fields above are sufficient
+      }
+    } else {
+      try {
+        processSystem.run();
+      } catch (RuntimeException e) {
+        runSucceeded = false;
+      }
+      converged = runSucceeded && processSystem.getRunStatus().isSuccess();
+      root.addProperty("converged", converged);
+    }
+    this.dirty = false;
+
+    root.addProperty("runSucceeded", runSucceeded);
+    mergeRunStatus(root);
+    return root.toString();
+  }
+
+  /**
+   * Atomic <em>evaluate</em> step for closed-loop agentic optimization: applies a batch of decision
+   * variables, runs the process until convergence, gates the result on the run status, and reads
+   * back the requested objective / constraint variables &mdash; all returned as a single JSON
+   * document. This method <strong>never throws</strong>; an infeasible trial (rejected setpoint,
+   * diverged solver, or failed unit) is reported as {@code "feasible": false} so the optimizer can
+   * penalise it instead of crashing.
+   *
+   * <p>
+   * This is the recommended one-call primitive for SQP / particle-swarm / grid sweeps over a
+   * flowsheet. It removes the boilerplate of set &rarr; run &rarr; try/catch &rarr; read and avoids
+   * the common jpype pitfall of mixing {@code java.lang.String} JSON with Python parsing, because
+   * the entire trial outcome is returned as one ready-to-parse string.
+   * </p>
+   *
+   * <p>
+   * Returned fields:
+   * </p>
+   * <ul>
+   * <li>{@code schemaVersion} &mdash; stable schema version</li>
+   * <li>{@code feasible} &mdash; {@code true} only when every setpoint was applied, the run did not
+   * fail, and the model converged</li>
+   * <li>{@code converged}, {@code runSucceeded}, {@code failedUnitName}, {@code failedUnitError},
+   * {@code iterations}, {@code maxError}</li>
+   * <li>{@code setpointsApplied} &mdash; map of address &rarr; value that were set</li>
+   * <li>{@code setpointsRejected} &mdash; map of address &rarr; rejection reason</li>
+   * <li>{@code readbacks} &mdash; map of address &rarr; value for successfully read outputs</li>
+   * <li>{@code readbackErrors} &mdash; map of address &rarr; reason for unreadable outputs</li>
+   * </ul>
+   *
+   * @param setpoints ordered map of decision-variable address &rarr; value to apply; may be null or
+   *        empty to evaluate the current configuration
+   * @param setpointUnit unit applied to every setpoint, or null for default units
+   * @param readbacks objective / constraint addresses to read after the run; may be null or empty
+   * @param readbackUnit unit applied to every read-back, or null for default units
+   * @param maxIterations maximum outer iterations for the convergence run; must be at least 1
+   * @param tolerance relative convergence tolerance; must be finite and positive
+   * @return schema-versioned JSON describing the trial outcome
+   * @throws IllegalArgumentException if {@code maxIterations < 1} or {@code tolerance} is not a
+   *         finite positive number
+   */
+  public String evaluate(Map<String, Double> setpoints, String setpointUnit, List<String> readbacks,
+      String readbackUnit, int maxIterations, double tolerance) {
+    if (maxIterations < 1) {
+      throw new IllegalArgumentException("maxIterations must be at least 1, was " + maxIterations);
+    }
+    if (Double.isNaN(tolerance) || Double.isInfinite(tolerance) || tolerance <= 0.0) {
+      throw new IllegalArgumentException(
+          "tolerance must be a finite positive number, was " + tolerance);
+    }
+
+    com.google.gson.JsonObject root = new com.google.gson.JsonObject();
+    root.addProperty("schemaVersion", SCHEMA_VERSION);
+
+    // 1) Apply decision variables, capturing per-address rejections.
+    com.google.gson.JsonObject applied = new com.google.gson.JsonObject();
+    com.google.gson.JsonObject rejected = new com.google.gson.JsonObject();
+    if (setpoints != null) {
+      for (Map.Entry<String, Double> e : setpoints.entrySet()) {
+        try {
+          setVariableValue(e.getKey(), e.getValue(), setpointUnit);
+          applied.addProperty(e.getKey(), e.getValue());
+        } catch (RuntimeException ex) {
+          rejected.addProperty(e.getKey(), ex.getMessage());
+          diagnostics.recordFailure("set", e.getKey(),
+              AutomationDiagnostics.ErrorCategory.INVALID_ADDRESS_FORMAT, null);
+        }
+      }
+    }
+    root.add("setpointsApplied", applied);
+    root.add("setpointsRejected", rejected);
+
+    // 2) Run until converged (never throws here).
+    boolean runSucceeded = true;
+    boolean converged;
+    if (processModel != null) {
+      try {
+        converged = processModel.runUntilConverged(maxIterations, tolerance);
+      } catch (RuntimeException ex) {
+        runSucceeded = false;
+        converged = false;
+      }
+      root.addProperty("iterations", processModel.getLastIterationCount());
+      root.addProperty("maxError", processModel.getError());
+    } else {
+      try {
+        processSystem.run();
+      } catch (RuntimeException ex) {
+        runSucceeded = false;
+      }
+      converged = runSucceeded && processSystem.getRunStatus().isSuccess();
+    }
+    this.dirty = false;
+    root.addProperty("runSucceeded", runSucceeded);
+    root.addProperty("converged", converged);
+    mergeRunStatus(root);
+
+    boolean runFailed = root.has("failedUnitName") && !root.get("failedUnitName").isJsonNull();
+    boolean feasible = runSucceeded && converged && !runFailed && rejected.size() == 0;
+    root.addProperty("feasible", feasible);
+
+    // 3) Read back objectives / constraints, capturing per-address failures.
+    com.google.gson.JsonObject reads = new com.google.gson.JsonObject();
+    com.google.gson.JsonObject readErrors = new com.google.gson.JsonObject();
+    if (readbacks != null) {
+      for (String addr : readbacks) {
+        try {
+          reads.addProperty(addr, getVariableValue(addr, readbackUnit));
+        } catch (RuntimeException ex) {
+          readErrors.addProperty(addr, ex.getMessage());
+        }
+      }
+    }
+    root.add("readbacks", reads);
+    root.add("readbackErrors", readErrors);
+
+    return root.toString();
+  }
+
+  /**
+   * Convenience overload of {@link #evaluate(Map, String, List, String, int, double)} that uses the
+   * same unit for setpoints and read-backs and sensible default convergence settings (30
+   * iterations, relative tolerance 5e-3, which is robust for plants with near-zero-flow anti-surge
+   * recycles).
+   *
+   * @param setpoints decision-variable address &rarr; value map; may be null or empty
+   * @param unitOfMeasure unit applied to setpoints and read-backs, or null for default units
+   * @param readbacks objective / constraint addresses to read after the run; may be null or empty
+   * @return schema-versioned JSON describing the trial outcome
+   */
+  public String evaluate(Map<String, Double> setpoints, String unitOfMeasure,
+      List<String> readbacks) {
+    return evaluate(setpoints, unitOfMeasure, readbacks, unitOfMeasure, 30, 5.0e-3);
+  }
+
+  /**
+   * Merges the most recent {@link neqsim.process.processmodel.RunStatus RunStatus} fields
+   * ({@code success}, {@code failedUnitName}, {@code failedUnitError}) into the supplied JSON
+   * object. Used by {@link #runUntilConvergedJson(int, double)} and
+   * {@link #evaluate(Map, String, List, String, int, double)}.
+   *
+   * @param root the JSON object to enrich with run-status fields
+   */
+  private void mergeRunStatus(com.google.gson.JsonObject root) {
+    neqsim.process.processmodel.RunStatus status =
+        processModel != null ? processModel.getRunStatus() : processSystem.getRunStatus();
+    if (status == null) {
+      return;
+    }
+    if (status.getFailedUnitName() != null) {
+      root.addProperty("failedUnitName", status.getFailedUnitName());
+    } else {
+      root.add("failedUnitName", com.google.gson.JsonNull.INSTANCE);
+    }
+    if (status.getFailedUnitError() != null) {
+      root.addProperty("failedUnitError", status.getFailedUnitError());
+    } else {
+      root.add("failedUnitError", com.google.gson.JsonNull.INSTANCE);
+    }
+  }
+
   // ----------------------------- Batch get / set ------------------------------
 
   /**
@@ -2371,6 +2784,37 @@ public class ProcessAutomation {
     }
     root.add("units", unitsArr);
     return root.toString();
+  }
+
+  /**
+   * Returns a stable, side-effect-free JSON utilization snapshot of every unit in the flowsheet.
+   *
+   * <p>
+   * This is the recommended observation endpoint for machine-learning / reinforcement-learning
+   * optimization loops. Whereas {@link #snapshot(String)} reports raw process variables, this
+   * method reports capacity <i>utilization</i> &mdash; for every unit the maximum constraint
+   * utilization, the limiting constraint, a per-constraint breakdown, feasibility, and (for
+   * compressors and pumps) shaft power, plus the plant-wide {@code bottleneck} and
+   * {@code anyOverloaded} flags. Pair it with
+   * {@link #evaluate(java.util.Map, String, java.util.List, String, int, double) evaluate(...)}
+   * (action + reward) to close an optimization loop: {@code evaluate} applies setpoints and runs
+   * the model; {@code getUtilizationSnapshot} reads back the resulting capacity observation.
+   * </p>
+   *
+   * <p>
+   * The method does <b>not</b> run the model; call {@link #evaluate} or {@link #run()} first so the
+   * reported utilization reflects the latest setpoints. For a multi-area model each unit entry
+   * carries an {@code "area"} property.
+   * </p>
+   *
+   * @return JSON string {@code {schemaVersion, units:[...], bottleneck:{...}, anyOverloaded,
+   *         anyHardLimitExceeded}}
+   */
+  public String getUtilizationSnapshot() {
+    if (processModel != null) {
+      return processModel.getUtilizationSnapshotJson();
+    }
+    return processSystem.getUtilizationSnapshotJson();
   }
 
   /**

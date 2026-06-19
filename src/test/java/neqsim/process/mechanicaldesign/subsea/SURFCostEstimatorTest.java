@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Tests for {@link SURFCostEstimator}.
@@ -12,6 +14,8 @@ import org.junit.jupiter.api.Test;
  * @version 1.0
  */
 class SURFCostEstimatorTest {
+  private static final Logger logger = LogManager.getLogger(SURFCostEstimatorTest.class);
+
 
   /**
    * Test a typical NCS subsea tieback: 6 wells, 300m water depth, 10 km infield + 80 km export.
@@ -84,16 +88,16 @@ class SURFCostEstimatorTest {
     double flowlinePct = est.getFlowlineCostUSD() / totalUSD * 100;
     assertTrue(flowlinePct > 30, "Flowlines should be >30% of SURF, got " + flowlinePct + "%");
 
-    System.out.println("=== SURF Cost Estimate (NCS 6-well tieback) ===");
-    System.out.println("  S (Subsea) : " + String.format("%,.0f", est.getSubseaCostUSD()) + " USD");
+    logger.info("=== SURF Cost Estimate (NCS 6-well tieback) ===");
+    logger.info("  S (Subsea) : " + String.format("%,.0f", est.getSubseaCostUSD()) + " USD");
     System.out
         .println("  U (Umbilicals): " + String.format("%,.0f", est.getUmbilicalCostUSD()) + " USD");
     System.out
         .println("  R (Risers)   : " + String.format("%,.0f", est.getRiserCostUSD()) + " USD");
     System.out
         .println("  F (Flowlines): " + String.format("%,.0f", est.getFlowlineCostUSD()) + " USD");
-    System.out.println("  TOTAL SURF   : " + String.format("%,.0f", totalUSD) + " USD");
-    System.out.println(
+    logger.info("  TOTAL SURF   : " + String.format("%,.0f", totalUSD) + " USD");
+    logger.info(
         "  TOTAL NOK    : " + String.format("%,.0f", est.getTotalCostInCurrency(10.5)) + " NOK");
   }
 

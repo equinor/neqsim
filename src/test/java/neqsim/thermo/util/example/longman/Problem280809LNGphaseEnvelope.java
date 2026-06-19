@@ -17,9 +17,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class Problem280809LNGphaseEnvelope {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(Problem280809LNGphaseEnvelope.class);
+  private static final Logger logger = LogManager.getLogger(Problem280809LNGphaseEnvelope.class);
 
+  /** Logger object for class. */
+  
   /**
    * <p>
    * main.
@@ -49,9 +50,9 @@ public class Problem280809LNGphaseEnvelope {
       logger.error(ex.getMessage(), ex);
     }
     testSystem.display();
-    // System.out.println("tempeerature " + (testSystem.getTemperature() - 273.15));
+    // logger.info("tempeerature " + (testSystem.getTemperature() - 273.15));
     // testOps.displayResult();
-    // System.out.println("Cricondenbar " + testOps.get("cricondenbar")[0] + " " +
+    // logger.info("Cricondenbar " + testOps.get("cricondenbar")[0] + " " +
     // testOps.get("cricondenbar")[1]);
   }
 }

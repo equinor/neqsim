@@ -9,6 +9,85 @@
 
 ---
 
+## 2026-06-17 — Expander capacity constraints fixed + constraint provenance in utilization snapshot
+
+### Summary
+Two additive changes that make the capacity/utilization framework correct for
+turbo-expanders and self-describing for agents/optimizers:
+
+1. **Expander capacity fix (root cause).** `Expander` now reports realistic
+   utilization instead of a spurious ~150 %. The inherited
+   `Compressor.getMaxUtilization()` returns `1.5` when `maxUtilization == 0 && !isSimulationValid()`,
+   and `Compressor.isSimulationValid()` is `false` for a healthy expander (negative
+   shaft power, outlet colder than inlet, pressure ratio < 1 are all normal for an
+   expander). The fix overrides both methods on `Expander`.
+2. **Constraint provenance in the snapshot.** Each constraint object in
+   `getUtilizationSnapshotJson()` now carries its `dataSource` (e.g. `"equipment"`,
+   `"design"`) so an agent can tell a measured/rated limit from an estimate.
+
+### What's new (additive — no breaking change)
+- `Expander.isSimulationValid()` — expander-correct validity (negative power and a
+  cooler outlet are valid; only NaN or an outlet *hotter* than inlet flags invalid).
+- `Expander.initializeCapacityConstraints()` — removes the inherited consumed-power
+  constraints (`power`, `ratedPower`) and, when a rating is set, adds a
+  `recoveredPower` HARD constraint sourced from `Math.abs(getPower("kW"))`.
+- `Expander.setRatedRecoveredPower(double kW)` / `getRatedRecoveredPower()` — set the
+  rated recovered shaft power; the setter rebuilds the constraints via
+  `reinitializeCapacityConstraints()`. Default `0` ⇒ no `recoveredPower` constraint.
+- `ProcessSystem.buildUtilizationUnitsJson(...)` now emits `dataSource` per constraint.
+  `ProcessModel.getUtilizationSnapshotJson()` inherits this automatically (it delegates
+  per area to the same method).
+
+### Migration
+None. Existing code is unaffected. For an expander whose recovered-power ceiling is
+known, call `expander.setRatedRecoveredPower(ratedKW)` to get a meaningful
+`recoveredPower` utilization; otherwise the expander simply reports no spurious limit.
+Downstream tooling that previously injected an external "ESTIMATE" expander rating or
+suppressed the spurious 150 % can now read the native `recoveredPower` constraint and
+its `dataSource` provenance directly.
+
+### Agents/skills to update
+- `neqsim-agentic-process-optimization` and `neqsim-platform-modeling` skills (mention
+  the expander `recoveredPower` constraint and the `dataSource` field in the snapshot).
+- Documented in `AGENTS.md` and `.github/copilot-instructions.md` in the
+  `getUtilizationSnapshot()` sections. Tests: `ExpanderCapacityTest` (5 tests, all pass).
+
+---
+
+## 2026-06-14 — AgenticProcessOptimizer: closed-loop optimizer for ML/agentic loops (new class)
+
+### Summary
+Added `neqsim.process.automation.AgenticProcessOptimizer`, a ready-made closed-loop,
+derivative-free optimizer that drives a process simulation through the existing
+`ProcessAutomation.evaluate(...)` primitive. Purpose-built for ML/agentic workflows:
+string-addressable decision variables, a never-throwing schema-versioned JSON contract,
+and a replayable (state, action, reward) trajectory tape.
+
+### What's new (additive — no breaking change)
+- `ProcessAutomation.newOptimizer()` → returns a fresh `AgenticProcessOptimizer` bound to the facade.
+- `AgenticProcessOptimizer` fluent API: `addVariable(addr, lo, hi, unit)`,
+  `useAdjustableParameters()`, `minimize/maximize/setObjective(addr, Sense, unit)`,
+  `setObjectiveFunction(Function<Map<String,Double>,Double>)`, `addWatch(addr, unit)`,
+  `addConstraintLessOrEqual/GreaterOrEqual/addConstraint(addr, type, limit, unit, penaltyWeight)`,
+  `setMaxEvaluations/setInnerConvergence/setConvergenceTolerance/setSeed`.
+- `optimize()` → `OptimizationResult` (never throws); `optimizeToJson()` → schema-versioned JSON
+  with the full trajectory; `getReadinessJson()` → machine-readable ML/agentic self-rating.
+- Algorithm: bounded Nelder–Mead simplex with deterministic (seeded) random init. Hard constraints
+  folded in as weighted quadratic penalties; infeasible trials logged but penalized.
+
+### Migration
+None. Existing code is unaffected. Agents optimizing a live `ProcessSystem`/`ProcessModel` should
+prefer `auto.newOptimizer()` over hand-rolling loops on top of `evaluate()`. Distinct from the
+classic `neqsim.process.util.optimizer` classes (which take a `Function<double[],Double>` over an
+opaque `ProcessSystem`).
+
+### Agents/skills to update
+- `neqsim-agentic-process-optimization` and `neqsim-optimization-and-doe` skills (mention the new class).
+- Documented in `AGENTS.md` and `.github/copilot-instructions.md` next to the `evaluate()` /
+  `getUtilizationSnapshot()` sections. Tests: `AgenticProcessOptimizerTest` (7 tests, all pass).
+
+---
+
 ## 2026-06-02 — CriticalPointFlash robustness fix (no API change)
 
 ### Summary

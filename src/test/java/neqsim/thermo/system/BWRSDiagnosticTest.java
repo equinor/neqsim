@@ -2,8 +2,12 @@ package neqsim.thermo.system;
 
 import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class BWRSDiagnosticTest {
+  private static final Logger logger = LogManager.getLogger(BWRSDiagnosticTest.class);
+
 
   @Test
   public void jtDiagnosticAt10bar() {
@@ -36,14 +40,14 @@ public class BWRSDiagnosticTest {
 
     System.out
         .println("=== JT Diagnostic: Methane at " + temperature + " K, " + pressure + " bar ===");
-    System.out.println();
+
 
     String[] names = {"BWRS", "GERG", "PR"};
     SystemInterface[] systems = {bwrs, gerg, pr};
     double R = 8.3144621;
 
     for (int s = 0; s < 3; s++) {
-      System.out.println("--- " + names[s] + " ---");
+      logger.info("--- " + names[s] + " ---");
       neqsim.thermo.phase.PhaseInterface phase = systems[s].getPhase(0);
       double n = phase.getNumberOfMolesInPhase();
       double T = phase.getTemperature();
@@ -72,20 +76,20 @@ public class BWRSDiagnosticTest {
       // Numerical JT (the override)
       double numericalJT = phase.getJouleThomsonCoefficient();
 
-      System.out.println("  n=" + n + " T=" + T + " P=" + P);
-      System.out.println("  Vm=" + Vm + " Vtot=" + Vtot);
-      System.out.println("  F=" + F + " dFdT=" + dFdT);
-      System.out.println("  dFdV=" + dFdV + " dFdVdV=" + dFdVdV);
-      System.out.println("  dFdTdV=" + dFdTdV);
-      System.out.println("  dPdVTn=" + dPdVTn + " dPdTVn=" + dPdTVn);
-      System.out.println("  kT=" + kT + " Cp=" + cp);
-      System.out.println("  H=" + H + " Hres=" + Hres);
-      System.out.println("  Vm*n=" + (Vm * n));
-      System.out.println("  T*dPdTVn/dPdVTn=" + (T * dPdTVn / dPdVTn));
-      System.out.println("  dH/dP_T (analytical)=" + (Vm * n + T * dPdTVn / dPdVTn));
-      System.out.println("  ANALYTICAL JT = " + analyticalJT);
-      System.out.println("  NUMERICAL JT  = " + numericalJT);
-      System.out.println();
+      logger.info("  n=" + n + " T=" + T + " P=" + P);
+      logger.info("  Vm=" + Vm + " Vtot=" + Vtot);
+      logger.info("  F=" + F + " dFdT=" + dFdT);
+      logger.info("  dFdV=" + dFdV + " dFdVdV=" + dFdVdV);
+      logger.info("  dFdTdV=" + dFdTdV);
+      logger.info("  dPdVTn=" + dPdVTn + " dPdTVn=" + dPdTVn);
+      logger.info("  kT=" + kT + " Cp=" + cp);
+      logger.info("  H=" + H + " Hres=" + Hres);
+      logger.info("  Vm*n=" + (Vm * n));
+      logger.info("  T*dPdTVn/dPdVTn=" + (T * dPdTVn / dPdVTn));
+      logger.info("  dH/dP_T (analytical)=" + (Vm * n + T * dPdTVn / dPdVTn));
+      logger.info("  ANALYTICAL JT = " + analyticalJT);
+      logger.info("  NUMERICAL JT  = " + numericalJT);
+
     }
   }
 }

@@ -3,6 +3,8 @@ package neqsim.process.util.example;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -14,6 +16,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class process1 {
+  private static final Logger logger = LogManager.getLogger(process1.class);
+
   /**
    * This method is just meant to test the thermo package.
    *
@@ -40,14 +44,14 @@ public class process1 {
 
     ThermodynamicOperations ops = new ThermodynamicOperations(testSystem);
     ops.TPflash();
-    System.out.println("actual flow 1 " + testSystem.getFlowRate("m3/hr"));
+    logger.info("actual flow 1 " + testSystem.getFlowRate("m3/hr"));
     double stdflowrate = testSystem.getFlowRate("Sm3/day");
     testSystem.setTotalFlowRate(stdflowrate, "Sm3/day");
     ops.TPflash();
 
     double actFLowRate = testSystem.getFlowRate("m3/hr");
 
-    System.out.println("actual flow 2 " + actFLowRate);
+    logger.info("actual flow 2 " + actFLowRate);
 
     Stream stream_1 = new Stream("Stream1", testSystem);
 
@@ -67,8 +71,8 @@ public class process1 {
     compr.displayResult();
     System.out
         .println("polytropic head " + stream_1.getThermoSystem().getFlowRate("m3/hr") + " m3/hr");
-    System.out.println("polytropic head " + compr.getPolytropicHead("kJ/kg") + " kJ/kg");
-    System.out.println("polytropic efficiency " + compr.getPolytropicEfficiency());
+    logger.info("polytropic head " + compr.getPolytropicHead("kJ/kg") + " kJ/kg");
+    logger.info("polytropic efficiency " + compr.getPolytropicEfficiency());
 
     // operations.displayResult();
 

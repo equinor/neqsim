@@ -13,7 +13,7 @@ import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class NeqSimDataBaseTest extends NeqSimTest {
-  Logger logger = LogManager.getFormatterLogger(NeqSimFluidDataBaseTest.class);
+  private static final Logger logger = LogManager.getLogger(NeqSimDataBaseTest.class);
 
   @Test
   void testHasComponent() {
@@ -141,7 +141,7 @@ public class NeqSimDataBaseTest extends NeqSimTest {
       dataSet.close();
       failed = false;
     } catch (Exception ex) {
-      System.out.println(ex.getMessage());
+      logger.info(ex.getMessage());
     }
     // Assertions.assertTrue(testHasMethane, "Methane component found in database");
     Assertions.assertEquals(16.04, molmass, 0.1);

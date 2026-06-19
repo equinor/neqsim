@@ -19,7 +19,7 @@
 	</scm>
 
 	<properties>
-		<revision>3.13.0</revision>
+		<revision>3.14.0</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<checkstyle.config.location>.config/checkstyle_neqsim.xml</checkstyle.config.location>
@@ -390,7 +390,7 @@
 			<plugin>
 				<groupId>com.github.spotbugs</groupId>
 				<artifactId>spotbugs-maven-plugin</artifactId>
-				<version>4.9.8.3</version>
+				<version>4.10.2.0</version>
 				<configuration>
 					<failOnError>false</failOnError>
 				</configuration>
@@ -411,7 +411,7 @@
 			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
-				<version>0.8.14</version>
+				<version>0.8.15</version>
 				<configuration>
 					<excludes>
 						<exclude>neqsim/physicalproperties/util/parameterfitting/**/*</exclude>

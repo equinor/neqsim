@@ -1,6 +1,8 @@
 package neqsim.physicalproperties.methods.diffusivity;
 
 import org.junit.jupiter.api.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -9,6 +11,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Diagnostic test to verify database parameter values and units.
  */
 public class DiffusivityDiagnosticTest {
+  private static final Logger logger = LogManager.getLogger(DiffusivityDiagnosticTest.class);
 
   @Test
   void printComponentProperties() {
@@ -23,21 +26,21 @@ public class DiffusivityDiagnosticTest {
     ops.TPflash();
     sys.initPhysicalProperties();
 
-    System.out.println("\n=== Component Database Properties ===");
+    logger.info("\n=== Component Database Properties ===");
     for (int i = 0; i < sys.getNumberOfComponents(); i++) {
-      System.out.println("\nComponent: " + sys.getComponent(i).getComponentName());
-      System.out.println("  MolarMass (kg/mol): " + sys.getComponent(i).getMolarMass());
-      System.out.println("  MolarMass (g/mol):  " + sys.getComponent(i).getMolarMass() * 1000);
-      System.out.println("  CriticalVolume:     " + sys.getComponent(i).getCriticalVolume());
-      System.out.println("  CriticalTemp (K):   " + sys.getComponent(i).getTC());
-      System.out.println("  CriticalPres (bara):" + sys.getComponent(i).getPC());
-      System.out.println("  NormLiqDens (g/cm3):" + sys.getComponent(i).getNormalLiquidDensity());
-      System.out.println(
-          "  LJ diameter (A):    " + sys.getComponent(i).getLennardJonesMolecularDiameter());
+      logger.info("\nComponent: " + sys.getComponent(i).getComponentName());
+      logger.info("  MolarMass (kg/mol): " + sys.getComponent(i).getMolarMass());
+      logger.info("  MolarMass (g/mol):  " + sys.getComponent(i).getMolarMass() * 1000);
+      logger.info("  CriticalVolume:     " + sys.getComponent(i).getCriticalVolume());
+      logger.info("  CriticalTemp (K):   " + sys.getComponent(i).getTC());
+      logger.info("  CriticalPres (bara):" + sys.getComponent(i).getPC());
+      logger.info("  NormLiqDens (g/cm3):" + sys.getComponent(i).getNormalLiquidDensity());
+      logger
+          .info("  LJ diameter (A):    " + sys.getComponent(i).getLennardJonesMolecularDiameter());
       System.out
           .println("  LJ epsilon/k (K):   " + sys.getComponent(i).getLennardJonesEnergyParameter());
-      System.out.println("  NormBoilPt (K):     " + sys.getComponent(i).getNormalBoilingPoint());
-      System.out.println("  AcentricFactor:     " + sys.getComponent(i).getAcentricFactor());
+      logger.info("  NormBoilPt (K):     " + sys.getComponent(i).getNormalBoilingPoint());
+      logger.info("  AcentricFactor:     " + sys.getComponent(i).getAcentricFactor());
     }
 
     // Verify Zc calculation for methane
@@ -46,19 +49,19 @@ public class DiffusivityDiagnosticTest {
     double Tc = sys.getComponent(0).getTC();
     double R = 8.314472;
     double Zc = Pc * Vc / (R * Tc * 10.0);
-    System.out.println("\n=== Methane Zc verification ===");
-    System.out.println("Pc=" + Pc + " Vc=" + Vc + " Tc=" + Tc);
-    System.out.println("Zc = Pc*Vc/(R*Tc*10) = " + Zc);
-    System.out.println("Expected Zc ~ 0.286");
+    logger.info("\n=== Methane Zc verification ===");
+    logger.info("Pc=" + Pc + " Vc=" + Vc + " Tc=" + Tc);
+    logger.info("Zc = Pc*Vc/(R*Tc*10) = " + Zc);
+    logger.info("Expected Zc ~ 0.286");
 
     // Test gas phase diffusion coefficients
     if (sys.hasPhaseType("gas")) {
-      System.out.println("\n=== Gas Diffusion Coefficients (default Chapman-Enskog) ===");
+      logger.info("\n=== Gas Diffusion Coefficients (default Chapman-Enskog) ===");
       for (int i = 0; i < sys.getPhase("gas").getNumberOfComponents(); i++) {
         for (int j = i + 1; j < sys.getPhase("gas").getNumberOfComponents(); j++) {
           double D = sys.getPhase("gas").getPhysicalProperties().diffusivityCalc
               .calcBinaryDiffusionCoefficient(i, j, 0);
-          System.out.println("  D(" + sys.getComponent(i).getComponentName() + "-"
+          logger.info("  D(" + sys.getComponent(i).getComponentName() + "-"
               + sys.getComponent(j).getComponentName() + ") = " + D + " m2/s = " + (D * 1e4)
               + " cm2/s");
         }
@@ -67,12 +70,12 @@ public class DiffusivityDiagnosticTest {
       // Switch to Fuller
       sys.getPhase("gas").getPhysicalProperties()
           .setDiffusionCoefficientModel("Fuller-Schettler-Giddings");
-      System.out.println("\n=== Gas Diffusion Coefficients (Fuller-Schettler-Giddings) ===");
+      logger.info("\n=== Gas Diffusion Coefficients (Fuller-Schettler-Giddings) ===");
       for (int i = 0; i < sys.getPhase("gas").getNumberOfComponents(); i++) {
         for (int j = i + 1; j < sys.getPhase("gas").getNumberOfComponents(); j++) {
           double D = sys.getPhase("gas").getPhysicalProperties().diffusivityCalc
               .calcBinaryDiffusionCoefficient(i, j, 0);
-          System.out.println("  D(" + sys.getComponent(i).getComponentName() + "-"
+          logger.info("  D(" + sys.getComponent(i).getComponentName() + "-"
               + sys.getComponent(j).getComponentName() + ") = " + D + " m2/s = " + (D * 1e4)
               + " cm2/s");
         }
@@ -80,12 +83,12 @@ public class DiffusivityDiagnosticTest {
 
       // Wilke-Lee
       sys.getPhase("gas").getPhysicalProperties().setDiffusionCoefficientModel("Wilke Lee");
-      System.out.println("\n=== Gas Diffusion Coefficients (Wilke-Lee) ===");
+      logger.info("\n=== Gas Diffusion Coefficients (Wilke-Lee) ===");
       for (int i = 0; i < sys.getPhase("gas").getNumberOfComponents(); i++) {
         for (int j = i + 1; j < sys.getPhase("gas").getNumberOfComponents(); j++) {
           double D = sys.getPhase("gas").getPhysicalProperties().diffusivityCalc
               .calcBinaryDiffusionCoefficient(i, j, 0);
-          System.out.println("  D(" + sys.getComponent(i).getComponentName() + "-"
+          logger.info("  D(" + sys.getComponent(i).getComponentName() + "-"
               + sys.getComponent(j).getComponentName() + ") = " + D + " m2/s = " + (D * 1e4)
               + " cm2/s");
         }

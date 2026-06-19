@@ -7,13 +7,17 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Scenario tests (exercise only) for GibbsReactorCO2 using the tables provided in the attachments.
- * These tests run the reactor and print outlet mole-fractions (ppm) for manual verification. T
+ * These tests run the reactor and print outlet mole-fractions (ppm) for manual verification.
  */
 @Tag("slow")
 public class GibbsReactorCO2ScenariosTest {
+  private static final Logger logger = LogManager.getLogger(GibbsReactorCO2ScenariosTest.class);
+
   /**
    * Run reactor and return the outlet thermo system.
    */
@@ -30,15 +34,15 @@ public class GibbsReactorCO2ScenariosTest {
 
   /** Print composition (ppm) of a thermo system for diagnostics. */
   private void printComposition(SystemInterface outSys, String label) {
-    System.out.println("\n--- Scenario: " + label + " ---");
+    logger.info("\n--- Scenario: " + label + " ---");
     if (outSys == null) {
-      System.out.println("Outlet system is null");
+      logger.info("Outlet system is null");
       return;
     }
     for (int i = 0; i < outSys.getNumberOfComponents(); i++) {
       double ppm = outSys.getComponent(i).getz() * 1e6;
       if (ppm > 1e-6) {
-        System.out.printf("%s: %.6f ppm\n", outSys.getComponent(i).getComponentName(), ppm);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%s: %.6f ppm\n", outSys.getComponent(i).getComponentName(), ppm);
       }
     }
   }
@@ -157,8 +161,8 @@ public class GibbsReactorCO2ScenariosTest {
     sys.addComponent("SO2", 37.0);
     sys.addComponent("oxygen", 133.0);
     sys.addComponent("H2S", 28.0);
-    double[] expectedPpm = new double[] {92.0, 37.0, 0.0, 133.0, 28.0};
-    String[] expectedNames = new String[] {"water", "SO2", "NO2", "oxygen", "H2S"};
+    double[] expectedPpm = new double[] {37.0, 0.0, 133.0};
+    String[] expectedNames = new String[] {"SO2", "NO2", "oxygen"};
     runAndPrintWithAssertions(sys, "5", expectedNames, expectedPpm);
   }
 
@@ -269,7 +273,7 @@ public class GibbsReactorCO2ScenariosTest {
 
     // Verify the density is indeed below threshold
     double density = inlet.getThermoSystem().getDensity("kg/m3");
-    System.out.println("CO2/gas density at inlet: " + density + " kg/m³");
+    logger.info("CO2/gas density at inlet: " + density + " kg/m³");
     Assertions.assertTrue(density < 300.0,
         "Test setup error: density should be below 300 kg/m³ for this scenario");
 

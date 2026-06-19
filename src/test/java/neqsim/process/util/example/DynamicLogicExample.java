@@ -12,6 +12,8 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Example demonstrating how to create process logic completely dynamically at runtime without any
@@ -31,13 +33,15 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version 1.0
  */
 public class DynamicLogicExample {
+  private static final Logger logger = LogManager.getLogger(DynamicLogicExample.class);
+
 
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
-    System.out.println("╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║           DYNAMIC PROCESS LOGIC CREATION EXAMPLE               ║");
-    System.out.println("║           (No Pre-Compilation Required)                        ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝\n");
+    logger.info("╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║           DYNAMIC PROCESS LOGIC CREATION EXAMPLE               ║");
+    logger.info("║           (No Pre-Compilation Required)                        ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝\n");
 
     // Create a simple process system
     ProcessSystem system = createSimpleProcess();
@@ -58,9 +62,9 @@ public class DynamicLogicExample {
     // Example 4: Runtime logic modification
     demonstrateRuntimeModification(valve, separator);
 
-    System.out.println("\n╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║        DYNAMIC LOGIC CREATION COMPLETED SUCCESSFULLY           ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝");
+    logger.info("\n╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║        DYNAMIC LOGIC CREATION COMPLETED SUCCESSFULLY           ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝");
   }
 
   /**
@@ -107,7 +111,7 @@ public class DynamicLogicExample {
    * @param separator the Separator to control in custom actions
    */
   private static void demonstrateCustomActions(ThrottlingValve valve, Separator separator) {
-    System.out.println("\n=== EXAMPLE 1: CUSTOM ACTIONS ===");
+    logger.info("\n=== EXAMPLE 1: CUSTOM ACTIONS ===");
 
     // Custom action using anonymous class
     LogicAction customAction1 = new LogicAction() {
@@ -117,7 +121,7 @@ public class DynamicLogicExample {
       public void execute() {
         if (!executed) {
           valve.setPercentValveOpening(75.0);
-          System.out.println("  Custom Action 1: Set valve to 75% opening");
+          logger.info("  Custom Action 1: Set valve to 75% opening");
           executed = true;
         }
       }
@@ -148,7 +152,7 @@ public class DynamicLogicExample {
         if (!executed) {
           separator.setCalculateSteadyState(false); // Switch to transient
           startTime = System.currentTimeMillis() / 1000.0;
-          System.out.println("  Custom Action 2: Switch separator to transient mode");
+          logger.info("  Custom Action 2: Switch separator to transient mode");
           executed = true;
         }
       }
@@ -189,7 +193,7 @@ public class DynamicLogicExample {
    * @param separator the Separator to monitor in custom conditions
    */
   private static void demonstrateCustomConditions(ThrottlingValve valve, Separator separator) {
-    System.out.println("\n=== EXAMPLE 2: CUSTOM CONDITIONS ===");
+    logger.info("\n=== EXAMPLE 2: CUSTOM CONDITIONS ===");
 
     // Custom condition using anonymous class
     LogicCondition customCondition1 = new LogicCondition() {
@@ -257,9 +261,9 @@ public class DynamicLogicExample {
     startupWithCustomConditions.addPermissive(customCondition1);
     startupWithCustomConditions.addPermissive(customCondition2);
 
-    System.out.println("✓ Created startup logic with custom permissive conditions");
-    System.out.println("  - Condition 1: " + customCondition1.getDescription());
-    System.out.println("  - Condition 2: " + customCondition2.getDescription());
+    logger.info("✓ Created startup logic with custom permissive conditions");
+    logger.info("  - Condition 1: " + customCondition1.getDescription());
+    logger.info("  - Condition 2: " + customCondition2.getDescription());
   }
 
   /**
@@ -269,7 +273,7 @@ public class DynamicLogicExample {
    * @param separator the separator to monitor
    */
   private static void demonstrateDynamicLogicSequences(ThrottlingValve valve, Separator separator) {
-    System.out.println("\n=== EXAMPLE 3: DYNAMIC LOGIC SEQUENCES ===");
+    logger.info("\n=== EXAMPLE 3: DYNAMIC LOGIC SEQUENCES ===");
 
     // Create a dynamic configuration for logic
     String[] scenarios = {"Normal Operation", "High Flow", "Emergency"};
@@ -290,7 +294,7 @@ public class DynamicLogicExample {
         public void execute() {
           if (!executed) {
             valve.setPercentValveOpening(setting);
-            System.out.println("    " + scenario + ": Set valve to " + setting + "%");
+            logger.info("    " + scenario + ": Set valve to " + setting + "%");
             executed = true;
           }
         }
@@ -312,7 +316,7 @@ public class DynamicLogicExample {
       };
 
       dynamicLogic.addAction(dynamicAction, 0.0);
-      System.out.println("✓ Created: " + dynamicLogic.getName());
+      logger.info("✓ Created: " + dynamicLogic.getName());
     }
   }
 
@@ -323,7 +327,7 @@ public class DynamicLogicExample {
    * @param separator the separator to monitor
    */
   private static void demonstrateRuntimeModification(ThrottlingValve valve, Separator separator) {
-    System.out.println("\n=== EXAMPLE 4: RUNTIME LOGIC MODIFICATION ===");
+    logger.info("\n=== EXAMPLE 4: RUNTIME LOGIC MODIFICATION ===");
 
     // Create base logic
     ESDLogic modifiableLogic = new ESDLogic("Modifiable Logic");
@@ -336,7 +340,7 @@ public class DynamicLogicExample {
       public void execute() {
         if (!executed) {
           valve.setPercentValveOpening(50.0);
-          System.out.println("    Initial: Set valve to 50%");
+          logger.info("    Initial: Set valve to 50%");
           executed = true;
         }
       }
@@ -358,7 +362,7 @@ public class DynamicLogicExample {
     };
 
     modifiableLogic.addAction(initialAction, 0.0);
-    System.out.println("✓ Created base logic with " + modifiableLogic.getActionCount() + " action");
+    logger.info("✓ Created base logic with " + modifiableLogic.getActionCount() + " action");
 
     // Simulate runtime decision to add more actions
     boolean addEmergencyAction = true; // This could be based on runtime conditions
@@ -372,7 +376,7 @@ public class DynamicLogicExample {
           if (!executed) {
             valve.setPercentValveOpening(5.0);
             separator.setCalculateSteadyState(false);
-            System.out.println("    Emergency: Valve to 5%, separator to transient");
+            logger.info("    Emergency: Valve to 5%, separator to transient");
             executed = true;
           }
         }
@@ -394,15 +398,15 @@ public class DynamicLogicExample {
       };
 
       modifiableLogic.addAction(emergencyAction, 2.0);
-      System.out.println("✓ Runtime modification: Added emergency action");
-      System.out.println("  Final logic has " + modifiableLogic.getActionCount() + " actions");
+      logger.info("✓ Runtime modification: Added emergency action");
+      logger.info("  Final logic has " + modifiableLogic.getActionCount() + " actions");
     }
 
     // You could also create entirely new logic based on runtime conditions
     String runtimeScenario = determineRuntimeScenario(); // Simulate runtime decision
     ESDLogic adaptiveLogic = createAdaptiveLogic(runtimeScenario, valve, separator);
-    System.out.println("✓ Created adaptive logic for scenario: " + runtimeScenario);
-    System.out.println("  Adaptive logic has " + adaptiveLogic.getActionCount() + " actions");
+    logger.info("✓ Created adaptive logic for scenario: " + runtimeScenario);
+    logger.info("  Adaptive logic has " + adaptiveLogic.getActionCount() + " actions");
   }
 
   /**
@@ -469,7 +473,7 @@ public class DynamicLogicExample {
           } else if (equipment instanceof Separator) {
             ((Separator) equipment).setCalculateSteadyState(false);
           }
-          System.out.println("    Adaptive Action: " + description);
+          logger.info("    Adaptive Action: " + description);
           executed = true;
         }
       }

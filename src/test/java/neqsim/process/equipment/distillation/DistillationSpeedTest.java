@@ -5,29 +5,33 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.distillation.DistillationColumn.SolverType;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 @Tag("slow")
 public class DistillationSpeedTest {
+  private static final Logger logger = LogManager.getLogger(DistillationSpeedTest.class);
+
   @Test
   public void compareSolvers() {
     int warmupRuns = 2;
     int benchmarkRuns = 5;
 
-    System.out.println("Warming up...");
+    logger.info("Warming up...");
     runBenchmark(SolverType.DIRECT_SUBSTITUTION, warmupRuns);
     runBenchmark(SolverType.INSIDE_OUT, warmupRuns);
 
-    System.out.println("Benchmarking DIRECT_SUBSTITUTION...");
+    logger.info("Benchmarking DIRECT_SUBSTITUTION...");
     double directTime = runBenchmark(SolverType.DIRECT_SUBSTITUTION, benchmarkRuns);
 
-    System.out.println("Benchmarking INSIDE_OUT...");
+    logger.info("Benchmarking INSIDE_OUT...");
     double insideOutTime = runBenchmark(SolverType.INSIDE_OUT, benchmarkRuns);
 
-    System.out.println("\n--- Results ---");
-    System.out.printf("DIRECT_SUBSTITUTION avg time: %.2f ms%n", directTime);
-    System.out.printf("INSIDE_OUT avg time:          %.2f ms%n", insideOutTime);
+    logger.info("\n--- Results ---");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "DIRECT_SUBSTITUTION avg time: %.2f ms%n", directTime);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "INSIDE_OUT avg time:          %.2f ms%n", insideOutTime);
     if (insideOutTime > 0) {
-      System.out.printf("Speedup (IO vs Direct):       %.2fx%n", directTime / insideOutTime);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Speedup (IO vs Direct):       %.2fx%n", directTime / insideOutTime);
     }
   }
 
@@ -43,11 +47,11 @@ public class DistillationSpeedTest {
       long end = System.nanoTime();
 
       if (!column.solved()) {
-        System.out.println("Warning: Solver " + solver + " did not converge in run " + i);
+        logger.info("Warning: Solver " + solver + " did not converge in run " + i);
       }
 
       totalTime += (end - start);
-      System.out.printf("Run %d: %.2f ms%n", i, (end - start) / 1e6);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Run %d: %.2f ms%n", i, (end - start) / 1e6);
     }
 
     return (double) totalTime / runs / 1e6;

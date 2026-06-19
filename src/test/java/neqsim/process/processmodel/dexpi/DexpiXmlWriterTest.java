@@ -369,6 +369,53 @@ public class DexpiXmlWriterTest extends NeqSimTest {
   }
 
   /**
+   * Tests that the standard writer declares the DEXPI namespace and exports originating-system
+   * metadata required by Proteus consumers.
+   *
+   * @throws IOException if writing fails
+   */
+  @Test
+  public void testStandardExportMetadata() throws IOException {
+    ProcessSystem process = new ProcessSystem();
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DexpiXmlWriter.write(process, out);
+    String xml = out.toString(StandardCharsets.UTF_8.name());
+
+    assertTrue(xml.contains("xmlns=\"http://sandbox.dexpi.org/xml\""),
+        "Standard export should include the DEXPI default namespace");
+    assertTrue(xml.contains("OriginatingSystem=\"NeqSim\""),
+        "PlantInformation should identify NeqSim as the originating system");
+    assertTrue(xml.contains("OriginatingSystemVendor=\"Equinor / NeqSim\""),
+        "PlantInformation should identify the originating system vendor");
+    assertTrue(xml.contains("OriginatingSystemVersion="),
+        "PlantInformation should include originating system version metadata");
+  }
+
+  /**
+   * Tests that pyDEXPI-friendly export omits only the default namespace while retaining the
+   * originating-system metadata needed by pyDEXPI/Proteus loaders.
+   *
+   * @throws IOException if writing fails
+   */
+  @Test
+  public void testPyDexpiExportOmitsNamespaceButKeepsMetadata() throws IOException {
+    ProcessSystem process = new ProcessSystem();
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DexpiXmlWriter.writeForPyDexpi(process, out);
+    String xml = out.toString(StandardCharsets.UTF_8.name());
+
+    assertFalse(xml.contains("xmlns=\"http://sandbox.dexpi.org/xml\""),
+        "pyDEXPI export should omit the DEXPI default namespace");
+    assertFalse(xml.contains("xmlns:xsi="), "pyDEXPI export should omit namespace declarations");
+    assertTrue(xml.contains("OriginatingSystem=\"NeqSim\""),
+        "pyDEXPI export should keep originating system metadata");
+    assertTrue(xml.contains("PlantInformation"),
+        "pyDEXPI export should keep unqualified PlantInformation elements");
+  }
+
+  /**
    * Tests that a separator produces multiple nozzles for gas and liquid outlets, and that stream
    * identity-based connection building correctly wires downstream equipment to the right nozzles.
    *
@@ -417,6 +464,123 @@ public class DexpiXmlWriterTest extends NeqSimTest {
     // Connection system should contain connections
     assertTrue(xml.contains("Connection"), "Should contain Connection elements");
     assertTrue(xml.contains("Separator"), "Should contain Separator equipment");
+  }
+
+  /**
+   * Tests that the equipment data-bar label converts mechanical-design lengths from the
+   * internally-stored metres to millimetres, and that the placeholder design temperature (the 100.0
+   * K default) is suppressed unless a real design basis has been set.
+   *
+   * @throws IOException if writing fails
+   */
+  @Test
+  public void testEquipmentBarMechanicalDesignUnitsAndPlaceholderSuppression() throws IOException {
+    Stream feed = createFeedStream();
+    Separator sep = new Separator("HP-Sep", feed);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(sep);
+    process.run();
+
+    // Mechanical-design lengths are stored in metres internally.
+    sep.initMechanicalDesign();
+    sep.getMechanicalDesign().setInnerDiameter(2.0);
+    sep.getMechanicalDesign().setWallThickness(0.02);
+    sep.getMechanicalDesign().setTantanLength(6.0);
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DexpiXmlWriter.writeForPyDexpi(process, out);
+    String xml = out.toString(StandardCharsets.UTF_8.name());
+
+    // 2.0 m inner diameter must render as 2000 mm, not "2 mm".
+    assertTrue(xml.contains("String=\"2000 mm\""),
+        "Inner diameter should be converted from metres to 2000 mm");
+    assertTrue(xml.contains("String=\"6000 mm\""),
+        "Tan-to-tan length should be converted from metres to 6000 mm");
+    assertTrue(xml.contains("String=\"20 mm\""),
+        "Wall thickness should be converted from metres to 20 mm");
+
+    // The placeholder design temperature (100.0 K -> -173.1 C) must not leak into the bar label.
+    assertFalse(xml.contains("-173.1"),
+        "Placeholder design temperature (-173.1 C) should be suppressed");
+  }
+
+  /**
+   * Tests that a process system without any explicitly modelled measurement devices or controllers
+   * still exports a realistic set of synthesized ISA-5.1 instrumentation (transmitters and matched
+   * PID controllers) so the resulting P&amp;ID resembles a real engineering diagram.
+   *
+   * @throws IOException if writing fails
+   */
+  @Test
+  public void testAutoSynthesizedInstrumentation() throws IOException {
+    Stream feed = createFeedStream();
+    Separator sep = new Separator("HP-Sep", feed);
+    Compressor comp = new Compressor("Comp-1", sep.getGasOutStream());
+    comp.setOutletPressure(120.0);
+    Cooler cooler = new Cooler("Cooler-1", comp.getOutletStream());
+    cooler.setOutTemperature(30.0, "C");
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(sep);
+    process.add(comp);
+    process.add(cooler);
+    process.run();
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DexpiXmlWriter.writeForPyDexpi(process, out);
+    String xml = out.toString(StandardCharsets.UTF_8.name());
+
+    // Instrumentation function bubbles must be emitted even though the model defines none.
+    assertTrue(xml.contains("ProcessInstrumentationFunction"),
+        "Synthesized instrumentation should produce ProcessInstrumentationFunction elements");
+    // Separator should get pressure, level and temperature transmitters.
+    assertTrue(xml.contains("PT-2001"), "Separator should get a pressure transmitter");
+    assertTrue(xml.contains("LT-2002"), "Separator should get a level transmitter");
+    assertTrue(xml.contains("TT-2003"), "Separator should get a temperature transmitter");
+    // Matched controllers should be present.
+    assertTrue(xml.contains("PC-2001"), "Separator pressure loop should get a controller");
+    assertTrue(xml.contains("LC-2002"), "Separator level loop should get a controller");
+    // Compressor should get a discharge pressure transmitter and a suction flow transmitter.
+    assertTrue(xml.contains("PT-2011"), "Compressor should get a discharge pressure transmitter");
+    assertTrue(xml.contains("FT-2014"), "Compressor should get a suction flow transmitter");
+    // Cooler should get a temperature loop.
+    assertTrue(xml.contains("TT-2023"), "Cooler should get a temperature transmitter");
+    assertTrue(xml.contains("TC-2023"), "Cooler should get a temperature controller");
+  }
+
+  /**
+   * Tests that automatic instrumentation synthesis can be disabled, so a model without explicit
+   * measurement devices exports no instrumentation.
+   *
+   * @throws IOException if writing fails
+   */
+  @Test
+  public void testAutoSynthesisCanBeDisabled() throws IOException {
+    Stream feed = createFeedStream();
+    Separator sep = new Separator("HP-Sep", feed);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(sep);
+    process.run();
+
+    try {
+      DexpiXmlWriter.setAutoSynthesizeInstrumentation(false);
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
+      DexpiXmlWriter.writeForPyDexpi(process, out);
+      String xml = out.toString(StandardCharsets.UTF_8.name());
+      // The shape catalogue always references the ProcessInstrumentationFunction class, so assert
+      // on the absence of synthesized instrument tags instead.
+      assertFalse(xml.contains("PT-2001"),
+          "Disabling synthesis should produce no synthesized pressure transmitter");
+      assertFalse(xml.contains("LT-2002"),
+          "Disabling synthesis should produce no synthesized level transmitter");
+    } finally {
+      DexpiXmlWriter.setAutoSynthesizeInstrumentation(true);
+    }
   }
 
   /**

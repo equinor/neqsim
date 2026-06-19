@@ -18,6 +18,8 @@ import neqsim.process.equipment.util.SetPoint;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Audit test to identify equipment classes that return null from toJson().
@@ -30,6 +32,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author esol
  */
 public class JsonSerializationAuditTest {
+  private static final Logger logger = LogManager.getLogger(JsonSerializationAuditTest.class);
+
   /**
    * Audit which equipment types return null from toJson().
    */
@@ -111,24 +115,24 @@ public class JsonSerializationAuditTest {
     }
 
     // Print audit results
-    System.out.println("\n========================================");
-    System.out.println("JSON SERIALIZATION AUDIT RESULTS");
-    System.out.println("========================================\n");
+    logger.info("\n========================================");
+    logger.info("JSON SERIALIZATION AUDIT RESULTS");
+    logger.info("========================================\n");
 
-    System.out.println("Equipment with toJson() implementation (" + hasToJson.size() + "):");
+    logger.info("Equipment with toJson() implementation (" + hasToJson.size() + "):");
     for (String name : hasToJson) {
-      System.out.println("  ✓ " + name);
+      logger.info("  ✓ " + name);
     }
 
-    System.out.println("\nEquipment returning null from toJson() (" + missingToJson.size() + "):");
+    logger.info("\nEquipment returning null from toJson() (" + missingToJson.size() + "):");
     for (String name : missingToJson) {
-      System.out.println("  ✗ " + name);
+      logger.info("  ✗ " + name);
     }
 
     // List all known equipment classes that need toJson()
-    System.out.println("\n========================================");
-    System.out.println("EQUIPMENT CLASSES NEEDING toJson() IMPLEMENTATION:");
-    System.out.println("========================================");
+    logger.info("\n========================================");
+    logger.info("EQUIPMENT CLASSES NEEDING toJson() IMPLEMENTATION:");
+    logger.info("========================================");
     String[] missingClasses = {
         // Adsorber
         "SimpleAdsorber",
@@ -175,11 +179,11 @@ public class JsonSerializationAuditTest {
         "StreamSaturatorUtil", "StreamTransition"};
 
     for (String cls : missingClasses) {
-      System.out.println("  - " + cls);
+      logger.info("  - " + cls);
     }
 
     System.out
         .println("\nTotal: " + missingClasses.length + " classes need toJson() implementations");
-    System.out.println("\n========================================");
+    logger.info("\n========================================");
   }
 }

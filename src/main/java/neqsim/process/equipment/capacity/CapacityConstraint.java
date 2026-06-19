@@ -156,6 +156,20 @@ public class CapacityConstraint implements Serializable {
   private String dataSource = "not_set";
 
   /**
+   * Marginal economic value (shadow price) of relaxing this constraint.
+   *
+   * <p>
+   * The shadow price is the incremental objective improvement obtained per unit of additional
+   * capacity when this constraint is binding — for example currency-per-day gained per extra unit
+   * of design rate, or per percentage point of utilisation headroom unlocked. It is zero by default
+   * and is populated by a debottlenecking study (see
+   * {@code neqsim.process.optimization.valuechain.DebottleneckingAdvisor}). A non-binding
+   * constraint has a shadow price of zero.
+   * </p>
+   */
+  private double shadowPrice = 0.0;
+
+  /**
    * Creates a new capacity constraint.
    *
    * @param name the name of the constraint
@@ -575,6 +589,33 @@ public class CapacityConstraint implements Serializable {
    */
   public CapacityConstraint setDataSource(String dataSource) {
     this.dataSource = dataSource != null ? dataSource : "not_set";
+    return this;
+  }
+
+  /**
+   * Gets the marginal economic value (shadow price) of relaxing this constraint.
+   *
+   * <p>
+   * Returns the incremental objective improvement obtainable per unit of additional capacity while
+   * this constraint is binding. The value is zero unless it has been populated by a debottlenecking
+   * study. See {@code neqsim.process.optimization.valuechain.DebottleneckingAdvisor} for the
+   * companion analysis that computes and sets this value.
+   * </p>
+   *
+   * @return the shadow price (objective units per unit of relaxed capacity); zero if not set
+   */
+  public double getShadowPrice() {
+    return shadowPrice;
+  }
+
+  /**
+   * Sets the marginal economic value (shadow price) of relaxing this constraint.
+   *
+   * @param shadowPrice the shadow price in objective units per unit of relaxed capacity
+   * @return this constraint for method chaining
+   */
+  public CapacityConstraint setShadowPrice(double shadowPrice) {
+    this.shadowPrice = shadowPrice;
     return this;
   }
 

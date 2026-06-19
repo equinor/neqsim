@@ -8,6 +8,8 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Test for TwoFluidPipe condensation behavior.
@@ -27,6 +29,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version 1.0
  */
 public class TwoFluidPipeCondensationTest {
+  private static final Logger logger = LogManager.getLogger(TwoFluidPipeCondensationTest.class);
+
 
   /**
    * Create wet natural gas feed fluid.
@@ -83,7 +87,7 @@ public class TwoFluidPipeCondensationTest {
     double inletPressureBara = 100.0; // Initial guess
 
     // ========== TwoFluidPipe ==========
-    System.out.println("===== TwoFluidPipe Condensation Test =====");
+    logger.info("===== TwoFluidPipe Condensation Test =====");
 
     SystemInterface fluidTF = createFeedFluid();
     ProcessSystem psTF = new ProcessSystem();
@@ -121,7 +125,7 @@ public class TwoFluidPipeCondensationTest {
       double error = outletPressureBara - actualOutletP;
 
       if (Math.abs(error) < 0.1) {
-        System.out.println("TwoFluidPipe converged after " + (iter + 1) + " iterations");
+        logger.info("TwoFluidPipe converged after " + (iter + 1) + " iterations");
         break;
       }
 
@@ -139,57 +143,57 @@ public class TwoFluidPipeCondensationTest {
     double[] oilHoldupTF = pipeTF.getOilHoldupProfile();
 
     // Print TwoFluidPipe results
-    System.out.println("\nTwoFluidPipe Results:");
+    logger.info("\nTwoFluidPipe Results:");
     System.out
         .println("  Inlet P: " + String.format("%.1f", inletTF.getPressure("bara")) + " bara");
-    System.out.println("  Outlet P: "
-        + String.format("%.1f", pipeTF.getOutletStream().getPressure("bara")) + " bara");
+    logger.info("  Outlet P: " + String.format("%.1f", pipeTF.getOutletStream().getPressure("bara"))
+        + " bara");
     System.out
         .println("  Pressure drop: "
             + String.format("%.1f",
                 inletTF.getPressure("bara") - pipeTF.getOutletStream().getPressure("bara"))
             + " bar");
-    System.out.println("  Inlet T: " + String.format("%.1f", temperatureTF[0] - 273.15) + " °C");
-    System.out.println("  Outlet T: "
+    logger.info("  Inlet T: " + String.format("%.1f", temperatureTF[0] - 273.15) + " °C");
+    logger.info("  Outlet T: "
         + String.format("%.1f", temperatureTF[temperatureTF.length - 1] - 273.15) + " °C");
 
     // Print holdup at inlet, middle, outlet
     int mid = numberOfSections / 2;
     int last = numberOfSections - 1;
-    System.out.println("\nTwoFluidPipe Holdup Profile:");
-    System.out.println("  Position\tWater %\t\tOil %\t\tTotal Liq %");
-    System.out.println("  Inlet:\t" + String.format("%.4f", waterHoldupTF[0] * 100) + "\t\t"
+    logger.info("\nTwoFluidPipe Holdup Profile:");
+    logger.info("  Position\tWater %\t\tOil %\t\tTotal Liq %");
+    logger.info("  Inlet:\t" + String.format("%.4f", waterHoldupTF[0] * 100) + "\t\t"
         + String.format("%.4f", oilHoldupTF[0] * 100) + "\t\t"
         + String.format("%.4f", liquidHoldupTF[0] * 100));
-    System.out.println("  Middle:\t" + String.format("%.4f", waterHoldupTF[mid] * 100) + "\t\t"
+    logger.info("  Middle:\t" + String.format("%.4f", waterHoldupTF[mid] * 100) + "\t\t"
         + String.format("%.4f", oilHoldupTF[mid] * 100) + "\t\t"
         + String.format("%.4f", liquidHoldupTF[mid] * 100));
-    System.out.println("  Outlet:\t" + String.format("%.4f", waterHoldupTF[last] * 100) + "\t\t"
+    logger.info("  Outlet:\t" + String.format("%.4f", waterHoldupTF[last] * 100) + "\t\t"
         + String.format("%.4f", oilHoldupTF[last] * 100) + "\t\t"
         + String.format("%.4f", liquidHoldupTF[last] * 100));
 
     // Print flow regimes
     PipeSection.FlowRegime[] flowRegimes = pipeTF.getFlowRegimeProfile();
-    System.out.println("\nFlow Regimes:");
-    System.out.println("  Inlet: " + flowRegimes[0]);
-    System.out.println("  Middle: " + flowRegimes[mid]);
-    System.out.println("  Outlet: " + flowRegimes[last]);
+    logger.info("\nFlow Regimes:");
+    logger.info("  Inlet: " + flowRegimes[0]);
+    logger.info("  Middle: " + flowRegimes[mid]);
+    logger.info("  Outlet: " + flowRegimes[last]);
 
     // Print detailed debug info
-    System.out.println("\nDetailed Debug Info:");
+    logger.info("\nDetailed Debug Info:");
     double[] gasVelocityTF = pipeTF.getGasVelocityProfile();
     double[] liquidVelocityTF = pipeTF.getLiquidVelocityProfile();
-    System.out.println("  Position\tT(C)\t\tP(bara)\t\tVgas(m/s)\tVliq(m/s)\tHoldup(%)");
+    logger.info("  Position\tT(C)\t\tP(bara)\t\tVgas(m/s)\tVliq(m/s)\tHoldup(%)");
     for (int idx : new int[] {0, 25, 50, 75, last}) {
-      System.out.println("  " + idx + ":\t\t" + String.format("%.1f", temperatureTF[idx] - 273.15)
-          + "\t\t" + String.format("%.1f", pressureTF[idx] / 1e5) + "\t\t"
+      logger.info("  " + idx + ":\t\t" + String.format("%.1f", temperatureTF[idx] - 273.15) + "\t\t"
+          + String.format("%.1f", pressureTF[idx] / 1e5) + "\t\t"
           + String.format("%.2f", gasVelocityTF[idx]) + "\t\t"
           + String.format("%.4f", liquidVelocityTF[idx]) + "\t\t"
           + String.format("%.4f", liquidHoldupTF[idx] * 100));
     }
 
     // Calculate and print no-slip holdup (lambdaL) at each position
-    System.out.println("\nNo-slip holdup calculation:");
+    logger.info("\nNo-slip holdup calculation:");
     double pipeArea = Math.PI * pipeDiameter * pipeDiameter / 4.0;
     for (int idx : new int[] {0, 50, last}) {
       // Calculate superficial velocities from actual velocities and holdup
@@ -199,13 +203,13 @@ public class TwoFluidPipeCondensationTest {
       double vsG = gasVelocityTF[idx] * alphaG; // vsG = vG * alphaG
       double vMix = vsG + vsL;
       double lambdaL = vsL / vMix;
-      System.out.println("  Idx " + idx + ": vsL=" + String.format("%.4f", vsL) + " m/s, vsG="
+      logger.info("  Idx " + idx + ": vsL=" + String.format("%.4f", vsL) + " m/s, vsG="
           + String.format("%.2f", vsG) + " m/s, lambdaL=" + String.format("%.6f", lambdaL) + " ("
           + String.format("%.4f", lambdaL * 100) + "%)");
     }
 
     // ========== PipeBeggsAndBrills for comparison ==========
-    System.out.println("\n===== PipeBeggsAndBrills Comparison =====");
+    logger.info("\n===== PipeBeggsAndBrills Comparison =====");
 
     SystemInterface fluidBB = createFeedFluid();
     ProcessSystem psBB = new ProcessSystem();
@@ -234,7 +238,7 @@ public class TwoFluidPipeCondensationTest {
       double error = outletPressureBara - actualOutletP;
 
       if (Math.abs(error) < 0.1) {
-        System.out.println("PipeBeggsAndBrills converged after " + (iter + 1) + " iterations");
+        logger.info("PipeBeggsAndBrills converged after " + (iter + 1) + " iterations");
         break;
       }
 
@@ -250,33 +254,33 @@ public class TwoFluidPipeCondensationTest {
     double[] liquidHoldupBB = pipeBB.getLiquidHoldupProfile();
 
     // Print BB results
-    System.out.println("\nPipeBeggsAndBrills Results:");
+    logger.info("\nPipeBeggsAndBrills Results:");
     System.out
         .println("  Inlet P: " + String.format("%.1f", inletBB.getPressure("bara")) + " bara");
-    System.out.println("  Outlet P: "
-        + String.format("%.1f", pipeBB.getOutletStream().getPressure("bara")) + " bara");
+    logger.info("  Outlet P: " + String.format("%.1f", pipeBB.getOutletStream().getPressure("bara"))
+        + " bara");
     System.out
         .println("  Pressure drop: "
             + String.format("%.1f",
                 inletBB.getPressure("bara") - pipeBB.getOutletStream().getPressure("bara"))
             + " bar");
-    System.out.println("  Inlet T: " + String.format("%.1f", temperatureBB[0] - 273.15) + " °C");
-    System.out.println("  Outlet T: "
+    logger.info("  Inlet T: " + String.format("%.1f", temperatureBB[0] - 273.15) + " °C");
+    logger.info("  Outlet T: "
         + String.format("%.1f", temperatureBB[temperatureBB.length - 1] - 273.15) + " °C");
 
-    System.out.println("\nPipeBeggsAndBrills Holdup Profile:");
-    System.out.println("  Position\tTotal Liq %");
-    System.out.println("  Inlet:\t" + String.format("%.4f", liquidHoldupBB[0] * 100));
-    System.out.println("  Middle:\t" + String.format("%.4f", liquidHoldupBB[mid] * 100));
-    System.out.println("  Outlet:\t" + String.format("%.4f", liquidHoldupBB[last] * 100));
+    logger.info("\nPipeBeggsAndBrills Holdup Profile:");
+    logger.info("  Position\tTotal Liq %");
+    logger.info("  Inlet:\t" + String.format("%.4f", liquidHoldupBB[0] * 100));
+    logger.info("  Middle:\t" + String.format("%.4f", liquidHoldupBB[mid] * 100));
+    logger.info("  Outlet:\t" + String.format("%.4f", liquidHoldupBB[last] * 100));
 
     // ========== Assertions ==========
     // Temperature should drop significantly (from 45°C towards 5°C)
     double tempDropTF = (temperatureTF[0] - temperatureTF[last]);
     double tempDropBB = (temperatureBB[0] - temperatureBB[last]);
-    System.out.println("\n===== Verification =====");
-    System.out.println("Temperature drop TF: " + String.format("%.1f", tempDropTF) + " K");
-    System.out.println("Temperature drop BB: " + String.format("%.1f", tempDropBB) + " K");
+    logger.info("\n===== Verification =====");
+    logger.info("Temperature drop TF: " + String.format("%.1f", tempDropTF) + " K");
+    logger.info("Temperature drop BB: " + String.format("%.1f", tempDropBB) + " K");
 
     assertTrue(tempDropTF > 30, "TwoFluidPipe: Temperature should drop > 30K due to heat transfer");
     assertTrue(tempDropBB > 30,
@@ -284,14 +288,14 @@ public class TwoFluidPipeCondensationTest {
 
     // For BB, holdup should increase from inlet to outlet due to condensation
     double holdupIncreaseBB = liquidHoldupBB[last] - liquidHoldupBB[0];
-    System.out.println("BB holdup increase (outlet - inlet): "
+    logger.info("BB holdup increase (outlet - inlet): "
         + String.format("%.6f", holdupIncreaseBB * 100) + " %");
     assertTrue(holdupIncreaseBB > 0,
         "PipeBeggsAndBrills: Holdup should increase from inlet to outlet due to condensation");
 
     // For TwoFluidPipe, holdup should also increase from inlet to outlet
     double holdupIncreaseTF = liquidHoldupTF[last] - liquidHoldupTF[0];
-    System.out.println("TF holdup increase (outlet - inlet): "
+    logger.info("TF holdup increase (outlet - inlet): "
         + String.format("%.6f", holdupIncreaseTF * 100) + " %");
 
     // This is the critical test - if this fails, the condensation isn't affecting holdup
@@ -299,7 +303,7 @@ public class TwoFluidPipeCondensationTest {
         "TwoFluidPipe: Holdup should increase from inlet to outlet due to condensation. "
             + "Current increase: " + String.format("%.6f", holdupIncreaseTF * 100) + "%");
 
-    System.out.println("\n✓ All assertions passed!");
+    logger.info("\n✓ All assertions passed!");
   }
 
   /**
@@ -307,7 +311,7 @@ public class TwoFluidPipeCondensationTest {
    */
   @Test
   public void testFlashAtPipelineConditions() {
-    System.out.println("===== Flash at Pipeline Conditions =====");
+    logger.info("===== Flash at Pipeline Conditions =====");
 
     SystemInterface fluid = createFeedFluid();
 
@@ -319,8 +323,8 @@ public class TwoFluidPipeCondensationTest {
     ops.TPflash();
     fluid.initPhysicalProperties();
 
-    System.out.println("\nAt INLET (45°C, 100 bara):");
-    System.out.println("  Number of phases: " + fluid.getNumberOfPhases());
+    logger.info("\nAt INLET (45°C, 100 bara):");
+    logger.info("  Number of phases: " + fluid.getNumberOfPhases());
 
     double totalMassWeighted = 0.0;
     for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
@@ -339,7 +343,7 @@ public class TwoFluidPipeCondensationTest {
       double molarMass = fluid.getPhase(i).getMolarMass();
       double massContrib = phaseFrac * molarMass;
 
-      System.out.println("  Phase " + (i + 1) + ": type='" + phaseType + "', beta=" + phaseFrac
+      logger.info("  Phase " + (i + 1) + ": type='" + phaseType + "', beta=" + phaseFrac
           + ", molarMass=" + molarMass + " kg/mol, massContrib=" + massContrib);
 
       if (phaseType.equals("gas")) {
@@ -349,11 +353,11 @@ public class TwoFluidPipeCondensationTest {
       }
     }
 
-    System.out.println("  totalMassWeighted: " + totalMassWeighted);
-    System.out.println("  gasMassContrib: " + gasMassContrib);
-    System.out.println("  liqMassContrib: " + liqMassContrib);
-    System.out.println("  Gas mass fraction: " + (gasMassContrib / totalMassWeighted));
-    System.out.println("  Liquid mass fraction: " + (liqMassContrib / totalMassWeighted));
+    logger.info("  totalMassWeighted: " + totalMassWeighted);
+    logger.info("  gasMassContrib: " + gasMassContrib);
+    logger.info("  liqMassContrib: " + liqMassContrib);
+    logger.info("  Gas mass fraction: " + (gasMassContrib / totalMassWeighted));
+    logger.info("  Liquid mass fraction: " + (liqMassContrib / totalMassWeighted));
 
     // Test flash at outlet conditions (5°C, 80 bara)
     SystemInterface fluid2 = createFeedFluid();
@@ -364,8 +368,8 @@ public class TwoFluidPipeCondensationTest {
     ops2.TPflash();
     fluid2.initPhysicalProperties();
 
-    System.out.println("\nAt OUTLET (5°C, 80 bara):");
-    System.out.println("  Number of phases: " + fluid2.getNumberOfPhases());
+    logger.info("\nAt OUTLET (5°C, 80 bara):");
+    logger.info("  Number of phases: " + fluid2.getNumberOfPhases());
 
     totalMassWeighted = 0.0;
     for (int p = 0; p < fluid2.getNumberOfPhases(); p++) {
@@ -383,7 +387,7 @@ public class TwoFluidPipeCondensationTest {
       double molarMass = fluid2.getPhase(i).getMolarMass();
       double massContrib = phaseFrac * molarMass;
 
-      System.out.println("  Phase " + (i + 1) + ": type='" + phaseType + "', beta=" + phaseFrac
+      logger.info("  Phase " + (i + 1) + ": type='" + phaseType + "', beta=" + phaseFrac
           + ", molarMass=" + molarMass + " kg/mol, massContrib=" + massContrib);
 
       if (phaseType.equals("gas")) {
@@ -393,13 +397,13 @@ public class TwoFluidPipeCondensationTest {
       }
     }
 
-    System.out.println("  totalMassWeighted: " + totalMassWeighted);
-    System.out.println("  gasMassContrib: " + gasMassContrib);
-    System.out.println("  liqMassContrib: " + liqMassContrib);
-    System.out.println("  Gas mass fraction: " + (gasMassContrib / totalMassWeighted));
-    System.out.println("  Liquid mass fraction: " + (liqMassContrib / totalMassWeighted));
+    logger.info("  totalMassWeighted: " + totalMassWeighted);
+    logger.info("  gasMassContrib: " + gasMassContrib);
+    logger.info("  liqMassContrib: " + liqMassContrib);
+    logger.info("  Gas mass fraction: " + (gasMassContrib / totalMassWeighted));
+    logger.info("  Liquid mass fraction: " + (liqMassContrib / totalMassWeighted));
 
     // The liquid fraction should increase from inlet to outlet due to condensation
-    System.out.println("\n=> Liquid mass fraction should be HIGHER at outlet due to condensation");
+    logger.info("\n=> Liquid mass fraction should be HIGHER at outlet due to condensation");
   }
 }

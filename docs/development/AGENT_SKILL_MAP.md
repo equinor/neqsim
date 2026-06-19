@@ -29,6 +29,7 @@ loaded with `read_file` at the start of an agent invocation.
 | `neqsim.test.agent.md` | write neqsim unit tests | _(none declared)_ |
 | `notebook.example.agent.md` | create a neqsim jupyter notebook | _(none declared)_ |
 | `optimize.agent.md` | optimize neqsim process | _(none declared)_ |
+| `optimize.processmodel.agent.md` | optimize neqsim process model plant | `neqsim-agentic-process-optimization`, `neqsim-optimization-and-doe`, `neqsim-platform-modeling`, `neqsim-api-patterns`, `neqsim-notebook-patterns`, `neqsim-professional-reporting` |
 | `plant.data.agent.md` | integrate neqsim with plant data | `neqsim-plant-data`, `neqsim-pid-process-operations`, `neqsim-model-calibration-and-data-reconciliation`, `neqsim-water-hammer` |
 | `process.model.agent.md` | make a neqsim process simulation | `neqsim-process-modeling`, `neqsim-api-patterns`, `neqsim-input-validation`, `neqsim-troubleshooting`, `neqsim-standards-lookup`, `neqsim-pid-process-operations`, `neqsim-water-hammer`, `neqsim-notebook-patterns`, `neqsim-distillation-design`, `neqsim-heat-integration`, `neqsim-controllability-operability`, `neqsim-platform-modeling`, `neqsim-dynamic-simulation`, `neqsim-java8-rules` |
 | `pvt.simulation.agent.md` | run a neqsim PVT simulation | _(none declared)_ |

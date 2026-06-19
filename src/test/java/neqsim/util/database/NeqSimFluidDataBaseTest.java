@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class NeqSimFluidDataBaseTest {
-  Logger logger = LogManager.getFormatterLogger(NeqSimFluidDataBaseTest.class);
+  private static final Logger logger = LogManager.getLogger(NeqSimFluidDataBaseTest.class);
 
   @Disabled
   @Test
@@ -18,10 +18,10 @@ public class NeqSimFluidDataBaseTest {
     try (ResultSet dataSet =
         database.getResultSet("FluidDatabase", "SELECT * FROM comp where name='water'")) {
       dataSet.next();
-      // System.out.println("dataset " + dataSet.getString("molarmass"));
+      // logger.info("dataset " + dataSet.getString("molarmass"));
       failed = false;
     } catch (Exception ex) {
-      System.out.println("failed");
+      logger.info("failed");
     }
     Assertions.assertFalse(failed, "Failed getting properties from FluidDatabase");
   }

@@ -3,6 +3,7 @@ package neqsim.process.costestimation;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.ProcessEquipmentInterface;
@@ -653,27 +654,31 @@ public class ProcessCostEstimate implements java.io.Serializable {
 
     sb.append("CAPITAL COST SUMMARY\n");
     sb.append("----------------------------------------------------------------------\n");
-    sb.append(
-        String.format("Purchased Equipment Cost (PEC):    $%,.0f%n", totalPurchasedEquipmentCost));
-    sb.append(String.format("Bare Module Cost (BMC):            $%,.0f%n", totalBareModuleCost));
-    sb.append(String.format("Total Module Cost (TMC):           $%,.0f%n", totalModuleCost));
-    sb.append(String.format("Grass Roots Cost:                  $%,.0f%n", totalGrassRootsCost));
+    sb.append(String.format(Locale.US, "Purchased Equipment Cost (PEC):    $%,.0f%n",
+      totalPurchasedEquipmentCost));
+    sb.append(String.format(Locale.US, "Bare Module Cost (BMC):            $%,.0f%n",
+      totalBareModuleCost));
+    sb.append(String.format(Locale.US, "Total Module Cost (TMC):           $%,.0f%n",
+      totalModuleCost));
+    sb.append(String.format(Locale.US, "Grass Roots Cost:                  $%,.0f%n",
+      totalGrassRootsCost));
     sb.append("\n");
 
     sb.append("INSTALLATION\n");
     sb.append("----------------------------------------------------------------------\n");
-    sb.append(
-        String.format("Total Installation Man-Hours:      %,.0f%n", totalInstallationManHours));
+    sb.append(String.format(Locale.US, "Total Installation Man-Hours:      %,.0f%n",
+      totalInstallationManHours));
     sb.append("\n");
 
     sb.append("COST BY EQUIPMENT TYPE\n");
     sb.append("----------------------------------------------------------------------\n");
-    sb.append(String.format("%-25s %15s %10s%n", "Type", "Cost (USD)", "% of PEC"));
+    sb.append(String.format(Locale.US, "%-25s %15s %10s%n", "Type", "Cost (USD)", "% of PEC"));
     for (Map.Entry<String, Double> entry : costByEquipmentType.entrySet()) {
       double pct =
           (totalPurchasedEquipmentCost > 0) ? (entry.getValue() / totalPurchasedEquipmentCost * 100)
               : 0;
-      sb.append(String.format("%-25s $%,14.0f %9.1f%%%n", entry.getKey(), entry.getValue(), pct));
+        sb.append(String.format(Locale.US, "%-25s $%,14.0f %9.1f%%%n", entry.getKey(),
+          entry.getValue(), pct));
     }
     sb.append("\n");
 
@@ -685,14 +690,15 @@ public class ProcessCostEstimate implements java.io.Serializable {
     }
     for (Map.Entry<String, Double> entry : costByDiscipline.entrySet()) {
       double pct = (totalDiscipline > 0) ? (entry.getValue() / totalDiscipline * 100) : 0;
-      sb.append(String.format("%-35s $%,14.0f %9.1f%%%n", entry.getKey(), entry.getValue(), pct));
+        sb.append(String.format(Locale.US, "%-35s $%,14.0f %9.1f%%%n", entry.getKey(),
+          entry.getValue(), pct));
     }
     sb.append("\n");
 
     sb.append("FACTORS APPLIED\n");
     sb.append("----------------------------------------------------------------------\n");
-    sb.append(String.format("Location Factor:                   %.2f%n", locationFactor));
-    sb.append(String.format("Complexity Factor:                 %.2f%n", complexityFactor));
+    sb.append(String.format(Locale.US, "Location Factor:                   %.2f%n", locationFactor));
+    sb.append(String.format(Locale.US, "Complexity Factor:                 %.2f%n", complexityFactor));
     sb.append("\n");
 
     sb.append("======================================================================\n");
@@ -712,13 +718,14 @@ public class ProcessCostEstimate implements java.io.Serializable {
     sb.append("======================================================================\n");
     sb.append("EQUIPMENT COST LIST\n");
     sb.append("======================================================================\n\n");
-    sb.append(String.format("%-20s %-15s %15s %15s %12s%n", "Name", "Type", "PEC (USD)",
+    sb.append(String.format(Locale.US, "%-20s %-15s %15s %15s %12s%n", "Name", "Type", "PEC (USD)",
         "TMC (USD)", "Man-Hours"));
-    sb.append(String.format("%-20s %-15s %15s %15s %12s%n", "--------------------",
+    sb.append(String.format(Locale.US, "%-20s %-15s %15s %15s %12s%n", "--------------------",
         "---------------", "---------------", "---------------", "------------"));
 
     for (EquipmentCostSummary eq : equipmentCosts) {
-      sb.append(String.format("%-20s %-15s $%,14.0f $%,14.0f %,11.0f%n", truncate(eq.getName(), 20),
+        sb.append(String.format(Locale.US, "%-20s %-15s $%,14.0f $%,14.0f %,11.0f%n",
+          truncate(eq.getName(), 20),
           truncate(eq.getType(), 15), eq.getPurchasedEquipmentCost(), eq.getTotalModuleCost(),
           eq.getInstallationManHours()));
     }

@@ -43,6 +43,18 @@ public class LevelTransmitter extends MeasurementDeviceBaseClass {
     this.separator = separator;
   }
 
+  /**
+   * <p>
+   * Returns the separator whose liquid level this transmitter measures.
+   * </p>
+   *
+   * @return the associated {@link neqsim.process.equipment.separator.Separator}, or {@code null} if
+   *         none was set
+   */
+  public Separator getSeparator() {
+    return separator;
+  }
+
   /** {@inheritDoc} */
   @Override
   @ExcludeFromJacocoGeneratedReport

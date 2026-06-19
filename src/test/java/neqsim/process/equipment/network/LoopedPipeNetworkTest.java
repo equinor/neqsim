@@ -12,6 +12,8 @@ import neqsim.process.equipment.reservoir.SimpleReservoir;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Unit tests for Hardy Cross looped network solver.
@@ -31,6 +33,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 class LoopedPipeNetworkTest {
+  private static final Logger logger = LogManager.getLogger(LoopedPipeNetworkTest.class);
+
 
   private SystemInterface testGas;
 
@@ -65,10 +69,10 @@ class LoopedPipeNetworkTest {
 
     List<NetworkLoop> loops = detector.findLoops();
 
-    System.out.println("Loops found: " + loops.size());
+    logger.info("Loops found: " + loops.size());
     for (NetworkLoop loop : loops) {
-      System.out.println("  Loop: " + loop.toString());
-      System.out.println("  Members: " + loop.getMembers().size());
+      logger.info("  Loop: " + loop.toString());
+      logger.info("  Members: " + loop.getMembers().size());
     }
 
     // Should detect exactly one loop
@@ -560,7 +564,7 @@ class LoopedPipeNetworkTest {
     double deliveredFlow = network.getNodeFlowRate("D");
     assertEquals(flow, deliveredFlow, 1.0, "Delivered flow at sink should equal pipe flow");
 
-    System.out.println("Pressure-pressure single pipe: flow = " + flow + " kg/hr");
+    logger.info("Pressure-pressure single pipe: flow = " + flow + " kg/hr");
   }
 
   /**
@@ -608,8 +612,8 @@ class LoopedPipeNetworkTest {
     assertEquals(inletFlow, outletFlow, 1.0, "Inlet and outlet flows should match");
     assertEquals(inletFlow, upperFlow + lowerFlow, 1.0, "Mass balance at junction A");
 
-    System.out.println("Parallel pipes: upper=" + upperFlow + " lower=" + lowerFlow + " total="
-        + inletFlow + " kg/hr");
+    logger.info("Parallel pipes: upper=" + upperFlow + " lower=" + lowerFlow + " total=" + inletFlow
+        + " kg/hr");
   }
 
   /**
@@ -654,7 +658,7 @@ class LoopedPipeNetworkTest {
 
     assertTrue(flowUphill < flowFlat,
         "Uphill flow should be less than flat flow due to hydrostatic head");
-    System.out.println("Flat flow=" + flowFlat + " Uphill flow=" + flowUphill + " kg/hr");
+    logger.info("Flat flow=" + flowFlat + " Uphill flow=" + flowUphill + " kg/hr");
   }
 
   /**
@@ -747,15 +751,15 @@ class LoopedPipeNetworkTest {
     double m1P = network.getNodePressure("manifold1");
     double m2P = network.getNodePressure("manifold2");
     double m3P = network.getNodePressure("manifold3");
-    System.out.println("=== Gathering Network Results ===");
-    System.out.println(
+    logger.info("=== Gathering Network Results ===");
+    logger.info(
         "Converged: " + network.isConverged() + ", iterations: " + network.getIterationCount());
-    System.out.println("Platform: " + String.format("%.4f", platformP) + " bara");
-    System.out.println("Manifold 1: " + String.format("%.4f", m1P) + " bara");
-    System.out.println("Manifold 2: " + String.format("%.4f", m2P) + " bara");
-    System.out.println("Manifold 3: " + String.format("%.4f", m3P) + " bara");
+    logger.info("Platform: " + String.format("%.4f", platformP) + " bara");
+    logger.info("Manifold 1: " + String.format("%.4f", m1P) + " bara");
+    logger.info("Manifold 2: " + String.format("%.4f", m2P) + " bara");
+    logger.info("Manifold 3: " + String.format("%.4f", m3P) + " bara");
     for (String pipeName : network.getPipeNames()) {
-      System.out.println(pipeName + ": " + String.format("%.1f", network.getPipeFlowRate(pipeName))
+      logger.info(pipeName + ": " + String.format("%.1f", network.getPipeFlowRate(pipeName))
           + " kg/hr, dP=" + String.format("%.4f", network.getPipeHeadLoss(pipeName)) + " bar, v="
           + String.format("%.3f", network.getPipeVelocity(pipeName)) + " m/s");
     }
@@ -816,9 +820,9 @@ class LoopedPipeNetworkTest {
     assertTrue(iprFlow > 0, "IPR flow should be positive (producing): " + iprFlow);
     assertEquals(iprFlow, lineFlow, 1.0, "Mass balance: IPR flow = flowline flow");
 
-    System.out.println("=== Single Well PI IPR ===");
-    System.out.println("Wellhead P = " + String.format("%.2f", pWh) + " bara");
-    System.out.println("Production rate = " + String.format("%.1f", iprFlow) + " kg/hr");
+    logger.info("=== Single Well PI IPR ===");
+    logger.info("Wellhead P = " + String.format("%.2f", pWh) + " bara");
+    logger.info("Production rate = " + String.format("%.1f", iprFlow) + " kg/hr");
   }
 
   /**
@@ -854,9 +858,9 @@ class LoopedPipeNetworkTest {
     // Flow should be less than qmax (in kg/hr = qmax*3600)
     assertTrue(flow < 50.0 * 3600.0, "Flow should be below AOF: " + flow);
 
-    System.out.println("=== Single Well Vogel IPR ===");
-    System.out.println("Wellhead P = " + String.format("%.2f", pWh) + " bara");
-    System.out.println("Production rate = " + String.format("%.1f", flow) + " kg/hr");
+    logger.info("=== Single Well Vogel IPR ===");
+    logger.info("Wellhead P = " + String.format("%.2f", pWh) + " bara");
+    logger.info("Production rate = " + String.format("%.1f", flow) + " kg/hr");
   }
 
   /**
@@ -890,9 +894,9 @@ class LoopedPipeNetworkTest {
         "Wellhead pressure should be between separator and reservoir: " + pWh);
     assertTrue(flow > 0.0, "Gas production should be positive: " + flow);
 
-    System.out.println("=== Fetkovich Gas Well ===");
-    System.out.println("Wellhead P = " + String.format("%.2f", pWh) + " bara");
-    System.out.println("Production rate = " + String.format("%.1f", flow) + " kg/hr");
+    logger.info("=== Fetkovich Gas Well ===");
+    logger.info("Wellhead P = " + String.format("%.2f", pWh) + " bara");
+    logger.info("Production rate = " + String.format("%.1f", flow) + " kg/hr");
   }
 
   /**
@@ -949,10 +953,10 @@ class LoopedPipeNetworkTest {
     double pDs = withChoke.getNodePressure("downstream_choke");
     assertTrue(pWh > pDs, "Pressure should drop across choke: " + pWh + " -> " + pDs);
 
-    System.out.println("=== Well With Production Choke ===");
-    System.out.println("No choke: " + String.format("%.1f", flowNoChoke) + " kg/hr");
-    System.out.println("With choke (50%): " + String.format("%.1f", flowWithChoke) + " kg/hr");
-    System.out.println("Choke dP = " + String.format("%.2f", pWh - pDs) + " bar");
+    logger.info("=== Well With Production Choke ===");
+    logger.info("No choke: " + String.format("%.1f", flowNoChoke) + " kg/hr");
+    logger.info("With choke (50%): " + String.format("%.1f", flowWithChoke) + " kg/hr");
+    logger.info("Choke dP = " + String.format("%.2f", pWh - pDs) + " bar");
   }
 
   /**
@@ -963,7 +967,7 @@ class LoopedPipeNetworkTest {
     double previousFlow = Double.MAX_VALUE;
     double[] openings = {100.0, 75.0, 50.0, 25.0};
 
-    System.out.println("=== Choke Sensitivity ===");
+    logger.info("=== Choke Sensitivity ===");
 
     for (double opening : openings) {
       LoopedPipeNetwork network = new LoopedPipeNetwork("choke_" + opening);
@@ -1039,11 +1043,11 @@ class LoopedPipeNetworkTest {
     assertTrue(pBh < 400.0, "BHP should be less than reservoir pressure: " + pBh);
     assertTrue(flow > 0, "Production should be positive: " + flow);
 
-    System.out.println("=== Well With Tubing ===");
-    System.out.println("BHP = " + String.format("%.2f", pBh) + " bara");
-    System.out.println("WHP = " + String.format("%.2f", pWh) + " bara");
-    System.out.println("Tubing dP = " + String.format("%.2f", pBh - pWh) + " bar");
-    System.out.println("Rate = " + String.format("%.1f", flow) + " kg/hr");
+    logger.info("=== Well With Tubing ===");
+    logger.info("BHP = " + String.format("%.2f", pBh) + " bara");
+    logger.info("WHP = " + String.format("%.2f", pWh) + " bara");
+    logger.info("Tubing dP = " + String.format("%.2f", pBh - pWh) + " bar");
+    logger.info("Rate = " + String.format("%.1f", flow) + " kg/hr");
   }
 
   /**
@@ -1111,13 +1115,13 @@ class LoopedPipeNetworkTest {
     assertTrue(pManifold > 40.0 && pManifold < 280.0,
         "Manifold pressure should be reasonable: " + pManifold);
 
-    System.out.println("=== Multi-Well Gathering Network ===");
-    System.out.println("Well 1: " + String.format("%.1f", flow1) + " kg/hr, WHP="
+    logger.info("=== Multi-Well Gathering Network ===");
+    logger.info("Well 1: " + String.format("%.1f", flow1) + " kg/hr, WHP="
         + String.format("%.2f", network.getNodePressure("wh1")) + " bara");
-    System.out.println("Well 2: " + String.format("%.1f", flow2) + " kg/hr, WHP="
+    logger.info("Well 2: " + String.format("%.1f", flow2) + " kg/hr, WHP="
         + String.format("%.2f", network.getNodePressure("wh2")) + " bara");
-    System.out.println("Manifold P = " + String.format("%.2f", pManifold) + " bara");
-    System.out.println("Export: " + String.format("%.1f", exportFlow) + " kg/hr");
+    logger.info("Manifold P = " + String.format("%.2f", pManifold) + " bara");
+    logger.info("Export: " + String.format("%.1f", exportFlow) + " kg/hr");
   }
 
   /**
@@ -1183,15 +1187,15 @@ class LoopedPipeNetworkTest {
     assertEquals(totalIn, totalOut, 10.0,
         "Total inflow should equal total outflow: " + totalIn + " vs " + totalOut);
 
-    System.out.println("=== Looped Production Gathering ===");
-    System.out.println("Well A: " + String.format("%.1f", flowA) + " kg/hr");
-    System.out.println("Well B: " + String.format("%.1f", flowB) + " kg/hr");
+    logger.info("=== Looped Production Gathering ===");
+    logger.info("Well A: " + String.format("%.1f", flowA) + " kg/hr");
+    logger.info("Well B: " + String.format("%.1f", flowB) + " kg/hr");
     System.out
         .println("Ring flow: " + String.format("%.1f", network.getPipeFlowRate("ring")) + " kg/hr");
-    System.out.println("Export 1: " + String.format("%.1f", exp1) + " kg/hr");
-    System.out.println("Export 2: " + String.format("%.1f", exp2) + " kg/hr");
-    System.out.println("M1 P = " + String.format("%.2f", network.getNodePressure("M1")) + " bara");
-    System.out.println("M2 P = " + String.format("%.2f", network.getNodePressure("M2")) + " bara");
+    logger.info("Export 1: " + String.format("%.1f", exp1) + " kg/hr");
+    logger.info("Export 2: " + String.format("%.1f", exp2) + " kg/hr");
+    logger.info("M1 P = " + String.format("%.2f", network.getNodePressure("M1")) + " bara");
+    logger.info("M2 P = " + String.format("%.2f", network.getNodePressure("M2")) + " bara");
   }
 
   /**
@@ -1235,15 +1239,15 @@ class LoopedPipeNetworkTest {
     assertTrue(pDs > pSep, "Downstream choke P > Psep: " + pDs + " > " + pSep);
     assertTrue(rate > 0, "Should produce: " + rate);
 
-    System.out.println("=== Complete Well System ===");
-    System.out.println("P_res=" + String.format("%.1f", pRes) + " -> BHP="
-        + String.format("%.1f", pBh) + " -> WHP=" + String.format("%.1f", pWh) + " -> DS_choke="
-        + String.format("%.1f", pDs) + " -> Sep=" + String.format("%.1f", pSep) + " bara");
-    System.out.println("IPR drawdown = " + String.format("%.1f", pRes - pBh) + " bar");
-    System.out.println("Tubing dP = " + String.format("%.1f", pBh - pWh) + " bar");
-    System.out.println("Choke dP = " + String.format("%.1f", pWh - pDs) + " bar");
-    System.out.println("Flowline dP = " + String.format("%.1f", pDs - pSep) + " bar");
-    System.out.println("Rate = " + String.format("%.1f", rate) + " kg/hr");
+    logger.info("=== Complete Well System ===");
+    logger.info("P_res=" + String.format("%.1f", pRes) + " -> BHP=" + String.format("%.1f", pBh)
+        + " -> WHP=" + String.format("%.1f", pWh) + " -> DS_choke=" + String.format("%.1f", pDs)
+        + " -> Sep=" + String.format("%.1f", pSep) + " bara");
+    logger.info("IPR drawdown = " + String.format("%.1f", pRes - pBh) + " bar");
+    logger.info("Tubing dP = " + String.format("%.1f", pBh - pWh) + " bar");
+    logger.info("Choke dP = " + String.format("%.1f", pWh - pDs) + " bar");
+    logger.info("Flowline dP = " + String.format("%.1f", pDs - pSep) + " bar");
+    logger.info("Rate = " + String.format("%.1f", rate) + " kg/hr");
   }
 
   /**
@@ -2073,9 +2077,9 @@ class LoopedPipeNetworkTest {
     assertNotNull(vlpRates, "Should have VLP rate array");
 
     // Debug output
-    System.out.println("Nodal debug: wellhead P=" + network.getNodePressure("wellhead"));
+    logger.info("Nodal debug: wellhead P=" + network.getNodePressure("wellhead"));
     for (int i = 0; i < Math.min(5, bhps.length); i++) {
-      System.out.printf("  BHP=%.1f: IPR=%.0f, VLP=%.0f%n", bhps[i], iprRates[i], vlpRates[i]);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  BHP=%.1f: IPR=%.0f, VLP=%.0f%n", bhps[i], iprRates[i], vlpRates[i]);
     }
 
     // Operating point should exist
@@ -2825,7 +2829,7 @@ class LoopedPipeNetworkTest {
     java.io.File f = new java.io.File(e300Path);
     if (!f.exists()) {
       // Skip if test file not available
-      System.out.println("Skipping E300 test — file not found: " + e300Path);
+      logger.info("Skipping E300 test — file not found: " + e300Path);
       return;
     }
 

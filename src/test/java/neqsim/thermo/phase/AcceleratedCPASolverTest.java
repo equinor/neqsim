@@ -20,6 +20,8 @@ import neqsim.thermo.system.SystemSrkCPAstatoilFullyImplicit;
 import neqsim.thermo.system.SystemSrkCPAstatoilFullyImplicitReduced;
 import neqsim.thermo.system.SystemSrkCPAstatoilReduced;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Tests for the accelerated CPA solver variants: Broyden quasi-Newton implicit and
@@ -28,6 +30,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author Even Solbraa
  */
 public class AcceleratedCPASolverTest {
+  private static final Logger logger = LogManager.getLogger(AcceleratedCPASolverTest.class);
+
 
   private static final double REL_TOL = 1.0e-6;
 
@@ -311,9 +315,9 @@ public class AcceleratedCPASolverTest {
     }
 
     // Timing benchmark
-    System.out.println("\n=== CPA Solver Benchmark: Pure Water ===");
-    System.out.printf("%-15s %8s%n", "Solver", "Time(ms)");
-    System.out.println("----------------------------");
+    logger.info("\n=== CPA Solver Benchmark: Pure Water ===");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %8s%n", "Solver", "Time(ms)");
+    logger.info("----------------------------");
     for (String type : types) {
       // Warmup
       for (int w = 0; w < warmup; w++) {
@@ -330,7 +334,7 @@ public class AcceleratedCPASolverTest {
       }
       long elapsed = System.nanoTime() - start;
       double ms = elapsed / 1.0e6;
-      System.out.printf("%-15s %8.2f%n", type, ms);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %8.2f%n", type, ms);
     }
   }
 
@@ -346,9 +350,9 @@ public class AcceleratedCPASolverTest {
 
     String[] types = {"standard", "implicit", "broyden", "anderson"};
 
-    System.out.println("\n=== CPA Solver Benchmark: Water-Methanol ===");
-    System.out.printf("%-15s %8s%n", "Solver", "Time(ms)");
-    System.out.println("----------------------------");
+    logger.info("\n=== CPA Solver Benchmark: Water-Methanol ===");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %8s%n", "Solver", "Time(ms)");
+    logger.info("----------------------------");
     for (String type : types) {
       for (int w = 0; w < warmup; w++) {
         for (double temp : temps) {
@@ -363,7 +367,7 @@ public class AcceleratedCPASolverTest {
       }
       long elapsed = System.nanoTime() - start;
       double ms = elapsed / 1.0e6;
-      System.out.printf("%-15s %8.2f%n", type, ms);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %8.2f%n", type, ms);
     }
   }
 
@@ -484,16 +488,16 @@ public class AcceleratedCPASolverTest {
       sys.initProperties();
       double density = sys.getDensity("kg/m3");
       int numPhases = sys.getNumberOfPhases();
-      System.out.printf("%-12s: density=%.6f nPhases=%d%n", type, density, numPhases);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s: density=%.6f nPhases=%d%n", type, density, numPhases);
       for (int p = 0; p < numPhases; p++) {
         double molarVol = sys.getPhase(p).getMolarVolume();
         double phaseFrac = sys.getPhase(p).getBeta();
-        System.out.printf("  Phase[%d] type=%s beta=%.6f molarVol=%.6f%n", p,
+        logger.printf(org.apache.logging.log4j.Level.INFO, "  Phase[%d] type=%s beta=%.6f molarVol=%.6f%n", p,
             sys.getPhase(p).getType(), phaseFrac, molarVol);
         for (int c = 0; c < sys.getPhase(p).getNumberOfComponents(); c++) {
           double fugCoeff = sys.getPhase(p).getComponent(c).getFugacityCoefficient();
           double z = sys.getPhase(p).getComponent(c).getz();
-          System.out.printf("    comp[%d] %s z=%.6f fugCoeff=%.8f%n", c,
+          logger.printf(org.apache.logging.log4j.Level.INFO, "    comp[%d] %s z=%.6f fugCoeff=%.8f%n", c,
               sys.getPhase(p).getComponent(c).getComponentName(), z, fugCoeff);
         }
       }
@@ -547,7 +551,7 @@ public class AcceleratedCPASolverTest {
 
     double[][] timesMs = new double[systemNames.length][solverTypes.length];
 
-    System.out.println("\n========= COMPREHENSIVE CPA SOLVER BENCHMARK =========\n");
+    logger.info("\n========= COMPREHENSIVE CPA SOLVER BENCHMARK =========\n");
 
     for (int s = 0; s < systemNames.length; s++) {
       final int sIdx = s;
@@ -585,9 +589,9 @@ public class AcceleratedCPASolverTest {
     }
 
     // Print summary table
-    System.out.printf("%-30s %10s %10s %10s %10s | %7s %7s%n", "System", "Standard", "Implicit",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s %10s %10s %10s %10s | %7s %7s%n", "System", "Standard", "Implicit",
         "Broyden", "Anderson", "SpB/Std", "SpA/Std");
-    System.out.println("---------------------------------------------"
+    logger.info("---------------------------------------------"
         + "-------------------------------------------");
 
     for (int s = 0; s < systemNames.length; s++) {
@@ -597,39 +601,39 @@ public class AcceleratedCPASolverTest {
       double tAndr = timesMs[s][3];
       double speedupBroyden = tStd / tBroy;
       double speedupAnderson = tStd / tAndr;
-      System.out.printf("%-30s %8.1f ms %8.1f ms %8.1f ms %8.1f ms | %6.2fx %6.2fx%n",
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s %8.1f ms %8.1f ms %8.1f ms %8.1f ms | %6.2fx %6.2fx%n",
           systemNames[s], tStd, tImpl, tBroy, tAndr, speedupBroyden, speedupAnderson);
     }
 
     // Print profiling data for Broyden and Anderson (from last system)
-    System.out.println(
+    logger.info(
         "\n--- Broyden profiling (last system): " + PhaseSrkCPABroydenImplicit.getProfileSummary());
-    System.out.println(
+    logger.info(
         "--- Anderson profiling (last system): " + PhaseSrkCPAandersonMixing.getProfileSummary());
 
     // Run profiling for each system individually
-    System.out.println("\n=== Profiling Data Per System ===");
-    System.out.printf("%-30s | %-60s%n", "System", "Broyden Profile");
-    System.out.println("-------------------------------|"
+    logger.info("\n=== Profiling Data Per System ===");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s | %-60s%n", "System", "Broyden Profile");
+    logger.info("-------------------------------|"
         + "-------------------------------------------------------------");
     for (int s = 0; s < systemNames.length; s++) {
       PhaseSrkCPABroydenImplicit.resetProfileCounters();
       for (int r = 0; r < repeats; r++) {
         runSystemCase("broyden", s);
       }
-      System.out.printf("%-30s | %s%n", systemNames[s],
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s | %s%n", systemNames[s],
           PhaseSrkCPABroydenImplicit.getProfileSummary());
     }
 
-    System.out.printf("%n%-30s | %-60s%n", "System", "Anderson Profile");
-    System.out.println("-------------------------------|"
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%n%-30s | %-60s%n", "System", "Anderson Profile");
+    logger.info("-------------------------------|"
         + "-------------------------------------------------------------");
     for (int s = 0; s < systemNames.length; s++) {
       PhaseSrkCPAandersonMixing.resetProfileCounters();
       for (int r = 0; r < repeats; r++) {
         runSystemCase("anderson", s);
       }
-      System.out.printf("%-30s | %s%n", systemNames[s],
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s | %s%n", systemNames[s],
           PhaseSrkCPAandersonMixing.getProfileSummary());
     }
   }
@@ -832,7 +836,7 @@ public class AcceleratedCPASolverTest {
 
     double[][] timesMs = new double[systemIndices.length][solverTypes.length];
 
-    System.out.println("\n========= REDUCED SOLVER BENCHMARK =========\n");
+    logger.info("\n========= REDUCED SOLVER BENCHMARK =========\n");
 
     for (int s = 0; s < systemIndices.length; s++) {
       for (int t = 0; t < solverTypes.length; t++) {
@@ -851,9 +855,9 @@ public class AcceleratedCPASolverTest {
       }
     }
 
-    System.out.printf("%-25s %10s %10s %10s | %8s %8s%n", "System", "Standard", "Broyden",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s %10s %10s %10s | %8s %8s%n", "System", "Standard", "Broyden",
         "Reduced", "SpR/Std", "SpR/Broy");
-    System.out.println(
+    logger.info(
         "------------------------------------------------------------------------------------");
 
     for (int s = 0; s < systemIndices.length; s++) {
@@ -862,7 +866,7 @@ public class AcceleratedCPASolverTest {
       double tRed = timesMs[s][2];
       double spVsStd = tStd / tRed;
       double spVsBroy = tBroy / tRed;
-      System.out.printf("%-25s %8.1f ms %8.1f ms %8.1f ms | %7.2fx %7.2fx%n", systemNames[s], tStd,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s %8.1f ms %8.1f ms %8.1f ms | %7.2fx %7.2fx%n", systemNames[s], tStd,
           tBroy, tRed, spVsStd, spVsBroy);
     }
   }
@@ -1021,7 +1025,7 @@ public class AcceleratedCPASolverTest {
 
     double[][] timesMs = new double[systemIndices.length][solverTypes.length];
 
-    System.out.println("\n========= ANDERSON-REDUCED SOLVER BENCHMARK =========\n");
+    logger.info("\n========= ANDERSON-REDUCED SOLVER BENCHMARK =========\n");
 
     for (int s = 0; s < systemIndices.length; s++) {
       for (int t = 0; t < solverTypes.length; t++) {
@@ -1040,10 +1044,10 @@ public class AcceleratedCPASolverTest {
       }
     }
 
-    System.out.printf("%-25s %10s %10s %10s %10s | %8s %8s%n", "System", "Standard", "Anderson",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s %10s %10s %10s %10s | %8s %8s%n", "System", "Standard", "Anderson",
         "Reduced", "And+Red", "SpAR/Std", "SpAR/And");
-    System.out.println(
-        "------------------------------------------------------------------------------------"
+    logger
+        .info("------------------------------------------------------------------------------------"
             + "------");
 
     for (int s = 0; s < systemIndices.length; s++) {
@@ -1053,12 +1057,12 @@ public class AcceleratedCPASolverTest {
       double tAR = timesMs[s][3];
       double spVsStd = tStd / tAR;
       double spVsAnd = tAnd / tAR;
-      System.out.printf("%-25s %8.1f ms %8.1f ms %8.1f ms %8.1f ms | %7.2fx %7.2fx%n",
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s %8.1f ms %8.1f ms %8.1f ms %8.1f ms | %7.2fx %7.2fx%n",
           systemNames[s], tStd, tAnd, tRed, tAR, spVsStd, spVsAnd);
     }
 
     // Print profiling data
-    System.out.println(
+    logger.info(
         "\n--- Anderson-Reduced profiling: " + PhaseSrkCPAandersonReduced.getProfileSummary());
   }
 
@@ -1172,7 +1176,7 @@ public class AcceleratedCPASolverTest {
 
     double[][] timesMs = new double[systemIndices.length][solverTypes.length];
 
-    System.out.println("\n========= IMPLICIT-REDUCED SOLVER BENCHMARK =========\n");
+    logger.info("\n========= IMPLICIT-REDUCED SOLVER BENCHMARK =========\n");
 
     for (int s = 0; s < systemIndices.length; s++) {
       for (int t = 0; t < solverTypes.length; t++) {
@@ -1191,10 +1195,10 @@ public class AcceleratedCPASolverTest {
       }
     }
 
-    System.out.printf("%-20s %8s %8s %8s %8s %8s | %7s %7s%n", "System", "Std", "Impl", "Red",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-20s %8s %8s %8s %8s %8s | %7s %7s%n", "System", "Std", "Impl", "Red",
         "And+R", "Impl+R", "IR/Std", "IR/Impl");
-    System.out.println(
-        "------------------------------------------------------------------------------------"
+    logger
+        .info("------------------------------------------------------------------------------------"
             + "-----------");
 
     for (int s = 0; s < systemIndices.length; s++) {
@@ -1205,7 +1209,7 @@ public class AcceleratedCPASolverTest {
       double tIR = timesMs[s][4];
       double spVsStd = tStd / tIR;
       double spVsImpl = tImpl / tIR;
-      System.out.printf("%-20s %6.1fms %6.1fms %6.1fms %6.1fms %6.1fms | %6.2fx %6.2fx%n",
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-20s %6.1fms %6.1fms %6.1fms %6.1fms %6.1fms | %6.2fx %6.2fx%n",
           systemNames[s], tStd, tImpl, tRed, tAR, tIR, spVsStd, spVsImpl);
     }
   }
@@ -1337,15 +1341,15 @@ public class AcceleratedCPASolverTest {
     double[] stdResults = runTEGDehydrationProcess("standard");
     double[] implResults = runTEGDehydrationProcess("implicit");
 
-    System.out.println("\n=== TEG Dehydration: Standard vs Fully Implicit ===");
-    System.out.printf("%-25s %12s %12s%n", "Property", "Standard", "Implicit");
-    System.out.println("---------------------------------------------------");
-    System.out.printf("%-25s %10.2f C %10.2f C%n", "Water dew point", stdResults[0],
+    logger.info("\n=== TEG Dehydration: Standard vs Fully Implicit ===");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s %12s %12s%n", "Property", "Standard", "Implicit");
+    logger.info("---------------------------------------------------");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s %10.2f C %10.2f C%n", "Water dew point", stdResults[0],
         implResults[0]);
-    System.out.printf("%-25s %10.4f   %10.4f%n", "Dry gas density (kg/m3)", stdResults[1],
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s %10.4f   %10.4f%n", "Dry gas density (kg/m3)", stdResults[1],
         implResults[1]);
-    System.out.printf("%-25s %10.6f   %10.6f%n", "Rich TEG water x", stdResults[2], implResults[2]);
-    System.out.printf("%-25s %10.6f   %10.6f%n", "Dry gas flow (MSm3/d)", stdResults[3],
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s %10.6f   %10.6f%n", "Rich TEG water x", stdResults[2], implResults[2]);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s %10.6f   %10.6f%n", "Dry gas flow (MSm3/d)", stdResults[3],
         implResults[3]);
 
     // Water dew point should match within 0.5°C (process-level tolerance)
@@ -1375,14 +1379,14 @@ public class AcceleratedCPASolverTest {
     double[] stdResults = runTEGDehydrationProcess("standard");
     double[] irResults = runTEGDehydrationProcess("implicit-reduced");
 
-    System.out.println("\n=== TEG Dehydration: Standard vs Implicit-Reduced ===");
-    System.out.printf("%-25s %12s %12s%n", "Property", "Standard", "Impl+Red");
-    System.out.println("---------------------------------------------------");
-    System.out.printf("%-25s %10.2f C %10.2f C%n", "Water dew point", stdResults[0], irResults[0]);
-    System.out.printf("%-25s %10.4f   %10.4f%n", "Dry gas density (kg/m3)", stdResults[1],
+    logger.info("\n=== TEG Dehydration: Standard vs Implicit-Reduced ===");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s %12s %12s%n", "Property", "Standard", "Impl+Red");
+    logger.info("---------------------------------------------------");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s %10.2f C %10.2f C%n", "Water dew point", stdResults[0], irResults[0]);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s %10.4f   %10.4f%n", "Dry gas density (kg/m3)", stdResults[1],
         irResults[1]);
-    System.out.printf("%-25s %10.6f   %10.6f%n", "Rich TEG water x", stdResults[2], irResults[2]);
-    System.out.printf("%-25s %10.6f   %10.6f%n", "Dry gas flow (MSm3/d)", stdResults[3],
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s %10.6f   %10.6f%n", "Rich TEG water x", stdResults[2], irResults[2]);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s %10.6f   %10.6f%n", "Dry gas flow (MSm3/d)", stdResults[3],
         irResults[3]);
 
     assertEquals(stdResults[0], irResults[0], 0.5, "Water dew point should match within 0.5°C");
@@ -1407,7 +1411,7 @@ public class AcceleratedCPASolverTest {
         {"standard", "implicit", "reduced", "anderson-reduced", "implicit-reduced"};
     double[] timesMs = new double[solverTypes.length];
 
-    System.out.println("\n========= TEG DEHYDRATION PROCESS BENCHMARK =========\n");
+    logger.info("\n========= TEG DEHYDRATION PROCESS BENCHMARK =========\n");
 
     for (int t = 0; t < solverTypes.length; t++) {
       // Warmup
@@ -1423,11 +1427,11 @@ public class AcceleratedCPASolverTest {
       timesMs[t] = elapsed / 1.0e6;
     }
 
-    System.out.printf("%-20s %10s | %8s%n", "Solver", "Time(ms)", "Speedup");
-    System.out.println("------------------------------------------");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-20s %10s | %8s%n", "Solver", "Time(ms)", "Speedup");
+    logger.info("------------------------------------------");
     for (int t = 0; t < solverTypes.length; t++) {
       double speedup = timesMs[0] / timesMs[t];
-      System.out.printf("%-20s %8.0f ms | %6.2fx%n", solverTypes[t], timesMs[t], speedup);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-20s %8.0f ms | %6.2fx%n", solverTypes[t], timesMs[t], speedup);
     }
   }
 }

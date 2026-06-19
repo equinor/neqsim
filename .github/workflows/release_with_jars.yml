@@ -54,8 +54,8 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
           cache: 'maven'
-      - name: Build java 8 version of Neqsim ${{ needs.get_versions.outputs.version_8 }} with Maven
-        run: mvn -B package --file pomJava8.xml -DskipTests -Djacoco.skip=true
+      - name: Build java 8 version of Neqsim ${{ needs.get_versions.outputs.version_8 }} with Maven, do not test
+        run: mvn -B package --file pomJava8.xml -DskipTests -Djacoco.skip=true -ntp
       - name: Copy jar file to staging
         run: mkdir staging && cp target/neqsim*Java8.jar staging
       - uses: actions/upload-artifact@v7
@@ -73,14 +73,14 @@ jobs:
     steps:
       - name: Check out neqsim java project
         uses: actions/checkout@v6
-      - name: Set up Java 17 environment
+      - name: Set up Java 21 environment
         uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
           cache: 'maven'
-      - name: Build java 17 version with Maven
-        run: mvn -B package --file pom.xml -DskipTests -Djacoco.skip=true
+      - name: Build java 17 version with Maven, do not test
+        run: mvn -B package --file pom.xml -DskipTests -Djacoco.skip=true -ntp
       - name: Copy jar file to staging
         run: mkdir staging && cp target/neqsim*.jar staging
       - uses: actions/upload-artifact@v7
@@ -89,7 +89,7 @@ jobs:
           path: staging
 
   compile_mcp_server:
-    name: Build MCP Server (Java 21)
+    name: Build MCP Server (Java 17)
     needs: get_versions
 
     if: ${{ needs.get_versions.outputs.version_8 == needs.get_versions.outputs.version }}
@@ -104,12 +104,12 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
           cache: 'maven'
-      - name: Install NeqSim core to local Maven repo
-        run: mvn -B install -DskipTests -Dmaven.javadoc.skip=true
+      - name: Install NeqSim core to local Maven repo, do not test
+        run: mvn -B install -DskipTests -Dmaven.javadoc.skip=true -ntp
       - name: Build MCP server uber-jar
         run: |
           NEQSIM_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-          cd neqsim-mcp-server && mvn -B package -Dneqsim.version="$NEQSIM_VERSION" -DskipTests -Dmaven.javadoc.skip=true
+          cd neqsim-mcp-server && mvn -B package -Dneqsim.version="$NEQSIM_VERSION" -DskipTests -Dmaven.javadoc.skip=true -ntp
       - name: Run MCP JSON-RPC integration tests
         run: cd neqsim-mcp-server && python test_mcp_server.py
       - name: Rename and checksum MCP jar
@@ -121,7 +121,6 @@ jobs:
           # Generate per-file SHA-256 checksum
           cd staging
           sha256sum "neqsim-mcp-server-${VERSION}-runner.jar" > "neqsim-mcp-server-${VERSION}-runner.jar.sha256"
-          cat "neqsim-mcp-server-${VERSION}-runner.jar.sha256"
       - uses: actions/upload-artifact@v7
         with:
           name: jarfiles-mcp-server

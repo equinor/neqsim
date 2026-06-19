@@ -12,9 +12,10 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Test TVFlash.
  */
 class TVFlashTest {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TVFlashTest.class);
+  private static final Logger logger = LogManager.getLogger(TVFlashTest.class);
 
+  /** Logger object for class. */
+  
   static neqsim.thermo.system.SystemInterface testSystem = null;
   static neqsim.thermo.system.SystemInterface testSystem2 = null;
   static ThermodynamicOperations testOps = null;
@@ -170,20 +171,20 @@ class TVFlashTest {
         double dPdVTn0 = leanFluid.getPhase(0).getdPdVTn();
         double dPdVTn1 =
             leanFluid.getNumberOfPhases() > 1 ? leanFluid.getPhase(1).getdPdVTn() : 0.0;
-        System.out.println("Iteration " + i + " BEFORE: dPdVTn(0)=" + dPdVTn0 + ", dPdVTn(1)="
-            + dPdVTn1 + ", P=" + leanFluid.getPressure("bara"));
+        logger.info("Iteration " + i + " BEFORE: dPdVTn(0)=" + dPdVTn0 + ", dPdVTn(1)=" + dPdVTn1
+            + ", P=" + leanFluid.getPressure("bara"));
 
         mixOps.TVflash(totalVolume, "m3");
-        System.out.println("Iteration " + i + " AFTER: P=" + leanFluid.getPressure("bara")
+        logger.info("Iteration " + i + " AFTER: P=" + leanFluid.getPressure("bara")
             + " bara, Phases=" + leanFluid.getNumberOfPhases());
       } catch (Exception ex) {
-        System.out.println("TVflash failed at iteration " + i + ": " + ex.getMessage());
+        logger.info("TVflash failed at iteration " + i + ": " + ex.getMessage());
       }
     }
 
     // Basic sanity checks
     double finalPressure = leanFluid.getPressure("bara");
-    System.out.println("Final pressure after 20 iterations: " + finalPressure + " bara");
+    logger.info("Final pressure after 20 iterations: " + finalPressure + " bara");
 
     // The pressure should be bounded and not diverge to infinity
     // Note: This test intentionally pushes the system beyond realistic conditions
@@ -239,10 +240,10 @@ class TVFlashTest {
    */
   @Test
   void testTVflashComprehensiveEvaluation() {
-    System.out.println("\n=== TVflash Comprehensive Evaluation ===\n");
+    logger.info("\n=== TVflash Comprehensive Evaluation ===\n");
 
     // Test 1: SRK EoS with natural gas composition
-    System.out.println("Test 1: SRK EoS - Natural Gas");
+    logger.info("Test 1: SRK EoS - Natural Gas");
     neqsim.thermo.system.SystemInterface srkGas =
         new neqsim.thermo.system.SystemSrkEos(273.15 + 15.0, 50.0);
     srkGas.addComponent("nitrogen", 0.02);
@@ -255,7 +256,7 @@ class TVFlashTest {
     evaluateTVflash(srkGas, "SRK-NaturalGas");
 
     // Test 2: PR EoS with rich gas
-    System.out.println("\nTest 2: PR EoS - Rich Gas");
+    logger.info("\nTest 2: PR EoS - Rich Gas");
     neqsim.thermo.system.SystemInterface prRichGas =
         new neqsim.thermo.system.SystemPrEos(273.15 + 25.0, 80.0);
     prRichGas.addComponent("methane", 0.70);
@@ -268,7 +269,7 @@ class TVFlashTest {
     evaluateTVflash(prRichGas, "PR-RichGas");
 
     // Test 3: SRK-CPA with water (polar component)
-    System.out.println("\nTest 3: SRK-CPA - Gas with Water");
+    logger.info("\nTest 3: SRK-CPA - Gas with Water");
     neqsim.thermo.system.SystemInterface cpaWater =
         new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 20.0, 30.0);
     cpaWater.addComponent("methane", 0.90);
@@ -278,7 +279,7 @@ class TVFlashTest {
     evaluateTVflash(cpaWater, "SRK-CPA-Water");
 
     // Test 4: UMR-PRU with classic mixing - light hydrocarbons
-    System.out.println("\nTest 4: UMR-PRU Classic - Light HCs");
+    logger.info("\nTest 4: UMR-PRU Classic - Light HCs");
     neqsim.thermo.system.SystemInterface umrLight =
         new neqsim.thermo.system.SystemUMRPRUMCEos(273.15 - 40.0, 20.0);
     umrLight.addComponent("methane", 0.60);
@@ -288,7 +289,7 @@ class TVFlashTest {
     evaluateTVflash(umrLight, "UMR-PRU-LightHC");
 
     // Test 5: High pressure gas injection scenario
-    System.out.println("\nTest 5: High Pressure Injection");
+    logger.info("\nTest 5: High Pressure Injection");
     neqsim.thermo.system.SystemInterface highP =
         new neqsim.thermo.system.SystemPrEos(273.15 + 80.0, 300.0);
     highP.addComponent("nitrogen", 0.10);
@@ -299,7 +300,7 @@ class TVFlashTest {
     evaluateTVflash(highP, "PR-HighPressure");
 
     // Test 6: Two-phase system (gas + liquid)
-    System.out.println("\nTest 6: Two-Phase System");
+    logger.info("\nTest 6: Two-Phase System");
     neqsim.thermo.system.SystemInterface twoPhase =
         new neqsim.thermo.system.SystemSrkEos(273.15 + 10.0, 30.0);
     twoPhase.addComponent("methane", 0.50);
@@ -309,7 +310,7 @@ class TVFlashTest {
     evaluateTVflash(twoPhase, "SRK-TwoPhase");
 
     // Test 7: Pure component (methane)
-    System.out.println("\nTest 7: Pure Methane");
+    logger.info("\nTest 7: Pure Methane");
     neqsim.thermo.system.SystemInterface pureMethane =
         new neqsim.thermo.system.SystemSrkEos(273.15 - 100.0, 10.0);
     pureMethane.addComponent("methane", 1.0);
@@ -317,7 +318,7 @@ class TVFlashTest {
     evaluateTVflash(pureMethane, "SRK-PureMethane");
 
     // Test 8: Heavy oil system
-    System.out.println("\nTest 8: Heavy Oil");
+    logger.info("\nTest 8: Heavy Oil");
     neqsim.thermo.system.SystemInterface heavyOil =
         new neqsim.thermo.system.SystemPrEos(273.15 + 60.0, 5.0);
     heavyOil.addComponent("methane", 0.05);
@@ -327,7 +328,7 @@ class TVFlashTest {
     heavyOil.setMixingRule("classic");
     evaluateTVflash(heavyOil, "PR-HeavyOil");
 
-    System.out.println("\n=== Evaluation Complete ===\n");
+    logger.info("\n=== Evaluation Complete ===\n");
   }
 
   /**
@@ -345,7 +346,7 @@ class TVFlashTest {
     double initialV = system.getVolume("m3");
     int initialPhases = system.getNumberOfPhases();
 
-    System.out.println("  Initial: T=" + String.format("%.1f", initialT) + "°C, P="
+    logger.info("  Initial: T=" + String.format("%.1f", initialT) + "°C, P="
         + String.format("%.2f", initialP) + " bara, V=" + String.format("%.6f", initialV)
         + " m³, Phases=" + initialPhases);
 
@@ -357,7 +358,7 @@ class TVFlashTest {
       long elapsed = (System.nanoTime() - startTime) / 1000000;
       double newP = system.getPressure("bara");
       double volumeError = Math.abs(system.getVolume("m3") - initialV) / initialV * 100;
-      System.out.println("  T+30K: P=" + String.format("%.2f", newP) + " bara, VolErr="
+      logger.info("  T+30K: P=" + String.format("%.2f", newP) + " bara, VolErr="
           + String.format("%.4f", volumeError) + "%, Time=" + elapsed + "ms");
 
       // Verify pressure increased (expected for heating at constant V)
@@ -366,7 +367,7 @@ class TVFlashTest {
       org.junit.jupiter.api.Assertions.assertTrue(volumeError < 0.01,
           testName + ": Volume error should be < 0.01%");
     } catch (Exception ex) {
-      System.out.println("  T+30K: FAILED - " + ex.getMessage());
+      logger.info("  T+30K: FAILED - " + ex.getMessage());
     }
 
     // Test 2: Temperature decrease at constant volume
@@ -377,7 +378,7 @@ class TVFlashTest {
       long elapsed = (System.nanoTime() - startTime) / 1000000;
       double newP = system.getPressure("bara");
       double volumeError = Math.abs(system.getVolume("m3") - initialV) / initialV * 100;
-      System.out.println("  T-30K: P=" + String.format("%.2f", newP) + " bara, VolErr="
+      logger.info("  T-30K: P=" + String.format("%.2f", newP) + " bara, VolErr="
           + String.format("%.4f", volumeError) + "%, Time=" + elapsed + "ms");
 
       org.junit.jupiter.api.Assertions.assertTrue(newP > 0,
@@ -386,7 +387,7 @@ class TVFlashTest {
       org.junit.jupiter.api.Assertions.assertTrue(volumeError < 10.0,
           testName + ": Volume error should be < 10% (allowing for phase transitions)");
     } catch (Exception ex) {
-      System.out.println("  T-30K: FAILED - " + ex.getMessage());
+      logger.info("  T-30K: FAILED - " + ex.getMessage());
     }
 
     // Test 3: Volume compression (should increase pressure)
@@ -401,7 +402,7 @@ class TVFlashTest {
       long elapsed = (System.nanoTime() - startTime) / 1000000;
       double newP = system.getPressure("bara");
       double volumeError = Math.abs(system.getVolume("m3") - compressedV) / compressedV * 100;
-      System.out.println("  V×0.8: P=" + String.format("%.2f", newP) + " bara, VolErr="
+      logger.info("  V×0.8: P=" + String.format("%.2f", newP) + " bara, VolErr="
           + String.format("%.4f", volumeError) + "%, Time=" + elapsed + "ms");
 
       org.junit.jupiter.api.Assertions.assertTrue(newP > initialP,
@@ -409,7 +410,7 @@ class TVFlashTest {
       org.junit.jupiter.api.Assertions.assertTrue(volumeError < 0.01,
           testName + ": Volume error should be < 0.01%");
     } catch (Exception ex) {
-      System.out.println("  V×0.8: FAILED - " + ex.getMessage());
+      logger.info("  V×0.8: FAILED - " + ex.getMessage());
     }
 
     // Test 4: Volume expansion (should decrease pressure)
@@ -423,7 +424,7 @@ class TVFlashTest {
       long elapsed = (System.nanoTime() - startTime) / 1000000;
       double newP = system.getPressure("bara");
       double volumeError = Math.abs(system.getVolume("m3") - expandedV) / expandedV * 100;
-      System.out.println("  V×1.5: P=" + String.format("%.2f", newP) + " bara, VolErr="
+      logger.info("  V×1.5: P=" + String.format("%.2f", newP) + " bara, VolErr="
           + String.format("%.4f", volumeError) + "%, Time=" + elapsed + "ms");
 
       org.junit.jupiter.api.Assertions.assertTrue(newP < initialP,
@@ -431,7 +432,7 @@ class TVFlashTest {
       org.junit.jupiter.api.Assertions.assertTrue(newP > 0,
           testName + ": Pressure should stay positive");
     } catch (Exception ex) {
-      System.out.println("  V×1.5: FAILED - " + ex.getMessage());
+      logger.info("  V×1.5: FAILED - " + ex.getMessage());
     }
   }
 
@@ -440,10 +441,10 @@ class TVFlashTest {
    */
   @Test
   void testTVflashExtremeConditions() {
-    System.out.println("\n=== TVflash Extreme Conditions Test ===\n");
+    logger.info("\n=== TVflash Extreme Conditions Test ===\n");
 
     // Test 1: Very low temperature (cryogenic)
-    System.out.println("Test 1: Cryogenic LNG");
+    logger.info("Test 1: Cryogenic LNG");
     neqsim.thermo.system.SystemInterface lng =
         new neqsim.thermo.system.SystemSrkEos(273.15 - 162.0, 1.0);
     lng.addComponent("methane", 0.95);
@@ -463,16 +464,16 @@ class TVFlashTest {
     lng.setTemperature(273.15 - 100.0);
     try {
       lngOps.TVflash(lngVolume, "m3");
-      System.out.println("  After heating to -100°C: P="
-          + String.format("%.2f", lng.getPressure("bara")) + " bara");
+      logger.info("  After heating to -100°C: P=" + String.format("%.2f", lng.getPressure("bara"))
+          + " bara");
       org.junit.jupiter.api.Assertions.assertTrue(lng.getPressure("bara") > 1.0,
           "Pressure should increase when heating LNG");
     } catch (Exception ex) {
-      System.out.println("  FAILED: " + ex.getMessage());
+      logger.info("  FAILED: " + ex.getMessage());
     }
 
     // Test 2: Very low pressure (vacuum)
-    System.out.println("\nTest 2: Low Pressure Gas");
+    logger.info("\nTest 2: Low Pressure Gas");
     neqsim.thermo.system.SystemInterface lowP =
         new neqsim.thermo.system.SystemPrEos(273.15 + 25.0, 0.1);
     lowP.addComponent("methane", 0.80);
@@ -490,16 +491,16 @@ class TVFlashTest {
     // Compress to half volume
     try {
       lowPOps.TVflash(lowPVolume * 0.5, "m3");
-      System.out.println("  After 50% compression: P="
-          + String.format("%.3f", lowP.getPressure("bara")) + " bara");
+      logger.info("  After 50% compression: P=" + String.format("%.3f", lowP.getPressure("bara"))
+          + " bara");
       org.junit.jupiter.api.Assertions.assertTrue(lowP.getPressure("bara") > 0.1,
           "Pressure should increase with compression");
     } catch (Exception ex) {
-      System.out.println("  FAILED: " + ex.getMessage());
+      logger.info("  FAILED: " + ex.getMessage());
     }
 
     // Test 3: Phase transition during TVflash
-    System.out.println("\nTest 3: Phase Transition");
+    logger.info("\nTest 3: Phase Transition");
     neqsim.thermo.system.SystemInterface phaseChange =
         new neqsim.thermo.system.SystemSrkEos(273.15 + 50.0, 10.0);
     phaseChange.addComponent("methane", 0.40);
@@ -513,23 +514,23 @@ class TVFlashTest {
 
     double pcVolume = phaseChange.getVolume("m3");
     int initialPhases = phaseChange.getNumberOfPhases();
-    System.out.println("  Initial: T=50°C, P=10 bara, Phases=" + initialPhases);
+    logger.info("  Initial: T=50°C, P=10 bara, Phases=" + initialPhases);
 
     // Cool down significantly
     phaseChange.setTemperature(273.15 - 10.0);
     try {
       pcOps.TVflash(pcVolume, "m3");
       int finalPhases = phaseChange.getNumberOfPhases();
-      System.out.println(
+      logger.info(
           "  After cooling to -10°C: P=" + String.format("%.2f", phaseChange.getPressure("bara"))
               + " bara, Phases=" + finalPhases);
       org.junit.jupiter.api.Assertions.assertTrue(phaseChange.getPressure("bara") > 0,
           "Pressure should be positive after phase change");
     } catch (Exception ex) {
-      System.out.println("  FAILED: " + ex.getMessage());
+      logger.info("  FAILED: " + ex.getMessage());
     }
 
-    System.out.println("\n=== Extreme Conditions Test Complete ===\n");
+    logger.info("\n=== Extreme Conditions Test Complete ===\n");
   }
 
   /**
@@ -537,7 +538,7 @@ class TVFlashTest {
    */
   @Test
   void testTVflashConvergenceMetrics() {
-    System.out.println("\n=== TVflash Convergence Metrics ===\n");
+    logger.info("\n=== TVflash Convergence Metrics ===\n");
 
     // Create a test system
     neqsim.thermo.system.SystemInterface system =
@@ -556,8 +557,8 @@ class TVFlashTest {
     // Test with various volume targets
     double[] volumeMultipliers = {0.5, 0.7, 0.9, 1.0, 1.1, 1.3, 1.5, 2.0};
 
-    System.out.println("Volume Multiplier | Target Volume | Final P | Volume Error | Converged");
-    System.out.println("------------------|---------------|---------|--------------|----------");
+    logger.info("Volume Multiplier | Target Volume | Final P | Volume Error | Converged");
+    logger.info("------------------|---------------|---------|--------------|----------");
 
     for (double mult : volumeMultipliers) {
       // Reset system
@@ -574,8 +575,8 @@ class TVFlashTest {
         double volError = Math.abs(actualV - targetV) / targetV * 100;
         boolean converged = volError < 0.01;
 
-        System.out.println(String.format("      %.1f         | %.6f     | %7.2f | %10.6f%% | %s",
-            mult, targetV, finalP, volError, converged ? "Yes" : "No"));
+        logger.info(String.format("      %.1f         | %.6f     | %7.2f | %10.6f%% | %s", mult,
+            targetV, finalP, volError, converged ? "Yes" : "No"));
 
         // All should converge with reasonable volume changes
         if (mult >= 0.5 && mult <= 2.0) {
@@ -583,11 +584,11 @@ class TVFlashTest {
               "Should converge or hit pressure limit for multiplier " + mult);
         }
       } catch (Exception ex) {
-        System.out.println(String
-            .format("      %.1f         | %.6f     | FAILED  | N/A          | No", mult, targetV));
+        logger.info(String.format("      %.1f         | %.6f     | FAILED  | N/A          | No",
+            mult, targetV));
       }
     }
 
-    System.out.println("\n=== Convergence Metrics Complete ===\n");
+    logger.info("\n=== Convergence Metrics Complete ===\n");
   }
 }

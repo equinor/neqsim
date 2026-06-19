@@ -13,9 +13,10 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.database.NeqSimDataBase;
 
 public class SoreideWhitsonSystemThermoTest {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(SoreideWhitsonSystemThermoTest.class);
+  private static final Logger logger = LogManager.getLogger(SoreideWhitsonSystemThermoTest.class);
 
+  /** Logger object for class. */
+  
   static neqsim.thermo.system.SystemInterface testSystem = null;
   static neqsim.thermo.ThermodynamicModelTest testModel = null;
   neqsim.thermo.ThermodynamicModelTest fugTest;

@@ -17,9 +17,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class LNGfilling {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(LNGfilling.class);
+  private static final Logger logger = LogManager.getLogger(LNGfilling.class);
 
+  /** Logger object for class. */
+  
   /**
    * <p>
    * main.
@@ -62,10 +63,10 @@ public class LNGfilling {
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
-    // System.out.println("JT " + testSystem.getPhase(0).getJouleThomsonCoefficient());
-    // System.out.println("wt%MEG " +
+    // logger.info("JT " + testSystem.getPhase(0).getJouleThomsonCoefficient());
+    // logger.info("wt%MEG " +
     // testSystem.getPhase(1).getComponent("MEG").getMolarMass()*testSystem.getPhase(1).getComponent("MEG").getx()/testSystem.getPhase(1).getMolarMass());
-    // System.out.println("fug"
+    // logger.info("fug"
     // +testSystem.getPhase(0).getComponent("water").getx()*testSystem.getPhase(0).getPressure()*testSystem.getPhase(0).getComponent(0).getFugacityCoefficient());
   }
 }
@@ -77,13 +78,13 @@ public class LNGfilling {
 // testSystem.setMultiPhaseCheck(true);
 // testOps.setSystem(testSystem);
 
-// System.out.println("new model name " + testSystem.getModelName());
+// logger.info("new model name " + testSystem.getModelName());
 // try{
 // testOps.TPflash();
 // testSystem.display();
 // }
 // catch(Exception ex){
-// System.out.println(ex.toString());
+// logger.info(ex.toString());
 // }
 // }
 // }

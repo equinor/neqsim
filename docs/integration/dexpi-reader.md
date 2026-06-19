@@ -97,27 +97,14 @@ process.run();
 DexpiXmlWriter.write(process, new File("output.xml"));
 ```
 
-### Export with layout configuration
+### Layout and visualization features
 
-```java
-DexpiLayoutConfig config = new DexpiLayoutConfig()
-    .setXSpacing(120.0)
-    .setYBranchOffset(70.0)
-    .setFontName("Arial")
-    .setTagFontHeight(5.0)
-    .setProcessLineWeight(0.6)
-    .setShowStreamTable(true)
-    .setShowSymbolLegend(true)
-    .setShowRevisionHistory(true)
-    .setShowBatteryLimit(true)
-    .setShowFlowArrows(true)
-    .setShowEquipmentBars(true)
-    .setShowFailPositionMarkers(true)
-    .setShowSilMarkers(true)
-    .setShowInsulationMarks(true);
-
-DexpiXmlWriter.write(process, new File("output.xml"), config);
-```
+The export path applies NeqSim's built-in auto-layout and visualization defaults: equipment tag
+labels, nozzles, routed connection lines, service labels, flow arrows, stream tables, battery-limit
+connectors, symbol legends, and equipment bar labels when simulation data is available. `DexpiLayoutConfig`
+collects the tunable layout fields used by the DEXPI layout workstream; check the writer API before
+using custom layout configuration from application code, because the stable public export calls are the
+`write(...)`, `writeForPyDexpi(...)`, and `writeSheets(...)` overloads shown below.
 
 ### Exporting a multi-area ProcessModel
 
@@ -143,7 +130,8 @@ List<File> sheets = DexpiXmlWriter.writeSheets(plant, new File("sheets"));
 perform *unqualified* tag look-ups cannot resolve elements when the default
 `xmlns="http://sandbox.dexpi.org/xml"` namespace is present. Use `writeForPyDexpi` (or the
 `DexpiDiagramBridge.exportForPyDexpi` convenience method) to write content-identical XML with the
-default namespace omitted, so the file loads directly without a namespace-stripping pre-pass.
+default namespace omitted while preserving the `OriginatingSystem*` `PlantInformation` metadata that
+Proteus loaders expect, so the file loads directly without a namespace-stripping pre-pass.
 
 ```java
 // Java — writer
@@ -172,8 +160,9 @@ display(SVG(filename=str(out_dir / "compact.svg")))
 
 For a standalone, importable end-to-end pipeline (NeqSim build → DEXPI export → pyDEXPI render),
 see [`examples/neqsim/render_neqsim_dexpi_with_pydexpi.py`](../../examples/neqsim/render_neqsim_dexpi_with_pydexpi.py).
-Its `build_process`, `export_dexpi`, `make_pydexpi_compatible`, and `render` functions can be imported
-directly into a notebook or run as a script via `python render_neqsim_dexpi_with_pydexpi.py`.
+Its `build_process`, `export_dexpi`, and `render` functions can be imported directly into a notebook
+or run as a script via `python render_neqsim_dexpi_with_pydexpi.py`. The example uses
+`writeForPyDexpi`, so it no longer needs a separate namespace-stripping compatibility pass.
 
 ### Round-trip (import, simulate, re-export)
 
@@ -221,18 +210,18 @@ The writer reverse-maps Java classes to DEXPI `ComponentClass` strings:
 
 | NeqSim class | DEXPI ComponentClass | RDL URI suffix |
 |---|---|---|
-| `ThreePhaseSeparator` | `ThreePhaseSeparator` | `RDS327127` |
-| `Separator` | `Separator` | `RDS327127` |
-| `Compressor` | `CentrifugalCompressor` | `RDS414578` |
-| `Pump` | `CentrifugalPump` | `RDS414578` |
-| `Cooler` | `AirCooledHeatExchanger` | `RDS414578` |
-| `HeatExchanger` | `ShellAndTubeHeatExchanger` | `RDS414578` |
-| `Heater` | `FiredHeater` | `RDS414578` |
-| `ThrottlingValve` | `GlobeValve` | `RDS414578` |
-| `Expander` | `Expander` | `RDS327127` |
-| `Mixer` | `Mixer` | `RDS327127` |
-| `Splitter` | `Splitter` | `RDS327127` |
-| `DistillationColumn` | `DistillationColumn` | `RDS327127` |
+| `ThreePhaseSeparator` | `ThreePhaseSeparator` | `RDS327962` |
+| `Separator` | `Separator` | `RDS327962` |
+| `Compressor` | `CentrifugalCompressor` | `RDS414622` |
+| `Pump` | `CentrifugalPump` | `RDS415550` |
+| `Cooler` | `AirCoolingSystem` | `RDS327938` |
+| `HeatExchanger` | `ShellAndTubeHeatExchanger` | `RDS327918` |
+| `Heater` | `FiredHeater` | `RDS327914` |
+| `ThrottlingValve` | `GlobeValve` (tag prefix may map to gate/ball/check/butterfly) | `RDS415212` |
+| `Expander` | `Expander` | `RDS414776` |
+| `Mixer` | `Mixer` | `RDS4149564` |
+| `Splitter` | `Splitter` | `RDS4112354` |
+| `DistillationColumn` | `DistillationColumn` | `RDS327902` |
 
 Valve types are further distinguished by tag name prefix: `XV-` (gate valve), `BV-` (ball valve),
 `NRV-` / `CV-` (check valve), `BFV-` (butterfly valve), or globe valve (default).

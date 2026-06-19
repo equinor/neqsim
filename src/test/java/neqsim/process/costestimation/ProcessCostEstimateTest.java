@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.separator.Separator;
@@ -21,6 +23,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class ProcessCostEstimateTest {
+  private static final Logger logger = LogManager.getLogger(ProcessCostEstimateTest.class);
 
   private ProcessSystem process;
 
@@ -83,11 +86,11 @@ public class ProcessCostEstimateTest {
     assertTrue(costEst.getTotalGrassRootsCost() > 0, "Grass roots cost should be positive");
 
     // Print summary
-    System.out.println("=== Cost Estimate via ProcessSystem ===");
-    System.out.println("PEC: $" + String.format("%,.0f", costEst.getTotalPurchasedEquipmentCost()));
-    System.out.println("BMC: $" + String.format("%,.0f", costEst.getTotalBareModuleCost()));
-    System.out.println("TMC: $" + String.format("%,.0f", costEst.getTotalModuleCost()));
-    System.out.println("Grass Roots: $" + String.format("%,.0f", costEst.getTotalGrassRootsCost()));
+    logger.info("=== Cost Estimate via ProcessSystem ===");
+    logger.info("PEC: $" + String.format("%,.0f", costEst.getTotalPurchasedEquipmentCost()));
+    logger.info("BMC: $" + String.format("%,.0f", costEst.getTotalBareModuleCost()));
+    logger.info("TMC: $" + String.format("%,.0f", costEst.getTotalModuleCost()));
+    logger.info("Grass Roots: $" + String.format("%,.0f", costEst.getTotalGrassRootsCost()));
   }
 
   @Test
@@ -104,12 +107,12 @@ public class ProcessCostEstimateTest {
     assertTrue(mecDesign.getEquipmentList().size() > 0, "Should have equipment");
 
     // Print summary
-    System.out.println("\n=== Mechanical Design via ProcessSystem ===");
+    logger.info("\n=== Mechanical Design via ProcessSystem ===");
     System.out
         .println("Total Weight: " + String.format("%,.0f", mecDesign.getTotalWeight()) + " kg");
-    System.out.println("Equipment Count: " + mecDesign.getEquipmentList().size());
-    System.out.println(
-        "Total Power: " + String.format("%,.1f", mecDesign.getTotalPowerRequired()) + " kW");
+    logger.info("Equipment Count: " + mecDesign.getEquipmentList().size());
+    logger
+        .info("Total Power: " + String.format("%,.1f", mecDesign.getTotalPowerRequired()) + " kW");
   }
 
   @Test
@@ -126,9 +129,9 @@ public class ProcessCostEstimateTest {
     assertTrue(costEst.getTotalGrassRootsCost() > 0, "Grass roots cost should be positive");
 
     // Print summary
-    System.out.println("\n=== Combined Workflow ===");
-    System.out.println("Weight: " + String.format("%,.0f", mecDesign.getTotalWeight()) + " kg");
-    System.out.println("Grass Roots: $" + String.format("%,.0f", costEst.getTotalGrassRootsCost()));
+    logger.info("\n=== Combined Workflow ===");
+    logger.info("Weight: " + String.format("%,.0f", mecDesign.getTotalWeight()) + " kg");
+    logger.info("Grass Roots: $" + String.format("%,.0f", costEst.getTotalGrassRootsCost()));
   }
 
   @Test
@@ -147,8 +150,8 @@ public class ProcessCostEstimateTest {
     assertTrue(json.contains("grassRootsCost_USD"), "JSON should contain grass roots cost");
 
     // Print first 2000 chars
-    System.out.println("\n=== Combined JSON (first 2000 chars) ===");
-    System.out.println(json.substring(0, Math.min(json.length(), 2000)));
+    logger.info("\n=== Combined JSON (first 2000 chars) ===");
+    logger.info(json.substring(0, Math.min(json.length(), 2000)));
   }
 
   @Test
@@ -160,8 +163,8 @@ public class ProcessCostEstimateTest {
     assertNotNull(compressorCost, "Compressor cost estimate should not be null");
     assertTrue(compressorCost.getPurchasedEquipmentCost() > 0, "Compressor PEC should be positive");
 
-    System.out.println("\n=== Compressor Cost Estimate ===");
-    System.out.println(
+    logger.info("\n=== Compressor Cost Estimate ===");
+    logger.info(
         "Compressor PEC: $" + String.format("%,.0f", compressorCost.getPurchasedEquipmentCost()));
     System.out
         .println("Compressor BMC: $" + String.format("%,.0f", compressorCost.getBareModuleCost()));
@@ -176,9 +179,9 @@ public class ProcessCostEstimateTest {
     assertNotNull(sepDesign, "Separator mechanical design should not be null");
     assertTrue(sepDesign.getWeightTotal() > 0, "Separator weight should be positive");
 
-    System.out.println("\n=== Separator Mechanical Design ===");
-    System.out.println("Weight: " + String.format("%,.0f", sepDesign.getWeightTotal()) + " kg");
-    System.out.println(
+    logger.info("\n=== Separator Mechanical Design ===");
+    logger.info("Weight: " + String.format("%,.0f", sepDesign.getWeightTotal()) + " kg");
+    logger.info(
         "Design Pressure: " + String.format("%,.1f", sepDesign.getMaxDesignPressure()) + " bara");
   }
 
@@ -193,8 +196,8 @@ public class ProcessCostEstimateTest {
     assertNotNull(costEst, "Cost estimate should not be null");
     assertTrue(costEst.getTotalGrassRootsCost() > 0, "Grass roots should be positive");
 
-    System.out.println("\n=== Cost via SystemMechanicalDesign ===");
-    System.out.println("Grass Roots: $" + String.format("%,.0f", costEst.getTotalGrassRootsCost()));
+    logger.info("\n=== Cost via SystemMechanicalDesign ===");
+    logger.info("Grass Roots: $" + String.format("%,.0f", costEst.getTotalGrassRootsCost()));
   }
 
   @Test
@@ -209,8 +212,8 @@ public class ProcessCostEstimateTest {
     assertTrue(summaryReport.contains("CAPITAL COST SUMMARY"),
         "Should contain capital cost summary");
 
-    System.out.println("\n=== Cost Summary Report ===");
-    System.out.println(summaryReport);
+    logger.info("\n=== Cost Summary Report ===");
+    logger.info(summaryReport);
 
     // Generate equipment list report
     String equipmentReport = costEst.generateEquipmentListReport();
@@ -218,7 +221,7 @@ public class ProcessCostEstimateTest {
     assertTrue(equipmentReport.contains("EQUIPMENT COST LIST"),
         "Should contain equipment cost list");
 
-    System.out.println(equipmentReport);
+    logger.info(equipmentReport);
   }
 
   @Test
@@ -232,8 +235,8 @@ public class ProcessCostEstimateTest {
     assertTrue(json.contains("mechanicalDesignSummary"), "Should contain mech design summary");
     assertTrue(json.contains("costSummary"), "Should contain cost summary");
 
-    System.out.println("\n=== JSON with Costs (first 1500 chars) ===");
-    System.out.println(json.substring(0, Math.min(json.length(), 1500)));
+    logger.info("\n=== JSON with Costs (first 1500 chars) ===");
+    logger.info(json.substring(0, Math.min(json.length(), 1500)));
   }
 
   @Test
@@ -254,8 +257,8 @@ public class ProcessCostEstimateTest {
     assertTrue(adjustedGrassRoots > defaultGrassRoots,
         "Adjusted grass roots should be higher with location and complexity factors");
 
-    System.out.println("\n=== Location/Complexity Factor Test ===");
-    System.out.println("Default Grass Roots: $" + String.format("%,.0f", defaultGrassRoots));
-    System.out.println("Adjusted Grass Roots: $" + String.format("%,.0f", adjustedGrassRoots));
+    logger.info("\n=== Location/Complexity Factor Test ===");
+    logger.info("Default Grass Roots: $" + String.format("%,.0f", defaultGrassRoots));
+    logger.info("Adjusted Grass Roots: $" + String.format("%,.0f", adjustedGrassRoots));
   }
 }

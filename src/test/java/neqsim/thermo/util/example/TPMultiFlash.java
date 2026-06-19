@@ -18,9 +18,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class TPMultiFlash {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TPMultiFlash.class);
+  private static final Logger logger = LogManager.getLogger(TPMultiFlash.class);
 
+  /** Logger object for class. */
+  
   /**
    * <p>
    * main.
@@ -76,7 +77,7 @@ public class TPMultiFlash {
     // testSystem.useVolumeCorrection(true);
     testSystem.setMixingRule(10);
 
-    // System.out.println("activity water " +
+    // logger.info("activity water " +
     // testSystem.getPhase(1).getActivityCoefficient(2));
     // testSystem.setMixingRule(1);
 
@@ -121,15 +122,15 @@ public class TPMultiFlash {
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
-    // System.out.println("Henrys Constant " +
+    // logger.info("Henrys Constant " +
     // 1.0/testSystem.getPhase(1).getComponent("CO2").getx()*testSystem.getPressure());
-    // System.out.println("water fugacity " +
+    // logger.info("water fugacity " +
     // testSystem.getPhase(0).getComponent("water").getx()*testSystem.getPhase(0).getComponent("water").getFugacityCoefficient()*testSystem.getPressure());
-    // System.out.println("partial pressure water " +
+    // logger.info("partial pressure water " +
     // testSystem.getPhase(0).getComponent("water").getx()*testSystem.getPressure());
-    // System.out.println("activity water " +
+    // logger.info("activity water " +
     // testSystem.getPhase(1).getActivityCoefficient(2));
-    // System.out.println("wt%MEG " +
+    // logger.info("wt%MEG " +
     // testSystem.getPhase(1).getComponent("MEG").getMolarMass() *
     // testSystem.getPhase(1).getComponent("MEG").getx() /
     // testSystem.getPhase(1).getMolarMass() * 1e2);

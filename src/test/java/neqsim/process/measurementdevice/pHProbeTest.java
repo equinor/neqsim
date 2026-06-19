@@ -11,8 +11,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 
 class pHProbeTest {
+  private static final Logger logger = LogManager.getLogger(pHProbeTest.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(pHProbeTest.class);
 
   static SystemInterface testFluid;
   static StreamInterface stream_1;

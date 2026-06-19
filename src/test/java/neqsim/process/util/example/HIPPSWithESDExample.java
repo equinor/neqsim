@@ -1,5 +1,7 @@
 package neqsim.process.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ESDValve;
@@ -39,6 +41,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class HIPPSWithESDExample {
+  private static final Logger logger = LogManager.getLogger(HIPPSWithESDExample.class);
+
   /**
    * Java 8 compatible string repeat utility method.
    *
@@ -63,10 +67,10 @@ public class HIPPSWithESDExample {
    * @param args command line arguments
    */
   public static void main(String[] args) {
-    System.out.println(repeat("=", 80));
-    System.out.println("HIPPS WITH ESD ESCALATION EXAMPLE");
-    System.out.println(repeat("=", 80));
-    System.out.println();
+    logger.info(repeat("=", 80));
+    logger.info("HIPPS WITH ESD ESCALATION EXAMPLE");
+    logger.info(repeat("=", 80));
+
 
     // Create process system
     SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
@@ -102,12 +106,15 @@ public class HIPPSWithESDExample {
     double hippsSetpoint = maop * 0.95; // HIPPS at 95% MAOP = 95 bara
     double esdSetpoint = maop * 0.98; // ESD at 98% MAOP = 98 bara
 
-    System.out.println("SAFETY SYSTEM CONFIGURATION:");
-    System.out.println(repeat("-", 80));
-    System.out.printf("Maximum Allowable Operating Pressure (MAOP): %.1f bara\n", maop);
-    System.out.printf("HIPPS Activation Setpoint (95%% MAOP):       %.1f bara\n", hippsSetpoint);
-    System.out.printf("ESD Activation Setpoint (98%% MAOP):         %.1f bara\n", esdSetpoint);
-    System.out.println();
+    logger.info("SAFETY SYSTEM CONFIGURATION:");
+    logger.info(repeat("-", 80));
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Maximum Allowable Operating Pressure (MAOP): %.1f bara\n", maop);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "HIPPS Activation Setpoint (95%% MAOP):       %.1f bara\n", hippsSetpoint);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "ESD Activation Setpoint (98%% MAOP):         %.1f bara\n", esdSetpoint);
+
 
     // Create HIPPS with 2oo3 voting for high reliability (SIL 3)
     HIPPSLogic hipps = new HIPPSLogic("HIPPS-101", VotingLogic.TWO_OUT_OF_THREE);
@@ -136,29 +143,29 @@ public class HIPPSWithESDExample {
     // Link HIPPS to escalate to ESD after 5 seconds if pressure remains high
     hipps.linkToEscalationLogic(esdLogic, 5.0);
 
-    System.out.println("HIPPS CONFIGURATION:");
-    System.out.println(repeat("-", 80));
-    System.out.println("Voting Logic: 2oo3 (2 out of 3 pressure transmitters must trip)");
-    System.out.println("Pressure Transmitters:");
-    System.out.println("  - PT-101A: Setpoint = " + hippsSetpoint + " bara");
-    System.out.println("  - PT-101B: Setpoint = " + hippsSetpoint + " bara");
-    System.out.println("  - PT-101C: Setpoint = " + hippsSetpoint + " bara");
-    System.out.println("Target Valve: " + hippsValve.getName());
-    System.out.println("Escalation: ESD activation after 5 seconds if pressure remains high");
-    System.out.println();
+    logger.info("HIPPS CONFIGURATION:");
+    logger.info(repeat("-", 80));
+    logger.info("Voting Logic: 2oo3 (2 out of 3 pressure transmitters must trip)");
+    logger.info("Pressure Transmitters:");
+    logger.info("  - PT-101A: Setpoint = " + hippsSetpoint + " bara");
+    logger.info("  - PT-101B: Setpoint = " + hippsSetpoint + " bara");
+    logger.info("  - PT-101C: Setpoint = " + hippsSetpoint + " bara");
+    logger.info("Target Valve: " + hippsValve.getName());
+    logger.info("Escalation: ESD activation after 5 seconds if pressure remains high");
 
-    System.out.println("ESD CONFIGURATION:");
-    System.out.println(repeat("-", 80));
-    System.out.println("Activation: Manual (backup) or automatic escalation from HIPPS");
-    System.out.println("Actions: Trip ESD valve");
-    System.out.println();
+
+    logger.info("ESD CONFIGURATION:");
+    logger.info(repeat("-", 80));
+    logger.info("Activation: Manual (backup) or automatic escalation from HIPPS");
+    logger.info("Actions: Trip ESD valve");
+
 
     // ======================================================================================
     // SCENARIO 1: NORMAL OPERATION
     // ======================================================================================
-    System.out.println(repeat("=", 80));
-    System.out.println("SCENARIO 1: NORMAL OPERATION (Pressure = 50 bara)");
-    System.out.println(repeat("=", 80));
+    logger.info(repeat("=", 80));
+    logger.info("SCENARIO 1: NORMAL OPERATION (Pressure = 50 bara)");
+    logger.info(repeat("=", 80));
 
     feedStream.run();
     separator.run();
@@ -169,59 +176,61 @@ public class HIPPSWithESDExample {
     double normalPressure = protectedSeparator.getGasOutStream().getPressure();
     hipps.update(normalPressure, normalPressure, normalPressure);
 
-    System.out.println("Status: All systems normal");
-    System.out.printf("Pressure: %.1f bara (%.1f%% of MAOP)\n", normalPressure,
-        normalPressure / maop * 100);
-    System.out.println("HIPPS: " + hipps.getStatusDescription());
-    System.out.println("ESD: " + esdLogic.getStatusDescription());
-    System.out.println();
+    logger.info("Status: All systems normal");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Pressure: %.1f bara (%.1f%% of MAOP)\n",
+        normalPressure, normalPressure / maop * 100);
+    logger.info("HIPPS: " + hipps.getStatusDescription());
+    logger.info("ESD: " + esdLogic.getStatusDescription());
+
 
     // ======================================================================================
     // SCENARIO 2: HIPPS ACTIVATION (Pressure rises to 96 bara)
     // ======================================================================================
-    System.out.println(repeat("=", 80));
-    System.out.println("SCENARIO 2: HIPPS ACTIVATION (Pressure rises to 96 bara)");
-    System.out.println(repeat("=", 80));
+    logger.info(repeat("=", 80));
+    logger.info("SCENARIO 2: HIPPS ACTIVATION (Pressure rises to 96 bara)");
+    logger.info(repeat("=", 80));
 
     // Simulate pressure rise
     double highPressure = 96.0; // Above HIPPS setpoint (95 bara)
 
-    System.out.println("Simulating pressure excursion...");
-    System.out.printf("Pressure: %.1f bara (%.1f%% of MAOP)\n", highPressure,
-        highPressure / maop * 100);
-    System.out.println();
+    logger.info("Simulating pressure excursion...");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Pressure: %.1f bara (%.1f%% of MAOP)\n",
+        highPressure, highPressure / maop * 100);
+
 
     // Update HIPPS pressure sensors
     hipps.update(highPressure, highPressure, highPressure);
 
-    System.out.println("IMMEDIATE RESPONSE:");
-    System.out.println(repeat("-", 80));
-    System.out.println("PT-101A: " + hippsPT1.toString());
-    System.out.println("PT-101B: " + hippsPT2.toString());
-    System.out.println("PT-101C: " + hippsPT3.toString());
-    System.out.println();
-    System.out.println("HIPPS: " + hipps.getStatusDescription());
-    System.out.printf("HIPPS Isolation Valve: %.0f%% open\n", hippsValve.getPercentValveOpening());
-    System.out.println("ESD: " + esdLogic.getStatusDescription());
-    System.out.printf("ESD Valve: %.0f%% open\n", esdValve.getPercentValveOpening());
-    System.out.println();
+    logger.info("IMMEDIATE RESPONSE:");
+    logger.info(repeat("-", 80));
+    logger.info("PT-101A: " + hippsPT1.toString());
+    logger.info("PT-101B: " + hippsPT2.toString());
+    logger.info("PT-101C: " + hippsPT3.toString());
+
+    logger.info("HIPPS: " + hipps.getStatusDescription());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "HIPPS Isolation Valve: %.0f%% open\n",
+        hippsValve.getPercentValveOpening());
+    logger.info("ESD: " + esdLogic.getStatusDescription());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "ESD Valve: %.0f%% open\n",
+        esdValve.getPercentValveOpening());
+
 
     if (hipps.isTripped()) {
-      System.out.println("✓ HIPPS ACTIVATED - Isolation valve closed rapidly");
-      System.out.println("✓ Process flow stopped, preventing overpressure");
-      System.out.println("✓ ESD not needed - HIPPS successful");
+      logger.info("✓ HIPPS ACTIVATED - Isolation valve closed rapidly");
+      logger.info("✓ Process flow stopped, preventing overpressure");
+      logger.info("✓ ESD not needed - HIPPS successful");
     }
-    System.out.println();
+
 
     // ======================================================================================
     // SCENARIO 3: HIPPS FAILURE - ESCALATION TO ESD
     // ======================================================================================
-    System.out.println(repeat("=", 80));
-    System.out.println("SCENARIO 3: HIPPS FAILURE - ESCALATION TO ESD");
-    System.out.println(repeat("=", 80));
-    System.out.println("Simulating scenario where HIPPS trips but pressure remains high...");
-    System.out.println("(This would indicate HIPPS valve failure or continued pressure source)");
-    System.out.println();
+    logger.info(repeat("=", 80));
+    logger.info("SCENARIO 3: HIPPS FAILURE - ESCALATION TO ESD");
+    logger.info(repeat("=", 80));
+    logger.info("Simulating scenario where HIPPS trips but pressure remains high...");
+    logger.info("(This would indicate HIPPS valve failure or continued pressure source)");
+
 
     // Reset for new scenario
     hippsValve.setPercentValveOpening(100.0);
@@ -235,11 +244,12 @@ public class HIPPSWithESDExample {
     // Simulate HIPPS trip with sustained high pressure
     hipps.update(highPressure, highPressure, highPressure);
 
-    System.out.println("t = 0.0s: HIPPS trips");
-    System.out.println("  HIPPS: " + hipps.getStatusDescription());
-    System.out.printf("  HIPPS Valve: %.0f%% open\n", hippsValve.getPercentValveOpening());
-    System.out.println("  ESD: " + esdLogic.getStatusDescription());
-    System.out.println();
+    logger.info("t = 0.0s: HIPPS trips");
+    logger.info("  HIPPS: " + hipps.getStatusDescription());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  HIPPS Valve: %.0f%% open\n",
+        hippsValve.getPercentValveOpening());
+    logger.info("  ESD: " + esdLogic.getStatusDescription());
+
 
     // Simulate time progression with sustained high pressure (HIPPS failed to control)
     double timeStep = 1.0;
@@ -251,44 +261,46 @@ public class HIPPSWithESDExample {
       hipps.execute(timeStep);
       esdLogic.execute(timeStep);
 
-      System.out.printf("t = %.1fs: ", time);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "t = %.1fs: ", time);
 
       if (hipps.hasEscalated() && !esdLogic.isActive()) {
-        System.out.println("ESCALATION TRIGGERED - Activating ESD");
+        logger.info("ESCALATION TRIGGERED - Activating ESD");
       } else if (esdLogic.isActive()) {
-        System.out.println("ESD ACTIVE");
+        logger.info("ESD ACTIVE");
       } else {
-        System.out.printf("Waiting for escalation (%.1fs / 5.0s)\n", time);
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "Waiting for escalation (%.1fs / 5.0s)\n", time);
       }
 
-      System.out.println("  HIPPS: " + hipps.getStatusDescription());
-      System.out.println("  ESD: " + esdLogic.getStatusDescription());
-      System.out.printf("  ESD Valve: %.0f%% open\n", esdValve.getPercentValveOpening());
-      System.out.println();
+      logger.info("  HIPPS: " + hipps.getStatusDescription());
+      logger.info("  ESD: " + esdLogic.getStatusDescription());
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  ESD Valve: %.0f%% open\n",
+          esdValve.getPercentValveOpening());
+
     }
 
-    System.out.println("KEY FEATURES DEMONSTRATED:");
-    System.out.println(repeat("-", 80));
-    System.out.println("✓ HIPPS acts as first line of defense (95% MAOP)");
-    System.out.println("✓ 2oo3 voting provides high reliability (SIL 3)");
-    System.out.println("✓ Rapid isolation valve closure prevents overpressure");
-    System.out.println("✓ ESD provides independent backup layer (98% MAOP)");
-    System.out.println("✓ Automatic escalation if HIPPS fails to control pressure");
-    System.out.println("✓ Defense in depth - multiple independent protection layers");
-    System.out.println();
+    logger.info("KEY FEATURES DEMONSTRATED:");
+    logger.info(repeat("-", 80));
+    logger.info("✓ HIPPS acts as first line of defense (95% MAOP)");
+    logger.info("✓ 2oo3 voting provides high reliability (SIL 3)");
+    logger.info("✓ Rapid isolation valve closure prevents overpressure");
+    logger.info("✓ ESD provides independent backup layer (98% MAOP)");
+    logger.info("✓ Automatic escalation if HIPPS fails to control pressure");
+    logger.info("✓ Defense in depth - multiple independent protection layers");
 
-    System.out.println("SAFETY INTEGRITY:");
-    System.out.println(repeat("-", 80));
+
+    logger.info("SAFETY INTEGRITY:");
+    logger.info(repeat("-", 80));
     System.out
         .println("• HIPPS prevents PSV lifting and flaring (environmental and economic benefit)");
-    System.out.println("• 2oo3 voting balances safety integrity with availability");
-    System.out.println("• Allows 1 sensor bypass for maintenance without compromising safety");
-    System.out.println("• ESD escalation ensures protection even if HIPPS fails");
-    System.out.println("• Complies with IEC 61508/61511 for SIL 2/3 applications");
-    System.out.println();
+    logger.info("• 2oo3 voting balances safety integrity with availability");
+    logger.info("• Allows 1 sensor bypass for maintenance without compromising safety");
+    logger.info("• ESD escalation ensures protection even if HIPPS fails");
+    logger.info("• Complies with IEC 61508/61511 for SIL 2/3 applications");
 
-    System.out.println(repeat("=", 80));
-    System.out.println("EXAMPLE COMPLETED");
-    System.out.println(repeat("=", 80));
+
+    logger.info(repeat("=", 80));
+    logger.info("EXAMPLE COMPLETED");
+    logger.info(repeat("=", 80));
   }
 }

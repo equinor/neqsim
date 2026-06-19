@@ -14,6 +14,8 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -25,6 +27,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class OffshoreProcess3 {
+  private static final Logger logger = LogManager.getLogger(OffshoreProcess3.class);
+
   /**
    * <p>
    * main.
@@ -275,31 +279,31 @@ public class OffshoreProcess3 {
     exportGasCompressor2.setSpeed(11500);
     exportGasCompressor2.getCompressorChart().setHeadUnit("kJ/kg");
     exportGasCompressor2.run();
-    System.out.println("power " + exportGasCompressor2.getPower());
+    logger.info("power " + exportGasCompressor2.getPower());
     // operations.run();
     exportGas.displayResult();
     /*
-     * // System.out.println("second stage comp power " + ((Compressor) //
+     * // logger.info("second stage comp power " + ((Compressor) //
      * operations.getUnit("2nd stage recompressor")).getPower()/1.0e3 + " kW");
      *
-     * // System.out.println("first stage   comp power " + ((Compressor)
+     * // logger.info("first stage   comp power " + ((Compressor)
      * operations.getUnit("1st stage recompressor")).getPower()/1.0e3 + " kW");
      *
-     * System.out.println("gas from inlet separator " + ((Separator)
+     * logger.info("gas from inlet separator " + ((Separator)
      * operations.getUnit("1st stage separator"))
      * .getGasOutStream().getFluid().getFlowRate("MSm3/day"));
      *
      * System.out .println("pressure of export oil  " + ((Stream)
      * operations.getUnit("stable oil")).getPressure("bara"));
      *
-     * System.out.println( "temperature of export oil  " + ((Stream)
+     * logger.info( "temperature of export oil  " + ((Stream)
      * operations.getUnit("stable oil")).getTemperature("C"));
      *
-     * System.out.println("TVP of export oil (30.0 C) " + ((Stream)
+     * logger.info("TVP of export oil (30.0 C) " + ((Stream)
      * operations.getUnit("stable oil")).TVP(30.0, "C"));
      *
-     * // System.out.println("entropy production " + // operations.getEntropyProduction("J/K") +
-     * " J/K"); // System.out.println("mass balance  separator " + ((Separator)
+     * // logger.info("entropy production " + // operations.getEntropyProduction("J/K") + " J/K");
+     * // logger.info("mass balance  separator " + ((Separator)
      * operations.getUnit("scrubber of mix gas HP")).getMassBalance("kg/sec") + " kg/sec");
      *
      * // liqFromlpscrubber.displayResult(); // richGas.phaseEnvelope(); // richGas.displayResult();
@@ -336,16 +340,16 @@ public class OffshoreProcess3 {
     // heatEx.run();heatEx.run();
     // heatEx.getOutStream(0).getFluid().display();
     // heatEx.getOutStream(1).getFluid().display();
-    // System.out.println("entropy production heat exchanger "
+    // logger.info("entropy production heat exchanger "
     // +heatEx.getEntropyProduction("J/K") + " J/K");
-    // System.out.println("mass balance production heat exchanger "
+    // logger.info("mass balance production heat exchanger "
     // +heatEx.getMassBalance("kg/sec"));
 
-    System.out.println("Cooler Duty " + operations.getCoolerDuty("J/sec") / 1.0e6 + " MW");
-    System.out.println("Heater Duty " + operations.getHeaterDuty("J/sec") / 1.0e6 + " MW");
-    System.out.println("Power " + operations.getPower("W") / 1.0e6 + " MW");
+    logger.info("Cooler Duty " + operations.getCoolerDuty("J/sec") / 1.0e6 + " MW");
+    logger.info("Heater Duty " + operations.getHeaterDuty("J/sec") / 1.0e6 + " MW");
+    logger.info("Power " + operations.getPower("W") / 1.0e6 + " MW");
 
-    System.out.println("exergy change " + operations.getExergyChange("J"));
-    // System.out.println("total weight " + operations.getMechanicalWeight("kg") + " kg");
+    logger.info("exergy change " + operations.getExergyChange("J"));
+    // logger.info("total weight " + operations.getMechanicalWeight("kg") + " kg");
   }
 }

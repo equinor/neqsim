@@ -14,6 +14,8 @@ import neqsim.process.logic.voting.VotingEvaluator;
 import neqsim.process.logic.voting.VotingPattern;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Comprehensive example demonstrating advanced process logic features.
@@ -32,6 +34,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class AdvancedProcessLogicExample {
+  private static final Logger logger = LogManager.getLogger(AdvancedProcessLogicExample.class);
+
 
   /**
    * Java 8 compatible method to repeat a string.
@@ -56,10 +60,10 @@ public class AdvancedProcessLogicExample {
    * @param args command line arguments
    */
   public static void main(String[] args) {
-    System.out.println(repeat("=", 80));
-    System.out.println("ADVANCED PROCESS LOGIC FEATURES EXAMPLE");
-    System.out.println(repeat("=", 80));
-    System.out.println();
+    logger.info(repeat("=", 80));
+    logger.info("ADVANCED PROCESS LOGIC FEATURES EXAMPLE");
+    logger.info(repeat("=", 80));
+
 
     // Create process equipment
     SystemInterface fluid = new SystemSrkEos(298.15, 10.0);
@@ -89,9 +93,9 @@ public class AdvancedProcessLogicExample {
     // ======================================================================================
     // FEATURE 1: VOTING LOGIC FOR REDUNDANT SENSORS
     // ======================================================================================
-    System.out.println(repeat("=", 80));
-    System.out.println("FEATURE 1: VOTING LOGIC (2oo3 for Pressure Sensors)");
-    System.out.println(repeat("=", 80));
+    logger.info(repeat("=", 80));
+    logger.info("FEATURE 1: VOTING LOGIC (2oo3 for Pressure Sensors)");
+    logger.info(repeat("=", 80));
 
     // Simulate 3 redundant pressure transmitters
     double actualPressure = feedStream.getPressure();
@@ -99,11 +103,11 @@ public class AdvancedProcessLogicExample {
     double pt2Reading = actualPressure - 0.05;
     double pt3Reading = actualPressure + 0.15;
 
-    System.out.printf("Actual pressure: %.2f bara\n", actualPressure);
-    System.out.printf("PT-101: %.2f bara (Good)\n", pt1Reading);
-    System.out.printf("PT-102: %.2f bara (Good)\n", pt2Reading);
-    System.out.printf("PT-103: %.2f bara (Good)\n", pt3Reading);
-    System.out.println();
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Actual pressure: %.2f bara\n", actualPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "PT-101: %.2f bara (Good)\n", pt1Reading);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "PT-102: %.2f bara (Good)\n", pt2Reading);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "PT-103: %.2f bara (Good)\n", pt3Reading);
+
 
     // Analog voting - median selection
     VotingEvaluator<Double> analogVoting = new VotingEvaluator<>(VotingPattern.TWO_OUT_OF_THREE);
@@ -112,10 +116,10 @@ public class AdvancedProcessLogicExample {
     analogVoting.addInput(pt3Reading, false);
 
     double votedPressure = analogVoting.evaluateMedian();
-    System.out.printf("Voted pressure (median): %.2f bara\n", votedPressure);
-    System.out.printf("Valid inputs: %d/%d\n", analogVoting.getValidInputCount(),
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Voted pressure (median): %.2f bara\n", votedPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Valid inputs: %d/%d\n", analogVoting.getValidInputCount(),
         analogVoting.getTotalInputCount());
-    System.out.println();
+
 
     // Digital voting - high pressure alarm
     double alarmSetpoint = 15.0;
@@ -129,16 +133,16 @@ public class AdvancedProcessLogicExample {
     digitalVoting.addInput(pt3High, false);
 
     boolean highPressureAlarm = digitalVoting.evaluateDigital();
-    System.out.printf("High pressure alarm (>%.1f bara): %s\n", alarmSetpoint,
+    logger.printf(org.apache.logging.log4j.Level.INFO, "High pressure alarm (>%.1f bara): %s\n", alarmSetpoint,
         highPressureAlarm ? "ACTIVE" : "INACTIVE");
-    System.out.println();
+
 
     // ======================================================================================
     // FEATURE 2: STARTUP LOGIC WITH PERMISSIVES
     // ======================================================================================
-    System.out.println(repeat("=", 80));
-    System.out.println("FEATURE 2: STARTUP LOGIC WITH PERMISSIVE CHECKS");
-    System.out.println(repeat("=", 80));
+    logger.info(repeat("=", 80));
+    logger.info("FEATURE 2: STARTUP LOGIC WITH PERMISSIVE CHECKS");
+    logger.info(repeat("=", 80));
 
     StartupLogic startupLogic = new StartupLogic("Separator Startup");
 
@@ -167,50 +171,50 @@ public class AdvancedProcessLogicExample {
       return feedValve.getPercentValveOpening() >= 99.0;
     }), 2.0);
 
-    System.out.println("Startup sequence configured:");
-    System.out.println("  Permissives: 3 conditions");
-    System.out.println("  Actions: 3 steps");
-    System.out.println();
+    logger.info("Startup sequence configured:");
+    logger.info("  Permissives: 3 conditions");
+    logger.info("  Actions: 3 steps");
+
 
     // Start the timer permissive
     warmupTime.start();
 
     // Activate startup
     startupLogic.activate();
-    System.out.println("Startup activated...\n");
+    logger.info("Startup activated...\n");
 
     // Simulate startup execution
     double timeStep = 1.0;
     double totalTime = 15.0;
 
-    System.out.println("Time (s) | Status");
-    System.out.println("---------|" + repeat("-", 70));
+    logger.info("Time (s) | Status");
+    logger.info("---------|" + repeat("-", 70));
 
     for (double time = 0.0; time <= totalTime; time += timeStep) {
       warmupTime.update(timeStep);
       startupLogic.execute(timeStep);
 
-      System.out.printf("%8.1f | %s\n", time, startupLogic.getStatusDescription());
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%8.1f | %s\n", time, startupLogic.getStatusDescription());
 
       if (startupLogic.isComplete()) {
         break;
       }
     }
 
-    System.out.println();
+
     if (startupLogic.isComplete()) {
-      System.out.println("✓ Startup completed successfully");
+      logger.info("✓ Startup completed successfully");
     } else if (startupLogic.isAborted()) {
-      System.out.println("✗ Startup aborted: " + startupLogic.getAbortReason());
+      logger.info("✗ Startup aborted: " + startupLogic.getAbortReason());
     }
-    System.out.println();
+
 
     // ======================================================================================
     // FEATURE 3: CONDITIONAL BRANCHING
     // ======================================================================================
-    System.out.println(repeat("=", 80));
-    System.out.println("FEATURE 3: CONDITIONAL BRANCHING (If-Then-Else Logic)");
-    System.out.println(repeat("=", 80));
+    logger.info(repeat("=", 80));
+    logger.info("FEATURE 3: CONDITIONAL BRANCHING (If-Then-Else Logic)");
+    logger.info(repeat("=", 80));
 
     // Scenario: If pressure > 12 bara, reduce flow; else increase flow
     PressureCondition highPressure = new PressureCondition(feedStream, 12.0, ">");
@@ -228,23 +232,23 @@ public class AdvancedProcessLogicExample {
     ConditionalAction conditionalAction =
         new ConditionalAction(highPressure, reduceFlow, increaseFlow, "Pressure Control");
 
-    System.out.printf("Current pressure: %.1f bara\n", feedStream.getPressure());
-    System.out.printf("Condition: Pressure > 12.0 bara? %s\n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Current pressure: %.1f bara\n", feedStream.getPressure());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Condition: Pressure > 12.0 bara? %s\n",
         highPressure.evaluate() ? "YES" : "NO");
-    System.out.println();
+
 
     conditionalAction.execute();
-    System.out.println("Conditional action executed:");
-    System.out.println("  " + conditionalAction.getDescription());
-    System.out.println("  Result: Feed valve set to " + feedValve.getPercentValveOpening() + "%");
-    System.out.println();
+    logger.info("Conditional action executed:");
+    logger.info("  " + conditionalAction.getDescription());
+    logger.info("  Result: Feed valve set to " + feedValve.getPercentValveOpening() + "%");
+
 
     // ======================================================================================
     // FEATURE 4: PARALLEL ACTION EXECUTION
     // ======================================================================================
-    System.out.println(repeat("=", 80));
-    System.out.println("FEATURE 4: PARALLEL ACTION EXECUTION");
-    System.out.println(repeat("=", 80));
+    logger.info(repeat("=", 80));
+    logger.info("FEATURE 4: PARALLEL ACTION EXECUTION");
+    logger.info(repeat("=", 80));
 
     // Create multiple actions to execute in parallel
     ParallelActionGroup parallelActions = new ParallelActionGroup("Open all valves");
@@ -264,25 +268,25 @@ public class AdvancedProcessLogicExample {
       return true;
     }));
 
-    System.out.println("Parallel group: " + parallelActions.getDescription());
-    System.out.println("Executing all actions simultaneously...");
+    logger.info("Parallel group: " + parallelActions.getDescription());
+    logger.info("Executing all actions simultaneously...");
 
     parallelActions.execute();
 
-    System.out.printf("Completion: %d/%d actions (%.0f%%)\n", parallelActions.getCompletedCount(),
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Completion: %d/%d actions (%.0f%%)\n", parallelActions.getCompletedCount(),
         parallelActions.getTotalCount(), parallelActions.getCompletionPercentage());
 
     if (parallelActions.isComplete()) {
-      System.out.println("✓ All parallel actions completed");
+      logger.info("✓ All parallel actions completed");
     }
-    System.out.println();
+
 
     // ======================================================================================
     // FEATURE 5: CONTROLLED SHUTDOWN WITH RAMP-DOWN
     // ======================================================================================
-    System.out.println(repeat("=", 80));
-    System.out.println("FEATURE 5: CONTROLLED SHUTDOWN WITH RAMP-DOWN");
-    System.out.println(repeat("=", 80));
+    logger.info(repeat("=", 80));
+    logger.info("FEATURE 5: CONTROLLED SHUTDOWN WITH RAMP-DOWN");
+    logger.info(repeat("=", 80));
 
     ShutdownLogic shutdownLogic = new ShutdownLogic("Separator Shutdown");
     shutdownLogic.setRampDownTime(10.0); // 10 second controlled shutdown
@@ -308,45 +312,45 @@ public class AdvancedProcessLogicExample {
       return true;
     }), 10.0);
 
-    System.out.println("Shutdown sequence configured:");
-    System.out.printf("  Mode: %s\n", shutdownLogic.isEmergencyMode() ? "EMERGENCY" : "CONTROLLED");
-    System.out.printf("  Duration: %.0f seconds\n", shutdownLogic.getEffectiveShutdownTime());
-    System.out.println("  Actions: 4 steps");
-    System.out.println();
+    logger.info("Shutdown sequence configured:");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Mode: %s\n", shutdownLogic.isEmergencyMode() ? "EMERGENCY" : "CONTROLLED");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Duration: %.0f seconds\n", shutdownLogic.getEffectiveShutdownTime());
+    logger.info("  Actions: 4 steps");
+
 
     // Activate shutdown
     shutdownLogic.activate();
-    System.out.println("Shutdown activated...\n");
+    logger.info("Shutdown activated...\n");
 
-    System.out.println("Time (s) | Valve (%) | Progress | Status");
-    System.out.println("---------|-----------|----------|" + repeat("-", 50));
+    logger.info("Time (s) | Valve (%) | Progress | Status");
+    logger.info("---------|-----------|----------|" + repeat("-", 50));
 
     for (double time = 0.0; time <= 12.0; time += timeStep) {
       shutdownLogic.execute(timeStep);
 
-      System.out.printf("%8.1f | %9.1f | %7.0f%% | ", time, feedValve.getPercentValveOpening(),
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%8.1f | %9.1f | %7.0f%% | ", time, feedValve.getPercentValveOpening(),
           shutdownLogic.getProgress());
 
       if (shutdownLogic.isComplete()) {
-        System.out.println("COMPLETED");
+        logger.info("COMPLETED");
         break;
       } else {
-        System.out.println("RUNNING");
+        logger.info("RUNNING");
       }
     }
 
-    System.out.println();
+
     if (shutdownLogic.isComplete()) {
-      System.out.println("✓ Shutdown completed successfully");
+      logger.info("✓ Shutdown completed successfully");
     }
-    System.out.println();
+
 
     // ======================================================================================
     // FEATURE 6: EMERGENCY SHUTDOWN (FASTER)
     // ======================================================================================
-    System.out.println(repeat("=", 80));
-    System.out.println("FEATURE 6: EMERGENCY SHUTDOWN (Accelerated Timing)");
-    System.out.println(repeat("=", 80));
+    logger.info(repeat("=", 80));
+    logger.info("FEATURE 6: EMERGENCY SHUTDOWN (Accelerated Timing)");
+    logger.info(repeat("=", 80));
 
     // Reset valve
     feedValve.setPercentValveOpening(100.0);
@@ -362,21 +366,21 @@ public class AdvancedProcessLogicExample {
       return true;
     }), 0.0);
 
-    System.out.println("Emergency shutdown activated...");
-    System.out.printf("  Normal duration: %.0f seconds\n", emergencyShutdown.getRampDownTime());
-    System.out.printf("  Emergency duration: %.0f seconds\n",
+    logger.info("Emergency shutdown activated...");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Normal duration: %.0f seconds\n", emergencyShutdown.getRampDownTime());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Emergency duration: %.0f seconds\n",
         emergencyShutdown.getEmergencyShutdownTime());
-    System.out.println();
+
 
     emergencyShutdown.activate();
 
-    System.out.println("Time (s) | Valve (%) | Status");
-    System.out.println("---------|-----------|--------");
+    logger.info("Time (s) | Valve (%) | Status");
+    logger.info("---------|-----------|--------");
 
     for (double time = 0.0; time <= 3.0; time += 0.5) {
       emergencyShutdown.execute(0.5);
 
-      System.out.printf("%8.1f | %9.1f | %s\n", time, feedValve.getPercentValveOpening(),
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%8.1f | %9.1f | %s\n", time, feedValve.getPercentValveOpening(),
           emergencyShutdown.isComplete() ? "COMPLETED" : "RUNNING");
 
       if (emergencyShutdown.isComplete()) {
@@ -384,29 +388,29 @@ public class AdvancedProcessLogicExample {
       }
     }
 
-    System.out.println();
+
     if (emergencyShutdown.isComplete()) {
-      System.out.println("✓ Emergency shutdown completed");
+      logger.info("✓ Emergency shutdown completed");
     }
-    System.out.println();
+
 
     // ======================================================================================
     // SUMMARY
     // ======================================================================================
-    System.out.println(repeat("=", 80));
-    System.out.println("FEATURES DEMONSTRATED");
-    System.out.println(repeat("=", 80));
-    System.out.println("✓ Voting Logic: 2oo3 digital and analog voting for redundant sensors");
-    System.out.println("✓ Startup Logic: Permissive checks with temperature, pressure, and timer");
-    System.out.println("✓ Conditional Branching: If-then-else logic for dynamic decision making");
-    System.out.println("✓ Parallel Execution: Simultaneous execution of multiple actions");
-    System.out.println("✓ Controlled Shutdown: Gradual ramp-down over configurable time");
-    System.out.println("✓ Emergency Shutdown: Accelerated shutdown with scaled timing");
-    System.out.println();
+    logger.info(repeat("=", 80));
+    logger.info("FEATURES DEMONSTRATED");
+    logger.info(repeat("=", 80));
+    logger.info("✓ Voting Logic: 2oo3 digital and analog voting for redundant sensors");
+    logger.info("✓ Startup Logic: Permissive checks with temperature, pressure, and timer");
+    logger.info("✓ Conditional Branching: If-then-else logic for dynamic decision making");
+    logger.info("✓ Parallel Execution: Simultaneous execution of multiple actions");
+    logger.info("✓ Controlled Shutdown: Gradual ramp-down over configurable time");
+    logger.info("✓ Emergency Shutdown: Accelerated shutdown with scaled timing");
 
-    System.out.println(repeat("=", 80));
-    System.out.println("EXAMPLE COMPLETED");
-    System.out.println(repeat("=", 80));
+
+    logger.info(repeat("=", 80));
+    logger.info("EXAMPLE COMPLETED");
+    logger.info(repeat("=", 80));
   }
 
   /**

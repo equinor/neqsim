@@ -441,7 +441,7 @@ except Exception as e:
             "ops.TPflash();"
             "fluid.initProperties();"
             "density = fluid.getDensity('kg/m3');"
-            "print('SUCCESS density={d:.2f} kg/m3'.format(d=density))"
+            "print('SUCCESS density=' + format(density, '.2f') + ' kg/m3')"
         ).format(
             devtools_path=os.path.join(PROJECT_ROOT, "devtools"),
             project_root=PROJECT_ROOT,

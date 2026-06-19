@@ -395,7 +395,13 @@ def discover_chapter_figures(book_dir: Path, ch_dir: str) -> List[str]:
     fig_dir = book_dir / "chapters" / ch_dir / "figures"
     if not fig_dir.exists():
         return []
-    return sorted(p.name for p in fig_dir.glob("*.png"))
+    # Skip decorative chapter-opener illustrations (e.g. 00_chapter_opener.png).
+    # These are selected by the renderers as the chapter hero image and must not
+    # be appended to the numbered "## Figures" list.
+    return sorted(
+        p.name for p in fig_dir.glob("*.png")
+        if "chapter_opener" not in p.name.lower()
+    )
 
 
 def _figures_referenced_in_text(text: str) -> set:

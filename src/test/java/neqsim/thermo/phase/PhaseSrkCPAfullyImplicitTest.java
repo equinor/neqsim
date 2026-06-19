@@ -7,6 +7,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkCPAstatoilFullyImplicit;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Tests comparing the fully implicit CPA algorithm against the standard nested approach. Verifies
@@ -16,6 +18,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version 1.0
  */
 class PhaseSrkCPAfullyImplicitTest extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(PhaseSrkCPAfullyImplicitTest.class);
+
 
   /**
    * Test pure water TP flash at liquid conditions.
@@ -44,8 +48,7 @@ class PhaseSrkCPAfullyImplicitTest extends neqsim.NeqSimTest {
     double densStd = standard.getDensity("kg/m3");
     double densImpl = implicit.getDensity("kg/m3");
 
-    assertEquals(densStd, densImpl, densStd * 0.001,
-        "Pure water density should match within 0.1%");
+    assertEquals(densStd, densImpl, densStd * 0.001, "Pure water density should match within 0.1%");
   }
 
   /**
@@ -179,8 +182,7 @@ class PhaseSrkCPAfullyImplicitTest extends neqsim.NeqSimTest {
     double densStd = standard.getDensity("kg/m3");
     double densImpl = implicit.getDensity("kg/m3");
 
-    assertEquals(densStd, densImpl, densStd * 0.01,
-        "MEG-water density should match within 1%");
+    assertEquals(densStd, densImpl, densStd * 0.01, "MEG-water density should match within 1%");
   }
 
   /**
@@ -209,8 +211,7 @@ class PhaseSrkCPAfullyImplicitTest extends neqsim.NeqSimTest {
 
     long startImpl = System.nanoTime();
     for (int i = 0; i < nTests; i++) {
-      SystemInterface implicit =
-          new SystemSrkCPAstatoilFullyImplicit(temps[i], pressures[i]);
+      SystemInterface implicit = new SystemSrkCPAstatoilFullyImplicit(temps[i], pressures[i]);
       implicit.addComponent("water", 1.0);
       implicit.setMixingRule(10);
       ThermodynamicOperations ops = new ThermodynamicOperations(implicit);
@@ -218,11 +219,11 @@ class PhaseSrkCPAfullyImplicitTest extends neqsim.NeqSimTest {
     }
     long timeImpl = System.nanoTime() - startImpl;
 
-    System.out.println("=== CPA Performance Comparison ===");
-    System.out.println("Standard nested:     " + (timeStd / 1_000_000) + " ms");
-    System.out.println("Fully implicit:      " + (timeImpl / 1_000_000) + " ms");
+    logger.info("=== CPA Performance Comparison ===");
+    logger.info("Standard nested:     " + (timeStd / 1_000_000) + " ms");
+    logger.info("Fully implicit:      " + (timeImpl / 1_000_000) + " ms");
     double ratio = (double) timeImpl / timeStd;
-    System.out.println("Implicit/Standard ratio: " + String.format("%.2f", ratio));
+    logger.info("Implicit/Standard ratio: " + String.format("%.2f", ratio));
 
     // Just verify both complete without error - timing comparison is informational
     assertTrue(timeStd > 0, "Standard timing should be positive");

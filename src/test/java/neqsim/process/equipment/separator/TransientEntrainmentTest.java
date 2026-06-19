@@ -2,6 +2,8 @@ package neqsim.process.equipment.separator;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
@@ -17,6 +19,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class TransientEntrainmentTest {
+  private static final Logger logger = LogManager.getLogger(TransientEntrainmentTest.class);
 
   /**
    * Creates a two-phase gas/condensate fluid for testing.
@@ -97,24 +100,26 @@ public class TransientEntrainmentTest {
       sepEntrain.runTransient(dt, id2);
     }
 
-    double[] gasCompEntrain =
-        sepEntrain.getGasOutStream().getFluid().getMolarComposition().clone();
+    double[] gasCompEntrain = sepEntrain.getGasOutStream().getFluid().getMolarComposition().clone();
 
     // Check if the performance calculator actually computed non-zero entrainment
     double oilInGasFrac = sepEntrain.getPerformanceCalculator().getOilInGasFraction();
-    System.out.printf("Performance calc oilInGas=%.6e, waterInGas=%.6e, gasInOil=%.6e%n",
-        oilInGasFrac, sepEntrain.getPerformanceCalculator().getWaterInGasFraction(),
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Performance calc oilInGas=%.6e, waterInGas=%.6e, gasInOil=%.6e%n", oilInGasFrac,
+        sepEntrain.getPerformanceCalculator().getWaterInGasFraction(),
         sepEntrain.getPerformanceCalculator().getGasInOilFraction());
-    System.out.printf("Vessel phases=%d, hasGas=%b, hasOil=%b, hasAqueous=%b%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Vessel phases=%d, hasGas=%b, hasOil=%b, hasAqueous=%b%n",
         sepEntrain.getThermoSystem().getNumberOfPhases(),
         sepEntrain.getThermoSystem().hasPhaseType("gas"),
         sepEntrain.getThermoSystem().hasPhaseType("oil"),
         sepEntrain.getThermoSystem().hasPhaseType("aqueous"));
-    System.out.printf("Gas outlet flow m3/s=%.6e, T=%.2f K, P=%.2f bar%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Gas outlet flow m3/s=%.6e, T=%.2f K, P=%.2f bar%n",
         sepEntrain.getGasOutStream().getFluid().getFlowRate("m3/sec"),
-        sepEntrain.getThermoSystem().getTemperature(),
-        sepEntrain.getThermoSystem().getPressure());
-    System.out.printf("Liquid level=%.4f%n", sepEntrain.getLiquidLevel());
+        sepEntrain.getThermoSystem().getTemperature(), sepEntrain.getThermoSystem().getPressure());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Liquid level=%.4f%n",
+        sepEntrain.getLiquidLevel());
 
     // The compositions should differ — entrainment adds liquid components to gas
     boolean anyDifference = false;
@@ -223,8 +228,7 @@ public class TransientEntrainmentTest {
     sepNoEntrain.runTransient(1.0, id1);
     sepNoEntrain.runTransient(1.0, id1);
 
-    double[] gasNoEntrain =
-        sepNoEntrain.getGasOutStream().getFluid().getMolarComposition().clone();
+    double[] gasNoEntrain = sepNoEntrain.getGasOutStream().getFluid().getMolarComposition().clone();
 
     // --- With entrainment ---
     ThreePhaseSeparator sepEntrain = new ThreePhaseSeparator("3ph-entrain", feed);
@@ -240,8 +244,7 @@ public class TransientEntrainmentTest {
     sepEntrain.runTransient(1.0, id2);
     sepEntrain.runTransient(1.0, id2);
 
-    double[] gasEntrain =
-        sepEntrain.getGasOutStream().getFluid().getMolarComposition().clone();
+    double[] gasEntrain = sepEntrain.getGasOutStream().getFluid().getMolarComposition().clone();
 
     // Gas compositions should differ
     boolean gasChanged = false;

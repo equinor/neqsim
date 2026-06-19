@@ -25,6 +25,7 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.optimizer.PressureBoundaryOptimizer;
+import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationResult;
 import neqsim.thermo.system.SystemSrkEos;
 
 // Create a simple process
@@ -42,7 +43,7 @@ feed.setPressure(50.0, "bara");
 ThrottlingValve valve = new ThrottlingValve("valve", feed);
 valve.setOutletPressure(30.0, "bara");
 
-Stream outlet = new Stream("outlet", valve);
+Stream outlet = new Stream("outlet", valve.getOutletStream());
 
 ProcessSystem process = new ProcessSystem();
 process.add(feed);
@@ -50,19 +51,18 @@ process.add(valve);
 process.add(outlet);
 process.run();
 
-// Create optimizer
-PressureBoundaryOptimizer optimizer = new PressureBoundaryOptimizer(process);
-optimizer.setInletStream(feed);
-optimizer.setOutletStream(outlet);
-optimizer.setFlowUnit("kg/hr");
-optimizer.setMaxFlow(500.0);
+// Create optimizer (feed and outlet streams are passed to the constructor)
+PressureBoundaryOptimizer optimizer = new PressureBoundaryOptimizer(process, feed, outlet);
+optimizer.setRateUnit("kg/hr");
+optimizer.setMaxFlowRate(500.0);
 
 // Find maximum flow rate
-double maxFlow = optimizer.findMaxFlowRate(
+OptimizationResult result = optimizer.findMaxFlowRate(
     50.0,   // inlet pressure
     30.0,   // outlet pressure
     "bara"  // pressure unit
 );
+double maxFlow = result.getOptimalRate();
 
 System.out.println("Maximum flow rate: " + maxFlow + " kg/hr");
 ```
@@ -71,14 +71,15 @@ System.out.println("Maximum flow rate: " + maxFlow + " kg/hr");
 
 ### 1. Finding Maximum Flow Rate
 
-The `findMaxFlowRate()` method uses binary search to find the maximum flow rate that produces a feasible process state:
+The `findMaxFlowRate()` method uses binary search to find the maximum flow rate that produces a feasible process state. It returns an `OptimizationResult`; read the rate with `getOptimalRate()`:
 
 ```java
-double maxFlow = optimizer.findMaxFlowRate(
+OptimizationResult result = optimizer.findMaxFlowRate(
     inletPressure,    // pressure at inlet
     outletPressure,   // pressure at outlet
     "bara"            // pressure unit
 );
+double maxFlow = result.getOptimalRate();
 ```
 
 A process state is considered "feasible" when:
@@ -116,16 +117,16 @@ Generate a 1D curve showing flow capacity vs outlet pressure at a fixed inlet pr
 ```java
 double[] outletPressures = {80.0, 90.0, 100.0, 110.0, 120.0};
 
-Map<Double, Double> curve = optimizer.generateCapacityCurve(
+// Returns an array of max flow rates, one per outlet pressure (same order)
+double[] curve = optimizer.generateCapacityCurve(
     60.0,             // fixed inlet pressure
     outletPressures,  // outlet pressures to evaluate
     "bara"
 );
 
-// Result: Map<OutletPressure, MaxFlowRate>
-curve.forEach((pOut, flow) ->
-    System.out.println("P_out=" + pOut + " bara -> " + flow + " kg/hr")
-);
+for (int i = 0; i < outletPressures.length; i++) {
+    System.out.println("P_out=" + outletPressures[i] + " bara -> " + curve[i] + " kg/hr");
+}
 ```
 
 ### 4. Minimum Power Optimization
@@ -133,32 +134,33 @@ curve.forEach((pOut, flow) ->
 Find the operating point that minimizes total compressor power while meeting constraints:
 
 ```java
-Map<String, Object> result = optimizer.findMinimumPowerOperatingPoint(
+OptimizationResult result = optimizer.findMinimumPowerOperatingPoint(
     50.0,    // inlet pressure
     100.0,   // target outlet pressure
-    250.0,   // target flow rate
     "bara",  // pressure unit
-    "kg/hr"  // flow unit
+    250.0    // target flow rate
 );
 
-System.out.println("Minimum power: " + result.get("minimumPower") + " kW");
-System.out.println("Achieved flow: " + result.get("achievedFlow"));
-System.out.println("Converged: " + result.get("converged"));
+System.out.println("Minimum power: " + result.getObjectiveValues().get("totalPower") + " kW");
+System.out.println("Achieved flow: " + result.getOptimalRate());
+System.out.println("Converged: " + result.isFeasible());
 ```
 
 ## Configuration Options
 
-| Parameter                | Method                    | Description                                 | Default   |
-| ------------------------ | ------------------------- | ------------------------------------------- | --------- |
-| Inlet Stream             | `setInletStream()`        | Stream where flow rate is adjusted          | Required  |
-| Outlet Stream            | `setOutletStream()`       | Stream where outlet pressure is measured    | Required  |
-| Flow Unit                | `setFlowUnit()`           | Unit for flow rate results                  | "kg/hr"   |
-| Max Flow                 | `setMaxFlow()`            | Upper bound for flow rate search            | 1000.0    |
-| Min Flow                 | `setMinFlow()`            | Lower bound for flow rate search            | 0.0       |
-| Flow Tolerance           | `setFlowTolerance()`      | Binary search convergence tolerance         | 0.1       |
-| Pressure Tolerance       | `setPressureTolerance()`  | Outlet pressure feasibility tolerance       | 0.1 bara  |
-| Minimum Surge Margin     | `setMinSurgeMargin()`     | Required distance from compressor surge     | 0.1 (10%) |
-| Minimum Stonewall Margin | `setMinStonewallMargin()` | Required distance from compressor stonewall | 0.1 (10%) |
+Inlet and outlet streams are supplied to the constructor; the remaining parameters are configured with setters:
+
+| Parameter            | Method                   | Description                              | Default   |
+| -------------------- | ------------------------ | ---------------------------------------- | --------- |
+| Rate Unit            | `setRateUnit()`          | Unit for flow rate results               | "kg/hr"   |
+| Max Flow             | `setMaxFlowRate()`       | Upper bound for flow rate search         | 1000.0    |
+| Min Flow             | `setMinFlowRate()`       | Lower bound for flow rate search         | 0.0       |
+| Flow Tolerance       | `setTolerance()`         | Binary search convergence tolerance      | 0.01      |
+| Pressure Tolerance   | `setPressureTolerance()` | Outlet pressure feasibility tolerance    | 0.02      |
+| Max Utilization      | `setMaxUtilization()`    | Default equipment utilization limit      | 0.95      |
+| Minimum Surge Margin | `setMinSurgeMargin()`    | Required distance from compressor surge  | 0.1 (10%) |
+| Max Power Limit      | `setMaxPowerLimit()`     | Maximum compressor power (kW)            | unlimited |
+| Speed Limits         | `setSpeedLimits()`       | Min/max compressor speed (RPM)           | unbounded |
 
 ## Process Types
 
@@ -170,7 +172,7 @@ The optimizer works with any `ProcessSystem` that has definable inlet/outlet str
 Stream feed = new Stream("feed", fluid);
 ThrottlingValve valve = new ThrottlingValve("valve", feed);
 valve.setOutletPressure(targetPressure, "bara");
-Stream outlet = new Stream("outlet", valve);
+Stream outlet = new Stream("outlet", valve.getOutletStream());
 
 ProcessSystem process = new ProcessSystem();
 process.add(feed);
@@ -187,7 +189,7 @@ compressor.setPolytropicEfficiency(0.75);
 compressor.setUsePolytropicCalc(true);
 Cooler aftercooler = new Cooler("cooler", compressor);
 aftercooler.setOutTemperature(40.0, "C");
-Stream outlet = new Stream("outlet", aftercooler);
+Stream outlet = new Stream("outlet", aftercooler.getOutletStream());
 
 ProcessSystem process = new ProcessSystem();
 process.add(feed);
@@ -316,23 +318,23 @@ Output:
 
 ```java
 // Always set bounds based on process capabilities
-optimizer.setMinFlow(10.0);      // Minimum stable flow
-optimizer.setMaxFlow(1000.0);    // Equipment limits
+optimizer.setMinFlowRate(10.0);    // Minimum stable flow
+optimizer.setMaxFlowRate(1000.0);  // Equipment limits
 ```
 
 ### 2. Configure Tolerances Appropriately
 
 ```java
 // Tighter tolerances = more accurate but slower
-optimizer.setFlowTolerance(0.1);     // 0.1 kg/hr
-optimizer.setPressureTolerance(0.05); // 0.05 bar
+optimizer.setTolerance(0.01);         // relative flow-rate tolerance
+optimizer.setPressureTolerance(0.02); // relative outlet-pressure tolerance
 ```
 
 ### 3. Check Feasibility Before Using Results
 
 ```java
-double flow = optimizer.findMaxFlowRate(pin, pout, "bara");
-if (Double.isNaN(flow) || flow <= 0) {
+OptimizationResult result = optimizer.findMaxFlowRate(pin, pout, "bara");
+if (!result.isFeasible() || result.getOptimalRate() <= 0) {
     System.out.println("No feasible flow rate found");
 }
 ```
@@ -366,13 +368,12 @@ The `PressureBoundaryOptimizer` is **NOT** thread-safe. The underlying `ProcessS
 // 1. Create and configure process
 ProcessSystem process = createGasCompressionProcess();
 
-// 2. Configure optimizer
-PressureBoundaryOptimizer optimizer = new PressureBoundaryOptimizer(process);
-optimizer.setInletStream(process.getStreamByName("feed"));
-optimizer.setOutletStream(process.getStreamByName("outlet"));
-optimizer.setFlowUnit("MSm3/day");
-optimizer.setMinFlow(0.5);
-optimizer.setMaxFlow(15.0);
+// 2. Configure optimizer (streams referenced by name in the constructor)
+PressureBoundaryOptimizer optimizer =
+    new PressureBoundaryOptimizer(process, "feed", "outlet");
+optimizer.setRateUnit("MSm3/day");
+optimizer.setMinFlowRate(0.5);
+optimizer.setMaxFlowRate(15.0);
 optimizer.setPressureTolerance(0.1);
 
 // 3. Generate lift curve table
@@ -386,10 +387,10 @@ System.out.println("Feasible points: " + table.countFeasiblePoints() +
                    "/" + (inletP.length * outletP.length));
 
 // Save to file for Eclipse
-Files.writeString(Path.of("vfp_table.inc"), table.toEclipseFormat());
+Files.write(Paths.get("vfp_table.inc"), table.toEclipseFormat().getBytes());
 
 // Save JSON for analysis
-Files.writeString(Path.of("lift_curve.json"), table.toJson());
+Files.write(Paths.get("lift_curve.json"), table.toJson().getBytes());
 ```
 
 ## Troubleshooting

@@ -589,6 +589,156 @@ plantAuto.setVariableValue("Compression::Compressor.outletPressure", 170.0, "bar
 plant.run();
 ```
 
+### Closed-loop optimization: `evaluate()` (PREFERRED for agent loops)
+
+`run()` returns `void`, so an agent that calls it must separately inspect `RunStatus`,
+`solved()`, and the convergence report to decide whether a trial is usable. The agentic run
+primitives collapse that into **one schema-versioned JSON object that never throws** — the single
+most important addition for closed-loop work. **Use `evaluate()` as the atomic optimizer step**:
+it applies a batch of setpoints, runs to convergence, gates feasibility, and reads back objectives.
+
+```java
+ProcessAutomation auto = plant.getAutomation();
+
+Map<String, Double> setpoints = new LinkedHashMap<String, Double>();
+setpoints.put("Compression::Export Compressor.outletPressure", 150.0);
+setpoints.put("Separation::Oil Heater.outletTemperature", 78.0);
+List<String> readbacks = Arrays.asList("Compression::Export Compressor.power");
+
+// Mixed-unit batch → pass null to use each variable's default unit (bara, K, kg/hr).
+// Single-unit batch → pass the shared unit (e.g. "bara") for setpoints and read-backs.
+String json = auto.evaluate(setpoints, null, readbacks, "kW", 30, 5.0e-3);
+// {"schemaVersion":"1.0","setpointsApplied":{...},"setpointsRejected":{},
+//  "runSucceeded":true,"converged":true,"iterations":7,"maxError":0.0021,
+//  "failedUnitName":null,"feasible":true,"readbacks":{...},"readbackErrors":{}}
+
+// Convenience overload: same unit for setpoints+readbacks, defaults (30 iter, tol 5e-3)
+String quick = auto.evaluate(setpoints, "bara", readbacks);
+```
+
+Gate optimizer trials on the single **`feasible`** flag — it is `true` only when the run did not
+throw, the model converged, no unit failed, and **every** setpoint was accepted. A bad address or
+out-of-bounds value lands in `setpointsRejected` (good setpoints still applied); a bad read-back
+lands in `readbackErrors` — both without throwing, so one malformed candidate degrades a single
+trial instead of crashing the loop. Through jpype, wrap as `json.loads(str(result))`.
+
+Lower-level gated runs (when you set values yourself):
+
+```java
+String conv = auto.runUntilConvergedJson(30, 5.0e-3); // convergence report + run status (never throws)
+String run  = auto.runJson();                          // single run() with structured outcome
+String last = auto.getRunStatusJson();                 // last run status without re-running
+```
+
+For a multi-area `ProcessModel`, `runUntilConvergedJson()` / `evaluate()` delegate to
+`ProcessModel.runUntilConverged(...)` and embed the nested `convergence` report plus a per-area
+`areas` array. For a single `ProcessSystem`, `run()` already iterates internal recycles and
+`converged` reflects the `RunStatus` success flag. All three primitives clear the dirty flag even
+on failure. Default tolerance `5e-3` is robust for plants with near-zero-flow anti-surge recycles
+(strict `1e-4` rarely converges there). Pair with `getAdjustableParameters()` to enumerate the
+bounded decision space the agent may perturb.
+
+### Capacity observation snapshot: `getUtilizationSnapshot()` (the observation vector)
+
+`evaluate()` is the **action + reward** step; `getUtilizationSnapshot()` is the matching
+**observation** step. Both `ProcessSystem` and `ProcessModel` expose
+`getUtilizationSnapshotJson()`, and `ProcessAutomation.getUtilizationSnapshot()` delegates to
+whichever it wraps. The snapshot is **side-effect-free** — it never calls `run()`, only reads the
+capacity utilization already computed by each unit's `CapacityConstraint`s. Units are emitted in
+insertion order so the observation vector is deterministic across calls.
+
+```java
+ProcessAutomation auto = plant.getAutomation();
+plant.run();                                   // (or auto.evaluate(...)) — snapshot reflects last solve
+String json = auto.getUtilizationSnapshot();
+// {"schemaVersion":"1.0",
+//  "units":[{"area":"Compression","name":"Export Compressor","type":"Compressor",
+//            "capacityAnalysisEnabled":true,"maxUtilization":0.83,"maxUtilizationPercent":83.0,
+//            "limitingConstraint":"power","feasible":true,"hardLimitExceeded":false,
+//            "power_kW":1240.5,"constraints":[{"name":"power","utilization":0.83,...},...]}, ...],
+//  "bottleneck":{"name":"Export Compressor","utilization":0.83,"utilizationPercent":83.0,
+//                "limitingConstraint":"power"},
+//  "anyOverloaded":false,"anyHardLimitExceeded":false}
+```
+
+Per unit: `name`, `type`, `capacityAnalysisEnabled`, `maxUtilization` (0–1, NaN→0),
+`maxUtilizationPercent`, `limitingConstraint` (or `null`), `feasible`, `hardLimitExceeded`,
+`power_kW` (compressors/pumps only), and a `constraints[]` breakdown (`name`, `utilization`,
+`current`, `design`, `unit`, `enabled`, `violated`, and `dataSource` when set — e.g. `"equipment"`,
+`"design"` — so an agent can tell a rated limit from an estimate). For a `ProcessModel`, every unit
+also carries its `area` label. Plant-wide: `bottleneck` (highest-utilization unit, or `null`),
+`anyOverloaded`, `anyHardLimitExceeded`.
+
+**Closed-loop RL pattern:** observation = `getUtilizationSnapshot()`; action = setpoints passed to
+`evaluate()`; reward = an objective read-back from `evaluate()` (e.g. negative compression power)
+**penalized when** `anyOverloaded` is `true` or any unit's `maxUtilization > 1`. Because the
+snapshot reads constraints rather than re-solving, it is cheap to call on every step.
+
+> **Compressors without a performance chart**: the chart-dependent constraints (surge, stonewall,
+> speed) are now **present but disabled** for chartless compressors (their distance-to-surge is
+> undefined and would otherwise pin utilization at a degenerate flat 100%). Such a compressor
+> reports smooth, power-driven utilization. Set an installed shaft power via
+> `comp.getMechanicalDesign().setMaxDesignPower(kW)` to give the `power` constraint a basis. When a
+> chart is later attached, `reinitializeCapacityConstraints()` re-enables the chart metrics.
+
+> **Expanders (turbo-expanders)**: `Expander` overrides the inherited `Compressor` capacity logic
+> so it no longer reports a spurious ~150% utilization. The inherited consumed-power constraints
+> (`power`, `ratedPower`) are removed and `isSimulationValid()` is expander-correct (negative shaft
+> power and a cooler outlet are *valid*). Call `expander.setRatedRecoveredPower(ratedKW)` to add a
+> `recoveredPower` HARD constraint (sourced from `|getPower|`, `dataSource = "equipment"`); without
+> a rating the expander simply reports no spurious limit instead of a fabricated one.
+
+### AgenticProcessOptimizer: closed-loop optimization for ML/agentic loops
+
+`evaluate()` makes a flowsheet *steppable*; `AgenticProcessOptimizer` is the **ready-made search
+loop** built on top of it, purpose-designed for ML and agentic use. Get one with
+`auto.newOptimizer()` (or `new AgenticProcessOptimizer(automation)`). It works entirely in terms of
+**string addresses**, a **never-throwing schema-versioned JSON contract**, and a **replayable
+trajectory** — so an LLM agent can build and solve an optimization problem straight from
+`getAdjustableParametersJson()` output without navigating Java objects.
+
+```java
+ProcessAutomation auto = plant.getAutomation();
+AgenticProcessOptimizer opt = auto.newOptimizer();
+opt.addVariable("Compression::Export Compressor.outletPressure", 80.0, 200.0, "bara");
+opt.minimize("Compression::Export Compressor.power", "kW");
+opt.addConstraintLessOrEqual("Export Oil.RVP", 0.79, "bara", 1.0e4); // quadratic penalty
+opt.setSeed(42).setMaxEvaluations(80);
+AgenticProcessOptimizer.OptimizationResult result = opt.optimize(); // never throws
+String json = opt.optimizeToJson(); // schema-versioned JSON incl. trajectory
+```
+
+- **Algorithm**: bounded Nelder–Mead simplex with deterministic (seeded) random initialization. A
+  flowsheet behind `evaluate()` is a noisy, feasibility-gated black box with no usable analytic
+  gradient, so a derivative-free method is the right choice. Same seed + same problem ⇒ identical
+  trajectory (reproducible experiments).
+- **Decision space**: `addVariable(address, lo, hi, unit)` (per-variable unit), or
+  `useAdjustableParameters()` to auto-fill bounded variables from the process adjusters (returns the
+  count added, skips unbounded ones).
+- **Objective**: `minimize(addr, unit)` / `maximize(addr, unit)` / `setObjective(addr, Sense, unit)`
+  for an address-based goal, or `setObjectiveFunction(Function<Map<String,Double>,Double>)` for a
+  **custom reward** computed over a read-map of decisions + constraint read-backs + watches
+  (reward shaping). Add observables with `addWatch(addr, unit)`.
+- **Constraints**: `addConstraintLessOrEqual` / `addConstraintGreaterOrEqual` /
+  `addConstraint(addr, type, limit, unit, penaltyWeight)` — hard inequalities folded in as weighted
+  quadratic penalties; infeasible runs are still logged but pushed to the back with a large penalty.
+- **Per-trial gating**: each trial sets the decision variables (each in its own unit, catching
+  rejections), calls `evaluate()` for one gated run (apply → run to convergence → feasibility flag),
+  then reads the objective/constraints individually. A malformed candidate degrades **one** trial
+  instead of crashing the loop; `optimize()` itself never throws.
+- **Trajectory tape**: every evaluated point is logged as a `Trial` (setpoints, read-backs, raw
+  objective, penalty, feasibility, minimized score) — the (state, action, reward) tape for offline
+  RL, surrogate-model fitting, and agent post-mortems. Exposed via `result.getTrajectory()` and in
+  the result JSON.
+- **Self-rating**: `getReadinessJson()` returns a machine-readable self-assessment rating each
+  capability `full`/`partial`/`none` (never_throws=full, deterministic=full,
+  bounded_action_space=full, json_io=full, reward_shaping=full, constraint_handling=full,
+  trajectory_logging=full, feasibility_gating=full; gradient_based=none,
+  global_optimum_guarantee=partial, parallel_evaluation=none) so an agent can decide whether to use
+  it before committing a budget.
+- **Tuning**: `setMaxEvaluations(int)` (evaluation budget), `setInnerConvergence(maxIter, tol)`
+  (per-trial `evaluate()` gating), `setConvergenceTolerance(double)` (simplex stop), `setSeed(long)`.
+
 ### Self-healing automation (PREFERRED for agents)
 
 The automation API includes self-diagnosis and auto-correction. When an address

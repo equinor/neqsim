@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Speed and robustness profiling for representative distillation columns.
@@ -23,17 +25,18 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 @Tag("slow")
 public class SolverSpeedBenchmark {
+  private static final Logger logger = LogManager.getLogger(SolverSpeedBenchmark.class);
+
 
   /** Solver labels reported in the profile. */
   private static final String[] SOLVER_LABELS =
       {"DIRECT", "INSIDE_OUT", "MATRIX_IO", "NEWTON", "NAPHTALI", "AUTO"};
 
   /** Solver types matching {@link #SOLVER_LABELS}. */
-  private static final DistillationColumn.SolverType[] SOLVER_TYPES = {
-      DistillationColumn.SolverType.DIRECT_SUBSTITUTION,
-      DistillationColumn.SolverType.INSIDE_OUT,
-      DistillationColumn.SolverType.MATRIX_INSIDE_OUT, DistillationColumn.SolverType.NEWTON,
-      DistillationColumn.SolverType.NAPHTALI_SANDHOLM, DistillationColumn.SolverType.AUTO};
+  private static final DistillationColumn.SolverType[] SOLVER_TYPES =
+      {DistillationColumn.SolverType.DIRECT_SUBSTITUTION, DistillationColumn.SolverType.INSIDE_OUT,
+          DistillationColumn.SolverType.MATRIX_INSIDE_OUT, DistillationColumn.SolverType.NEWTON,
+          DistillationColumn.SolverType.NAPHTALI_SANDHOLM, DistillationColumn.SolverType.AUTO};
 
   /**
    * Create a standard deethanizer feed.
@@ -67,8 +70,8 @@ public class SolverSpeedBenchmark {
     StringBuilder report = new StringBuilder();
     appendHeader(report);
 
-    String[] caseNames = {"deethanizer_5", "deethanizer_10", "depropanizer",
-        "debutanizer", "lean_demethanizer"};
+    String[] caseNames =
+        {"deethanizer_5", "deethanizer_10", "depropanizer", "debutanizer", "lean_demethanizer"};
     for (int caseIndex = 0; caseIndex < caseNames.length; caseIndex++) {
       for (int solverIndex = 0; solverIndex < SOLVER_LABELS.length; solverIndex++) {
         DistillationColumn column = createBenchmarkColumn(caseNames[caseIndex],
@@ -82,7 +85,7 @@ public class SolverSpeedBenchmark {
     }
 
     String profile = report.toString();
-    System.out.println(profile);
+    logger.info(profile);
     writeReport("target/distillation_solver_profile.tsv", profile);
     writeReport("target/solver_benchmark.txt", profile);
   }
@@ -116,8 +119,7 @@ public class SolverSpeedBenchmark {
       DistillationColumn column, double wallTimeSeconds) {
     report.append(String.format(Locale.ROOT,
         "%s\t%s\t%d\t%d\t%.6f\t%.6f\t%s\t%s\t%s\t%.6f\t%.6f\t%.6e\t%.6e\t%.6e"
-            + "\t%d\t%d\t%.6e\t%.6e\t%d\t%s\t%s\t%.6f\t%d\t%d\t%d\t%d\t%.6f"
-            + "\t%d\t%d\t%.6f%n",
+            + "\t%d\t%d\t%.6e\t%.6e\t%d\t%s\t%s\t%.6f\t%d\t%d\t%d\t%d\t%.6f" + "\t%d\t%d\t%.6f%n",
         caseName, solverLabel, column.getNumberOfTrays(), column.getLastIterationCount(),
         wallTimeSeconds, column.getLastSolveTimeSeconds(), column.solved() ? "YES" : "NO",
         statusName(column.getLastSolveStatus()), solverName(column.getLastSolverTypeUsed()),
@@ -132,8 +134,7 @@ public class SolverSpeedBenchmark {
         column.getLastMatrixInsideOutSolveTimeSeconds(),
         column.getLastNaphtaliAnalyticJacobianColumns(),
         column.getLastNaphtaliFiniteDifferenceJacobianColumns(),
-        column.getLastNaphtaliThermoEvaluationCount(),
-        column.getLastNaphtaliThermoCacheHitCount(),
+        column.getLastNaphtaliThermoEvaluationCount(), column.getLastNaphtaliThermoCacheHitCount(),
         column.getLastNaphtaliJacobianBuildTimeSeconds(),
         column.getLastNaphtaliBlockLinearSolveCount(),
         column.getLastNaphtaliDenseLinearSolveCount(),
@@ -178,13 +179,13 @@ public class SolverSpeedBenchmark {
    */
   private DistillationColumn createDeethanizerColumn(String caseName,
       DistillationColumn.SolverType solverType, String solverLabel, int trayCount) {
-    Stream feed = new Stream("feed_" + caseName + "_" + solverLabel,
-        createDeethanizerFeed().clone());
+    Stream feed =
+        new Stream("feed_" + caseName + "_" + solverLabel, createDeethanizerFeed().clone());
     feed.setFlowRate(100.0, "kg/hr");
     feed.run();
 
-    DistillationColumn column = new DistillationColumn("bench_" + caseName + "_" + solverLabel,
-        trayCount, true, false);
+    DistillationColumn column =
+        new DistillationColumn("bench_" + caseName + "_" + solverLabel, trayCount, true, false);
     column.addFeedStream(feed, trayCount);
     column.getReboiler().setOutTemperature(105.0 + 273.15);
     column.setTopPressure(30.0);
@@ -281,7 +282,8 @@ public class SolverSpeedBenchmark {
    * @param column column to configure
    * @param solverType solver type to configure
    */
-  private void configureSolver(DistillationColumn column, DistillationColumn.SolverType solverType) {
+  private void configureSolver(DistillationColumn column,
+      DistillationColumn.SolverType solverType) {
     column.setSolverType(solverType);
     if (solverType == DistillationColumn.SolverType.INSIDE_OUT
         || solverType == DistillationColumn.SolverType.MATRIX_INSIDE_OUT) {

@@ -3,12 +3,16 @@ package neqsim.thermo.system;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Validate that BWRS EoS produces reasonable compressor results (positive efficiency, outlet
  * temperature comparable to GERG-2008).
  */
 public class BWRSCompressorTest {
+  private static final Logger logger = LogManager.getLogger(BWRSCompressorTest.class);
+
 
   @Test
   void testPureMethaneCompressorBWRS() {
@@ -62,10 +66,10 @@ public class BWRSCompressorTest {
     double gergPower = gergComp.getPower("MW");
     double gergHead = gergComp.getPolytropicHead("kJ/kg");
 
-    System.out.println("=== Pure Methane Compressor (10->30 bar, eta=0.75) ===");
-    System.out.println(
+    logger.info("=== Pure Methane Compressor (10->30 bar, eta=0.75) ===");
+    logger.info(
         "BWRS  Tout=" + bwrsTout + " C, Power=" + bwrsPower + " MW, Head=" + bwrsHead + " kJ/kg");
-    System.out.println(
+    logger.info(
         "GERG  Tout=" + gergTout + " C, Power=" + gergPower + " MW, Head=" + gergHead + " kJ/kg");
 
     // BWRS must give positive outlet temperature rise (compression heats gas)
@@ -137,10 +141,10 @@ public class BWRSCompressorTest {
     double srkPower = srkComp.getPower("MW");
     double srkHead = srkComp.getPolytropicHead("kJ/kg");
 
-    System.out.println("=== Natural Gas Compressor (10->30 bar, eta=0.75) ===");
-    System.out.println(
+    logger.info("=== Natural Gas Compressor (10->30 bar, eta=0.75) ===");
+    logger.info(
         "BWRS  Tout=" + bwrsTout + " C, Power=" + bwrsPower + " MW, Head=" + bwrsHead + " kJ/kg");
-    System.out.println(
+    logger.info(
         "SRK   Tout=" + srkTout + " C, Power=" + srkPower + " MW, Head=" + srkHead + " kJ/kg");
 
     // BWRS must give positive outlet temperature rise (compression heats gas)

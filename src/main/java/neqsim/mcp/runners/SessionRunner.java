@@ -3,6 +3,7 @@ package neqsim.mcp.runners;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -78,6 +79,14 @@ public final class SessionRunner {
           return runSession(input);
         case "modify":
           return modifyParameter(input);
+        case "evaluate":
+          return evaluateSession(input);
+        case "getValues":
+          return getValuesSession(input);
+        case "setValues":
+          return setValuesSession(input);
+        case "adjustables":
+          return adjustablesSession(input);
         case "getState":
           return getSessionState(input);
         case "list":
@@ -86,7 +95,8 @@ public final class SessionRunner {
           return closeSession(input);
         default:
           return errorJson("UNKNOWN_ACTION", "Unknown session action: " + action,
-              "Use: create, addEquipment, run, modify, getState, list, close");
+              "Use: create, addEquipment, run, modify, evaluate, getValues, setValues, "
+                  + "adjustables, getState, list, close");
       }
     } catch (Exception e) {
       return errorJson("SESSION_ERROR", "Session operation failed: " + e.getMessage(),
@@ -336,6 +346,215 @@ public final class SessionRunner {
     }
 
     return GSON.toJson(response);
+  }
+
+  /**
+   * Runs one closed-loop evaluation step against the cached, already-converged process in a
+   * session. Unlike {@link #modifyParameter(JsonObject)}, this does NOT rebuild the flowsheet from
+   * JSON; it applies a batch of setpoints in place and re-converges via
+   * {@link neqsim.process.automation.ProcessAutomation#evaluate(Map, String, List, String, int, double)},
+   * making it the cheap atomic step for agent optimization loops.
+   *
+   * @param input JSON with sessionId, setpoints (object of address-&gt;value), optional readbacks
+   *        (array of addresses), optional setpointUnit, readbackUnit, maxIterations, tolerance
+   * @return JSON envelope containing the schema-versioned evaluation result (including the feasible
+   *         flag, rejected setpoints, and read-back errors)
+   */
+  private static String evaluateSession(JsonObject input) {
+    SessionState state = getValidSession(input);
+    if (state == null) {
+      return errorJson("SESSION_NOT_FOUND", "Session not found or expired",
+          "Create a new session with action: 'create'");
+    }
+    if (state.process == null) {
+      return errorJson("NO_PROCESS", "No process in session", "Add equipment first");
+    }
+
+    Map<String, Double> setpoints = parseDoubleMap(input, "setpoints");
+    List<String> readbacks = parseStringList(input, "readbacks");
+    String spUnit = optString(input, "setpointUnit");
+    String rbUnit = optString(input, "readbackUnit");
+    int maxIter = input.has("maxIterations") ? input.get("maxIterations").getAsInt() : 30;
+    double tol = input.has("tolerance") ? input.get("tolerance").getAsDouble() : 5.0e-3;
+
+    String evalJson;
+    try {
+      neqsim.process.automation.ProcessAutomation auto = state.process.getAutomation();
+      evalJson = auto.evaluate(setpoints, spUnit, readbacks, rbUnit, maxIter, tol);
+    } catch (RuntimeException ex) {
+      return errorJson("EVALUATE_ERROR", "evaluate failed: " + ex.getMessage(),
+          "Ensure maxIterations >= 1 and tolerance is a finite positive number.");
+    }
+
+    state.runCount++;
+    state.hasRun = true;
+    state.lastAccess = System.currentTimeMillis();
+
+    JsonObject response = new JsonObject();
+    response.addProperty("status", "success");
+    response.addProperty("sessionId", state.sessionId);
+    response.addProperty("ownerId", state.ownerId);
+    response.addProperty("runCount", state.runCount);
+    response.add("evaluation", JsonParser.parseString(evalJson));
+    return GSON.toJson(response);
+  }
+
+  /**
+   * Reads a batch of variable values from the cached session process without rebuilding or running.
+   *
+   * @param input JSON with sessionId, addresses (array of dot-notation addresses), optional unit
+   * @return JSON envelope mapping each successfully resolved address to its value
+   */
+  private static String getValuesSession(JsonObject input) {
+    SessionState state = getValidSession(input);
+    if (state == null) {
+      return errorJson("SESSION_NOT_FOUND", "Session not found or expired",
+          "Create a new session with action: 'create'");
+    }
+    if (state.process == null) {
+      return errorJson("NO_PROCESS", "No process in session", "Add equipment first");
+    }
+
+    List<String> addresses = parseStringList(input, "addresses");
+    String unit = optString(input, "unit");
+    neqsim.process.automation.ProcessAutomation auto = state.process.getAutomation();
+    Map<String, Double> values = auto.getValues(addresses, unit);
+    state.lastAccess = System.currentTimeMillis();
+
+    JsonObject valuesObj = new JsonObject();
+    for (Map.Entry<String, Double> e : values.entrySet()) {
+      valuesObj.addProperty(e.getKey(), e.getValue());
+    }
+    JsonObject response = new JsonObject();
+    response.addProperty("status", "success");
+    response.addProperty("sessionId", state.sessionId);
+    response.addProperty("requested", addresses.size());
+    response.addProperty("resolved", values.size());
+    response.add("values", valuesObj);
+    return GSON.toJson(response);
+  }
+
+  /**
+   * Writes a batch of input variables to the cached session process, optionally re-running once.
+   *
+   * @param input JSON with sessionId, updates (object of address-&gt;value), optional unit,
+   *        optional runAfter (default true)
+   * @return JSON envelope with the count of variables set and whether the process was re-run
+   */
+  private static String setValuesSession(JsonObject input) {
+    SessionState state = getValidSession(input);
+    if (state == null) {
+      return errorJson("SESSION_NOT_FOUND", "Session not found or expired",
+          "Create a new session with action: 'create'");
+    }
+    if (state.process == null) {
+      return errorJson("NO_PROCESS", "No process in session", "Add equipment first");
+    }
+
+    Map<String, Double> updates = parseDoubleMap(input, "updates");
+    String unit = optString(input, "unit");
+    boolean runAfter = !input.has("runAfter") || input.get("runAfter").getAsBoolean();
+
+    neqsim.process.automation.ProcessAutomation auto = state.process.getAutomation();
+    int set = auto.setValues(updates, unit, runAfter);
+    if (runAfter) {
+      state.hasRun = true;
+      state.runCount++;
+    }
+    state.lastAccess = System.currentTimeMillis();
+
+    JsonObject response = new JsonObject();
+    response.addProperty("status", "success");
+    response.addProperty("sessionId", state.sessionId);
+    response.addProperty("requested", updates.size());
+    response.addProperty("set", set);
+    response.addProperty("reRan", runAfter);
+    if (runAfter) {
+      String report = state.process.getReport_json();
+      if (report != null && !report.isEmpty()) {
+        response.add("results", JsonParser.parseString(report));
+      }
+    }
+    return GSON.toJson(response);
+  }
+
+  /**
+   * Enumerates the bounded decision space (adjustable parameters and adjusters) for the cached
+   * session process so an agent can discover what it may perturb.
+   *
+   * @param input JSON with sessionId
+   * @return JSON envelope with the adjustable-parameter registry
+   */
+  private static String adjustablesSession(JsonObject input) {
+    SessionState state = getValidSession(input);
+    if (state == null) {
+      return errorJson("SESSION_NOT_FOUND", "Session not found or expired",
+          "Create a new session with action: 'create'");
+    }
+    if (state.process == null) {
+      return errorJson("NO_PROCESS", "No process in session", "Add equipment first");
+    }
+
+    neqsim.process.automation.ProcessAutomation auto = state.process.getAutomation();
+    String json = auto.getAdjustableParametersJson();
+    state.lastAccess = System.currentTimeMillis();
+
+    JsonObject response = new JsonObject();
+    response.addProperty("status", "success");
+    response.addProperty("sessionId", state.sessionId);
+    response.add("adjustableParameters", JsonParser.parseString(json));
+    return GSON.toJson(response);
+  }
+
+  /**
+   * Parses a nested JSON object of address-&gt;number into an ordered map.
+   *
+   * @param input the parent JSON object
+   * @param key the field name holding the address-&gt;value object
+   * @return an ordered map (never null; empty if the field is absent)
+   */
+  private static Map<String, Double> parseDoubleMap(JsonObject input, String key) {
+    Map<String, Double> out = new LinkedHashMap<String, Double>();
+    if (input.has(key) && input.get(key).isJsonObject()) {
+      JsonObject obj = input.getAsJsonObject(key);
+      for (Map.Entry<String, com.google.gson.JsonElement> e : obj.entrySet()) {
+        out.put(e.getKey(), e.getValue().getAsDouble());
+      }
+    }
+    return out;
+  }
+
+  /**
+   * Parses a JSON array field into a list of strings.
+   *
+   * @param input the parent JSON object
+   * @param key the field name holding the array
+   * @return a list of strings (never null; empty if the field is absent)
+   */
+  private static List<String> parseStringList(JsonObject input, String key) {
+    List<String> out = new ArrayList<String>();
+    if (input.has(key) && input.get(key).isJsonArray()) {
+      com.google.gson.JsonArray arr = input.getAsJsonArray(key);
+      for (int i = 0; i < arr.size(); i++) {
+        out.add(arr.get(i).getAsString());
+      }
+    }
+    return out;
+  }
+
+  /**
+   * Returns a trimmed string field, or {@code null} when the field is absent or blank.
+   *
+   * @param input the parent JSON object
+   * @param key the field name
+   * @return the string value, or {@code null} for absent/blank
+   */
+  private static String optString(JsonObject input, String key) {
+    if (!input.has(key) || input.get(key).isJsonNull()) {
+      return null;
+    }
+    String v = input.get(key).getAsString();
+    return v.trim().isEmpty() ? null : v;
   }
 
   /**

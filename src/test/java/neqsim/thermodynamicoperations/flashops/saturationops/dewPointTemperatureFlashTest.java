@@ -8,9 +8,10 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class dewPointTemperatureFlashTest {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(dewPointTemperatureFlashTest.class);
+  private static final Logger logger = LogManager.getLogger(dewPointTemperatureFlashTest.class);
 
+  /** Logger object for class. */
+  
   @Test
   void testRun() {
     SystemSrkEos fluid0_HC = new SystemSrkEos();

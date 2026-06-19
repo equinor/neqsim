@@ -10,12 +10,15 @@ import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
- * Long-running harness for attaching JFR / async-profiler to the parallel
- * compressor workload.
+ * Long-running harness for attaching JFR / async-profiler to the parallel compressor workload.
  */
 public class JfrHotSpotHarness {
+  private static final Logger logger = LogManager.getLogger(JfrHotSpotHarness.class);
+
 
   private SystemInterface makeHeavyFluid() {
     SystemInterface f = new SystemSrkEos(298.0, 80.0);
@@ -99,6 +102,6 @@ public class JfrHotSpotHarness {
       }
       iters++;
     }
-    System.out.println("JFR harness iterations: " + iters);
+    logger.info("JFR harness iterations: " + iters);
   }
 }

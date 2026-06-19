@@ -65,6 +65,13 @@ public class SaturateWithWater extends QfuncFlash {
     } else {
       lastdn = system.getPhase(0).getNumberOfMolesInPhase();
     }
+    // Snapshot of the last successfully converged composition (absolute moles).
+    // The bisection-style refinement below drives the aqueous phase towards zero,
+    // and the underlying TPflash can diverge for a vanishingly small aqueous phase.
+    // The exact point of divergence depends on the JVM's transcendental math
+    // implementation (JDK 8 vs newer), so a flash failure here is recovered by
+    // restoring the last converged state instead of aborting the whole flowsheet.
+    double[] lastConvergedMoles = captureMoles(system);
     double dn = 1.0;
     int i = 0;
     do {
@@ -74,12 +81,26 @@ public class SaturateWithWater extends QfuncFlash {
       } else if (!hasAq) {
         lastdn = Math.abs(lastdn) * 1.05;
       } else {
-        lastdn =
-            -system.getPhaseOfType("aqueous").getComponent("water").getNumberOfMolesInPhase() * 0.9;
+        lastdn = -system.getPhase(PhaseType.AQUEOUS).getComponent("water").getNumberOfMolesInPhase()
+            * 0.9;
       }
       dn = lastdn / system.getNumberOfMoles();
       system.addComponent("water", lastdn);
-      tpFlash.run();
+      try {
+        tpFlash.run();
+        lastConvergedMoles = captureMoles(system);
+      } catch (RuntimeException ex) {
+        logger.warn("water saturation refinement flash diverged near the saturation point; "
+            + "restoring last converged state: " + ex.getMessage());
+        restoreMoles(system, lastConvergedMoles);
+        try {
+          tpFlash.run();
+        } catch (RuntimeException ex2) {
+          logger
+              .warn("recovery flash after water saturation divergence failed: " + ex2.getMessage());
+        }
+        break;
+      }
       hasAq = system.hasPhaseType(PhaseType.AQUEOUS);
     } while (Math.abs(dn) > 1e-7 && i <= 50);
     if (i == 50) {
@@ -87,11 +108,43 @@ public class SaturateWithWater extends QfuncFlash {
     }
     if (system.hasPhaseType(PhaseType.AQUEOUS)) {
       system.removePhase(system.getNumberOfPhases() - 1);
-      tpFlash.run();
+      try {
+        tpFlash.run();
+      } catch (RuntimeException ex) {
+        logger.warn("flash after removing residual aqueous phase in water saturation failed: "
+            + ex.getMessage());
+      }
     }
     if (changedMultiPhase) {
       system.setMultiPhaseCheck(false);
     }
+  }
+
+  /**
+   * Captures the current overall composition of a system as absolute component mole numbers.
+   *
+   * @param sys the thermodynamic system to snapshot
+   * @return array of component mole numbers in component order
+   */
+  private static double[] captureMoles(SystemInterface sys) {
+    double[] composition = sys.getMolarComposition();
+    double totalMoles = sys.getNumberOfMoles();
+    double[] moles = new double[composition.length];
+    for (int k = 0; k < composition.length; k++) {
+      moles[k] = composition[k] * totalMoles;
+    }
+    return moles;
+  }
+
+  /**
+   * Restores a system to a previously captured set of absolute component mole numbers.
+   *
+   * @param sys the thermodynamic system to restore
+   * @param moles array of component mole numbers in component order, as produced by
+   *        {@link #captureMoles(SystemInterface)}
+   */
+  private static void restoreMoles(SystemInterface sys, double[] moles) {
+    sys.setMolarFlowRates(moles);
   }
 
   /**

@@ -265,7 +265,7 @@ config.validate();  // Throws IllegalArgumentException if invalid
 // Add hard constraint: compressor power must stay below 5000 kW
 OptimizationConstraint powerLimit = OptimizationConstraint.lessThan(
     "MaxPower",
-    (proc, rate) -> getTotalPower(proc),
+    proc -> getTotalPower(proc),
     5000.0,
     ConstraintSeverity.HARD,
     100.0  // penalty weight
@@ -274,7 +274,7 @@ OptimizationConstraint powerLimit = OptimizationConstraint.lessThan(
 // Add soft constraint: prefer gas export above 10 MSm3/d
 OptimizationConstraint exportTarget = OptimizationConstraint.greaterThan(
     "MinExport",
-    (proc, rate) -> getGasExport(proc),
+    proc -> getGasExport(proc),
     10.0e6,
     ConstraintSeverity.SOFT,
     50.0
@@ -287,7 +287,7 @@ OptimizationConstraint exportTarget = OptimizationConstraint.greaterThan(
 // Add secondary objective alongside throughput
 OptimizationObjective minPower = new OptimizationObjective(
     "MinPower",
-    (proc, rate) -> getTotalCompressorPower(proc),
+    proc -> getTotalCompressorPower(proc),
     0.3,  // weight
     ObjectiveType.MINIMIZE
 );
@@ -300,7 +300,7 @@ ParetoResult pareto = optimizer.optimizePareto(process, feed, config,
 ### Infeasibility Diagnostics
 
 ```java
-OptimizationResult result = optimizer.optimize(process, feed, config);
+OptimizationResult result = optimizer.optimize(process, feed, config, null, null);
 
 if (!result.isFeasible()) {
     String diagnosis = result.getInfeasibilityDiagnosis();
@@ -600,7 +600,7 @@ process.run();
 // 4. Optimize — constraints now reflect the auto-sized design limits
 OptimizationConfig config = new OptimizationConfig(1000.0, 20000.0)
     .searchMode(SearchMode.GOLDEN_SECTION_SCORE);
-OptimizationResult result = optimizer.optimize(process, feed, config);
+OptimizationResult result = optimizer.optimize(process, feed, config, null, null);
 ```
 
 Company-standard sizing is also supported:

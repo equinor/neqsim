@@ -17,9 +17,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class TestUMRPRUMC {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TestUMRPRUMC.class);
+  private static final Logger logger = LogManager.getLogger(TestUMRPRUMC.class);
 
+  /** Logger object for class. */
+  
   /**
    * <p>
    * main.
@@ -117,7 +118,7 @@ public class TestUMRPRUMC {
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
-    // System.out.println("activity coefficient water " +
+    // logger.info("activity coefficient water " +
     // testSystem.getPhase(1).getActivityCoefficient(1));
     // testSystem.display();
     // testSystem.saveObjectToFile("C:\\Users\\esol\\AppData\\Roaming\\neqsim\\fluids\\testUMR.neqsim","");

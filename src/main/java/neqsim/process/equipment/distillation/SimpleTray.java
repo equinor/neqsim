@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -112,7 +113,10 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     double enthalpy = 0;
 
     for (int k = 0; k < streams.size(); k++) {
-      streams.get(k).getThermoSystem().init(3);
+      // init(2) is sufficient: getEnthalpy() reads only residual thermodynamic
+      // properties, not the composition derivatives that init(3) additionally computes.
+      // This removes redundant derivative work from the per-tray enthalpy summation.
+      streams.get(k).getThermoSystem().init(2);
       enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
       // System.out.println("total enthalpy k : " + ( ((Stream)
       // streams.get(k)).getThermoSystem()).getEnthalpy());
@@ -131,7 +135,9 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
 
     for (int k = 0; k < streams.size(); k++) {
       if (streams.get(k).getFlowRate("kg/hr") > getMinimumFlow()) {
-        streams.get(k).getThermoSystem().init(3);
+        // init(2) is sufficient for getEnthalpy(); composition derivatives from init(3)
+        // are not read here, so skipping them removes dead work from the solver hot loop.
+        streams.get(k).getThermoSystem().init(2);
         enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
       }
       // System.out.println("total enthalpy k : " + ( ((Stream)
@@ -593,6 +599,12 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    */
   private void scalePhaseSystemToNormalizedMoles(SystemInterface phaseSystem, double targetMoles) {
     double currentMoles = phaseSystem.getTotalNumberOfMoles();
+    // Capture the extracted phase type before any re-initialisation can reorder phases.
+    // SystemThermo.phaseToSystem copies the selected phase into slot 0 and marks it with
+    // the correct type (e.g. liquid). A later init(0) re-expands the system to its maximum
+    // number of phases and slot 0 reverts to the default (gas) type, which would make
+    // getEnthalpy() evaluate the wrong EOS root for a liquid outlet.
+    PhaseType extractedPhaseType = phaseSystem.getPhase(0).getType();
     if (!Double.isFinite(currentMoles) || currentMoles <= 0.0 || !Double.isFinite(targetMoles)) {
       phaseSystem.setTotalNumberOfMoles(0.0);
       return;
@@ -624,7 +636,18 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     }
     phaseSystem.setTotalNumberOfMoles(Math.max(0.0, targetMoles));
     phaseSystem.init(0);
-    phaseSystem.init(1);
+    // The extracted phase system carries the selected phase's moles in every phase
+    // slot and relies on a single-phase designation (see SystemThermo.phaseToSystem).
+    // The preceding init(0) re-expands the system to its maximum number of phases, so
+    // restore the single-phase state, re-apply the captured phase type so the correct
+    // EOS root is used, and initialise residual properties; otherwise getEnthalpy() sums a
+    // spurious second phase (or evaluates the wrong root) and returns an inconsistent
+    // value that breaks reboiler/condenser duty and column energy balances. init(2) is
+    // sufficient here because only the residual thermodynamic properties (enthalpy,
+    // entropy, Cp) are read from the out-stream; composition derivatives are not needed.
+    phaseSystem.setNumberOfPhases(1);
+    phaseSystem.setPhaseType(0, extractedPhaseType);
+    phaseSystem.init(2);
   }
 
   /** {@inheritDoc} */

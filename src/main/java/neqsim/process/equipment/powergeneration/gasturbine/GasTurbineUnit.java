@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.compressor.driver.GasTurbineDriver;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -57,6 +58,12 @@ public class GasTurbineUnit extends TwoPortEquipment {
   private double ambientPressureBara = GasTurbinePerformanceMap.P_ISO_BARA;
 
   private final List<PowerDemandConsumer> consumers = new ArrayList<PowerDemandConsumer>();
+
+  /** Compressors attached via {@link #addPowerConsumer(Compressor)}, kept for power feedback. */
+  private final List<Compressor> drivenCompressors = new ArrayList<Compressor>();
+
+  /** Opt-in: feed an available-power limit back to the driven compressors on each run. */
+  private boolean enforcePowerLimit = false;
 
   private boolean explicitDemandSet = false;
   private double explicitDemandW = 0.0;
@@ -181,6 +188,7 @@ public class GasTurbineUnit extends TwoPortEquipment {
     if (compressor == null) {
       return;
     }
+    drivenCompressors.add(compressor);
     consumers.add(new PowerDemandConsumer() {
       @Override
       public double getDemandedPowerW() {
@@ -208,6 +216,7 @@ public class GasTurbineUnit extends TwoPortEquipment {
   /** Remove all attached consumers. */
   public void clearPowerConsumers() {
     consumers.clear();
+    drivenCompressors.clear();
   }
 
   /**
@@ -268,6 +277,15 @@ public class GasTurbineUnit extends TwoPortEquipment {
     this.overloaded = this.loadFraction > 1.0;
     this.belowMinLoad =
         this.loadFraction > 0.0 && this.loadFraction < performanceMap.getMinLoadFraction();
+
+    if (enforcePowerLimit) {
+      applyAvailablePowerLimitToCompressors();
+      if (this.overloaded) {
+        logger.warn(
+            "GasTurbineUnit {} overloaded: demanded {} W exceeds available {} W (shortfall {} W)",
+            getName(), this.demandedPowerW, this.availablePowerW, getPowerShortfallW());
+      }
+    }
 
     if (this.demandedPowerW <= 0.0) {
       // no demand — turbine off
@@ -555,6 +573,109 @@ public class GasTurbineUnit extends TwoPortEquipment {
    */
   public boolean isBelowMinLoad() {
     return belowMinLoad;
+  }
+
+  /**
+   * Enable or disable feeding an available-power limit back to the driven compressors.
+   *
+   * <p>
+   * When enabled (opt-in; default {@code false} preserves the historical one-way snapshot
+   * behaviour), each {@link #run()} distributes {@link #getAvailablePowerW()} across the
+   * compressors attached via {@link #addPowerConsumer(Compressor)} and installs the share on each
+   * compressor as a {@link GasTurbineDriver} performance curve. The per-compressor caps sum to the
+   * turbine available power, so the capacity / bottleneck framework enforces &Sigma; compressor
+   * power &le; turbine available power.
+   * </p>
+   *
+   * @param enforcePowerLimit true to feed the available-power limit back to driven compressors
+   */
+  public void setEnforcePowerLimit(boolean enforcePowerLimit) {
+    this.enforcePowerLimit = enforcePowerLimit;
+  }
+
+  /**
+   * Indicate whether available-power feedback to the driven compressors is enabled.
+   *
+   * @return true if the available-power limit is fed back to driven compressors on each run
+   */
+  public boolean isEnforcePowerLimit() {
+    return enforcePowerLimit;
+  }
+
+  /**
+   * Get the power shortfall on the last run (how much demand exceeded available power).
+   *
+   * @return shortfall in Watts ({@code demanded - available}), clamped to be non-negative
+   */
+  public double getPowerShortfallW() {
+    double shortfall = demandedPowerW - availablePowerW;
+    return shortfall > 0.0 ? shortfall : 0.0;
+  }
+
+  /**
+   * Get the available-power allocation across the driven compressors.
+   *
+   * <p>
+   * Each driven compressor receives a share of {@link #getAvailablePowerW()} proportional to its
+   * current power demand (equal split when no demand is registered). The shares sum to the turbine
+   * available power. This is the distribution applied to the compressors when
+   * {@link #isEnforcePowerLimit()} is true.
+   * </p>
+   *
+   * @return ordered map of compressor name to allocated available power [W]
+   */
+  public java.util.Map<String, Double> getPowerAllocationW() {
+    java.util.Map<String, Double> allocation = new java.util.LinkedHashMap<String, Double>();
+    if (drivenCompressors.isEmpty()) {
+      return allocation;
+    }
+    double totalDemand = 0.0;
+    for (Compressor c : drivenCompressors) {
+      double p = c.getPower();
+      if (p > 0.0) {
+        totalDemand += p;
+      }
+    }
+    int count = drivenCompressors.size();
+    for (Compressor c : drivenCompressors) {
+      double shareW;
+      if (totalDemand > 0.0) {
+        double p = Math.max(0.0, c.getPower());
+        shareW = availablePowerW * (p / totalDemand);
+      } else {
+        shareW = availablePowerW / count;
+      }
+      allocation.put(c.getName(), shareW);
+    }
+    return allocation;
+  }
+
+  /**
+   * Distribute the turbine available shaft power across the driven compressors and feed each one an
+   * available-power limit via
+   * {@link Compressor#setDriverCurve(neqsim.process.equipment.compressor.driver.DriverCurve)}.
+   *
+   * <p>
+   * The share is installed as a {@link GasTurbineDriver} performance curve evaluated at ISO ambient
+   * conditions so that each compressor's {@link Compressor#getCapacityMax()} reports exactly its
+   * allocation. The per-compressor caps sum to {@link #getAvailablePowerW()}, enforcing &Sigma;
+   * compressor power &le; turbine available power in the capacity / bottleneck framework.
+   * </p>
+   */
+  private void applyAvailablePowerLimitToCompressors() {
+    if (drivenCompressors.isEmpty() || availablePowerW <= 0.0) {
+      return;
+    }
+    java.util.Map<String, Double> allocation = getPowerAllocationW();
+    for (Compressor c : drivenCompressors) {
+      Double shareW = allocation.get(c.getName());
+      if (shareW == null || shareW <= 0.0) {
+        continue;
+      }
+      GasTurbineDriver curve = new GasTurbineDriver(shareW / 1000.0, 0.35);
+      curve.setAmbientTemperature(15.0); // ISO so the allocation maps 1:1 to available power
+      c.setDriverCurve(curve);
+    }
   }
 
   /**

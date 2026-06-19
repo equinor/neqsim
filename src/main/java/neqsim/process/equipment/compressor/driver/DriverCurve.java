@@ -1,5 +1,7 @@
 package neqsim.process.equipment.compressor.driver;
 
+import java.io.Serializable;
+
 /**
  * Interface for compressor and pump driver performance curves.
  *
@@ -10,14 +12,18 @@ package neqsim.process.equipment.compressor.driver;
  * constraints of its driver.
  * </p>
  *
- * <p><strong>Supported Driver Types</strong></p>
+ * <p>
+ * <strong>Supported Driver Types</strong>
+ * </p>
  * <ul>
  * <li>Gas Turbines - Power varies with ambient temperature, altitude, and speed</li>
  * <li>Electric Motors - Constant torque (VFD) or fixed speed characteristics</li>
  * <li>Steam Turbines - Power varies with steam conditions and extraction</li>
  * </ul>
  *
- * <p><strong>Example Usage</strong></p>
+ * <p>
+ * <strong>Example Usage</strong>
+ * </p>
  *
  * <pre>
  * DriverCurve driver = new GasTurbineDriver(10000, 0.35); // 10 MW, 35% efficiency
@@ -30,7 +36,7 @@ package neqsim.process.equipment.compressor.driver;
  * @author NeqSim Development Team
  * @version 1.0
  */
-public interface DriverCurve {
+public interface DriverCurve extends Serializable {
 
   /**
    * Gets the type of driver.

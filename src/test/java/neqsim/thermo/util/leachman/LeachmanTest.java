@@ -8,11 +8,15 @@ import org.netlib.util.StringW;
 import org.netlib.util.doubleW;
 import org.netlib.util.intW;
 import neqsim.thermo.system.SystemInterface;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * @author victorigi99
  */
 public class LeachmanTest {
+  private static final Logger logger = LogManager.getLogger(LeachmanTest.class);
+
   private Leachman Leachman;
 
   @BeforeEach
@@ -277,18 +281,18 @@ public class LeachmanTest {
     compressor_Schultz.setPolytropicMethod("schultz");
     compressor_Schultz.run();
 
-    System.out.println("Density before compressor " + Leachmanfluid.getDensity("kg/m3"));
-    System.out.println("-----------------Normal-----------------");
-    System.out.println(
+    logger.info("Density before compressor " + Leachmanfluid.getDensity("kg/m3"));
+    logger.info("-----------------Normal-----------------");
+    logger.info(
         "Temperature out of Compr." + compressor_Leachman.getOutletStream().getTemperature("C"));
-    System.out.println("Power out of Compr." + compressor_Leachman.getPower("MW"));
+    logger.info("Power out of Compr." + compressor_Leachman.getPower("MW"));
     System.out
         .println("Polytropic Head out of Compr." + compressor_Leachman.getPolytropicHead("kJ/kg"));
 
-    System.out.println("-----------------Schultz-----------------");
-    System.out.println(
+    logger.info("-----------------Schultz-----------------");
+    logger.info(
         "Temperature out of Compr." + compressor_Schultz.getOutletStream().getTemperature("C"));
-    System.out.println("Power out of Compr." + compressor_Schultz.getPower("MW"));
+    logger.info("Power out of Compr." + compressor_Schultz.getPower("MW"));
     System.out
         .println("Polytropic Head out of Compr." + compressor_Schultz.getPolytropicHead("kJ/kg"));
   }

@@ -12,6 +12,8 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Tests for MechanicalDesignReport and ProcessInterconnectionDesign.
@@ -23,6 +25,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author NeqSim Development Team
  */
 public class MechanicalDesignReportTest {
+  private static final Logger logger = LogManager.getLogger(MechanicalDesignReportTest.class);
+
   private MechanicalDesignReport report;
   private ProcessSystem process;
 
@@ -96,8 +100,8 @@ public class MechanicalDesignReportTest {
     assertTrue(csv.contains("Tag"), "CSV should have header");
     assertTrue(csv.contains("MainCompressor"), "CSV should contain equipment names");
 
-    System.out.println("Equipment List CSV:");
-    System.out.println(csv);
+    logger.info("Equipment List CSV:");
+    logger.info(csv);
   }
 
   @Test
@@ -109,8 +113,8 @@ public class MechanicalDesignReportTest {
     assertTrue(csv.length() > 0, "CSV should have content");
     assertTrue(csv.contains("Line Number"), "CSV should have header");
 
-    System.out.println("Piping Line List CSV:");
-    System.out.println(csv);
+    logger.info("Piping Line List CSV:");
+    logger.info(csv);
   }
 
   @Test
@@ -123,8 +127,8 @@ public class MechanicalDesignReportTest {
     assertTrue(weightReport.contains("WEIGHT BY EQUIPMENT TYPE"), "Should have type breakdown");
     assertTrue(weightReport.contains("UTILITY REQUIREMENTS"), "Should have utility section");
 
-    System.out.println("Weight Report:");
-    System.out.println(weightReport);
+    logger.info("Weight Report:");
+    logger.info(weightReport);
   }
 
   @Test
@@ -135,8 +139,8 @@ public class MechanicalDesignReportTest {
     assertNotNull(dataSheets, "Data sheets should not be null");
     assertTrue(dataSheets.contains("EQUIPMENT DATA SHEETS"), "Should have title");
 
-    System.out.println("Equipment Data Sheets:");
-    System.out.println(dataSheets);
+    logger.info("Equipment Data Sheets:");
+    logger.info(dataSheets);
   }
 
   @Test
@@ -147,7 +151,7 @@ public class MechanicalDesignReportTest {
     assertNotNull(complete, "Complete report should not be null");
     assertTrue(complete.length() > 1000, "Complete report should be substantial");
 
-    System.out.println("Complete Report Length: " + complete.length() + " characters");
+    logger.info("Complete Report Length: " + complete.length() + " characters");
   }
 
   @Test
@@ -161,8 +165,8 @@ public class MechanicalDesignReportTest {
     String pipingReport = piping.generatePipingReport();
     assertNotNull(pipingReport, "Piping report should not be null");
 
-    System.out.println("Piping Report:");
-    System.out.println(pipingReport);
+    logger.info("Piping Report:");
+    logger.info(pipingReport);
   }
 
   @Test
@@ -189,8 +193,8 @@ public class MechanicalDesignReportTest {
     assertNotNull(json, "JSON summary should not be null");
     assertTrue(json.contains("totalWeight"), "JSON should contain key fields");
 
-    System.out.println("System Summary Report:");
-    System.out.println(summary);
+    logger.info("System Summary Report:");
+    logger.info(summary);
   }
 
   @Test
@@ -212,8 +216,8 @@ public class MechanicalDesignReportTest {
     assertTrue(json.contains("\"pipingDesign\""), "Should have piping design");
     assertTrue(json.contains("\"pipeSegments\""), "Should have pipe segments");
 
-    System.out.println("JSON Report (first 2000 chars):");
-    System.out.println(json.substring(0, Math.min(2000, json.length())));
+    logger.info("JSON Report (first 2000 chars):");
+    logger.info(json.substring(0, Math.min(2000, json.length())));
   }
 
   @Test

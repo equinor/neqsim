@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import org.netlib.util.StringW;
 import org.netlib.util.doubleW;
 import org.netlib.util.intW;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Diagnostic test that prints a comparison table of GERG2008NH3 vs NIST data.
@@ -13,6 +15,8 @@ import org.netlib.util.intW;
  * @version 1.0
  */
 public class GERG2008NH3DiagnosticTest {
+  private static final Logger logger = LogManager.getLogger(GERG2008NH3DiagnosticTest.class);
+
   private GERG2008NH3 gerg;
 
   /**
@@ -29,13 +33,13 @@ public class GERG2008NH3DiagnosticTest {
    */
   @Test
   public void printDeviationTable() {
-    System.out.println("\n========================================================");
-    System.out.println("GERG-2008-NH3 vs NIST WebBook — Pure Ammonia Deviations");
-    System.out.println("(Tillner-Roth SFE-12 amplitudes + Gao critical params)");
-    System.out.println("========================================================");
-    System.out.printf("%-6s %-8s %-12s %-12s %-8s %-10s %-10s %-8s%n", "T(K)", "P(MPa)", "rho_NIST",
+    logger.info("\n========================================================");
+    logger.info("GERG-2008-NH3 vs NIST WebBook — Pure Ammonia Deviations");
+    logger.info("(Tillner-Roth SFE-12 amplitudes + Gao critical params)");
+    logger.info("========================================================");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-6s %-8s %-12s %-12s %-8s %-10s %-10s %-8s%n", "T(K)", "P(MPa)", "rho_NIST",
         "rho_calc", "err(%)", "Cp_calc", "W_calc", "Z_calc");
-    System.out.println("------------------------------------------------------------------------");
+    logger.info("------------------------------------------------------------------------");
 
     // NIST data: {T(K), P(kPa), rho(mol/L), Cp(J/molK), W(m/s)}
     double[][] nistData = {
@@ -65,7 +69,7 @@ public class GERG2008NH3DiagnosticTest {
       gerg.DensityGERG(0, T, P_kPa, x, D, ierr, herr);
 
       if (ierr.val != 0 || D.val > 20.0) {
-        System.out.printf("%-6.0f %-8.1f %-12.5f %-12s %-8s%n", T, P_kPa / 1000, rhoNIST, "FAILED",
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%-6.0f %-8.1f %-12.5f %-12s %-8s%n", T, P_kPa / 1000, rhoNIST, "FAILED",
             "---");
         continue;
       }
@@ -92,16 +96,16 @@ public class GERG2008NH3DiagnosticTest {
       gerg.PropertiesGERG(T, D.val, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT,
           Kappa, A);
 
-      System.out.printf("%-6.0f %-8.1f %-12.5f %-12.5f %-+8.2f %-10.3f %-10.2f %-8.5f%n", T,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-6.0f %-8.1f %-12.5f %-12.5f %-+8.2f %-10.3f %-10.2f %-8.5f%n", T,
           P_kPa / 1000, rhoNIST, D.val, relErr, Cp.val, W.val, Z.val);
     }
 
-    System.out.println("------------------------------------------------------------------------");
-    System.out.println("Positive err% = model overpredicts density");
+    logger.info("------------------------------------------------------------------------");
+    logger.info("Positive err% = model overpredicts density");
     System.out
         .println("Full Gao et al. (2020) reference EOS: 20-term (8 power + 10 Gaussian + 2 GaoB)");
     System.out
         .println("Coefficients from CoolProp (Gao-JPCRD-2020), Tc=405.56K, rhoc=13.696 mol/L");
-    System.out.println("========================================================\n");
+    logger.info("========================================================\n");
   }
 }

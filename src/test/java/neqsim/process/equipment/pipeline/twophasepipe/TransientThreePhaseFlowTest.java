@@ -7,6 +7,8 @@ import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Test for three-phase transient flow in a pipeline. Based on the
@@ -14,6 +16,8 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
  */
 @Tag("slow")
 class TransientThreePhaseFlowTest {
+  private static final Logger logger = LogManager.getLogger(TransientThreePhaseFlowTest.class);
+
   @Test
   void testThreePhaseTransientStability() {
     // Create a rich gas condensate fluid with water (CPA for accurate water
@@ -67,7 +71,7 @@ class TransientThreePhaseFlowTest {
     pipe.run();
 
     double initialInventory = pipe.getLiquidInventory("m3");
-    System.out.println("Three-phase test - Initial liquid inventory: " + initialInventory + " m3");
+    logger.info("Three-phase test - Initial liquid inventory: " + initialInventory + " m3");
 
     // Should have some liquid in the pipe
     assertTrue(initialInventory > 0, "Should have liquid in pipe");
@@ -81,7 +85,7 @@ class TransientThreePhaseFlowTest {
     }
 
     double finalInventory = pipe.getLiquidInventory("m3");
-    System.out.println("Three-phase test - Final liquid inventory: " + finalInventory + " m3");
+    logger.info("Three-phase test - Final liquid inventory: " + finalInventory + " m3");
 
     // Should stabilize (not blow up or go to zero)
     assertTrue(finalInventory > 0, "Liquid inventory should remain positive");

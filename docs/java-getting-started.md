@@ -51,44 +51,7 @@ No authentication required. Add to your `pom.xml`:
 
 Run `mvn clean install` and Maven will resolve NeqSim from Central automatically.
 
-### Option 2: GitHub Packages (latest snapshots)
-
-Useful if you want pre-release versions.
-
-1. Create a [Personal Access Token](https://github.com/settings/tokens) with `read:packages` scope.
-
-2. Add to your Maven `settings.xml` (typically at `~/.m2/settings.xml`):
-
-```xml
-<settings>
-  <servers>
-    <server>
-      <id>github</id>
-      <username>YOUR_GITHUB_USERNAME</username>
-      <password>YOUR_GITHUB_TOKEN</password>
-    </server>
-  </servers>
-</settings>
-```
-
-3. Add the repository and dependency to `pom.xml`:
-
-```xml
-<repositories>
-  <repository>
-    <id>github</id>
-    <url>https://maven.pkg.github.com/equinor/neqsim</url>
-  </repository>
-</repositories>
-
-<dependency>
-  <groupId>com.equinor.neqsim</groupId>
-  <artifactId>neqsim</artifactId>
-  <version>3.6.1</version>
-</dependency>
-```
-
-### Option 3: Direct JAR download
+### Option 2: Direct JAR download
 
 Download `neqsim-x.x.x.jar` from the [releases page](https://github.com/equinor/neqsim/releases) and add it to your classpath.
 

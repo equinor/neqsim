@@ -16,6 +16,8 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Integration-style tests exercising the dynamic Beggs & Brill pipeline together with a throttling
@@ -24,6 +26,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * introduced by the transient pipeline model.
  */
 public class PipeBeggsAndBrillsTransientSystemTest {
+  private static final Logger logger = LogManager.getLogger(PipeBeggsAndBrillsTransientSystemTest.class);
+
   private static final double PIPELINE_LENGTH_METERS = 100.0;
   private static final double PIPELINE_DIAMETER_METERS = 0.3;
   private static final double PIPELINE_ROUGHNESS_METERS = 5e-6;
@@ -154,7 +158,7 @@ public class PipeBeggsAndBrillsTransientSystemTest {
       // the response is essentially instantaneous (which may indicate a model limitation).
       // This is a soft check since the transient model may not always show ideal delay behavior.
       if (firstStepChange >= 0.95 * totalChange) {
-        System.out.println("Note: " + scenarioDescription + " " + probe.description()
+        logger.info("Note: " + scenarioDescription + " " + probe.description()
             + " showed near-instant response (first step captured "
             + String.format("%.1f%%", 100.0 * firstStepChange / totalChange)
             + " of total change). Pipeline transient delay may not be working as expected.");
@@ -190,7 +194,7 @@ public class PipeBeggsAndBrillsTransientSystemTest {
     // Soft check: transient simulation should ideally require multiple steps
     // This may not always hold depending on the pipeline model behavior
     if (additionalSteps == 0) {
-      System.out.println("Note: " + scenarioDescription
+      logger.info("Note: " + scenarioDescription
           + " converged in first step. Pipeline transient delay may not be active.");
     }
 

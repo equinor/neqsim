@@ -439,7 +439,7 @@ public class CapabilitiesRunner {
     addGenericToolCapability(tools, "runOperationalStudy", "run_operational_study", "process",
         "Run P&ID/tag-driven operating scenarios and trip-margin screening", "process-system");
     addGenericToolCapability(tools, "runAgenticEngineering", "run_agentic_engineering", "workflow",
-        "Plan engineering workflows, evaluate evidence trust, and rank studies",
+        "Plan engineering workflows, evaluate evidence trust, rank studies, and gate readiness",
         "flowsheet-builder");
     addGenericToolCapability(tools, "crossValidateModels", "cross_validate_models", "uncertainty",
         "Run one process under multiple EOS models", "optimization-uncertainty");
@@ -503,6 +503,13 @@ public class CapabilitiesRunner {
         "Fetch per-tool benchmark trust and validation maturity metadata", "benchmark-registry");
     addGenericToolCapability(tools, "checkToolAccess", "check_tool_access", "governance",
         "Check whether a tool is allowed in the active deployment profile", "safety-governance");
+    addGenericToolCapability(tools, "getAdjustableParameters", "get_adjustable_parameters",
+        "automation",
+        "Discover bounded decision variables (setpoints) before driving an optimization loop",
+        "optimization-uncertainty");
+    addGenericToolCapability(tools, "runProcessLoop", "run_process_loop", "uncertainty",
+        "Build a process once and sweep many setpoint trials via cached automation evaluate",
+        "optimization-uncertainty");
   }
 
   /**

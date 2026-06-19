@@ -7,6 +7,8 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Validation of Beggs and Brill pipeline model against literature data and analytical solutions.
@@ -32,6 +34,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * </ul>
  */
 public class BeggsAndBrillsValidationExample {
+  private static final Logger logger = LogManager.getLogger(BeggsAndBrillsValidationExample.class);
+
 
   /**
    * Main method to run the validation.
@@ -39,11 +43,11 @@ public class BeggsAndBrillsValidationExample {
    * @param args command line arguments (not used)
    */
   public static void main(String[] args) {
-    System.out.println("╔══════════════════════════════════════════════════════════════════════╗");
-    System.out.println("║  BEGGS AND BRILL MODEL VALIDATION                                    ║");
-    System.out.println("║  Comparison against Literature Data and Analytical Solutions         ║");
-    System.out.println("╚══════════════════════════════════════════════════════════════════════╝");
-    System.out.println();
+    logger.info("╔══════════════════════════════════════════════════════════════════════╗");
+    logger.info("║  BEGGS AND BRILL MODEL VALIDATION                                    ║");
+    logger.info("║  Comparison against Literature Data and Analytical Solutions         ║");
+    logger.info("╚══════════════════════════════════════════════════════════════════════╝");
+
 
     // Run all validation tests
     validateSinglePhaseGasPressureDrop();
@@ -51,9 +55,9 @@ public class BeggsAndBrillsValidationExample {
     validateHeatTransfer();
     validateTwoPhaseFlowRegimes();
 
-    System.out.println("╔══════════════════════════════════════════════════════════════════════╗");
-    System.out.println("║  VALIDATION COMPLETE                                                 ║");
-    System.out.println("╚══════════════════════════════════════════════════════════════════════╝");
+    logger.info("╔══════════════════════════════════════════════════════════════════════╗");
+    logger.info("║  VALIDATION COMPLETE                                                 ║");
+    logger.info("╚══════════════════════════════════════════════════════════════════════╝");
   }
 
   /**
@@ -68,11 +72,11 @@ public class BeggsAndBrillsValidationExample {
    * </p>
    */
   private static void validateSinglePhaseGasPressureDrop() {
-    System.out.println("═══════════════════════════════════════════════════════════════════════");
-    System.out.println("TEST 1: SINGLE-PHASE GAS PRESSURE DROP");
-    System.out.println("       Comparison with Darcy-Weisbach Equation");
-    System.out.println("═══════════════════════════════════════════════════════════════════════");
-    System.out.println();
+    logger.info("═══════════════════════════════════════════════════════════════════════");
+    logger.info("TEST 1: SINGLE-PHASE GAS PRESSURE DROP");
+    logger.info("       Comparison with Darcy-Weisbach Equation");
+    logger.info("═══════════════════════════════════════════════════════════════════════");
+
 
     // Test parameters
     double temperature = 25.0; // °C
@@ -127,47 +131,47 @@ public class BeggsAndBrillsValidationExample {
     double dP_analytical = f * (length / diameter) * (rho * velocity * velocity / 2.0) / 1e5; // bar
 
     // Results
-    System.out.println("Input Parameters:");
-    System.out.printf("  Pipe length: %.0f m%n", length);
-    System.out.printf("  Pipe diameter: %.3f m (%.0f mm)%n", diameter, diameter * 1000);
-    System.out.printf("  Roughness: %.2e m%n", roughness);
-    System.out.printf("  Flow rate: %.0f kg/hr%n", flowRate);
-    System.out.printf("  Inlet pressure: %.1f bara%n", pressure);
-    System.out.printf("  Temperature: %.1f °C%n", temperature);
-    System.out.println();
+    logger.info("Input Parameters:");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Pipe length: %.0f m%n", length);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Pipe diameter: %.3f m (%.0f mm)%n", diameter, diameter * 1000);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Roughness: %.2e m%n", roughness);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Flow rate: %.0f kg/hr%n", flowRate);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Inlet pressure: %.1f bara%n", pressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Temperature: %.1f °C%n", temperature);
 
-    System.out.println("Fluid Properties:");
-    System.out.printf("  Density: %.2f kg/m³%n", rho);
-    System.out.printf("  Viscosity: %.4e Pa·s%n", mu);
-    System.out.printf("  Velocity: %.2f m/s%n", velocity);
-    System.out.printf("  Reynolds number: %.2e%n", Re);
-    System.out.printf("  Friction factor (Haaland): %.5f%n", f);
-    System.out.println();
 
-    System.out.println("Pressure Drop Comparison:");
-    System.out.printf("  Analytical (Darcy-Weisbach): %.4f bar%n", dP_analytical);
-    System.out.printf("  Beggs & Brill simulation:   %.4f bar%n", simPressureDrop);
+    logger.info("Fluid Properties:");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Density: %.2f kg/m³%n", rho);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Viscosity: %.4e Pa·s%n", mu);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Velocity: %.2f m/s%n", velocity);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Reynolds number: %.2e%n", Re);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Friction factor (Haaland): %.5f%n", f);
+
+
+    logger.info("Pressure Drop Comparison:");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Analytical (Darcy-Weisbach): %.4f bar%n", dP_analytical);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Beggs & Brill simulation:   %.4f bar%n", simPressureDrop);
     double error = Math.abs(simPressureDrop - dP_analytical) / dP_analytical * 100;
-    System.out.printf("  Relative error: %.2f%%%n", error);
-    System.out.println();
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Relative error: %.2f%%%n", error);
+
 
     if (error < 10) {
-      System.out.println("  ✓ PASS: Error < 10%");
+      logger.info("  ✓ PASS: Error < 10%");
     } else {
-      System.out.println("  ✗ FAIL: Error > 10%");
+      logger.info("  ✗ FAIL: Error > 10%");
     }
-    System.out.println();
+
   }
 
   /**
    * Validate single-phase liquid pressure drop against Darcy-Weisbach equation.
    */
   private static void validateSinglePhaseLiquidPressureDrop() {
-    System.out.println("═══════════════════════════════════════════════════════════════════════");
-    System.out.println("TEST 2: SINGLE-PHASE LIQUID PRESSURE DROP");
-    System.out.println("       Comparison with Darcy-Weisbach Equation");
-    System.out.println("═══════════════════════════════════════════════════════════════════════");
-    System.out.println();
+    logger.info("═══════════════════════════════════════════════════════════════════════");
+    logger.info("TEST 2: SINGLE-PHASE LIQUID PRESSURE DROP");
+    logger.info("       Comparison with Darcy-Weisbach Equation");
+    logger.info("═══════════════════════════════════════════════════════════════════════");
+
 
     // Test parameters - liquid nC10
     double temperature = 25.0; // °C
@@ -227,34 +231,34 @@ public class BeggsAndBrillsValidationExample {
     double dP_analytical = f * (length / diameter) * (rho * velocity * velocity / 2.0) / 1e5;
 
     // Results
-    System.out.println("Input Parameters:");
-    System.out.printf("  Pipe length: %.0f m%n", length);
-    System.out.printf("  Pipe diameter: %.3f m%n", diameter);
-    System.out.printf("  Flow rate: %.0f kg/hr%n", flowRate);
-    System.out.printf("  Inlet pressure: %.1f bara%n", pressure);
-    System.out.println();
+    logger.info("Input Parameters:");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Pipe length: %.0f m%n", length);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Pipe diameter: %.3f m%n", diameter);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Flow rate: %.0f kg/hr%n", flowRate);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Inlet pressure: %.1f bara%n", pressure);
 
-    System.out.println("Fluid Properties (nC10 - decane):");
-    System.out.printf("  Density: %.1f kg/m³%n", rho);
-    System.out.printf("  Viscosity: %.4e Pa·s%n", mu);
-    System.out.printf("  Velocity: %.2f m/s%n", velocity);
-    System.out.printf("  Reynolds number: %.2e%n", Re);
-    System.out.printf("  Friction factor: %.5f%n", f);
-    System.out.println();
 
-    System.out.println("Pressure Drop Comparison:");
-    System.out.printf("  Analytical (Darcy-Weisbach): %.4f bar%n", dP_analytical);
-    System.out.printf("  Beggs & Brill simulation:   %.4f bar%n", simPressureDrop);
+    logger.info("Fluid Properties (nC10 - decane):");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Density: %.1f kg/m³%n", rho);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Viscosity: %.4e Pa·s%n", mu);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Velocity: %.2f m/s%n", velocity);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Reynolds number: %.2e%n", Re);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Friction factor: %.5f%n", f);
+
+
+    logger.info("Pressure Drop Comparison:");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Analytical (Darcy-Weisbach): %.4f bar%n", dP_analytical);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Beggs & Brill simulation:   %.4f bar%n", simPressureDrop);
     double error = Math.abs(simPressureDrop - dP_analytical) / dP_analytical * 100;
-    System.out.printf("  Relative error: %.2f%%%n", error);
-    System.out.println();
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Relative error: %.2f%%%n", error);
+
 
     if (error < 15) {
-      System.out.println("  ✓ PASS: Error < 15%");
+      logger.info("  ✓ PASS: Error < 15%");
     } else {
-      System.out.println("  ✗ FAIL: Error > 15%");
+      logger.info("  ✗ FAIL: Error > 15%");
     }
-    System.out.println();
+
   }
 
   /**
@@ -268,11 +272,11 @@ public class BeggsAndBrillsValidationExample {
    * </p>
    */
   private static void validateHeatTransfer() {
-    System.out.println("═══════════════════════════════════════════════════════════════════════");
-    System.out.println("TEST 3: HEAT TRANSFER VALIDATION");
-    System.out.println("       Comparison with NTU-Effectiveness Analytical Solution");
-    System.out.println("═══════════════════════════════════════════════════════════════════════");
-    System.out.println();
+    logger.info("═══════════════════════════════════════════════════════════════════════");
+    logger.info("TEST 3: HEAT TRANSFER VALIDATION");
+    logger.info("       Comparison with NTU-Effectiveness Analytical Solution");
+    logger.info("═══════════════════════════════════════════════════════════════════════");
+
 
     // Test parameters
     double inletTemp = 80.0; // °C
@@ -328,45 +332,45 @@ public class BeggsAndBrillsValidationExample {
     double pipeLength = pipe.getLength(); // This should be total length
 
     // Results
-    System.out.println("Input Parameters:");
-    System.out.printf("  Pipe length: %.0f m%n", length);
-    System.out.printf("  Pipe diameter: %.3f m (pipe reports: %.3f m)%n", diameter, pipeInsideDiam);
-    System.out.printf("  Heat transfer area: %.1f m²%n", area);
-    System.out.printf("  Flow rate: %.0f kg/hr (%.3f kg/s)%n", flowRate, massFlow);
-    System.out.printf("  U-value: %.1f W/(m²·K)%n", U);
-    System.out.printf("  Inlet temperature: %.1f °C%n", inletTemp);
-    System.out.printf("  Wall temperature: %.1f °C%n", wallTemp);
-    System.out.println();
+    logger.info("Input Parameters:");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Pipe length: %.0f m%n", length);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Pipe diameter: %.3f m (pipe reports: %.3f m)%n", diameter, pipeInsideDiam);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Heat transfer area: %.1f m²%n", area);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Flow rate: %.0f kg/hr (%.3f kg/s)%n", flowRate, massFlow);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  U-value: %.1f W/(m²·K)%n", U);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Inlet temperature: %.1f °C%n", inletTemp);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Wall temperature: %.1f °C%n", wallTemp);
 
-    System.out.println("Heat Transfer Parameters:");
-    System.out.printf("  Heat capacity (Cp): %.1f J/(kg·K)%n", Cp);
-    System.out.printf("  NTU = U×A/(ṁ×Cp): %.4f%n", NTU);
-    System.out.printf("  Effectiveness = 1-exp(-NTU): %.4f%n", 1 - Math.exp(-NTU));
-    System.out.println();
 
-    System.out.println("Outlet Temperature Comparison:");
-    System.out.printf("  Analytical (NTU method):  %.2f °C%n", analyticalOutletTemp);
-    System.out.printf("  Beggs & Brill simulation: %.2f °C%n", simOutletTemp);
+    logger.info("Heat Transfer Parameters:");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Heat capacity (Cp): %.1f J/(kg·K)%n", Cp);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  NTU = U×A/(ṁ×Cp): %.4f%n", NTU);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Effectiveness = 1-exp(-NTU): %.4f%n", 1 - Math.exp(-NTU));
+
+
+    logger.info("Outlet Temperature Comparison:");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Analytical (NTU method):  %.2f °C%n", analyticalOutletTemp);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Beggs & Brill simulation: %.2f °C%n", simOutletTemp);
     double error = Math.abs(simOutletTemp - analyticalOutletTemp);
-    System.out.printf("  Absolute error: %.2f °C%n", error);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Absolute error: %.2f °C%n", error);
     double relError = error / (inletTemp - wallTemp) * 100;
-    System.out.printf("  Relative error: %.2f%% of ΔT%n", relError);
-    System.out.println();
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Relative error: %.2f%% of ΔT%n", relError);
+
 
     // Heat duty comparison
     double Q_analytical = massFlow * Cp * (inletTemp - analyticalOutletTemp); // W
     double Q_simulation = massFlow * Cp * (inletTemp - simOutletTemp);
-    System.out.println("Heat Duty Comparison:");
-    System.out.printf("  Analytical: %.1f kW%n", Q_analytical / 1000);
-    System.out.printf("  Simulation: %.1f kW%n", Q_simulation / 1000);
-    System.out.println();
+    logger.info("Heat Duty Comparison:");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Analytical: %.1f kW%n", Q_analytical / 1000);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Simulation: %.1f kW%n", Q_simulation / 1000);
+
 
     if (error < 2.0) {
-      System.out.println("  ✓ PASS: Temperature error < 2°C");
+      logger.info("  ✓ PASS: Temperature error < 2°C");
     } else {
-      System.out.println("  ✗ FAIL: Temperature error > 2°C");
+      logger.info("  ✗ FAIL: Temperature error > 2°C");
     }
-    System.out.println();
+
   }
 
   /**
@@ -377,11 +381,11 @@ public class BeggsAndBrillsValidationExample {
    * </p>
    */
   private static void validateTwoPhaseFlowRegimes() {
-    System.out.println("═══════════════════════════════════════════════════════════════════════");
-    System.out.println("TEST 4: TWO-PHASE FLOW REGIME AND HOLDUP");
-    System.out.println("       Beggs & Brill (1973) Correlation Validation");
-    System.out.println("═══════════════════════════════════════════════════════════════════════");
-    System.out.println();
+    logger.info("═══════════════════════════════════════════════════════════════════════");
+    logger.info("TEST 4: TWO-PHASE FLOW REGIME AND HOLDUP");
+    logger.info("       Beggs & Brill (1973) Correlation Validation");
+    logger.info("═══════════════════════════════════════════════════════════════════════");
+
 
     // Test parameters - varying gas fraction
     double temperature = 40.0; // °C
@@ -389,22 +393,22 @@ public class BeggsAndBrillsValidationExample {
     double length = 500.0; // m
     double diameter = 0.1; // m
 
-    System.out.println("Test Configuration:");
-    System.out.printf("  Pipe length: %.0f m, diameter: %.3f m%n", length, diameter);
-    System.out.printf("  Pressure: %.0f bara, Temperature: %.0f °C%n", pressure, temperature);
-    System.out.println();
+    logger.info("Test Configuration:");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Pipe length: %.0f m, diameter: %.3f m%n", length, diameter);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Pressure: %.0f bara, Temperature: %.0f °C%n", pressure, temperature);
+
 
     // Test multiple GOR (Gas-Oil Ratio) conditions
     double[] gasFlowRates = {100, 500, 2000, 5000, 10000}; // kg/hr gas
     double liquidFlowRate = 10000; // kg/hr liquid (constant)
 
-    System.out.println("Two-Phase Flow Results:");
-    System.out.println(StringUtils.repeat("─", 90));
-    System.out.printf("%-10s %-10s %-8s %-10s %-12s %-10s %-12s %-10s%n", "Gas Flow", "Liq Flow",
+    logger.info("Two-Phase Flow Results:");
+    logger.info(StringUtils.repeat("─", 90));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-10s %-10s %-8s %-10s %-12s %-10s %-12s %-10s%n", "Gas Flow", "Liq Flow",
         "GOR", "λ_liquid", "Flow Regime", "Holdup El", "ΔP (bar)", "ΔP/km");
-    System.out.printf("%-10s %-10s %-8s %-10s %-12s %-10s %-12s %-10s%n", "(kg/hr)", "(kg/hr)",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-10s %-10s %-8s %-10s %-12s %-10s %-12s %-10s%n", "(kg/hr)", "(kg/hr)",
         "(-)", "(-)", "(-)", "(-)", "(bar)", "(bar/km)");
-    System.out.println(StringUtils.repeat("─", 90));
+    logger.info(StringUtils.repeat("─", 90));
 
     for (double gasFlow : gasFlowRates) {
       // Create two-phase fluid (methane + nC10)
@@ -449,38 +453,38 @@ public class BeggsAndBrillsValidationExample {
 
         double gor = gasFlow / liquidFlowRate;
 
-        System.out.printf("%-10.0f %-10.0f %-8.2f %-10.3f %-12s %-10.3f %-12.4f %-10.3f%n", gasFlow,
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.0f %-10.0f %-8.2f %-10.3f %-12s %-10.3f %-12.4f %-10.3f%n", gasFlow,
             liquidFlowRate, gor, lambda, regime, holdup, pressureDrop,
             pressureDrop / length * 1000);
       } catch (Exception e) {
-        System.out.printf("%-10.0f %-10.0f - Error: %s%n", gasFlow, liquidFlowRate, e.getMessage());
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.0f %-10.0f - Error: %s%n", gasFlow, liquidFlowRate, e.getMessage());
       }
     }
 
-    System.out.println(StringUtils.repeat("─", 90));
-    System.out.println();
+    logger.info(StringUtils.repeat("─", 90));
+
 
     // Validate against Beggs & Brill flow regime map boundaries
-    System.out.println("Flow Regime Map Validation (Beggs & Brill 1973):");
-    System.out.println("  Expected regimes based on Froude number and liquid holdup:");
-    System.out.println("  - Low gas rate (GOR < 0.1): SEGREGATED or INTERMITTENT");
-    System.out.println("  - Medium gas rate (0.1 < GOR < 1): INTERMITTENT");
-    System.out.println("  - High gas rate (GOR > 1): DISTRIBUTED or INTERMITTENT");
-    System.out.println();
+    logger.info("Flow Regime Map Validation (Beggs & Brill 1973):");
+    logger.info("  Expected regimes based on Froude number and liquid holdup:");
+    logger.info("  - Low gas rate (GOR < 0.1): SEGREGATED or INTERMITTENT");
+    logger.info("  - Medium gas rate (0.1 < GOR < 1): INTERMITTENT");
+    logger.info("  - High gas rate (GOR > 1): DISTRIBUTED or INTERMITTENT");
 
-    System.out.println("  ✓ Flow regime detection is functioning");
-    System.out.println("  ✓ Liquid holdup decreases with increasing gas fraction (as expected)");
-    System.out.println("  ✓ Pressure drop varies with flow regime and composition");
-    System.out.println();
+
+    logger.info("  ✓ Flow regime detection is functioning");
+    logger.info("  ✓ Liquid holdup decreases with increasing gas fraction (as expected)");
+    logger.info("  ✓ Pressure drop varies with flow regime and composition");
+
 
     // Reference data from literature
-    System.out.println("Literature Reference Values (Beggs & Brill 1973 test data):");
-    System.out.println("  Original correlation developed from 584 tests with:");
-    System.out.println("  - Pipe diameters: 1 inch and 1.5 inch");
-    System.out.println("  - Pipe length: 90 ft");
-    System.out.println("  - Inclinations: -90° to +90°");
-    System.out.println("  - Liquid holdup prediction accuracy: ±20% for most conditions");
-    System.out.println("  - Pressure drop accuracy: ±10-30% depending on flow regime");
-    System.out.println();
+    logger.info("Literature Reference Values (Beggs & Brill 1973 test data):");
+    logger.info("  Original correlation developed from 584 tests with:");
+    logger.info("  - Pipe diameters: 1 inch and 1.5 inch");
+    logger.info("  - Pipe length: 90 ft");
+    logger.info("  - Inclinations: -90° to +90°");
+    logger.info("  - Liquid holdup prediction accuracy: ±20% for most conditions");
+    logger.info("  - Pressure drop accuracy: ±10-30% depending on flow regime");
+
   }
 }

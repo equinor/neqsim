@@ -22,6 +22,9 @@ discoverability layer that maps engineering problems to the right class.
 ```
 Need to OPTIMIZE something on a flowsheet?
 │
+├── ML / agentic closed loop (string addresses, never-throw JSON, replayable trajectory)?
+│   → auto.newOptimizer()  (AgenticProcessOptimizer — bounded Nelder-Mead on top of evaluate())
+│
 ├── Maximize THROUGHPUT for given P_in / P_out, with equipment constraints?
 │   → ProcessOptimizationEngine.findMaximumThroughput(...)
 │
@@ -77,6 +80,7 @@ Need to OPTIMIZE something on a flowsheet?
 | Throughput maximization | `ProcessOptimizationEngine` | Binary, Golden-section, Gradient, BFGS, Nelder-Mead | Mature |
 | Custom-objective single-var | `ProductionOptimizer` | Binary feasibility, Golden-section score | Mature |
 | Custom-objective multi-var | `ProductionOptimizer` | Nelder-Mead, Particle Swarm | Mature |
+| Agentic/ML closed-loop | `AgenticProcessOptimizer` (`auto.newOptimizer()`) | Bounded Nelder-Mead over string addresses + `evaluate()` gating; never-throw JSON, trajectory tape | New (≥3.13.0) |
 | Constrained NLP | `SQPoptimizer` | BFGS-damped + active-set QP + L1 merit | Mature |
 | Pareto multi-objective | `MultiObjectiveOptimizer` | Weighted-sum, epsilon-constraint, knee-point | Mature |
 | Parallel parameter sweep | `BatchStudy` | Full-factorial, ExecutorService parallel | Mature |
