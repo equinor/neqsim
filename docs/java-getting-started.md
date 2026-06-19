@@ -254,6 +254,10 @@ cd neqsim
 code .   # VS Code will prompt to reopen in container
 ```
 
+### Docker container
+
+To build NeqSim in a self-contained Docker image and use it from both Java and Python (jpype) without a local toolchain, see [Building and Running NeqSim with Docker](docker-getting-started.md).
+
 ### IntelliJ IDEA
 
 1. Open IntelliJ IDEA
