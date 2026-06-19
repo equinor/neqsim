@@ -4,6 +4,10 @@
 	"name": "NeqSim Dev",
 	"build": {
 		"dockerfile": "Dockerfile",
+		// Reuse the prebuilt image pushed by the "Prebuild Dev Container"
+		// workflow so "Reopen in Container" pulls cached layers instead of
+		// rebuilding from scratch.
+		"cacheFrom": "ghcr.io/equinor/neqsim-devcontainer:latest",
 		"args": {
 			"VARIANT": "21",
 			"INSTALL_MAVEN": "true",
