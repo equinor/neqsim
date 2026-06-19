@@ -52,7 +52,19 @@ jobs:
         run: python -m pip install --upgrade pip pre-commit
 
       - name: Run auto-format hooks
-        run: pre-commit run --all-files --hook-stage pre-commit
+        run: |
+          set +e
+          pre-commit run --all-files --hook-stage pre-commit
+          status=$?
+          set -e
+
+          # pre-commit returns exit 1 when files are auto-fixed (expected for formatters).
+          # In that case continue so the next step can commit/push the changes.
+          # If there are no file changes, treat non-zero as a real failure.
+          if [ "$status" -ne 0 ] && git diff --quiet; then
+            echo "pre-commit failed without auto-fix changes"
+            exit "$status"
+          fi
 
       - name: Commit formatting changes
         run: |
