@@ -206,9 +206,7 @@ class ExampleCatalogTest {
     assertTrue(root.has("components"));
   }
 
-  @Disabled("TODO: not working per 19.06.2060")
   @Test
-  @Tag("failing")
   void testRootCauseExample_runsSuccessfully() {
     String example = ExampleCatalog.getExample("root-cause", "compressor-high-vibration");
     assertNotNull(example);
