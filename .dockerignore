@@ -1,0 +1,36 @@
+# Build-context exclusions for the root Dockerfile (self-contained NeqSim image).
+# Keep source, devtools, Maven wrapper, and resources; drop heavy/derived files
+# so the build context stays small and the baked checkout is reproducible.
+
+# Version control
+.git/
+.gitignore
+
+# Python virtualenvs (large — must not enter the image)
+.venv/
+.venv-1/
+venv/
+**/__pycache__/
+**/*.pyc
+**/*.egg-info/
+
+# Maven / Java build output (regenerated inside the image)
+target/
+**/target/
+*.class
+
+# Node
+**/node_modules/
+
+# Task / scratch output (not needed to build NeqSim)
+task_solve/
+output/
+*.jfr
+benchmark_results.txt
+.devcontainer-build.log
+
+# IDE / OS noise
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
