@@ -5,15 +5,21 @@ description: "Complete guide to building NeqSim in a Docker container and using 
 
 # Building and Running NeqSim with Docker
 
-This guide shows how to build NeqSim inside a Docker container and use the freshly
-compiled library from both **Java** and **Python** (via jpype). Docker gives you a
-reproducible environment with Java 21, Maven, and Python already wired together — no
-local JDK, Maven, or Python setup required beyond Docker itself.
+This guide shows how to run NeqSim inside a Docker container and use it from both
+**Java** and **Python** (via jpype). Docker gives you a reproducible environment with
+Java 21, Maven, and Python already wired together — no local JDK, Maven, or Python
+setup required beyond Docker itself.
 
-There are two container setups in the repository:
+**The fastest way to run everything on your local computer** is to pull the prebuilt
+image and mount the source — jump straight to
+[Quick start](#quick-start-do-everything-locally-with-the-prebuilt-image-recommended).
 
-| File | Purpose |
+There are two container setups in the repository, plus a prebuilt base image you can
+pull directly:
+
+| File / image | Purpose |
 |------|---------|
+| [`ghcr.io/equinor/neqsim-devcontainer`](https://github.com/equinor/neqsim/pkgs/container/neqsim-devcontainer) | **Prebuilt base image (recommended)** — Java 21 + Maven + Python 3.12, published to GHCR. Pull with `docker pull`, mount the repo, and run everything locally (see [Quick start](#quick-start-do-everything-locally-with-the-prebuilt-image-recommended)). Contains the toolchain, not the compiled NeqSim source. |
 | [Dockerfile](https://github.com/equinor/neqsim/blob/master/Dockerfile) | **Self-contained image** — copies the repo in, compiles and packages NeqSim, and wires Python to the built classes. Best for running NeqSim from Java/Python without a local toolchain. |
 | [.devcontainer/Dockerfile](https://github.com/equinor/neqsim/blob/master/.devcontainer/Dockerfile) | **VS Code Dev Container** — a full development environment (Java 21 + Maven + Python 3.12 + JupyterLab) for editing and contributing to NeqSim. |
 
@@ -32,6 +38,83 @@ Verify Docker is installed and running:
 docker --version
 docker info
 ```
+
+---
+
+## Quick start: do everything locally with the prebuilt image (recommended)
+
+This is the **fastest way to run NeqSim on your own computer** — the only thing you
+install locally is Docker. The **neqsim-devcontainer** image is published to the
+GitHub Container Registry with Java 21, Maven, and Python 3.12 already installed, so
+you skip all local JDK/Maven/Python setup.
+
+Published package:
+[ghcr.io/equinor/neqsim-devcontainer](https://github.com/equinor/neqsim/pkgs/container/neqsim-devcontainer).
+
+### Step 1 — Pull the image
+
+```bash
+docker pull ghcr.io/equinor/neqsim-devcontainer:latest
+```
+
+### Step 2 — Get the source and start a container with it mounted
+
+The image ships the **toolchain** (Java + Maven + Python) but not the NeqSim source,
+so clone the repo on your computer and mount it into the container:
+
+```bash
+git clone https://github.com/equinor/neqsim.git
+cd neqsim
+docker run -it -v "${PWD}:/workspaces/neqsim" -w /workspaces/neqsim \
+    ghcr.io/equinor/neqsim-devcontainer:latest bash
+```
+
+On Windows PowerShell (Docker Desktop handles the path translation):
+
+```powershell
+git clone https://github.com/equinor/neqsim.git
+cd neqsim
+docker run -it -v "${PWD}:/workspaces/neqsim" -w /workspaces/neqsim ghcr.io/equinor/neqsim-devcontainer:latest bash
+```
+
+Because the repo is **mounted**, files stay editable on your host and any change is
+immediately visible inside the container.
+
+### Step 3 — Build NeqSim once inside the container
+
+```bash
+./mvnw -DskipTests clean package
+```
+
+### Step 4 — Run it from Java
+
+```bash
+./mvnw -o test -Dtest=SystemSrkEosTest
+```
+
+### Step 5 — Run it from Python (jpype)
+
+```bash
+python3 -c "import sys; sys.path.insert(0,'devtools'); \
+    from neqsim_dev_setup import neqsim_init, neqsim_classes; \
+    ns=neqsim_classes(neqsim_init(project_root='/workspaces/neqsim')); \
+    f=ns.SystemSrkEos(298.15,10.0); f.addComponent('methane',1.0); \
+    f.setMixingRule('classic'); print('NeqSim OK from Python')"
+```
+
+That's the full loop — pull, mount, build, and run from both Java and Python entirely
+on your local machine. See [section 3](#3-using-neqsim-from-python-jpype) for fuller
+Python examples and [section 4](#4-mounting-your-own-scripts-and-notebooks) for
+JupyterLab.
+
+> **Prefer a zero-mount image?** If you'd rather bake the compiled source into an
+> image (so you don't mount the repo each time), build the **self-contained image** in
+> [section 1](#1-building-the-self-contained-image) — it starts FROM this same
+> prebuilt base.
+
+> **Pin a version for reproducibility.** Replace `:latest` with a specific tag or
+> digest (e.g. `ghcr.io/equinor/neqsim-devcontainer@sha256:...`) in CI to guarantee
+> the same toolchain every time.
 
 ---
 
