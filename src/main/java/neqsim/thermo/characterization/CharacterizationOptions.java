@@ -157,19 +157,18 @@ public class CharacterizationOptions {
   }
 
   /**
-   * Whether the reference cut boundaries should be placed as carbon-number-based equal-mass cuts on
-   * the reference fluid's imaginary (fine-resolution) composition, instead of the simple boiling-point
-   * midpoints between adjacent reference pseudo-components.
+   * Whether the reference cut boundaries should be placed as carbon-number-based equal-mass cuts on the reference
+   * fluid's imaginary (fine-resolution) composition, instead of the simple boiling-point midpoints between adjacent
+   * reference pseudo-components.
    *
    * <p>
-   * Disabled by default (boiling-point midpoints are used). When {@code true}, the reference is the
-   * single representative composition (NFLUID = 1) of the Pedersen et al. (Chapter 5.6) common-slate
-   * scheme: each reference pseudo-component is delumped into {@link #getDelumpResolution()}
-   * single-carbon-number sub-fractions to rebuild the imaginary molar composition (Eqs. 5.58-5.59),
-   * and the cut points are then placed so each cut carries an equal mass fraction (Section 5.3). Each
-   * boundary is clamped to lie strictly between the two adjacent reference pseudo-component sorting
-   * keys, so the strict one-to-one property-inheritance mapping is preserved even when the reference
-   * lumps are not equal in mass.
+   * Disabled by default (boiling-point midpoints are used). When {@code true}, the reference is the single
+   * representative composition (NFLUID = 1) of the Pedersen et al. (Chapter 5.6) common-slate scheme: each reference
+   * pseudo-component is delumped into {@link #getDelumpResolution()} single-carbon-number sub-fractions to rebuild the
+   * imaginary molar composition (Eqs. 5.58-5.59), and the cut points are then placed so each cut carries an equal mass
+   * fraction (Section 5.3). Each boundary is clamped to lie strictly between the two adjacent reference
+   * pseudo-component sorting keys, so the strict one-to-one property-inheritance mapping is preserved even when the
+   * reference lumps are not equal in mass.
    *
    * @return true if equal-mass cut points on the reference imaginary composition should be used
    */
@@ -333,16 +332,16 @@ public class CharacterizationOptions {
     }
 
     /**
-     * Set whether the reference cut boundaries should be placed as carbon-number-based equal-mass
-     * cuts on the reference fluid's imaginary (fine-resolution) composition, instead of the simple
-     * boiling-point midpoints between adjacent reference pseudo-components.
+     * Set whether the reference cut boundaries should be placed as carbon-number-based equal-mass cuts on the reference
+     * fluid's imaginary (fine-resolution) composition, instead of the simple boiling-point midpoints between adjacent
+     * reference pseudo-components.
      *
      * <p>
-     * Disabled by default. Enable to follow the Pedersen et al. (Chapter 5.6) common-slate cut-point
-     * rule (Eqs. 5.58-5.59 with NFLUID = 1, Section 5.3 equal-mass lumping) for the reference-only
-     * path. The {@link #delumpResolution(int) delump resolution} controls how finely each reference
-     * lump is split when rebuilding the imaginary composition. Boundaries are clamped between adjacent
-     * reference pseudo-component sorting keys so the property-inheritance mapping stays one-to-one.
+     * Disabled by default. Enable to follow the Pedersen et al. (Chapter 5.6) common-slate cut-point rule (Eqs.
+     * 5.58-5.59 with NFLUID = 1, Section 5.3 equal-mass lumping) for the reference-only path. The
+     * {@link #delumpResolution(int) delump resolution} controls how finely each reference lump is split when rebuilding
+     * the imaginary composition. Boundaries are clamped between adjacent reference pseudo-component sorting keys so the
+     * property-inheritance mapping stays one-to-one.
      *
      * @param shared true to use equal-mass cut points on the reference imaginary composition
      * @return this builder

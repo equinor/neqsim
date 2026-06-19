@@ -187,8 +187,7 @@ public final class PseudoComponentCombiner {
    * @return characterized fluid containing pseudo components compatible with the reference fluid
    */
   private static SystemInterface characterizeToReferenceCore(SystemInterface source, SystemInterface reference,
-      boolean inheritReferenceProperties, boolean delump, int delumpResolution,
-      boolean sharedImaginaryBoundaries) {
+      boolean inheritReferenceProperties, boolean delump, int delumpResolution, boolean sharedImaginaryBoundaries) {
     Objects.requireNonNull(source, "source");
     Objects.requireNonNull(reference, "reference");
 
@@ -1012,31 +1011,28 @@ public final class PseudoComponentCombiner {
   }
 
   /**
-   * Place the reference cut boundaries as carbon-number-based equal-mass cut points on the reference
-   * fluid's imaginary (fine-resolution) composition.
+   * Place the reference cut boundaries as carbon-number-based equal-mass cut points on the reference fluid's imaginary
+   * (fine-resolution) composition.
    *
    * <p>
-   * This is the reference-only (NFLUID = 1) form of the Pedersen et al. (Chapter 5.6) common-slate
-   * cut-point rule. Because the reference is supplied already lumped into pseudo-components, its fine
-   * carbon-number distribution is first rebuilt by delumping each lump into {@code resolution}
-   * single-carbon-number sub-fractions (the imaginary composition of Eqs. 5.58-5.59 with the
-   * reference as the sole weighted fluid). Equal-mass cut points are then placed on that fine
-   * composition (Section 5.3 lumping criterion), so each cut carries an equal mass fraction instead of
-   * being split at the arithmetic boiling-point midpoint, which ignores how much mass each lump
-   * represents.
+   * This is the reference-only (NFLUID = 1) form of the Pedersen et al. (Chapter 5.6) common-slate cut-point rule.
+   * Because the reference is supplied already lumped into pseudo-components, its fine carbon-number distribution is
+   * first rebuilt by delumping each lump into {@code resolution} single-carbon-number sub-fractions (the imaginary
+   * composition of Eqs. 5.58-5.59 with the reference as the sole weighted fluid). Equal-mass cut points are then placed
+   * on that fine composition (Section 5.3 lumping criterion), so each cut carries an equal mass fraction instead of
+   * being split at the arithmetic boiling-point midpoint, which ignores how much mass each lump represents.
    *
    * <p>
-   * Each equal-mass cut is finally clamped to lie strictly between the sorting keys of the two
-   * adjacent reference pseudo-components. This guarantees that every reference pseudo-component
-   * remains inside its own cut, preserving the strict one-to-one ordering on which the property
-   * inheritance in {@link #characterizeToReferenceCore} relies, even when the reference lumps are not
-   * equal in mass (in which case an unclamped equal-mass cut could fall across a lump and mis-bin the
-   * source). When clamping cannot recover a valid in-gap value the boiling-point midpoint is used as a
+   * Each equal-mass cut is finally clamped to lie strictly between the sorting keys of the two adjacent reference
+   * pseudo-components. This guarantees that every reference pseudo-component remains inside its own cut, preserving the
+   * strict one-to-one ordering on which the property inheritance in {@link #characterizeToReferenceCore} relies, even
+   * when the reference lumps are not equal in mass (in which case an unclamped equal-mass cut could fall across a lump
+   * and mis-bin the source). When clamping cannot recover a valid in-gap value the boiling-point midpoint is used as a
    * fallback.
    *
    * @param referenceContributions the reference pseudo-components, sorted ascending by sorting key
-   * @param resolution number of single-carbon-number sub-fractions per reference lump used to rebuild
-   *        the imaginary composition; values of 1 or less fall back to boiling-point midpoints
+   * @param resolution number of single-carbon-number sub-fractions per reference lump used to rebuild the imaginary
+   * composition; values of 1 or less fall back to boiling-point midpoints
    * @return the clamped equal-mass cut boundaries (size {@code referenceContributions.size() - 1})
    */
   private static List<Double> determineReferenceEqualMassBoundaries(
@@ -1056,8 +1052,8 @@ public final class PseudoComponentCombiner {
     for (int i = 0; i < cuts; i++) {
       double lower = referenceContributions.get(i).sortingKey();
       double upper = referenceContributions.get(i + 1).sortingKey();
-      double midpoint =
-	  Double.isFinite(lower) && Double.isFinite(upper) ? 0.5 * (lower + upper) : Math.max(lower, upper);
+      double midpoint = Double.isFinite(lower) && Double.isFinite(upper) ? 0.5 * (lower + upper)
+	  : Math.max(lower, upper);
 
       double boundary = midpoint;
       if (Double.isFinite(lower) && Double.isFinite(upper) && upper > lower) {
