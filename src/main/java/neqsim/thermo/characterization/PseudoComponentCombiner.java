@@ -162,7 +162,7 @@ public final class PseudoComponentCombiner {
    * @return characterized fluid containing pseudo components compatible with the reference fluid
    */
   public static SystemInterface characterizeToReference(SystemInterface source, SystemInterface reference) {
-    return characterizeToReferenceCore(source, reference, false);
+    return characterizeToReferenceCore(source, reference, false, false, 0);
   }
 
   /**
@@ -178,12 +178,22 @@ public final class PseudoComponentCombiner {
    * @param source fluid to characterize
    * @param reference fluid defining the pseudo component characterization
    * @param inheritReferenceProperties whether to inherit the reference lump properties
+   * @param delump whether to delump each source lump into finer sub-fractions before re-distributing
+   *        it onto the reference cuts
+   * @param delumpResolution number of sub-fractions per source lump when {@code delump} is
+   *        {@code true}; values of 1 or less disable splitting
    * @return characterized fluid containing pseudo components compatible with the reference fluid
    */
   private static SystemInterface characterizeToReferenceCore(SystemInterface source, SystemInterface reference,
-      boolean inheritReferenceProperties) {
+      boolean inheritReferenceProperties, boolean delump, int delumpResolution) {
     Objects.requireNonNull(source, "source");
     Objects.requireNonNull(reference, "reference");
+
+    if (delump && inheritReferenceProperties) {
+      logger.warn("delumpBeforeRecharacterization=true is combined with inheritReferenceProperties=true: the "
+          + "recomputed lump molar mass and density are still overwritten by the reference values, which largely "
+          + "defeats the delumping. Set inheritReferenceProperties=false to keep the redistributed lump properties.");
+    }
 
     SystemInterface characterized = source.clone();
     removeAllComponents(characterized);
@@ -200,8 +210,13 @@ public final class PseudoComponentCombiner {
       return characterized;
     }
 
+    List<PseudoComponentContribution> sourcePseudoComponents = sourceExtraction.pseudoComponents;
+    if (delump) {
+      sourcePseudoComponents = delumpContributions(sourcePseudoComponents, delumpResolution);
+    }
+
     List<Double> boundaries = determineReferenceBoundaries(referenceExtraction.pseudoComponents);
-    List<PseudoComponentProfile> profiles = distributeToProfiles(sourceExtraction.pseudoComponents, boundaries,
+    List<PseudoComponentProfile> profiles = distributeToProfiles(sourcePseudoComponents, boundaries,
 	referenceExtraction.pseudoComponents.size());
 
     for (int i = 0; i < referenceExtraction.pseudoComponents.size(); i++) {
@@ -250,7 +265,8 @@ public final class PseudoComponentCombiner {
     Objects.requireNonNull(options, "options");
 
     SystemInterface characterized = characterizeToReferenceCore(source, reference,
-	options.isInheritReferenceProperties());
+	options.isInheritReferenceProperties(), options.isDelumpBeforeRecharacterization(),
+	options.getDelumpResolution());
 
     if (options.isTransferBinaryInteractionParameters()) {
       transferBinaryInteractionParameters(reference, characterized);
@@ -891,6 +907,92 @@ public final class PseudoComponentCombiner {
     return boundaries;
   }
 
+  /**
+   * Split each coarse source pseudo-component into a grid of finer single-carbon-number (SCN)
+   * sub-fractions that conserve the parent moles and mass exactly.
+   *
+   * <p>
+   * This implements the delumping stage of the Pedersen et al. (Chapter 5) lumping/delumping scheme
+   * (Eqs. 5.35-5.37 describe the inverse mass-weighted lumping). For every parent lump the method:
+   * <ol>
+   * <li>builds a molar-mass grid that brackets the parent molar mass over a symmetric
+   * &plusmn;{@code window} window;</li>
+   * <li>assigns normalized, light-end-biased sub-fraction mole weights (their sum is one, so the
+   * parent moles are conserved);</li>
+   * <li>rescales the molar-mass grid by a single factor so that &Sigma;<sub>k</sub> n<sub>k</sub>
+   * M<sub>k</sub> = n<sub>parent</sub> M<sub>parent</sub> exactly, conserving the parent mass;</li>
+   * <li>spreads the normal boiling point monotonically with molar mass so the sub-fractions can
+   * cross reference cut boundaries (this is what removes the identity source-to-reference mapping),
+   * while holding density and the critical constants at the parent values.</li>
+   * </ol>
+   *
+   * <p>
+   * The expanded list is re-sorted by sorting key (normal boiling point, falling back to molar mass)
+   * so it can be fed directly to {@link #distributeToProfiles}.
+   *
+   * @param sourcePseudoComponents the coarse source pseudo-components to delump
+   * @param resolution number of sub-fractions per parent lump; values of 1 or less return the input
+   *        unchanged
+   * @return the delumped, sorted list of sub-fractions
+   */
+  private static List<PseudoComponentContribution> delumpContributions(
+      List<PseudoComponentContribution> sourcePseudoComponents, int resolution) {
+    if (resolution <= 1) {
+      return sourcePseudoComponents;
+    }
+
+    final double window = 0.4;
+    final double decay = 1.5;
+
+    List<PseudoComponentContribution> expanded =
+	new ArrayList<>(sourcePseudoComponents.size() * resolution);
+
+    for (PseudoComponentContribution parent : sourcePseudoComponents) {
+      double parentMoles = parent.moles;
+      double parentMolarMass = parent.molarMass;
+      if (!(parentMoles > 0.0) || !(parentMolarMass > 0.0)) {
+	expanded.add(parent);
+	continue;
+      }
+
+      double[] weights = new double[resolution];
+      double weightSum = 0.0;
+      double[] molarMasses = new double[resolution];
+      for (int k = 0; k < resolution; k++) {
+	double t = (double) k / (resolution - 1);
+	weights[k] = Math.exp(-decay * t);
+	weightSum += weights[k];
+	molarMasses[k] = parentMolarMass * (1.0 - window + 2.0 * window * t);
+      }
+
+      double rawMass = 0.0;
+      for (int k = 0; k < resolution; k++) {
+	double moleFraction = weights[k] / weightSum;
+	rawMass += parentMoles * moleFraction * molarMasses[k];
+      }
+      double parentMass = parentMoles * parentMolarMass;
+      double scale = rawMass > MASS_TOLERANCE ? parentMass / rawMass : 1.0;
+
+      boolean parentHasTb = Double.isFinite(parent.normalBoilingPoint) && parent.normalBoilingPoint > 0.0;
+      for (int k = 0; k < resolution; k++) {
+	double moleFraction = weights[k] / weightSum;
+	double subMoles = parentMoles * moleFraction;
+	double subMolarMass = molarMasses[k] * scale;
+	double ratio = subMolarMass / parentMolarMass;
+	double subTb = parentHasTb ? parent.normalBoilingPoint * ratio : parent.normalBoilingPoint;
+
+	expanded.add(new PseudoComponentContribution(parent.name + "_d" + k, subMoles, subMolarMass,
+	    parent.density, subTb, parent.criticalTemperature, parent.criticalPressure, parent.acentricFactor,
+	    parent.criticalVolume, parent.racketZ, parent.racketZCpa, parent.parachor, parent.criticalViscosity,
+	    parent.triplePointTemperature, parent.heatOfFusion, parent.idealGasEnthalpyOfFormation, parent.cpA,
+	    parent.cpB, parent.cpC, parent.cpD, parent.attractiveM));
+      }
+    }
+
+    expanded.sort(Comparator.comparingDouble(PseudoComponentContribution::sortingKey));
+    return expanded;
+  }
+
   private static List<Double> determineReferenceBoundaries(List<PseudoComponentContribution> referenceContributions) {
     if (referenceContributions.size() <= 1) {
       return Collections.emptyList();
@@ -1069,6 +1171,41 @@ public final class PseudoComponentCombiner {
       AttractiveTermInterface attractiveTerm = component.getAttractiveTerm();
       attractiveM = attractiveTerm != null ? attractiveTerm.getm() : Double.NaN;
       mass = moles * molarMass;
+    }
+
+    /**
+     * All-arguments constructor used to synthesize delumped single-carbon-number sub-fractions.
+     * Properties are supplied directly instead of being read from a {@link ComponentInterface}, and
+     * the mass is derived from {@code moles * molarMass} to keep the invariant of the
+     * component-backed constructor.
+     */
+    private PseudoComponentContribution(String name, double moles, double molarMass, double density,
+	double normalBoilingPoint, double criticalTemperature, double criticalPressure, double acentricFactor,
+	double criticalVolume, double racketZ, double racketZCpa, double parachor, double criticalViscosity,
+	double triplePointTemperature, double heatOfFusion, double idealGasEnthalpyOfFormation, double cpA,
+	double cpB, double cpC, double cpD, double attractiveM) {
+      this.name = name;
+      this.moles = moles;
+      this.molarMass = molarMass;
+      this.density = density;
+      this.normalBoilingPoint = normalBoilingPoint;
+      this.criticalTemperature = criticalTemperature;
+      this.criticalPressure = criticalPressure;
+      this.acentricFactor = acentricFactor;
+      this.criticalVolume = criticalVolume;
+      this.racketZ = racketZ;
+      this.racketZCpa = racketZCpa;
+      this.parachor = parachor;
+      this.criticalViscosity = criticalViscosity;
+      this.triplePointTemperature = triplePointTemperature;
+      this.heatOfFusion = heatOfFusion;
+      this.idealGasEnthalpyOfFormation = idealGasEnthalpyOfFormation;
+      this.cpA = cpA;
+      this.cpB = cpB;
+      this.cpC = cpC;
+      this.cpD = cpD;
+      this.attractiveM = attractiveM;
+      this.mass = moles * molarMass;
     }
 
     private double sortingKey() {
